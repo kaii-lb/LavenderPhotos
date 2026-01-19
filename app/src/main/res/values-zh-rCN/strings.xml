@@ -107,7 +107,7 @@
     <string name="log_file_non_existent">目前尚未记录任何日志文件。</string>
     <string name="album_add_path">添加相册路径</string>
     <string name="album_add">添加相册</string>
-    <string name="album_add_path_placeholder">Download/Movies</string>
+    <string name="album_add_path_placeholder">下载/影片</string>
     <string name="debugging_spawn_loading_snackbar">显示进度提示条</string>
     <string name="debugging_spawn_loading_snackbar_desc">每当 Compose 抽风时，就得调试那些薰衣草色的 SnackBar</string>
     <string name="debugging_loading">调试中…</string>
@@ -522,8 +522,8 @@
     <string name="export_location">本地</string>
     <string name="favourites_remove_this">从收藏中移除吗？</string>
     <string name="favourites_migration">收藏夹已更新！</string>
-    <string name="favourites_migration_notice">更新通知：</string>
-    <string name="favourites_migration_desc">收藏已更新，以带来更好的体验，这意味着可以在所有支持的应用中同步收藏，实现无缝管理，并进一步提升性能！\n\n您之前收藏的所有项目都将被迁移。\n\n请保持手机开机并保持此应用程序打开。</string>
+    <string name="favourites_migration_notice">收藏</string>
+    <string name="favourites_migration_desc">这是记录你最佳时刻的一种方式；在Lavender Photos中，这意味着能够跨所有支持的应用同步收藏夹，拥有无瑕的管理和高性能的系统！\n\n如果你是从之前版本的Lavender Photos过来的，所有之前收藏的项目都会迁移到新系统中。\n\n请保持手机开机，并保持此应用程序打开。</string>
     <string name="favourites_migration_started">迁移开始了！</string>
     <string name="favourites_migration_in_progress">迁移进行中</string>
     <string name="favourites_migration_in_progress_short">进行中</string>
@@ -541,4 +541,5 @@
     <string name="look_and_feel_date_format_datetime_taken">拍摄日期和时间</string>
     <string name="exif_enter_time">输入时间</string>
     <string name="exif_date_changed_failed">更改日期失败</string>
+    <string name="favourites_migration_none">没有可迁移的项目</string>
 </resources>
