@@ -52,4 +52,73 @@
     <string name="look_and_feel_extra_secure_nav_desc">Mostra unha unha opción para ir ao Cartafol Seguro desde o menú principal da app</string>
     <string name="look_and_feel_rounded_corners">Cantos redondeados para miniaturas</string>
     <string name="immich_main_dialog_sync_state">Sincronizando: %1$d de %2$d</string>
+    <string name="tabs_navigate_to">Ir á páxina %1$s</string>
+    <string name="tabs_add">Engade unha pestana</string>
+    <string name="tabs_name">Nome da pestana</string>
+    <string name="tabs_albums_incl">Álbums incluídos</string>
+    <string name="tabs_confirm">Engadir Pestana</string>
+    <string name="tabs_empty_params">Os parámetros non poden quedar baleiros</string>
+    <string name="tabs_max_reached">Non se pode engadir máis de 16 pestana</string>
+    <string name="tabs_min_reached">Ten que existir polo menos unha pestana</string>
+    <string name="return_to_previous_page">Volver á páxina anterior</string>
+    <string name="navigation">Navegación</string>
+    <string name="navigation_photos">Fotos</string>
+    <string name="navigation_secure">Protexer</string>
+    <string name="navigation_albums">Álbums</string>
+    <string name="navigation_search">Buscar</string>
+    <string name="navigation_favourites">Favoritas</string>
+    <string name="navigation_trash">Lixo</string>
+    <string name="app_icon">Icona da app</string>
+    <string name="app_name_full">Lavender Photos</string>
+    <string name="dev_title">Desenvolvemento</string>
+    <string name="privacy_policy_title">Directiva de privacidade</string>
+    <string name="privacy_policy">Non hai ningunha! Ningún dos teus datos vai a ningures, todo queda no dispositivo Ningunha IA se adestra con eles, nin algoritmos que recollan información. Nada. Lavender Photos sempre foi e sempre será unha app tipo galería centrada na privacidade.</string>
+    <string name="i_swear_were_not_bad">de verdade que non usamos os teus datos</string>
+    <string name="support">Axuda &amp; Doazóns</string>
+    <string name="support_desc">dalle vida á app coa túa axuda</string>
+    <string name="version_info">Info da Versión</string>
+    <string name="translation">Tradución</string>
+    <string name="translation_desc">espalla Lavender Photos por todo o mundo!</string>
+    <string name="licenses">Licenzas</string>
+    <string name="licenses_desc">software de código aberto que usamos</string>
+    <string name="licenses_extra">Detalles extra</string>
+    <string name="licenses_extra_desc">Ver información máis polo miúdo sobre as licenzas</string>
+    <string name="special_thanks_to">Agradecemento especial:</string>
+    <string name="updates">Actualizacións</string>
+    <string name="updates_desc">mantén a app ao día</string>
+    <string name="updates_check">Comprobar actualización</string>
+    <string name="updates_check_desc">Informa da nova versión cando abres a app. Non a instala de xeito automático a actualización</string>
+    <string name="updates_whats_new">Novidades</string>
+    <string name="updates_notice">Descargar aviso</string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>A actualización descarga apks desde <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> o que significa que
+                non pasa polo proceso adicional de proba que realizan  IzzyOnDroid, F-Droid ou semellantes.
+
+                <br><br>As versións publicadas en GitHub están sempre asinadas, comprobadas, e verificadas pola desenvolvedora principal (kaii-lb), mais depende de ti se queres usala ou non.
+
+                <br><br>Lavender Photos nunca se auto-actualiza, e só o fai co consentimento explícito da persoa usuaria.
+            </p>
+        ]]></string>
+    <string name="updates_not_found">Non hai novas versións</string>
+    <string name="updates_new_version_available">Hai unha nova versión!</string>
+    <string name="updates_latest">Xa usas a última versión</string>
+    <string name="updates_failed">Fallou a comprobación de actualizacións</string>
+    <string name="updates_checking">Buscando actualizacións</string>
+    <string name="updates_start">Actualizar</string>
+    <string name="updates_failed_download">Non se puido descargar a actualización</string>
+    <string name="updates_no_changelog">Non está dispoñible o rexistro cos cambios</string>
+    <string name="locked_folder_help_top">O Cartafol Seguro é un cartafol protexido para as túas imaxes e vídeos neste dispositivo.\nO multimedia protexido non se sobe a ningunha outra parte e sempre permanece no dispositivo, cifrado cunha clave única en relación ao contrasinal do dispositivo ou datos da impresión dactilar.</string>
+    <string name="locked_folder_help_bottom">Os datos protexidos non se poden restablecer se esqueces o contrasinal ou se retira a impresión dactilar.</string>
+    <string name="secure_folder">Cartafol Seguro</string>
+    <string name="secure_processing">Agarda mentras se procesa o multimedia</string>
+    <string name="secure_encrypting">Cifrando os ficheiros</string>
+    <string name="secure_decrypting">Descifrando os ficheiros</string>
+    <string name="secure_getting_file_info">Obtendo info do ficheiro…</string>
+    <string name="secure_please_wait">Agarda…</string>
+    <string name="secure_export_failed">Fallou a exportación da copia!</string>
+    <string name="secure_encryption_failed_no_permission">Non se poden cifrar as fotos sen permiso</string>
+    <string name="secure_migrating">Migrando</string>
+    <string name="secure_migrating_desc">Facendo copia de apoio e cifrando as túas fotos, agarda…</string>
+    <string name="secure_migrating_notice">Aviso sobre a migración</string>
+    <string name="secure_migrating_notice_desc">O cartafol protexido está cifrado! Todas as túas fotos están agora protexidas e non pode acceder a elas ninguén. Como precaución, actualmente hai unha copia das túas fotos protexidas nun cartafol de exportación, que podes atopar na páxina de álbums ou en Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports.</string>
 </resources>
