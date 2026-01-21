@@ -14,7 +14,7 @@ if [ "$1" == "release" ];then
     tag=release
 fi
 
-JAVA_HOME=/opt/android-studio/jbr/ ./gradlew $gradleTarget ${@:2}
+./gradlew $gradleTarget ${@:2}
 
 echo "Signing...."
 

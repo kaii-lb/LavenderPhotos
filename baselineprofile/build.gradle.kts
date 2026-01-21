@@ -2,21 +2,22 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.test)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.baselineprofile)
+}
+
+kotlin{
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
 }
 
 android {
     namespace = "com.kaii.lavender.baselineprofile"
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlin.compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
     }
 
     defaultConfig {

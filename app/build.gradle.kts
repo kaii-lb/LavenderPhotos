@@ -2,13 +2,22 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     id("org.jetbrains.kotlin.plugin.parcelize")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.baselineprofile)
     id("com.mikepenz.aboutlibraries.plugin.android")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }
 
 android {
@@ -33,13 +42,9 @@ android {
                 isEnable = true
 
                 reset()
-                include("armeabi-v7a", "arm64-v8a")
+                include(includes = arrayOf("armeabi-v7a", "arm64-v8a"))
             }
         }
-    }
-
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     buildTypes {
@@ -52,25 +57,31 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlin.compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-    }
+
     buildFeatures {
         compose = true
         viewBinding = true
         buildConfig = true
+        resValues = true
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    baselineProfile {
-        dexLayoutOptimization = true
+}
+
+baselineProfile {
+    dexLayoutOptimization = true
+
+    filter {
+        include(pkg = "com.kaii.photos.**")
     }
 }
 
@@ -79,18 +90,18 @@ dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation("androidx.activity:activity-compose:1.12.2")
-    implementation(platform("androidx.compose:compose-bom:2025.12.01"))
-    implementation("androidx.compose.ui:ui:1.10.0")
-    implementation("androidx.compose.ui:ui-graphics:1.10.0")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.10.0")
-    implementation("androidx.compose.material3:material3:1.5.0-alpha11")
-    implementation("androidx.compose.animation:animation:1.10.0")
-    implementation("androidx.compose.animation:animation-graphics:1.10.0")
-    implementation("androidx.compose.runtime:runtime-livedata:1.10.0")
+    implementation(platform("androidx.compose:compose-bom:2026.01.00"))
+    implementation("androidx.compose.ui:ui:1.10.1")
+    implementation("androidx.compose.ui:ui-graphics:1.10.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.10.1")
+    implementation("androidx.compose.material3:material3:1.5.0-alpha12")
+    implementation("androidx.compose.animation:animation:1.10.1")
+    implementation("androidx.compose.animation:animation-graphics:1.10.1")
+    implementation("androidx.compose.runtime:runtime-livedata:1.10.1")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.google.android.material:material:1.13.0")
-    implementation("""androidx.compose.foundation:foundation:1.10.0""")
+    implementation("""androidx.compose.foundation:foundation:1.10.1""")
     implementation("androidx.graphics:graphics-shapes-android:1.1.0")
     implementation("androidx.test:monitor:1.8.0")
     implementation("androidx.test.ext:junit-ktx:1.3.0")
@@ -109,7 +120,6 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.0")
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.rules)
-    "baselineProfile"(project(":baselineprofile"))
 
     val media3Version = "1.9.0"
     implementation("androidx.media3:media3-transformer:$media3Version")
@@ -144,14 +154,16 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2025.12.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.01.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.4.0-alpha07")
 
-    debugImplementation("androidx.compose.ui:ui-tooling:1.10.0")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.10.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.10.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.10.1")
 
     ksp("com.github.bumptech.glide:ksp:5.0.5")
     ksp("androidx.room:room-compiler:$roomVersion")
+
+    baselineProfile(project(":baselineprofile"))
 }
 

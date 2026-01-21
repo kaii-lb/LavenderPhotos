@@ -1,10 +1,10 @@
 [versions]
-agp = "8.13.2"
-kotlin = "2.2.21"
+agp = "9.0.0"
+kotlin = "2.3.0"
 junit = "1.3.0"
 espressoCore = "3.7.0"
 benchmarkMacroJunit4 = "1.4.1"
-baselineprofile = "1.4.1"
+baselineprofile = "1.5.0-alpha01"
 profileinstaller = "1.4.1"
 documentfile = "1.1.0"
 rules = "1.7.0"
@@ -19,7 +19,6 @@ androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin"}
 android-test = { id = "com.android.test", version.ref = "agp" }
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
