@@ -148,13 +148,13 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
     }
 }
 
-/** @param dateModified in seconds */
+/** @param fallback in seconds */
 @OptIn(ExperimentalTime::class)
 fun getExifDataForMedia(
     context: Context,
     inputStream: InputStream,
     absolutePath: String,
-    dateModified: Long
+    fallback: Long
 ): Map<MediaData, Any> {
     val list = emptyMap<MediaData, Any?>().toMutableMap()
     val file = File(absolutePath)
@@ -167,7 +167,7 @@ fun getExifDataForMedia(
     try {
         val exifInterface = ExifInterface(inputStream)
 
-        val datetime = getDateTakenForMedia(inputStream = inputStream, dateModified = dateModified)
+        val datetime = getDateTakenForMedia(inputStream = inputStream, dateModified = fallback)
         val is24Hr = DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(datetime)

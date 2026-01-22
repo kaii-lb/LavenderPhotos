@@ -192,15 +192,14 @@ private fun Content(
             context = context,
             inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
             absolutePath = currentMediaItem.absolutePath,
-            dateModified = currentMediaItem.dateModified
+            fallback = currentMediaItem.dateTaken
         )
     }
 
     var location by remember { mutableStateOf("") }
     LaunchedEffect(mediaData) {
         with(Dispatchers.IO) {
-            val latLong = mediaData[MediaData.LatLong] as? DoubleArray
-            if (latLong == null) return@LaunchedEffect
+            val latLong = mediaData[MediaData.LatLong] as? DoubleArray ?: return@LaunchedEffect
 
             Log.d(TAG, "this is running")
 

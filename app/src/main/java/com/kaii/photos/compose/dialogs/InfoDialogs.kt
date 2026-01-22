@@ -650,7 +650,7 @@ fun SingleSecurePhotoInfoDialog(
                         context = context,
                         inputStream = file.inputStream(),
                         absolutePath = file.absolutePath,
-                        dateModified = currentMediaItem.dateModified
+                        fallback = currentMediaItem.dateModified
                     )
                 }
             }
