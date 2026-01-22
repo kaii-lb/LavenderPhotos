@@ -530,8 +530,8 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="export_location">Lokalizacja</string>
     <string name="favourites_remove_this">Usunąć z ulubionych?</string>
     <string name="favourites_migration">Ulubione zostały odnowione!</string>
-    <string name="favourites_migration_notice">Informacja o aktualizacji:</string>
-    <string name="favourites_migration_desc">Ulubione zostały zaktualizowane, aby zapewnić lepsze wrażenia, co oznacza synchronizację ulubionych we wszystkich aplikacjach, które je obsługują, bezproblemowe zarządzanie i jeszcze lepszą wydajność!\n\nWszystkie Twoje poprzednio dodane do ulubionych elementy zostaną przeniesione.\n\nProszę, nie wyłączaj telefonu i nie wyłączaj tej aplikacji.</string>
+    <string name="favourites_migration_notice">Ulubione</string>
+    <string name="favourites_migration_desc">To sposób na śledzenie najlepszych momentów. Dzięki Lavender Photos oznacza to synchronizację ulubionych we wszystkich aplikacjach, które ją obsługują, bezproblemowe zarządzanie i wysoce wydajny system!\n\nJeśli korzystasz z poprzedniej wersji Lavender Photos, wszystkie Twoje poprzednie ulubione elementy zostaną przeniesione do nowego systemu.\n\nProszę, nie wyłączaj telefonu i nie wyłączaj tej aplikacji.</string>
     <string name="favourites_migration_started">Migracja rozpoczęta!</string>
     <string name="favourites_migration_in_progress">Migracja w toku</string>
     <string name="favourites_migration_in_progress_short">W toku</string>
@@ -541,4 +541,5 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="permissions_grant_long">Udziel pozwolenia</string>
     <string name="exif_enter_time">Wprowadź czas</string>
     <string name="exif_date_changed_failed">Nie udało się zmienić daty</string>
+    <string name="favourites_migration_none">Brak elementów do migracji</string>
 </resources>
