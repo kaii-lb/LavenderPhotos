@@ -52,7 +52,7 @@
     <string name="dev_title">Entwickler</string>
     <string name="privacy_policy_title">Datenschutzerklärung</string>
     <string name="privacy_policy">Es gibt keine! Die Daten bleiben alle auf Deinem Gerät. Es wird keine KI darauf trainiert, keine Algorithmen zum Sammeln von Informationen, nichts. Lavender Photos ist und bleibt eine auf Datenschutz ausgerichtete Galerie-App.</string>
-    <string name="i_swear_were_not_bad">Wir sammeln wirklich nicht Deine Daten</string>
+    <string name="i_swear_were_not_bad">Wir sammeln Deine Daten wirklich nicht</string>
     <string name="support">Unterstützen &amp; Spenden</string>
     <string name="support_desc">Hilf mir, die App am Leben zu erhalten</string>
     <string name="version_info">Versionsinfo</string>
