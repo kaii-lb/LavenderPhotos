@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -70,11 +71,14 @@ import androidx.compose.ui.zIndex
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import java.io.File
 
 @Composable
 fun SplitButton(
@@ -384,12 +388,22 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun PfpGlideImage(
-    path: Any?,
+fun UpdatableProfileImage(
+    loggedIn: Boolean,
+    pfpUrl: String,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val pfpPath = remember(loggedIn) {
+        if (loggedIn) {
+            val file = File(context.profilePicture)
+
+            if (file.exists()) file.absolutePath else R.drawable.cat_picture
+        } else R.drawable.cat_picture
+    }
+
     GlideImage(
-        model = path,
+        model = pfpPath,
         contentDescription = "User profile picture",
         contentScale = ContentScale.Crop,
         modifier = modifier
@@ -397,6 +411,7 @@ fun PfpGlideImage(
         it
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(true)
+            .signature(ObjectKey(if (pfpPath is String) pfpUrl else 0))
     }
 }
 
@@ -422,8 +437,9 @@ fun AnimatedImmichBackupIcon(
         //     )
         // )
 
-        PfpGlideImage(
-            path = (state as? LoginState.LoggedIn)?.pfpUrl ?: R.drawable.cat_picture,
+        UpdatableProfileImage(
+            loggedIn = state is LoginState.LoggedIn,
+            pfpUrl = (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
             modifier = Modifier
                 .size(28.dp) // TODO
                 .clip(CircleShape)

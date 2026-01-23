@@ -66,14 +66,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.serialization.ProfilePictureResponse
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DialogClickableItem
 import com.kaii.photos.compose.dialogs.DialogExpandableItem
+import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.helpers.getFileNameFromPath
+import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -305,7 +311,9 @@ fun AnimatableTextField(
 
 @Composable
 fun MainDialogUserInfo(
-    loginState: LoginState
+    loginState: LoginState,
+    uploadPfp: suspend (bytes: ByteArray, filename: String, accessToken: String) -> ProfilePictureResponse?,
+    setUsername: (username: String, accessToken: String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -316,10 +324,27 @@ fun MainDialogUserInfo(
     ) {
         val context = LocalContext.current
         val resources = LocalResources.current
+        val mainViewModel = LocalMainViewModel.current
 
-        var originalName by remember(loginState) {
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+
+        var originalName by remember(loginState, immichInfo) {
             mutableStateOf(
-                (loginState as? LoginState.LoggedIn)?.name ?: resources.getString(R.string.immich_login_unavailable)
+                when (loginState) {
+                    is LoginState.LoggedIn -> {
+                        resources.getString(R.string.immich_email) + " " + loginState.email
+                    }
+
+                    is LoginState.ServerUnreachable -> {
+                        immichInfo.username.ifBlank {
+                            resources.getString(R.string.immich_login_unavailable)
+                        }
+                    }
+
+                    else -> {
+                        resources.getString(R.string.immich_login_unavailable)
+                    }
+                }
             )
         }
 
@@ -332,45 +357,60 @@ fun MainDialogUserInfo(
         val coroutineScope = rememberCoroutineScope()
 
         val pfpPicker = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-            var success = false
-            if (uri != null) {
-                val media = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)
+            coroutineScope.launch {
+                val loading = mutableStateOf(true)
+                var success = false
 
-                if (media != null) {
-                    success = true
-                    // immichViewModel.setProfilePic(media.immichFile) // TODO
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.LoadingEvent(
+                        message = resources.getString(R.string.immich_set_pfp_loading),
+                        icon = R.drawable.face,
+                        isLoading = loading
+                    )
+                )
+
+                if (uri != null) {
+                    context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        val filename = context.contentResolver.getAbsolutePathFromUri(uri = uri)?.getFileNameFromPath() ?: "image.png"
+                        success = uploadPfp(
+                            inputStream.readBytes(),
+                            filename,
+                            (loginState as LoginState.LoggedIn).accessToken
+                        ) != null
+
+                        loading.value = false
+                    }
                 }
-            }
 
-            if (success) {
-                coroutineScope.launch {
+                if (success) {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvents.MessageEvent(
                             message = resources.getString(R.string.immich_set_pfp_success),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.face
+                            icon = R.drawable.face,
+                            duration = SnackbarDuration.Short
                         )
                     )
-                }
-            } else {
-                coroutineScope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = resources.getString(R.string.immich_set_pfp_fail),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.error_2
+                } else {
+                    coroutineScope.launch {
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.MessageEvent(
+                                message = resources.getString(R.string.immich_set_pfp_fail),
+                                icon = R.drawable.error_2,
+                                duration = SnackbarDuration.Short
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
 
-        PfpGlideImage(
-            path = (loginState as? LoginState.LoggedIn)?.pfpUrl ?: R.drawable.cat_picture,
+        UpdatableProfileImage(
+            loggedIn = loginState !is LoginState.LoggedOut,
+            pfpUrl = (loginState as? LoginState.LoggedIn)?.pfpUrl ?: "",
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .clickable {
+                .clickable(enabled = loginState is LoginState.LoggedIn) {
                     pfpPicker.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                 }
         )
@@ -396,7 +436,10 @@ fun MainDialogUserInfo(
                 return@LaunchedEffect
             } else if (changeName) {
                 originalName = username
-                // immichViewModel.setUsername(username) // TODO
+
+                if (loginState is LoginState.LoggedIn) {
+                    setUsername(username, loginState.accessToken)
+                }
                 changeName = false
             }
         }

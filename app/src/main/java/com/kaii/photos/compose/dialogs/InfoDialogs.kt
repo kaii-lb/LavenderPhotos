@@ -91,6 +91,7 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
+import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
@@ -404,6 +405,16 @@ fun MainAppDialog(
     val navController = LocalNavController.current
     val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
+    val userInfo by loginState.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(immichInfo) {
+        loginState.refresh(
+            accessToken = immichInfo.accessToken,
+            pfpSavePath = context.profilePicture,
+            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+        )
+    }
 
     if (showDialog.value) {
         LavenderDialogBase(
@@ -419,10 +430,11 @@ fun MainAppDialog(
             }
 
             val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
-            val userInfo by loginState.state.collectAsStateWithLifecycle()
             if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
                 MainDialogUserInfo(
-                    loginState = userInfo
+                    loginState = userInfo,
+                    uploadPfp = loginState::uploadPfp,
+                    setUsername = loginState::updateUsername
                 )
             }
 

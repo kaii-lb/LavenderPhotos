@@ -1168,6 +1168,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_account">Immich Account</string>
     <string name="immich_login_unavailable">Not Logged In</string>
     <string name="immich_login_unavailable_desc">No immich account connected</string>
+    <string name="immich_login_unreachable">Endpoint Unreachable</string>
+    <string name="immich_login_unreachable_desc">Couldn\'t connect to server</string>
     <string name="immich_login_found">Logged in as: </string>
     <string name="immich_login">Login with Immich</string>
     <string name="immich_login_confirm">Login</string>
@@ -1186,6 +1188,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_email">Email:</string>
     <string name="immich_set_pfp_fail">Unable to set Profile Picture</string>
     <string name="immich_set_pfp_success">Updated profile picture!</string>
+    <string name="immich_set_pfp_loading">Updating profile picture</string>
     <string name="immich_operation_complete">Operation complete!</string>
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_state_loading">Loading…</string>

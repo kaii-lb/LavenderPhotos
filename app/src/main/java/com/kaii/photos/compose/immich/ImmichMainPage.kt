@@ -43,7 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,8 +59,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.immichintegration.state_managers.ServerInfoState
 import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
@@ -76,10 +74,12 @@ import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.profilePicture
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -211,6 +211,7 @@ fun ImmichMainPage() {
             }
 
             item {
+                val context = LocalContext.current
                 val userInfo by loginState.state.collectAsStateWithLifecycle()
 
                 var showLoginDialog by remember { mutableStateOf(false) }
@@ -228,7 +229,9 @@ fun ImmichMainPage() {
                 LaunchedEffect(loginInfo) {
                     isLoadingInfo = true
                     loginState.refresh(
-                        accessToken = loginInfo.accessToken
+                        accessToken = loginInfo.accessToken,
+                        pfpSavePath = context.profilePicture,
+                        previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
                     ).invokeOnCompletion {
                         serverState.fetch(apiKey = loginInfo.accessToken)
 
@@ -262,14 +265,37 @@ fun ImmichMainPage() {
                 val resources = LocalResources.current
                 val title by remember {
                     derivedStateOf {
-                        if (userInfo is LoginState.LoggedOut) resources.getString(R.string.immich_login_unavailable)
-                        else resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).name
+                        when (userInfo) {
+                            is LoginState.LoggedIn -> {
+                                resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).name
+                            }
+
+                            is LoginState.ServerUnreachable -> {
+                                resources.getString(R.string.immich_login_unreachable)
+                            }
+
+                            else -> {
+                                resources.getString(R.string.immich_login_unavailable)
+                            }
+                        }
                     }
                 }
+
                 val summary by remember {
                     derivedStateOf {
-                        if (userInfo is LoginState.LoggedOut) resources.getString(R.string.immich_login_unavailable_desc)
-                        else resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).email
+                        when (userInfo) {
+                            is LoginState.LoggedIn -> {
+                                resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).email
+                            }
+
+                            is LoginState.ServerUnreachable -> {
+                                resources.getString(R.string.immich_login_unreachable_desc)
+                            }
+
+                            else -> {
+                                resources.getString(R.string.immich_login_unavailable_desc)
+                            }
+                        }
                     }
                 }
 
@@ -277,7 +303,7 @@ fun ImmichMainPage() {
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .clickable {
+                        .clickable(enabled = userInfo !is LoginState.ServerUnreachable) {
                             if (loginInfo.endpoint != "" && !isLoadingInfo) {
                                 if (userInfo is LoginState.LoggedOut) showLoginDialog = true
                                 else showLogoutDialog.value = true
@@ -286,7 +312,15 @@ fun ImmichMainPage() {
                         .padding(16.dp, 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (userInfo is LoginState.LoggedOut || (userInfo as LoginState.LoggedIn).pfpUrl.isBlank()) {
+                    if (userInfo is LoginState.LoggedIn && (userInfo as LoginState.LoggedIn).pfpUrl.isNotBlank()) {
+                        UpdatableProfileImage(
+                            loggedIn = true,
+                            pfpUrl = (userInfo as LoginState.LoggedIn).pfpUrl,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
                         Icon(
                             painter = painterResource(id = R.drawable.account_circle),
                             contentDescription = "an icon describing: $title",
@@ -294,17 +328,6 @@ fun ImmichMainPage() {
                             modifier = Modifier
                                 .size(28.dp)
                         )
-                    } else {
-                        GlideImage(
-                            model = (userInfo as LoginState.LoggedIn).pfpUrl,
-                            contentDescription = "User profile picture",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                        ) {
-                            it.diskCacheStrategy(DiskCacheStrategy.NONE)
-                        }
                     }
 
                     Spacer(modifier = Modifier.width(16.dp))
