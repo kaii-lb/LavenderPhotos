@@ -251,7 +251,7 @@ fun VideoEditorBottomBar(
 
                     val stepSize = basicData.duration.roundToInt().seconds.inWholeMicroseconds / 6
 
-                    for (i in 0..(VideoPlayerConstants.TRIM_THUMBNAIL_COUNT - 1)) {
+                    for (i in 0..<VideoPlayerConstants.TRIM_THUMBNAIL_COUNT) {
                         val new = metadata.getScaledFrameAtTime(
                             stepSize * i,
                             MediaMetadataRetriever.OPTION_PREVIOUS_SYNC,

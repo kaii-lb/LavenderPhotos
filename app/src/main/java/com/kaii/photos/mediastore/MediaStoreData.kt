@@ -5,9 +5,7 @@ import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.lavender.immichintegration.serialization.File
 import com.kaii.photos.helpers.SectionItem
-import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.util.Calendar
 import java.util.Locale
@@ -36,18 +34,19 @@ data class MediaStoreData(
         val dummyItem = MediaStoreData()
     }
 
-    @IgnoredOnParcel
-    val immichFile = run {
-        File(
-            path = absolutePath,
-            dateCreated = dateTaken * 1000,
-            lastModified = dateModified * 1000,
-            size = size
-        )
-    }
+    // TODO
+    // @IgnoredOnParcel
+    // val immichFile = run {
+    //     File(
+    //         path = absolutePath,
+    //         dateCreated = dateTaken * 1000,
+    //         lastModified = dateModified * 1000,
+    //         size = size
+    //     )
+    // }
 
-    @IgnoredOnParcel
-    val deviceAssetId = "${displayName}-${size}"
+    // @IgnoredOnParcel
+    // val deviceAssetId = "${displayName}-${size}"
 
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/

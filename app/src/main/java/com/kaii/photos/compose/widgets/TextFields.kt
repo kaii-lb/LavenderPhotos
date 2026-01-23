@@ -38,7 +38,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,20 +66,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bumptech.glide.signature.ObjectKey
+import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DialogClickableItem
 import com.kaii.photos.compose.dialogs.DialogExpandableItem
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 fun ClearableTextField(
@@ -309,7 +304,9 @@ fun AnimatableTextField(
 }
 
 @Composable
-fun MainDialogUserInfo() {
+fun MainDialogUserInfo(
+    loginState: LoginState
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -317,35 +314,13 @@ fun MainDialogUserInfo() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        LaunchedEffect(Unit) {
-            immichViewModel.refreshUserInfo()
-        }
-
         val context = LocalContext.current
         val resources = LocalResources.current
-        val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
-        var originalName by remember(userInfo) {
+        var originalName by remember(loginState) {
             mutableStateOf(
-                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable)
-                else (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
+                (loginState as? LoginState.LoggedIn)?.name ?: resources.getString(R.string.immich_login_unavailable)
             )
-        }
-        val pfpPath by remember {
-            derivedStateOf {
-                if (userInfo is ImmichUserLoginState.IsLoggedIn) {
-                    val file = File((userInfo as ImmichUserLoginState.IsLoggedIn).info.profileImagePath)
-                    if (file.exists()) file.absolutePath
-                    else R.drawable.cat_picture
-                } else R.drawable.cat_picture
-            }
-        }
-        val pfpSignature by remember {
-            derivedStateOf {
-                if (pfpPath is String) {
-                    ObjectKey(File(pfpPath as String).lastModified())
-                } else ObjectKey(0)
-            }
         }
 
         var username by remember {
@@ -363,7 +338,7 @@ fun MainDialogUserInfo() {
 
                 if (media != null) {
                     success = true
-                    immichViewModel.setProfilePic(media.immichFile)
+                    // immichViewModel.setProfilePic(media.immichFile) // TODO
                 }
             }
 
@@ -390,9 +365,8 @@ fun MainDialogUserInfo() {
             }
         }
 
-        InvalidatableGlideImage(
-            path = pfpPath,
-            signature = pfpSignature,
+        PfpGlideImage(
+            path = (loginState as? LoginState.LoggedIn)?.pfpUrl ?: R.drawable.cat_picture,
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
@@ -422,7 +396,7 @@ fun MainDialogUserInfo() {
                 return@LaunchedEffect
             } else if (changeName) {
                 originalName = username
-                immichViewModel.setUsername(username)
+                // immichViewModel.setUsername(username) // TODO
                 changeName = false
             }
         }
@@ -466,7 +440,7 @@ fun MainDialogUserInfo() {
                 },
             ),
             trailingIcon = {
-                if (userInfo is ImmichUserLoginState.IsLoggedIn) {
+                if (loginState is LoginState.LoggedIn) {
                     Icon(
                         painter = painterResource(id = R.drawable.checkmark_thin),
                         contentDescription = "Confirm filename change button",
@@ -482,7 +456,7 @@ fun MainDialogUserInfo() {
                 }
             },
             shape = RoundedCornerShape(1000.dp),
-            enabled = userInfo is ImmichUserLoginState.IsLoggedIn,
+            enabled = loginState is LoginState.LoggedIn,
             modifier = Modifier
                 .focusRequester(focus)
                 .onFocusChanged {

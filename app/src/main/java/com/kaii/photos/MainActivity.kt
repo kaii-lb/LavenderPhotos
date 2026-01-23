@@ -76,6 +76,8 @@ import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
+import com.kaii.lavender.immichintegration.clients.ApiClient
+import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -99,7 +101,6 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
-import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.settings.AboutPage
@@ -125,7 +126,6 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Storage
@@ -146,8 +146,6 @@ import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.immich.ImmichViewModel
-import com.kaii.photos.models.immich.ImmichViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -182,10 +180,6 @@ val LocalAppDatabase = compositionLocalOf<MediaDatabase> {
 }
 
 class MainActivity : ComponentActivity() {
-    companion object {
-        lateinit var immichViewModel: ImmichViewModel
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
@@ -193,8 +187,6 @@ class MainActivity : ComponentActivity() {
 
         val applicationDatabase = MediaDatabase.getInstance(applicationContext)
 
-        // TODO: check if doable for coil
-        // TODO: move to coil only
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val mainViewModel = ViewModelProvider.create(
@@ -214,14 +206,6 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            immichViewModel = viewModel(
-                factory = ImmichViewModelFactory(
-                    application = application,
-                    immichSettings = mainViewModel.settings.Immich,
-                    albumsSettings = mainViewModel.settings.AlbumsList
-                )
-            )
-
             val continueToApp = remember {
                 mutableStateOf(
                     mainViewModel.checkCanPass()
@@ -244,10 +228,15 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
+                val apiClient = remember {
+                    ApiClient()
+                }
+
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal,
                     LocalMainViewModel provides mainViewModel,
-                    LocalAppDatabase provides applicationDatabase
+                    LocalAppDatabase provides applicationDatabase,
+                    LocalApiClient provides apiClient
                 ) {
                     AnimatedContent(
                         targetState = continueToApp.value,
@@ -826,28 +815,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                     ImmichMainPage()
-                }
-
-                composable<Screens.ImmichAlbumPage>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    )
-                ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    val screen: Screens.ImmichAlbumPage = it.toRoute()
-                    multiAlbumViewModel.update(
-                        context = context,
-                        album = screen.albumInfo
-                    )
-
-                    ImmichAlbumPage(
-                        albumInfo = screen.albumInfo,
-                        multiAlbumViewModel = multiAlbumViewModel
-                    )
                 }
 
                 composable<Screens.VideoEditor>(

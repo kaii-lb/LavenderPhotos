@@ -143,7 +143,7 @@ dependencies {
     implementation("me.saket.telephoto:zoomable-image-glide:0.18.0")
 
     implementation("com.github.kaii-lb:Lavender-Snackbars:b79cb851bc")
-    implementation("com.github.kaii-lb.LavenderImmichIntegration:library:v1.0.9")
+    implementation("com.kaii.lavender:immich-integration-android:2.0.0") // TODO: un-maven-local this
 
     implementation("com.mikepenz:aboutlibraries:13.2.1")
     implementation("com.mikepenz:aboutlibraries-compose-m3:13.2.1")

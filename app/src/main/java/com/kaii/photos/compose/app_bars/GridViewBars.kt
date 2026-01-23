@@ -1,17 +1,12 @@
 package com.kaii.photos.compose.app_bars
 
 import android.content.Intent
-import android.os.CancellationSignal
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,9 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
@@ -49,7 +42,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.dialogs.AlbumPathsDialog
@@ -59,7 +51,6 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.ImmichBackupMedia
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -74,9 +65,6 @@ import com.kaii.photos.helpers.permissions.favourites.rememberListFavouritesStat
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
-import com.kaii.photos.immich.ImmichAlbumSyncState
-import com.kaii.photos.immich.ImmichUserLoginState
-import com.kaii.photos.immich.getImmichBackupMedia
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
@@ -84,7 +72,6 @@ import com.kaii.photos.mediastore.getOriginalPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
@@ -213,87 +200,88 @@ fun SingleAlbumViewTopBar(
                         }
                     }
 
-                    if (!isMediaPicker) {
-                        val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-
-                        // TODO: rework
-                        if (userInfo is ImmichUserLoginState.IsLoggedIn) {
-                            var loadingBackupState by remember { mutableStateOf(false) }
-                            val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
-
-                            var deviceBackupMedia by remember { mutableStateOf(emptyList<ImmichBackupMedia>()) }
-
-                            LaunchedEffect(media) {
-                                loadingBackupState = true
-                                withContext(Dispatchers.IO) {
-                                    deviceBackupMedia = getImmichBackupMedia(
-                                        groupedMedia = media.value,
-                                        cancellationSignal = CancellationSignal()
-                                    )
-
-                                    immichViewModel.checkSyncStatus(
-                                        immichAlbumId = albumInfo.immichId,
-                                        expectedBackupMedia = deviceBackupMedia.toSet()
-                                    )
-                                    immichViewModel.refreshDuplicateState(
-                                        immichId = albumInfo.immichId,
-                                        media = deviceBackupMedia.toSet()
-                                    ) {
-                                        loadingBackupState = false
-                                    }
-                                }
-                            }
-
-                            val isBackedUp by remember(albumState) {
-                                derivedStateOf {
-                                    if (albumInfo.immichId.isEmpty()) null
-                                    else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true
-                                    else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.OutOfSync) false
-                                    else null
-                                }
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .wrapContentSize()
-                            ) {
-                                val navController = LocalNavController.current
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate(Screens.ImmichAlbumPage(albumInfo))
-                                    },
-                                    enabled = !loadingBackupState
-                                ) {
-                                    Icon(
-                                        painter =
-                                            when (isBackedUp) {
-                                                true -> painterResource(id = R.drawable.cloud_done)
-                                                false -> painterResource(id = R.drawable.cloud_upload)
-                                                else -> painterResource(id = R.drawable.cloud_off)
-                                            },
-                                        contentDescription = "show more options for the album view",
-                                        tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
-                                            alpha = 0.5f
-                                        ),
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                    )
-                                }
-
-                                if (loadingBackupState) {
-                                    CircularProgressIndicator(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        strokeWidth = 2.dp,
-                                        strokeCap = StrokeCap.Round,
-                                        modifier = Modifier
-                                            .size(12.dp)
-                                            .align(Alignment.BottomEnd)
-                                            .offset(x = (-8).dp, y = (-10).dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // TODO
+                    // if (!isMediaPicker) {
+                    //     val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                    //
+                    //     // TODO: rework
+                    //     if (userInfo is ImmichUserLoginState.IsLoggedIn) {
+                    //         var loadingBackupState by remember { mutableStateOf(false) }
+                    //         val albumState by immichViewModel.immichAlbumsSyncState.collectAsStateWithLifecycle()
+                    //
+                    //         var deviceBackupMedia by remember { mutableStateOf(emptyList<ImmichBackupMedia>()) }
+                    //
+                    //         LaunchedEffect(media) {
+                    //             loadingBackupState = true
+                    //             withContext(Dispatchers.IO) {
+                    //                 deviceBackupMedia = getImmichBackupMedia(
+                    //                     groupedMedia = media.value,
+                    //                     cancellationSignal = CancellationSignal()
+                    //                 )
+                    //
+                    //                 immichViewModel.checkSyncStatus(
+                    //                     immichAlbumId = albumInfo.immichId,
+                    //                     expectedBackupMedia = deviceBackupMedia.toSet()
+                    //                 )
+                    //                 immichViewModel.refreshDuplicateState(
+                    //                     immichId = albumInfo.immichId,
+                    //                     media = deviceBackupMedia.toSet()
+                    //                 ) {
+                    //                     loadingBackupState = false
+                    //                 }
+                    //             }
+                    //         }
+                    //
+                    //         val isBackedUp by remember(albumState) {
+                    //             derivedStateOf {
+                    //                 if (albumInfo.immichId.isEmpty()) null
+                    //                 else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.InSync) true
+                    //                 else if (albumState[albumInfo.immichId] is ImmichAlbumSyncState.OutOfSync) false
+                    //                 else null
+                    //             }
+                    //         }
+                    //
+                    //         Box(
+                    //             modifier = Modifier
+                    //                 .wrapContentSize()
+                    //         ) {
+                    //             val navController = LocalNavController.current
+                    //             IconButton(
+                    //                 onClick = {
+                    //                     navController.navigate(Screens.ImmichAlbumPage(albumInfo))
+                    //                 },
+                    //                 enabled = !loadingBackupState
+                    //             ) {
+                    //                 Icon(
+                    //                     painter =
+                    //                         when (isBackedUp) {
+                    //                             true -> painterResource(id = R.drawable.cloud_done)
+                    //                             false -> painterResource(id = R.drawable.cloud_upload)
+                    //                             else -> painterResource(id = R.drawable.cloud_off)
+                    //                         },
+                    //                     contentDescription = "show more options for the album view",
+                    //                     tint = if (!loadingBackupState) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(
+                    //                         alpha = 0.5f
+                    //                     ),
+                    //                     modifier = Modifier
+                    //                         .size(24.dp)
+                    //                 )
+                    //             }
+                    //
+                    //             if (loadingBackupState) {
+                    //                 CircularProgressIndicator(
+                    //                     color = MaterialTheme.colorScheme.primary,
+                    //                     strokeWidth = 2.dp,
+                    //                     strokeCap = StrokeCap.Round,
+                    //                     modifier = Modifier
+                    //                         .size(12.dp)
+                    //                         .align(Alignment.BottomEnd)
+                    //                         .offset(x = (-8).dp, y = (-10).dp)
+                    //                 )
+                    //             }
+                    //         }
+                    //     }
+                    // }
 
                     IconButton(
                         onClick = {

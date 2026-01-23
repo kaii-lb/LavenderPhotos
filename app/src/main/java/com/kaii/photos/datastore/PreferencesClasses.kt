@@ -801,7 +801,6 @@ class SettingsImmichImpl(
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
     private val immichToken = byteArrayPreferencesKey("immich_token")
     private val username = stringPreferencesKey("immich_username")
-    private val pfpPath = stringPreferencesKey("immich_pfp_path")
     private val alwaysShowUserInfo =
         booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and user name, even if not logged in.
 
@@ -810,7 +809,6 @@ class SettingsImmichImpl(
         val token = data[immichToken] ?: return@map ImmichBasicInfo.Empty
         val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo.Empty
         val username = data[username] ?: ""
-        val pfpPath = data[pfpPath] ?: ""
 
         val decToken = EncryptionManager.decryptBytes(
             bytes = token,
@@ -819,18 +817,16 @@ class SettingsImmichImpl(
 
         ImmichBasicInfo(
             endpoint = endpoint,
-            bearerToken = decToken.decodeToString(),
-            username = username,
-            pfpPath = pfpPath
+            accessToken = decToken.decodeToString(),
+            username = username
         )
     }
 
     fun setImmichBasicInfo(info: ImmichBasicInfo) = viewModelScope.launch {
         context.datastore.edit { data ->
-            val (enc, iv) = EncryptionManager.encryptBytes(info.bearerToken.toByteArray())
+            val (enc, iv) = EncryptionManager.encryptBytes(info.accessToken.toByteArray())
 
             data[username] = info.username
-            data[pfpPath] = info.pfpPath
             data[immichEndpoint] = info.endpoint
             data[immichToken] = enc
             data[immichEncryptionIV] = iv

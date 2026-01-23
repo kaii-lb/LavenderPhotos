@@ -66,9 +66,10 @@ import androidx.compose.ui.util.fastAll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
@@ -77,6 +78,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -93,7 +95,6 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
@@ -401,6 +402,8 @@ fun MainAppDialog(
 ) {
     val vibratorManager = rememberVibratorManager()
     val navController = LocalNavController.current
+    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
 
     if (showDialog.value) {
         LavenderDialogBase(
@@ -416,9 +419,11 @@ fun MainAppDialog(
             }
 
             val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
-            val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-            if (userInfo is ImmichUserLoginState.IsLoggedIn || alwaysShowInfo) {
-                MainDialogUserInfo()
+            val userInfo by loginState.state.collectAsStateWithLifecycle()
+            if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
+                MainDialogUserInfo(
+                    loginState = userInfo
+                )
             }
 
             Column(
@@ -457,21 +462,23 @@ fun MainAppDialog(
                     }
                 }
 
-                val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-                val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+                // TODO
+                // val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+                // val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
 
-                if (immichUploadTotal != 0) {
-                    DialogClickableItem(
-                        text = stringResource(id = R.string.immich_main_dialog_sync_state, immichUploadCount, immichUploadTotal),
-                        iconResId = R.drawable.cloud_upload,
-                        position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
-                    )
-                }
+                // if (immichUploadTotal != 0) {
+                //     DialogClickableItem(
+                //         text = stringResource(id = R.string.immich_main_dialog_sync_state, immichUploadCount, immichUploadTotal),
+                //         iconResId = R.drawable.cloud_upload,
+                //         position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
+                //     )
+                // }
 
                 DialogClickableItem(
                     text = stringResource(id = R.string.data_and_backup),
                     iconResId = R.drawable.data,
-                    position = if (currentView.value == DefaultTabs.TabTypes.secure && immichUploadTotal == 0) RowPosition.Top else RowPosition.Middle,
+                    // position = if (currentView.value == DefaultTabs.TabTypes.secure && immichUploadTotal == 0) RowPosition.Top else RowPosition.Middle,
+                    position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                 ) {
                     showDialog.value = false
                     navController.navigate(MultiScreenViewType.DataAndBackup.name)

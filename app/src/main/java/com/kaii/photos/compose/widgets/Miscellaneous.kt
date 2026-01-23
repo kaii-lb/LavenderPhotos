@@ -5,9 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -35,12 +33,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,7 +56,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -72,18 +67,14 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.ObjectKey
-import com.kaii.photos.MainActivity.Companion.immichViewModel
+import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.immich.ImmichUserLoginState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import java.io.File
 
 @Composable
 fun SplitButton(
@@ -393,9 +384,8 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun InvalidatableGlideImage(
+fun PfpGlideImage(
     path: Any?,
-    signature: ObjectKey,
     modifier: Modifier = Modifier
 ) {
     GlideImage(
@@ -407,56 +397,41 @@ fun InvalidatableGlideImage(
         it
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(true)
-            .signature(signature)
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AnimatedImmichBackupIcon(
-    immichUserState: ImmichUserLoginState,
+    state: LoginState,
     modifier: Modifier = Modifier
 ) {
-    val pfpPath by remember {
-        derivedStateOf {
-            if (immichUserState is ImmichUserLoginState.IsLoggedIn) {
-                val file = File(immichUserState.info.profileImagePath)
-                if (file.exists()) file.absolutePath
-                else R.drawable.cat_picture
-            } else R.drawable.cat_picture
-        }
-    }
-    val pfpSignature by remember {
-        derivedStateOf {
-            if (pfpPath is String) {
-                ObjectKey(File(pfpPath as String).lastModified())
-            } else ObjectKey(0)
-        }
-    }
-    val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-    val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+    // TODO:
+    // val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+    // val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
 
     Box(
         modifier = modifier
             .size(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        val size by animateDpAsState(
-            targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
-            animationSpec = tween(
-                durationMillis = 400
-            )
-        )
-        InvalidatableGlideImage(
-            path = pfpPath,
-            signature = pfpSignature,
+        // val size by animateDpAsState(
+        //     targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
+        //     animationSpec = tween(
+        //         durationMillis = 400
+        //     )
+        // )
+
+        PfpGlideImage(
+            path = (state as? LoginState.LoggedIn)?.pfpUrl ?: R.drawable.cat_picture,
             modifier = Modifier
-                .size(size)
+                .size(28.dp) // TODO
                 .clip(CircleShape)
                 .zIndex(2f)
         )
 
         AnimatedVisibility(
-            visible = immichUploadTotal != 0,
+            visible = false, // immichUploadTotal != 0,
             enter = scaleIn(
                 animationSpec = tween(
                     durationMillis = 400
@@ -470,33 +445,33 @@ fun AnimatedImmichBackupIcon(
             modifier = Modifier
                 .zIndex(1f)
         ) {
-            val percentage by animateFloatAsState(
-                targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
-                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-            )
+            // val percentage by animateFloatAsState(
+            //     targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
+            //     animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+            // )
 
-            CircularProgressIndicator(
-                progress = {
-                    percentage
-                },
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeCap = StrokeCap.Round,
-                strokeWidth = 3.dp,
-                modifier = Modifier
-                    .size(32.dp)
-            )
+            // CircularProgressIndicator(
+            //     progress = {
+            //         percentage
+            //     },
+            //     color = MaterialTheme.colorScheme.primary,
+            //     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            //     strokeCap = StrokeCap.Round,
+            //     strokeWidth = 3.dp,
+            //     modifier = Modifier
+            //         .size(32.dp)
+            // )
         }
     }
 }
 
 @Composable
 fun AnimatedLoginIcon(
-    immichUserLoginState: ImmichUserLoginState,
+    state: LoginState,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = immichUserLoginState is ImmichUserLoginState.IsLoggedIn,
+        targetState = state is LoginState.LoggedIn && state.pfpUrl.isNotBlank(),
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -509,10 +484,11 @@ fun AnimatedLoginIcon(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(end = 4.dp)
-    ) { state ->
-        if (state) {
+    ) { visible ->
+        if (visible) {
+            // TODO
             AnimatedImmichBackupIcon(
-                immichUserState = immichUserLoginState,
+                state = state,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)

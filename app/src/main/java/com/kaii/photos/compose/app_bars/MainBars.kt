@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -65,8 +65,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
@@ -157,10 +157,11 @@ fun MainAppTopBar(
             }
 
             if (!isFromMediaPicker) {
-                val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                // TODO:
+                // val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
 
                 AnimatedLoginIcon(
-                    immichUserLoginState = immichUserState
+                    state = LoginState.LoggedOut
                 ) {
                     showDialog.value = true
                 }
@@ -203,7 +204,8 @@ fun MainAppBottomBar(
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
+    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
 
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -296,9 +298,9 @@ fun MainAppBottomBar(
                         LazyRow(
                             state = state
                         ) {
-                            itemsIndexed(
+                            items(
                                 items = tabs
-                            ) { index, tab ->
+                            ) { tab ->
                                 ToggleButton(
                                     checked = currentView.value == tab,
                                     onCheckedChange = {

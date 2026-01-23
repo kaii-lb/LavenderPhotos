@@ -1167,7 +1167,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_desc">Backup to self-hosted Immich server</string>
     <string name="immich_account">Immich Account</string>
     <string name="immich_login_unavailable">Not Logged In</string>
-    <string name="immich_login_unavailable_desc">No immich account is currently connected</string>
+    <string name="immich_login_unavailable_desc">No immich account connected</string>
     <string name="immich_login_found">Logged in as: </string>
     <string name="immich_login">Login with Immich</string>
     <string name="immich_login_confirm">Login</string>
@@ -1203,6 +1203,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_failed_refreshing_albums">Failed refreshing albums</string>
     <string name="immich_failed_uploading_albums">Failed uploading album</string>
     <string name="immich_server_info">Server Info</string>
+    <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
     <string name="immich_server_storage">Server Storage</string>
     <string name="immich_server_storage_desc">%1$s of %2$s used</string>
@@ -1229,6 +1230,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_misc">Miscellaneous</string>
     <string name="immich_always_show_user_info">Always Show User Info</string>
     <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
+    <string name="immich_server_online">Online</string>
+    <string name="immich_server_offline">Offline</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>

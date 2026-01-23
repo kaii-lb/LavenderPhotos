@@ -72,11 +72,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.immichintegration.serialization.LoginCredentials
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.WallpaperSetter
@@ -86,6 +86,8 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
@@ -823,7 +825,8 @@ fun AddCustomAlbumDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun ImmichLoginDialog(
-    endpointBase: String,
+    loginState: LoginStateManager,
+    endpoint: String,
     onDismiss: () -> Unit,
 ) {
     LavenderDialogBase(
@@ -872,6 +875,7 @@ fun ImmichLoginDialog(
 
             val coroutineScope = rememberCoroutineScope()
             val resources = LocalResources.current
+            val mainViewModel = LocalMainViewModel.current
 
             suspend fun login() {
                 val eventTitle =
@@ -886,14 +890,28 @@ fun ImmichLoginDialog(
                     )
                 )
 
-                immichViewModel.loginUser(
-                    credentials = LoginCredentials(
-                        email = email.value.trim(),
-                        password = password.value.trim()
-                    ),
-                    endpointBase = endpointBase
-                ).let { success ->
-                    if (success) {
+                loginState.login(
+                    email = email.value.trim(),
+                    password = password.value.trim(),
+                    userAgent = System.getProperty("http.agent") ?: ""
+                ).let { state ->
+                    mainViewModel.settings.Immich.setImmichBasicInfo(
+                        if (state is LoginState.LoggedIn) {
+                            ImmichBasicInfo(
+                                endpoint = endpoint,
+                                accessToken = state.accessToken,
+                                username = state.name
+                            )
+                        } else {
+                            ImmichBasicInfo(
+                                endpoint = endpoint,
+                                accessToken = "",
+                                username = ""
+                            )
+                        }
+                    )
+
+                    if (state is LoginState.LoggedIn) {
                         eventTitle.value = resources.getString(R.string.immich_login_successful)
                         isLoading.value = false
 
@@ -1052,7 +1070,7 @@ fun SliderDialog(
             track = { state ->
                 SliderDefaults.Track(
                     sliderState = state,
-                    drawTick = { offset, color -> },
+                    drawTick = { _, _ -> },
                     modifier = Modifier
                         .height(32.dp)
                 )

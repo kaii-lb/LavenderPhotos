@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -61,6 +62,79 @@ fun PreferencesRow(
     showBackground: Boolean = true,
     enabled: Boolean = true,
     titleTextSize: Float = 18f,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    action: (() -> Unit)? = null
+) {
+    PreferencesRowBase(
+        title = {
+            Text(
+                text = title,
+                fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f)
+            )
+        },
+        iconResID = iconResID,
+        position = position,
+        modifier = modifier,
+        summary = summary,
+        goesToOtherPage = goesToOtherPage,
+        showBackground = showBackground,
+        enabled = enabled,
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        action = action
+    )
+}
+
+@Composable
+fun PreferencesRow(
+    title: AnnotatedString,
+    iconResID: Int,
+    position: RowPosition,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    goesToOtherPage: Boolean = false,
+    showBackground: Boolean = true,
+    enabled: Boolean = true,
+    titleTextSize: Float = 18f,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    action: (() -> Unit)? = null
+) {
+    PreferencesRowBase(
+        title = {
+            Text(
+                text = title,
+                fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f)
+            )
+        },
+        iconResID = iconResID,
+        position = position,
+        modifier = modifier,
+        summary = summary,
+        goesToOtherPage = goesToOtherPage,
+        showBackground = showBackground,
+        enabled = enabled,
+        backgroundColor = backgroundColor,
+        contentColor = contentColor,
+        action = action
+    )
+}
+
+@Composable
+private fun PreferencesRowBase(
+    title: @Composable () -> Unit,
+    iconResID: Int,
+    position: RowPosition,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    goesToOtherPage: Boolean = false,
+    showBackground: Boolean = true,
+    enabled: Boolean = true,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     action: (() -> Unit)? = null
@@ -120,12 +194,7 @@ fun PreferencesRow(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
         ) {
-            Text(
-                text = title,
-                fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
-                textAlign = TextAlign.Start,
-                color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f)
-            )
+            title()
 
             if (summary != null) {
                 Text(

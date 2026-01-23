@@ -8,6 +8,7 @@ baselineprofile = "1.5.0-alpha01"
 profileinstaller = "1.4.1"
 documentfile = "1.1.0"
 rules = "1.7.0"
+foundation = "1.10.1"
 
 [libraries]
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
@@ -16,6 +17,7 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

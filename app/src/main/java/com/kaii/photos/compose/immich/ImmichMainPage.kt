@@ -1,7 +1,12 @@
 package com.kaii.photos.compose.immich
 
 import android.util.Patterns
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +21,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -37,16 +43,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -54,9 +61,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.ServerInfoState
+import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
+import com.kaii.lavender.immichintegration.state_managers.rememberServerState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -68,16 +78,21 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.immich.ImmichServerState
-import com.kaii.photos.immich.ImmichUserLoginState
 import kotlinx.coroutines.launch
-import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImmichMainPage() {
     val navController = LocalNavController.current
+
+    val mainViewModel = LocalMainViewModel.current
+    val loginInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
+        .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+
+    val loginState = rememberLoginState(baseUrl = loginInfo.endpoint)
+    val serverState = rememberServerState(baseUrl = loginInfo.endpoint)
 
     Scaffold(
         topBar = {
@@ -123,8 +138,6 @@ fun ImmichMainPage() {
             item {
                 var showAddressDialog by remember { mutableStateOf(false) }
                 val resources = LocalResources.current
-                val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
-                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
                 if (showAddressDialog) {
                     TextEntryDialog(
@@ -141,9 +154,8 @@ fun ImmichMainPage() {
                                 mainViewModel.settings.Immich.setImmichBasicInfo(
                                     ImmichBasicInfo(
                                         endpoint = value.removeSuffix("/"),
-                                        bearerToken = immichBasicInfo.bearerToken,
-                                        username = immichBasicInfo.username,
-                                        pfpPath = immichBasicInfo.pfpPath
+                                        accessToken = loginInfo.accessToken,
+                                        username = loginInfo.username
                                     )
                                 )
                                 showAddressDialog = false
@@ -163,7 +175,6 @@ fun ImmichMainPage() {
                     )
                 }
 
-
                 val showClearEndpointDialog = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
                 if (showClearEndpointDialog.value) {
@@ -174,14 +185,13 @@ fun ImmichMainPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (immichBasicInfo.bearerToken != "") {
-                                immichViewModel.logoutUser()
+                            if (loginInfo.accessToken != "") {
+                                loginState.logout(accessToken = loginInfo.accessToken)
                             }
 
-                            mainViewModel.settings.Immich.setImmichBasicInfo(
-                                ImmichBasicInfo.Empty
-                            )
+                            mainViewModel.settings.Immich.setImmichBasicInfo(ImmichBasicInfo.Empty)
                         }
+
                         showClearEndpointDialog.value = false
                     }
                 }
@@ -189,35 +199,39 @@ fun ImmichMainPage() {
                 PreferencesRow(
                     title = stringResource(id = R.string.immich_endpoint_base),
                     summary =
-                        if (immichBasicInfo.endpoint == "") stringResource(id = R.string.immich_endpoint_base_desc)
-                        else immichBasicInfo.endpoint,
+                        if (loginInfo.endpoint == "") stringResource(id = R.string.immich_endpoint_base_desc)
+                        else loginInfo.endpoint,
                     iconResID = R.drawable.data,
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
-                    if (immichBasicInfo.endpoint.isEmpty()) showAddressDialog = true
+                    if (loginInfo.endpoint.isEmpty()) showAddressDialog = true
                     else showClearEndpointDialog.value = true
                 }
             }
 
             item {
-                val mainViewModel = LocalMainViewModel.current
-                val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-                val immichBasicInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
-                    .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+                val userInfo by loginState.state.collectAsStateWithLifecycle()
+
                 var showLoginDialog by remember { mutableStateOf(false) }
                 var isLoadingInfo by remember { mutableStateOf(true) }
 
                 if (showLoginDialog) {
                     ImmichLoginDialog(
-                        endpointBase = immichBasicInfo.endpoint
+                        loginState = loginState,
+                        endpoint = loginInfo.endpoint
                     ) {
                         showLoginDialog = false
                     }
                 }
 
-                LaunchedEffect(Unit) {
-                    immichViewModel.refreshUserInfo {
+                LaunchedEffect(loginInfo) {
+                    isLoadingInfo = true
+                    loginState.refresh(
+                        accessToken = loginInfo.accessToken
+                    ).invokeOnCompletion {
+                        serverState.fetch(apiKey = loginInfo.accessToken)
+
                         isLoadingInfo = false
                     }
                 }
@@ -232,10 +246,15 @@ fun ImmichMainPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (immichBasicInfo.bearerToken == "") return@launch
+                            if (loginInfo.accessToken == "") return@launch
 
-                            immichViewModel.logoutUser()
+                            loginState.logout(accessToken = loginInfo.accessToken).invokeOnCompletion {
+                                mainViewModel.settings.Immich.setImmichBasicInfo(
+                                    ImmichBasicInfo.Empty.copy(endpoint = loginInfo.endpoint)
+                                )
+                            }
                         }
+
                         showLogoutDialog.value = false
                     }
                 }
@@ -243,14 +262,14 @@ fun ImmichMainPage() {
                 val resources = LocalResources.current
                 val title by remember {
                     derivedStateOf {
-                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable)
-                        else resources.getString(R.string.immich_login_found) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.name
+                        if (userInfo is LoginState.LoggedOut) resources.getString(R.string.immich_login_unavailable)
+                        else resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).name
                     }
                 }
                 val summary by remember {
                     derivedStateOf {
-                        if (userInfo is ImmichUserLoginState.IsNotLoggedIn) resources.getString(R.string.immich_login_unavailable_desc)
-                        else resources.getString(R.string.immich_email) + " " + (userInfo as ImmichUserLoginState.IsLoggedIn).info.email
+                        if (userInfo is LoginState.LoggedOut) resources.getString(R.string.immich_login_unavailable_desc)
+                        else resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).email
                     }
                 }
 
@@ -259,23 +278,15 @@ fun ImmichMainPage() {
                         .fillMaxWidth(1f)
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .clickable {
-                            if (immichBasicInfo.endpoint != "" && !isLoadingInfo) {
-                                if (userInfo is ImmichUserLoginState.IsNotLoggedIn) showLoginDialog = true
+                            if (loginInfo.endpoint != "" && !isLoadingInfo) {
+                                if (userInfo is LoginState.LoggedOut) showLoginDialog = true
                                 else showLogoutDialog.value = true
                             }
                         }
                         .padding(16.dp, 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val pfpPath by remember {
-                        derivedStateOf {
-                            val file = File((userInfo as ImmichUserLoginState.IsLoggedIn).info.profileImagePath)
-                            if (file.exists()) file.absolutePath
-                            else null
-                        }
-                    }
-
-                    if (userInfo is ImmichUserLoginState.IsNotLoggedIn || pfpPath == null) {
+                    if (userInfo is LoginState.LoggedOut || (userInfo as LoginState.LoggedIn).pfpUrl.isBlank()) {
                         Icon(
                             painter = painterResource(id = R.drawable.account_circle),
                             contentDescription = "an icon describing: $title",
@@ -285,7 +296,7 @@ fun ImmichMainPage() {
                         )
                     } else {
                         GlideImage(
-                            model = pfpPath,
+                            model = (userInfo as LoginState.LoggedIn).pfpUrl,
                             contentDescription = "User profile picture",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
@@ -309,31 +320,31 @@ fun ImmichMainPage() {
                             text = title,
                             fontSize = TextUnit(18f, TextUnitType.Sp),
                             textAlign = TextAlign.Start,
-                            color = if (immichBasicInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.5f
-                            )
+                            color =
+                                if (loginInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
 
                         Text(
                             text = summary,
                             fontSize = TextUnit(14f, TextUnitType.Sp),
                             textAlign = TextAlign.Start,
-                            color = if (immichBasicInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.5f
-                            ),
+                            color =
+                                if (loginInfo.endpoint != "" && !isLoadingInfo) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
 
-                    if (isLoadingInfo) {
-                        CircularProgressIndicator(
-                            strokeWidth = 3.dp,
-                            strokeCap = StrokeCap.Round,
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = Color.Transparent,
+                    AnimatedVisibility(
+                        visible = isLoadingInfo,
+                        enter = fadeIn() + scaleIn(animationSpec = AnimationConstants.expressiveTween()),
+                        exit = fadeOut() + scaleOut(animationSpec = AnimationConstants.expressiveTween())
+                    ) {
+                        ContainedLoadingIndicator(
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(32.dp)
                         )
                     }
                 }
@@ -346,20 +357,16 @@ fun ImmichMainPage() {
             }
 
             item {
-                val serverInfo by immichViewModel.immichServerState.collectAsStateWithLifecycle()
-                val userInfo by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
+                val serverInfo by serverState.state.collectAsStateWithLifecycle()
+                val userInfo by loginState.state.collectAsStateWithLifecycle()
                 val resources = LocalResources.current
-
-                LaunchedEffect(userInfo) {
-                    if (userInfo is ImmichUserLoginState.IsLoggedIn) immichViewModel.refreshServerInfo()
-                }
 
                 val info by remember {
                     derivedStateOf {
-                        if (serverInfo is ImmichServerState.HasInfo) {
+                        if (serverInfo is ServerInfoState.Available) {
                             Pair(
-                                (serverInfo as ImmichServerState.HasInfo).info.version.toString(),
-                                (serverInfo as ImmichServerState.HasInfo).info.build.toString()
+                                (serverInfo as ServerInfoState.Available).version,
+                                (serverInfo as ServerInfoState.Available).build ?: resources.getString(R.string.immich_state_unknown)
                             )
                         } else {
                             Pair(
@@ -372,10 +379,10 @@ fun ImmichMainPage() {
 
                 val storage by remember {
                     derivedStateOf {
-                        if (serverInfo is ImmichServerState.HasInfo) {
+                        if (serverInfo is ServerInfoState.Available) {
                             Pair(
-                                (serverInfo as ImmichServerState.HasInfo).storage.diskUse,
-                                (serverInfo as ImmichServerState.HasInfo).storage.diskSize
+                                (serverInfo as ServerInfoState.Available).diskUsed,
+                                (serverInfo as ServerInfoState.Available).diskSize
                             )
                         } else {
                             Pair(
@@ -387,24 +394,40 @@ fun ImmichMainPage() {
                 }
 
                 PreferencesRow(
-                    title = stringResource(id = R.string.immich_server_info),
+                    title = buildAnnotatedString {
+                        append(resources.getString(R.string.immich_server_info_with_status))
+                        append(" ")
+
+                        val online = (serverInfo as? ServerInfoState.Available)?.online == true
+
+                        withStyle(
+                            style = SpanStyle(
+                                color =
+                                    if (online) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                            )
+                        ) {
+                            if (online) append(resources.getString(R.string.immich_server_online))
+                            else append(resources.getString(R.string.immich_server_offline))
+                        }
+                    },
                     summary = stringResource(id = R.string.immich_server_info_desc, info.first, info.second),
                     iconResID = R.drawable.handyman,
                     position = RowPosition.Middle,
                     showBackground = false,
-                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
+                    enabled = userInfo is LoginState.LoggedIn
                 )
 
                 PreferenceRowWithCustomBody(
                     icon = R.drawable.storage,
                     title = stringResource(id = R.string.immich_server_storage),
-                    enabled = userInfo is ImmichUserLoginState.IsLoggedIn
+                    enabled = userInfo is LoginState.LoggedIn
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val animated by animateFloatAsState(
-                        targetValue = if (serverInfo is ImmichServerState.HasInfo) {
-                            (serverInfo as ImmichServerState.HasInfo).storage.diskUsagePercentage.toFloat() / 100f
+                        targetValue = if (serverInfo is ServerInfoState.Available) {
+                            (serverInfo as ServerInfoState.Available).diskUsedPercentage
                         } else {
                             1f
                         }
@@ -414,11 +437,12 @@ fun ImmichMainPage() {
                         progress = {
                             animated
                         },
-                        color = if (serverInfo is ImmichServerState.HasInfo) {
-                            ProgressIndicatorDefaults.linearColor
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        }.copy(alpha = if (userInfo is ImmichUserLoginState.IsLoggedIn) 1f else 0.6f),
+                        color =
+                            if (serverInfo is ServerInfoState.Available) {
+                                ProgressIndicatorDefaults.linearColor
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            }.copy(alpha = if (userInfo is LoginState.LoggedIn) 1f else 0.6f),
                         modifier = Modifier
                             .height(14.dp)
                             .fillMaxWidth(1f)
@@ -428,14 +452,14 @@ fun ImmichMainPage() {
 
                     Text(
                         text =
-                            if (serverInfo is ImmichServerState.HasInfo) {
+                            if (serverInfo is ServerInfoState.Available) {
                                 stringResource(id = R.string.immich_server_storage_desc, storage.first, storage.second)
                             } else {
                                 stringResource(id = R.string.immich_server_info_failed)
                             },
                         fontSize = TextUnit(14f, TextUnitType.Sp),
                         textAlign = TextAlign.Start,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo is ImmichServerState.HasInfo) 1f else 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo is ServerInfoState.Available) 1f else 0.6f),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
