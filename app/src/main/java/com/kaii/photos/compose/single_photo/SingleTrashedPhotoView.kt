@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -32,9 +33,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarDefaults.vibrantFloatingToolbarColors
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -72,6 +76,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
@@ -176,8 +181,10 @@ private fun SingleTrashedPhotoViewImpl(
         }
     )
 
+    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             SingleViewTopBar(
@@ -194,6 +201,7 @@ private fun SingleTrashedPhotoViewImpl(
             BottomBar(
                 visible = appBarsVisible.value,
                 item = mediaItem,
+                privacyMode = scrollState.privacyMode,
                 showDeleteDialog = {
                     showDialog = true
                 },
@@ -228,6 +236,7 @@ private fun SingleTrashedPhotoViewImpl(
                     currentMediaItem = mediaItem,
                     sheetState = sheetState,
                     showMoveCopyOptions = false,
+                    isTouchLocked = scrollState.privacyMode,
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()
@@ -236,7 +245,8 @@ private fun SingleTrashedPhotoViewImpl(
                     },
                     onMoveMedia = {
                         onMoveMedia()
-                    }
+                    },
+                    togglePrivacyMode = scrollState::togglePrivacyMode
                 )
             }
 
@@ -244,7 +254,8 @@ private fun SingleTrashedPhotoViewImpl(
                 groupedMedia = mediaStoreData.value,
                 state = state,
                 window = window,
-                appBarsVisible = appBarsVisible
+                appBarsVisible = appBarsVisible,
+                scrollState = scrollState
             )
         }
     }
@@ -255,6 +266,7 @@ private fun SingleTrashedPhotoViewImpl(
 private fun BottomBar(
     visible: Boolean,
     item: MediaStoreData,
+    privacyMode: Boolean,
     showDeleteDialog: () -> Unit,
     onMoveMedia: () -> Unit
 ) {
@@ -288,14 +300,26 @@ private fun BottomBar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                 floatingActionButton = {
-                    FloatingToolbarDefaults.VibrantFloatingActionButton(
+                    FilledIconButton(
                         onClick = {
                             shareImage(
                                 uri = item.uri,
                                 context = context,
                                 mimeType = item.mimeType
                             )
-                        }
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = vibrantFloatingToolbarColors().fabContentColor,
+                            containerColor = vibrantFloatingToolbarColors().fabContainerColor,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                        ),
+                        shapes = IconButtonDefaults.shapes(
+                            shape = IconButtonDefaults.mediumSquareShape,
+                            pressedShape = IconButtonDefaults.smallPressedShape
+                        ),
+                        enabled = !privacyMode,
+                        modifier = Modifier
+                            .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.share),
@@ -326,11 +350,12 @@ private fun BottomBar(
                         }
                     }
                 )
+
                 Row(
                     modifier = Modifier
                         .wrapContentWidth()
                         .clip(CircleShape)
-                        .clickable {
+                        .clickable(enabled = !privacyMode) {
                             runRestoreAction.value = true
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
@@ -340,7 +365,9 @@ private fun BottomBar(
                     Icon(
                         painter = painterResource(id = R.drawable.unlock),
                         contentDescription = "Restore Image Button",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint =
+                            if (!privacyMode) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
                         modifier = Modifier
                             .size(22.dp)
                     )
@@ -354,7 +381,9 @@ private fun BottomBar(
                         text = stringResource(id = R.string.media_restore),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color =
+                            if (!privacyMode) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
                         modifier = Modifier
                             .fillMaxWidth(1f)
                     )
@@ -374,7 +403,7 @@ private fun BottomBar(
                     modifier = Modifier
                         .wrapContentWidth()
                         .clip(CircleShape)
-                        .clickable {
+                        .clickable(enabled = !privacyMode) {
                             showDeleteDialog()
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
@@ -384,7 +413,9 @@ private fun BottomBar(
                     Icon(
                         painter = painterResource(id = R.drawable.trash),
                         contentDescription = "Permanently Delete Image Button",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint =
+                            if (!privacyMode) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
                         modifier = Modifier
                             .size(22.dp)
                     )
@@ -398,7 +429,9 @@ private fun BottomBar(
                         text = stringResource(id = R.string.media_delete),
                         fontSize = TextUnit(16f, TextUnitType.Sp),
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color =
+                            if (!privacyMode) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f),
                         modifier = Modifier
                             .fillMaxWidth(1f)
                     )

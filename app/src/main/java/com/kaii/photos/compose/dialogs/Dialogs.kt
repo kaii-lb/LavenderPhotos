@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -735,13 +736,16 @@ fun TallDialogInfoRow(
     @DrawableRes icon: Int,
     position: RowPosition,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: Color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
     val (shape, spacerHeight) = remember(position) {
-        getDefaultShapeSpacerForPosition(position, 24.dp)
+        getDefaultShapeSpacerForPosition(
+            position = position,
+            cornerRadius = 32.dp
+        )
     }
 
     Column(

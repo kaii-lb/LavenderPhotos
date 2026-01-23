@@ -80,6 +80,7 @@ import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
@@ -342,7 +343,9 @@ private fun SinglePhotoViewCommon(
         (context as Activity).finish()
     }
 
+    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             SingleViewTopBar(
@@ -361,6 +364,7 @@ private fun SinglePhotoViewCommon(
             BottomBar(
                 visible = appBarsVisible.value,
                 currentItem = mediaItem,
+                privacyMode = scrollState.privacyMode,
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -425,6 +429,7 @@ private fun SinglePhotoViewCommon(
                 currentMediaItem = mediaItem,
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
+                isTouchLocked = scrollState.privacyMode,
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()
@@ -441,7 +446,8 @@ private fun SinglePhotoViewCommon(
                         )
                         delay(AnimationConstants.DURATION_SHORT.toLong())
                     }
-                }
+                },
+                togglePrivacyMode = scrollState::togglePrivacyMode
             )
         }
 
@@ -467,7 +473,8 @@ private fun SinglePhotoViewCommon(
                 groupedMedia = mediaStoreData.value,
                 state = state,
                 window = window,
-                appBarsVisible = appBarsVisible
+                appBarsVisible = appBarsVisible,
+                scrollState = scrollState
             )
         }
     }
@@ -478,6 +485,7 @@ private fun SinglePhotoViewCommon(
 private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
+    privacyMode: Boolean,
     showEditingView: () -> Unit,
     checkZeroItemsLeft: () -> Unit,
     onMoveMedia: () -> Unit
@@ -563,12 +571,14 @@ private fun BottomBar(
                         },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = vibrantFloatingToolbarColors().fabContentColor,
-                            containerColor = vibrantFloatingToolbarColors().fabContainerColor
+                            containerColor = vibrantFloatingToolbarColors().fabContainerColor,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                         ),
                         shapes = IconButtonDefaults.shapes(
                             shape = IconButtonDefaults.mediumSquareShape,
                             pressedShape = IconButtonDefaults.smallPressedShape
                         ),
+                        enabled = !privacyMode,
                         modifier = Modifier
                             .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
                     ) {
@@ -584,7 +594,8 @@ private fun BottomBar(
                 IconButton(
                     onClick = {
                         shareImage(currentItem.uri, context)
-                    }
+                    },
+                    enabled = !privacyMode
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.share),
@@ -643,7 +654,7 @@ private fun BottomBar(
                     onClick = {
                         showMoveToSecureFolderDialog.value = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto.value
+                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),
@@ -664,7 +675,8 @@ private fun BottomBar(
                             uri = currentItem.uri,
                             favourite = !isFavourited
                         )
-                    }
+                    },
+                    enabled = !privacyMode
                 ) {
                     Icon(
                         painter = painterResource(id = if (isFavourited) R.drawable.favourite_filled else R.drawable.favourite),
@@ -716,7 +728,8 @@ private fun BottomBar(
                     onClick = {
                         if (confirmToDelete) showDeleteDialog.value = true
                         else runTrashAction.value = true
-                    }
+                    },
+                    enabled = !privacyMode
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.trash),

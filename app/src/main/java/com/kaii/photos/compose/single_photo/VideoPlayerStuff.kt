@@ -114,13 +114,13 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
+import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -405,8 +405,7 @@ fun VideoPlayer(
     item: MediaStoreData,
     appBarsVisible: MutableState<Boolean>,
     shouldAutoPlay: Boolean,
-    lastWasMuted: MutableState<Boolean>,
-    isTouchLocked: MutableState<Boolean>,
+    scrollState: SinglePhotoScrollState,
     window: Window,
     shouldPlay: State<Boolean>,
     modifier: Modifier = Modifier,
@@ -489,8 +488,6 @@ fun VideoPlayer(
     val isPlaying = rememberSaveable { mutableStateOf(shouldPlay.value && shouldAutoPlay) }
     val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
 
-    val isMuted = rememberSaveable(lastWasMuted.value) { mutableStateOf(lastWasMuted.value) }
-
     /** In Seconds */
     val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
     val duration = rememberSaveable { mutableFloatStateOf(0f) }
@@ -505,10 +502,7 @@ fun VideoPlayer(
     )
     val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
 
-    val mainViewModel = LocalMainViewModel.current
-    val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart()
-        .collectAsStateWithLifecycle(initialValue = true)
-
+    val isMuted = remember(scrollState.videoWasMuted) { mutableStateOf(scrollState.videoWasMuted) }
     val controlsVisible = remember { mutableStateOf(true) }
     var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
 
@@ -530,7 +524,7 @@ fun VideoPlayer(
         isPlaying.value = false
         currentVideoPosition.floatValue = 0f
         duration.floatValue = 0f
-        lastWasMuted.value = muteVideoOnStart
+        scrollState.resetMute()
 
         exoPlayer.stop()
         exoPlayer.release()
@@ -571,6 +565,10 @@ fun VideoPlayer(
             exoPlayer.seekTo(0)
             currentVideoPosition.floatValue = 0f
             isPlaying.value = false
+        }
+
+        if (shouldPlay.value && isPlaying.value && shouldAutoPlay && !exoPlayer.isPlaying) {
+            exoPlayer.play()
         }
 
         while (isPlaying.value && shouldPlay.value) {
@@ -660,7 +658,7 @@ fun VideoPlayer(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { position ->
-                            if (!isTouchLocked.value && doubleTapDisplayTimeMillis == 0) {
+                            if (!scrollState.videoLock && doubleTapDisplayTimeMillis == 0) {
                                 setBarVisibility(
                                     visible = if (isLandscape) false else !controlsVisible.value,
                                     window = window
@@ -669,7 +667,7 @@ fun VideoPlayer(
                                 }
 
                                 controlsVisible.value = !controlsVisible.value
-                            } else if (!isTouchLocked.value && doubleTapDisplayTimeMillis != 0) {
+                            } else if (!scrollState.videoLock && doubleTapDisplayTimeMillis != 0) {
                                 if (position.x < size.width / 2) {
                                     if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
                                         0
@@ -693,14 +691,14 @@ fun VideoPlayer(
                         },
 
                         onDoubleTap = { position ->
-                            if (!isTouchLocked.value && position.x < size.width / 2) {
+                            if (!scrollState.videoLock && position.x < size.width / 2) {
                                 if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis -= 1000
 
                                 val prev = isPlaying.value
                                 exoPlayer.seekBack()
                                 isPlaying.value = prev
-                            } else if (!isTouchLocked.value && position.x >= size.width / 2) {
+                            } else if (!scrollState.videoLock && position.x >= size.width / 2) {
                                 if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis += 1000
 
@@ -839,12 +837,12 @@ fun VideoPlayer(
                     showVideoPlayerControlsTimeout += 1
                 },
                 setLastWasMuted = { new ->
-                    lastWasMuted.value = new
+                    scrollState.setWasMuted(new)
                 }
             )
         }
 
-        if ((isTouchLocked.value || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if ((scrollState.videoLock || controlsVisible.value) && localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Row(
                 modifier = Modifier
                     .wrapContentSize()
@@ -858,9 +856,9 @@ fun VideoPlayer(
                 )
             ) {
                 FilledTonalIconToggleButton(
-                    checked = isTouchLocked.value,
+                    checked = scrollState.videoLock,
                     onCheckedChange = {
-                        isTouchLocked.value = it
+                        scrollState.setVideoLock(it)
                         showVideoPlayerControlsTimeout += 1
                     },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
@@ -874,7 +872,7 @@ fun VideoPlayer(
                         .align(Alignment.Top)
                 ) {
                     Icon(
-                        painter = painterResource(id = if (isTouchLocked.value) R.drawable.secure_folder else R.drawable.unlock),
+                        painter = painterResource(id = if (scrollState.videoLock) R.drawable.secure_folder else R.drawable.unlock),
                         contentDescription = stringResource(id = R.string.video_lock_screen),
                         modifier = Modifier
                             .size(20.dp)
@@ -901,7 +899,7 @@ fun VideoPlayer(
                                 }
 
                                 showVideoPlayerControlsTimeout += 1
-                                isTouchLocked.value = false
+                                scrollState.setVideoLock(false)
                             },
                             colors = IconButtonDefaults.filledTonalIconButtonColors().copy(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,

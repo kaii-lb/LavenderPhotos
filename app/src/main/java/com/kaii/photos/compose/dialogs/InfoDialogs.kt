@@ -72,6 +72,7 @@ import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -524,8 +525,11 @@ fun FeatureNotAvailableDialog(onDismiss: () -> Unit) {
 @Composable
 fun SingleSecurePhotoInfoDialog(
     currentMediaItem: MediaStoreData,
-    dismiss: () -> Unit
+    privacyMode: Boolean,
+    dismiss: () -> Unit,
+    togglePrivacyMode: () -> Unit
 ) {
+    val isLandscape by rememberDeviceOrientation()
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
@@ -549,7 +553,10 @@ fun SingleSecurePhotoInfoDialog(
             shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp),
             containerColor = MaterialTheme.colorScheme.background,
             onDismissRequest = dismiss,
-            contentWindowInsets = { WindowInsets.systemBars },
+            contentWindowInsets = {
+                if (!isLandscape) WindowInsets.systemBars
+                else WindowInsets()
+            },
             modifier = Modifier
                 .windowInsetsPadding(
                     WindowInsets.statusBars
@@ -563,7 +570,6 @@ fun SingleSecurePhotoInfoDialog(
                     dismiss()
                 }
             }
-
 
             var showLoadingDialog by remember { mutableStateOf(false) }
             if (showLoadingDialog) {
@@ -705,6 +711,32 @@ fun SingleSecurePhotoInfoDialog(
                             val clipData = ClipData.newPlainText(name, value.toString())
                             clipboardManager.setPrimaryClip(clipData)
                         }
+                    }
+
+                    if (isLandscape) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            TallDialogInfoRow(
+                                title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+                                info = "",
+                                icon = if (!privacyMode) R.drawable.swipe else R.drawable.do_not_touch,
+                                position = RowPosition.Single
+                            ) {
+                                togglePrivacyMode()
+                            }
+                        }
+                    }
+                }
+
+                if (!isLandscape) {
+                    TallDialogInfoRow(
+                        title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+                        info = "",
+                        icon = if (!privacyMode) R.drawable.swipe else R.drawable.do_not_touch,
+                        position = RowPosition.Single
+                    ) {
+                        togglePrivacyMode()
                     }
                 }
             }

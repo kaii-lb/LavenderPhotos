@@ -71,6 +71,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
+import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
@@ -94,6 +95,8 @@ fun OpenWithContent(
     val type =
         if (mimeType.contains("image")) MediaType.Image
         else MediaType.Video
+
+    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = true)
 
     Scaffold(
         topBar = {
@@ -125,12 +128,10 @@ fun OpenWithContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val zoomableState = rememberGlideZoomableState()
-            val isTouchLocked = rememberSaveable { mutableStateOf(false) }
             val motionPhoto = rememberMotionPhoto(uri = uri)
 
             if (type == MediaType.Video) {
                 val shouldPlay = rememberSaveable { mutableStateOf(true) }
-                val lastWasMuted = rememberSaveable { mutableStateOf(true) }
 
                 VideoPlayer(
                     item = MediaStoreData(
@@ -138,8 +139,7 @@ fun OpenWithContent(
                     ),
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = false,
-                    lastWasMuted = lastWasMuted,
-                    isTouchLocked = isTouchLocked,
+                    scrollState = scrollState,
                     window = window,
                     shouldPlay = shouldPlay,
                     isOpenWithView = true,

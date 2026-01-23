@@ -1243,4 +1243,11 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="exif_size">Size:</string>
     <string name="exif_enter_time">Enter Time</string>
     <string name="exif_date_changed_failed">Failed changing date</string>
+
+    <!--  Privacy  -->
+    <string name="privacy_scroll_mode">Privacy Mode</string>
+    <string name="privacy_scroll_mode_enabled">Privacy Mode: Enabled</string>
+    <string name="privacy_scroll_mode_disabled">Privacy Mode: Disabled</string>
+    <string name="privacy_scroll_mode_prompt">Manage access to scrolling and actions</string>
+    <string name="privacy_scroll_mode_fail">Failed to change privacy mode</string>
 </resources>

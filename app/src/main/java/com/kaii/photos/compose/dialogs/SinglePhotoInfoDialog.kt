@@ -92,8 +92,10 @@ fun SinglePhotoInfoDialog(
     currentMediaItem: MediaStoreData,
     sheetState: SheetState,
     showMoveCopyOptions: Boolean,
+    isTouchLocked: Boolean,
     dismiss: () -> Unit,
-    onMoveMedia: () -> Unit
+    onMoveMedia: () -> Unit,
+    togglePrivacyMode: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
@@ -153,7 +155,9 @@ fun SinglePhotoInfoDialog(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
                             onMoveMedia = onMoveMedia,
-                            dismiss = dismiss
+                            dismiss = dismiss,
+                            privacyMode = isTouchLocked,
+                            togglePrivacyMode = togglePrivacyMode
                         )
                     }
                 } else {
@@ -170,8 +174,10 @@ fun SinglePhotoInfoDialog(
                         Content(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
+                            privacyMode = isTouchLocked,
                             onMoveMedia = onMoveMedia,
-                            dismiss = dismiss
+                            dismiss = dismiss,
+                            togglePrivacyMode = togglePrivacyMode
                         )
                     }
                 }
@@ -184,8 +190,10 @@ fun SinglePhotoInfoDialog(
 private fun Content(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
+    privacyMode: Boolean,
     onMoveMedia: () -> Unit,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    togglePrivacyMode: () -> Unit
 ) {
     val context = LocalContext.current
     val mediaData = remember(currentMediaItem) {
@@ -261,6 +269,7 @@ private fun Content(
                 IconContent(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
+                    privacyMode = privacyMode,
                     onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
@@ -281,6 +290,7 @@ private fun Content(
                 IconContent(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
+                    privacyMode = privacyMode,
                     onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
@@ -325,7 +335,7 @@ private fun Content(
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .weight(1f)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(32.dp))
         ) {
             items(
                 items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
@@ -345,7 +355,7 @@ private fun Content(
                         else
                             RowPosition.Middle,
                     onClick = {
-                        if (key == MediaData.Date && currentMediaItem.type == MediaType.Image) {
+                        if (key == MediaData.Date && currentMediaItem.type == MediaType.Image && !privacyMode) {
                             showDateTimePicker = true
                         } else {
                             val clipboardManager =
@@ -380,6 +390,19 @@ private fun Content(
             }
 
             if (isLandscape) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TallDialogInfoRow(
+                        title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+                        info = "",
+                        icon = if (!privacyMode) R.drawable.swipe else R.drawable.do_not_touch,
+                        position = RowPosition.Single
+                    ) {
+                        togglePrivacyMode()
+                    }
+                }
+
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -458,6 +481,15 @@ private fun Content(
 
         if (!isLandscape) {
             TallDialogInfoRow(
+                title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+                info = "",
+                icon = if (!privacyMode) R.drawable.swipe else R.drawable.do_not_touch,
+                position = RowPosition.Single
+            ) {
+                togglePrivacyMode()
+            }
+
+            TallDialogInfoRow(
                 title = stringResource(id = R.string.media_exif_erase),
                 info = "",
                 icon = R.drawable.error,
@@ -475,12 +507,14 @@ private fun Content(
 private fun RowScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
+    privacyMode: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
+        privacyMode = privacyMode,
         onMoveMedia = onMoveMedia,
         dismiss = dismiss,
         modifier = Modifier.weight(1f)
@@ -491,12 +525,14 @@ private fun RowScope.IconContent(
 private fun ColumnScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
+    privacyMode: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
+        privacyMode = privacyMode,
         onMoveMedia = onMoveMedia,
         dismiss = dismiss,
         modifier = Modifier.weight(1f)
@@ -507,6 +543,7 @@ private fun ColumnScope.IconContent(
 private fun IconContentImpl(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
+    privacyMode: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit,
     modifier: Modifier
@@ -586,6 +623,7 @@ private fun IconContentImpl(
         onClick = {
             showRenameDialog = true
         },
+        enabled = !privacyMode,
         modifier = modifier
             .height(48.dp)
     ) {
@@ -617,6 +655,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
+            enabled = !privacyMode,
             modifier = modifier
                 .height(48.dp)
         ) {
@@ -631,6 +670,7 @@ private fun IconContentImpl(
                 isMoving = false
                 show.value = true
             },
+            enabled = !privacyMode,
             modifier = modifier
                 .height(48.dp)
         ) {
@@ -655,6 +695,7 @@ private fun IconContentImpl(
 
                 context.startActivity(intent)
             },
+            enabled = !privacyMode,
             modifier = modifier
                 .height(48.dp)
         ) {

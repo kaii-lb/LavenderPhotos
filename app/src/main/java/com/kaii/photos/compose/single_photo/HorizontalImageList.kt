@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo
 
-import android.content.res.Configuration
 import android.util.Log
 import android.view.Window
 import androidx.compose.animation.core.snap
@@ -17,11 +16,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
@@ -32,16 +29,15 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
+import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
@@ -67,33 +63,12 @@ private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageLis
 fun HorizontalImageList(
     groupedMedia: List<MediaStoreData>,
     state: PagerState,
+    scrollState: SinglePhotoScrollState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    isHidden: Boolean = false,
-    isOpenWithView: Boolean = false
+    isHidden: Boolean = false
 ) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    val isTouchLocked = remember { mutableStateOf(false) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-        if (!isLandscape) isTouchLocked.value = false
-    }
-
-    val mainViewModel = LocalMainViewModel.current
-    val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
-        .collectAsStateWithLifecycle(initialValue = true)
-
-    val muteVideoOnStart by mainViewModel.settings.Video.getMuteOnStart()
-        .collectAsStateWithLifecycle(initialValue = true)
-
-    val lastVideoWasMuted = rememberSaveable { mutableStateOf(muteVideoOnStart) }
-    LaunchedEffect(muteVideoOnStart) {
-        lastVideoWasMuted.value = muteVideoOnStart && !isOpenWithView
-    }
+    val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
 
     HorizontalPager(
         state = state,
@@ -110,7 +85,7 @@ fun HorizontalImageList(
             }
         },
         snapPosition = SnapPosition.Center,
-        userScrollEnabled = !isTouchLocked.value,
+        userScrollEnabled = !scrollState.privacyMode && !scrollState.videoLock,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
@@ -145,9 +120,8 @@ fun HorizontalImageList(
                 VideoPlayer(
                     item = mediaStoreItem,
                     appBarsVisible = appBarsVisible,
-                    shouldAutoPlay = shouldAutoPlay || isOpenWithView,
-                    lastWasMuted = lastVideoWasMuted,
-                    isTouchLocked = isTouchLocked,
+                    shouldAutoPlay = videoAutoplay,
+                    scrollState = scrollState,
                     window = window,
                     shouldPlay = shouldPlay,
                     modifier = Modifier
