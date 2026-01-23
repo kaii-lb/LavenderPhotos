@@ -134,8 +134,8 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
-                var model by remember { mutableStateOf<Any?>(null) }
                 val context = LocalContext.current
+                var model by remember { mutableStateOf<Any?>(null) }
 
                 LaunchedEffect(isHidden) {
                     if (!isHidden || model != null) return@LaunchedEffect
@@ -144,14 +144,17 @@ fun HorizontalImageList(
                         try {
                             val iv = mediaStoreItem.bytes!!.getIv()
                             val thumbnailIv = mediaStoreItem.bytes.getThumbnailIv()
-
-                            model = EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(
-                                    fileName = mediaStoreItem.displayName,
-                                    context = context
-                                ).readBytes(),
-                                iv = thumbnailIv
+                            val thumbnailFile = getSecuredCacheImageForFile(
+                                fileName = mediaStoreItem.displayName,
+                                context = context
                             )
+
+                            if (thumbnailFile.length() > 1024*1024*10) { // don't decrypt thumbnail if file will load instantly anyway
+                                model = EncryptionManager.decryptBytes(
+                                    bytes = thumbnailFile.readBytes(),
+                                    iv = thumbnailIv
+                                )
+                            }
 
                             model = EncryptionManager.decryptBytes(
                                 bytes = File(mediaStoreItem.absolutePath).readBytes(),
@@ -191,6 +194,7 @@ fun HorizontalImageList(
                         zoomableState = zoomableState,
                         window = window,
                         appBarsVisible = appBarsVisible,
+                        isHidden = isHidden,
                         modifier = Modifier
                             .align(Alignment.Center)
                     )
@@ -218,7 +222,8 @@ fun GlideView(
     appBarsVisible: MutableState<Boolean>,
     modifier: Modifier = Modifier,
     useCache: Boolean = true,
-    disableSetBarVisibility: Boolean = false
+    disableSetBarVisibility: Boolean = false,
+    isHidden: Boolean = false
 ) {
     val context = LocalContext.current
     val state = rememberZoomableImageState(zoomableState = zoomableState)
@@ -255,8 +260,8 @@ fun GlideView(
     ) {
         it.signature(item.signature())
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-            .error(R.drawable.broken_image)
             .downsample(DownsampleStrategy.FIT_CENTER)
+            .error(if (isHidden) R.drawable.empty_image else R.drawable.broken_image)
             .thumbnail(
                 Glide.with(context)
                     .load(model)
@@ -264,7 +269,7 @@ fun GlideView(
                     .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                     .override(windowSize.width, windowSize.height)
             )
-            .transition(withCrossFade(100))
+            .transition(withCrossFade(if (isHidden) 250 else 100))
     }
 }
 
