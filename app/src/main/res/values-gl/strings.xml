@@ -108,7 +108,7 @@
     <string name="updates_failed_download">Non se puido descargar a actualización</string>
     <string name="updates_no_changelog">Non está dispoñible o rexistro cos cambios</string>
     <string name="locked_folder_help_top">O Cartafol Bloqueado é un cartafol protexido para as túas imaxes e vídeos neste dispositivo.\nO multimedia protexido non se sobe a ningunha outra parte e sempre permanece no dispositivo, cifrado cunha clave única en relación ao contrasinal do dispositivo ou datos da impresión dactilar.</string>
-    <string name="locked_folder_help_bottom">Os datos protexidos non se poden restablecer se esqueces o contrasinal ou se retira a impresión dactilar.</string>
+    <string name="locked_folder_help_bottom">Os datos protexidos non se poden restablecer se esqueces o contrasinal ou se retira a impresión dactilar.\nOs elementos protexidos vanse perder se desinstalas a app, fai copia de apoio para evitalo.</string>
     <string name="secure_folder">Cartafol Protexido</string>
     <string name="secure_processing">Agarda mentras se procesa o multimedia</string>
     <string name="secure_encrypting">Cifrando os ficheiros</string>
