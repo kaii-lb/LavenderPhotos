@@ -82,6 +82,7 @@ import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileNotFoundException
 
 private const val TAG = "com.kaii.photos.compose.dialogs.SinglePhotoInfoDialogs"
 
@@ -188,12 +189,16 @@ private fun Content(
 ) {
     val context = LocalContext.current
     val mediaData = remember(currentMediaItem) {
-        getExifDataForMedia(
-            context = context,
-            inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
-            absolutePath = currentMediaItem.absolutePath,
-            fallback = currentMediaItem.dateTaken
-        )
+        try {
+            getExifDataForMedia(
+                context = context,
+                inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
+                absolutePath = currentMediaItem.absolutePath,
+                fallback = currentMediaItem.dateTaken
+            )
+        } catch (_: FileNotFoundException) {
+            emptyMap()
+        }
     }
 
     var location by remember { mutableStateOf("") }
