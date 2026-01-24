@@ -191,6 +191,7 @@ private fun SingleTrashedPhotoViewImpl(
                 mediaItem = mediaItem,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
+                privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = false,
                 expandInfoDialog = {
                     showInfoDialog = true

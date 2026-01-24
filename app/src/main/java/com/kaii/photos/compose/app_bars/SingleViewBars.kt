@@ -12,6 +12,7 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -1051,9 +1052,26 @@ fun SingleViewTopBar(
     mediaItem: MediaStoreData,
     visible: Boolean,
     showInfoDialog: Boolean,
+    privacyMode: Boolean,
     isOpenWithDefaultView: Boolean = false,
     expandInfoDialog: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val resources = LocalResources.current
+    BackHandler(
+        enabled = privacyMode
+    ) {
+        coroutineScope.launch {
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvents.MessageEvent(
+                    message = resources.getString(R.string.privacy_scroll_mode_exit_tried),
+                    icon = R.drawable.do_not_touch,
+                    duration = SnackbarDuration.Short
+                )
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.systemBars)
@@ -1102,11 +1120,11 @@ fun SingleViewTopBar(
                         shape = IconButtonDefaults.filledShape,
                         pressedShape = IconButtonDefaults.mediumPressedShape
                     ),
+                    enabled = !privacyMode
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
-                        contentDescription = stringResource(id = R.string.return_to_previous_page),
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        contentDescription = stringResource(id = R.string.return_to_previous_page)
                     )
                 }
 
