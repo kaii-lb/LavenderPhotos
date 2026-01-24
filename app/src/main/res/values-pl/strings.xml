@@ -68,7 +68,7 @@
     <string name="updates_checking">Sprawdzanie aktualizacji</string>
     <string name="updates_start">Rozpocznij aktualizację</string>
     <string name="locked_folder_help_top">Zabezpieczony folder to bezpieczny folder na Twoje zdjęcia i filmy na tym urządzeniu. \nZabezpieczone multimedia nigdy nie są nigdzie przesyłane i zawsze znajdują się na urządzeniu, zaszyfrowane kluczem unikalnym dla hasła lub odcisku palca Twojego urządzenia.</string>
-    <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.</string>
+    <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.\nZabezpieczone dane zostaną utracone po odinstalowaniu aplikacji. Należy wykonać ich kopię zapasową.</string>
     <string name="secure_folder">Zabezpieczony folder</string>
     <string name="secure_processing">Poczekaj, aż te multimedia zostaną przetworzone</string>
     <string name="secure_encrypting">Szyfrowanie plików</string>
