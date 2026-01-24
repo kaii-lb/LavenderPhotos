@@ -1250,4 +1250,5 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="privacy_scroll_mode_disabled">Privacy Mode: Disabled</string>
     <string name="privacy_scroll_mode_prompt">Manage access to scrolling and actions</string>
     <string name="privacy_scroll_mode_fail">Failed to change privacy mode</string>
+    <string name="privacy_scroll_mode_exit_tried">Privacy mode enabled</string>
 </resources>

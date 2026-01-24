@@ -352,6 +352,7 @@ private fun SinglePhotoViewCommon(
                 mediaItem = mediaItem,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
+                privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
                 expandInfoDialog = {
                     showInfoDialog = true

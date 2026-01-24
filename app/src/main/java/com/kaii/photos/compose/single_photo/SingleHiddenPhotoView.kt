@@ -217,6 +217,7 @@ fun SingleHiddenPhotoView(
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 isOpenWithDefaultView = false,
+                privacyMode = scrollState.privacyMode,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
