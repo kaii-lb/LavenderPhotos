@@ -48,6 +48,7 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.relativePath
@@ -272,6 +273,23 @@ fun DebuggingSettingsPage() {
                             )
                         )
                     }
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(stringResource(id = R.string.immich))
+            }
+
+            item {
+                val navController = LocalNavController.current
+                PreferencesRow(
+                    title = stringResource(id = R.string.debugging_navigate_immich_album),
+                    iconResID = R.drawable.cloud_upload,
+                    summary = stringResource(id = R.string.debugging_navigate_immich_album_desc),
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                   navController.navigate(Screens.ImmichAlbum(id = "6f8489e9-103a-4355-9036-6df2f828cba8"))
                 }
             }
         }

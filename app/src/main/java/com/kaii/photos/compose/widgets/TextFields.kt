@@ -332,7 +332,7 @@ fun MainDialogUserInfo(
             mutableStateOf(
                 when (loginState) {
                     is LoginState.LoggedIn -> {
-                        resources.getString(R.string.immich_email) + " " + loginState.email
+                        loginState.name
                     }
 
                     is LoginState.ServerUnreachable -> {

@@ -70,6 +70,12 @@ enum class ViewProperties(
         emptyIconResId = R.drawable.favourite,
         prefix = null,
         operation = ImageFunctions.LoadNormalImage
+    ),
+    Immich(
+        emptyText = R.string.immich_server_not_loading,
+        emptyIconResId = R.drawable.cloud_off,
+        prefix = null,
+        operation = ImageFunctions.LoadNormalImage
     );
 
     companion object {

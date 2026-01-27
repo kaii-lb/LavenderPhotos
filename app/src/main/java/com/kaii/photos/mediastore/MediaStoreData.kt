@@ -28,7 +28,8 @@ data class MediaStoreData(
     var section: SectionItem = SectionItem(0L, 0),
     val bytes: ByteArray? = null,
     val customId: Int? = null,
-    val size: Long = 0L
+    val size: Long = 0L,
+    val immichInfo: ImmichInfo? = null
 ) : Parcelable {
     companion object {
         val dummyItem = MediaStoreData()
@@ -122,6 +123,14 @@ data class MediaStoreData(
         return result
     }
 }
+
+@Immutable
+@Parcelize
+data class ImmichInfo(
+    val thumbnail: String,
+    val original: String,
+    val accessToken: String
+) : Parcelable
 
 fun MediaStoreData.signature() = ObjectKey(dateTaken + dateModified + absolutePath.hashCode() + id + mimeType.hashCode())
 fun MediaStoreData.itemKey() = absolutePath + displayName

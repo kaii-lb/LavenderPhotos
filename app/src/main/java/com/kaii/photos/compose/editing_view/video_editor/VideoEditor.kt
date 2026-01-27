@@ -77,6 +77,7 @@ import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
 import com.kaii.photos.helpers.editing.DrawableText
@@ -105,8 +106,7 @@ fun VideoEditor(
     albumInfo: AlbumInfo?,
     window: Window,
     isFromOpenWithView: Boolean,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean
+    screenType: ScreenType
 ) {
     val isPlaying = remember { mutableStateOf(false) }
 
@@ -379,8 +379,7 @@ fun VideoEditor(
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
                 albumInfo = albumInfo,
-                isSearchPage = isSearchPage,
-                isFavouritesPage = isFavouritesPage
+                screenType = screenType
             )
         },
         bottomBar = {

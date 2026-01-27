@@ -828,6 +828,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="debugging_loading">Debugging…</string>
     <string name="debugging_spawn_message_snackbar">Spawn Message Snackbar</string>
     <string name="debugging_spawn_message_snackbar_desc">Like deprecate a feature and not add an equivalent :D</string>
+    <string name="debugging_navigate_immich_album">Test Immich Album</string>
+    <string name="debugging_navigate_immich_album_desc">Opens a test immich album page with a hardcoded album id</string>
 
     <!-- Video -->
     <string name="video">Video</string>
@@ -1235,6 +1237,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
     <string name="immich_server_online">Online</string>
     <string name="immich_server_offline">Offline</string>
+    <string name="immich_server_unreachable">Cannot ping server!</string>
+    <string name="immich_server_not_loading">This album has no media or server is unreachable</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>

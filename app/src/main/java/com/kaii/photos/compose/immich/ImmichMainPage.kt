@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.immich
 
-import android.util.Patterns
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -30,6 +29,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -63,6 +63,8 @@ import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.immichintegration.state_managers.ServerInfoState
 import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.lavender.immichintegration.state_managers.rememberServerState
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -138,6 +140,7 @@ fun ImmichMainPage() {
             item {
                 var showAddressDialog by remember { mutableStateOf(false) }
                 val resources = LocalResources.current
+                val coroutineScope = rememberCoroutineScope()
 
                 if (showAddressDialog) {
                     TextEntryDialog(
@@ -145,29 +148,39 @@ fun ImmichMainPage() {
                         placeholder = stringResource(id = R.string.immich_endpoint_base_placeholder),
                         errorMessage = resources.getString(R.string.immich_server_url_invalid),
                         onConfirm = { value ->
-                            if ((value.startsWith("https://") || value.startsWith("http://"))
-                                && ((Regex("(?<=:)[0-9]+$").containsMatchIn(value) && value.count { it == ':' } <= 2)
-                                        || Patterns.WEB_URL.matcher(value).matches()
+                            when {
+                                loginState.validateServerAddress(address = value) && serverState.ping(address = value) -> {
+                                    mainViewModel.settings.Immich.setImmichBasicInfo(
+                                        ImmichBasicInfo(
+                                            endpoint = value.removeSuffix("/"),
+                                            accessToken = loginInfo.accessToken,
+                                            username = loginInfo.username
                                         )
-                            ) {
-                                // TODO: check if we can ping server address?
-                                mainViewModel.settings.Immich.setImmichBasicInfo(
-                                    ImmichBasicInfo(
-                                        endpoint = value.removeSuffix("/"),
-                                        accessToken = loginInfo.accessToken,
-                                        username = loginInfo.username
                                     )
-                                )
-                                showAddressDialog = false
-                                true
-                            } else false
+                                    showAddressDialog = false
+                                    true
+                                }
+
+                                loginState.validateServerAddress(address = value) -> {
+                                    coroutineScope.launch {
+                                        LavenderSnackbarController.pushEvent(
+                                            LavenderSnackbarEvents.MessageEvent(
+                                                message = resources.getString(R.string.immich_server_unreachable),
+                                                icon = R.drawable.globe_2_cancel,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        )
+                                    }
+                                    false
+                                }
+
+                                else -> {
+                                    false
+                                }
+                            }
                         },
                         onValueChange = { value ->
-                            (value.startsWith("https://") || value.startsWith("http://"))
-                                    && ((Regex("(?<=:)[0-9]+$").containsMatchIn(value) && value.count { it == ':' } <= 2)
-                                    || Patterns.WEB_URL.matcher(value).matches()
-                                    )
-                            // TODO: check if we can ping server address?
+                            loginState.validateServerAddress(address = value)
                         },
                         onDismiss = {
                             showAddressDialog = false
@@ -176,7 +189,6 @@ fun ImmichMainPage() {
                 }
 
                 val showClearEndpointDialog = remember { mutableStateOf(false) }
-                val coroutineScope = rememberCoroutineScope()
                 if (showClearEndpointDialog.value) {
                     ConfirmationDialogWithBody(
                         showDialog = showClearEndpointDialog,

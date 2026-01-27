@@ -67,6 +67,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
@@ -372,16 +373,14 @@ private fun BottomBar(
                                                         uri = contentUri.toString(),
                                                         dateTaken = currentTime / 1000,
                                                         albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                                        isSearchPage = false,
-                                                        isFavouritesPage = false
+                                                        type = ScreenType.Normal
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(
                                                         uri = contentUri.toString(),
                                                         absolutePath = absolutePath,
                                                         albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                                        isSearchPage = false,
-                                                        isFavouritesPage = false
+                                                        type = ScreenType.Normal
                                                     )
                                                 }
                                             )

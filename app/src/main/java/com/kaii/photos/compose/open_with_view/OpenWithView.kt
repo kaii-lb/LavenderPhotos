@@ -211,8 +211,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     albumInfo = null,
                                     isFromOpenWithView = true,
-                                    isSearchPage = false,
-                                    isFavouritesPage = false
+                                    screenType = screen.type
                                 )
                             }
 
@@ -265,8 +264,7 @@ class OpenWithView : ComponentActivity() {
                                     window = window,
                                     isFromOpenWithView = true,
                                     albumInfo = null,
-                                    isSearchPage = false,
-                                    isFavouritesPage = false
+                                    screenType = screen.type
                                 )
                             }
                         }

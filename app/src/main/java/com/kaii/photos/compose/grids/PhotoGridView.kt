@@ -105,6 +105,7 @@ import com.kaii.photos.helpers.BitmapUriShadowBuilder
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ImageFunctions
 import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -359,8 +360,13 @@ fun DeviceMedia(
                                                 albumInfo = albumInfo,
                                                 mediaItemId = mediaStoreItem.id,
                                                 nextMediaItemId = null,
-                                                isSearchPage = viewProperties == ViewProperties.SearchLoading || viewProperties == ViewProperties.SearchNotFound,
-                                                isFavouritesPage = viewProperties == ViewProperties.Favourites
+                                                type =
+                                                    when (viewProperties) {
+                                                        ViewProperties.SearchLoading, ViewProperties.SearchNotFound -> ScreenType.Search
+                                                        ViewProperties.Favourites -> ScreenType.Favourites
+                                                        ViewProperties.Immich -> ScreenType.Immich
+                                                        else -> ScreenType.Normal
+                                                    }
                                             )
                                         )
                                     }
@@ -627,7 +633,7 @@ private fun MediaStoreItem(
             }
 
             GlideImage(
-                model = if (isSecureMedia) model else item.uri,
+                model = if (isSecureMedia) model else item.immichInfo ?: item.uri,
                 contentDescription = item.displayName,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),

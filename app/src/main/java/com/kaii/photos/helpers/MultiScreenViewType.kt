@@ -2,6 +2,7 @@ package com.kaii.photos.helpers
 
 import com.kaii.photos.datastore.AlbumInfo
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
 
 enum class MultiScreenViewType {
     MainScreen,
@@ -24,14 +25,20 @@ enum class MultiScreenViewType {
     FavouritesMigrationPage
 }
 
+enum class ScreenType {
+    Immich,
+    Search,
+    Favourites,
+    Normal
+}
+
 object Screens {
     @Serializable
     data class SinglePhotoView(
         val albumInfo: AlbumInfo,
         val mediaItemId: Long,
         val nextMediaItemId: Long?,
-        val isSearchPage: Boolean,
-        val isFavouritesPage: Boolean
+        val type: ScreenType
     )
 
     @Serializable
@@ -62,8 +69,7 @@ object Screens {
         val uri: String,
         val dateTaken: Long,
         val albumInfo: AlbumInfo,
-        val isSearchPage: Boolean,
-        val isFavouritesPage: Boolean
+        val type: ScreenType
     )
 
     @Serializable
@@ -71,7 +77,12 @@ object Screens {
         val uri: String,
         val absolutePath: String,
         val albumInfo: AlbumInfo,
-        val isSearchPage: Boolean,
-        val isFavouritesPage: Boolean
+        val type: ScreenType
+    )
+
+    @OptIn(ExperimentalUuidApi::class)
+    @Serializable
+    data class ImmichAlbum(
+        val id: String
     )
 }

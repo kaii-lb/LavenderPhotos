@@ -132,6 +132,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
@@ -359,8 +360,7 @@ fun VideoEditorTopBar(
     canvasSize: Size,
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean
+    screenType: ScreenType
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -402,8 +402,9 @@ fun VideoEditorTopBar(
                                             albumInfo = albumInfo!!,
                                             mediaItemId = item.id,
                                             nextMediaItemId = navMediaId,
-                                            isSearchPage = isSearchPage,
-                                            isFavouritesPage = isFavouritesPage
+                                            type = screenType
+                                            // isSearchPage = isSearchPage,
+                                            // isFavouritesPage = isFavouritesPage
                                         )
                                     )
                                 }
@@ -524,8 +525,7 @@ fun VideoEditorTopBar(
                                             albumInfo = albumInfo!!,
                                             mediaItemId = item.id,
                                             nextMediaItemId = navMediaId,
-                                            isSearchPage = isSearchPage,
-                                            isFavouritesPage = isFavouritesPage,
+                                            type = screenType
                                         )
                                     )
                                 }

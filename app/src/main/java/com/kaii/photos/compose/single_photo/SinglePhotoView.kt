@@ -71,6 +71,7 @@ import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
@@ -88,6 +89,7 @@ import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.Dispatchers
@@ -126,8 +128,7 @@ fun SinglePhotoView(
             nextMediaItemId = nextMediaItemId,
             mediaStoreData = mediaStoreData,
             albumInfo = albumInfo,
-            isSearchPage = false,
-            isFavouritesPage = false,
+            screenType = ScreenType.Normal,
             isOpenWithDefaultView = isOpenWithDefaultView
         )
     }
@@ -164,8 +165,7 @@ fun SinglePhotoView(
             navController = navController,
             window = window,
             isOpenWithDefaultView = isOpenWithDefaultView,
-            isSearchPage = false,
-            isFavouritesPage = false,
+            screenType = ScreenType.Normal,
             nextMediaItemId = nextMediaItemId
         )
     }
@@ -210,8 +210,7 @@ fun SinglePhotoView(
             navController = navController,
             window = window,
             isOpenWithDefaultView = false,
-            isSearchPage = true,
-            isFavouritesPage = false,
+            screenType = ScreenType.Search,
             nextMediaItemId = nextMediaItemId
         )
     }
@@ -221,13 +220,13 @@ fun SinglePhotoView(
 @Composable
 fun SinglePhotoView(
     navController: NavHostController,
-    favViewModel: FavouritesViewModel,
+    viewModel: FavouritesViewModel,
     window: Window,
     mediaItemId: Long,
     albumInfo: AlbumInfo,
     nextMediaItemId: Long?
 ) {
-    val mediaStoreData = favViewModel.mediaFlow.mapSync {
+    val mediaStoreData = viewModel.mediaFlow.mapSync {
         it.filter { item ->
             item.type != MediaType.Section
         }
@@ -247,8 +246,42 @@ fun SinglePhotoView(
             navController = navController,
             window = window,
             isOpenWithDefaultView = false,
-            isSearchPage = false,
-            isFavouritesPage = true,
+            screenType = ScreenType.Favourites,
+            nextMediaItemId = nextMediaItemId
+        )
+    }
+}
+
+@Composable
+fun SinglePhotoView(
+    navController: NavHostController,
+    viewModel: ImmichAlbumViewModel,
+    window: Window,
+    mediaItemId: Long,
+    albumInfo: AlbumInfo,
+    nextMediaItemId: Long?
+) {
+    val mediaStoreData = viewModel.mediaFlow.mapSync {
+        it.filter { item ->
+            item.type != MediaType.Section
+        }
+    }.collectAsStateWithLifecycle()
+
+    val startIndex = remember(mediaStoreData.value.isEmpty()) {
+        mediaStoreData.value.indexOfFirst { item ->
+            item.id == mediaItemId
+        }
+    }
+
+    if (mediaStoreData.value.isNotEmpty()) {
+        SinglePhotoViewCommon(
+            mediaStoreData = mediaStoreData,
+            startIndex = startIndex,
+            albumInfo = albumInfo,
+            navController = navController,
+            window = window,
+            isOpenWithDefaultView = false,
+            screenType = ScreenType.Immich,
             nextMediaItemId = nextMediaItemId
         )
     }
@@ -264,8 +297,7 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean,
+    screenType: ScreenType,
     nextMediaItemId: Long?
 ) {
     val state = rememberPagerState(
@@ -382,8 +414,7 @@ private fun SinglePhotoViewCommon(
                                     uri = mediaItem.uri.toString(),
                                     dateTaken = mediaItem.dateTaken,
                                     albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                                    type = screenType
                                 )
                             )
                         } else {
@@ -392,8 +423,7 @@ private fun SinglePhotoViewCommon(
                                     uri = mediaItem.uri.toString(),
                                     absolutePath = mediaItem.absolutePath,
                                     albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                                    type = screenType
                                 )
                             )
                         }

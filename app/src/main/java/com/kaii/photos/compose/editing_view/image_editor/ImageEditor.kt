@@ -92,6 +92,7 @@ import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
@@ -115,8 +116,7 @@ fun ImageEditor(
     absolutePath: String,
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean
+    screenType: ScreenType
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -284,8 +284,7 @@ fun ImageEditor(
                                     albumInfo = albumInfo!!,
                                     mediaItemId = item.id,
                                     nextMediaItemId = navMediaId,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                                    type = screenType
                                 )
                             )
                         }
@@ -304,8 +303,7 @@ fun ImageEditor(
                                         albumInfo = albumInfo!!,
                                         mediaItemId = item.id,
                                         nextMediaItemId = navMediaId,
-                                        isSearchPage = isSearchPage,
-                                        isFavouritesPage = isFavouritesPage
+                                        type = screenType
                                     )
                                 )
                             }
@@ -638,12 +636,8 @@ fun ImageEditor(
 
                         imageEditingState.offset =
                             Offset(
-                                x = with(localDensity) {
-                                    scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
-                                },
-                                y = with(localDensity) {
-                                    scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
-                                }
+                                x = scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2),
+                                y = scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
                             )
                     }
                 )

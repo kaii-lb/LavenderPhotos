@@ -67,7 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
+import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -78,7 +78,6 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -91,7 +90,6 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
@@ -399,22 +397,12 @@ fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
     selectedItemsList: SnapshotStateList<MediaStoreData>,
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    loginState: LoginStateManager
 ) {
     val vibratorManager = rememberVibratorManager()
     val navController = LocalNavController.current
-    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-
-    LaunchedEffect(immichInfo) {
-        loginState.refresh(
-            accessToken = immichInfo.accessToken,
-            pfpSavePath = context.profilePicture,
-            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-        )
-    }
 
     if (showDialog.value) {
         LavenderDialogBase(

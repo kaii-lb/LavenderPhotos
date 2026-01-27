@@ -141,7 +141,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             if (pair.first) {
                 albums.fastMap { albumInfo ->
                     albumInfo.paths.fastMap { it.removeSuffix("/") }
-                }.flatMap { it } - pair.second
+                }.flatMap { it } - pair.second.toSet()
             } else {
                 pair.second
             }

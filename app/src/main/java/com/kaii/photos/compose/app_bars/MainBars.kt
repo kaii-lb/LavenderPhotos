@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -66,16 +67,21 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
+import com.kaii.photos.compose.dialogs.MainAppDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 
@@ -99,6 +105,29 @@ fun MainAppTopBar(
         derivedStateOf {
             media.value.size - mediaCount.value
         }
+    }
+
+    val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+
+    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
+    val userInfo by loginState.state.collectAsStateWithLifecycle()
+
+    MainAppDialog(
+        showDialog = showDialog,
+        currentView = currentView,
+        selectedItemsList = selectedItemsList,
+        mainViewModel = mainViewModel,
+        loginState = loginState
+    )
+
+    LaunchedEffect(immichInfo) {
+        loginState.refresh(
+            accessToken = immichInfo.accessToken,
+            pfpSavePath = context.profilePicture,
+            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+        )
     }
 
     DualFunctionTopAppBar(
@@ -157,11 +186,8 @@ fun MainAppTopBar(
             }
 
             if (!isFromMediaPicker) {
-                // TODO:
-                // val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-
                 AnimatedLoginIcon(
-                    state = LoginState.LoggedOut
+                    state = userInfo
                 ) {
                     showDialog.value = true
                 }

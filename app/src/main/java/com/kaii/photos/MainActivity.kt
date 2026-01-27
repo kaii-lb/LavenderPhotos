@@ -91,7 +91,6 @@ import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.MainAppDialog
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.grids.AlbumsGridView
@@ -101,6 +100,7 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.settings.AboutPage
@@ -126,6 +126,7 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.datastore.Storage
@@ -135,6 +136,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.checkHasFiles
@@ -146,6 +148,8 @@ import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -163,6 +167,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
+import kotlin.random.Random
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.MainActivity"
@@ -451,7 +456,7 @@ class MainActivity : ComponentActivity() {
                     val screen: Screens.SinglePhotoView = it.toRoute()
 
                     when {
-                        screen.isSearchPage -> {
+                        screen.type == ScreenType.Search -> {
                             SinglePhotoView(
                                 navController = navController,
                                 viewModel = searchViewModel,
@@ -462,7 +467,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        screen.isFavouritesPage -> {
+                        screen.type == ScreenType.Favourites -> {
                             val favViewModel = viewModel<FavouritesViewModel>(
                                 factory = FavouritesViewModelFactory(
                                     context = context,
@@ -473,7 +478,28 @@ class MainActivity : ComponentActivity() {
 
                             SinglePhotoView(
                                 navController = navController,
-                                favViewModel = favViewModel,
+                                viewModel = favViewModel,
+                                window = window,
+                                mediaItemId = screen.mediaItemId,
+                                nextMediaItemId = screen.nextMediaItemId,
+                                albumInfo = screen.albumInfo
+                            )
+                        }
+
+                        screen.type == ScreenType.Immich -> {
+                            val viewModel = viewModel<ImmichAlbumViewModel>(
+                                factory = ImmichAlbumViewModelFactory(
+                                    immichId = screen.albumInfo.immichId,
+                                    info = ImmichBasicInfo.Empty,
+                                    sortMode = currentSortMode,
+                                    displayDateFormat = displayDateFormat,
+                                    apiClient = LocalApiClient.current
+                                )
+                            )
+
+                            SinglePhotoView(
+                                navController = navController,
+                                viewModel = viewModel,
                                 window = window,
                                 mediaItemId = screen.mediaItemId,
                                 nextMediaItemId = screen.nextMediaItemId,
@@ -722,8 +748,7 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
                         albumInfo = screen.albumInfo,
-                        isSearchPage = screen.isSearchPage,
-                        isFavouritesPage = screen.isFavouritesPage
+                        screenType = screen.type
                     )
                 }
 
@@ -871,8 +896,7 @@ class MainActivity : ComponentActivity() {
                         albumInfo = screen.albumInfo,
                         window = window,
                         isFromOpenWithView = false,
-                        isSearchPage = screen.isSearchPage,
-                        isFavouritesPage = screen.isFavouritesPage
+                        screenType = screen.type
                     )
                 }
 
@@ -901,6 +925,26 @@ class MainActivity : ComponentActivity() {
                     )
 
                     FavouritesMigrationPage()
+                }
+
+                composable<Screens.ImmichAlbum> {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    val screen = it.toRoute<Screens.ImmichAlbum>()
+
+                    ImmichAlbumPage(
+                        // TODO
+                        albumInfo = AlbumInfo(
+                            id = Random.nextInt(),
+                            name = "Immich Album",
+                            paths = emptyList(),
+                            immichId = screen.id
+                        ),
+                        selectedItemsList = selectedItemsList
+                    )
                 }
             }
         }
@@ -1058,13 +1102,6 @@ class MainActivity : ComponentActivity() {
                         bottom = 0.dp
                     )
             ) {
-                MainAppDialog(
-                    showDialog = showDialog,
-                    currentView = currentView,
-                    selectedItemsList = selectedItemsList,
-                    mainViewModel = mainViewModel
-                )
-
                 MainPages(
                     currentView = currentView,
                     multiAlbumViewModel = multiAlbumViewModel,

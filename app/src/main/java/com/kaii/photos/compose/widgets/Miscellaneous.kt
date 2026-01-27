@@ -398,8 +398,8 @@ fun UpdatableProfileImage(
         if (loggedIn) {
             val file = File(context.profilePicture)
 
-            if (file.exists()) file.absolutePath else R.drawable.cat_picture
-        } else R.drawable.cat_picture
+            if (file.exists()) file.absolutePath else R.drawable.account_circle
+        } else R.drawable.account_circle
     }
 
     GlideImage(
