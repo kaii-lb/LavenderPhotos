@@ -74,12 +74,12 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
@@ -87,25 +87,16 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
-import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.models.main_activity.MainViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 
@@ -114,7 +105,7 @@ fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
     albumId: Int,
     navController: NavHostController,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     itemCount: Int
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -184,7 +175,7 @@ fun SingleAlbumDialog(
             ) {
                 showDialog.value = false
                 selectedItemsList.clear()
-                selectedItemsList.add(MediaStoreData())
+                selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
             }
 
             val fileName = remember { mutableStateOf(dynamicAlbum.name) }
@@ -396,7 +387,7 @@ fun SingleAlbumDialog(
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     currentView: MutableState<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mainViewModel: MainViewModel,
     loginState: LoginStateManager
 ) {
@@ -440,7 +431,7 @@ fun MainAppDialog(
                     ) {
                         showDialog.value = false
                         selectedItemsList.clear()
-                        selectedItemsList.add(MediaStoreData())
+                        selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
                         vibratorManager.vibrateShort()
                     }
                 }
@@ -592,81 +583,83 @@ fun SingleSecurePhotoInfoDialog(
                     emptyMap<MediaData, Any>()
                 )
             }
-            LaunchedEffect(currentMediaItem) {
-                withContext(Dispatchers.IO) {
-                    showLoadingDialog = true
 
-                    val file = if (currentMediaItem.type == MediaType.Video) {
-                        val originalFile = File(currentMediaItem.absolutePath)
-                        val cachedFile = getSecureDecryptedVideoFile(
-                            name = currentMediaItem.displayName,
-                            context = context
-                        )
-
-                        if (!cachedFile.exists()) {
-                            val iv = currentMediaItem.bytes?.getIv()
-
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                return@withContext
-                            }
-                            EncryptionManager.decryptVideo(
-                                absolutePath = originalFile.absolutePath,
-                                iv = iv,
-                                context = context,
-                                progress = {}
-                            )
-                        } else if (cachedFile.length() < originalFile.length()) {
-                            while (cachedFile.length() < originalFile.length()) {
-                                delay(100)
-                            }
-
-                            cachedFile
-                        } else {
-                            cachedFile
-                        }
-                    } else {
-                        val originalFile = File(currentMediaItem.absolutePath)
-                        val cachedFile = getDecryptCacheForFile(
-                            file = originalFile,
-                            context = context
-                        )
-
-                        if (!cachedFile.exists()) {
-                            val iv = currentMediaItem.bytes?.getIv()
-
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
-                                return@withContext
-                            }
-                            EncryptionManager.decryptInputStream(
-                                inputStream = originalFile.inputStream(),
-                                outputStream = cachedFile.outputStream(),
-                                iv = iv
-                            )
-
-                            cachedFile
-                        } else if (cachedFile.length() < originalFile.length()) {
-                            val threshold = 500
-                            while (cachedFile.length() + threshold < originalFile.length()) {
-                                delay(100)
-                            }
-
-                            cachedFile
-                        } else {
-                            cachedFile
-                        }
-                    }
-
-                    showLoadingDialog = false
-                    mediaData = getExifDataForMedia(
-                        context = context,
-                        inputStream = file.inputStream(),
-                        absolutePath = file.absolutePath,
-                        fallback = currentMediaItem.dateModified
-                    )
-                }
-            }
+            // TODO
+            // LaunchedEffect(currentMediaItem) {
+            //     withContext(Dispatchers.IO) {
+            //         showLoadingDialog = true
+            //
+            //         val file = if (currentMediaItem.type == MediaType.Video) {
+            //             val originalFile = File(currentMediaItem.absolutePath)
+            //             val cachedFile = getSecureDecryptedVideoFile(
+            //                 name = currentMediaItem.displayName,
+            //                 context = context
+            //             )
+            //
+            //             if (!cachedFile.exists()) {
+            //                 val iv = currentMediaItem.bytes?.getIv()
+            //
+            //                 if (iv == null) {
+            //                     Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+            //                     return@withContext
+            //                 }
+            //                 EncryptionManager.decryptVideo(
+            //                     absolutePath = originalFile.absolutePath,
+            //                     iv = iv,
+            //                     context = context,
+            //                     progress = {}
+            //                 )
+            //             } else if (cachedFile.length() < originalFile.length()) {
+            //                 while (cachedFile.length() < originalFile.length()) {
+            //                     delay(100)
+            //                 }
+            //
+            //                 cachedFile
+            //             } else {
+            //                 cachedFile
+            //             }
+            //         } else {
+            //             val originalFile = File(currentMediaItem.absolutePath)
+            //             val cachedFile = getDecryptCacheForFile(
+            //                 file = originalFile,
+            //                 context = context
+            //             )
+            //
+            //             if (!cachedFile.exists()) {
+            //                 val iv = currentMediaItem.bytes?.getIv()
+            //
+            //                 if (iv == null) {
+            //                     Log.e(TAG, "IV for ${currentMediaItem.displayName} was null, aborting")
+            //                     return@withContext
+            //                 }
+            //                 EncryptionManager.decryptInputStream(
+            //                     inputStream = originalFile.inputStream(),
+            //                     outputStream = cachedFile.outputStream(),
+            //                     iv = iv
+            //                 )
+            //
+            //                 cachedFile
+            //             } else if (cachedFile.length() < originalFile.length()) {
+            //                 val threshold = 500
+            //                 while (cachedFile.length() + threshold < originalFile.length()) {
+            //                     delay(100)
+            //                 }
+            //
+            //                 cachedFile
+            //             } else {
+            //                 cachedFile
+            //             }
+            //         }
+            //
+            //         showLoadingDialog = false
+            //         mediaData = getExifDataForMedia(
+            //             context = context,
+            //             inputStream = file.inputStream(),
+            //             absolutePath = file.absolutePath,
+            //             fallback = currentMediaItem.dateModified
+            //         )
+            //     }
+            // }
 
             Column(
                 modifier = Modifier

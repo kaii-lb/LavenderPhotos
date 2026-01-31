@@ -7,15 +7,14 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -55,7 +54,7 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
     private val _fileList = MutableStateFlow(secureFolder.listFiles())
     val fileList = _fileList.asStateFlow()
 
-    private val _groupedMedia = MutableStateFlow(emptyList<MediaStoreData>())
+    private val _groupedMedia = MutableStateFlow(emptyList<PhotoLibraryUIModel>())
     val groupedMedia = _groupedMedia.asStateFlow()
 
     init {
@@ -69,6 +68,7 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
     fun attachFileObserver() {
         fileObserver.startWatching()
     }
+
     fun stopFileObserver() {
         fileObserver.stopWatching()
     }
@@ -85,12 +85,13 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
 
             // remove deleted/moved media
             mediaStoreData.removeIf {
-                it.absolutePath !in paths
+                if (it is PhotoLibraryUIModel.Media) it.item.absolutePath !in paths
+                else false
             }
 
             snapshot.forEach { file ->
                 // if file is already processed, skip processing it
-                if (mediaStoreData.any { it.absolutePath == file.absolutePath }) {
+                if (mediaStoreData.any { it is PhotoLibraryUIModel.Media && it.item.absolutePath == file.absolutePath }) {
                     return@forEach
                 }
 
@@ -101,18 +102,22 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
                     else if (mimeType.lowercase().contains("video")) MediaType.Video
                     else MediaType.Section
 
-                val decryptedBytes =
-                    run {
-                        val iv = dao.getIvFromSecuredPath(file.absolutePath)
-                        val thumbnailIv = dao.getIvFromSecuredPath(
-                            getSecuredCacheImageForFile(file = file, context = context).absolutePath
-                        )
+                if (type == MediaType.Section) {
+                    return@forEach
+                }
 
-                        if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
-                    }
-
-                val originalPath =
-                    dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
+                // val decryptedBytes =
+                //     run {
+                //         val iv = dao.getIvFromSecuredPath(file.absolutePath)
+                //         val thumbnailIv = dao.getIvFromSecuredPath(
+                //             getSecuredCacheImageForFile(file = file, context = context).absolutePath
+                //         )
+                //
+                //         if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
+                //     }
+                //
+                // val originalPath =
+                //     dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
                 val item = MediaStoreData(
                     type = type,
@@ -121,13 +126,18 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
                         context,
                         LAVENDER_FILE_PROVIDER_AUTHORITY,
                         file
-                    ),
+                    ).toString(),
                     mimeType = mimeType,
                     dateModified = file.lastModified() / 1000,
                     dateTaken = file.lastModified() / 1000,
                     displayName = file.name,
                     absolutePath = file.absolutePath,
-                    bytes = decryptedBytes + originalPath.encodeToByteArray()
+                    size = 0L,
+                    immichUrl = null, // TODO
+                    immichThumbnail = null,
+                    hash = null,
+                    customId = null
+                    // bytes = decryptedBytes + originalPath.encodeToByteArray() // TODO
                 )
 
                 mediaStoreData.add(item)

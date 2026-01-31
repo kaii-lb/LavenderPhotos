@@ -77,10 +77,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import com.kaii.photos.R
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingColors
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -149,6 +151,7 @@ fun BoxWithConstraintsScope.ColorRangeSlider(
             )
         }
 
+        @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
         BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
@@ -396,7 +399,7 @@ fun BoxWithConstraintsScope.PopupPillSlider(
 fun FloatingScrollbar(
     gridState: LazyGridState,
     spacerHeight: State<Dp>,
-    groupedMedia: State<List<MediaStoreData>>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -461,6 +464,7 @@ fun FloatingScrollbar(
                 }
             }
 
+            @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
             Box(
                 modifier = Modifier
                     .fillMaxHeight(1f)
@@ -485,10 +489,10 @@ fun FloatingScrollbar(
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                         .pointerInput(Unit) {
                             detectVerticalDragGestures(
-                                onDragStart = { offset ->
+                                onDragStart = { _ ->
                                     isDraggingHandle = true
                                 },
-                                onVerticalDrag = { change, dragAmount ->
+                                onVerticalDrag = { _, dragAmount ->
                                     val scrollbarHeight = maxHeight - spacerHeight.value.toPx()
 
                                     totalDrag += dragAmount
@@ -496,7 +500,7 @@ fun FloatingScrollbar(
                                     val newIndex = (totalDrag / scrollbarHeight) * totalItems
 
                                     if (!newIndex.isNaN()) {
-                                        targetIndex = newIndex.roundToInt().coerceIn(0, groupedMedia.value.size - 1)
+                                        targetIndex = newIndex.roundToInt().coerceIn(0, pagingItems.itemCount - 1)
 
                                         coroutineScope.launch {
                                             gridState.scrollToItem(
@@ -562,13 +566,16 @@ fun FloatingScrollbar(
                             // last index to "reach" even the last items
                             val item by remember {
                                 derivedStateOf {
-                                    groupedMedia.value.getOrNull(targetIndex) ?: MediaStoreData()
+                                    pagingItems[targetIndex] ?: PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem)
                                 }
                             }
 
                             val format = remember { SimpleDateFormat("MMM yyyy", Locale.getDefault()) }
                             val formatted = remember(item) {
-                                format.format(Date(item.dateTaken * 1000))
+                                format.format(
+                                    Date(
+                                        (item as? PhotoLibraryUIModel.Media)?.item?.let { it.dateTaken * 1000 } ?: 0L
+                                ))
                             }
 
                             Text(

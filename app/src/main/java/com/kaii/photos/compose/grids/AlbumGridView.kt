@@ -88,6 +88,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
@@ -99,8 +100,7 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.signature
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -513,7 +513,7 @@ private fun AlbumGridItem(
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     ) {
-                        it.signature(item.signature())
+                        it.signature(PhotoLibraryUIModel.Media(item).signature())
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
                     }
                 } else {

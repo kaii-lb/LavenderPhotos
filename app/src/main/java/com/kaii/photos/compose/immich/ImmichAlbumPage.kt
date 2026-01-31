@@ -13,8 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,15 +23,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
-import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import kotlin.uuid.ExperimentalUuidApi
@@ -42,7 +36,7 @@ import kotlin.uuid.ExperimentalUuidApi
 @Composable
 fun ImmichAlbumPage(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -86,18 +80,18 @@ fun ImmichAlbumPage(
         modifier = modifier
             .fillMaxSize(),
         topBar = {
-            val navController = LocalNavController.current
-
-            SingleAlbumViewTopBar(
-                albumInfo = albumInfo,
-                media = mediaStoreData,
-                selectedItemsList = selectedItemsList,
-                showDialog = remember { mutableStateOf(false) },
-                isMediaPicker = false, // TODO:
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
+            // TODO
+            // val navController = LocalNavController.current
+            // SingleAlbumViewTopBar(
+            //     albumInfo = albumInfo,
+            //     pagingItems = mediaStoreData,
+            //     selectedItemsList = selectedItemsList,
+            //     showDialog = remember { mutableStateOf(false) },
+            //     isMediaPicker = false, // TODO:
+            //     onBackClick = {
+            //         navController.popBackStack()
+            //     }
+            // )
         },
         bottomBar = {
             // TODO:
@@ -139,14 +133,15 @@ fun ImmichAlbumPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PhotoGrid(
-                groupedMedia = mediaStoreData,
-                albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList,
-                viewProperties = ViewProperties.Immich,
-                isMediaPicker = false, // TODO:
-                hasFiles = hasFiles
-            )
+            // TODO
+            // PhotoGrid(
+            //     pagingItems = mediaStoreData,
+            //     albumInfo = albumInfo,
+            //     selectedItemsList = selectedItemsList,
+            //     viewProperties = ViewProperties.Immich,
+            //     isMediaPicker = false, // TODO:
+            //     hasFiles = hasFiles
+            // )
         }
     }
 }

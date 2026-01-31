@@ -15,7 +15,7 @@ import androidx.compose.ui.util.fastFirstOrNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -28,8 +28,6 @@ import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.Path
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -68,7 +66,7 @@ suspend fun ContentResolver.insertMedia(
 
     if (preserveDate) {
         setDateForMedia(
-            uri = media.uri,
+            uri = media.uri.toUri(),
             type = media.type,
             dateTaken = media.dateTaken
         )
@@ -93,7 +91,7 @@ suspend fun ContentResolver.insertMedia(
         )
 
         newUri?.let { contentUri ->
-            onInsert(media.uri, contentUri)
+            onInsert(media.uri.toUri(), contentUri)
 
             if (!preserveDate) { // change date to most recent
                 setDateForMedia(
@@ -116,10 +114,7 @@ suspend fun ContentResolver.insertMedia(
         val directory = DocumentFile.fromTreeUri(context, fullUriPath)
         Log.d(TAG, "Directory URI path ${directory?.uri}")
 
-        val createdFile = directory?.createFile(
-            media.mimeType ?: Files.probeContentType(Path(media.absolutePath)),
-            fileName
-        )
+        val createdFile = directory?.createFile(media.mimeType, fileName)
 
         if (createdFile == null) {
             Log.e(TAG, "Unable to create document file for directory $destination and file ${file.absolutePath}")
@@ -129,7 +124,7 @@ suspend fun ContentResolver.insertMedia(
         val fileToBeSavedTo = DocumentFile.fromSingleUri(context, createdFile.uri)
 
         fileToBeSavedTo?.let { savedToFile ->
-            onInsert(media.uri, savedToFile.uri)
+            onInsert(media.uri.toUri(), savedToFile.uri)
 
             if (!preserveDate) { // change date to most recent
                 setDateForMedia(
@@ -244,7 +239,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
 
-        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
+        val dao = MediaDatabase.getInstance(context).mediaDao()
         val allEntities = dao.getAll()
 
         while (cursor.moveToNext()) {
@@ -272,18 +267,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
-                            dao.insertEntity(
-                                MediaEntity(
-                                    id = contentId,
-                                    dateTaken = exifDateTaken,
-                                    mimeType = mimeType,
-                                    displayName = displayName
-                                )
-                            )
-
-                            exifDateTaken
-                        }
+                        getDateTakenForMedia(absolutePath, dateModified)
                     }
 
                     dateAdded > 0L -> dateAdded
@@ -302,12 +286,17 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             return MediaStoreData(
                 type = type,
                 id = contentId,
-                uri = contentUri,
+                uri = contentUri.toString(),
                 mimeType = mimeType,
                 dateModified = dateModified,
                 dateTaken = dateTaken,
                 displayName = displayName,
-                absolutePath = absolutePath
+                absolutePath = absolutePath,
+                customId = null,
+                immichUrl = null,
+                immichThumbnail = null,
+                hash = null,
+                size = 0L
             )
         }
     }

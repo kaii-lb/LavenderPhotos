@@ -34,12 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
-import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.TrashBin
@@ -48,8 +48,8 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.days
@@ -57,7 +57,7 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: TrashViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -102,7 +102,7 @@ fun TrashedPhotoGridView(
                 dateDeletedDays > autoDeleteInterval.days
             }
             .map {
-                it.uri
+                it.uri.toUri()
             }
 
         runAutoDeleteAction.value = true
@@ -124,14 +124,15 @@ fun TrashedPhotoGridView(
         modifier = Modifier
             .fillMaxSize(1f),
         topBar = {
-            val navController = LocalNavController.current
-            TrashedPhotoGridViewTopBar(
-                selectedItemsList = selectedItemsList,
-                groupedMedia = mediaStoreData
-            ) {
-                viewModel.cancelMediaFlow()
-                navController.popBackStack()
-            }
+            // TODO
+            // val navController = LocalNavController.current
+            // TrashedPhotoGridViewTopBar(
+            //     selectedItemsList = selectedItemsList,
+            //     pagingItems = mediaStoreData
+            // ) {
+            //     viewModel.cancelMediaFlow()
+            //     navController.popBackStack()
+            // }
         },
         bottomBar = {
             AnimatedVisibility(
@@ -179,8 +180,9 @@ fun TrashedPhotoGridView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val pagingItems = viewModel.mediaPagingFlow.collectAsLazyPagingItems()
             PhotoGrid(
-                groupedMedia = mediaStoreData,
+                pagingItems = pagingItems,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,

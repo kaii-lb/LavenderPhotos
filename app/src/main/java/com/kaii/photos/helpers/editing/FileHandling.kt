@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -60,13 +61,13 @@ import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
@@ -269,13 +270,19 @@ suspend fun saveVideo(
     }
 
     val media = MediaStoreData(
+        id = 0L,
         displayName = file.name,
         absolutePath = file.absolutePath,
         dateTaken = System.currentTimeMillis() / 1000,
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Video,
         mimeType = "video/mp4",
-        uri = uri
+        uri = uri.toString(),
+        size = 0L,
+        immichUrl = null,
+        immichThumbnail = null,
+        hash = null,
+        customId = null
     )
 
     val tempPath = context.appStorageDir + "/cache/${media.displayName}"
@@ -447,7 +454,7 @@ suspend fun saveVideo(
         permanentlyDeletePhotoList(
             context = context,
             list = listOf(
-                media.uri
+                media.uri.toUri()
             )
         )
     }
@@ -456,7 +463,7 @@ suspend fun saveVideo(
         context = context,
         list = listOf(
             media.copy(
-                uri = newUri,
+                uri = newUri.toString(),
                 absolutePath = tempFileCrop.absolutePath,
                 mimeType = "video/mp4"
             )
@@ -469,7 +476,7 @@ suspend fun saveVideo(
             it.replaceFirst("crop-", "")
         },
         onSingleItemDone = { data ->
-            permanentlyDeletePhotoList(context, listOf(data.uri))
+            permanentlyDeletePhotoList(context, listOf(data.uri.toUri()))
             if (tempFile.exists()) tempFile.delete()
 
             body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
@@ -689,7 +696,13 @@ suspend fun saveImage(
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Image,
         mimeType = "image/png",
-        uri = uri
+        uri = uri.toString(),
+        customId = null,
+        size = 0L,
+        immichUrl = null,
+        immichThumbnail = null,
+        hash = null,
+        id = 0L
     )
 
     val newUri =

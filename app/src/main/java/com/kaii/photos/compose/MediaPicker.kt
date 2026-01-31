@@ -47,7 +47,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -71,6 +70,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -79,6 +79,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
@@ -107,8 +109,8 @@ import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.mapToMediaItems
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -123,7 +125,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
-import kotlinx.coroutines.Dispatchers
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.MediaPicker"
@@ -145,7 +146,7 @@ class MediaPicker : ComponentActivity() {
         val incomingIntent = intent
 
         setContent {
-            val selectedItemsList = remember { mutableStateListOf<MediaStoreData>() }
+            val selectedItemsList = remember { mutableStateListOf<PhotoLibraryUIModel>() }
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext, emptyList())
             )
@@ -189,7 +190,7 @@ class MediaPicker : ComponentActivity() {
     @Composable
     private fun Content(
         mainViewModel: MainViewModel,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
         incomingIntent: Intent
     ) {
         val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
@@ -412,15 +413,14 @@ class MediaPicker : ComponentActivity() {
     private fun MainWindow(
         currentView: MutableState<BottomBarTab>,
         tabs: List<BottomBarTab>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
+        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
         multiAlbumViewModel: MultiAlbumViewModel,
         searchViewModel: SearchViewModel,
         incomingIntent: Intent
     ) {
         val mainViewModel = LocalMainViewModel.current
 
-        val mediaStoreData =
-            multiAlbumViewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+        val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
 
         val showDialog = rememberSaveable { mutableStateOf(false) }
         val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
@@ -432,7 +432,7 @@ class MediaPicker : ComponentActivity() {
                 TopBar(
                     showDialog = showDialog,
                     selectedItemsList = selectedItemsList,
-                    media = mediaStoreData,
+                    pagingItems = mediaStoreData,
                     currentView = currentView
                 )
             },
@@ -540,8 +540,8 @@ class MediaPicker : ComponentActivity() {
     @Composable
     private fun TopBar(
         showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<MediaStoreData>,
-        media: State<List<MediaStoreData>>,
+        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+        pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
         currentView: MutableState<BottomBarTab>
     ) {
         val show by remember {
@@ -554,7 +554,7 @@ class MediaPicker : ComponentActivity() {
             alternate = show,
             showDialog = showDialog,
             selectedItemsList = selectedItemsList,
-            media = media,
+            media = pagingItems,
             currentView = currentView,
             isFromMediaPicker = true
         )
@@ -564,7 +564,7 @@ class MediaPicker : ComponentActivity() {
 @Composable
 fun MediaPickerConfirmButton(
     incomingIntent: Intent,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     contentResolver: ContentResolver
 ) {
     val context = LocalContext.current
@@ -583,7 +583,7 @@ fun MediaPickerConfirmButton(
                 if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                     || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
                 ) {
-                    val uris = selectedItemsList.filter { it.type != MediaType.Section }.map { it.uri }
+                    val uris = selectedItemsList.mapToMediaItems().map { it.uri.toUri() }
 
                     Log.d(TAG, "Selected items are $selectedItemsList")
 
@@ -599,12 +599,13 @@ fun MediaPickerConfirmButton(
 
                     activity.setResult(RESULT_OK, resultIntent)
                 } else {
+                    val first = (selectedItemsList.first { it is PhotoLibraryUIModel.Media } as PhotoLibraryUIModel.Media).item
                     val resultIntent = Intent().apply {
-                        data = selectedItemsList.first { it.type != MediaType.Section }.uri
+                        data = first.uri.toUri()
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
 
-                    Log.d(TAG, "Selected item is ${selectedItemsList.first { it.type != MediaType.Section }}")
+                    Log.d(TAG, "Selected item is $first")
 
                     activity.setResult(RESULT_OK, resultIntent)
                 }

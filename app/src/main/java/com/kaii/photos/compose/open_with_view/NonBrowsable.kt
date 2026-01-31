@@ -64,6 +64,7 @@ import com.kaii.photos.compose.single_photo.VideoPlayer
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -74,7 +75,6 @@ import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -135,8 +135,8 @@ fun OpenWithContent(
                 val shouldPlay = rememberSaveable { mutableStateOf(true) }
 
                 VideoPlayer(
-                    item = MediaStoreData(
-                        uri = uri
+                    item = MediaStoreData.dummyItem.copy(
+                        uri = uri.toString()
                     ),
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = false,

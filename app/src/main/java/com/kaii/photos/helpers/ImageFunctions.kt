@@ -15,18 +15,17 @@ import android.util.Log
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import java.io.File
@@ -111,7 +110,7 @@ suspend fun setTrashedOnPhotoList(
     setFavouriteOnMedia(
         context = context,
         favourite = false,
-        list = list.map { it.uri }
+        list = list.map { it.uri.toUri() }
     )
 
     try {
@@ -119,7 +118,7 @@ suspend fun setTrashedOnPhotoList(
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
             File(media.absolutePath).setLastModified(currentTimeMillis)
-            contentResolver.update(media.uri, trashedValues, null)
+            contentResolver.update(media.uri.toUri(), trashedValues, null)
 
             appDatabase.favouritedItemEntityDao().deleteEntityById(media.id)
 
@@ -224,7 +223,7 @@ fun moveImageToLockedFolder(
             val destinationFile = File(copyToPath)
 
             context.contentResolver.setDateForMedia(
-                uri = mediaItem.uri,
+                uri = mediaItem.uri.toUri(),
                 type = mediaItem.type,
                 dateTaken = mediaItem.dateTaken,
                 overwriteLastModified = false
@@ -256,9 +255,9 @@ fun moveImageToLockedFolder(
             // cleanup
             permanentlyDeletePhotoList(
                 context = context,
-                list = listOf(mediaItem.uri)
+                list = listOf(mediaItem.uri.toUri())
             )
-            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
+            applicationDatabase.mediaDao().deleteById(mediaItem.id)
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
             e.printStackTrace()
@@ -282,68 +281,69 @@ suspend fun moveImageOutOfLockedFolder(
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
 ) {
-    val contentResolver = context.contentResolver
-    val restoredFilesDir = context.appRestoredFilesDir
+    // TODO
+    // val contentResolver = context.contentResolver
+    // val restoredFilesDir = context.appRestoredFilesDir
 
-    list.forEach { media ->
-        val fileToBeRestored = File(media.absolutePath)
-        val originalPath = media.bytes?.getOriginalPath() ?: restoredFilesDir
-
-        Log.d(TAG, "ORIGINAL PATH $originalPath")
-
-        val tempFile = File(context.cacheDir, fileToBeRestored.name)
-
-        val iv = media.bytes?.getIv()
-        try {
-            if (iv != null) {
-                EncryptionManager.decryptInputStream(
-                    fileToBeRestored.inputStream(),
-                    tempFile.outputStream(),
-                    iv
-                )
-            } else {
-                fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
-            }
-        } catch (e: Throwable) {
-            Log.e(TAG, e.toString())
-            e.printStackTrace()
-        }
-
-        Log.d(TAG, "Base path ${originalPath.toBasePath()}")
-
-        contentResolver.insertMedia(
-            context = context,
-            media = media.copy(
-                uri = FileProvider.getUriForFile(
-                    context,
-                    LAVENDER_FILE_PROVIDER_AUTHORITY,
-                    tempFile
-                )
-            ),
-            destination = originalPath.getParentFromPath(),
-            basePath = originalPath.toBasePath(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            preserveDate = true,
-            onInsert = { original, new ->
-                contentResolver.copyUriToUri(original, new)
-            }
-        )?.let {
-            try {
-                fileToBeRestored.delete()
-                tempFile.delete()
-                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
-
-                val thumbnailFile =
-                    getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
-                thumbnailFile.delete()
-                applicationDatabase.securedItemEntityDao()
-                    .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-                e.printStackTrace()
-            }
-        }
-    }
+    // list.forEach { media ->
+    //     val fileToBeRestored = File(media.absolutePath)
+    //     val originalPath = media.bytes?.getOriginalPath() ?: restoredFilesDir
+    //
+    //     Log.d(TAG, "ORIGINAL PATH $originalPath")
+    //
+    //     val tempFile = File(context.cacheDir, fileToBeRestored.name)
+    //
+    //     val iv = media.bytes?.getIv()
+    //     try {
+    //         if (iv != null) {
+    //             EncryptionManager.decryptInputStream(
+    //                 fileToBeRestored.inputStream(),
+    //                 tempFile.outputStream(),
+    //                 iv
+    //             )
+    //         } else {
+    //             fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
+    //         }
+    //     } catch (e: Throwable) {
+    //         Log.e(TAG, e.toString())
+    //         e.printStackTrace()
+    //     }
+    //
+    //     Log.d(TAG, "Base path ${originalPath.toBasePath()}")
+    //
+    //     contentResolver.insertMedia(
+    //         context = context,
+    //         media = media.copy(
+    //             uri = FileProvider.getUriForFile(
+    //                 context,
+    //                 LAVENDER_FILE_PROVIDER_AUTHORITY,
+    //                 tempFile
+    //             ).toString()
+    //         ),
+    //         destination = originalPath.getParentFromPath(),
+    //         basePath = originalPath.toBasePath(),
+    //         currentVolumes = MediaStore.getExternalVolumeNames(context),
+    //         preserveDate = true,
+    //         onInsert = { original, new ->
+    //             contentResolver.copyUriToUri(original, new)
+    //         }
+    //     )?.let {
+    //         try {
+    //             fileToBeRestored.delete()
+    //             tempFile.delete()
+    //             applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+    //
+    //             val thumbnailFile =
+    //                 getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+    //             thumbnailFile.delete()
+    //             applicationDatabase.securedItemEntityDao()
+    //                 .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+    //         } catch (e: Throwable) {
+    //             Log.e(TAG, e.toString())
+    //             e.printStackTrace()
+    //         }
+    //     }
+    // }
 
     onDone()
 }
@@ -447,7 +447,7 @@ suspend fun moveImageListToPath(
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
             percentage.floatValue = (index + 1f) / list.size
 
-            contentResolver.delete(media.uri, null)
+            contentResolver.delete(media.uri.toUri(), null)
         }
     }
 

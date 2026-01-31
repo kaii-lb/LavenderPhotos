@@ -74,10 +74,10 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.R
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import java.io.File
 
 @Composable
@@ -275,7 +275,7 @@ fun ShowSelectedState(
 
 @Composable
 fun SelectViewTopBarLeftButtons(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
 ) {
     SplitButton(
         primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
@@ -292,7 +292,7 @@ fun SelectViewTopBarLeftButtons(
         },
         secondaryContent = {
             Text(
-                text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
+                text = selectedItemsList.filter { it !is PhotoLibraryUIModel.Section && (it as PhotoLibraryUIModel.Media).item != MediaStoreData.dummyItem }.size.toString(),
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 modifier = Modifier
@@ -311,7 +311,7 @@ fun SelectViewTopBarLeftButtons(
 
 @Composable
 fun SelectViewTopBarRightButtons(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mediaCount: State<Int>,
     sectionCount: State<Int>,
     getAllMedia: () -> List<MediaStoreData>
@@ -337,11 +337,11 @@ fun SelectViewTopBarRightButtons(
             onClick = {
                 if (isTicked) {
                     selectedItemsList.clear()
-                    selectedItemsList.add(MediaStoreData())
+                    selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
                 } else {
                     selectedItemsList.clear()
 
-                    selectedItemsList.addAll(getAllMedia())
+                    selectedItemsList.addAll(getAllMedia().map { PhotoLibraryUIModel.Media(it) })
                 }
             },
             enabled = selectAllEnabled, // limit of 2000 since android can't handle more uris

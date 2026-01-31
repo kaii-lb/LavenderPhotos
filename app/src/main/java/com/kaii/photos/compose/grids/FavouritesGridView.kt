@@ -30,7 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
@@ -41,7 +41,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import kotlinx.coroutines.delay
 
@@ -50,16 +50,17 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: FavouritesViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle()
+    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
 
     var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(mediaStoreData.value) {
+    LaunchedEffect(pagingItems.loadState) {
+        // TODO: fix
         delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = mediaStoreData.value.isNotEmpty()
+        hasFiles = pagingItems.loadState.source.append.endOfPaginationReached && pagingItems.itemCount == 0
     }
 
     val navController = LocalNavController.current
@@ -79,7 +80,7 @@ fun FavouritesGridView(
         topBar = {
             FavouritesViewTopAppBar(
                 selectedItemsList = selectedItemsList,
-                media = mediaStoreData
+                pagingItems = pagingItems
             ) {
                 navController.popBackStack()
             }
@@ -127,7 +128,7 @@ fun FavouritesGridView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = mediaStoreData,
+                pagingItems = pagingItems,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,

@@ -8,13 +8,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaDataSource
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.multi_album.mapToMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -64,11 +70,22 @@ class SearchViewModel(
         )
     }
 
+    // TODO: fix this
+    val mediaPagingFlow = Pager(
+        config = PagingConfig(
+            pageSize = 80,
+            prefetchDistance = 40,
+            enablePlaceholders = true,
+            initialLoadSize = 80
+        ),
+        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
+    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
+
     private fun getMediaDataFlow() = derivedStateOf {
         mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
     }
 
-    private val _groupedMedia = MutableStateFlow<List<MediaStoreData>>(emptyList())
+    private val _groupedMedia = MutableStateFlow<List<PhotoLibraryUIModel>>(emptyList())
     val groupedMedia = _groupedMedia.asStateFlow()
 
     fun search(
@@ -79,7 +96,12 @@ class SearchViewModel(
         this@SearchViewModel.query = query
 
         if (query.isEmpty()) {
-            _groupedMedia.value = mediaFlow.value
+            _groupedMedia.value = groupPhotosBy(
+                media = mediaFlow.value,
+                sortBy = sortMode,
+                displayDateFormat = displayDateFormat,
+                context = context
+            )
             return@launch
         }
 
@@ -101,11 +123,18 @@ class SearchViewModel(
         )
     }
 
+    // TODO: fix
     /** [setMedia] but without grouping */
     fun overrideMedia(
+        context: Context,
         media: List<MediaStoreData>
     ) {
-        _groupedMedia.value = media
+        _groupedMedia.value = groupPhotosBy(
+            media = media,
+            sortBy = sortMode,
+            displayDateFormat = displayDateFormat,
+            context = context
+        )
     }
 
     fun setMedia(

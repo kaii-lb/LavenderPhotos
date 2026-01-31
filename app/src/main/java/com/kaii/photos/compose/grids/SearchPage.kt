@@ -28,13 +28,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,7 +44,7 @@ import kotlinx.datetime.Month
 
 @Composable
 fun SearchPage(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     searchViewModel: SearchViewModel,
     isMediaPicker: Boolean
 ) {
@@ -132,6 +133,7 @@ fun SearchPage(
             }
         }
 
+        val context = LocalContext.current
         var hasFiles by remember { mutableStateOf(true) }
 
         LaunchedEffect(searchedForText.value, mediaStoreData, sortMode) {
@@ -140,7 +142,7 @@ fun SearchPage(
                     search = "",
                     context = context
                 )
-                searchViewModel.overrideMedia(media = mediaStoreData)
+                searchViewModel.overrideMedia(media = mediaStoreData, context = context)
                 hideLoadingSpinner = true
                 return@LaunchedEffect
             }
@@ -165,8 +167,9 @@ fun SearchPage(
             modifier = Modifier
                 .fillMaxHeight(1f)
         ) {
+            val pagingItems = searchViewModel.mediaPagingFlow.collectAsLazyPagingItems()
             PhotoGrid(
-                groupedMedia = groupedMedia,
+                pagingItems = pagingItems,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,

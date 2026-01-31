@@ -62,6 +62,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -70,6 +71,7 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -77,8 +79,8 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.rememberMediaRenamer
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -200,7 +202,7 @@ private fun Content(
         try {
             getExifDataForMedia(
                 context = context,
-                inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
+                inputStream = context.contentResolver.openInputStream(currentMediaItem.uri.toUri()) ?: File(currentMediaItem.absolutePath).inputStream(),
                 absolutePath = currentMediaItem.absolutePath,
                 fallback = currentMediaItem.dateTaken
             )
@@ -434,7 +436,7 @@ private fun Content(
         val coroutineScope = rememberCoroutineScope()
 
         GetPermissionAndRun(
-            uris = listOf(currentMediaItem.uri),
+            uris = listOf(currentMediaItem.uri.toUri()),
             shouldRun = runEraseExifData,
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
@@ -568,7 +570,7 @@ private fun IconContentImpl(
     val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
 
-    val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri) {
+    val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri.toUri()) {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
@@ -581,12 +583,12 @@ private fun IconContentImpl(
     }
 
     GetPermissionAndRun(
-        uris = listOf(currentMediaItem.uri),
+        uris = listOf(currentMediaItem.uri.toUri()),
         shouldRun = saveFileName,
         onGranted = {
             mediaRenamer.rename(
                 newName = "${currentFileName}.${file.extension}",
-                uri = currentMediaItem.uri
+                uri = currentMediaItem.uri.toUri()
             )
 
             originalFileName = currentFileName
@@ -637,8 +639,8 @@ private fun IconContentImpl(
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
 
-        val stateList = SnapshotStateList<MediaStoreData>()
-        stateList.add(currentMediaItem)
+        val stateList = SnapshotStateList<PhotoLibraryUIModel>()
+        stateList.add(PhotoLibraryUIModel.Media(item = currentMediaItem))
 
         MoveCopyAlbumListView(
             show = show,
@@ -688,7 +690,7 @@ private fun IconContentImpl(
             onClick = {
                 val intent = Intent(context, WallpaperSetter::class.java).apply {
                     action = Intent.ACTION_SET_WALLPAPER
-                    data = currentMediaItem.uri
+                    data = currentMediaItem.uri.toUri()
                     addCategory(Intent.CATEGORY_DEFAULT)
                     putExtra("mimeType", currentMediaItem.mimeType)
                 }

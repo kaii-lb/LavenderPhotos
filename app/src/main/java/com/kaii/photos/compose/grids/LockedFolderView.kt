@@ -42,16 +42,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
-import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,7 +63,7 @@ fun LockedFolderView(
 ) {
     val context = LocalContext.current
 
-    val selectedItemsList = remember { SnapshotStateList<MediaStoreData>() }
+    val selectedItemsList = remember { SnapshotStateList<PhotoLibraryUIModel>() }
     val navController = LocalNavController.current
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -158,12 +154,13 @@ fun LockedFolderView(
 
     Scaffold(
         topBar = {
-            SecureFolderViewTopAppBar(
-                selectedItemsList = selectedItemsList,
-                media = groupedMedia
-            ) {
-                navController.popBackStack()
-            }
+            // TODO
+            // SecureFolderViewTopAppBar(
+            //     selectedItemsList = selectedItemsList,
+            //     pagingItems = groupedMedia
+            // ) {
+            //     navController.popBackStack()
+            // }
         },
         bottomBar = {
             AnimatedVisibility(
@@ -175,11 +172,12 @@ fun LockedFolderView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                SecureFolderViewBottomAppBar(
-                    selectedItemsList = selectedItemsList,
-                    groupedMedia = groupedMedia,
-                    isGettingPermissions = isGettingPermissions
-                )
+                // TODO
+                // SecureFolderViewBottomAppBar(
+                //     selectedItemsList = selectedItemsList,
+                //     pagingItems = groupedMedia,
+                //     isGettingPermissions = isGettingPermissions
+                // )
             }
         },
         modifier = Modifier
@@ -214,13 +212,13 @@ fun LockedFolderView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PhotoGrid(
-                groupedMedia = groupedMedia,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                selectedItemsList = selectedItemsList,
-                viewProperties = ViewProperties.SecureFolder,
-                hasFiles = hasFiles
-            )
+            // PhotoGrid(
+            //     pagingItems = groupedMedia,
+            //     albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+            //     selectedItemsList = selectedItemsList,
+            //     viewProperties = ViewProperties.SecureFolder,
+            //     hasFiles = hasFiles
+            // )
         }
     }
 }

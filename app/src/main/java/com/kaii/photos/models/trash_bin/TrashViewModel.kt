@@ -4,10 +4,15 @@ import android.content.Context
 import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.TrashDataSource
+import com.kaii.photos.models.multi_album.mapToMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +43,17 @@ class TrashViewModel(
             initialValue = emptyList()
         )
     }
+
+    // TODO
+    val mediaPagingFlow = Pager(
+        config = PagingConfig(
+            pageSize = 80,
+            prefetchDistance = 40,
+            enablePlaceholders = true,
+            initialLoadSize = 80
+        ),
+        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
+    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
 
     private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
         return mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO)

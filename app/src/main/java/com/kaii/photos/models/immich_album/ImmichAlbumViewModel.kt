@@ -3,20 +3,17 @@ package com.kaii.photos.models.immich_album
 import android.content.Context
 import android.os.CancellationSignal
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.lavender.immichintegration.serialization.albums.AlbumGetState
 import com.kaii.lavender.immichintegration.serialization.assets.AssetType
 import com.kaii.lavender.immichintegration.state_managers.AlbumsStateManager
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.ImmichInfo
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.multi_album.groupPhotosBy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,18 +62,18 @@ class ImmichAlbumViewModel(
                     state.album.assets.map { asset ->
                         MediaStoreData(
                             id = Uuid.parse(asset.id).toLongs { a, _ -> a },
-                            uri = "${info.endpoint}/api/assets/${asset.id}/original".toUri(),
+                            uri = "${info.endpoint}/api/assets/${asset.id}/original",
                             dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
                             dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                             type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
                             absolutePath = asset.originalFileName,
                             displayName = asset.originalFileName,
                             mimeType = asset.originalMimeType,
-                            immichInfo = ImmichInfo(
-                                thumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
-                                original = "${info.endpoint}/api/assets/${asset.id}/original",
-                                accessToken = info.accessToken
-                            )
+                            immichUrl = "${info.endpoint}/api/assets/${asset.id}/original",
+                            immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
+                            hash = "", // TODO
+                            size = 0L, // TODO
+                            customId = null
                         )
                     }
             } else {
@@ -92,13 +89,13 @@ class ImmichAlbumViewModel(
     ) = viewModelScope.launch(Dispatchers.IO) {
         if (refetch) refetch()
 
-        _mediaFlow.value =
-            groupPhotosBy(
-                media = media,
-                sortBy = sortMode,
-                displayDateFormat = displayDateFormat,
-                context = context
-            )
+        _mediaFlow.value = media
+            // groupPhotosBy(
+            //     media = media,
+            //     sortBy = sortMode,
+            //     displayDateFormat = displayDateFormat,
+            //     context = context
+            // ) // TODO
     }
 
     fun cancelMediaFlow() {

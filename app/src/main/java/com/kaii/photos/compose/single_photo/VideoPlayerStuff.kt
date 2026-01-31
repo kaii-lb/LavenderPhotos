@@ -114,6 +114,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.TextStylingConstants
@@ -121,7 +122,6 @@ import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.mediastore.MediaStoreData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -156,6 +156,7 @@ fun VideoPlayerControls(
 
         if (isLandscape) {
             // title box
+            @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
             Box(
                 modifier = Modifier
                     .wrapContentSize()
@@ -414,7 +415,7 @@ fun VideoPlayer(
     val context = LocalContext.current
     val navController = LocalNavController.current
     val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
-    var videoSource by remember { mutableStateOf(item.uri) }
+    var videoSource by remember { mutableStateOf(item.uri.toUri()) }
 
     if (isSecuredMedia) {
         var securedMediaProgress by remember { mutableFloatStateOf(0f) }

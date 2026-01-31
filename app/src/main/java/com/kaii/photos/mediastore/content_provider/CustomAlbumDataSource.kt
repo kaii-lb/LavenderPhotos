@@ -9,12 +9,9 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.SectionItem
-import com.kaii.photos.helpers.formatDate
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -103,7 +100,7 @@ class CustomAlbumDataSource(
 
         while (cursor.moveToNext()) {
             val uri = cursor.getString(uriCol).toUri()
-            val id = cursor.getInt(idCol)
+            val id = cursor.getLong(idCol)
 
             val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)!!
 
@@ -122,41 +119,11 @@ class CustomAlbumDataSource(
         cursor.close()
 
         val sortedMap = holderMap.toSortedMap(compareByDescending { it })
-        val sorted = mutableListOf<MediaStoreData>()
 
         if (sortMode == MediaItemSortMode.Disabled) {
             return sortedMap[0L]?.sortedByDescending { it.dateTaken } ?: emptyList()
         }
 
-        sortedMap.forEach { (day, items) ->
-            val title = formatDate(day, sortMode, displayDateFormat)
-            val sectionItem = SectionItem(
-                date = day,
-                childCount = items.size
-            )
-
-            val section =
-                MediaStoreData(
-                    type = MediaType.Section,
-                    dateModified = day,
-                    dateTaken = day,
-                    uri = "$title $day".toUri(),
-                    displayName = title,
-                    id = 0L,
-                    mimeType = null,
-                    section = sectionItem
-                )
-
-            sorted.add(section)
-
-            sorted.addAll(
-                items.sortedByDescending { item ->
-                    if (sortMode == MediaItemSortMode.LastModified) item.dateModified
-                    else item.dateTaken
-                }.onEach { it.section = sectionItem }
-            )
-        }
-
-        return sorted
+        return holderMap.flatMap { it.value }
     }
 }

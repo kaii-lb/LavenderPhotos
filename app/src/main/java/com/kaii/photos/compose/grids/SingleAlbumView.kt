@@ -19,7 +19,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +32,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -47,8 +48,8 @@ import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.mapToMediaItems
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ import kotlin.io.path.Path
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -86,19 +87,19 @@ fun SingleAlbumView(
 
     OnBackPressedEffect { destination ->
         if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
+            // viewModel.cancelMediaFlow() TODO
         }
     }
 
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
-        mediaStoreData = mediaStoreData,
+        pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
         navController = navController,
         incomingIntent = incomingIntent,
         onBackClick = {
-            viewModel.cancelMediaFlow()
+            // viewModel.cancelMediaFlow() TODO
             navController.popBackStack()
         }
     )
@@ -107,7 +108,7 @@ fun SingleAlbumView(
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -138,9 +139,9 @@ fun SingleAlbumView(
         }
     }
 
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val pagingItems = viewModel.mediaPagingFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
-        mediaStoreData = mediaStoreData,
+        pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
         selectedItemsList = selectedItemsList,
         navController = navController,
@@ -155,9 +156,9 @@ fun SingleAlbumView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SingleAlbumViewCommon(
-    mediaStoreData: State<List<MediaStoreData>>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     navController: NavHostController,
     incomingIntent: Intent?,
     modifier: Modifier = Modifier,
@@ -166,7 +167,8 @@ private fun SingleAlbumViewCommon(
     val showDialog = remember { mutableStateOf(false) }
 
     var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(mediaStoreData.value.lastOrNull()) {
+    // TODO: improve
+    LaunchedEffect(pagingItems.itemSnapshotList.lastOrNull()) {
         withContext(Dispatchers.IO) {
             hasFiles = if (!albumInfo.isCustomAlbum) {
                 var result: Boolean? = null
@@ -181,7 +183,7 @@ private fun SingleAlbumViewCommon(
                 result == true
             } else {
                 delay(PhotoGridConstants.LOADING_TIME)
-                mediaStoreData.value.isNotEmpty()
+                pagingItems.itemSnapshotList.isNotEmpty()
             }
         }
     }
@@ -192,7 +194,7 @@ private fun SingleAlbumViewCommon(
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                media = mediaStoreData,
+                pagingItems = pagingItems,
                 selectedItemsList = selectedItemsList,
                 showDialog = showDialog,
                 isMediaPicker = incomingIntent != null,
@@ -243,7 +245,7 @@ private fun SingleAlbumViewCommon(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = mediaStoreData,
+                pagingItems = pagingItems,
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Album,
@@ -256,7 +258,7 @@ private fun SingleAlbumViewCommon(
                 albumId = albumInfo.id,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
-                itemCount = mediaStoreData.value.filter { it.type != MediaType.Section }.size
+                itemCount = pagingItems.itemSnapshotList.mapToMediaItems().size
             )
         }
     }

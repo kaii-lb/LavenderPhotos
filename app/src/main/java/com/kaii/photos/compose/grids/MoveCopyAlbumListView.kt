@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -73,6 +74,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -85,10 +87,11 @@ import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.mediastore.mapToMediaItems
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -99,7 +102,7 @@ private const val TAG = "com.kaii.photos.compose.grids.MoveCopyAlbumListView"
 @Composable
 fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     isMoving: Boolean,
     groupedMedia: MutableState<List<MediaStoreData>>? = null,
     insetsPadding: WindowInsets,
@@ -139,6 +142,7 @@ fun MoveCopyAlbumListView(
             // find common ancestors, if there's only one hide it (below code)
             // if not do nothing
             val grouped = selectedItemsList
+                .mapToMediaItems()
                 .filter {
                     it.type != MediaType.Section
                 }
@@ -281,7 +285,7 @@ fun AlbumsListItem(
     album: AlbumInfo,
     data: MediaStoreData,
     position: RowPosition,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     isMoving: Boolean,
     show: MutableState<Boolean>,
     onMoveMedia: () -> Unit,
@@ -294,8 +298,9 @@ fun AlbumsListItem(
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData.dummyItem
+            selectedItemsList.fastMapNotNull {
+                if (it is PhotoLibraryUIModel.Media && it.item != MediaStoreData.dummyItem) it.item
+                else null
             }
         }
     }
@@ -319,7 +324,7 @@ fun AlbumsListItem(
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
+        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
         shouldRun = runOnUriGranted,
         onGranted = {
             show.value = false
@@ -364,7 +369,7 @@ fun AlbumsListItem(
                         if (doNotTrash) {
                             permanentlyDeletePhotoList(
                                 context = context,
-                                list = list.fastMap { it.uri }
+                                list = list.fastMap { it.uri.toUri() }
                             )
                         } else {
                             setTrashedOnPhotoList(

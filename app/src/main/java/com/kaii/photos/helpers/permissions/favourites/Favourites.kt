@@ -13,7 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.kaii.photos.mediastore.MediaStoreData
+import androidx.core.net.toUri
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.mediastore.isFavourited
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -76,7 +77,7 @@ fun rememberFavouritesState(
     val context = LocalContext.current
     val state = remember(media) {
         FavouritesState(
-            uri = media.uri,
+            uri = media.uri.toUri(),
             context = context,
             onSuccess = onFavourited
         )

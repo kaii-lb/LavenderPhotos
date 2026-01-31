@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
@@ -72,6 +73,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.mapSync
@@ -79,8 +81,8 @@ import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -107,7 +109,7 @@ fun SingleTrashedPhotoView(
 
     if (mediaStoreData.value.isNotEmpty()) {
         SingleTrashedPhotoViewImpl(
-            mediaStoreData = mediaStoreData,
+            items = mediaStoreData,
             startIndex = startIndex,
             window = window
         )
@@ -118,7 +120,7 @@ fun SingleTrashedPhotoView(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun SingleTrashedPhotoViewImpl(
-    mediaStoreData: State<List<MediaStoreData>>,
+    items: State<List<MediaStoreData>>,
     startIndex: Int,
     window: Window
 ) {
@@ -132,8 +134,8 @@ private fun SingleTrashedPhotoViewImpl(
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
-                    mediaStoreData.value[currentIndex]
+                if (currentIndex in 0..items.value.size && items.value.isNotEmpty()) {
+                    items.value[currentIndex]
                 } else {
                     MediaStoreData.dummyItem
                 }
@@ -144,23 +146,23 @@ private fun SingleTrashedPhotoViewImpl(
     val context = LocalContext.current
     LaunchedEffect(runPermaDeleteAction.value) {
         if (runPermaDeleteAction.value) withContext(Dispatchers.IO) {
-            permanentlyDeletePhotoList(context, listOf(mediaItem.uri))
+            permanentlyDeletePhotoList(context, listOf(mediaItem.uri.toUri()))
 
             runPermaDeleteAction.value = false
         }
     }
 
     val state = rememberPagerState(
-        initialPage = currentIndex.coerceIn(0, mediaStoreData.value.size)
+        initialPage = currentIndex.coerceIn(0, items.value.size)
     ) {
-        mediaStoreData.value.size
+        items.value.size
     }
 
     val coroutineScope = rememberCoroutineScope()
     fun onMoveMedia() {
         coroutineScope.launch {
             state.animateScrollToPage(
-                page = (currentIndex + 1) % mediaStoreData.value.size,
+                page = (currentIndex + 1) % items.value.size,
                 animationSpec = AnimationConstants.expressiveTween(
                     durationMillis = AnimationConstants.DURATION
                 )
@@ -252,7 +254,7 @@ private fun SingleTrashedPhotoViewImpl(
             }
 
             HorizontalImageList(
-                groupedMedia = mediaStoreData.value,
+                groupedMedia = items.value.map { PhotoLibraryUIModel.Media(it) },
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
@@ -304,7 +306,7 @@ private fun BottomBar(
                     FilledIconButton(
                         onClick = {
                             shareImage(
-                                uri = item.uri,
+                                uri = item.uri.toUri(),
                                 context = context,
                                 mimeType = item.mimeType
                             )
@@ -336,7 +338,7 @@ private fun BottomBar(
                 val applicationDatabase = LocalAppDatabase.current
 
                 GetPermissionAndRun(
-                    uris = listOf(item.uri),
+                    uris = listOf(item.uri.toUri()),
                     shouldRun = runRestoreAction,
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {

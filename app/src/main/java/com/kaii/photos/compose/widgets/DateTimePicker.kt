@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
@@ -44,10 +45,9 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmCancelRow
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
-import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -120,30 +120,22 @@ fun DateTimePicker(
         val context = LocalContext.current
         val resources = LocalResources.current
         val mainViewModel = LocalMainViewModel.current
-        val mediaDao = LocalAppDatabase.current.mediaEntityDao()
+        val mediaDao = LocalAppDatabase.current.mediaDao()
         val coroutineScope = rememberCoroutineScope()
 
         var selectedTime by remember { mutableStateOf(dateTime.time) }
         val getPermission = remember { mutableStateOf(false) }
         GetPermissionAndRun(
-            uris = listOf(mediaItem.uri),
+            uris = listOf(mediaItem.uri.toUri()),
             shouldRun = getPermission,
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
                     val dateTime = selectedDate.atTime(selectedTime).toInstant(timeZone = TimeZone.currentSystemDefault()).epochSeconds
 
-                    mediaDao.deleteEntityById(mediaItem.id)
-                    mediaDao.insertEntity(
-                        MediaEntity(
-                            id = mediaItem.id,
-                            dateTaken = dateTime,
-                            mimeType = mediaItem.mimeType ?: "image/png", // videos aren't supported right now.
-                            displayName = mediaItem.displayName
-                        )
-                    )
+                    mediaDao.insert(mediaItem.copy(dateTaken = dateTime))
 
                     context.contentResolver.setDateForMedia(
-                        uri = mediaItem.uri,
+                        uri = mediaItem.uri.toUri(),
                         type = mediaItem.type,
                         dateTaken = dateTime,
                         overwriteLastModified = false

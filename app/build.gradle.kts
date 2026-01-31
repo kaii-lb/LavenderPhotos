@@ -120,8 +120,10 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.0")
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.rules)
+    implementation(libs.androidx.paging.common)
+    implementation(libs.androidx.paging.compose)
 
-    val media3Version = "1.9.0"
+    val media3Version = "1.9.1"
     implementation("androidx.media3:media3-transformer:$media3Version")
     implementation("androidx.media3:media3-effect:$media3Version")
     implementation("androidx.media3:media3-common:$media3Version")
@@ -132,6 +134,7 @@ dependencies {
     val roomVersion = "2.8.4"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
+    implementation("androidx.room:room-paging:${roomVersion}")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
     implementation("com.github.bumptech.glide:glide:5.0.5")

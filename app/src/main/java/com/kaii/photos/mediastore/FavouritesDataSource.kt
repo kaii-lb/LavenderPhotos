@@ -12,17 +12,12 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
-import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,8 +26,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
 
 private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
@@ -128,11 +121,7 @@ class FavouritesDataSource(
         val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
-        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
-        val allEntities = dao.getAll().associate { it.id to it.dateTaken } // map lookups are faster
-
-        val entitiesToBeInserted = mutableListOf<MediaEntity>() // bulk insert is faster
-        val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>() // maps are faster, AGAIN
+        val holderMap = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
             val id = cursor.getLong(idColNum)
@@ -148,27 +137,12 @@ class FavouritesDataSource(
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
                 else MediaType.Video
 
-            val possibleDateTaken = allEntities[id]
-
             val dateTaken =
                 when {
-                    possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
-
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
-                            entitiesToBeInserted.add(
-                                MediaEntity(
-                                    id = id,
-                                    dateTaken = exifDateTaken,
-                                    mimeType = mimeType,
-                                    displayName = displayName
-                                )
-                            )
-
-                            exifDateTaken
-                        }
+                        getDateTakenForMedia(absolutePath, dateModified)
                     }
 
                     dateAdded > 0L -> dateAdded
@@ -186,97 +160,24 @@ class FavouritesDataSource(
                 MediaStoreData(
                     type = type,
                     id = id,
-                    uri = uri,
+                    uri = uri.toString(),
                     mimeType = mimeType,
                     dateModified = dateModified,
                     dateTaken = dateTaken,
                     displayName = displayName,
                     absolutePath = absolutePath,
-                    size = size
+                    size = size,
+                    immichThumbnail = null,
+                    immichUrl = null,
+                    hash = null,
+                    customId = null
                 )
 
-            val day =
-                when (sortMode) {
-                    MediaItemSortMode.LastModified -> new.getLastModifiedDay()
-                    MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
-                    MediaItemSortMode.DateTaken -> new.getDateTakenDay()
-                    else -> 0L
-                }
-
-            holderMap.getOrPut(day) { mutableListOf() }.add(new)
+            holderMap.add(new)
         }
 
         cursor.close()
 
-        if (entitiesToBeInserted.isNotEmpty()) dao.insertAll(entitiesToBeInserted)
-
-        val sortedMap = holderMap.toSortedMap(compareByDescending { it })
-        val sorted = mutableListOf<MediaStoreData>()
-
-        if (sortMode == MediaItemSortMode.DisabledLastModified || sortMode == MediaItemSortMode.Disabled) {
-            return sortedMap.flatMap { it.value }.sortedByDescending { it.dateModified }
-        }
-
-        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        val today = calendar.timeInMillis / 1000
-        val daySeconds = 60 * 60 * 24
-        val yesterday = today - daySeconds
-
-        val todayString = context.resources.getString(R.string.today)
-        val yesterdayString = context.resources.getString(R.string.yesterday)
-
-        sortedMap.forEach { (day, items) ->
-            val title = when (day) {
-                today -> {
-                    todayString
-                }
-
-                yesterday -> {
-                    yesterdayString
-                }
-
-                else -> {
-                    formatDate(
-                        timestamp = day,
-                        sortBy = sortMode,
-                        format = displayDateFormat
-                    )
-                }
-            }
-
-            val sectionItem = SectionItem(
-                date = day,
-                childCount = items.size
-            )
-
-            val section =
-                MediaStoreData(
-                    type = MediaType.Section,
-                    dateModified = day,
-                    dateTaken = day,
-                    uri = "$title $day".toUri(),
-                    displayName = title,
-                    id = 0L,
-                    mimeType = null,
-                    section = sectionItem
-                )
-
-            sorted.add(section)
-
-            sorted.addAll(
-                items.sortedByDescending { item ->
-                    item.dateModified
-                }.onEach { it.section = sectionItem }
-            )
-        }
-
-        return sorted
+        return holderMap
     }
 }

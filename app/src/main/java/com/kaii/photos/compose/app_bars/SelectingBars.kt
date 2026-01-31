@@ -37,7 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
@@ -48,6 +48,7 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
@@ -57,8 +58,8 @@ import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +70,7 @@ private const val TAG = "com.kaii.photos.compose.app_bars.SelectingBars"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mediaCount: State<Int>,
     sectionCount: State<Int>,
     getAllMedia: () -> List<MediaStoreData>
@@ -121,14 +122,15 @@ fun IsSelectingBottomAppBar(
 @Composable
 fun SelectingBottomBarItems(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData.dummyItem
+            selectedItemsList.mapNotNull {
+                if (it is PhotoLibraryUIModel.Media && it.item != MediaStoreData.dummyItem) it.item
+                else null
             }
         }
     }
@@ -137,7 +139,7 @@ fun SelectingBottomBarItems(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri },
+                    uris = selectedItemsWithoutSection.map { it.uri.toUri() },
                     context = context,
                     hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
                 )
@@ -193,14 +195,14 @@ fun SelectingBottomBarItems(
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.fastMapNotNull { it.uri },
+        uris = selectedItemsWithoutSection.fastMap { it.uri.toUri() },
         shouldRun = runDeleteAction,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.fastMap { it.uri }
+                        list = selectedItemsWithoutSection.fastMap { it.uri.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
@@ -303,7 +305,7 @@ fun SelectingBottomBarItems(
 
     val appDatabase = LocalAppDatabase.current
     GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
+        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
         shouldRun = moveToSecureFolder,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {

@@ -7,10 +7,11 @@ import android.media.MediaMetadataRetriever
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -48,7 +49,7 @@ fun addSecuredCachedMediaThumbnail(
 
     val thumbnail =
         if (mediaItem.type == MediaType.Video) {
-            metadataRetriever.setDataSource(context, mediaItem.uri)
+            metadataRetriever.setDataSource(context, mediaItem.uri.toUri())
 
             metadataRetriever.getScaledFrameAtTime(
                 -1L,

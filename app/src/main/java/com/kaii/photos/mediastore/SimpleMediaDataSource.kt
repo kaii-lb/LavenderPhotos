@@ -2,96 +2,37 @@ package com.kaii.photos.mediastore
 
 import android.content.ContentUris
 import android.content.Context
-import android.database.ContentObserver
-import android.net.Uri
-import android.os.CancellationSignal
-import android.os.Handler
-import android.os.Looper
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
-import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.SQLiteQuery
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.getFileNameFromPath
 import com.kaii.photos.helpers.toBasePath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.launch
+import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 
-private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
+// private const val TAG = "com.kaii.photos.mediastore.SimpleMediaDataSource"
 
 /** Loads metadata from the media store for images and videos. */
-class MediaDataSource(
+class SimpleMediaDataSource(
     private val context: Context,
-    private val sqliteQuery: SQLiteQuery,
-    private val sortMode: MediaItemSortMode,
-    private val cancellationSignal: CancellationSignal,
-    private val displayDateFormat: DisplayDateFormat
+    private val sqliteQuery: SQLiteQuery
 ) {
     companion object {
-        val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
-
         private val PROJECTION =
             arrayOf(
                 MediaColumns._ID,
                 MediaColumns.DATA,
                 MediaColumns.DATE_TAKEN,
-                MediaColumns.DATE_ADDED,
                 MediaColumns.DATE_MODIFIED,
-                MediaColumns.MIME_TYPE,
-                MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
-                MediaColumns.SIZE
+                MediaColumns.SIZE,
+                MediaColumns.MIME_TYPE
             )
     }
-
-    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
-        val contentObserver =
-            object : ContentObserver(Handler(Looper.getMainLooper())) {
-                override fun onChange(selfChange: Boolean) {
-                    super.onChange(selfChange)
-                    launch(Dispatchers.IO) {
-                        runCatching {
-                            trySend(query())
-                        }
-                    }
-                }
-            }
-
-        context.contentResolver.registerContentObserver(
-            MEDIA_STORE_FILE_URI,
-            true,
-            contentObserver
-        )
-
-        launch(Dispatchers.IO) {
-            runCatching {
-                trySend(query())
-            }
-        }
-
-        cancellationSignal.setOnCancelListener {
-            try {
-                cancel("Cancelling MediaStoreDataSource channel because of exit signal...")
-                channel.close()
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-            }
-        }
-
-        awaitClose {
-            context.contentResolver.unregisterContentObserver(contentObserver)
-        }
-    }.conflate()
 
     fun query(): List<MediaStoreData> {
         Preconditions.checkArgument(
@@ -110,15 +51,13 @@ class MediaDataSource(
 
         val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
         val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
-        val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
-        val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
-        val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
 
-        val holderMap = mutableListOf<MediaStoreData>()
+        val items = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
             val absolutePath = cursor.getString(absolutePathColNum)
@@ -126,12 +65,10 @@ class MediaDataSource(
             if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) != true && sqliteQuery.basePaths != null) continue
 
             val id = cursor.getLong(idColNum)
-            val mimeType = cursor.getString(mimeTypeColNum)
             val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
-            val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
-            val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
+            val mimeType = cursor.getString(mimeTypeColumn)
 
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -141,11 +78,7 @@ class MediaDataSource(
                 when {
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
-                    type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified)
-                    }
-
-                    dateAdded > 0L -> dateAdded
+                    type == MediaType.Image -> getDateTakenForMedia(absolutePath, dateModified)
 
                     else -> {
                         dateModified
@@ -164,20 +97,20 @@ class MediaDataSource(
                     mimeType = mimeType,
                     dateModified = dateModified,
                     dateTaken = dateTaken,
-                    displayName = displayName,
+                    displayName = absolutePath.getFileNameFromPath(),
                     absolutePath = absolutePath,
                     size = size,
-                    customId = null,
                     immichUrl = null,
                     immichThumbnail = null,
-                    hash = null
+                    hash = null,
+                    customId = null
                 )
 
-            holderMap.add(new)
+            items.add(new)
         }
 
         cursor.close()
 
-        return holderMap
+        return items
     }
 }

@@ -43,7 +43,6 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +65,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
@@ -82,28 +82,28 @@ import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.mapToMediaItems
 
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
     showDialog: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    media: State<List<MediaStoreData>>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    media: LazyPagingItems<PhotoLibraryUIModel>,
     currentView: MutableState<BottomBarTab>,
     isFromMediaPicker: Boolean = false
 ) {
     val mediaCount = remember {
         derivedStateOf {
-            media.value.filter {
-                it.type != MediaType.Section
+            media.itemSnapshotList.filter {
+                it !is PhotoLibraryUIModel.Section
             }.size
         }
     }
     val sectionCount = remember {
         derivedStateOf {
-            media.value.size - mediaCount.value
+            media.itemSnapshotList.size - mediaCount.value
         }
     }
 
@@ -215,7 +215,7 @@ fun MainAppTopBar(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
                 sectionCount = sectionCount,
-                getAllMedia = { media.value }
+                getAllMedia = { media.itemSnapshotList.mapToMediaItems() }
             )
         },
     )
@@ -226,7 +226,7 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     currentView: MutableState<BottomBarTab>,
     tabs: List<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current

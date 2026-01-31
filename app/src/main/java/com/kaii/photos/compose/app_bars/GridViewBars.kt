@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.app_bars
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
@@ -17,7 +16,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,10 +33,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastDistinctBy
-import androidx.compose.ui.util.fastFilter
-import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
@@ -49,39 +46,32 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.getParentFromPath
-import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.permissions.favourites.rememberListFavouritesState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.mapToMediaItems
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.io.File
 
-private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
+// private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
     albumInfo: AlbumInfo,
-    media: State<List<MediaStoreData>>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     showDialog: MutableState<Boolean>,
     isMediaPicker: Boolean = false,
     onBackClick: () -> Unit
@@ -103,14 +93,12 @@ fun SingleAlbumViewTopBar(
 
     val mediaCount = remember {
         derivedStateOf {
-            media.value.filter {
-                it.type != MediaType.Section
-            }.size
+            pagingItems.itemSnapshotList.mapToMediaItems().size
         }
     }
     val sectionCount = remember {
         derivedStateOf {
-            media.value.size - mediaCount.value
+            pagingItems.itemSnapshotList.size - mediaCount.value
         }
     }
 
@@ -303,7 +291,7 @@ fun SingleAlbumViewTopBar(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
                 sectionCount = sectionCount,
-                getAllMedia = { media.value }
+                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
             )
         }
     }
@@ -312,7 +300,7 @@ fun SingleAlbumViewTopBar(
 @Composable
 fun SingleAlbumViewBottomBar(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     incomingIntent: Intent? = null
 ) {
     if (incomingIntent == null) {
@@ -336,8 +324,8 @@ fun SingleAlbumViewBottomBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridViewTopBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: State<List<MediaStoreData>>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
@@ -349,7 +337,7 @@ fun TrashedPhotoGridViewTopBar(
         if (runEmptyTrashAction.value) {
             permanentlyDeletePhotoList(
                 context = context,
-                list = groupedMedia.value.filter { it.type != MediaType.Section }.map { it.uri }
+                list = pagingItems.itemSnapshotList.mapToMediaItems().map { it.uri.toUri() }
             )
 
             runEmptyTrashAction.value = false
@@ -373,14 +361,12 @@ fun TrashedPhotoGridViewTopBar(
 
     val mediaCount = remember {
         derivedStateOf {
-            groupedMedia.value.filter {
-                it.type != MediaType.Section
-            }.size
+            pagingItems.itemSnapshotList.mapToMediaItems().size
         }
     }
     val sectionCount = remember {
         derivedStateOf {
-            groupedMedia.value.size - mediaCount.value
+            pagingItems.itemSnapshotList.size - mediaCount.value
         }
     }
 
@@ -441,7 +427,7 @@ fun TrashedPhotoGridViewTopBar(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
                 sectionCount = sectionCount,
-                getAllMedia = { groupedMedia.value }
+                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
             )
         }
     }
@@ -449,7 +435,7 @@ fun TrashedPhotoGridViewTopBar(
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     incomingIntent: Intent?
 ) {
     if (incomingIntent == null) {
@@ -469,15 +455,16 @@ fun TrashedPhotoGridViewBottomBar(
 
 @Composable
 fun TrashPhotoGridBottomBarItems(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData()
+            selectedItemsList.mapNotNull {
+                if (it is PhotoLibraryUIModel.Media && it != MediaStoreData.dummyItem) it.item
+                else null
             }
         }
     }
@@ -486,7 +473,7 @@ fun TrashPhotoGridBottomBarItems(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri },
+                    uris = selectedItemsWithoutSection.map { it.uri.toUri() },
                     context = context,
                     hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
                 )
@@ -505,7 +492,7 @@ fun TrashPhotoGridBottomBarItems(
     val mainViewModel = LocalMainViewModel.current
     val applicationDatabase = LocalAppDatabase.current
     GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
+        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
         shouldRun = runRestoreAction,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
@@ -546,8 +533,8 @@ fun TrashPhotoGridBottomBarItems(
     LaunchedEffect(runPermaDeleteAction.value) {
         if (runPermaDeleteAction.value) {
             permanentlyDeletePhotoList(
-                context,
-                selectedItemsWithoutSection.map { it.uri }
+                context = context,
+                list = selectedItemsWithoutSection.map { it.uri.toUri() }
             )
 
             selectedItemsList.clear()
@@ -582,8 +569,8 @@ fun TrashPhotoGridBottomBarItems(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecureFolderViewTopAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    media: State<List<MediaStoreData>>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     onBackClicked: () -> Unit
 ) {
     val show by remember {
@@ -594,14 +581,14 @@ fun SecureFolderViewTopAppBar(
 
     val mediaCount = remember {
         derivedStateOf {
-            media.value.filter {
-                it.type != MediaType.Section
+            pagingItems.itemSnapshotList.filter {
+                it is PhotoLibraryUIModel.Media
             }.size
         }
     }
     val sectionCount = remember {
         derivedStateOf {
-            media.value.size - mediaCount.value
+            pagingItems.itemSnapshotList.size - mediaCount.value
         }
     }
 
@@ -647,7 +634,7 @@ fun SecureFolderViewTopAppBar(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
                 sectionCount = sectionCount,
-                getAllMedia = { media.value }
+                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
             )
         }
     }
@@ -655,8 +642,8 @@ fun SecureFolderViewTopAppBar(
 
 @Composable
 fun SecureFolderViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    groupedMedia: MutableState<List<MediaStoreData>>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     isGettingPermissions: MutableState<Boolean>
 ) {
     IsSelectingBottomAppBar {
@@ -664,13 +651,11 @@ fun SecureFolderViewBottomAppBar(
         val resources = LocalResources.current
         val coroutineScope = rememberCoroutineScope()
 
-        val selectedItemsWithoutSection by remember {
-            derivedStateOf {
-                selectedItemsList.filter {
-                    it.type != MediaType.Section
-                }
-            }
-        }
+        // val selectedItemsWithoutSection by remember {
+        //     derivedStateOf {
+        //         selectedItemsList.mapToMediaItems()
+        //     }
+        // }
 
         var showLoadingDialog by remember { mutableStateOf(false) }
         var loadingDialogTitle by remember { mutableStateOf(resources.getString(R.string.secure_decrypting)) }
@@ -691,25 +676,26 @@ fun SecureFolderViewBottomAppBar(
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
 
-                        selectedItemsWithoutSection.forEach { item ->
-                            val iv = item.bytes?.getIv()
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
-                                return@async
-                            }
-
-                            val originalFile = File(item.absolutePath)
-                            val cachedFile = File(context.cacheDir, item.displayName)
-
-                            EncryptionManager.decryptInputStream(
-                                inputStream = originalFile.inputStream(),
-                                outputStream = cachedFile.outputStream(),
-                                iv = iv
-                            )
-
-                            cachedFile.deleteOnExit()
-                            cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
-                        }
+                        // TODO
+                        // selectedItemsWithoutSection.forEach { item ->
+                        //     val iv = item.bytes?.getIv()
+                        //     if (iv == null) {
+                        //         Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
+                        //         return@async
+                        //     }
+                        //
+                        //     val originalFile = File(item.absolutePath)
+                        //     val cachedFile = File(context.cacheDir, item.displayName)
+                        //
+                        //     EncryptionManager.decryptInputStream(
+                        //         inputStream = originalFile.inputStream(),
+                        //         outputStream = cachedFile.outputStream(),
+                        //         iv = iv
+                        //     )
+                        //
+                        //     cachedFile.deleteOnExit()
+                        //     cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
+                        // }
 
                         showLoadingDialog = false
 
@@ -724,51 +710,52 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
+        // val mainViewModel = LocalMainViewModel.current
         val showRestoreDialog = remember { mutableStateOf(false) }
         val runRestoreAction = remember { mutableStateOf(false) }
-        val restoredFilesDir = remember { context.appRestoredFilesDir }
 
-        val mainViewModel = LocalMainViewModel.current
-        val applicationDatabase = LocalAppDatabase.current
-        GetDirectoryPermissionAndRun(
-            absoluteDirPaths =
-                selectedItemsWithoutSection.fastMap {
-                    it.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir
-                }.fastDistinctBy {
-                    it
-                },
-            shouldRun = runRestoreAction,
-            onGranted = { grantedList ->
-                mainViewModel.launch(Dispatchers.IO) {
-                    val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
-                        (selected.bytes?.getOriginalPath()?.getParentFromPath()
-                            ?: restoredFilesDir) in grantedList
-                    }
-
-                    val newList = groupedMedia.value.toMutableList()
-
-                    moveImageOutOfLockedFolder(
-                        list = hasPermission,
-                        context = context,
-                        applicationDatabase = applicationDatabase
-                    ) {
-                        showLoadingDialog = false
-                        isGettingPermissions.value = false
-                    }
-
-                    newList.removeAll(selectedItemsList.fastFilter { selected ->
-                        selected.section in hasPermission.fastMap { it.section }
-                    }.toSet())
-
-                    selectedItemsList.clear()
-                    groupedMedia.value = newList
-                }
-            },
-            onRejected = {
-                isGettingPermissions.value = false
-                showLoadingDialog = false
-            }
-        )
+        // TODO
+        // val restoredFilesDir = remember { context.appRestoredFilesDir }
+        // val applicationDatabase = LocalAppDatabase.current
+        // GetDirectoryPermissionAndRun(
+        //     absoluteDirPaths =
+        //         selectedItemsWithoutSection.fastMap {
+        //             it.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir
+        //         }.fastDistinctBy {
+        //             it
+        //         },
+        //     shouldRun = runRestoreAction,
+        //     onGranted = { grantedList ->
+        //         mainViewModel.launch(Dispatchers.IO) {
+        //             val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
+        //                 (selected.bytes?.getOriginalPath()?.getParentFromPath()
+        //                     ?: restoredFilesDir) in grantedList
+        //             }
+        //
+        //             val newList = groupedMedia.value.toMutableList()
+        //
+        //             moveImageOutOfLockedFolder(
+        //                 list = hasPermission,
+        //                 context = context,
+        //                 applicationDatabase = applicationDatabase
+        //             ) {
+        //                 showLoadingDialog = false
+        //                 isGettingPermissions.value = false
+        //             }
+        //
+        //             newList.removeAll(selectedItemsList.fastFilter { selected ->
+        //                 selected.section in hasPermission.fastMap { it.section }
+        //             }.toSet())
+        //
+        //             selectedItemsList.clear()
+        //             groupedMedia.value = newList
+        //         }
+        //     },
+        //     onRejected = {
+        //         isGettingPermissions.value = false
+        //         showLoadingDialog = false
+        //     }
+        // )
 
         ConfirmationDialog(
             showDialog = showRestoreDialog,
@@ -802,36 +789,37 @@ fun SecureFolderViewBottomAppBar(
                 loadingDialogTitle = "Deleting Files"
                 showLoadingDialog = true
 
-                mainViewModel.launch(Dispatchers.IO) {
-                    val newList = groupedMedia.value.toMutableList()
-
-                    permanentlyDeleteSecureFolderImageList(
-                        list = selectedItemsWithoutSection.map { it.absolutePath },
-                        context = context
-                    )
-
-
-                    selectedItemsWithoutSection.forEach {
-                        newList.remove(it)
-                    }
-
-                    newList.filter {
-                        it.type == MediaType.Section
-                    }.forEach { item ->
-                        // remove sections which no longer have any children
-                        val filtered = newList.filter { newItem ->
-                            newItem.getLastModifiedDay() == item.getLastModifiedDay()
-                        }
-
-                        if (filtered.size == 1) newList.remove(item)
-                    }
-
-                    selectedItemsList.clear()
-                    groupedMedia.value = newList
-
-                    showLoadingDialog = false
-                    runPermaDeleteAction.value = false
-                }
+                // TODO
+                // mainViewModel.launch(Dispatchers.IO) {
+                //     val newList = groupedMedia.value.toMutableList()
+                //
+                //     permanentlyDeleteSecureFolderImageList(
+                //         list = selectedItemsWithoutSection.map { it.absolutePath },
+                //         context = context
+                //     )
+                //
+                //
+                //     selectedItemsWithoutSection.forEach {
+                //         newList.remove(it)
+                //     }
+                //
+                //     newList.filter {
+                //         it.type == MediaType.Section
+                //     }.forEach { item ->
+                //         // remove sections which no longer have any children
+                //         val filtered = newList.filter { newItem ->
+                //             newItem.getLastModifiedDay() == item.getLastModifiedDay()
+                //         }
+                //
+                //         if (filtered.size == 1) newList.remove(item)
+                //     }
+                //
+                //     selectedItemsList.clear()
+                //     groupedMedia.value = newList
+                //
+                //     showLoadingDialog = false
+                //     runPermaDeleteAction.value = false
+                // }
             }
         }
 
@@ -860,8 +848,8 @@ fun SecureFolderViewBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesViewTopAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    media: State<List<MediaStoreData>>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     onBackClick: () -> Unit
 ) {
     val show by remember {
@@ -872,14 +860,14 @@ fun FavouritesViewTopAppBar(
 
     val mediaCount = remember {
         derivedStateOf {
-            media.value.filter {
-                it.type != MediaType.Section
+            pagingItems.itemSnapshotList.filter {
+                it !is PhotoLibraryUIModel.Section
             }.size
         }
     }
     val sectionCount = remember {
         derivedStateOf {
-            media.value.size - mediaCount.value
+            pagingItems.itemSnapshotList.size - mediaCount.value
         }
     }
 
@@ -922,7 +910,7 @@ fun FavouritesViewTopAppBar(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
                 sectionCount = sectionCount,
-                getAllMedia = { media.value }
+                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
             )
         }
     }
@@ -930,7 +918,7 @@ fun FavouritesViewTopAppBar(
 
 @Composable
 fun FavouritesViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     incomingIntent: Intent?
 ) {
     if (incomingIntent == null) {
@@ -952,7 +940,7 @@ fun FavouritesViewBottomAppBar(
 
 @Composable
 fun FavouritesBottomAppBarItems(
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -961,9 +949,7 @@ fun FavouritesBottomAppBarItems(
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section
-            }
+            selectedItemsList.mapToMediaItems()
         }
     }
 
@@ -971,7 +957,7 @@ fun FavouritesBottomAppBarItems(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri },
+                    uris = selectedItemsWithoutSection.map { it.uri.toUri() },
                     context = context,
                     hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
                 )
@@ -1017,7 +1003,7 @@ fun FavouritesBottomAppBarItems(
         coroutineScope.launch {
             favState.setFavourite(
                 favourite = false,
-                list = selectedItemsWithoutSection.map { it.uri }
+                list = selectedItemsWithoutSection.map { it.uri.toUri() }
             )
         }
     }
@@ -1042,14 +1028,14 @@ fun FavouritesBottomAppBarItems(
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
+        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
         shouldRun = runTrashAction,
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.fastMap { it.uri }
+                        list = selectedItemsWithoutSection.map { it.uri.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
@@ -1071,7 +1057,8 @@ fun FavouritesBottomAppBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
         coroutineScope.launch {
-            selectedItemsList.forEach {
+            // TODO: bulk delete
+            selectedItemsWithoutSection.forEach {
                 dao.deleteEntityById(it.id)
             }
             runTrashAction.value = true
@@ -1084,7 +1071,8 @@ fun FavouritesBottomAppBarItems(
                 showDeleteDialog.value = true
             } else {
                 coroutineScope.launch {
-                    selectedItemsList.forEach {
+                    // TODO: bulk delete
+                    selectedItemsWithoutSection.forEach {
                         dao.deleteEntityById(it.id)
                     }
                     runTrashAction.value = true

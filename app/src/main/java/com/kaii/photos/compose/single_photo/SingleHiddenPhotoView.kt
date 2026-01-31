@@ -82,20 +82,18 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareSecuredImage
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -200,7 +198,7 @@ fun SingleHiddenPhotoView(
             if (index != groupedMedia.value.size) {
                 groupedMedia.value[index]
             } else {
-                MediaStoreData(
+                MediaStoreData.dummyItem.copy(
                     displayName = resources.getString(R.string.media_broken)
                 )
             }
@@ -248,7 +246,7 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                groupedMedia = groupedMedia.value,
+                groupedMedia = groupedMedia.value.map { PhotoLibraryUIModel.Media(it) },
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
@@ -308,7 +306,7 @@ private fun BottomBar(
     }
 
     GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(item.bytes?.getOriginalPath()?.getParentFromPath() ?: context.appRestoredFilesDir),
+        absoluteDirPaths = emptyList(), // TODO listOf(item.bytes?.getOriginalPath()?.getParentFromPath() ?: context.appRestoredFilesDir),
         shouldRun = runRestoreAction,
         onGranted = { _ ->
             mainViewModel.launch(Dispatchers.IO) {

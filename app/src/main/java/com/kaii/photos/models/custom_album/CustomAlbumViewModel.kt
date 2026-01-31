@@ -7,10 +7,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
+import com.kaii.photos.models.multi_album.mapToMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
@@ -44,6 +49,17 @@ class CustomAlbumViewModel(
             initialValue = emptyList()
         )
     }
+
+    // TODO
+    val mediaPagingFlow = Pager(
+        config = PagingConfig(
+            pageSize = 80,
+            prefetchDistance = 40,
+            enablePlaceholders = true,
+            initialLoadSize = 80
+        ),
+        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
+    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
 
     private fun getMediaDataFlow() = derivedStateOf {
         mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)

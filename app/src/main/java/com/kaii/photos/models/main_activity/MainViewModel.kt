@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.LookAndFeel
@@ -24,7 +25,6 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaDataSource
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.CoroutineDispatcher

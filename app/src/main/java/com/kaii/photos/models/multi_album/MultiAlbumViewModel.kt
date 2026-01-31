@@ -1,30 +1,27 @@
 package com.kaii.photos.models.multi_album
 
 import android.content.Context
-import android.os.CancellationSignal
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.core.net.toUri
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
+import androidx.paging.map
 import com.kaii.photos.R
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.SectionItem
 import com.kaii.photos.helpers.formatDate
-import com.kaii.photos.mediastore.MediaDataSource
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getSQLiteQuery
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
+import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.Locale
-import kotlin.time.Duration.Companion.seconds
 
 // private const val TAG = "com.kaii.photos.models.MultiAlbumViewModel"
 
@@ -34,35 +31,23 @@ class MultiAlbumViewModel(
     var sortMode: MediaItemSortMode,
     var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
-    private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(
-        initDataSource(
-            context = context,
-            album = albumInfo,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
-    )
+    val mediaFlow = Pager(
+        config = PagingConfig(
+            pageSize = 80,
+            prefetchDistance = 40,
+            enablePlaceholders = true,
+            initialLoadSize = 80
+        ),
+        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
+    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
 
-    val mediaFlow by derivedStateOf {
-        getMediaDataFlow().value.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = 300.seconds.inWholeMilliseconds
-            ),
-            initialValue = emptyList()
-        )
-    }
+    // TODO
+    // fun cancelMediaFlow() {
+    //     cancellationSignal.cancel()
+    //     cancellationSignal = CancellationSignal()
+    // }
 
-    private fun getMediaDataFlow() = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-    }
-
-    fun cancelMediaFlow() {
-        cancellationSignal.cancel()
-        cancellationSignal = CancellationSignal()
-    }
-
+    // TODO
     fun update(
         context: Context,
         album: AlbumInfo
@@ -88,14 +73,7 @@ class MultiAlbumViewModel(
         this.sortMode = sortMode
         this.displayDateFormat = displayDateFormat
 
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = album,
-                sortMode = sortMode,
-                displayDateFormat = displayDateFormat
-            )
+        // cancelMediaFlow()
     }
 
     fun changeSortMode(
@@ -106,14 +84,7 @@ class MultiAlbumViewModel(
 
         this.sortMode = sortMode
 
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = this.albumInfo,
-                sortMode = sortMode,
-                displayDateFormat = this.displayDateFormat
-            )
+        // cancelMediaFlow()
     }
 
     fun changeDisplayDateFormat(
@@ -124,41 +95,47 @@ class MultiAlbumViewModel(
 
         this.displayDateFormat = displayDateFormat
 
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = this.albumInfo,
-                sortMode = this.sortMode,
-                displayDateFormat = displayDateFormat
-            )
-    }
-
-    private fun initDataSource(
-        context: Context,
-        album: AlbumInfo,
-        sortMode: MediaItemSortMode,
-        displayDateFormat: DisplayDateFormat
-    ) = run {
-        val query = getSQLiteQuery(album.paths)
-
-        this.albumInfo = album
-        this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
-
-        MediaDataSource(
-            context = context,
-            sqliteQuery = query,
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
-        )
+        // cancelMediaFlow()
     }
 
     override fun onCleared() {
         super.onCleared()
-        cancelMediaFlow()
+        // cancelMediaFlow()
     }
+}
+
+fun Flow<PagingData<MediaStoreData>>.mapToMedia(
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat
+) = this.map { pagingData ->
+    pagingData
+        .map {
+            PhotoLibraryUIModel.Media(it)
+        }
+        .insertSeparators { before, after ->
+            val beforeDate = before?.item?.getDateTakenDay() // TODO
+            val afterDate = after?.item?.getDateTakenDay()
+
+            when {
+                beforeDate == null && afterDate != null -> PhotoLibraryUIModel.Section(
+                    title = formatDate(
+                        timestamp = afterDate,
+                        sortBy = sortMode,
+                        format = format
+                    )
+                )
+
+                beforeDate != afterDate && afterDate != null -> PhotoLibraryUIModel.Section(
+                    title = formatDate(
+                        timestamp = afterDate,
+                        sortBy = sortMode,
+                        format = format
+                    )
+                )
+
+                else -> null
+            }
+        }
 }
 
 /** Groups photos by date */
@@ -167,7 +144,7 @@ fun groupPhotosBy(
     sortBy: MediaItemSortMode = MediaItemSortMode.DateTaken,
     displayDateFormat: DisplayDateFormat,
     context: Context
-): List<MediaStoreData> {
+): List<PhotoLibraryUIModel> {
     if (media.isEmpty()) return emptyList()
 
     val sortedList =
@@ -183,7 +160,7 @@ fun groupPhotosBy(
             }
         }
 
-    if (sortBy == MediaItemSortMode.Disabled) return sortedList
+    if (sortBy == MediaItemSortMode.Disabled) return sortedList.fastMap { PhotoLibraryUIModel.Media(it) }
 
     val grouped = sortedList.groupBy { item ->
         when (sortBy) {
@@ -221,7 +198,7 @@ fun groupPhotosBy(
     val daySeconds = 60 * 60 * 24
     val yesterday = today - daySeconds
 
-    val mediaItems = mutableListOf<MediaStoreData>()
+    val mediaItems = mutableListOf<PhotoLibraryUIModel>()
     val todayString = context.resources.getString(R.string.today)
     val yesterdayString = context.resources.getString(R.string.yesterday)
     sortedMap.forEach { (sectionTime, children) ->
@@ -243,32 +220,16 @@ fun groupPhotosBy(
             }
         }
 
-        val section = SectionItem(date = sectionTime, childCount = children.size)
-        mediaItems.add(listSection(sectionKey, sectionTime, children.size))
+        mediaItems.add(PhotoLibraryUIModel.Section(title = sectionKey))
+        // mediaItems.add(listSection(sectionKey, sectionTime, children.size))
 
-        mediaItems.addAll(
-            children.onEach {
-                it.section = section
-            }
-        )
+        mediaItems.addAll(children.fastMap { PhotoLibraryUIModel.Media(it) })
+        // TODO
+        // val section = SectionItem(date = sectionTime, childCount = children.size)
+        // children.onEach {
+        //     it.section = section
+        // }
     }
 
     return mediaItems
-}
-
-private fun listSection(title: String, key: Long, childCount: Int): MediaStoreData {
-    val mediaSection = MediaStoreData(
-        type = MediaType.Section,
-        dateModified = key,
-        dateTaken = key,
-        uri = "$title $key".toUri(),
-        displayName = title,
-        id = 0L,
-        mimeType = null,
-        section = SectionItem(
-            date = key,
-            childCount = childCount
-        )
-    )
-    return mediaSection
 }
