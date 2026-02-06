@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -36,10 +38,8 @@ import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.signature
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -53,7 +53,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HorizontalImageList(
-    groupedMedia: List<PhotoLibraryUIModel.Media>,
+    items: LazyPagingItems<PhotoLibraryUIModel>,
     state: PagerState,
     scrollState: SinglePhotoScrollState,
     window: Window,
@@ -67,22 +67,12 @@ fun HorizontalImageList(
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
         // beyondViewportPageCount = 5, // TODO: check this
-        key = {
-            if (groupedMedia.isNotEmpty() && it <= groupedMedia.size - 1) {
-                val neededItem = groupedMedia[it].item
-                neededItem.uri
-            } else {
-                System.currentTimeMillis()
-                    .toString() // this should be unique enough in case of failure right?
-            }
-        },
+        key = items.itemKey { it.itemKey() },
         snapPosition = SnapPosition.Center,
         userScrollEnabled = !scrollState.privacyMode && !scrollState.videoLock,
         modifier = Modifier
             .fillMaxHeight(1f)
     ) { index ->
-        if (groupedMedia.isEmpty()) return@HorizontalPager
-
         val zoomableState = rememberGlideZoomableState()
 
         if (state.settledPage != index) {
@@ -100,97 +90,99 @@ fun HorizontalImageList(
             }
         }
 
-        val mediaStoreItem = groupedMedia[index].item
+        val mediaStoreItem = (items[index] as? PhotoLibraryUIModel.MediaImpl)?.item
 
-        val motionPhoto = rememberMotionPhoto(uri = mediaStoreItem.uri.toUri())
+        if (mediaStoreItem != null) {
+            val motionPhoto = rememberMotionPhoto(uri = mediaStoreItem.uri.toUri())
 
-        if (mediaStoreItem.type == MediaType.Video) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(1f)
-            ) {
-                VideoPlayer(
-                    item = mediaStoreItem,
-                    appBarsVisible = appBarsVisible,
-                    shouldAutoPlay = videoAutoplay,
-                    scrollState = scrollState,
-                    window = window,
-                    shouldPlay = shouldPlay,
+            if (mediaStoreItem.type == MediaType.Video) {
+                Box(
                     modifier = Modifier
                         .fillMaxSize(1f)
-                        .transformable()
-                )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(1f)
-            ) {
-                // TODO
-                // val context = LocalContext.current
-                // var model by remember { mutableStateOf<Any?>(null) }
-
-                // LaunchedEffect(isHidden) {
-                //     if (!isHidden || model != null) return@LaunchedEffect
-                //
-                //     withContext(Dispatchers.IO) {
-                //         try {
-                //             val iv = mediaStoreItem.bytes!!.getIv()
-                //             val thumbnailIv = mediaStoreItem.bytes.getThumbnailIv()
-                //             val thumbnailFile = getSecuredCacheImageForFile(
-                //                 fileName = mediaStoreItem.displayName,
-                //                 context = context
-                //             )
-                //
-                //             if (thumbnailFile.length() > 1024*1024*10) { // don't decrypt thumbnail if file will load instantly anyway
-                //                 model = EncryptionManager.decryptBytes(
-                //                     bytes = thumbnailFile.readBytes(),
-                //                     iv = thumbnailIv
-                //                 )
-                //             }
-                //
-                //             model = EncryptionManager.decryptBytes(
-                //                 bytes = File(mediaStoreItem.absolutePath).readBytes(),
-                //                 iv = iv
-                //             )
-                //         } catch (e: Throwable) {
-                //             Log.d(TAG, e.toString())
-                //             e.printStackTrace()
-                //
-                //             mediaStoreItem.uri.path
-                //         }
-                //     }
-                // }
-
-                if (motionPhoto.isMotionPhoto.value) {
-                    MotionPhotoView(
-                        state = rememberMotionPhotoState(uri = motionPhoto.uri),
-                        zoomableState = zoomableState,
-                        appBarsVisible = appBarsVisible,
-                        window = window,
-                        glideImageView = @Composable { modifier ->
-                            GlideView(
-                                model = mediaStoreItem.uri, // TODO if (isHidden) model else mediaStoreItem.uri,
-                                item = mediaStoreItem,
-                                zoomableState = zoomableState,
-                                window = window,
-                                appBarsVisible = appBarsVisible,
-                                modifier = modifier,
-                                disableSetBarVisibility = true
-                            )
-                        }
-                    )
-                } else {
-                    GlideView(
-                        model = mediaStoreItem.uri, // TODO if (isHidden) model else mediaStoreItem.uri,
+                ) {
+                    VideoPlayer(
                         item = mediaStoreItem,
-                        zoomableState = zoomableState,
-                        window = window,
                         appBarsVisible = appBarsVisible,
-                        isHidden = isHidden,
+                        shouldAutoPlay = videoAutoplay,
+                        scrollState = scrollState,
+                        window = window,
+                        shouldPlay = shouldPlay,
                         modifier = Modifier
-                            .align(Alignment.Center)
+                            .fillMaxSize(1f)
+                            .transformable()
                     )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(1f)
+                ) {
+                    // TODO
+                    // val context = LocalContext.current
+                    // var model by remember { mutableStateOf<Any?>(null) }
+
+                    // LaunchedEffect(isHidden) {
+                    //     if (!isHidden || model != null) return@LaunchedEffect
+                    //
+                    //     withContext(Dispatchers.IO) {
+                    //         try {
+                    //             val iv = mediaStoreItem.bytes!!.getIv()
+                    //             val thumbnailIv = mediaStoreItem.bytes.getThumbnailIv()
+                    //             val thumbnailFile = getSecuredCacheImageForFile(
+                    //                 fileName = mediaStoreItem.displayName,
+                    //                 context = context
+                    //             )
+                    //
+                    //             if (thumbnailFile.length() > 1024*1024*10) { // don't decrypt thumbnail if file will load instantly anyway
+                    //                 model = EncryptionManager.decryptBytes(
+                    //                     bytes = thumbnailFile.readBytes(),
+                    //                     iv = thumbnailIv
+                    //                 )
+                    //             }
+                    //
+                    //             model = EncryptionManager.decryptBytes(
+                    //                 bytes = File(mediaStoreItem.absolutePath).readBytes(),
+                    //                 iv = iv
+                    //             )
+                    //         } catch (e: Throwable) {
+                    //             Log.d(TAG, e.toString())
+                    //             e.printStackTrace()
+                    //
+                    //             mediaStoreItem.uri.path
+                    //         }
+                    //     }
+                    // }
+
+                    if (motionPhoto.isMotionPhoto.value) {
+                        MotionPhotoView(
+                            state = rememberMotionPhotoState(uri = motionPhoto.uri),
+                            zoomableState = zoomableState,
+                            appBarsVisible = appBarsVisible,
+                            window = window,
+                            glideImageView = @Composable { modifier ->
+                                GlideView(
+                                    model = mediaStoreItem.uri, // TODO if (isHidden) model else mediaStoreItem.uri,
+                                    item = mediaStoreItem,
+                                    zoomableState = zoomableState,
+                                    window = window,
+                                    appBarsVisible = appBarsVisible,
+                                    modifier = modifier,
+                                    disableSetBarVisibility = true
+                                )
+                            }
+                        )
+                    } else {
+                        GlideView(
+                            model = mediaStoreItem.uri, // TODO if (isHidden) model else mediaStoreItem.uri,
+                            item = mediaStoreItem,
+                            zoomableState = zoomableState,
+                            window = window,
+                            appBarsVisible = appBarsVisible,
+                            isHidden = isHidden,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                        )
+                    }
                 }
             }
         }
@@ -263,30 +255,5 @@ fun GlideView(
                     .override(windowSize.width, windowSize.height)
             )
             .transition(withCrossFade(if (isHidden) 250 else 100))
-    }
-}
-
-/** deals with grouped media modifications, in this case removing stuff*/
-fun sortOutMediaMods(
-    item: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
-    coroutineScope: CoroutineScope,
-    state: PagerState,
-    popBackStackAction: () -> Unit
-) {
-    coroutineScope.launch {
-        val size = groupedMedia.value.size - 1
-        val scrollIndex = groupedMedia.value.indexOf(item)
-
-        val newMedia = groupedMedia.value.toMutableList()
-        newMedia.removeAt(scrollIndex)
-
-        groupedMedia.value = newMedia
-
-        if (size == 0) {
-            popBackStackAction()
-        } else {
-            state.animateScrollToPage((scrollIndex).coerceIn(0, size))
-        }
     }
 }

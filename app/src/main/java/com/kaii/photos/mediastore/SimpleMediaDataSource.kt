@@ -8,10 +8,9 @@ import android.provider.MediaStore.MediaColumns
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.getFileNameFromPath
-import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.helpers.filename
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 
 // private const val TAG = "com.kaii.photos.mediastore.SimpleMediaDataSource"
@@ -19,7 +18,8 @@ import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 /** Loads metadata from the media store for images and videos. */
 class SimpleMediaDataSource(
     private val context: Context,
-    private val sqliteQuery: SQLiteQuery
+    private val paths: List<String>,
+    private val reversed: Boolean
 ) {
     companion object {
         private val PROJECTION =
@@ -30,7 +30,8 @@ class SimpleMediaDataSource(
                 MediaColumns.DATE_MODIFIED,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.SIZE,
-                MediaColumns.MIME_TYPE
+                MediaColumns.MIME_TYPE,
+                MediaColumns.IS_FAVORITE
             )
     }
 
@@ -40,13 +41,20 @@ class SimpleMediaDataSource(
             "Can only query from a background thread"
         )
 
+        val query =
+            if (paths.isEmpty()) {
+                ""
+            } else {
+                "AND ${FileColumns.DATA} IN (${paths.joinToString(", ") { it }})"
+            }
+
         val cursor =
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
-                sqliteQuery.paths?.toTypedArray(),
-                "${MediaColumns.DATE_ADDED} DESC",
+                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})) " + query,
+                null,
+                "${MediaColumns.DATE_TAKEN} ${if (reversed) "ASC" else "DESC"}",
             ) ?: return emptyList()
 
         val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
@@ -56,19 +64,19 @@ class SimpleMediaDataSource(
         val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
         val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
+        val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
         val items = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
             val absolutePath = cursor.getString(absolutePathColNum)
 
-            if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) != true && sqliteQuery.basePaths != null) continue
-
             val id = cursor.getLong(idColNum)
             val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
             val dateModified = cursor.getLong(dateModifiedColumn)
             val size = cursor.getLong(sizeColumn)
             val mimeType = cursor.getString(mimeTypeColumn)
+            val isFavourite = cursor.getInt(favouritedColumn) == 1
 
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -97,13 +105,15 @@ class SimpleMediaDataSource(
                     mimeType = mimeType,
                     dateModified = dateModified,
                     dateTaken = dateTaken,
-                    displayName = absolutePath.getFileNameFromPath(),
+                    displayName = absolutePath.filename(),
                     absolutePath = absolutePath,
+                    parentPath = absolutePath.parent(),
                     size = size,
                     immichUrl = null,
                     immichThumbnail = null,
                     hash = null,
-                    customId = null
+                    customId = null,
+                    favourited = isFavourite
                 )
 
             items.add(new)
@@ -111,6 +121,6 @@ class SimpleMediaDataSource(
 
         cursor.close()
 
-        return items
+        return if (reversed) items.sortedBy { it.dateTaken } else items.sortedByDescending { it.dateTaken }
     }
 }

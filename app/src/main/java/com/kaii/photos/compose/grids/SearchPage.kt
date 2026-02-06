@@ -24,10 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
@@ -35,7 +35,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,13 +48,10 @@ fun SearchPage(
     searchViewModel: SearchViewModel,
     isMediaPicker: Boolean
 ) {
-    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    val mediaStoreData by searchViewModel.mediaFlow.collectAsStateWithLifecycle()
-    val groupedMedia = searchViewModel.groupedMedia.collectAsStateWithLifecycle()
-
+    val items = searchViewModel.mediaFlow.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
 
     Column(
@@ -74,7 +71,7 @@ fun SearchPage(
         var hideLoadingSpinner by remember { mutableStateOf(false) }
         val showLoadingSpinner by remember {
             derivedStateOf {
-                if (groupedMedia.value.isEmpty()) true else !hideLoadingSpinner
+                if (items.loadState.source == LoadState.Loading) true else !hideLoadingSpinner
             }
         }
 
@@ -133,16 +130,11 @@ fun SearchPage(
             }
         }
 
-        val context = LocalContext.current
         var hasFiles by remember { mutableStateOf(true) }
 
-        LaunchedEffect(searchedForText.value, mediaStoreData, sortMode) {
+        LaunchedEffect(searchedForText.value, sortMode) {
             if (searchedForText.value.isEmpty()) {
-                searchViewModel.search(
-                    search = "",
-                    context = context
-                )
-                searchViewModel.overrideMedia(media = mediaStoreData, context = context)
+                searchViewModel.search(query = "")
                 hideLoadingSpinner = true
                 return@LaunchedEffect
             }
@@ -151,15 +143,12 @@ fun SearchPage(
             hideLoadingSpinner = false
             hasFiles = true
 
-            searchViewModel.search(
-                search = searchedForText.value,
-                context = context
-            )
+            searchViewModel.search(query = searchedForText.value)
 
             hideLoadingSpinner = true
 
             delay(PhotoGridConstants.LOADING_TIME)
-            hasFiles = groupedMedia.value.isNotEmpty()
+            hasFiles = items.itemCount != 0
             gridState.requestScrollToItem(0)
         }
 
@@ -167,7 +156,7 @@ fun SearchPage(
             modifier = Modifier
                 .fillMaxHeight(1f)
         ) {
-            val pagingItems = searchViewModel.mediaPagingFlow.collectAsLazyPagingItems()
+            val pagingItems = searchViewModel.mediaFlow.collectAsLazyPagingItems()
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),

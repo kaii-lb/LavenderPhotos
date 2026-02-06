@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomAppBarDefaults.windowInsets
@@ -48,7 +47,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +71,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
@@ -84,33 +84,38 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.secure_folder.SecureFolderViewModel
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.single_photo.SingleHiddenPhotoView"
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RestrictedApi")
 @Composable
 fun SingleHiddenPhotoView(
-    mediaItemId: Long,
+    viewModel: SecureFolderViewModel,
+    index: Int,
     window: Window
 ) {
     window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = LocalNavController.current
-    val mainViewModel = LocalMainViewModel.current
 
     var lastLifecycleState by rememberSaveable {
         mutableStateOf(Lifecycle.State.STARTED)
@@ -124,7 +129,7 @@ fun SingleHiddenPhotoView(
 
     LaunchedEffect(hideSecureFolder) {
         if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SecureFolder.name
+            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
         ) {
             navController.navigate(MultiScreenViewType.MainScreen.name)
         }
@@ -136,7 +141,7 @@ fun SingleHiddenPhotoView(
 
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.SecureFolder.name
+                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
                             && !isGettingPermissions.value
                         ) {
@@ -165,41 +170,24 @@ fun SingleHiddenPhotoView(
 
     if (hideSecureFolder) return
 
-    val holderGroupedMedia =
-        mainViewModel.groupedMedia.collectAsState(initial = null).value ?: return
-
-    val mediaItem by remember {
-        derivedStateOf {
-            holderGroupedMedia.find {
-                it.id == mediaItemId
-            }
-        }
-    }
-
-    if (mediaItem == null) return
-
-    val groupedMedia = remember {
-        mutableStateOf(
-            holderGroupedMedia.filter { item ->
-                item.type != MediaType.Section
-            }
-        )
-    }
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
     val appBarsVisible = remember { mutableStateOf(true) }
     val state = rememberPagerState {
-        groupedMedia.value.size
+        items.itemCount
     }
 
     val resources = LocalResources.current
     val currentMediaItem by remember {
         derivedStateOf {
-            val index = state.layoutInfo.visiblePagesInfo.firstOrNull()?.index ?: 0
-            if (index != groupedMedia.value.size) {
-                groupedMedia.value[index]
+            if (index in 0..items.itemCount && items.itemCount != 0) {
+                items[index] as PhotoLibraryUIModel.SecuredMedia
             } else {
-                MediaStoreData.dummyItem.copy(
-                    displayName = resources.getString(R.string.media_broken)
+                PhotoLibraryUIModel.SecuredMedia(
+                    item = MediaStoreData.dummyItem.copy(
+                        displayName = resources.getString(R.string.media_broken)
+                    ),
+                    bytes = ByteArray(0)
                 )
             }
         }
@@ -211,7 +199,7 @@ fun SingleHiddenPhotoView(
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = currentMediaItem,
+                mediaItem = currentMediaItem.item,
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 isOpenWithDefaultView = false,
@@ -224,14 +212,10 @@ fun SingleHiddenPhotoView(
         bottomBar = {
             BottomBar(
                 visible = appBarsVisible.value,
-                item = currentMediaItem,
-                groupedMedia = groupedMedia,
-                state = state,
+                securedMedia = currentMediaItem,
                 privacyMode = scrollState.privacyMode,
                 isGettingPermissions = isGettingPermissions
-            ) {
-                navController.popBackStack()
-            }
+            )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
@@ -246,7 +230,7 @@ fun SingleHiddenPhotoView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalImageList(
-                groupedMedia = groupedMedia.value.map { PhotoLibraryUIModel.Media(it) },
+                items = items,
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
@@ -257,7 +241,7 @@ fun SingleHiddenPhotoView(
 
         if (showInfoDialog) {
             SingleSecurePhotoInfoDialog(
-                currentMediaItem = currentMediaItem,
+                currentMediaItem = currentMediaItem.item,
                 privacyMode = scrollState.privacyMode,
                 dismiss = {
                     showInfoDialog = false
@@ -266,27 +250,16 @@ fun SingleHiddenPhotoView(
             )
         }
     }
-
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(key1 = mediaItem) {
-        coroutineScope.launch {
-            state.scrollToPage(
-                if (groupedMedia.value.indexOf(mediaItem) >= 0) groupedMedia.value.indexOf(mediaItem) else 0
-            )
-        }
-    }
 }
 
+// TODO: handle 0 items left case
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BottomBar(
     visible: Boolean,
-    item: MediaStoreData,
-    groupedMedia: MutableState<List<MediaStoreData>>,
-    state: PagerState,
+    securedMedia: PhotoLibraryUIModel.SecuredMedia,
     privacyMode: Boolean,
-    isGettingPermissions: MutableState<Boolean>,
-    popBackStack: () -> Unit
+    isGettingPermissions: MutableState<Boolean>
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -295,7 +268,6 @@ private fun BottomBar(
 
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
-    val runRestoreAction = remember { mutableStateOf(false) }
 
     var showLoadingDialog by remember { mutableStateOf(false) }
     if (showLoadingDialog) {
@@ -305,27 +277,16 @@ private fun BottomBar(
         )
     }
 
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = emptyList(), // TODO listOf(item.bytes?.getOriginalPath()?.getParentFromPath() ?: context.appRestoredFilesDir),
-        shouldRun = runRestoreAction,
-        onGranted = { _ ->
+    val permissionManager = rememberDirectoryPermissionManager(
+        onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 moveImageOutOfLockedFolder(
-                    list = listOf(item),
+                    list = listOf(securedMedia),
                     context = context,
                     applicationDatabase = applicationDatabase
                 ) {
                     isGettingPermissions.value = false
                     showLoadingDialog = false
-                }
-
-                sortOutMediaMods(
-                    item,
-                    groupedMedia,
-                    coroutineScope,
-                    state
-                ) {
-                    popBackStack()
                 }
             }
         },
@@ -341,7 +302,13 @@ private fun BottomBar(
         confirmButtonLabel = stringResource(id = R.string.media_move)
     ) {
         isGettingPermissions.value = true
-        runRestoreAction.value = true
+
+        permissionManager.start(
+            directories = listOf(
+                securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
+            )
+        )
+
         showLoadingDialog = true
     }
 
@@ -353,18 +320,9 @@ private fun BottomBar(
     ) {
         mainViewModel.launch(Dispatchers.IO) {
             permanentlyDeleteSecureFolderImageList(
-                list = listOf(item.absolutePath),
+                list = listOf(securedMedia.item.absolutePath),
                 context = context
             )
-
-            sortOutMediaMods(
-                item,
-                groupedMedia,
-                coroutineScope,
-                state
-            ) {
-                popBackStack()
-            }
         }
     }
 
@@ -399,6 +357,7 @@ private fun BottomBar(
                     FilledIconButton(
                         onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
+                                val item = securedMedia.item
                                 showLoadingDialog = true
 
                                 val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)

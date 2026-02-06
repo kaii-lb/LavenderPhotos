@@ -1,11 +1,8 @@
 package com.kaii.photos.compose
 
-import android.content.Context
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
-import android.net.Uri
 import android.os.CancellationSignal
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +24,6 @@ import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,41 +39,18 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.helpers.AppDirectories
-import com.kaii.photos.helpers.DataAndBackupHelper
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
-import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getFileNameFromPath
-import com.kaii.photos.helpers.moveImageToLockedFolder
-import com.kaii.photos.helpers.relativePath
-import com.kaii.photos.helpers.toRelativePath
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.mediastore.getUriFromAbsolutePath
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.permissions.secure_folder.rememberSecureFolderManager
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.Path
-import kotlin.uuid.ExperimentalUuidApi
-
-private const val TAG = "com.kaii.photos.compose.LockedFolderEntryView"
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -86,193 +59,43 @@ fun LockedFolderEntryView() {
     val mainViewModel = LocalMainViewModel.current
 
     val context = LocalContext.current
-    val cancellationSignal = CancellationSignal()
+    val cancellationSignal = remember { CancellationSignal() }
 
     // TODO: move again to Android/data for space purposes
     // moves media from old dir to new dir for secure folder
-    var canOpenSecureFolder by remember { mutableStateOf(true) }
-
     var migrating by remember { mutableStateOf(false) }
+    var canOpenSecureFolder by remember { mutableStateOf(true) }
     var showExplanationForMigration by remember { mutableStateOf(false) }
 
-    val newFolderDirPermission = remember { mutableStateOf(false) }
-    val encryptionDirPermission = remember { mutableStateOf(false) }
-
-    val runEncryptAction = remember { mutableStateOf(false) }
-    val uriList = remember { mutableStateListOf<Uri>() }
-    val unencryptedFilesList = remember { mutableStateListOf<File>() }
-
-    var rerunMigration by remember { mutableStateOf(false) }
-
-    val applicationDatabase = LocalAppDatabase.current
+    val coroutineScope = rememberCoroutineScope()
     val resources = LocalResources.current
 
-    // migrate from old secure folder dir to new one
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(context.appRestoredFilesDir),
-        shouldRun = newFolderDirPermission,
+    val secureFolderManager = rememberSecureFolderManager()
+
+    val migrateEncryptedFilePM = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
-                val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
-                val oldFiles = oldDir.listFiles()
-
-                if (oldFiles == null || oldFiles.isEmpty()) return@launch
-
-                migrating = true
-                canOpenSecureFolder = false
-
-                Log.d(TAG, "Exporting backup of old secure folder items")
-
-                val helper = DataAndBackupHelper(applicationDatabase = applicationDatabase)
-                val success = helper.exportRawSecureFolderItems(
-                    context = context,
-                    secureFolder = oldDir
-                )
-
-                if (success) {
-                    val exportDir = helper.getRawExportDir(context = context)
-                    mainViewModel.settings.AlbumsList.add(
-                        listOf(
-                            AlbumInfo(
-                                id = exportDir.relativePath.hashCode(),
-                                name = exportDir.relativePath.split("/").last(),
-                                paths = listOf(exportDir.relativePath)
-                            )
-                        )
-                    )
-
-                    oldFiles.forEach {
-                        Log.d(TAG, "item in old dir ${it.name}")
-
-                        val destination = File(context.appSecureFolderDir, it.name)
-                        if (!destination.exists()) {
-                            it.copyTo(destination)
-                            it.delete()
-                        }
-                    }
-
-                    showExplanationForMigration = true
-                } else {
-                    LavenderSnackbarController.pushEvent(
-                        @OptIn(ExperimentalUuidApi::class)
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = resources.getString(R.string.secure_export_failed),
-                            icon = R.drawable.error_2,
-                            duration = SnackbarDuration.Long
-                        )
-                    )
-                }
-
-                migrating = false
-                canOpenSecureFolder = true
-
-                rerunMigration = true
-            }
-        },
-        onRejected = {}
-    )
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(context.appRestoredFilesDir),
-        shouldRun = encryptionDirPermission,
-        onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
-                if (unencryptedFilesList.isEmpty()) return@launch
-
-                migrating = true
-                canOpenSecureFolder = false
-
-                val restoredFilesDir = context.appRestoredFilesDir
-
-                val uris = unencryptedFilesList.mapNotNull { file ->
-                    val destination = File(restoredFilesDir, file.name)
-                    if (!destination.exists()) {
-                        file.copyTo(destination)
-                    }
-
-                    val uri = context.contentResolver.getUriFromAbsolutePath(
-                        absolutePath = destination.absolutePath,
-                        type =
-                            if (Files.probeContentType(Path(destination.absolutePath)).startsWith("image")) MediaType.Image
-                            else MediaType.Video
-                    )
-
-                    Log.d(TAG, "Uri for file ${file.name} is $uri")
-
-                    uri
-                }
-
-                if (uris.isEmpty()) {
+            mainViewModel.launch {
+                secureFolderManager.migrateFromUnencrypted {
                     migrating = false
-                    return@launch
+                    canOpenSecureFolder = true
                 }
-
-                Log.d(TAG, "Starting encryption process...")
-
-                uriList.clear()
-                uriList.addAll(uris)
-
-                runEncryptAction.value = true
             }
-        },
-        onRejected = {}
+        }
     )
 
-    val coroutineScope = rememberCoroutineScope()
-    GetPermissionAndRun(
-        uris = uriList,
-        shouldRun = runEncryptAction,
+    val migrateUnencryptedDirectoryPM = rememberDirectoryPermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
-                val mediaItems = uriList.mapNotNull { uri ->
-                    context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)
-                }
+            mainViewModel.launch {
+                migrating = true
+                canOpenSecureFolder = false
 
-                Log.d(TAG, "Creating a backup of the secure folder media...")
-                copyImageListToPath(
-                    list = mediaItems,
-                    context = context,
-                    destination = context.appRestoredFilesDir,
-                    overwriteDate = true,
-                    basePath = baseInternalStorageDirectory,
-                    overrideDisplayName = { displayName ->
-                        val extension = displayName.replaceBeforeLast(".", "")
-
-                        val name = displayName.replace(extension, ".backup")
-                        Log.d(TAG, "Final name of file is $name")
-                        name
-                    },
-                    onSingleItemDone = { _ -> }
-                )
-
-                val path = context.appRestoredFilesDir.toRelativePath()
-                mainViewModel.settings.AlbumsList.add(
-                    listOf(
-                        AlbumInfo(
-                            id = path.hashCode(),
-                            name = path.getFileNameFromPath(),
-                            paths = listOf(path)
-                        )
-                    )
-                )
-
-                Log.d(TAG, "Encrypting secure folder media...")
-                moveImageToLockedFolder(
-                    list = mediaItems,
-                    context = context,
-                    applicationDatabase = applicationDatabase,
-                    onDone = {
-                        migrating = false
-                        canOpenSecureFolder = true
-                        showExplanationForMigration = true
-                    }
-                )
+                secureFolderManager.setupMigrationFromUnencrypted()
+                migrateEncryptedFilePM.get(uris = secureFolderManager.uris)
             }
         },
         onRejected = {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
-                    @OptIn(ExperimentalUuidApi::class)
                     LavenderSnackbarEvents.MessageEvent(
                         message = resources.getString(R.string.secure_encryption_failed_no_permission),
                         icon = R.drawable.error_2,
@@ -283,38 +106,23 @@ fun LockedFolderEntryView() {
         }
     )
 
-    LaunchedEffect(rerunMigration) {
-        withContext(Dispatchers.IO) {
-            val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
-            if (oldDir.listFiles()?.isNotEmpty() == true) {
-                newFolderDirPermission.value = true
+    val migrateOldDirectoryPM = rememberDirectoryPermissionManager(
+        onGranted = {
+            mainViewModel.launch {
+                migrating = true
+                canOpenSecureFolder = false
+
+                secureFolderManager.migrateFromOldDirectory()
+
+                migrating = false
+                canOpenSecureFolder = true
             }
+        }
+    )
 
-            while (newFolderDirPermission.value) {
-                delay(100)
-            }
-
-            val maybeUnencryptedDir = File(context.appSecureFolderDir)
-            val maybeUnencryptedDirChildren = maybeUnencryptedDir.listFiles()
-
-            val unencryptedDirChildren = maybeUnencryptedDirChildren?.filter {
-                try {
-                    val hasIV = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(it.absolutePath) != null
-                    Log.e(TAG, "${it.name} has IV? $hasIV")
-                    !hasIV // we want items that don't have an IV, that means they have not been encrypted yet
-                } catch (e: Throwable) {
-                    Log.e(TAG, "${it.name} has no IV, error: ${e.message}")
-                    e.printStackTrace()
-                    true
-                }
-            }
-
-            if (unencryptedDirChildren?.isNotEmpty() == true) {
-                unencryptedFilesList.clear()
-                unencryptedFilesList.addAll(unencryptedDirChildren.mapNotNull { it })
-
-                encryptionDirPermission.value = true
-            }
+    LaunchedEffect(Unit) {
+        if (secureFolderManager.needsMigrationFromOld || secureFolderManager.needsMigrationFromUnencrypted()) {
+            showExplanationForMigration = true
         }
     }
 
@@ -332,33 +140,45 @@ fun LockedFolderEntryView() {
             title = stringResource(id = R.string.secure_migrating_notice),
             explanation = stringResource(id = R.string.secure_migrating_notice_desc)
         ) {
+            mainViewModel.launch {
+                if (secureFolderManager.needsMigrationFromOld) {
+                    migrateOldDirectoryPM.start(directories = listOf(context.appRestoredFilesDir))
+                } else {
+                    migrateUnencryptedDirectoryPM.start(directories = listOf(context.appRestoredFilesDir))
+                }
+            }
+
             showExplanationForMigration = false
         }
     }
 
-    val prompt = BiometricPrompt.Builder(LocalContext.current)
-        .setTitle(resources.getString(R.string.secure_unlock))
-        .setSubtitle(resources.getString(R.string.secure_unlock_desc))
-        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-        .build()
+    val prompt = remember {
+        BiometricPrompt.Builder(context)
+            .setTitle(resources.getString(R.string.secure_unlock))
+            .setSubtitle(resources.getString(R.string.secure_unlock_desc))
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
+            .build()
+    }
 
-    val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
-        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-            super.onAuthenticationSucceeded(result)
-            navController.navigate(MultiScreenViewType.SecureFolder.name)
-        }
+    val promptCallback = remember {
+        object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+                super.onAuthenticationSucceeded(result)
+                navController.navigate(Screens.SecureFolder)
+            }
 
-        override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-            super.onAuthenticationError(errorCode, errString)
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                super.onAuthenticationError(errorCode, errString)
 
-            coroutineScope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
-                        message = resources.getString(R.string.secure_unlock_failed),
-                        duration = SnackbarDuration.Short,
-                        icon = R.drawable.secure_folder
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = resources.getString(R.string.secure_unlock_failed),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.secure_folder
+                        )
                     )
-                )
+                }
             }
         }
     }

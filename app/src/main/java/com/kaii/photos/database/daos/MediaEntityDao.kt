@@ -8,30 +8,42 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.MediaStoreData
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaDao {
-    @Query("SELECT * FROM media ORDER BY dateTaken DESC")
-    fun getPagedMedia(): PagingSource<Int, MediaStoreData>
+    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC")
+    fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query("SELECT * from media")
-    fun getAll(): List<MediaStoreData>
+    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
+    fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query("UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
+    @Query(value = "SELECT * FROM media ORDER BY :sortByProp DESC")
+    fun getPagedMedia(sortByProp: String): PagingSource<Int, MediaStoreData>
+
+    @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
+    fun getAllMedia(): Flow<List<MediaStoreData>>
+
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY :sortByProp DESC")
+    fun getPagedFavourites(sortByProp: String): PagingSource<Int, MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
+    fun getAllFavourites(): List<MediaStoreData>
+
+    @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
     suspend fun linkToImmich(
         hash: String,
         immichUrl: String,
         immichThumbnail: String
     )
 
-    // maybe try ignore and see performance difference?
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 
     @Upsert
     fun upsertAll(items: List<MediaStoreData>)
 
-    @Query("DELETE FROM media WHERE id = :id")
+    @Query(value = "DELETE FROM media WHERE id = :id")
     fun deleteById(id: Long)
 
     @Delete

@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.permissions.favourites
+package com.kaii.photos.permissions.favourites
 
 import android.app.Activity
 import android.content.Context

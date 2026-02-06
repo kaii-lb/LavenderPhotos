@@ -65,7 +65,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaType
@@ -282,7 +282,9 @@ suspend fun saveVideo(
         immichUrl = null,
         immichThumbnail = null,
         hash = null,
-        customId = null
+        customId = null,
+        parentPath = file.absolutePath.parent(),
+        favourited = false
     )
 
     val tempPath = context.appStorageDir + "/cache/${media.displayName}"
@@ -468,7 +470,7 @@ suspend fun saveVideo(
                 mimeType = "video/mp4"
             )
         ),
-        destination = absolutePath.getParentFromPath(),
+        destination = absolutePath.parent(),
         basePath = absolutePath.toBasePath(),
         overwriteDate = false,
         showProgressSnackbar = false,
@@ -702,7 +704,9 @@ suspend fun saveImage(
         immichUrl = null,
         immichThumbnail = null,
         hash = null,
-        id = 0L
+        id = 0L,
+        parentPath = file.absolutePath.parent(),
+        favourited = false
     )
 
     val newUri =
@@ -710,7 +714,7 @@ suspend fun saveImage(
             context.contentResolver.insertMedia(
                 context = context,
                 media = media,
-                destination = absolutePath.getParentFromPath(),
+                destination = absolutePath.parent(),
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
                 overrideDisplayName = file.name.removeSuffix(file.extension) + "png",

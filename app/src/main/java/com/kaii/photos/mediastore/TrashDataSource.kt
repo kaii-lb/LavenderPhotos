@@ -15,8 +15,7 @@ import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,9 +30,7 @@ private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 /** Loads metadata from the media store for images and videos. */
 class TrashDataSource(
     private val context: Context,
-    private val sortMode: MediaItemSortMode,
-    private val cancellationSignal: CancellationSignal,
-    private val displayDateFormat: DisplayDateFormat
+    private val cancellationSignal: CancellationSignal
 ) {
     companion object {
         private val PROJECTION =
@@ -147,11 +144,13 @@ class TrashDataSource(
                     dateTaken = dateModified,
                     displayName = displayName,
                     absolutePath = absolutePath,
+                    parentPath = absolutePath.parent(),
                     size = size,
                     customId = null,
                     immichUrl = null,
                     immichThumbnail = null,
-                    hash = null
+                    hash = null,
+                    favourited = false
                 )
 
             holderMap.add(new)

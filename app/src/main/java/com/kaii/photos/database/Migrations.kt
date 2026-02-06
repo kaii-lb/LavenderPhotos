@@ -5,14 +5,14 @@ import android.content.Context
 import androidx.room.OnConflictStrategy
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.kaii.photos.database.entities.FavouritedItemEntity
-import com.kaii.photos.mediastore.toMediaType
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.mediastore.toMediaType
 
 class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersion = 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
         val favItems = db.query("SELECT * FROM favouriteditementity")
-        val newFavItems = emptyList<FavouritedItemEntity>().toMutableList()
+        val newFavItems = emptyList<MediaStoreData>().toMutableList()
 
         val idNum = favItems.getColumnIndexOrThrow("id")
         val dateTakenNum = favItems.getColumnIndexOrThrow("date_taken")
@@ -22,7 +22,7 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
         val typeNum = favItems.getColumnIndexOrThrow("type")
         val dateModifiedNum = favItems.getColumnIndexOrThrow("date_modified")
 
-        while(favItems.moveToNext()) {
+        while (favItems.moveToNext()) {
             val id = favItems.getLong(idNum)
             val dateTaken = favItems.getLong(dateTakenNum)
             val mimeType = favItems.getString(mimeTypeNum)
@@ -34,7 +34,7 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
             val uri = context.contentResolver.getUriFromAbsolutePath(absolutePath = absolutePath, type = type).toString()
 
             newFavItems.add(
-                FavouritedItemEntity(
+                MediaStoreData(
                     id = id,
                     dateTaken = dateTaken,
                     mimeType = mimeType,
@@ -42,7 +42,14 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
                     absolutePath = absolutePath,
                     type = type,
                     dateModified = dateModified,
-                    uri = uri
+                    uri = uri,
+                    hash = null,
+                    immichUrl = null,
+                    immichThumbnail = null,
+                    customId = null,
+                    favourited = true,
+                    parentPath = "",
+                    size = 0L
                 )
             )
         }
@@ -70,8 +77,8 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
 }
 
 class Migration4to5(val context: Context) : Migration(startVersion = 4, endVersion = 5) {
-	override fun migrate(db: SupportSQLiteDatabase) {
-		db.execSQL("DROP TABLE secureditementity")
-		db.execSQL("CREATE TABLE IF NOT EXISTS `secureditementity` (`originalPath` TEXT NOT NULL, `secured_path` TEXT NOT NULL, `iv` BLOB NOT NULL, PRIMARY KEY(`originalPath`))")
-	}
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE secureditementity")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `secureditementity` (`originalPath` TEXT NOT NULL, `secured_path` TEXT NOT NULL, `iv` BLOB NOT NULL, PRIMARY KEY(`originalPath`))")
+    }
 }

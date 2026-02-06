@@ -45,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -67,7 +66,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalAppDatabase
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
@@ -75,15 +75,13 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.mapSync
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -92,35 +90,23 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SingleTrashedPhotoView(
     window: Window,
-    mediaItemId: Long,
+    index: Int,
     viewModel: TrashViewModel
 ) {
-    val mediaStoreData = viewModel.mediaFlow.mapSync {
-        it.filter { item ->
-            item.type != MediaType.Section
-        }
-    }.collectAsStateWithLifecycle()
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val startIndex = remember(mediaStoreData.value.isEmpty()) {
-        mediaStoreData.value.indexOfFirst { item ->
-            item.id == mediaItemId
-        }
-    }
-
-    if (mediaStoreData.value.isNotEmpty()) {
-        SingleTrashedPhotoViewImpl(
-            items = mediaStoreData,
-            startIndex = startIndex,
-            window = window
-        )
-    }
+    SingleTrashedPhotoViewImpl(
+        items = items,
+        startIndex = index,
+        window = window
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun SingleTrashedPhotoViewImpl(
-    items: State<List<MediaStoreData>>,
+    items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
     window: Window
 ) {
@@ -134,8 +120,8 @@ private fun SingleTrashedPhotoViewImpl(
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..items.value.size && items.value.isNotEmpty()) {
-                    items.value[currentIndex]
+                if (currentIndex in 0..items.itemCount && items.itemCount != 0) {
+                    ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
                 } else {
                     MediaStoreData.dummyItem
                 }
@@ -153,16 +139,16 @@ private fun SingleTrashedPhotoViewImpl(
     }
 
     val state = rememberPagerState(
-        initialPage = currentIndex.coerceIn(0, items.value.size)
+        initialPage = startIndex.coerceIn(0, items.itemCount)
     ) {
-        items.value.size
+        items.itemCount
     }
 
     val coroutineScope = rememberCoroutineScope()
     fun onMoveMedia() {
         coroutineScope.launch {
             state.animateScrollToPage(
-                page = (currentIndex + 1) % items.value.size,
+                page = (currentIndex + 1) % items.itemCount,
                 animationSpec = AnimationConstants.expressiveTween(
                     durationMillis = AnimationConstants.DURATION
                 )
@@ -254,7 +240,7 @@ private fun SingleTrashedPhotoViewImpl(
             }
 
             HorizontalImageList(
-                groupedMedia = items.value.map { PhotoLibraryUIModel.Media(it) },
+                items = items,
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
@@ -333,13 +319,8 @@ private fun BottomBar(
                 modifier = Modifier
                     .windowInsetsPadding(windowInsets)
             ) {
-                val runRestoreAction = remember { mutableStateOf(false) }
                 val mainViewModel = LocalMainViewModel.current
-                val applicationDatabase = LocalAppDatabase.current
-
-                GetPermissionAndRun(
-                    uris = listOf(item.uri.toUri()),
-                    shouldRun = runRestoreAction,
+                val permissionManager = rememberFilePermissionManager(
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
                             onMoveMedia()
@@ -347,8 +328,7 @@ private fun BottomBar(
                             setTrashedOnPhotoList(
                                 context = context,
                                 list = listOf(item),
-                                trashed = false,
-                                appDatabase = applicationDatabase
+                                trashed = false
                             )
                         }
                     }
@@ -359,7 +339,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            runRestoreAction.value = true
+                            permissionManager.get(uris = listOf(item.uri.toUri()))
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

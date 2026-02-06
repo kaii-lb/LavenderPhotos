@@ -27,55 +27,46 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
-import com.kaii.photos.helpers.ImageFunctions
 
 enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
-    val prefix: Int?,
-    val operation: ImageFunctions
+    val prefix: Int?
 ) {
     Trash(
         emptyText = R.string.error_views_trash_empty,
         emptyIconResId = R.drawable.delete,
-        prefix = R.string.error_views_trash_prefix,
-        operation = ImageFunctions.LoadTrashedImage
+        prefix = R.string.error_views_trash_prefix
     ),
     Album(
         emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
-        prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        prefix = null
     ),
     SearchLoading(
         emptyText = R.string.error_views_search_empty,
         emptyIconResId = R.drawable.search,
-        prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        prefix = null
     ),
     SearchNotFound(
         emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,
-        prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        prefix = null
     ),
     SecureFolder(
         emptyText = R.string.error_views_secure_empty,
         emptyIconResId = R.drawable.secure_folder,
-        prefix = R.string.error_views_secure_prefix,
-        operation = ImageFunctions.LoadSecuredImage
+        prefix = R.string.error_views_secure_prefix
     ),
     Favourites(
         emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
-        prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        prefix = null
     ),
     Immich(
         emptyText = R.string.immich_server_not_loading,
         emptyIconResId = R.drawable.cloud_off,
-        prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        prefix = null
     );
 
     companion object {

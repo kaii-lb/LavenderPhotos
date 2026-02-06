@@ -5,6 +5,10 @@ import android.os.CancellationSignal
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.lavender.immichintegration.serialization.albums.AlbumGetState
 import com.kaii.lavender.immichintegration.serialization.assets.AssetType
@@ -14,10 +18,18 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.models.loading.ListPagingSource
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMedia
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -27,10 +39,11 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
     private var immichId: String,
-    var info: ImmichBasicInfo,
-    var sortMode: MediaItemSortMode,
-    var displayDateFormat: DisplayDateFormat,
-    private val apiClient: ApiClient
+    private var info: ImmichBasicInfo,
+    private var sortMode: MediaItemSortMode,
+    private var format: DisplayDateFormat,
+    private val apiClient: ApiClient,
+    private val separators: Boolean
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
 
@@ -44,11 +57,27 @@ class ImmichAlbumViewModel(
 
     private var media = emptyList<MediaStoreData>()
 
-    private val _mediaFlow = MutableStateFlow<List<MediaStoreData>>(emptyList())
-    val mediaFlow = _mediaFlow.asStateFlow()
+    private val immichItems = MutableStateFlow<List<MediaStoreData>>(emptyList())
 
     private val _hasFiles = MutableStateFlow(true)
     val hasFiles = _hasFiles.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mediaFlow = immichItems.flatMapLatest { media ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 80,
+                prefetchDistance = 40,
+                enablePlaceholders = true,
+                initialLoadSize = 80
+            ),
+            pagingSourceFactory = { ListPagingSource(media = media) }
+        ).flow.mapToMedia(sortMode = sortMode, format = format, separators = separators, accessToken = info.accessToken).cachedIn(viewModelScope)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 30.seconds.inWholeMilliseconds),
+        initialValue = PagingData.from(emptyList<PhotoLibraryUIModel>())
+    )
 
     private suspend fun refetch() {
         albumState.value.getInfo(
@@ -66,14 +95,16 @@ class ImmichAlbumViewModel(
                             dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
                             dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                             type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
-                            absolutePath = asset.originalFileName,
+                            absolutePath = "",
+                            parentPath = "",
                             displayName = asset.originalFileName,
                             mimeType = asset.originalMimeType,
                             immichUrl = "${info.endpoint}/api/assets/${asset.id}/original",
                             immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
                             hash = "", // TODO
                             size = 0L, // TODO
-                            customId = null
+                            customId = null,
+                            favourited = asset.isFavorite
                         )
                     }
             } else {
@@ -89,13 +120,13 @@ class ImmichAlbumViewModel(
     ) = viewModelScope.launch(Dispatchers.IO) {
         if (refetch) refetch()
 
-        _mediaFlow.value = media
-            // groupPhotosBy(
-            //     media = media,
-            //     sortBy = sortMode,
-            //     displayDateFormat = displayDateFormat,
-            //     context = context
-            // ) // TODO
+        immichItems.value = media
+        // groupPhotosBy(
+        //     media = media,
+        //     sortBy = sortMode,
+        //     displayDateFormat = displayDateFormat,
+        //     context = context
+        // ) // TODO
     }
 
     fun cancelMediaFlow() {
@@ -115,7 +146,7 @@ class ImmichAlbumViewModel(
                 context = context,
                 info = info,
                 sortMode = sortMode,
-                displayDateFormat = displayDateFormat
+                displayDateFormat = format
             )
         }
     }
@@ -124,13 +155,13 @@ class ImmichAlbumViewModel(
         context: Context,
         info: ImmichBasicInfo,
         sortMode: MediaItemSortMode = this.sortMode,
-        displayDateFormat: DisplayDateFormat = this.displayDateFormat
+        displayDateFormat: DisplayDateFormat = this.format
     ) {
-        if (info == this.info && sortMode == this.sortMode && displayDateFormat == this.displayDateFormat) return
+        if (info == this.info && sortMode == this.sortMode && displayDateFormat == this.format) return
 
         this.info = info
         this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
+        this.format = displayDateFormat
 
         cancelMediaFlow()
         albumState.value =
@@ -156,7 +187,7 @@ class ImmichAlbumViewModel(
             initDataSource(
                 info = this.info,
                 sortMode = sortMode,
-                displayDateFormat = this.displayDateFormat
+                displayDateFormat = this.format
             )
 
         refresh(context)
@@ -166,9 +197,9 @@ class ImmichAlbumViewModel(
         context: Context,
         displayDateFormat: DisplayDateFormat
     ) {
-        if (this.displayDateFormat == displayDateFormat) return
+        if (this.format == displayDateFormat) return
 
-        this.displayDateFormat = displayDateFormat
+        this.format = displayDateFormat
 
         cancelMediaFlow()
         albumState.value =
@@ -188,7 +219,7 @@ class ImmichAlbumViewModel(
     ) = run {
         this.info = info
         this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
+        this.format = displayDateFormat
 
         _hasFiles.value = true
 

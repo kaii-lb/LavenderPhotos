@@ -11,17 +11,15 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.compose.ui.util.fastFirstOrNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.exif.setDateTakenForMedia
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
@@ -224,6 +222,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             MediaColumns.DATE_TAKEN,
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
+            MediaColumns.IS_FAVORITE
         ),
         "${MediaColumns._ID} = ?",
         arrayOf(uri.lastPathSegment),
@@ -238,9 +237,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
-
-        val dao = MediaDatabase.getInstance(context).mediaDao()
-        val allEntities = dao.getAll()
+        val favouritedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
@@ -250,6 +247,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
+            val favourited = cursor.getInt(favouritedColumn) == 1
 
             Log.d(TAG, "Searching absolute path $absolutePath")
 
@@ -259,11 +257,8 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
                 if (mimeType.contains("image")) MediaType.Image
                 else MediaType.Video
 
-            val possibleDateTaken = allEntities.fastFirstOrNull { it.id == contentId }?.dateTaken
             val dateTaken =
                 when {
-                    possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
-
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
@@ -292,42 +287,18 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
                 dateTaken = dateTaken,
                 displayName = displayName,
                 absolutePath = absolutePath,
+                parentPath = absolutePath.parent(),
                 customId = null,
                 immichUrl = null,
                 immichThumbnail = null,
                 hash = null,
-                size = 0L
+                size = 0L,
+                favourited = favourited
             )
         }
     }
 
     return null
-}
-
-/** returns the media store query and the individual paths
- * albums needed cuz the query has ? instead of the actual paths for...reasons */
-fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
-    if (albums.isEmpty()) {
-        return SQLiteQuery(query = "", paths = null, basePaths = null)
-    }
-
-    val colName = FileColumns.RELATIVE_PATH
-    val base = "($colName = ?)"
-
-    val list = mutableListOf<String>()
-    var string = base
-    val firstAlbum = albums.first().toRelativePath().removeSuffix("/").removePrefix("/")
-    list.add("$firstAlbum/")
-
-    for (i in 1..<albums.size) {
-        val album = albums[i].toRelativePath().removeSuffix("/").removePrefix("/")
-
-        string += " OR $base"
-        list.add("$album/")
-    }
-
-    val query = "AND ($string)"
-    return SQLiteQuery(query = query, paths = list, basePaths = albums.map { it.toBasePath() }.distinct())
 }
 
 private fun getStorageContentUri(

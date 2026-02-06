@@ -29,12 +29,13 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7, spec = DeleteDupeEntityTable::class),
+        AutoMigration(from = 7, to = 8, spec = DeleteOldMediaTable::class)
     ]
 )
 abstract class MediaDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
+    abstract fun favouritesDao(): FavouritedItemEntityDao
     abstract fun trashedItemEntityDao(): TrashedItemEntityDao
-    abstract fun favouritedItemEntityDao(): FavouritedItemEntityDao
     abstract fun securedItemEntityDao(): SecuredMediaItemEntityDao
 
     companion object {
@@ -62,3 +63,6 @@ abstract class MediaDatabase : RoomDatabase() {
 
 @DeleteTable("ImmichDuplicateEntity")
 class DeleteDupeEntityTable : AutoMigrationSpec
+
+@DeleteTable(tableName = "MediaEntity")
+class DeleteOldMediaTable : AutoMigrationSpec

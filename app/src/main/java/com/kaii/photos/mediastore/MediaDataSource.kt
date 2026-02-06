@@ -14,11 +14,8 @@ import android.util.Log
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SQLiteQuery
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.helpers.parent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
@@ -32,10 +29,7 @@ private const val TAG = "com.kaii.photos.models.multi_album.MultiAlbumViewModel"
 /** Loads metadata from the media store for images and videos. */
 class MediaDataSource(
     private val context: Context,
-    private val sqliteQuery: SQLiteQuery,
-    private val sortMode: MediaItemSortMode,
-    private val cancellationSignal: CancellationSignal,
-    private val displayDateFormat: DisplayDateFormat
+    private val cancellationSignal: CancellationSignal
 ) {
     companion object {
         val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
@@ -50,7 +44,8 @@ class MediaDataSource(
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
-                MediaColumns.SIZE
+                MediaColumns.SIZE,
+                MediaColumns.IS_FAVORITE
             )
     }
 
@@ -103,8 +98,8 @@ class MediaDataSource(
             context.contentResolver.query(
                 MEDIA_STORE_FILE_URI,
                 PROJECTION,
-                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})) ${sqliteQuery.query}",
-                sqliteQuery.paths?.toTypedArray(),
+                "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
+                null,
                 "${MediaColumns.DATE_ADDED} DESC",
             ) ?: return emptyList()
 
@@ -117,13 +112,12 @@ class MediaDataSource(
         val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
+        val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
-        val holderMap = mutableListOf<MediaStoreData>()
+        val dataList = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
             val absolutePath = cursor.getString(absolutePathColNum)
-
-            if (sqliteQuery.basePaths?.contains(absolutePath.toBasePath()) != true && sqliteQuery.basePaths != null) continue
 
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
@@ -132,6 +126,7 @@ class MediaDataSource(
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
+            val favourited = cursor.getInt(favouritedColumn) == 1
 
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -166,18 +161,20 @@ class MediaDataSource(
                     dateTaken = dateTaken,
                     displayName = displayName,
                     absolutePath = absolutePath,
+                    parentPath = absolutePath.parent(),
                     size = size,
                     customId = null,
                     immichUrl = null,
                     immichThumbnail = null,
-                    hash = null
+                    hash = null,
+                    favourited = favourited
                 )
 
-            holderMap.add(new)
+            dataList.add(new)
         }
 
         cursor.close()
 
-        return holderMap
+        return dataList
     }
 }

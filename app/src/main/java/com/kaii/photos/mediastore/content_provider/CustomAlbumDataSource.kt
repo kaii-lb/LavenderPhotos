@@ -10,7 +10,6 @@ import androidx.core.net.toUri
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +27,7 @@ class CustomAlbumDataSource(
     private val context: Context,
     private val parentId: Int,
     private val sortMode: MediaItemSortMode,
-    private val cancellationSignal: CancellationSignal,
-    private val displayDateFormat: DisplayDateFormat
+    private val cancellationSignal: CancellationSignal
 ) {
     companion object {
         private val PROJECTION =
@@ -106,7 +104,7 @@ class CustomAlbumDataSource(
 
             val day =
                 when (sortMode) {
-                    MediaItemSortMode.LastModified -> new.getLastModifiedDay()
+                    MediaItemSortMode.LastModified -> new.getDateModifiedDay()
                     MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
                     MediaItemSortMode.DateTaken -> new.getDateTakenDay()
                     else -> MediaStoreData.dummyItem.getDateTakenDay()

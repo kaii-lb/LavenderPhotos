@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.permissions.favourites
+package com.kaii.photos.permissions.favourites
 
 import android.content.ContentValues
 import android.content.Context
@@ -33,7 +33,7 @@ class FavouritesMigrationManager(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val appDatabase = MediaDatabase.getInstance(applicationContext).favouritedItemEntityDao()
+            val appDatabase = MediaDatabase.getInstance(applicationContext).favouritesDao()
             val items = appDatabase.getAll().first().map { it.uri.toUri() }
 
             val contentValues = ContentValues().apply {
@@ -41,7 +41,7 @@ class FavouritesMigrationManager(
             }
 
             val contentResolver = applicationContext.contentResolver
-            val moved = items.filterIndexed { index, item ->
+            val moved = items.filter { item ->
                 contentResolver.update(item, contentValues, null) > 0
             }
 

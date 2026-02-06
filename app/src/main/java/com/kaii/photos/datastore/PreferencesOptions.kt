@@ -225,13 +225,6 @@ data class BottomBarTab(
 }
 
 @Serializable
-data class SQLiteQuery(
-    val query: String,
-    val paths: List<String>?,
-    val basePaths: List<String>?
-)
-
-@Serializable
 data class AlbumInfo(
     val id: Int,
     val name: String,
@@ -293,20 +286,17 @@ data class AlbumInfo(
 }
 
 @Serializable
-data class ImmichBackupMedia(
-    val deviceAssetId: String,
-    val absolutePath: String,
-    val checksum: String
-)
-
-@Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
     val accessToken: String,
     val username: String
 ) {
     companion object {
-        val Empty = ImmichBasicInfo("", "", "")
+        val Empty = ImmichBasicInfo(
+            endpoint = "",
+            accessToken = "",
+            username = ""
+        )
     }
 }
 

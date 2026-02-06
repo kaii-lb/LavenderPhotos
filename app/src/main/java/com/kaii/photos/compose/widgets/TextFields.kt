@@ -78,7 +78,7 @@ import com.kaii.photos.compose.dialogs.DialogExpandableItem
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.getFileNameFromPath
+import com.kaii.photos.helpers.filename
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -182,11 +182,11 @@ fun ClearableTextField(
 fun AnimatableTextField(
     state: MutableState<Boolean>,
     string: MutableState<String>,
-    doAction: MutableState<Boolean>,
     rowPosition: RowPosition,
     modifier: Modifier = Modifier,
     extraAction: MutableState<Boolean>? = null,
     enabled: Boolean = true,
+    doAction: () -> Unit,
     resetAction: () -> Unit
 ) {
     var waitForKB by remember { mutableStateOf(false) }
@@ -231,7 +231,7 @@ fun AnimatableTextField(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        doAction.value = true
+                        doAction()
                         waitForKB = true
                     }
                 ),
@@ -251,7 +251,6 @@ fun AnimatableTextField(
                     IconButton(
                         onClick = {
                             focusManager.clearFocus()
-                            doAction.value = false
                             waitForKB = true
                         }
                     ) {
@@ -371,7 +370,7 @@ fun MainDialogUserInfo(
 
                 if (uri != null) {
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                        val filename = context.contentResolver.getAbsolutePathFromUri(uri = uri)?.getFileNameFromPath() ?: "image.png"
+                        val filename = context.contentResolver.getAbsolutePathFromUri(uri = uri)?.filename() ?: "image.png"
                         success = uploadPfp(
                             inputStream.readBytes(),
                             filename,

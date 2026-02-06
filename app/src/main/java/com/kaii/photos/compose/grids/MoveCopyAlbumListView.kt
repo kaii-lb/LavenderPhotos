@@ -68,7 +68,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
@@ -77,21 +76,21 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageListToPath
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
-import com.kaii.photos.mediastore.mapToMediaItems
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMediaItems
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -147,7 +146,7 @@ fun MoveCopyAlbumListView(
                     it.type != MediaType.Section
                 }
                 .groupBy {
-                    it.absolutePath.getParentFromPath()
+                    it.absolutePath.parent()
                 }
 
             Log.d(TAG, "Grouped $grouped")
@@ -298,34 +297,16 @@ fun AlbumsListItem(
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.fastMapNotNull {
-                if (it is PhotoLibraryUIModel.Media && it.item != MediaStoreData.dummyItem) it.item
-                else null
-            }
+            selectedItemsList.mapToMediaItems()
         }
     }
 
-    val runOnUriGranted = remember { mutableStateOf(false) }
-    val runOnDirGranted = remember { mutableStateOf(false) }
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(album.mainPath),
-        shouldRun = runOnDirGranted,
-        onGranted = {
-            runOnUriGranted.value = true
-        },
-        onRejected = {}
-    )
-
     val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
     val coroutineScope = rememberCoroutineScope()
     val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
-        shouldRun = runOnUriGranted,
+    val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
             show.value = false
 
@@ -375,8 +356,7 @@ fun AlbumsListItem(
                             setTrashedOnPhotoList(
                                 context = context,
                                 list = list,
-                                trashed = true,
-                                appDatabase = applicationDatabase
+                                trashed = true
                             )
                         }
                     }
@@ -388,6 +368,14 @@ fun AlbumsListItem(
         }
     )
 
+    val dirPermissionManager = rememberDirectoryPermissionManager(
+        onGranted = {
+            filePermissionManager.get(
+                uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+            )
+        }
+    )
+
     val resources = LocalResources.current
     Row(
         modifier = modifier
@@ -396,7 +384,9 @@ fun AlbumsListItem(
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
                 if (!album.isCustomAlbum) {
-                    runOnDirGranted.value = true
+                    dirPermissionManager.start(
+                        directories = listOf(album.mainPath)
+                    )
                 } else {
                     val items = selectedItemsWithoutSection
 
@@ -421,11 +411,11 @@ fun AlbumsListItem(
                             LavenderContentProvider.CONTENT_URI,
                             items
                                 .fastFilter { media ->
-                                    media.uri.toString() !in data
+                                    media.uri !in data
                                 }.fastMap { media ->
                                     ContentValues().apply {
                                         // no id since the content provider handles that on its own
-                                        put(LavenderMediaColumns.URI, media.uri.toString())
+                                        put(LavenderMediaColumns.URI, media.uri)
                                         put(LavenderMediaColumns.PARENT_ID, album.id)
                                         put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
                                         put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)

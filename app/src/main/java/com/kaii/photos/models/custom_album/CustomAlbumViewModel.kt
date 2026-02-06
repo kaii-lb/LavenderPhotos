@@ -10,14 +10,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
-import com.kaii.photos.models.multi_album.mapToMedia
+import com.kaii.photos.models.loading.ListPagingSource
+import com.kaii.photos.models.loading.mapToMedia
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.seconds
@@ -31,6 +35,7 @@ class CustomAlbumViewModel(
     var displayDateFormat: DisplayDateFormat
 ) : ViewModel() {
     private var cancellationSignal = CancellationSignal()
+    private val settings = SettingsImmichImpl(context = context, viewModelScope = viewModelScope)
     private val mediaStoreDataSource = mutableStateOf(
         initDataSource(
             context = context,
@@ -40,7 +45,7 @@ class CustomAlbumViewModel(
         )
     )
 
-    val mediaFlow by derivedStateOf {
+    private val mediaItems by derivedStateOf {
         getMediaDataFlow().value.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
@@ -51,15 +56,24 @@ class CustomAlbumViewModel(
     }
 
     // TODO
-    val mediaPagingFlow = Pager(
-        config = PagingConfig(
-            pageSize = 80,
-            prefetchDistance = 40,
-            enablePlaceholders = true,
-            initialLoadSize = 80
-        ),
-        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
-    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mediaFlow = mediaItems
+        .combine(settings.getImmichBasicInfo()) { a, b -> Pair(a, b) }
+        .flatMapLatest { (media, info) ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = 80,
+                    prefetchDistance = 40,
+                    enablePlaceholders = true,
+                    initialLoadSize = 80
+                ),
+                pagingSourceFactory = { ListPagingSource(media = media) }
+            ).flow.mapToMedia(
+                sortMode = sortMode,
+                format = displayDateFormat,
+                accessToken = info.accessToken
+            ).cachedIn(viewModelScope)
+        }
 
     private fun getMediaDataFlow() = derivedStateOf {
         mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
@@ -155,8 +169,7 @@ class CustomAlbumViewModel(
             context = context,
             parentId = album.id,
             sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
+            cancellationSignal = cancellationSignal
         )
     }
 

@@ -10,12 +10,12 @@ import com.kaii.photos.helpers.MediaItemSortMode
 class TrashViewModelFactory(
     private val context: Context,
     private val sortMode: MediaItemSortMode,
-    private val displayDateFormat: DisplayDateFormat
+    private val format: DisplayDateFormat
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == TrashViewModel::class.java) {
-            return TrashViewModel(context, sortMode, displayDateFormat) as T
+            return TrashViewModel(context, sortMode, format) as T
         }
-        throw IllegalArgumentException("GalleryViewModel: Cannot cast ${modelClass.simpleName} as ${TrashViewModel::class.java.simpleName}!! This should never happen!!")
+        throw IllegalArgumentException("TrashViewModel: Cannot cast ${modelClass.simpleName} as ${TrashViewModel::class.java.simpleName}!! This should never happen!!")
     }
 }

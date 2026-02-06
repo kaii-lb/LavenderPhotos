@@ -77,7 +77,7 @@ import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import java.io.File
 
 @Composable
@@ -292,7 +292,7 @@ fun SelectViewTopBarLeftButtons(
         },
         secondaryContent = {
             Text(
-                text = selectedItemsList.filter { it !is PhotoLibraryUIModel.Section && (it as PhotoLibraryUIModel.Media).item != MediaStoreData.dummyItem }.size.toString(),
+                text = selectedItemsList.filter { it !is PhotoLibraryUIModel.Section && (it as PhotoLibraryUIModel.MediaImpl).item != MediaStoreData.dummyItem }.size.toString(),
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 modifier = Modifier
@@ -337,7 +337,10 @@ fun SelectViewTopBarRightButtons(
             onClick = {
                 if (isTicked) {
                     selectedItemsList.clear()
-                    selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
+                    selectedItemsList.add(PhotoLibraryUIModel.Media(
+                        item = MediaStoreData.dummyItem,
+                        accessToken = null // TODO
+                    ))
                 } else {
                     selectedItemsList.clear()
 

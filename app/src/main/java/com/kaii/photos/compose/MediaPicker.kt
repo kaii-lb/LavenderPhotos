@@ -109,12 +109,12 @@ import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.mapToMediaItems
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMediaItems
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -222,24 +222,27 @@ class MediaPicker : ComponentActivity() {
             factory = SearchViewModelFactory(
                 context = context,
                 sortMode = currentSortMode,
-                displayDateFormat = displayDateFormat
+                format = displayDateFormat,
+                separators = true
             )
         )
 
         val navController = LocalNavController.current
-        LaunchedEffect(albumsList) {
-            if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-                || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
-            ) return@LaunchedEffect
 
-            Log.d(TAG, "Refreshing main photos view")
-            Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albumsList")
-            multiAlbumViewModel.reinitDataSource(
-                context = context,
-                album = AlbumInfo.createPathOnlyAlbum(albumsList),
-                sortMode = currentSortMode
-            )
-        }
+        // TODO
+        // LaunchedEffect(albumsList) {
+        //     if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+        //         || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
+        //     ) return@LaunchedEffect
+        //
+        //     Log.d(TAG, "Refreshing main photos view")
+        //     Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albumsList")
+        //     multiAlbumViewModel.reinitDataSource(
+        //         context = context,
+        //         album = AlbumInfo.createPathOnlyAlbum(albumsList),
+        //         sortMode = currentSortMode
+        //     )
+        // }
 
         val currentView = rememberSaveable(
             stateSaver = BottomBarTab.TabSaver
@@ -250,8 +253,6 @@ class MediaPicker : ComponentActivity() {
         LaunchedEffect(currentView.value) {
             if (currentView.value != DefaultTabs.TabTypes.search) {
                 searchViewModel.clear()
-            } else {
-                searchViewModel.restart(context = context)
             }
         }
 
@@ -321,10 +322,7 @@ class MediaPicker : ComponentActivity() {
                 val screen: Screens.SingleAlbumView = it.toRoute()
 
                 if (!screen.albumInfo.isCustomAlbum) {
-                    multiAlbumViewModel.update(
-                        context = context,
-                        album = screen.albumInfo
-                    )
+                    multiAlbumViewModel.update(album = screen.albumInfo)
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
@@ -347,40 +345,47 @@ class MediaPicker : ComponentActivity() {
                 }
             }
 
-            composable(MultiScreenViewType.FavouritesGridView.name) {
-                setupNextScreen(
-                    selectedItemsList,
-                    window
-                )
-
-                val favViewModel = viewModel<FavouritesViewModel>(
-                    factory = FavouritesViewModelFactory(
-                        context = context,
-                        sortMode = currentSortMode,
-                        displayDateFormat = displayDateFormat
+            navigation<Screens.Favourites>(
+                startDestination = Screens.Favourites.GridView
+            ) {
+                composable<Screens.Favourites.GridView> {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
                     )
-                )
 
-                FavouritesGridView(
-                    selectedItemsList = selectedItemsList,
-                    viewModel = favViewModel,
-                    incomingIntent = incomingIntent
-                )
-            }
+                    val storeOwner = remember(it) {
+                        navController.getBackStackEntry(Screens.Favourites)
+                    }
+                    val viewModel = viewModel<FavouritesViewModel>(
+                        viewModelStoreOwner = storeOwner,
+                        factory = FavouritesViewModelFactory(
+                            context = context,
+                            sortMode = currentSortMode,
+                            displayDateFormat = displayDateFormat
+                        )
+                    )
 
-            composable(route = MultiScreenViewType.FavouritesMigrationPage.name) {
-                setupNextScreen(
-                    selectedItemsList,
-                    window
-                )
+                    FavouritesGridView(
+                        selectedItemsList = selectedItemsList,
+                        viewModel = viewModel
+                    )
+                }
 
-                FavouritesMigrationPage()
+                composable<Screens.Favourites.MigrationPage> {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
+
+                    FavouritesMigrationPage()
+                }
             }
 
             navigation<Screens.Trash>(
-                startDestination = Screens.Trash.TrashedPhotoView
+                startDestination = Screens.Trash.GridView
             ) {
-                composable<Screens.Trash.TrashedPhotoView> {
+                composable<Screens.Trash.GridView> {
                     setupNextScreen(
                         selectedItemsList,
                         window
@@ -394,7 +399,7 @@ class MediaPicker : ComponentActivity() {
                         factory = TrashViewModelFactory(
                             context = context,
                             sortMode = currentSortMode,
-                            displayDateFormat = displayDateFormat
+                            format = displayDateFormat
                         )
                     )
 
@@ -599,7 +604,7 @@ fun MediaPickerConfirmButton(
 
                     activity.setResult(RESULT_OK, resultIntent)
                 } else {
-                    val first = (selectedItemsList.first { it is PhotoLibraryUIModel.Media } as PhotoLibraryUIModel.Media).item
+                    val first = (selectedItemsList.first { it is PhotoLibraryUIModel.MediaImpl } as PhotoLibraryUIModel.MediaImpl).item
                     val resultIntent = Intent().apply {
                         data = first.uri.toUri()
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

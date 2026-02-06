@@ -56,6 +56,7 @@ import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
@@ -354,14 +355,12 @@ private fun InitSinglePhotoView(
     )
 
     LaunchedEffect(Unit) {
-        multiAlbumViewModel.reinitDataSource(
-            context = context,
+        multiAlbumViewModel.update(
             album = AlbumInfo.createPathOnlyAlbum(
                 paths = listOf(
-                    incomingData.absolutePath.split("/").dropLast(1).joinToString("/")
+                    incomingData.absolutePath.parent() // .split("/").dropLast(1).joinToString("/")
                 )
-            ),
-            sortMode = multiAlbumViewModel.sortMode
+            )
         )
     }
 
@@ -373,7 +372,7 @@ private fun InitSinglePhotoView(
         nextMediaItemId = null,
         albumInfo = AlbumInfo.createPathOnlyAlbum(
             paths = listOf(
-                incomingData.absolutePath.split("/").dropLast(1).joinToString("/")
+                incomingData.absolutePath.parent() // .split("/").dropLast(1).joinToString("/")
             )
         ),
         isOpenWithDefaultView = true

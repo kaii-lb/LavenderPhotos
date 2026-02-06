@@ -19,6 +19,7 @@ data class MediaStoreData(
     @PrimaryKey val id: Long,
     val uri: String,
     val absolutePath: String,
+    val parentPath: String,
     val displayName: String,
     val dateTaken: Long,
     val dateModified: Long,
@@ -28,13 +29,15 @@ data class MediaStoreData(
     val immichThumbnail: String?,
     val hash: String?,
     val size: Long,
-    val customId: Long?
+    val customId: Long?,
+    val favourited: Boolean
 ) {
     companion object {
         val dummyItem = MediaStoreData(
             id = 0L,
             uri = "",
             absolutePath = "",
+            parentPath = "",
             displayName = "",
             dateTaken = 0L,
             dateModified = 0L,
@@ -44,7 +47,8 @@ data class MediaStoreData(
             immichThumbnail = null,
             hash = null,
             size = 0L,
-            customId = null
+            customId = null,
+            favourited = false
         )
     }
 
@@ -76,7 +80,7 @@ data class MediaStoreData(
         return calendar.timeInMillis / 1000
     }
 
-    fun getLastModifiedDay(): Long {
+    fun getDateModifiedDay(): Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateModified * 1000
             set(Calendar.HOUR_OF_DAY, 0)

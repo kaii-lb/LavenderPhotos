@@ -97,10 +97,9 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -362,13 +361,13 @@ fun AlbumsGridView(
                     CategoryList(
                         navigateToFavourites = {
                             if (!migrateFav) {
-                                navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                                navController.navigate(Screens.Favourites.GridView)
                             } else {
-                                navController.navigate(MultiScreenViewType.FavouritesMigrationPage.name)
+                                navController.navigate(Screens.Favourites.MigrationPage)
                             }
                         },
                         navigateToTrash = {
-                            navController.navigate(Screens.Trash.TrashedPhotoView)
+                            navController.navigate(Screens.Trash.GridView)
                         }
                     )
                 }
@@ -513,7 +512,7 @@ private fun AlbumGridItem(
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     ) {
-                        it.signature(PhotoLibraryUIModel.Media(item).signature())
+                        it.signature(item.signature())
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
                     }
                 } else {

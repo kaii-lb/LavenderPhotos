@@ -92,7 +92,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
 import com.kaii.photos.helpers.findMinParent
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.launch
@@ -589,7 +589,7 @@ fun AlbumPathsDialog(
                             .forEach { group ->
                                 val min = findMinParent(group.value)
                                 val grouped = min
-                                    .groupBy { it.getParentFromPath() }
+                                    .groupBy { it.parent() }
                                     .map { (key, value) ->
                                         if (value.size > 1) key
                                         else value.first()
@@ -608,14 +608,14 @@ fun AlbumPathsDialog(
 
                         fun buildHierarchy(path: String): PathItem {
                             val possibleChildren = children.filter {
-                                it.toRelativePath(true).getParentFromPath() == path.toRelativePath(
+                                it.toRelativePath(true).parent() == path.toRelativePath(
                                     true
                                 )
                             }.toMutableList()
 
                             val possibleSubChildren = children.filter {
                                 it.toRelativePath(true)
-                                    .getParentFromPath()
+                                    .parent()
                                     .startsWith(path.toRelativePath(true))
                             }
                             if (possibleSubChildren.isNotEmpty()) {
@@ -624,7 +624,7 @@ fun AlbumPathsDialog(
                                         child !in possibleChildren && !possibleChildren.any {
                                             it.endsWith(
                                                 child.toRelativePath(true)
-                                                    .getParentFromPath()
+                                                    .parent()
                                             )
                                         }
                                     }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -50,16 +51,16 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.permissions.favourites.rememberListFavouritesState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.mapToMediaItems
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMediaItems
+import com.kaii.photos.permissions.favourites.rememberListFavouritesState
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -326,32 +327,17 @@ fun SingleAlbumViewBottomBar(
 fun TrashedPhotoGridViewTopBar(
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    deleteAll: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
-
-    val runEmptyTrashAction = remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    LaunchedEffect(runEmptyTrashAction.value) {
-        if (runEmptyTrashAction.value) {
-            permanentlyDeletePhotoList(
-                context = context,
-                list = pagingItems.itemSnapshotList.mapToMediaItems().map { it.uri.toUri() }
-            )
-
-            runEmptyTrashAction.value = false
-        }
-    }
-
     ConfirmationDialogWithBody(
         showDialog = showDialog,
         dialogTitle = stringResource(id = R.string.trash_empty),
         dialogBody = stringResource(id = R.string.trash_empty),
-        confirmButtonLabel = stringResource(id = R.string.trash_empty_confirm)
-    ) {
-        runEmptyTrashAction.value = true
-    }
+        confirmButtonLabel = stringResource(id = R.string.trash_empty_confirm),
+        action = deleteAll
+    )
 
     val show by remember {
         derivedStateOf {
@@ -462,8 +448,8 @@ fun TrashPhotoGridBottomBarItems(
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
-            selectedItemsList.mapNotNull {
-                if (it is PhotoLibraryUIModel.Media && it != MediaStoreData.dummyItem) it.item
+            selectedItemsList.fastMapNotNull {
+                if (it is PhotoLibraryUIModel.MediaImpl && it != MediaStoreData.dummyItem) it.item
                 else null
             }
         }
@@ -486,21 +472,15 @@ fun TrashPhotoGridBottomBarItems(
         )
     }
 
-    val showRestoreDialog = remember { mutableStateOf(false) }
-    val runRestoreAction = remember { mutableStateOf(false) }
-
     val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
-        shouldRun = runRestoreAction,
+    val showRestoreDialog = remember { mutableStateOf(false) }
+    val permissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 setTrashedOnPhotoList(
                     context = context,
                     list = selectedItemsWithoutSection,
-                    trashed = false,
-                    appDatabase = applicationDatabase
+                    trashed = false
                 )
 
                 selectedItemsList.clear()
@@ -513,7 +493,9 @@ fun TrashPhotoGridBottomBarItems(
         dialogTitle = stringResource(id = R.string.media_restore_confirm),
         confirmButtonLabel = stringResource(id = R.string.media_restore)
     ) {
-        runRestoreAction.value = true
+        permissionState.get(
+            uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+        )
     }
 
     IconButton(
@@ -528,28 +510,20 @@ fun TrashPhotoGridBottomBarItems(
     }
 
     val showPermaDeleteDialog = remember { mutableStateOf(false) }
-    val runPermaDeleteAction = remember { mutableStateOf(false) }
-
-    LaunchedEffect(runPermaDeleteAction.value) {
-        if (runPermaDeleteAction.value) {
-            permanentlyDeletePhotoList(
-                context = context,
-                list = selectedItemsWithoutSection.map { it.uri.toUri() }
-            )
-
-            selectedItemsList.clear()
-
-            runPermaDeleteAction.value = false
-        }
-    }
-
     ConfirmationDialogWithBody(
         showDialog = showPermaDeleteDialog,
         dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        runPermaDeleteAction.value = true
+        mainViewModel.launch(Dispatchers.IO) {
+            permanentlyDeletePhotoList(
+                context = context,
+                list = selectedItemsWithoutSection.map { it.uri.toUri() }
+            )
+
+            selectedItemsList.clear()
+        }
     }
 
     IconButton(
@@ -582,7 +556,7 @@ fun SecureFolderViewTopAppBar(
     val mediaCount = remember {
         derivedStateOf {
             pagingItems.itemSnapshotList.filter {
-                it is PhotoLibraryUIModel.Media
+                it is PhotoLibraryUIModel.MediaImpl
             }.size
         }
     }
@@ -640,6 +614,7 @@ fun SecureFolderViewTopAppBar(
     }
 }
 
+// TODO
 @Composable
 fun SecureFolderViewBottomAppBar(
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
@@ -945,7 +920,6 @@ fun FavouritesBottomAppBarItems(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val applicationDatabase = LocalAppDatabase.current
-    val dao = applicationDatabase.favouritedItemEntityDao()
 
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
@@ -1019,17 +993,19 @@ fun FavouritesBottomAppBarItems(
         )
     }
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
-    val runTrashAction = remember { mutableStateOf(false) }
     val mainViewModel = LocalMainViewModel.current
+    val showDeleteDialog = remember { mutableStateOf(false) }
 
-    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
+    val doNotTrash by mainViewModel.settings.Permissions
+        .getDoNotTrash()
         .collectAsStateWithLifecycle(initialValue = true)
-    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
-        shouldRun = runTrashAction,
+    val confirmToDelete by mainViewModel.settings.Permissions
+        .getConfirmToDelete()
+        .collectAsStateWithLifecycle(initialValue = true)
+
+
+    val permissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 if (doNotTrash) {
@@ -1041,8 +1017,7 @@ fun FavouritesBottomAppBarItems(
                     setTrashedOnPhotoList(
                         context = context,
                         list = selectedItemsWithoutSection,
-                        trashed = true,
-                        appDatabase = applicationDatabase
+                        trashed = true
                     )
                 }
 
@@ -1058,10 +1033,12 @@ fun FavouritesBottomAppBarItems(
     ) {
         coroutineScope.launch {
             // TODO: bulk delete
-            selectedItemsWithoutSection.forEach {
-                dao.deleteEntityById(it.id)
-            }
-            runTrashAction.value = true
+            // selectedItemsWithoutSection.forEach {
+            //     dao.deleteEntityById(it.id)
+            // }
+            permissionState.get(
+                uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+            )
         }
     }
 
@@ -1072,10 +1049,12 @@ fun FavouritesBottomAppBarItems(
             } else {
                 coroutineScope.launch {
                     // TODO: bulk delete
-                    selectedItemsWithoutSection.forEach {
-                        dao.deleteEntityById(it.id)
-                    }
-                    runTrashAction.value = true
+                    // selectedItemsWithoutSection.forEach {
+                    //     dao.deleteEntityById(it.id)
+                    // }
+                    permissionState.get(
+                        uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+                    )
                 }
             }
         }

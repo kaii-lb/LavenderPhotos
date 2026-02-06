@@ -72,15 +72,15 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
 import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.rememberMediaRenamer
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.permissions.files.rememberMediaRenamer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -319,8 +319,6 @@ private fun Content(
         )
 
         val showConfirmEraseDialog = remember { mutableStateOf(false) }
-        val runEraseExifData = remember { mutableStateOf(false) }
-
         var showDateTimePicker by remember { mutableStateOf(false) }
 
         if (showDateTimePicker) {
@@ -422,22 +420,10 @@ private fun Content(
             }
         }
 
-        ConfirmationDialogWithBody(
-            showDialog = showConfirmEraseDialog,
-            dialogTitle = stringResource(id = R.string.media_exif_erase),
-            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-            confirmButtonLabel = stringResource(id = R.string.media_erase)
-        ) {
-            runEraseExifData.value = true
-        }
-
         val resources = LocalResources.current
         val mainViewModel = LocalMainViewModel.current
         val coroutineScope = rememberCoroutineScope()
-
-        GetPermissionAndRun(
-            uris = listOf(currentMediaItem.uri.toUri()),
-            shouldRun = runEraseExifData,
+        val permissionState = rememberFilePermissionManager(
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
                     try {
@@ -480,6 +466,15 @@ private fun Content(
                 }
             }
         )
+
+        ConfirmationDialogWithBody(
+            showDialog = showConfirmEraseDialog,
+            dialogTitle = stringResource(id = R.string.media_exif_erase),
+            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_erase)
+        ) {
+            permissionState.get(uris = listOf(currentMediaItem.uri.toUri()))
+        }
 
         if (!isLandscape) {
             TallDialogInfoRow(
@@ -564,13 +559,12 @@ private fun IconContentImpl(
             }
         )
     }
-    val saveFileName = remember { mutableStateOf(false) }
-    var currentFileName by remember { mutableStateOf(originalFileName) }
 
+    var currentFileName by remember { mutableStateOf(originalFileName) }
     val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
 
-    val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri.toUri()) {
+    val mediaRenamer = rememberMediaRenamer {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
@@ -581,19 +575,6 @@ private fun IconContentImpl(
             )
         }
     }
-
-    GetPermissionAndRun(
-        uris = listOf(currentMediaItem.uri.toUri()),
-        shouldRun = saveFileName,
-        onGranted = {
-            mediaRenamer.rename(
-                newName = "${currentFileName}.${file.extension}",
-                uri = currentMediaItem.uri.toUri()
-            )
-
-            originalFileName = currentFileName
-        }
-    )
 
     var showRenameDialog by remember { mutableStateOf(false) }
     if (showRenameDialog) {
@@ -606,7 +587,12 @@ private fun IconContentImpl(
 
                 if (valid) {
                     currentFileName = newName
-                    saveFileName.value = true
+                    mediaRenamer.rename(
+                        newName = "${currentFileName}.${file.extension}",
+                        uri = currentMediaItem.uri.toUri()
+                    )
+
+                    originalFileName = currentFileName
                     showRenameDialog = false
                 }
 
@@ -640,7 +626,10 @@ private fun IconContentImpl(
         var isMoving by remember { mutableStateOf(false) }
 
         val stateList = SnapshotStateList<PhotoLibraryUIModel>()
-        stateList.add(PhotoLibraryUIModel.Media(item = currentMediaItem))
+        stateList.add(PhotoLibraryUIModel.Media(
+            item = currentMediaItem,
+            accessToken = null // TODO
+        ))
 
         MoveCopyAlbumListView(
             show = show,

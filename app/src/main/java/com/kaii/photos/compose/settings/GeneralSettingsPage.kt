@@ -103,7 +103,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             if (shouldShowEverything) {
                                 val flat = allAlbums.flatMap { it.paths }.fastMap { it.removeSuffix("/") }
 
-                                flat - mainPhotosPaths.fastMap { it.removeSuffix("/") }
+                                flat - mainPhotosPaths.fastMap { it.removeSuffix("/") }.toSet()
                             } else {
                                 mainPhotosPaths.fastMap { it.removeSuffix("/") }
                             }
@@ -167,8 +167,6 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 val foundAlbums = stringResource(id = R.string.albums_found)
 
                 val context = LocalContext.current
-                val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_auto_detect),
                     summary = stringResource(id = R.string.albums_auto_detect_desc),
@@ -192,10 +190,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                                 )
 
                                 mainViewModel.settings.AlbumsList.add(
-                                    list = tryGetAllAlbums(
-                                        context = context,
-                                        displayDateFormat = displayDateFormat
-                                    )
+                                    list = tryGetAllAlbums(context = context)
                                 )
                                 isAlreadyLoading.value = false
                             }

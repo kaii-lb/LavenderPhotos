@@ -46,9 +46,9 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmCancelRow
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.GetPermissionAndRun
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.setDateForMedia
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -124,10 +124,8 @@ fun DateTimePicker(
         val coroutineScope = rememberCoroutineScope()
 
         var selectedTime by remember { mutableStateOf(dateTime.time) }
-        val getPermission = remember { mutableStateOf(false) }
-        GetPermissionAndRun(
-            uris = listOf(mediaItem.uri.toUri()),
-            shouldRun = getPermission,
+
+        val permissionManager = rememberFilePermissionManager(
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
                     val dateTime = selectedDate.atTime(selectedTime).toInstant(timeZone = TimeZone.currentSystemDefault()).epochSeconds
@@ -165,7 +163,7 @@ fun DateTimePicker(
             onDismiss = onDismiss,
             onSave = { time ->
                 selectedTime = time
-                getPermission.value = true
+                permissionManager.get(uris = listOf(mediaItem.uri.toUri()))
             }
         )
     }

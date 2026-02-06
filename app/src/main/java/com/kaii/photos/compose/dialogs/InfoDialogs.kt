@@ -80,7 +80,6 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -91,11 +90,12 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.launch
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
@@ -175,18 +175,18 @@ fun SingleAlbumDialog(
             ) {
                 showDialog.value = false
                 selectedItemsList.clear()
-                selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
+                selectedItemsList.add(PhotoLibraryUIModel.Media(
+                    item = MediaStoreData.dummyItem,
+                    accessToken = null
+                ))
             }
 
-            val fileName = remember { mutableStateOf(dynamicAlbum.name) }
-            val saveFileName = remember { mutableStateOf(false) }
 
             val context = LocalContext.current
+            val fileName = remember { mutableStateOf(dynamicAlbum.name) }
 
             if (dynamicAlbum.paths.size == 1 && !dynamicAlbum.isCustomAlbum) {
-                GetDirectoryPermissionAndRun(
-                    absoluteDirPaths = dynamicAlbum.paths,
-                    shouldRun = saveFileName,
+                val permissionManager = rememberDirectoryPermissionManager(
                     onGranted = {
                         Log.d(TAG, "Running rename ${fileName.value} ${dynamicAlbum.name}")
                         if (fileName.value != dynamicAlbum.name) {
@@ -230,49 +230,46 @@ fun SingleAlbumDialog(
                                 Log.d(TAG, "Couldn't release permission for ${newInfo.mainPath}")
                                 e.printStackTrace()
                             }
-
-                            saveFileName.value = false
                         }
-                    },
-                    onRejected = {}
+                    }
                 )
 
                 AnimatableTextField(
                     state = isEditingFileName,
                     string = fileName,
-                    doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
                     enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
                     modifier = Modifier
-                        .padding(8.dp, 0.dp)
-                ) {
-                    fileName.value = dynamicAlbum.name
-                }
+                        .padding(8.dp, 0.dp),
+                    doAction = {
+                        permissionManager.start(
+                            directories = dynamicAlbum.paths
+                        )
+                    },
+                    resetAction = {
+                        fileName.value = dynamicAlbum.name
+                    }
+                )
             } else {
-                LaunchedEffect(saveFileName.value) {
-                    if (!saveFileName.value) return@LaunchedEffect
-
-                    val newInfo = dynamicAlbum.copy(name = fileName.value)
-
-                    mainViewModel.settings.AlbumsList.edit(
-                        id = dynamicAlbum.id,
-                        newInfo = newInfo
-                    )
-
-                    saveFileName.value = false
-                }
-
                 AnimatableTextField(
                     state = isEditingFileName,
                     string = fileName,
-                    doAction = saveFileName,
                     rowPosition = RowPosition.Middle,
                     enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
                     modifier = Modifier
-                        .padding(8.dp, 0.dp)
-                ) {
-                    fileName.value = dynamicAlbum.name
-                }
+                        .padding(8.dp, 0.dp),
+                    doAction = {
+                        val newInfo = dynamicAlbum.copy(name = fileName.value)
+
+                        mainViewModel.settings.AlbumsList.edit(
+                            id = dynamicAlbum.id,
+                            newInfo = newInfo
+                        )
+                    },
+                    resetAction = {
+                        fileName.value = dynamicAlbum.name
+                    }
+                )
             }
 
             DialogClickableItem(
@@ -431,7 +428,10 @@ fun MainAppDialog(
                     ) {
                         showDialog.value = false
                         selectedItemsList.clear()
-                        selectedItemsList.add(PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem))
+                        selectedItemsList.add(PhotoLibraryUIModel.Media(
+                            item = MediaStoreData.dummyItem,
+                            accessToken = null
+                        ))
                         vibratorManager.vibrateShort()
                     }
                 }

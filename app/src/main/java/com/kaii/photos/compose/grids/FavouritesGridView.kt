@@ -38,11 +38,9 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 
 // private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
@@ -64,13 +62,6 @@ fun FavouritesGridView(
     }
 
     val navController = LocalNavController.current
-
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
-        }
-    }
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f)

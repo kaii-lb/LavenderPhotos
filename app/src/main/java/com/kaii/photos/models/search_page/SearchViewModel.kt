@@ -1,11 +1,7 @@
 package com.kaii.photos.models.search_page
 
 import android.content.Context
-import android.os.CancellationSignal
 import android.util.Log
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -13,19 +9,20 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SQLiteQuery
+import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.models.multi_album.groupPhotosBy
-import com.kaii.photos.models.multi_album.mapToMedia
+import com.kaii.photos.models.loading.ListPagingSource
+import com.kaii.photos.models.loading.mapToMedia
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
@@ -43,65 +40,72 @@ import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.models.search_page.SearchViewModel"
 
+private data class SearchParams(
+    val items: List<MediaStoreData>,
+    val accessToken: String
+)
+
 class SearchViewModel(
     context: Context,
     private var sortMode: MediaItemSortMode,
-    private var displayDateFormat: DisplayDateFormat
+    private var displayDateFormat: DisplayDateFormat,
+    private val separators: Boolean
 ) : ViewModel() {
-    var query = ""
-    private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(
-        MediaDataSource(
-            context = context,
-            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
+    private var query = ""
+
+    private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val allMedia =
+        mediaDao.getAllMedia()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = emptyList()
+            )
+
+    private val params = MutableStateFlow(
+        value = SearchParams(
+            items = emptyList(),
+            accessToken = ""
         )
     )
+    private val settings = SettingsImmichImpl(context = context, viewModelScope = viewModelScope)
 
-    val mediaFlow by derivedStateOf {
-        getMediaDataFlow().value.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = 10.seconds.inWholeMilliseconds
+    init {
+        viewModelScope.launch {
+            settings.getImmichBasicInfo().collectLatest {
+                params.value = params.value.copy(accessToken = it.accessToken)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    val mediaFlow = params.debounce(1.seconds).flatMapLatest { (media, accessToken) ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 100,
+                prefetchDistance = 50,
+                enablePlaceholders = true,
+                initialLoadSize = 300
             ),
-            initialValue = emptyList()
+            pagingSourceFactory = { ListPagingSource(media = media) }
+        ).flow.mapToMedia(
+            sortMode = sortMode,
+            format = displayDateFormat,
+            accessToken = accessToken,
+            separators = separators
         )
-    }
-
-    // TODO: fix this
-    val mediaPagingFlow = Pager(
-        config = PagingConfig(
-            pageSize = 80,
-            prefetchDistance = 40,
-            enablePlaceholders = true,
-            initialLoadSize = 80
-        ),
-        pagingSourceFactory = { MediaDatabase.getInstance(context).mediaDao().getPagedMedia() }
-    ).flow.mapToMedia(sortMode = sortMode, format = displayDateFormat).cachedIn(viewModelScope)
-
-    private fun getMediaDataFlow() = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-    }
-
-    private val _groupedMedia = MutableStateFlow<List<PhotoLibraryUIModel>>(emptyList())
-    val groupedMedia = _groupedMedia.asStateFlow()
+    }.cachedIn(viewModelScope)
 
     fun search(
-        search: String,
-        context: Context
+        query: String
     ) = viewModelScope.launch(Dispatchers.IO) {
-        val query = search.trim()
+        val query = query.trim()
         this@SearchViewModel.query = query
 
         if (query.isEmpty()) {
-            _groupedMedia.value = groupPhotosBy(
-                media = mediaFlow.value,
-                sortBy = sortMode,
-                displayDateFormat = displayDateFormat,
-                context = context
-            )
+            params.value = params.value.copy(items = allMedia.value)
             return@launch
         }
 
@@ -116,29 +120,13 @@ class SearchViewModel(
         }
 
         setMedia(
-            context = context,
             media = final,
             sortMode = sortMode,
             displayDateFormat = displayDateFormat
         )
     }
 
-    // TODO: fix
-    /** [setMedia] but without grouping */
-    fun overrideMedia(
-        context: Context,
-        media: List<MediaStoreData>
-    ) {
-        _groupedMedia.value = groupPhotosBy(
-            media = media,
-            sortBy = sortMode,
-            displayDateFormat = displayDateFormat,
-            context = context
-        )
-    }
-
     fun setMedia(
-        context: Context,
         media: List<MediaStoreData>,
         sortMode: MediaItemSortMode,
         displayDateFormat: DisplayDateFormat
@@ -146,35 +134,11 @@ class SearchViewModel(
         this@SearchViewModel.sortMode = sortMode
         this@SearchViewModel.displayDateFormat = displayDateFormat
 
-        _groupedMedia.value = groupPhotosBy(
-            media = media,
-            sortBy = sortMode,
-            displayDateFormat = displayDateFormat,
-            context = context
-        )
+        params.value = params.value.copy(items = media)
     }
 
     fun clear() {
-        _groupedMedia.value = emptyList()
-        cancellationSignal.cancel()
-        cancellationSignal = CancellationSignal()
-    }
-
-    fun restart(
-        context: Context,
-        sortMode: MediaItemSortMode = this.sortMode,
-        displayDateFormat: DisplayDateFormat = this.displayDateFormat
-    ) {
-        this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
-
-        mediaStoreDataSource.value = MediaDataSource(
-            context = context,
-            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
-        )
+        params.value = params.value.copy(items = emptyList())
     }
 
     private val formats = listOf(
@@ -192,7 +156,7 @@ class SearchViewModel(
     )
 
     fun searchByName(name: String): List<MediaStoreData> {
-        val list = mediaFlow.value
+        val list = allMedia.value
 
         return list.filter { data ->
             data.type != MediaType.Section && data.displayName.lowercase().contains(name.lowercase())
@@ -219,7 +183,7 @@ class SearchViewModel(
 
         if (parsed == null) return emptyList()
 
-        val list = mediaFlow.value
+        val list = allMedia.value
         return list.filter { data ->
             val date = data.getDateTakenDay().toLocalDate()
 
@@ -232,7 +196,7 @@ class SearchViewModel(
         if (unpacked.size !in 2..3) return emptyList()
 
         try {
-            val list = mediaFlow.value
+            val list = allMedia.value
 
             // dayNumber month year
             if (unpacked[0].length <= 2) {
@@ -277,9 +241,10 @@ class SearchViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    fun Long.toLocalDate() = Instant.fromEpochSeconds(
+    private fun Long.toLocalDate() = Instant.fromEpochSeconds(
         epochSeconds = this
     ).toLocalDateTime(
         timeZone = TimeZone.currentSystemDefault()
     ).date
 }
+

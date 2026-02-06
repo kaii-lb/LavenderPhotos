@@ -82,8 +82,8 @@ import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.mapToMediaItems
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMediaItems
 
 @Composable
 fun MainAppTopBar(

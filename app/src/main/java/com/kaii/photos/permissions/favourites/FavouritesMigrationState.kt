@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.permissions.favourites
+package com.kaii.photos.permissions.favourites
 
 import android.content.Context
 import android.net.Uri
@@ -19,9 +19,9 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.Versions
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.permissions.MediaPermissionsState
-import com.kaii.photos.helpers.permissions.rememberMediaPermissionsState
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.permissions.MediaPermissionsState
+import com.kaii.photos.permissions.rememberMediaPermissionsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +54,7 @@ class FavouritesMigrationState(
 
     init {
         coroutineScope.launch(Dispatchers.IO) {
-            favourites = appDatabase.favouritedItemEntityDao().getAll().first().map { it.uri.toUri() }
+            favourites = appDatabase.favouritesDao().getAll().first().map { it.uri.toUri() }
 
             if (favourites.isEmpty()) _state.value = MigrationState.Done
         }
@@ -140,8 +140,8 @@ fun rememberFavouritesMigrationState(): FavouritesMigrationState {
             coroutineScope = coroutineScope,
             navigate = {
                 coroutineScope.launch(Dispatchers.Main) {
-                    navController.popBackStack(MultiScreenViewType.FavouritesMigrationPage.name, true)
-                    navController.navigate(MultiScreenViewType.FavouritesGridView.name)
+                    navController.popBackStack(Screens.Favourites.MigrationPage, true)
+                    navController.navigate(Screens.Favourites.GridView)
                 }
             },
             onDone = {

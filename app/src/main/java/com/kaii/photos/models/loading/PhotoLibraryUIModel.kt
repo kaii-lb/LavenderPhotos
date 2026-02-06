@@ -1,0 +1,58 @@
+package com.kaii.photos.models.loading
+
+import androidx.paging.ItemSnapshotList
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.mediastore.signature
+
+sealed interface PhotoLibraryUIModel {
+    interface MediaImpl : PhotoLibraryUIModel {
+        val item: MediaStoreData
+        val accessToken: String?
+    }
+
+    data class Media(
+        override val item: MediaStoreData,
+        override val accessToken: String? = null
+    ) : MediaImpl
+
+    data class Section(val title: String) : PhotoLibraryUIModel
+
+    data class SecuredMedia(
+        override val item: MediaStoreData,
+        override val accessToken: String? = null,
+        val bytes: ByteArray?
+    ) : MediaImpl {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as SecuredMedia
+
+            if (item != other.item) return false
+            if (!bytes.contentEquals(other.bytes)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = item.hashCode()
+            result = 31 * result + bytes.contentHashCode()
+            return result
+        }
+    }
+
+    fun signature() =
+        if (this is MediaImpl) {
+            item.signature()
+        } else {
+            throw IllegalStateException("Cannot get signature of a ${Section::class.simpleName}!")
+        }
+
+    fun itemKey() =
+        if (this is MediaImpl) item.absolutePath + item.displayName + item.id
+        else (this as Section).title
+}
+
+fun List<PhotoLibraryUIModel>.mapToMediaItems() = mapNotNull { if (it is PhotoLibraryUIModel.MediaImpl) it.item else null }
+fun ItemSnapshotList<PhotoLibraryUIModel>.mapToMediaItems() = mapNotNull { if (it is PhotoLibraryUIModel.MediaImpl) it.item else null }
+

@@ -48,9 +48,9 @@ import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.mapToMediaItems
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.mapToMediaItems
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -65,7 +65,6 @@ fun SingleAlbumView(
     incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
@@ -77,18 +76,7 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
-            viewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum
-            )
-        }
-    }
-
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            // viewModel.cancelMediaFlow() TODO
-        }
+        viewModel.update(album = dynamicAlbum)
     }
 
     val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -139,7 +127,7 @@ fun SingleAlbumView(
         }
     }
 
-    val pagingItems = viewModel.mediaPagingFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,

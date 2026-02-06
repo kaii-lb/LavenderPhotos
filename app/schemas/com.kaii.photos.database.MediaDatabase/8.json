@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "77e1945c647e782c9db89f00c4ae9339",
+    "identityHash": "47f3ce7fe3b99499983017a579d225e9",
     "entities": [
       {
         "tableName": "media",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `uri` TEXT NOT NULL, `absolutePath` TEXT NOT NULL, `displayName` TEXT NOT NULL, `dateTaken` INTEGER NOT NULL, `dateModified` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `type` TEXT NOT NULL, `immichUrl` TEXT, `immichThumbnail` TEXT, `hash` TEXT, `size` INTEGER NOT NULL, `customId` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `uri` TEXT NOT NULL, `absolutePath` TEXT NOT NULL, `parentPath` TEXT NOT NULL, `displayName` TEXT NOT NULL, `dateTaken` INTEGER NOT NULL, `dateModified` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `type` TEXT NOT NULL, `immichUrl` TEXT, `immichThumbnail` TEXT, `hash` TEXT, `size` INTEGER NOT NULL, `customId` INTEGER, `favourited` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -23,6 +23,12 @@
           {
             "fieldPath": "absolutePath",
             "columnName": "absolutePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentPath",
+            "columnName": "parentPath",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -81,6 +87,12 @@
             "fieldPath": "customId",
             "columnName": "customId",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "favourited",
+            "columnName": "favourited",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -256,7 +268,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '77e1945c647e782c9db89f00c4ae9339')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '47f3ce7fe3b99499983017a579d225e9')"
     ]
   }
 }

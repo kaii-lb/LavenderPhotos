@@ -26,14 +26,10 @@ import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
-import com.kaii.photos.mediastore.getSQLiteQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -67,9 +63,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
                 Manifest.permission.READ_EXTERNAL_STORAGE
             )
         }
-
-    private val _groupedMedia = MutableStateFlow<List<MediaStoreData>?>(null)
-    val groupedMedia: Flow<List<MediaStoreData>?> = _groupedMedia.asStateFlow()
 
     val permissionQueue = mutableStateListOf<String>()
 
@@ -160,10 +153,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             val media = if (!album.isCustomAlbum) {
                 val datasource = MediaDataSource(
                     context = context,
-                    sqliteQuery = getSQLiteQuery(album.paths),
-                    sortMode = sortMode,
-                    cancellationSignal = cancellationSignal,
-                    displayDateFormat = DisplayDateFormat.Default
+                    cancellationSignal = cancellationSignal
                 )
 
                 datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
@@ -172,8 +162,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
                     context = context,
                     parentId = album.id,
                     sortMode = sortMode,
-                    cancellationSignal = cancellationSignal,
-                    displayDateFormat = DisplayDateFormat.Default
+                    cancellationSignal = cancellationSignal
                 )
 
                 datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
@@ -182,10 +171,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             cancellationSignal.cancel()
             albumsThumbnailsMap[album.id] = media
         }
-    }
-
-    fun setGroupedMedia(media: List<MediaStoreData>?) {
-        _groupedMedia.value = media
     }
 
     fun startupPermissionCheck(context: Context) {

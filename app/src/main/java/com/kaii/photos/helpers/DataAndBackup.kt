@@ -6,7 +6,6 @@ import android.util.Log
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.FavouritesDataSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -198,19 +197,13 @@ class DataAndBackupHelper(
         return zipFile.absolutePath
     }
 
-    suspend fun exportFavourites(context: Context) {
+    fun exportFavourites(context: Context) {
         val exportDir = getFavExportDir(context = context)
         if (!exportDir.exists()) exportDir.mkdirs()
 
-        val cancellationSignal = CancellationSignal()
-        val mediaStore = FavouritesDataSource(
-            context = context,
-            sortMode = MediaItemSortMode.LastModified,
-            displayDateFormat = DisplayDateFormat.Default,
-            cancellationSignal = cancellationSignal
-        )
+        val mediaStore = FavouritesDataSource(context = context, cancellationSignal = CancellationSignal())
 
-        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
+        val items = mediaStore.query().map { File(it.absolutePath) }
 
         if (items.isEmpty()) return
 
@@ -225,7 +218,7 @@ class DataAndBackupHelper(
     suspend fun exportFavouritesToZipFile(
         context: Context,
         progress: (percentage: Float) -> Unit
-    ) : String? {
+    ): String? {
         val zipFile = getFavZipFile(context = context)
         if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
 
@@ -234,17 +227,9 @@ class DataAndBackupHelper(
 
         zipOutputStream.setLevel(Deflater.DEFAULT_COMPRESSION)
 
-        val cancellationSignal = CancellationSignal()
-        val mediaStore = FavouritesDataSource(
-            context = context,
-            sortMode = MediaItemSortMode.LastModified,
-            displayDateFormat = DisplayDateFormat.Default,
-            cancellationSignal = cancellationSignal
-        )
+        val mediaStore = FavouritesDataSource(context = context, cancellationSignal = CancellationSignal())
 
-        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
-
-        cancellationSignal.cancel()
+        val items = mediaStore.query().map { File(it.absolutePath) }
 
         if (items.isEmpty()) {
             zipOutputStream.close()

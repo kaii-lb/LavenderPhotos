@@ -82,7 +82,7 @@ import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingColors
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -566,7 +566,10 @@ fun FloatingScrollbar(
                             // last index to "reach" even the last items
                             val item by remember {
                                 derivedStateOf {
-                                    pagingItems[targetIndex] ?: PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem)
+                                    pagingItems[targetIndex] ?: PhotoLibraryUIModel.Media(
+                                        item = MediaStoreData.dummyItem,
+                                        accessToken = null // TODO
+                                    )
                                 }
                             }
 
@@ -574,7 +577,7 @@ fun FloatingScrollbar(
                             val formatted = remember(item) {
                                 format.format(
                                     Date(
-                                        (item as? PhotoLibraryUIModel.Media)?.item?.let { it.dateTaken * 1000 } ?: 0L
+                                        (item as? PhotoLibraryUIModel.MediaImpl)?.item?.let { it.dateTaken * 1000 } ?: 0L
                                 ))
                             }
 

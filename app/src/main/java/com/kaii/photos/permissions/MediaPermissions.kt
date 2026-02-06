@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.permissions
+package com.kaii.photos.permissions
 
 import android.app.Activity
 import android.content.Context

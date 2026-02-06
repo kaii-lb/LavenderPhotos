@@ -56,6 +56,7 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.random.Random
 
 @Composable
 fun DebuggingSettingsPage() {
@@ -289,7 +290,16 @@ fun DebuggingSettingsPage() {
                     position = RowPosition.Single,
                     showBackground = false
                 ) {
-                   navController.navigate(Screens.ImmichAlbum(id = "6f8489e9-103a-4355-9036-6df2f828cba8"))
+                   navController.navigate(
+                       Screens.Immich.GridView(
+                           albumInfo = AlbumInfo(
+                               id = Random.nextInt(),
+                               name = "Immich Album",
+                               paths = emptyList(),
+                               immichId = "6f8489e9-103a-4355-9036-6df2f828cba8"
+                           )
+                       )
+                   )
                 }
             }
         }

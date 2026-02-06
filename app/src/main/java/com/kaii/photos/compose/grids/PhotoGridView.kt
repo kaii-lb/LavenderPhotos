@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.grids
 
 import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -86,19 +87,24 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
+import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.isRawImage
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 
-// private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
+private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
 @Composable
 fun PhotoGrid(
@@ -263,7 +269,6 @@ fun DeviceMedia(
                     } else {
                         MediaStoreItem(
                             item = mediaStoreItem,
-                            // groupedMedia = groupedMedia,
                             viewProperties = viewProperties,
                             selectedItemsList = selectedItemsList,
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
@@ -271,11 +276,42 @@ fun DeviceMedia(
                             isMediaPicker = isMediaPicker,
                             useRoundedCorners = useRoundedCorners
                         ) {
-                            if (!isMediaPicker && mediaStoreItem is PhotoLibraryUIModel.Media) {
+                            if (!isMediaPicker && mediaStoreItem is PhotoLibraryUIModel.MediaImpl) {
                                 val item = mediaStoreItem.item
 
-                                when (viewProperties.operation) {
-                                    ImageFunctions.LoadNormalImage -> {
+                                when (viewProperties) {
+                                    ViewProperties.Trash -> {
+                                        navController.navigate(
+                                            Screens.Trash.SinglePhoto(
+                                                index =
+                                                    pagingItems.itemSnapshotList
+                                                        .filterIsInstance<PhotoLibraryUIModel.Media>()
+                                                        .indexOf(pagingItems[i])
+                                            )
+                                        )
+                                    }
+
+                                    ViewProperties.SecureFolder -> {
+                                        navController.navigate(
+                                            Screens.SecureFolder.SinglePhoto(
+                                                index =
+                                                    pagingItems.itemSnapshotList
+                                                        .filterIsInstance<PhotoLibraryUIModel.Media>()
+                                                        .indexOf(pagingItems[i])
+                                            )
+                                        )
+                                    }
+
+                                    ViewProperties.Favourites -> {
+                                        navController.navigate(
+                                            Screens.Favourites.SinglePhoto(
+                                                mediaItemId = item.id,
+                                                nextMediaItemId = null
+                                            )
+                                        )
+                                    }
+
+                                    else -> {
                                         if (openVideosExternally && item.type == MediaType.Video) {
                                             val intent = Intent().apply {
                                                 data = item.uri.toUri() // TODO
@@ -292,32 +328,12 @@ fun DeviceMedia(
                                                     type =
                                                         when (viewProperties) {
                                                             ViewProperties.SearchLoading, ViewProperties.SearchNotFound -> ScreenType.Search
-                                                            ViewProperties.Favourites -> ScreenType.Favourites
                                                             ViewProperties.Immich -> ScreenType.Immich
                                                             else -> ScreenType.Normal
                                                         }
                                                 )
                                             )
                                         }
-                                    }
-
-                                    ImageFunctions.LoadTrashedImage -> {
-                                        navController.navigate(
-                                            Screens.Trash.SingleTrashedPhotoView(
-                                                mediaItemId = item.id
-                                            )
-                                        )
-                                    }
-
-                                    ImageFunctions.LoadSecuredImage -> {
-                                        // TODO
-                                        // mainViewModel.setGroupedMedia(groupedMedia.value)
-
-                                        navController.navigate(
-                                            Screens.SingleHiddenPhotoView(
-                                                mediaItemId = item.id
-                                            )
-                                        )
                                     }
                                 }
                             }
@@ -389,7 +405,6 @@ fun DeviceMedia(
 @Composable
 private fun MediaStoreItem(
     item: PhotoLibraryUIModel,
-    // groupedMedia: State<List<MediaStoreData>>,
     viewProperties: ViewProperties,
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     thumbnailSettings: Pair<Boolean, Int>,
@@ -458,7 +473,7 @@ private fun MediaStoreItem(
             )
         }
     } else {
-        item as PhotoLibraryUIModel.Media
+        item as PhotoLibraryUIModel.MediaImpl
 
         val isSelected by remember {
             derivedStateOf {
@@ -538,39 +553,52 @@ private fun MediaStoreItem(
                     }
                 )
         ) {
-            // TODO
-            // var model by remember { mutableStateOf<Any?>(null) }
-            // val context = LocalContext.current
-            // val isSecureMedia =
-            //     remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
-            //
-            // LaunchedEffect(isSecureMedia) {
-            //     if (!isSecureMedia || model != null) return@LaunchedEffect
-            //
-            //     model =
-            //         withContext(Dispatchers.IO) {
-            //             try {
-            //                 val thumbnailIv =
-            //                     item.bytes!!.getThumbnailIv() // get thumbnail iv from video
-            //
-            //                 EncryptionManager.decryptBytes(
-            //                     bytes = getSecuredCacheImageForFile(
-            //                         fileName = item.displayName,
-            //                         context = context
-            //                     ).readBytes(),
-            //                     iv = thumbnailIv
-            //                 )
-            //             } catch (e: Throwable) {
-            //                 Log.d(TAG, e.toString())
-            //                 e.printStackTrace()
-            //
-            //                 item.uri.path
-            //             }
-            //         }
-            // }
+            // TODO: possibly move to a less messy and horrible decrypting implementation
+            var model by remember { mutableStateOf<Any?>(null) }
+            val context = LocalContext.current
+            val isSecureMedia =
+                remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
+
+            LaunchedEffect(isSecureMedia) {
+                if (!isSecureMedia || model != null) return@LaunchedEffect
+
+                item as PhotoLibraryUIModel.SecuredMedia
+
+                model =
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val thumbnailIv =
+                                item.bytes!!.getThumbnailIv() // get thumbnail iv from video
+
+                            EncryptionManager.decryptBytes(
+                                bytes = getSecuredCacheImageForFile(
+                                    fileName = item.item.displayName,
+                                    context = context
+                                ).readBytes(),
+                                iv = thumbnailIv
+                            )
+                        } catch (e: Throwable) {
+                            Log.d(TAG, e.toString())
+                            e.printStackTrace()
+
+                            item.item.uri.toUri().path
+                        }
+                    }
+            }
 
             GlideImage(
-                model = item.item.uri, // if (isSecureMedia) model else item.immichInfo ?: item.uri,
+                model = when {
+                    isSecureMedia -> model
+
+                    item.item.immichUrl != null -> ImmichInfo(
+                        thumbnail = item.item.immichThumbnail!!,
+                        original = item.item.immichUrl!!,
+                        hash = item.item.hash!!,
+                        accessToken = item.accessToken!!
+                    )
+
+                    else -> item.item.uri
+                },
                 contentDescription = item.item.displayName,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),
@@ -580,7 +608,7 @@ private fun MediaStoreItem(
                     .scale(animatedItemScale)
                     .clip(RoundedCornerShape(animatedItemCornerRadius))
             ) {
-                if (/*TODO isSecureMedia*/ false) {
+                if (isSecureMedia) {
                     it.signature(item.signature())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                 } else if (thumbnailSettings.second == 0) {

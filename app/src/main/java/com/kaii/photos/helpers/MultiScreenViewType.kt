@@ -2,13 +2,10 @@ package com.kaii.photos.helpers
 
 import com.kaii.photos.datastore.AlbumInfo
 import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
 
 enum class MultiScreenViewType {
     MainScreen,
-    SecureFolder,
     AboutAndUpdateView,
-    FavouritesGridView,
     SettingsMainView,
     SettingsDebuggingView,
     SettingsGeneralView,
@@ -21,8 +18,7 @@ enum class MultiScreenViewType {
     PrivacyAndSecurity,
     ImmichMainPage,
     LicensePage,
-    ExtendedLicensePage,
-    FavouritesMigrationPage
+    ExtendedLicensePage
 }
 
 enum class ScreenType {
@@ -49,19 +45,39 @@ object Screens {
     @Serializable
     object Trash {
         @Serializable
-        object TrashedPhotoView
+        object GridView
 
         @Serializable
-        data class SingleTrashedPhotoView(
-            val mediaItemId: Long
+        data class SinglePhoto(
+            val index: Int
         )
     }
 
+    @Serializable
+    object Favourites {
+        @Serializable
+        object GridView
+
+        @Serializable
+        object MigrationPage
+
+        @Serializable
+        data class SinglePhoto(
+            val mediaItemId: Long,
+            val nextMediaItemId: Long?
+        )
+    }
 
     @Serializable
-    data class SingleHiddenPhotoView(
-        val mediaItemId: Long
-    )
+    object SecureFolder {
+        @Serializable
+        object GridView
+
+        @Serializable
+        data class SinglePhoto(
+            val index: Int
+        )
+    }
 
     @Serializable
     data class ImageEditor(
@@ -80,9 +96,33 @@ object Screens {
         val type: ScreenType
     )
 
-    @OptIn(ExperimentalUuidApi::class)
     @Serializable
-    data class ImmichAlbum(
-        val id: String
-    )
+    object Immich {
+        @Serializable
+        data class GridView(
+            val albumInfo: AlbumInfo
+        )
+
+        @Serializable
+        data class SinglePhoto(
+            val mediaItemId: Long,
+            val albumInfo: AlbumInfo,
+            val nextMediaItemId: Long?,
+        )
+    }
+
+    @Serializable
+    object CustomAlbums {
+        @Serializable
+        data class GridView(
+            val albumInfo: AlbumInfo
+        )
+
+        @Serializable
+        data class SinglePhoto(
+            val mediaItemId: Long,
+            val albumInfo: AlbumInfo,
+            val nextMediaItemId: Long?,
+        )
+    }
 }

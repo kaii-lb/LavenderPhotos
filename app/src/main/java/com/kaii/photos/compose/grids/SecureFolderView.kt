@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,16 +39,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
+import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -57,7 +62,7 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LockedFolderView(
+fun SecureFolderView(
     window: Window,
     viewModel: SecureFolderViewModel
 ) {
@@ -90,7 +95,7 @@ fun LockedFolderView(
 
     LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
+            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
         ) {
             viewModel.stopFileObserver()
             navController.navigate(MultiScreenViewType.MainScreen.name)
@@ -111,7 +116,7 @@ fun LockedFolderView(
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SingleHiddenPhotoView::class) == false
+                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
                             && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
                             && !isGettingPermissions.value
                         ) {
@@ -139,28 +144,22 @@ fun LockedFolderView(
         }
     }
 
-    val fileList by viewModel.fileList.collectAsStateWithLifecycle()
+    if (hideSecureFolder) return
 
-    if (hideSecureFolder || fileList == null) return
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val actualGroupedMedia by viewModel.groupedMedia.collectAsStateWithLifecycle()
-    val groupedMedia = remember { mutableStateOf(actualGroupedMedia) }
-
-    var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(actualGroupedMedia.lastOrNull()) {
-        groupedMedia.value = actualGroupedMedia
-        hasFiles = groupedMedia.value.isNotEmpty()
-    }
+    val hasFiles by remember { derivedStateOf {
+        items.itemSnapshotList.isNotEmpty()
+    }}
 
     Scaffold(
         topBar = {
-            // TODO
-            // SecureFolderViewTopAppBar(
-            //     selectedItemsList = selectedItemsList,
-            //     pagingItems = groupedMedia
-            // ) {
-            //     navController.popBackStack()
-            // }
+            SecureFolderViewTopAppBar(
+                pagingItems = items,
+                selectedItemsList = selectedItemsList
+            ) {
+                navController.popBackStack()
+            }
         },
         bottomBar = {
             AnimatedVisibility(
@@ -172,12 +171,11 @@ fun LockedFolderView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                // TODO
-                // SecureFolderViewBottomAppBar(
-                //     selectedItemsList = selectedItemsList,
-                //     pagingItems = groupedMedia,
-                //     isGettingPermissions = isGettingPermissions
-                // )
+                SecureFolderViewBottomAppBar(
+                    pagingItems = items,
+                    selectedItemsList = selectedItemsList,
+                    isGettingPermissions = isGettingPermissions
+                )
             }
         },
         modifier = Modifier
@@ -212,13 +210,13 @@ fun LockedFolderView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // PhotoGrid(
-            //     pagingItems = groupedMedia,
-            //     albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-            //     selectedItemsList = selectedItemsList,
-            //     viewProperties = ViewProperties.SecureFolder,
-            //     hasFiles = hasFiles
-            // )
+            PhotoGrid(
+                pagingItems = items,
+                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                selectedItemsList = selectedItemsList,
+                viewProperties = ViewProperties.SecureFolder,
+                hasFiles = hasFiles
+            )
         }
     }
 }

@@ -4,7 +4,7 @@ import androidx.compose.animation.core.EaseInOutExpo
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 
 object PhotoGridConstants {
     const val LOADING_TIME = 5000L

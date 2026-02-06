@@ -6,32 +6,51 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
-import com.kaii.photos.models.multi_album.groupPhotosBy
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.loading.SecuredListPagingSource
+import com.kaii.photos.models.loading.mapToMedia
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "com.kaii.photos.models.LockedFolderViewModel"
 
-class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displayDateFormat: DisplayDateFormat) : ViewModel() {
+private data class QueryParams(
+    val securedItems: List<PhotoLibraryUIModel.SecuredMedia>,
+    val separators: Boolean
+)
+
+class SecureFolderViewModel(
+    context: Context,
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat
+) : ViewModel() {
     private val secureFolder = File(context.appSecureFolderDir)
-    private val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
-    private val mediaStoreData = mutableListOf<MediaStoreData>()
     private var job: Job? = null
 
     private val fileObserver =
@@ -42,27 +61,39 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
                     _fileList.value = secureFolder.listFiles()
                     Log.d(TAG, "File path changed: $path")
 
-                    load(
-                        context = context,
-                        sortMode = sortMode,
-                        displayDateFormat = displayDateFormat
-                    )
+                    load(context = context)
                 }
             }
         }
 
     private val _fileList = MutableStateFlow(secureFolder.listFiles())
-    val fileList = _fileList.asStateFlow()
 
-    private val _groupedMedia = MutableStateFlow(emptyList<PhotoLibraryUIModel>())
-    val groupedMedia = _groupedMedia.asStateFlow()
+    private val params = MutableStateFlow(
+        value = QueryParams(
+            securedItems = emptyList(),
+            separators = true
+        )
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mediaFlow = params.flatMapLatest { (media, separators) ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 80,
+                prefetchDistance = 40,
+                enablePlaceholders = true,
+                initialLoadSize = 80
+            ),
+            pagingSourceFactory = { SecuredListPagingSource(media = media) }
+        ).flow.mapToMedia(sortMode = sortMode, format = format, separators = separators).cachedIn(viewModelScope)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 30.seconds.inWholeMilliseconds),
+        initialValue = PagingData.from(emptyList<PhotoLibraryUIModel>())
+    )
 
     init {
-        load(
-            context = context,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
+        load(context = context)
     }
 
     fun attachFileObserver() {
@@ -73,25 +104,24 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
         fileObserver.stopWatching()
     }
 
-    private fun load(
-        context: Context,
-        sortMode: MediaItemSortMode,
-        displayDateFormat: DisplayDateFormat
-    ): Job {
+    fun setSeparators(value: Boolean) {
+        params.value = params.value.copy(separators = value)
+    }
+
+    private fun load(context: Context): Job {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
-            val snapshot = _fileList.value ?: return@launch
-            val paths = snapshot.map { it.absolutePath }
+            val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
+            val settings = SettingsImmichImpl(context = context, viewModelScope = viewModelScope)
+            val accessToken = settings.getImmichBasicInfo().first().accessToken
 
-            // remove deleted/moved media
-            mediaStoreData.removeIf {
-                if (it is PhotoLibraryUIModel.Media) it.item.absolutePath !in paths
-                else false
-            }
+            val snapshot = _fileList.value?.sortedBy { it.lastModified() } ?: return@launch
+
+            val mediaStoreData = params.value.securedItems.toMutableList()
 
             snapshot.forEach { file ->
                 // if file is already processed, skip processing it
-                if (mediaStoreData.any { it is PhotoLibraryUIModel.Media && it.item.absolutePath == file.absolutePath }) {
+                if (mediaStoreData.any { it.item.absolutePath == file.absolutePath }) {
                     return@forEach
                 }
 
@@ -106,18 +136,18 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
                     return@forEach
                 }
 
-                // val decryptedBytes =
-                //     run {
-                //         val iv = dao.getIvFromSecuredPath(file.absolutePath)
-                //         val thumbnailIv = dao.getIvFromSecuredPath(
-                //             getSecuredCacheImageForFile(file = file, context = context).absolutePath
-                //         )
-                //
-                //         if (iv != null && thumbnailIv != null) iv + thumbnailIv else ByteArray(32)
-                //     }
-                //
-                // val originalPath =
-                //     dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
+                val decryptedBytes =
+                    run {
+                        val iv = dao.getIvFromSecuredPath(file.absolutePath)
+                        val thumbnailIv = dao.getIvFromSecuredPath(
+                            securedPath = getSecuredCacheImageForFile(file = file, context = context).absolutePath
+                        )
+
+                        if (iv != null && thumbnailIv != null) iv + thumbnailIv else null
+                    }
+
+                val originalPath =
+                    dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
                 val item = MediaStoreData(
                     type = type,
@@ -132,25 +162,25 @@ class SecureFolderViewModel(context: Context, sortMode: MediaItemSortMode, displ
                     dateTaken = file.lastModified() / 1000,
                     displayName = file.name,
                     absolutePath = file.absolutePath,
+                    parentPath = file.absolutePath.parent(),
                     size = 0L,
                     immichUrl = null, // TODO
                     immichThumbnail = null,
                     hash = null,
-                    customId = null
-                    // bytes = decryptedBytes + originalPath.encodeToByteArray() // TODO
+                    customId = null,
+                    favourited = false
                 )
 
-                mediaStoreData.add(item)
+                val securedItem = PhotoLibraryUIModel.SecuredMedia(
+                    item = item,
+                    accessToken = accessToken,
+                    bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
+                )
+
+                mediaStoreData.add(securedItem)
             }
 
-            _groupedMedia.value = groupPhotosBy(
-                media = mediaStoreData,
-                sortBy = if (sortMode == MediaItemSortMode.Disabled) sortMode else MediaItemSortMode.LastModified,
-                displayDateFormat = displayDateFormat,
-                context = context
-            )
-
-            delay(PhotoGridConstants.LOADING_TIME)
+            params.value = params.value.copy(securedItems = mediaStoreData)
         }
 
         return job!!

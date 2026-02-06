@@ -10,7 +10,6 @@ import androidx.compose.ui.util.fastJoinToString
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMinByOrNull
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.SQLiteQuery
 import com.kaii.photos.mediastore.MediaDataSource
 import kotlinx.coroutines.flow.first
 import java.io.File
@@ -125,10 +124,10 @@ fun String.checkPathIsDownloads(): Boolean = run {
             && toRelativePath(true).endsWith(Environment.DIRECTORY_DOWNLOADS)
 }
 
-fun String.getFileNameFromPath(): String = trim().removeSuffix("/").split("/").last()
+fun String.filename(): String = trim().removeSuffix("/").split("/").last()
 
-fun String.getParentFromPath(): String =
-    trim().replace(this.getFileNameFromPath(), "").removeSuffix("/")
+fun String.parent(): String =
+    trim().replace(this.filename(), "").removeSuffix("/")
 
 val File.relativePath: String
     get() = this.absolutePath.toRelativePath()
@@ -155,26 +154,23 @@ fun String.toBasePath() = run {
     }
 }
 
+// TODO: improve this
 /** returns the absolute paths to all the found albums */
 suspend fun tryGetAllAlbums(
-    context: Context,
-    displayDateFormat: DisplayDateFormat
+    context: Context
 ): List<AlbumInfo> {
     val cancellationSignal = CancellationSignal()
     val mediaStoreDataSource =
         MediaDataSource(
             context = context,
-            sqliteQuery = SQLiteQuery(query = "", paths = null, basePaths = null),
-            sortMode = MediaItemSortMode.DateTaken,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
+            cancellationSignal = cancellationSignal
         )
 
     return mediaStoreDataSource.loadMediaStoreData().first().let { list ->
         list.fastDistinctBy { media ->
-            media.absolutePath.getParentFromPath()
+            media.absolutePath.parent()
         }.fastMap { media ->
-            val album = listOf(media.absolutePath.getParentFromPath())
+            val album = listOf(media.absolutePath.parent())
 
             AlbumInfo(
                 name = album.first().split("/").last(),

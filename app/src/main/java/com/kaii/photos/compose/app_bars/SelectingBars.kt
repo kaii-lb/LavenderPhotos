@@ -51,17 +51,17 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.getParentFromPath
 import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -129,7 +129,7 @@ fun SelectingBottomBarItems(
     val selectedItemsWithoutSection by remember {
         derivedStateOf {
             selectedItemsList.mapNotNull {
-                if (it is PhotoLibraryUIModel.Media && it.item != MediaStoreData.dummyItem) it.item
+                if (it is PhotoLibraryUIModel.MediaImpl && it.item != MediaStoreData.dummyItem) it.item
                 else null
             }
         }
@@ -187,16 +187,10 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
-    val runDeleteAction = remember { mutableStateOf(false) }
-
     val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
     val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.fastMap { it.uri.toUri() },
-        shouldRun = runDeleteAction,
+    val permissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 if (doNotTrash) {
@@ -208,8 +202,7 @@ fun SelectingBottomBarItems(
                     setTrashedOnPhotoList(
                         context = context,
                         list = selectedItemsWithoutSection,
-                        trashed = true,
-                        appDatabase = applicationDatabase
+                        trashed = true
                     )
                 }
 
@@ -218,16 +211,20 @@ fun SelectingBottomBarItems(
         }
     )
 
-    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
+    val confirmToDelete by mainViewModel.settings.Permissions
+        .getConfirmToDelete()
         .collectAsStateWithLifecycle(initialValue = true)
 
+    val showDeleteDialog = remember { mutableStateOf(false) }
     if (!albumInfo.isCustomAlbum) {
         ConfirmationDialog(
             showDialog = showDeleteDialog,
             dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
-            runDeleteAction.value = true
+            permissionState.get(
+                uris = selectedItemsWithoutSection.fastMap { it.uri.toUri() }
+            )
         }
     } else {
         var showExplanationDialog by remember { mutableStateOf(false) }
@@ -268,7 +265,9 @@ fun SelectingBottomBarItems(
     IconButton(
         onClick = {
             if (confirmToDelete) showDeleteDialog.value = true
-            else runDeleteAction.value = true
+            else permissionState.get( // TODO: handle custom albums
+                uris = selectedItemsWithoutSection.fastMap { it.uri.toUri() }
+            )
         }
     ) {
         Icon(
@@ -277,25 +276,7 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val moveToSecureFolder = remember { mutableStateOf(false) }
-    val tryGetDirPermission = remember { mutableStateOf(false) }
-
     var showLoadingDialog by remember { mutableStateOf(false) }
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = selectedItemsWithoutSection.fastMap {
-            it.absolutePath.getParentFromPath()
-        }.fastDistinctBy {
-            it
-        },
-        shouldRun = tryGetDirPermission,
-        onGranted = {
-            showLoadingDialog = true
-            moveToSecureFolder.value = true
-        },
-        onRejected = {}
-    )
-
     if (showLoadingDialog) {
         LoadingDialog(
             title = stringResource(id = R.string.secure_encrypting),
@@ -304,9 +285,7 @@ fun SelectingBottomBarItems(
     }
 
     val appDatabase = LocalAppDatabase.current
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri.toUri() },
-        shouldRun = moveToSecureFolder,
+    val filePermissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 moveImageToLockedFolder(
@@ -321,9 +300,26 @@ fun SelectingBottomBarItems(
         }
     )
 
+    val dirPermissionManager = rememberDirectoryPermissionManager(
+        onGranted = {
+            showLoadingDialog = true
+            filePermissionState.get(
+                uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+            )
+        }
+    )
+
     IconButton(
         onClick = {
-            if (selectedItemsWithoutSection.isNotEmpty()) tryGetDirPermission.value = true
+            if (selectedItemsWithoutSection.isNotEmpty()) {
+                dirPermissionManager.start(
+                    directories = selectedItemsWithoutSection.fastMap {
+                        it.absolutePath.parent()
+                    }.fastDistinctBy {
+                        it
+                    }
+                )
+            }
         }
     ) {
         Icon(
