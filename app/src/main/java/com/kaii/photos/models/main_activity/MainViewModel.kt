@@ -166,7 +166,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
                     cancellationSignal = cancellationSignal
                 )
 
-                datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
+                datasource.query().getOrElse(0) { MediaStoreData.dummyItem }
             }
 
             cancellationSignal.cancel()

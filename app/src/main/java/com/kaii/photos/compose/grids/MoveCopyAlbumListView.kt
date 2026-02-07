@@ -388,6 +388,8 @@ fun AlbumsListItem(
                         directories = setOf(album.mainPath)
                     )
                 } else {
+                    show.value = false
+
                     val items = selectedItemsWithoutSection
 
                     coroutineScope.launch(Dispatchers.IO) {
@@ -434,11 +436,11 @@ fun AlbumsListItem(
                                     duration = SnackbarDuration.Short
                                 )
                             )
-                            show.value = false
                         }
                     }
 
                     selectedItemsList.clear()
+                    dismissInfoDialog()
                 }
             },
         verticalAlignment = Alignment.CenterVertically

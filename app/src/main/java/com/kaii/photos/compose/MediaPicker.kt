@@ -340,6 +340,7 @@ class MediaPicker : ComponentActivity() {
                         factory = CustomAlbumViewModelFactory(
                             context = context,
                             albumInfo = screen.albumInfo,
+                            info = immichInfo,
                             sortBy = currentSortMode,
                             displayDateFormat = displayDateFormat
                         )

@@ -323,6 +323,16 @@ fun DeviceMedia(
                                         )
                                     }
 
+                                    ViewProperties.CustomAlbum -> {
+                                        navController.navigate(
+                                            Screens.CustomAlbum.SinglePhoto(
+                                                albumInfo = albumInfo,
+                                                index = index,
+                                                nextMediaItemId = null
+                                            )
+                                        )
+                                    }
+
                                     ViewProperties.Immich -> {
                                         navController.navigate(
                                             Screens.Immich.SinglePhoto(

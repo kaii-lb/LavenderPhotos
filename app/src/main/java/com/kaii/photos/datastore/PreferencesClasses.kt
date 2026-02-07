@@ -80,6 +80,7 @@ class SettingsAlbumsListImpl(
                     )
                 }
                 set(oldList)
+                resetOld()
                 oldList
             }
 
@@ -94,8 +95,9 @@ class SettingsAlbumsListImpl(
                         paths = setOf(baseInternalStorageDirectory + path)
                     )
                 }
-                set(oldList)
 
+                set(oldList)
+                resetOld()
                 oldList
             }
 

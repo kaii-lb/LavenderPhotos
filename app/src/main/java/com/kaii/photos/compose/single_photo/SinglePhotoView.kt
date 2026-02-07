@@ -102,34 +102,28 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
+    albumInfo: AlbumInfo,
     window: Window,
     viewModel: CustomAlbumViewModel,
-    mediaItemId: Long,
-    albumInfo: AlbumInfo,
+    index: Int,
     nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
-    val startIndex = remember(items.itemCount, items.loadState) {
-        (0 until items.itemCount).find {
-            val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
-            (item != null && item.id == nextMediaItemId) || item?.id == mediaItemId
-        }
-    }
 
-    if (startIndex != null) {
-        SinglePhotoViewCommon(
-            items = items,
-            navController = navController,
-            window = window,
-            startIndex = startIndex,
-            nextMediaItemId = nextMediaItemId,
-            albumInfo = albumInfo,
-            screenType = ScreenType.Normal,
-            isOpenWithDefaultView = isOpenWithDefaultView
-        )
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        navController = LocalNavController.current,
+        window = window,
+        startIndex = index,
+        nextMediaItemId = nextMediaItemId,
+        albumInfo = albumInfo,
+        screenType = ScreenType.Normal,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        removeFromCustom = { item ->
+            viewModel.remove(items = setOf(item))
+        }
+    )
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -244,7 +238,8 @@ private fun SinglePhotoViewCommon(
     window: Window,
     isOpenWithDefaultView: Boolean,
     screenType: ScreenType,
-    nextMediaItemId: Long?
+    nextMediaItemId: Long?,
+    removeFromCustom: (MediaStoreData) -> Unit = {}
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -339,6 +334,7 @@ private fun SinglePhotoViewCommon(
                 visible = appBarsVisible.value,
                 currentItem = mediaItem,
                 privacyMode = scrollState.privacyMode,
+                isCustom = albumInfo.isCustomAlbum,
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -385,7 +381,8 @@ private fun SinglePhotoViewCommon(
                         )
                         delay(AnimationConstants.DURATION_SHORT.toLong())
                     }
-                }
+                },
+                removeFromCustom = removeFromCustom
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -458,9 +455,11 @@ private fun BottomBar(
     visible: Boolean,
     currentItem: MediaStoreData,
     privacyMode: Boolean,
+    isCustom: Boolean,
     showEditingView: () -> Unit,
     checkZeroItemsLeft: () -> Unit,
-    onMoveMedia: () -> Unit
+    onMoveMedia: () -> Unit,
+    removeFromCustom: (MediaStoreData) -> Unit
 ) {
     var showLoadingDialog by remember { mutableStateOf(false) }
 
@@ -582,6 +581,7 @@ private fun BottomBar(
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {
+                                removeFromCustom(currentItem)
                                 onMoveMedia()
                                 checkZeroItemsLeft()
 
@@ -651,17 +651,21 @@ private fun BottomBar(
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-                            if (doNotTrash) {
-                                permanentlyDeletePhotoList(
-                                    context = context,
-                                    list = listOf(currentItem.uri.toUri())
-                                )
+                            if (!isCustom) {
+                                if (doNotTrash) {
+                                    permanentlyDeletePhotoList(
+                                        context = context,
+                                        list = listOf(currentItem.uri.toUri())
+                                    )
+                                } else {
+                                    setTrashedOnPhotoList(
+                                        context = context,
+                                        list = listOf(currentItem),
+                                        trashed = true
+                                    )
+                                }
                             } else {
-                                setTrashedOnPhotoList(
-                                    context = context,
-                                    list = listOf(currentItem),
-                                    trashed = true
-                                )
+                                removeFromCustom(currentItem)
                             }
 
                             onMoveMedia()
@@ -676,8 +680,24 @@ private fun BottomBar(
                 if (showDeleteDialog.value) {
                     ConfirmationDialog(
                         showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_delete_confirm),
-                        confirmButtonLabel = stringResource(id = R.string.media_delete)
+                        dialogTitle = stringResource(
+                            id =
+                                when {
+                                    isCustom -> R.string.custom_album_remove_media_desc
+
+                                    doNotTrash -> R.string.media_delete_permanently_confirm
+
+                                    else -> R.string.media_delete_confirm
+                                }
+                        ),
+                        confirmButtonLabel = stringResource(
+                            id =
+                                when {
+                                    isCustom -> R.string.custom_album_remove_media
+
+                                    else -> R.string.media_delete
+                                }
+                        )
                     ) {
                         trashFilePermissionManager.get(
                             uris = listOf(currentItem.uri.toUri())

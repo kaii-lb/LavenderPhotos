@@ -43,6 +43,11 @@ enum class ViewProperties(
         emptyIconResId = R.drawable.error,
         prefix = null
     ),
+    CustomAlbum(
+        emptyText = R.string.error_views_album_empty,
+        emptyIconResId = R.drawable.error,
+        prefix = null
+    ),
     SearchLoading(
         emptyText = R.string.error_views_search_empty,
         emptyIconResId = R.drawable.search,

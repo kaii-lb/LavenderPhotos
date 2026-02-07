@@ -94,34 +94,22 @@ class CustomAlbumDataSource(
         val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
         val idCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.ID)
 
-        val holderMap = mutableMapOf<Long, MutableList<MediaStoreData>>()
+        val items = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
             val uri = cursor.getString(uriCol).toUri()
             val id = cursor.getLong(idCol)
 
-            val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)!!
+            val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)
 
-            val day =
-                when (sortMode) {
-                    MediaItemSortMode.DateModified -> new.getDateModifiedDay()
-                    MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
-                    MediaItemSortMode.DateTaken -> new.getDateTakenDay()
-                    else -> MediaStoreData.dummyItem.getDateTakenDay()
-                }
-
-            if (sortMode == MediaItemSortMode.Disabled) holderMap.getOrPut(0L) { mutableListOf() }.add(new)
-            else holderMap.getOrPut(day) { mutableListOf() }.add(new)
+            new?.let { items.add(it) }
         }
 
         cursor.close()
 
-        val sortedMap = holderMap.toSortedMap(compareByDescending { it })
-
-        if (sortMode == MediaItemSortMode.Disabled) {
-            return sortedMap[0L]?.sortedByDescending { it.dateTaken } ?: emptyList()
+        return items.sortedByDescending {
+            if (sortMode.isDateModified) it.dateModified
+            else it.dateTaken
         }
-
-        return holderMap.flatMap { it.value }
     }
 }

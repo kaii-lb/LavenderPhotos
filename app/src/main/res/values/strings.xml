@@ -1087,8 +1087,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
-    <string name="custom_album_media_not_custom_title">Non Custom Media</string>
-    <string name="custom_album_media_not_custom_explanation">Some media in this album belongs to actual folders, Lavender Photos cannot remove that media without deleting it so it will be ignored.</string>
     <string name="custom_album_remove_media">Remove</string>
     <string name="custom_album_remove_media_desc">Remove these items from the album?</string>
     <string name="action_cannot_be_undone">This action cannot be undone!</string>

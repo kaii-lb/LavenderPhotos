@@ -766,6 +766,7 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
+                                info = immichInfo,
                                 sortBy = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -793,18 +794,18 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
+                                info = immichInfo,
                                 sortBy = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
                         )
 
                         SinglePhotoView(
-                            navController = navController,
-                            window = window,
+                            albumInfo = screen.albumInfo,
                             viewModel = viewModel,
-                            mediaItemId = screen.mediaItemId,
-                            nextMediaItemId = screen.nextMediaItemId,
-                            albumInfo = screen.albumInfo
+                            index = screen.index,
+                            window = window,
+                            nextMediaItemId = screen.nextMediaItemId
                         )
                     }
                 }

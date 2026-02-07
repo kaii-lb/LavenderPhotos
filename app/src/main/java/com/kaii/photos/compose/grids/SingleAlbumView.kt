@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,18 +42,11 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.helpers.checkHasFiles
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlin.io.path.Path
 
 @Composable
 fun SingleAlbumView(
@@ -99,7 +91,6 @@ fun SingleAlbumView(
     incomingIntent: Intent? = null
 ) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
@@ -110,22 +101,7 @@ fun SingleAlbumView(
         }
     }
 
-    LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
-            viewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum
-            )
-        }
-    }
-
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
-        }
-    }
-
-    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
@@ -133,7 +109,6 @@ fun SingleAlbumView(
         navController = navController,
         incomingIntent = incomingIntent,
         onBackClick = {
-            viewModel.cancelMediaFlow()
             navController.popBackStack()
         }
     )
@@ -153,25 +128,9 @@ private fun SingleAlbumViewCommon(
     val showDialog = remember { mutableStateOf(false) }
 
     var hasFiles by remember { mutableStateOf(true) }
-    // TODO: improve
-    LaunchedEffect(pagingItems.itemSnapshotList.lastOrNull()) {
-        withContext(Dispatchers.IO) {
-            hasFiles = if (!albumInfo.isCustomAlbum) {
-                var result: Boolean? = null
-
-                albumInfo.paths.any { path ->
-                    val basePath = path.toBasePath()
-
-                    result = Path(path).checkHasFiles(basePath = basePath)
-                    result == true
-                }
-
-                result == true
-            } else {
-                delay(PhotoGridConstants.LOADING_TIME)
-                pagingItems.itemSnapshotList.isNotEmpty()
-            }
-        }
+    LaunchedEffect(pagingItems.loadState) {
+        delay(PhotoGridConstants.LOADING_TIME)
+        hasFiles = !pagingItems.loadState.source.append.endOfPaginationReached || pagingItems.itemCount != 0
     }
 
     Scaffold(
@@ -234,7 +193,7 @@ private fun SingleAlbumViewCommon(
                 pagingItems = pagingItems,
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
-                viewProperties = ViewProperties.Album,
+                viewProperties = if (albumInfo.isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
                 isMediaPicker = incomingIntent != null,
                 hasFiles = hasFiles
             )

@@ -43,7 +43,6 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
@@ -227,25 +226,11 @@ fun SelectingBottomBarItems(
             )
         }
     } else {
-        var showExplanationDialog by remember { mutableStateOf(false) }
-        if (showExplanationDialog) {
-            ExplanationDialog(
-                title = stringResource(id = R.string.custom_album_media_not_custom_title),
-                explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation)
-            ) {
-                showExplanationDialog = false
-            }
-        }
-
         ConfirmationDialog(
             showDialog = showDeleteDialog,
             dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
-            if (selectedItemsWithoutSection.any { it.customId == null }) {
-                showExplanationDialog = true
-            }
-
             mainViewModel.launch(Dispatchers.IO) {
                 selectedItemsWithoutSection.forEach { item ->
                     Log.d(
@@ -257,6 +242,7 @@ fun SelectingBottomBarItems(
                         )
                     )
                 }
+
                 selectedItemsList.clear()
             }
         }
