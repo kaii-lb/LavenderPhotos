@@ -78,7 +78,7 @@ fun SingleAlbumView(
         viewModel.update(album = dynamicAlbum)
     }
 
-    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
@@ -86,7 +86,6 @@ fun SingleAlbumView(
         navController = navController,
         incomingIntent = incomingIntent,
         onBackClick = {
-            // viewModel.cancelMediaFlow() TODO
             navController.popBackStack()
         }
     )

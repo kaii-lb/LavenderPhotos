@@ -61,6 +61,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -134,34 +135,25 @@ fun SinglePhotoView(
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
     window: Window,
     viewModel: MultiAlbumViewModel,
-    mediaItemId: Long,
+    index: Int,
     albumInfo: AlbumInfo,
     nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false,
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
-    val startIndex = remember(items.itemCount, items.loadState) {
-        (0 until items.itemCount).find {
-            val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
-            (item != null && item.id == nextMediaItemId) || item?.id == mediaItemId
-        }
-    }
 
-    if (startIndex != null) {
-        SinglePhotoViewCommon(
-            items = items,
-            startIndex = startIndex,
-            albumInfo = albumInfo,
-            navController = navController,
-            window = window,
-            isOpenWithDefaultView = isOpenWithDefaultView,
-            screenType = ScreenType.Normal,
-            nextMediaItemId = nextMediaItemId
-        )
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = albumInfo,
+        navController = LocalNavController.current,
+        window = window,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        screenType = ScreenType.Normal,
+        nextMediaItemId = nextMediaItemId
+    )
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -272,7 +264,7 @@ private fun SinglePhotoViewCommon(
     nextMediaItemId: Long?
 ) {
     val state = rememberPagerState(
-        initialPage = startIndex.coerceIn(0, items.itemCount - 1)
+        initialPage = startIndex
     ) {
         items.itemCount
     }

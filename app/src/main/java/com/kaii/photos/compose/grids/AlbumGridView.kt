@@ -411,9 +411,16 @@ fun AlbumsGridView(
                         )
                 ) {
                     navController.navigate(
-                        Screens.SingleAlbumView(
-                            albumInfo = albumInfo
-                        )
+                        route =
+                            if (albumInfo.isCustomAlbum) {
+                                Screens.CustomAlbum.GridView(
+                                    albumInfo = albumInfo
+                                )
+                            } else {
+                                Screens.Album.GridView(
+                                    albumInfo = albumInfo
+                                )
+                            }
                     )
                 }
             }

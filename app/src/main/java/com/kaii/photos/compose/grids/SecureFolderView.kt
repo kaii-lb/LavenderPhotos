@@ -146,7 +146,7 @@ fun SecureFolderView(
 
     if (hideSecureFolder) return
 
-    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
     val hasFiles by remember { derivedStateOf {
         items.itemSnapshotList.isNotEmpty()

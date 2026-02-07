@@ -107,25 +107,21 @@ private const val TAG = "com.kaii.photos.compose.single_photo.SingleHiddenPhotoV
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RestrictedApi")
 @Composable
-fun SingleHiddenPhotoView(
+fun SecurePhotoView(
     viewModel: SecureFolderViewModel,
     index: Int,
     window: Window
 ) {
-    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    LaunchedEffect(Unit) {
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val navController = LocalNavController.current
 
-    var lastLifecycleState by rememberSaveable {
-        mutableStateOf(Lifecycle.State.STARTED)
-    }
-    var hideSecureFolder by rememberSaveable {
-        mutableStateOf(false)
-    }
-    val isGettingPermissions = rememberSaveable {
-        mutableStateOf(false)
-    }
+    var lastLifecycleState by rememberSaveable { mutableStateOf(Lifecycle.State.STARTED) }
+    var hideSecureFolder by rememberSaveable { mutableStateOf(false) }
+    val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(hideSecureFolder) {
         if (hideSecureFolder
@@ -135,6 +131,7 @@ fun SingleHiddenPhotoView(
         }
     }
 
+    // TODO: immediately pop the backstack without hideSecureFolder
     DisposableEffect(key1 = lifecycleOwner.lifecycle.currentStateAsState().value, isGettingPermissions.value) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
@@ -173,15 +170,17 @@ fun SingleHiddenPhotoView(
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
     val appBarsVisible = remember { mutableStateOf(true) }
-    val state = rememberPagerState {
+    val state = rememberPagerState(
+        initialPage = index
+    ) {
         items.itemCount
     }
 
     val resources = LocalResources.current
     val currentMediaItem by remember {
         derivedStateOf {
-            if (index in 0..items.itemCount && items.itemCount != 0) {
-                items[index] as PhotoLibraryUIModel.SecuredMedia
+            if (state.currentPage in 0..items.itemCount && items.itemCount != 0) {
+                items[state.currentPage] as PhotoLibraryUIModel.SecuredMedia
             } else {
                 PhotoLibraryUIModel.SecuredMedia(
                     item = MediaStoreData.dummyItem.copy(

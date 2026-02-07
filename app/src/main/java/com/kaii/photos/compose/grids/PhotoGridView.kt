@@ -278,15 +278,16 @@ fun DeviceMedia(
                         ) {
                             if (!isMediaPicker && mediaStoreItem is PhotoLibraryUIModel.MediaImpl) {
                                 val item = mediaStoreItem.item
+                                val index =
+                                    pagingItems.itemSnapshotList
+                                        .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
+                                        .indexOf(pagingItems[i])
 
                                 when (viewProperties) {
                                     ViewProperties.Trash -> {
                                         navController.navigate(
                                             Screens.Trash.SinglePhoto(
-                                                index =
-                                                    pagingItems.itemSnapshotList
-                                                        .filterIsInstance<PhotoLibraryUIModel.Media>()
-                                                        .indexOf(pagingItems[i])
+                                                index = index
                                             )
                                         )
                                     }
@@ -294,10 +295,7 @@ fun DeviceMedia(
                                     ViewProperties.SecureFolder -> {
                                         navController.navigate(
                                             Screens.SecureFolder.SinglePhoto(
-                                                index =
-                                                    pagingItems.itemSnapshotList
-                                                        .filterIsInstance<PhotoLibraryUIModel.Media>()
-                                                        .indexOf(pagingItems[i])
+                                                index = index
                                             )
                                         )
                                     }
@@ -311,6 +309,21 @@ fun DeviceMedia(
                                         )
                                     }
 
+                                    ViewProperties.Main -> {
+                                        TODO("Implement main grid/single views after moving main pages to own nav views")
+                                    }
+
+                                    ViewProperties.Album -> {
+                                        navController.navigate(
+                                            Screens.Album.SinglePhoto(
+                                                albumInfo = albumInfo,
+                                                index = index,
+                                                nextMediaItemId = null
+                                            )
+                                        )
+                                    }
+
+                                    // TODO
                                     else -> {
                                         if (openVideosExternally && item.type == MediaType.Video) {
                                             val intent = Intent().apply {
@@ -329,7 +342,6 @@ fun DeviceMedia(
                                                         when (viewProperties) {
                                                             ViewProperties.SearchLoading, ViewProperties.SearchNotFound -> ScreenType.Search
                                                             ViewProperties.Immich -> ScreenType.Immich
-                                                            else -> ScreenType.Normal
                                                         }
                                                 )
                                             )

@@ -139,7 +139,7 @@ private fun SingleTrashedPhotoViewImpl(
     }
 
     val state = rememberPagerState(
-        initialPage = startIndex.coerceIn(0, items.itemCount)
+        initialPage = startIndex
     ) {
         items.itemCount
     }

@@ -163,9 +163,16 @@ fun SingleAlbumViewTopBar(
 
                                     navController.popBackStack()
                                     navController.navigate(
-                                        Screens.SingleAlbumView(
-                                            albumInfo = newInfo
-                                        )
+                                        route =
+                                            if (albumInfo.isCustomAlbum) {
+                                                Screens.CustomAlbum.GridView(
+                                                    albumInfo = newInfo
+                                                )
+                                            } else {
+                                                Screens.Album.GridView(
+                                                    albumInfo = newInfo
+                                                )
+                                            }
                                     )
                                 },
                                 onDismiss = {

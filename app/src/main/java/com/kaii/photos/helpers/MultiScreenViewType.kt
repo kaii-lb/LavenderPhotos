@@ -38,9 +38,19 @@ object Screens {
     )
 
     @Serializable
-    data class SingleAlbumView(
-        val albumInfo: AlbumInfo
-    )
+    object Album {
+        @Serializable
+        data class GridView(
+            val albumInfo: AlbumInfo
+        )
+
+        @Serializable
+        data class SinglePhoto(
+            val albumInfo: AlbumInfo,
+            val index: Int,
+            val nextMediaItemId: Long?
+        )
+    }
 
     @Serializable
     object Trash {
@@ -112,7 +122,7 @@ object Screens {
     }
 
     @Serializable
-    object CustomAlbums {
+    object CustomAlbum {
         @Serializable
         data class GridView(
             val albumInfo: AlbumInfo

@@ -1,70 +1,51 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.os.CancellationSignal
-import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SettingsImmichImpl
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.mediastore.TrashDataSource
-import com.kaii.photos.models.loading.ListPagingSource
 import com.kaii.photos.models.loading.mapToMedia
 import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
-class TrashRepository(
+class MediaRepository(
     private val context: Context,
-    private val scope: CoroutineScope,
+    albumInfo: AlbumInfo,
+    scope: CoroutineScope,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
-    // TODO: cleanup when moving to room's trash table
-    private data class TrashFlowParams(
-        val items: List<MediaStoreData>,
+    private data class RoomQueryParams(
+        val paths: Set<String>,
         val sortMode: MediaItemSortMode,
         val format: DisplayDateFormat,
-        val accessToken: String
+        val accessToken: String,
+        val separators: Boolean
     )
 
-    private val cancellationSignal = CancellationSignal()
+    private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
     private val settings = SettingsImmichImpl(context = context, viewModelScope = scope)
-    private val dataSource =
-        TrashDataSource(
-            context = context,
-            cancellationSignal = cancellationSignal
-        )
-
-    private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
-
-    private val params = MutableStateFlow(
-        TrashFlowParams(
-            items = emptyList(),
+    private var params = MutableStateFlow(
+        value = RoomQueryParams(
+            paths = albumInfo.paths,
             sortMode = sortMode,
             format = format,
-            accessToken = ""
+            accessToken = "",
+            separators = true
         )
     )
 
     init {
-        scope.launch(Dispatchers.IO) {
-            getMediaDataFlow().collectLatest { items ->
-                params.value = params.value.copy(items = items)
-            }
-        }
-
         scope.launch {
             settings.getImmichBasicInfo().collectLatest {
                 params.value = params.value.copy(accessToken = it.accessToken)
@@ -81,7 +62,10 @@ class TrashRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 100
             ),
-            pagingSourceFactory = { ListPagingSource(media = params.items) }
+            pagingSourceFactory = {
+                if (sortMode.isDateModified) mediaDao.getPagedMediaDateModified(paths = params.paths)
+                else mediaDao.getPagedMediaDateTaken(paths = params.paths)
+            }
         ).flow.mapToMedia(
             sortMode = params.sortMode,
             format = params.format,
@@ -98,24 +82,16 @@ class TrashRepository(
         )
     }.cachedIn(scope)
 
-    fun cancel() = cancellationSignal.cancel()
-
     fun update(
+        album: AlbumInfo?,
         sortMode: MediaItemSortMode?,
         format: DisplayDateFormat?
     ) {
         val snapshot = params.value
         params.value = snapshot.copy(
             sortMode = sortMode ?: snapshot.sortMode,
-            format = format ?: snapshot.format
+            format = format ?: snapshot.format,
+            paths = album?.paths ?: snapshot.paths
         )
     }
-
-    fun deleteAll() =
-        scope.launch(Dispatchers.IO) {
-            permanentlyDeletePhotoList(
-                context = context,
-                list = dataSource.query().fastMap { it.uri.toUri() }
-            )
-        }
 }

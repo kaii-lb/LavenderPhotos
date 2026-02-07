@@ -68,6 +68,54 @@ fun Flow<PagingData<MediaStoreData>>.mapToMedia(
     }
 }
 
+fun Flow<PagingData<PhotoLibraryUIModel>>.mapToSeparatedMedia(
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat
+) = this.map { pagingData ->
+    if (sortMode.isDisabled) {
+        pagingData
+    } else {
+        pagingData.map {
+            it as PhotoLibraryUIModel.MediaImpl
+        }.insertSeparators { before, after ->
+            val beforeDate: Long?
+            val afterDate: Long?
+
+            when {
+                sortMode.isDateModified -> {
+                    beforeDate = before?.item?.getDateModifiedDay()
+                    afterDate = after?.item?.getDateModifiedDay()
+                }
+
+                else -> {
+                    beforeDate = before?.item?.getDateTakenDay()
+                    afterDate = after?.item?.getDateTakenDay()
+                }
+            }
+
+            when {
+                beforeDate == null && afterDate != null -> PhotoLibraryUIModel.Section(
+                    title = formatDate(
+                        timestamp = afterDate,
+                        sortBy = sortMode,
+                        format = format
+                    )
+                )
+
+                beforeDate != afterDate && afterDate != null -> PhotoLibraryUIModel.Section(
+                    title = formatDate(
+                        timestamp = afterDate,
+                        sortBy = sortMode,
+                        format = format
+                    )
+                )
+
+                else -> null
+            }
+        }
+    }
+}
+
 fun Flow<PagingData<PhotoLibraryUIModel.SecuredMedia>>.mapToMedia(
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat,

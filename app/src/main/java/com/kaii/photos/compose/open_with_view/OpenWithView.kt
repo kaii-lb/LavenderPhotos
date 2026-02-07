@@ -39,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.LocalAppDatabase
@@ -58,6 +59,7 @@ import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -339,7 +341,6 @@ private fun InitSinglePhotoView(
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val navController = rememberNavController()
 
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
@@ -349,7 +350,7 @@ private fun InitSinglePhotoView(
         factory = MultiAlbumViewModelFactory(
             context = context,
             albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-            sortBy = currentSortMode,
+            sortMode = currentSortMode,
             displayDateFormat = displayDateFormat
         )
     )
@@ -364,17 +365,26 @@ private fun InitSinglePhotoView(
         )
     }
 
-    SinglePhotoView(
-        navController = navController,
-        window = window,
-        viewModel = multiAlbumViewModel,
-        mediaItemId = incomingData.id,
-        nextMediaItemId = null,
-        albumInfo = AlbumInfo.createPathOnlyAlbum(
-            paths = setOf(
-                incomingData.absolutePath.parent()
-            )
-        ),
-        isOpenWithDefaultView = true
-    )
+    val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
+    val index = remember(items.itemCount, items.loadState) {
+        (0 until items.itemCount).find {
+            val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
+            item?.id == incomingData.id
+        }
+    }
+
+    if (index != null) {
+        SinglePhotoView(
+            window = window,
+            viewModel = multiAlbumViewModel,
+            index = index,
+            nextMediaItemId = null,
+            albumInfo = AlbumInfo.createPathOnlyAlbum(
+                paths = setOf(
+                    incomingData.absolutePath.parent()
+                )
+            ),
+            isOpenWithDefaultView = true
+        )
+    }
 }

@@ -67,6 +67,11 @@ enum class ViewProperties(
         emptyText = R.string.immich_server_not_loading,
         emptyIconResId = R.drawable.cloud_off,
         prefix = null
+    ),
+    Main(
+        emptyText = R.string.error_views_main_empty,
+        emptyIconResId = R.drawable.photogrid,
+        prefix = null
     );
 
     companion object {

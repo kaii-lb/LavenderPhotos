@@ -53,7 +53,7 @@ fun TrashedPhotoGridView(
     viewModel: TrashViewModel,
     incomingIntent: Intent? = null
 ) {
-    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     var hasFiles by remember { mutableStateOf(true) }
 
     LaunchedEffect(pagingItems.loadState) {

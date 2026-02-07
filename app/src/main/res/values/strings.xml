@@ -1138,6 +1138,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
     <string name="error_views_error_page">This is an error page</string>
+    <string name="error_views_main_empty">Seems empty...</string>
 
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Styling</string>

@@ -16,11 +16,11 @@ class TrashViewModel(
         context = context,
         scope = viewModelScope,
         sortMode = sortMode,
-        format = format,
-        separators = true
+        format = format
     )
 
     val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
 
     override fun onCleared() {
         super.onCleared()
@@ -29,9 +29,8 @@ class TrashViewModel(
 
     fun update(
         sortMode: MediaItemSortMode? = null,
-        format: DisplayDateFormat? = null,
-        separators: Boolean? = null
-    ) = repo.updateParams(sortMode, format, separators)
+        format: DisplayDateFormat? = null
+    ) = repo.update(sortMode, format)
 
     fun cancel() = repo.cancel()
 

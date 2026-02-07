@@ -73,7 +73,6 @@ import androidx.compose.ui.util.fastFilter
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -204,16 +203,7 @@ class MediaPicker : ComponentActivity() {
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
-                sortBy = currentSortMode,
-                displayDateFormat = displayDateFormat
-            )
-        )
-
-        val customAlbumViewModel: CustomAlbumViewModel = viewModel(
-            factory = CustomAlbumViewModelFactory(
-                context = context,
-                albumInfo = AlbumInfo.Empty,
-                sortBy = currentSortMode,
+                sortMode = currentSortMode,
                 displayDateFormat = displayDateFormat
             )
         )
@@ -308,21 +298,21 @@ class MediaPicker : ComponentActivity() {
                 )
             }
 
-            composable<Screens.SingleAlbumView>(
-                typeMap = mapOf(
-                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType,
-                    typeOf<List<String>>() to NavType.StringListType
-                )
+            navigation<Screens.Album>(
+                startDestination = Screens.Favourites.GridView::class
             ) {
-                setupNextScreen(
-                    selectedItemsList,
-                    window
-                )
+                composable<Screens.Album.GridView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                    )
+                ) {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                val screen: Screens.SingleAlbumView = it.toRoute()
-
-                if (!screen.albumInfo.isCustomAlbum) {
-                    multiAlbumViewModel.update(album = screen.albumInfo)
+                    val screen: Screens.Album.GridView = it.toRoute()
+                    multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
@@ -330,16 +320,32 @@ class MediaPicker : ComponentActivity() {
                         viewModel = multiAlbumViewModel,
                         incomingIntent = incomingIntent
                     )
-                } else {
-                    customAlbumViewModel.update(
-                        context = context,
-                        album = screen.albumInfo
+                }
+            }
+
+            navigation<Screens.CustomAlbum>(
+                startDestination = Screens.CustomAlbum.GridView::class
+            ) {
+                composable<Screens.CustomAlbum.GridView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                    )
+                ) {
+                    val screen = it.toRoute<Screens.CustomAlbum.GridView>()
+
+                    val viewModel: CustomAlbumViewModel = viewModel(
+                        factory = CustomAlbumViewModelFactory(
+                            context = context,
+                            albumInfo = screen.albumInfo,
+                            sortBy = currentSortMode,
+                            displayDateFormat = displayDateFormat
+                        )
                     )
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
-                        viewModel = customAlbumViewModel,
+                        viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
                 }
@@ -354,11 +360,7 @@ class MediaPicker : ComponentActivity() {
                         window
                     )
 
-                    val storeOwner = remember(it) {
-                        navController.getBackStackEntry(Screens.Favourites)
-                    }
                     val viewModel = viewModel<FavouritesViewModel>(
-                        viewModelStoreOwner = storeOwner,
                         factory = FavouritesViewModelFactory(
                             context = context,
                             sortMode = currentSortMode,
@@ -368,7 +370,8 @@ class MediaPicker : ComponentActivity() {
 
                     FavouritesGridView(
                         selectedItemsList = selectedItemsList,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        incomingIntent = incomingIntent
                     )
                 }
 
@@ -391,11 +394,7 @@ class MediaPicker : ComponentActivity() {
                         window
                     )
 
-                    val storeOwner = remember(it) {
-                        navController.getBackStackEntry(Screens.Trash)
-                    }
                     val trashViewModel = viewModel<TrashViewModel>(
-                        viewModelStoreOwner = storeOwner,
                         factory = TrashViewModelFactory(
                             context = context,
                             sortMode = currentSortMode,
