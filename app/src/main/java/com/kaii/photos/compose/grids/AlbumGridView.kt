@@ -150,12 +150,12 @@ fun AlbumsGridView(
                     newList.addAll(
                         if (sortByDescending) {
                             copy.sortedByDescending { album ->
-                                if (mediaSortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified
+                                if (mediaSortMode == MediaItemSortMode.DateModified) albumToThumbnailMapping[album.id]?.dateModified
                                 else albumToThumbnailMapping[album.id]?.dateTaken
                             }
                         } else {
                             copy.sortedBy { album ->
-                                if (mediaSortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified
+                                if (mediaSortMode == MediaItemSortMode.DateModified) albumToThumbnailMapping[album.id]?.dateModified
                                 else albumToThumbnailMapping[album.id]?.dateTaken
                             }
                         }

@@ -104,6 +104,8 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -218,6 +220,7 @@ class MediaPicker : ComponentActivity() {
         )
 
         val navController = LocalNavController.current
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         // TODO
         // LaunchedEffect(albumsList) {
@@ -363,6 +366,7 @@ class MediaPicker : ComponentActivity() {
                     val viewModel = viewModel<FavouritesViewModel>(
                         factory = FavouritesViewModelFactory(
                             context = context,
+                            info = immichInfo,
                             sortMode = currentSortMode,
                             displayDateFormat = displayDateFormat
                         )

@@ -73,7 +73,7 @@ object Screens {
 
         @Serializable
         data class SinglePhoto(
-            val mediaItemId: Long,
+            val index: Int,
             val nextMediaItemId: Long?
         )
     }

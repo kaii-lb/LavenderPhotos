@@ -303,7 +303,7 @@ fun DeviceMedia(
                                     ViewProperties.Favourites -> {
                                         navController.navigate(
                                             Screens.Favourites.SinglePhoto(
-                                                mediaItemId = item.id,
+                                                index = index,
                                                 nextMediaItemId = null
                                             )
                                         )

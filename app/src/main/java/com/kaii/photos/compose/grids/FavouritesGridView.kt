@@ -43,8 +43,6 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 
-// private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
@@ -52,13 +50,12 @@ fun FavouritesGridView(
     viewModel: FavouritesViewModel,
     incomingIntent: Intent? = null
 ) {
-    val pagingItems = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
     var hasFiles by remember { mutableStateOf(true) }
     LaunchedEffect(pagingItems.loadState) {
-        // TODO: fix
         delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = pagingItems.loadState.source.append.endOfPaginationReached && pagingItems.itemCount == 0
+        hasFiles = !pagingItems.loadState.source.append.endOfPaginationReached || pagingItems.itemCount != 0
     }
 
     val navController = LocalNavController.current

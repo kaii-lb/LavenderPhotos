@@ -18,15 +18,14 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT * FROM media ORDER BY :sortByProp DESC")
-    fun getPagedMedia(sortByProp: String): PagingSource<Int, MediaStoreData>
-
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMedia(): Flow<List<MediaStoreData>>
 
-    // TODO: remove sorting by sortByProp
-    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY :sortByProp DESC")
-    fun getPagedFavourites(sortByProp: String): PagingSource<Int, MediaStoreData>
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
+    fun getPagedFavouritesDateTaken(): PagingSource<Int, MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateModified DESC")
+    fun getPagedFavouritesDateModified(): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
     fun getAllFavourites(): List<MediaStoreData>

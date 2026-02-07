@@ -159,7 +159,7 @@ fun MoveCopyAlbumListView(
             it.name.contains(searchedForText.value, true)
         }.sortedByDescending { album ->
             val dateToSortBy =
-                if (sortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified ?: 0L
+                if (sortMode == MediaItemSortMode.DateModified) albumToThumbnailMapping[album.id]?.dateModified ?: 0L
                 else albumToThumbnailMapping[album.id]?.dateTaken ?: 0L
 
             (if (album.isCustomAlbum) 1L else 0L) or dateToSortBy

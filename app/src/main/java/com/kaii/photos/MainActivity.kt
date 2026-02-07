@@ -522,6 +522,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
+                                info = immichInfo,
                                 sortMode = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -546,6 +547,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
+                                info = immichInfo,
                                 sortMode = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -553,10 +555,9 @@ class MainActivity : ComponentActivity() {
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
                         SinglePhotoView(
-                            navController = navController,
                             viewModel = viewModel,
                             window = window,
-                            mediaItemId = screen.mediaItemId,
+                            index = screen.index,
                             nextMediaItemId = screen.nextMediaItemId
                         )
                     }
@@ -1240,6 +1241,7 @@ fun MainPages(
         .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
     val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
+    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
     AnimatedContent(
         targetState = currentView.value,
@@ -1355,6 +1357,7 @@ fun MainPages(
                     val favouritesViewModel: FavouritesViewModel = viewModel(
                         factory = FavouritesViewModelFactory(
                             context = context,
+                            info = immichInfo,
                             sortMode = sortMode,
                             displayDateFormat = displayDateFormat
                         )

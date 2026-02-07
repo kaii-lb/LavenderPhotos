@@ -104,7 +104,7 @@ class CustomAlbumDataSource(
 
             val day =
                 when (sortMode) {
-                    MediaItemSortMode.LastModified -> new.getDateModifiedDay()
+                    MediaItemSortMode.DateModified -> new.getDateModifiedDay()
                     MediaItemSortMode.MonthTaken -> new.getDateTakenMonth()
                     MediaItemSortMode.DateTaken -> new.getDateTakenDay()
                     else -> MediaStoreData.dummyItem.getDateTakenDay()

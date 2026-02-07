@@ -253,7 +253,7 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             mainViewModel.settings.PhotoGrid.setSortMode(MediaItemSortMode.DateTaken)
                         } else {
                             mainViewModel.settings.PhotoGrid.setSortMode(
-                                if (currentSortMode == MediaItemSortMode.LastModified) MediaItemSortMode.DisabledLastModified
+                                if (currentSortMode == MediaItemSortMode.DateModified) MediaItemSortMode.DisabledLastModified
                                 else MediaItemSortMode.Disabled
                             )
                         }

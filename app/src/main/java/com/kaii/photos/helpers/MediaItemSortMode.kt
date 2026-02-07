@@ -1,11 +1,9 @@
 package com.kaii.photos.helpers
 
-import com.kaii.photos.database.entities.MediaStoreData
-
 enum class MediaItemSortMode {
     DateTaken,
     MonthTaken,
-    LastModified,
+    DateModified,
     Disabled,
     DisabledLastModified;
 
@@ -18,8 +16,5 @@ enum class MediaItemSortMode {
         get() = this == Disabled || this == DisabledLastModified
 
     val isDateModified: Boolean
-        get() = this == DisabledLastModified || this == LastModified
-
-    fun toSortProp() =
-        if (isDateModified) MediaStoreData::dateModified.name else MediaStoreData::dateTaken.name
+        get() = this == DisabledLastModified || this == DateModified
 }
