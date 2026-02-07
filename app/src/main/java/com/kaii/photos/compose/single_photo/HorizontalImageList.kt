@@ -42,6 +42,7 @@ import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
+import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
@@ -68,7 +69,7 @@ fun HorizontalImageList(
     scrollState: SinglePhotoScrollState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    isHidden: Boolean = false
+    isSecuredMedia: Boolean = false
 ) {
     val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
 
@@ -109,6 +110,7 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
+                // TODO: handle immich
                 VideoPlayer(
                     item = media.item,
                     appBarsVisible = appBarsVisible,
@@ -130,8 +132,8 @@ fun HorizontalImageList(
                 val context = LocalContext.current
                 var model by remember { mutableStateOf<Any?>(null) }
 
-                LaunchedEffect(isHidden) {
-                    if (!isHidden || model != null) return@LaunchedEffect
+                LaunchedEffect(isSecuredMedia) {
+                    if (!isSecuredMedia || model != null) return@LaunchedEffect
 
                     withContext(Dispatchers.IO) {
                         try {
@@ -172,7 +174,20 @@ fun HorizontalImageList(
                         window = window,
                         glideImageView = @Composable { modifier ->
                             GlideView(
-                                model = if (isHidden) model else media.item.uri,
+                                model =
+                                    when {
+                                        isSecuredMedia -> model
+
+                                        media.item.immichUrl != null -> ImmichInfo(
+                                            thumbnail = media.item.immichThumbnail!!,
+                                            original = media.item.immichUrl!!,
+                                            hash = media.item.hash!!,
+                                            accessToken = media.accessToken!!,
+                                            useThumbnail = false
+                                        )
+
+                                        else -> media.item.uri
+                                    },
                                 item = media.item,
                                 zoomableState = zoomableState,
                                 window = window,
@@ -184,12 +199,25 @@ fun HorizontalImageList(
                     )
                 } else {
                     GlideView(
-                        model = if (isHidden) model else media.item.uri,
+                        model =
+                            when {
+                                isSecuredMedia -> model
+
+                                media.item.immichUrl != null -> ImmichInfo(
+                                    thumbnail = media.item.immichThumbnail!!,
+                                    original = media.item.immichUrl!!,
+                                    hash = media.item.hash!!,
+                                    accessToken = media.accessToken!!,
+                                    useThumbnail = false
+                                )
+
+                                else -> media.item.uri
+                            },
                         item = media.item,
                         zoomableState = zoomableState,
                         window = window,
                         appBarsVisible = appBarsVisible,
-                        isHidden = isHidden,
+                        isHidden = isSecuredMedia,
                         modifier = Modifier
                             .align(Alignment.Center)
                     )
@@ -254,6 +282,7 @@ fun GlideView(
             .fillMaxSize()
     ) {
         it.signature(item.signature())
+            // TODO: cache invalidation for immich
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .downsample(DownsampleStrategy.FIT_CENTER)
             .error(if (isHidden) R.drawable.empty_image else R.drawable.broken_image)

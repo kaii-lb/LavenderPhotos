@@ -13,13 +13,12 @@ class ImmichAlbumViewModelFactory(
     private val info: ImmichBasicInfo,
     private val sortMode: MediaItemSortMode,
     private val format: DisplayDateFormat,
-    private val apiClient: ApiClient,
-    private val separators: Boolean
+    private val apiClient: ApiClient
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == ImmichAlbumViewModel::class.java) {
-            return ImmichAlbumViewModel(immichId, info, sortMode, format, apiClient, separators) as T
+            return ImmichAlbumViewModel(immichId, info, sortMode, format, apiClient) as T
         }
-        throw IllegalArgumentException("ImmichAlbumViewModel: Cannot cast ${modelClass.simpleName} as ${ImmichAlbumViewModel::class.java.simpleName}!! This should never happen!!")
+        throw IllegalArgumentException("${ImmichAlbumViewModel::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${ImmichAlbumViewModel::class.simpleName}!! This should never happen!!")
     }
 }

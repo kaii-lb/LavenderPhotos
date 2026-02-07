@@ -224,30 +224,22 @@ fun SinglePhotoView(
     navController: NavHostController,
     viewModel: ImmichAlbumViewModel,
     window: Window,
-    mediaItemId: Long,
+    index: Int,
     albumInfo: AlbumInfo,
     nextMediaItemId: Long?
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
-    val startIndex = remember(items.itemCount, items.loadState) {
-        (0 until items.itemCount).find {
-            val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
-            (item != null && item.id == nextMediaItemId) || item?.id == mediaItemId
-        }
-    }
 
-    if (startIndex != null) {
-        SinglePhotoViewCommon(
-            items = items,
-            startIndex = startIndex,
-            albumInfo = albumInfo,
-            navController = navController,
-            window = window,
-            isOpenWithDefaultView = false,
-            screenType = ScreenType.Immich,
-            nextMediaItemId = nextMediaItemId
-        )
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = albumInfo,
+        navController = navController,
+        window = window,
+        isOpenWithDefaultView = false,
+        screenType = ScreenType.Immich,
+        nextMediaItemId = nextMediaItemId
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

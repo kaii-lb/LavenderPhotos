@@ -323,6 +323,16 @@ fun DeviceMedia(
                                         )
                                     }
 
+                                    ViewProperties.Immich -> {
+                                        navController.navigate(
+                                            Screens.Immich.SinglePhoto(
+                                                albumInfo = albumInfo,
+                                                index = index,
+                                                nextMediaItemId = null
+                                            )
+                                        )
+                                    }
+
                                     // TODO
                                     else -> {
                                         if (openVideosExternally && item.type == MediaType.Video) {
@@ -338,11 +348,7 @@ fun DeviceMedia(
                                                     albumInfo = albumInfo,
                                                     mediaItemId = item.id,
                                                     nextMediaItemId = null,
-                                                    type =
-                                                        when (viewProperties) {
-                                                            ViewProperties.SearchLoading, ViewProperties.SearchNotFound -> ScreenType.Search
-                                                            ViewProperties.Immich -> ScreenType.Immich
-                                                        }
+                                                    type = ScreenType.Search
                                                 )
                                             )
                                         }
@@ -606,7 +612,8 @@ private fun MediaStoreItem(
                         thumbnail = item.item.immichThumbnail!!,
                         original = item.item.immichUrl!!,
                         hash = item.item.hash!!,
-                        accessToken = item.accessToken!!
+                        accessToken = item.accessToken!!,
+                        useThumbnail = true
                     )
 
                     else -> item.item.uri

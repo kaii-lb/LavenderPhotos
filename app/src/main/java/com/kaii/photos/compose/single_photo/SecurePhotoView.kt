@@ -233,7 +233,7 @@ fun SecurePhotoView(
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
-                isHidden = true,
+                isSecuredMedia = true,
                 scrollState = scrollState
             )
         }

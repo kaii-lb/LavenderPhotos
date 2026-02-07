@@ -52,7 +52,7 @@ class ImmichModelLoader(
 ) : BaseGlideUrlLoader<ImmichInfo>(concreteLoader, modelCache) {
 
     override fun getUrl(model: ImmichInfo, width: Int, height: Int, options: Options?): String {
-        return model.thumbnail
+        return if (model.useThumbnail) model.thumbnail else model.original
     }
 
     override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers {

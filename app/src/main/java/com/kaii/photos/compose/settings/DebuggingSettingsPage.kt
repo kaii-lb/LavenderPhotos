@@ -296,7 +296,7 @@ fun DebuggingSettingsPage() {
                                id = Random.nextInt(),
                                name = "Immich Album",
                                paths = emptySet(),
-                               immichId = "6f8489e9-103a-4355-9036-6df2f828cba8"
+                               immichId = "a2d6a371-a7b3-4965-815d-e1e61265db6e"
                            )
                        )
                    )

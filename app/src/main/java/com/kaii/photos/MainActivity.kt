@@ -130,6 +130,7 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Permissions
@@ -398,6 +399,8 @@ class MainActivity : ComponentActivity() {
         val snackbarHostState = remember {
             LavenderSnackbarHostState()
         }
+
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
@@ -698,11 +701,10 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = ImmichBasicInfo.Empty,
+                                info = immichInfo,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat,
-                                apiClient = LocalApiClient.current,
-                                separators = true
+                                apiClient = LocalApiClient.current
                             )
                         )
 
@@ -727,11 +729,10 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = ImmichBasicInfo.Empty,
+                                info = immichInfo,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat,
-                                apiClient = LocalApiClient.current,
-                                separators = false
+                                apiClient = LocalApiClient.current
                             )
                         )
 
@@ -739,7 +740,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             viewModel = viewModel,
                             window = window,
-                            mediaItemId = screen.mediaItemId,
+                            index = screen.index,
                             nextMediaItemId = screen.nextMediaItemId,
                             albumInfo = screen.albumInfo
                         )

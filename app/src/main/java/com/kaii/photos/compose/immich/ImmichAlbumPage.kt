@@ -11,27 +11,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlin.uuid.ExperimentalUuidApi
@@ -44,27 +39,8 @@ fun ImmichAlbumPage(
     modifier: Modifier = Modifier,
     viewModel: ImmichAlbumViewModel
 ) {
-    val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-
-    if (immichInfo == ImmichBasicInfo.Empty) return
-
-    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val hasFiles by viewModel.hasFiles.collectAsStateWithLifecycle()
-
-    LaunchedEffect(immichInfo) {
-        viewModel.update(
-            context = context,
-            immichId = albumInfo.immichId,
-            info = immichInfo
-        )
-
-        viewModel.refresh(
-            context = context,
-            refetch = true
-        )
-    }
 
     Scaffold(
         modifier = modifier
