@@ -317,7 +317,7 @@ fun SelectingBottomBarItems(
                         it.absolutePath.parent()
                     }.fastDistinctBy {
                         it
-                    }
+                    }.toSet()
                 )
             }
         }

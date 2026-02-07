@@ -217,7 +217,7 @@ fun SinglePhotoView(
         SinglePhotoViewCommon(
             items = items,
             startIndex = startIndex,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(paths = emptyList()),
+            albumInfo = AlbumInfo.Empty,
             navController = navController,
             window = window,
             isOpenWithDefaultView = false,
@@ -559,7 +559,7 @@ private fun BottomBar(
                     FilledIconButton(
                         onClick = {
                             dirPermissionManager.start(
-                                directories = listOf(currentItem.absolutePath.parent())
+                                directories = setOf(currentItem.absolutePath.parent())
                             )
                         },
                         colors = IconButtonDefaults.iconButtonColors(
@@ -632,7 +632,7 @@ private fun BottomBar(
                     confirmButtonLabel = stringResource(id = R.string.media_secure)
                 ) {
                     dirPermissionManager.start(
-                        directories = listOf(currentItem.absolutePath.parent())
+                        directories = setOf(currentItem.absolutePath.parent())
                     )
                 }
 

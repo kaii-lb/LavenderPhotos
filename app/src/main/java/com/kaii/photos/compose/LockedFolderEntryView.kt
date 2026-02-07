@@ -142,9 +142,9 @@ fun LockedFolderEntryView() {
         ) {
             mainViewModel.launch {
                 if (secureFolderManager.needsMigrationFromOld) {
-                    migrateOldDirectoryPM.start(directories = listOf(context.appRestoredFilesDir))
+                    migrateOldDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))
                 } else {
-                    migrateUnencryptedDirectoryPM.start(directories = listOf(context.appRestoredFilesDir))
+                    migrateUnencryptedDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))
                 }
             }
 

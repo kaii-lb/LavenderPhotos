@@ -159,7 +159,7 @@ fun SearchPage(
             val pagingItems = searchViewModel.mediaFlow.collectAsLazyPagingItems()
             PhotoGrid(
                 pagingItems = pagingItems,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,

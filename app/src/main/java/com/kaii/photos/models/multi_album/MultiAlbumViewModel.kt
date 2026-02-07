@@ -40,7 +40,7 @@ class MultiAlbumViewModel(
     private val settings = SettingsImmichImpl(context = context, viewModelScope = viewModelScope)
     private var _params = MutableStateFlow(
         value = RoomQueryParams(
-            paths = albumInfo.paths.toSet(),
+            paths = albumInfo.paths,
             sortMode = sortMode,
             format = format,
             accessToken = "",
@@ -62,7 +62,7 @@ class MultiAlbumViewModel(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = RoomQueryParams(
-                paths = albumInfo.paths.toSet(),
+                paths = albumInfo.paths,
                 sortMode = sortMode,
                 format = format,
                 accessToken = "",
@@ -81,7 +81,7 @@ class MultiAlbumViewModel(
                 initialLoadSize = 300
             ),
             pagingSourceFactory = {
-                if (sortMode.isLastModified) mediaDao.getPagedMediaDateModified(paths = paths)
+                if (sortMode.isDateModified) mediaDao.getPagedMediaDateModified(paths = paths)
                 else mediaDao.getPagedMediaDateTaken(paths = paths)
             }
         ).flow.mapToMedia(
@@ -93,8 +93,8 @@ class MultiAlbumViewModel(
     }.cachedIn(viewModelScope)
 
     fun update(album: AlbumInfo) {
-        if (album.paths.toSet() != _params.value.paths) {
-            _params.value = _params.value.copy(paths = album.paths.toSet())
+        if (album.paths != _params.value.paths) {
+            _params.value = _params.value.copy(paths = album.paths)
         }
     }
 

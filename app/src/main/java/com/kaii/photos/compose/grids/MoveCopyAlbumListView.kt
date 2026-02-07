@@ -385,7 +385,7 @@ fun AlbumsListItem(
             .clickable {
                 if (!album.isCustomAlbum) {
                     dirPermissionManager.start(
-                        directories = listOf(album.mainPath)
+                        directories = setOf(album.mainPath)
                     )
                 } else {
                     val items = selectedItemsWithoutSection

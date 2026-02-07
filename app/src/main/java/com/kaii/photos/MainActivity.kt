@@ -1373,7 +1373,7 @@ fun MainPages(
 
                     PhotoGrid(
                         pagingItems = mediaStoreData,
-                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                        albumInfo = AlbumInfo.Empty,
                         selectedItemsList = selectedItemsList,
                         viewProperties = ViewProperties.Favourites,
                         hasFiles = hasFiles,
@@ -1406,7 +1406,7 @@ fun MainPages(
 
                     PhotoGrid(
                         pagingItems = trashStoreData,
-                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                        albumInfo = AlbumInfo.Empty,
                         selectedItemsList = selectedItemsList,
                         viewProperties = ViewProperties.Trash,
                         hasFiles = hasFiles,

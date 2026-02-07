@@ -103,9 +103,9 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                             if (shouldShowEverything) {
                                 val flat = allAlbums.flatMap { it.paths }.fastMap { it.removeSuffix("/") }
 
-                                flat - mainPhotosPaths.fastMap { it.removeSuffix("/") }.toSet()
+                                flat - mainPhotosPaths.map { it.removeSuffix("/") }.toSet()
                             } else {
-                                mainPhotosPaths.fastMap { it.removeSuffix("/") }
+                                mainPhotosPaths.map { it.removeSuffix("/") }
                             }
                         )
 

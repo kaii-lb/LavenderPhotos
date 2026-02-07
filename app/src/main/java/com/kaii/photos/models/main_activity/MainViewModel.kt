@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
@@ -24,7 +25,6 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
-import com.kaii.photos.mediastore.MediaDataSource
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -121,7 +121,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = emptyList()
+            initialValue = emptySet()
         )
 
     private fun getMainPhotosAlbums() =
@@ -133,8 +133,8 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         ) { albums, pair ->
             if (pair.first) {
                 albums.fastMap { albumInfo ->
-                    albumInfo.paths.fastMap { it.removeSuffix("/") }
-                }.flatMap { it } - pair.second.toSet()
+                    albumInfo.paths.map { it.removeSuffix("/") }
+                }.flatMap { it }.toSet() - pair.second
             } else {
                 pair.second
             }
@@ -144,19 +144,20 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         context: Context,
         albums: List<AlbumInfo>,
         sortMode: MediaItemSortMode
-    ) {
-        if (albums.toSet() == albumInfo.toSet()) return
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        if (albums.toSet() == albumInfo.toSet()) return@launch
+
+        val dao = MediaDatabase.getInstance(context).mediaDao()
 
         albums.forEach { album ->
             val cancellationSignal = CancellationSignal()
 
             val media = if (!album.isCustomAlbum) {
-                val datasource = MediaDataSource(
-                    context = context,
-                    cancellationSignal = cancellationSignal
-                )
-
-                datasource.query().getOrElse(1) { MediaStoreData.dummyItem }
+                if (sortMode.isDateModified) {
+                    dao.getThumbnailForAlbumDateModified(paths = album.paths)
+                } else {
+                    dao.getThumbnailForAlbumDateTaken(paths = album.paths)
+                } ?: MediaStoreData.dummyItem
             } else {
                 val datasource = CustomAlbumDataSource(
                     context = context,

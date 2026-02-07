@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.util.fastAll
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.createPersistablePermissionLauncher
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
@@ -49,12 +48,12 @@ class DirectoryPermissionManager(
         directories.removeAt(0)
     }
 
-    fun start(directories: List<String>) {
+    fun start(directories: Set<String>) {
         if (running) throw IllegalStateException("Cannot get directory permissions while another permission request is running!")
         if (directories.all { it.isBlank() }) throw IllegalArgumentException("Cannot get directory permissions for directories with blank paths!")
 
         val previous = context.contentResolver.persistedUriPermissions
-        val persisted = directories.fastAll { path ->
+        val persisted = directories.all { path ->
             val uri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath = path, trimDoc = true)
 
             previous.find { perm ->

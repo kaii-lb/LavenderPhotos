@@ -17,9 +17,9 @@ enum class MediaItemSortMode {
     val isDisabled: Boolean
         get() = this == Disabled || this == DisabledLastModified
 
-    val isLastModified: Boolean
+    val isDateModified: Boolean
         get() = this == DisabledLastModified || this == LastModified
 
     fun toSortProp() =
-        if (isLastModified) MediaStoreData::dateModified.name else MediaStoreData::dateTaken.name
+        if (isDateModified) MediaStoreData::dateModified.name else MediaStoreData::dateTaken.name
 }

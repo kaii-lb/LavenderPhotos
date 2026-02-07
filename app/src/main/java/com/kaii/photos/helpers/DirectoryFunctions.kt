@@ -124,10 +124,10 @@ fun String.checkPathIsDownloads(): Boolean = run {
             && toRelativePath(true).endsWith(Environment.DIRECTORY_DOWNLOADS)
 }
 
-fun String.filename(): String = trim().removeSuffix("/").split("/").last()
+fun String.filename(): String = trim().split("/").takeLast(1).first()
 
 fun String.parent(): String =
-    trim().replace(this.filename(), "").removeSuffix("/")
+    trim().split("/").dropLast(1).joinToString("/") { it }
 
 val File.relativePath: String
     get() = this.absolutePath.toRelativePath()
@@ -170,7 +170,7 @@ suspend fun tryGetAllAlbums(
         list.fastDistinctBy { media ->
             media.absolutePath.parent()
         }.fastMap { media ->
-            val album = listOf(media.absolutePath.parent())
+            val album = setOf(media.absolutePath.parent())
 
             AlbumInfo(
                 name = album.first().split("/").last(),

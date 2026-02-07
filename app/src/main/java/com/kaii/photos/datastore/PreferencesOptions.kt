@@ -21,7 +21,7 @@ object DefaultTabs {
     object TabTypes {
         val photos = BottomBarTab(
             name = "Photos",
-            albumPaths = listOf("main_photos"),
+            albumPaths = setOf("main_photos"),
             icon = StoredDrawable.PhotoGrid,
             id = 0,
             storedNameIndex = StoredName.Photos.ordinal
@@ -29,7 +29,7 @@ object DefaultTabs {
 
         val secure = BottomBarTab(
             name = "Secure",
-            albumPaths = listOf("secure_folder"),
+            albumPaths = setOf("secure_folder"),
             icon = StoredDrawable.SecureFolder,
             id = 1,
             storedNameIndex = StoredName.Secure.ordinal
@@ -37,7 +37,7 @@ object DefaultTabs {
 
         val albums = BottomBarTab(
             name = "Albums",
-            albumPaths = listOf("albums_page"),
+            albumPaths = setOf("albums_page"),
             icon = StoredDrawable.Albums,
             id = 2,
             storedNameIndex = StoredName.Albums.ordinal
@@ -45,7 +45,7 @@ object DefaultTabs {
 
         val search = BottomBarTab(
             name = "Search",
-            albumPaths = listOf("search_page"),
+            albumPaths = setOf("search_page"),
             icon = StoredDrawable.Search,
             id = 3,
             storedNameIndex = StoredName.Search.ordinal
@@ -53,7 +53,7 @@ object DefaultTabs {
 
         val favourites = BottomBarTab(
             name = "Favourites",
-            albumPaths = listOf("favourites_page"),
+            albumPaths = setOf("favourites_page"),
             icon = StoredDrawable.Favourite,
             id = 4,
             storedNameIndex = StoredName.Favourites.ordinal
@@ -61,7 +61,7 @@ object DefaultTabs {
 
         val trash = BottomBarTab(
             name = "Trash",
-            albumPaths = listOf("trash_page"),
+            albumPaths = setOf("trash_page"),
             icon = StoredDrawable.Trash,
             id = 5,
             storedNameIndex = StoredName.Trash.ordinal
@@ -160,7 +160,7 @@ enum class StoredDrawable(
 data class BottomBarTab(
     val id: Int,
     val name: String,
-    val albumPaths: List<String>,
+    val albumPaths: Set<String>,
     val icon: StoredDrawable,
     val isCustom: Boolean = false,
     val storedNameIndex: Int? = null
@@ -182,7 +182,7 @@ data class BottomBarTab(
                 restore = {
                     BottomBarTab(
                         name = it[0] as String,
-                        albumPaths = it[1] as List<String>,
+                        albumPaths = it[1] as Set<String>,
                         icon = StoredDrawable.entries[it[2] as Int],
                         id = it[3] as Int,
                         isCustom = it[4] as Boolean,
@@ -228,13 +228,15 @@ data class BottomBarTab(
 data class AlbumInfo(
     val id: Int,
     val name: String,
-    val paths: List<String>,
+    val paths: Set<String>,
     val isCustomAlbum: Boolean = false,
     val isPinned: Boolean = false,
     val immichId: String = ""
 ) {
     companion object {
-        fun createPathOnlyAlbum(paths: List<String>) = AlbumInfo(id = 0, name = "", paths = paths)
+        fun createPathOnlyAlbum(paths: Set<String>) = AlbumInfo(id = 0, name = "", paths = paths)
+
+        val Empty = createPathOnlyAlbum(emptySet())
     }
 
     object AlbumNavType : NavType<AlbumInfo>(isNullableAllowed = false) {
@@ -267,7 +269,7 @@ data class AlbumInfo(
         if (id != other.id) return false
         if (isCustomAlbum != other.isCustomAlbum) return false
         if (name != other.name) return false
-        if (paths.toSet() != other.paths.toSet()) return false // as a set since we don't care about the order
+        if (paths != other.paths) return false // as a set since we don't care about the order
         if (mainPath != other.mainPath) return false
         if (isPinned != other.isPinned) return false
 
@@ -278,7 +280,7 @@ data class AlbumInfo(
         var result = id
         result = 31 * result + isCustomAlbum.hashCode()
         result = 31 * result + name.hashCode()
-        result = 31 * result + paths.toSet().hashCode()
+        result = 31 * result + paths.hashCode()
         result = 31 * result + mainPath.hashCode()
         result = 31 * result + isPinned.hashCode()
         return result

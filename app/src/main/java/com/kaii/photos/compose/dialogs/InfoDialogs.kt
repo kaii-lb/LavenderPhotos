@@ -62,7 +62,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastAll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -175,10 +174,12 @@ fun SingleAlbumDialog(
             ) {
                 showDialog.value = false
                 selectedItemsList.clear()
-                selectedItemsList.add(PhotoLibraryUIModel.Media(
-                    item = MediaStoreData.dummyItem,
-                    accessToken = null
-                ))
+                selectedItemsList.add(
+                    PhotoLibraryUIModel.Media(
+                        item = MediaStoreData.dummyItem,
+                        accessToken = null
+                    )
+                )
             }
 
 
@@ -210,7 +211,7 @@ fun SingleAlbumDialog(
 
                             val newInfo = dynamicAlbum.copy(
                                 name = fileName.value,
-                                paths = listOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
+                                paths = setOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
                             )
                             mainViewModel.settings.AlbumsList.edit(
                                 id = dynamicAlbum.id,
@@ -238,7 +239,7 @@ fun SingleAlbumDialog(
                     state = isEditingFileName,
                     string = fileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
+                    enabled = dynamicAlbum.paths.all { !it.checkPathIsDownloads() },
                     modifier = Modifier
                         .padding(8.dp, 0.dp),
                     doAction = {
@@ -255,7 +256,7 @@ fun SingleAlbumDialog(
                     state = isEditingFileName,
                     string = fileName,
                     rowPosition = RowPosition.Middle,
-                    enabled = dynamicAlbum.paths.fastAll { !it.checkPathIsDownloads() },
+                    enabled = dynamicAlbum.paths.all { !it.checkPathIsDownloads() },
                     modifier = Modifier
                         .padding(8.dp, 0.dp),
                     doAction = {
@@ -428,10 +429,12 @@ fun MainAppDialog(
                     ) {
                         showDialog.value = false
                         selectedItemsList.clear()
-                        selectedItemsList.add(PhotoLibraryUIModel.Media(
-                            item = MediaStoreData.dummyItem,
-                            accessToken = null
-                        ))
+                        selectedItemsList.add(
+                            PhotoLibraryUIModel.Media(
+                                item = MediaStoreData.dummyItem,
+                                accessToken = null
+                            )
+                        )
                         vibratorManager.vibrateShort()
                     }
                 }

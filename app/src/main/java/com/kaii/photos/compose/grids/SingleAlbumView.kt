@@ -50,7 +50,6 @@ import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import com.kaii.photos.models.loading.mapToMediaItems
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -246,7 +245,7 @@ private fun SingleAlbumViewCommon(
                 albumId = albumInfo.id,
                 navController = navController,
                 selectedItemsList = selectedItemsList,
-                itemCount = pagingItems.itemSnapshotList.mapToMediaItems().size
+                itemCount = pagingItems.itemCount // TODO
             )
         }
     }

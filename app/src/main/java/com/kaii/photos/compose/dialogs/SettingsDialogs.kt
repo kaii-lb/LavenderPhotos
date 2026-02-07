@@ -427,7 +427,7 @@ fun AddTabDialog(
                             add(
                                 BottomBarTab(
                                     name = tabName,
-                                    albumPaths = selectedAlbums,
+                                    albumPaths = selectedAlbums.toSet(),
                                     icon = selectedItem!!,
                                     id = tabList.size,
                                     isCustom = true

@@ -212,7 +212,7 @@ fun SecureFolderView(
         ) {
             PhotoGrid(
                 pagingItems = items,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.SecureFolder,
                 hasFiles = hasFiles

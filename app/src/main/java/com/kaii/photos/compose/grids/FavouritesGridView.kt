@@ -120,7 +120,7 @@ fun FavouritesGridView(
         ) {
             PhotoGrid(
                 pagingItems = pagingItems,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
                 hasFiles = hasFiles,

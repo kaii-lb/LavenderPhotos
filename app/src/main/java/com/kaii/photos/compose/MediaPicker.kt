@@ -197,7 +197,7 @@ class MediaPicker : ComponentActivity() {
 
         val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptyList())
+            .collectAsStateWithLifecycle(initialValue = emptySet())
 
         val context = LocalContext.current
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
@@ -212,7 +212,7 @@ class MediaPicker : ComponentActivity() {
         val customAlbumViewModel: CustomAlbumViewModel = viewModel(
             factory = CustomAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                albumInfo = AlbumInfo.Empty,
                 sortBy = currentSortMode,
                 displayDateFormat = displayDateFormat
             )

@@ -136,7 +136,7 @@ fun TrashedPhotoGridView(
         ) {
             PhotoGrid(
                 pagingItems = pagingItems,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
+                albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
                 hasFiles = hasFiles,

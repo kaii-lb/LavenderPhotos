@@ -34,7 +34,7 @@ fun Flow<PagingData<MediaStoreData>>.mapToMedia(
             val afterDate: Long?
 
             when {
-                sortMode.isLastModified -> {
+                sortMode.isDateModified -> {
                     beforeDate = before?.item?.getDateModifiedDay()
                     afterDate = after?.item?.getDateModifiedDay()
                 }
@@ -85,7 +85,7 @@ fun Flow<PagingData<PhotoLibraryUIModel.SecuredMedia>>.mapToMedia(
             val afterDate: Long?
 
             when {
-                sortMode.isLastModified -> {
+                sortMode.isDateModified -> {
                     beforeDate = before?.item?.getDateModifiedDay()
                     afterDate = after?.item?.getDateModifiedDay()
                 }

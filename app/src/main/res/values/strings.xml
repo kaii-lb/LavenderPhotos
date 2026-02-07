@@ -663,7 +663,7 @@
     <string name="albums_auto_detect">Auto detect albums</string>
     <string name="albums_auto_detect_desc">Detects all the folders with media on this device and add them to the albums view</string>
     <string name="albums_clear_list">Clear album list</string>
-    <string name="albums_clear_list_desc">Remove all albums except for Camera and Download</string>
+    <string name="albums_clear_list_desc">Remove all non-essential albums from the album list</string>
     <string name="albums_clear_list_done">Cleared albums list</string>
     <string name="albums_media_sorting">Media Sorting</string>
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>

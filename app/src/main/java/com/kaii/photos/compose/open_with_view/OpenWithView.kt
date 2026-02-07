@@ -357,8 +357,8 @@ private fun InitSinglePhotoView(
     LaunchedEffect(Unit) {
         multiAlbumViewModel.update(
             album = AlbumInfo.createPathOnlyAlbum(
-                paths = listOf(
-                    incomingData.absolutePath.parent() // .split("/").dropLast(1).joinToString("/")
+                paths = setOf(
+                    incomingData.absolutePath.parent()
                 )
             )
         )
@@ -371,8 +371,8 @@ private fun InitSinglePhotoView(
         mediaItemId = incomingData.id,
         nextMediaItemId = null,
         albumInfo = AlbumInfo.createPathOnlyAlbum(
-            paths = listOf(
-                incomingData.absolutePath.parent() // .split("/").dropLast(1).joinToString("/")
+            paths = setOf(
+                incomingData.absolutePath.parent()
             )
         ),
         isOpenWithDefaultView = true

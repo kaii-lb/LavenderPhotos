@@ -2,7 +2,6 @@ package com.kaii.photos.datastore
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.util.fastForEach
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -14,6 +13,7 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.baseInternalStorageDirectory
+import com.kaii.photos.helpers.filename
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -49,72 +49,77 @@ class SettingsAlbumsListImpl(
             }
 
             val present = json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList()
-            val presentMap = present.associate { it.id to it.paths.toSet() }
 
             val missing = list.filter {
-                it.name.isNotBlank() && it.id !in presentMap.keys && it.paths.toSet() !in presentMap.values
+                it.name.isNotBlank() && it !in present
             }
 
-            missing.fastForEach { album ->
-                present.add(album)
-            }
+            present.addAll(missing)
 
             data[albumsKey] = json.encodeToString(present)
         }
     }
 
     fun get() = context.datastore.data.map { data ->
-        var list = data[oldAlbumsKey] ?: return@map defaultAlbumsList
+        var list = data[oldAlbumsKey] ?: jsonDefaultAlbumsList
 
         val isPreV083 = list.startsWith(",") // if list starts with a , then its using an old version of list storing system, move to new version
         val isPreV095 = list.startsWith(separator)
 
-        if (isPreV083) {
-            val split = list.split(",").distinct().toMutableList()
-            split.remove("")
-            split.remove("/storage/emulated/0")
+        when {
+            isPreV083 -> {
+                val split = list.split(",").distinct().toMutableList()
+                split.remove("")
+                split.remove(baseInternalStorageDirectory.removeSuffix("/"))
 
-            val oldList = split.map { path ->
-                AlbumInfo(
-                    id = path.hashCode(),
-                    name = path.split("/").last(),
-                    paths = listOf(path)
-                )
-            }
-            set(oldList)
-            return@map oldList
-        } else if (isPreV095) {
-            val split = list.split(separator).distinct().toMutableList()
-            split.remove("")
-
-            val oldList = split.map { path ->
-                AlbumInfo(
-                    id = path.hashCode(),
-                    name = path.split("/").last(),
-                    paths = listOf(path)
-                )
-            }
-            set(oldList)
-
-            return@map oldList
-        } else if (list.isNotBlank() && !list.startsWith("RESET")) {
-            val split = json.decodeFromString<List<AlbumInfo>>(list)
-            set(split)
-            resetOld()
-
-            return@map split
-        }
-
-        list = data[albumsKey] ?: jsonDefaultAlbumsList
-        val split = json.decodeFromString<List<AlbumInfo>>(list)
-
-        return@map split.map {
-            it.copy(
-                paths = it.paths.map { path ->
-                    if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path
-                    else path
+                val oldList = split.map { path ->
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.filename(),
+                        paths = setOf(path)
+                    )
                 }
-            )
+                set(oldList)
+                oldList
+            }
+
+            isPreV095 -> {
+                val split = list.split(separator).distinct().toMutableList()
+                split.remove("")
+
+                val oldList = split.map { path ->
+                    AlbumInfo(
+                        id = path.hashCode(),
+                        name = path.filename(),
+                        paths = setOf(baseInternalStorageDirectory + path)
+                    )
+                }
+                set(oldList)
+
+                oldList
+            }
+
+            list.isNotBlank() && !list.startsWith("RESET") -> {
+                val split = json.decodeFromString<List<AlbumInfo>>(list)
+                set(split)
+                resetOld()
+
+                split
+            }
+
+            else -> {
+                list = data[albumsKey] ?: jsonDefaultAlbumsList
+                val split = json.decodeFromString<List<AlbumInfo>>(list)
+
+                split.map {
+                    it.copy(
+                        paths = it.paths.map { path ->
+                            if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path
+                            else path
+                        }.toSet()
+                    )
+                }
+            }
         }
     }
 
@@ -159,7 +164,7 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun resetOld() = viewModelScope.launch {
+    private fun resetOld() = viewModelScope.launch {
         context.datastore.edit {
             it[oldAlbumsKey] = "RESET" + it[oldAlbumsKey]
         }
@@ -200,28 +205,18 @@ class SettingsAlbumsListImpl(
             AlbumInfo(
                 id = 0,
                 name = "Camera",
-                paths = listOf("DCIM/Camera"),
+                paths = setOf("${baseInternalStorageDirectory}DCIM/Camera"),
                 isPinned = false
-            ),
-            AlbumInfo(
-                id = 1,
-                name = "WhatsApp Images",
-                paths = listOf("Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images")
-            ),
-            AlbumInfo(
-                id = 2,
-                name = "Screenshots",
-                paths = listOf("Pictures/Screenshot")
             ),
             AlbumInfo(
                 id = 3,
                 name = "Pictures",
-                paths = listOf("Pictures")
+                paths = setOf("${baseInternalStorageDirectory}Pictures")
             ),
             AlbumInfo(
                 id = 4,
                 name = "Downloads",
-                paths = listOf("Download")
+                paths = setOf("${baseInternalStorageDirectory}Download")
             )
         )
 
@@ -599,7 +594,7 @@ class SettingMainPhotosViewImpl(
     private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
     private val shouldShowEverything = booleanPreferencesKey("main_photos_show_everything")
 
-    fun getAlbums(): Flow<List<String>> =
+    fun getAlbums(): Flow<Set<String>> =
         context.datastore.data.map { data ->
             val string = data[mainPhotosAlbumsList] ?: defaultAlbumsList
 
@@ -611,7 +606,7 @@ class SettingMainPhotosViewImpl(
             list.map {
                 if (!it.startsWith("/storage/")) baseInternalStorageDirectory + it
                 else it
-            }
+            }.toSet()
         }
 
     fun addAlbum(relativePath: String) = viewModelScope.launch {

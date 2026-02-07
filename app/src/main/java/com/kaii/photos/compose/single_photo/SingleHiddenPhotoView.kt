@@ -304,7 +304,7 @@ private fun BottomBar(
         isGettingPermissions.value = true
 
         permissionManager.start(
-            directories = listOf(
+            directories = setOf(
                 securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
             )
         )

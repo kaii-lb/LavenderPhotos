@@ -211,7 +211,7 @@ fun DebuggingSettingsPage() {
                                         AlbumInfo(
                                             id = file.hashCode(),
                                             name = file.name,
-                                            paths = listOf(file.relativePath)
+                                            paths = setOf(file.relativePath)
                                         )
                                     )
                                 )
@@ -295,7 +295,7 @@ fun DebuggingSettingsPage() {
                            albumInfo = AlbumInfo(
                                id = Random.nextInt(),
                                name = "Immich Album",
-                               paths = emptyList(),
+                               paths = emptySet(),
                                immichId = "6f8489e9-103a-4355-9036-6df2f828cba8"
                            )
                        )

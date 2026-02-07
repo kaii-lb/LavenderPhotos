@@ -83,7 +83,7 @@ class SecureFolderManager(
                     AlbumInfo(
                         id = exportDir.relativePath.hashCode(),
                         name = exportDir.relativePath.filename(),
-                        paths = listOf(exportDir.relativePath)
+                        paths = setOf(exportDir.relativePath)
                     )
                 )
             )
@@ -173,7 +173,7 @@ class SecureFolderManager(
                 AlbumInfo(
                     id = path.hashCode(),
                     name = path.filename(),
-                    paths = listOf(path)
+                    paths = setOf(path)
                 )
             )
         )

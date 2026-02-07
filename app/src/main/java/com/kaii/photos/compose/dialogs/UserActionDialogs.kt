@@ -91,6 +91,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.findMinParent
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
@@ -447,7 +448,7 @@ private fun ExplanationDialogBase(
 @Composable
 fun AlbumPathsDialog(
     albumInfo: AlbumInfo,
-    onConfirm: (selectedPaths: List<String>) -> Unit,
+    onConfirm: (selectedPaths: Set<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
     val selectedPaths = remember { albumInfo.paths.toMutableStateList() }
@@ -712,7 +713,7 @@ fun AlbumPathsDialog(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            onConfirm(selectedPaths)
+            onConfirm(selectedPaths.toSet())
             onDismiss()
         }
     }
@@ -747,8 +748,8 @@ fun AlbumAddChoiceDialog(
                     listOf(
                         AlbumInfo(
                             id = (basePath + path).hashCode(),
-                            name = path.split("/").last(),
-                            paths = listOf(basePath + path)
+                            name = path.filename(),
+                            paths = setOf(basePath + path)
                         )
                     )
                 )
@@ -808,7 +809,7 @@ fun AddCustomAlbumDialog(
             onConfirm = { text ->
                 val albumInfo = AlbumInfo(
                     id = text.hashCode(),
-                    paths = emptyList(),
+                    paths = emptySet(),
                     name = text,
                     isCustomAlbum = true
                 )

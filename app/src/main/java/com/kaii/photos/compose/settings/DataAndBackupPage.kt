@@ -127,7 +127,7 @@ fun DataAndBackupPage() {
                             listOf(
                                 AlbumInfo(
                                     name = albumFile.name,
-                                    paths = listOf(albumFile.relativePath),
+                                    paths = setOf(albumFile.relativePath),
                                     id = albumFile.hashCode()
                                 )
                             )
@@ -163,7 +163,7 @@ fun DataAndBackupPage() {
                             listOf(
                                 AlbumInfo(
                                     name = albumFile.name,
-                                    paths = listOf(albumFile.relativePath),
+                                    paths = setOf(albumFile.relativePath),
                                     id = albumFile.hashCode()
                                 )
                             )
@@ -252,7 +252,7 @@ fun DataAndBackupPage() {
                             listOf(
                                 AlbumInfo(
                                     name = favExportDir.name,
-                                    paths = listOf(favExportDir.relativePath),
+                                    paths = setOf(favExportDir.relativePath),
                                     id = favExportDir.hashCode()
                                 )
                             )

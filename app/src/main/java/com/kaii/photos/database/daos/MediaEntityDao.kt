@@ -24,11 +24,18 @@ interface MediaDao {
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMedia(): Flow<List<MediaStoreData>>
 
+    // TODO: remove sorting by sortByProp
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY :sortByProp DESC")
     fun getPagedFavourites(sortByProp: String): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
     fun getAllFavourites(): List<MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC LIMIT 1")
+    fun getThumbnailForAlbumDateTaken(paths: Set<String>): MediaStoreData?
+
+    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
+    fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
 
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
     suspend fun linkToImmich(
