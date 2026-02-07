@@ -21,11 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,10 +37,8 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.OnBackPressedEffect
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,12 +48,6 @@ fun TrashedPhotoGridView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    var hasFiles by remember { mutableStateOf(true) }
-
-    LaunchedEffect(pagingItems.loadState) {
-        delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = pagingItems.itemCount > 0
-    }
 
     BackHandler(
         enabled = selectedItemsList.isNotEmpty()
@@ -139,7 +127,6 @@ fun TrashedPhotoGridView(
                 albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
-                hasFiles = hasFiles,
                 isMediaPicker = incomingIntent != null
             )
         }

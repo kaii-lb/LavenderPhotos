@@ -20,11 +20,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +34,8 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,12 +45,6 @@ fun FavouritesGridView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-
-    var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(pagingItems.loadState) {
-        delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = !pagingItems.loadState.source.append.endOfPaginationReached || pagingItems.itemCount != 0
-    }
 
     val navController = LocalNavController.current
     Scaffold(
@@ -120,7 +108,6 @@ fun FavouritesGridView(
                 albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Favourites,
-                hasFiles = hasFiles,
                 isMediaPicker = incomingIntent != null
             )
         }

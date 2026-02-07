@@ -1,5 +1,7 @@
 package com.kaii.photos.database.entities
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -7,6 +9,8 @@ import com.kaii.photos.mediastore.MediaType
 import java.util.Calendar
 import java.util.Locale
 
+@Stable
+@Immutable
 @Entity(
     tableName = "media",
     indices = [
@@ -65,6 +69,8 @@ data class MediaStoreData(
 
         return calendar.timeInMillis / 1000
     }
+
+    // TODO
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/
     fun getDateTakenMonth(): Long {

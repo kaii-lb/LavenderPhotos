@@ -408,7 +408,7 @@ private fun SinglePhotoViewCommon(
                 onMoveMedia = {
                     coroutineScope.launch {
                         state.animateScrollToPage(
-                            page = (currentIndex + 1) % items.itemCount,
+                            page = (currentIndex + 1) % items.itemCount, // TODO: check if last item was deleted and move back instead of wrapping
                             animationSpec = AnimationConstants.expressiveTween(
                                 durationMillis = AnimationConstants.DURATION
                             )

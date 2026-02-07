@@ -1,22 +1,34 @@
 package com.kaii.photos.models.loading
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.paging.ItemSnapshotList
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.mediastore.signature
 
+@Stable
+@Immutable
 sealed interface PhotoLibraryUIModel {
+    @Stable
+    @Immutable
     interface MediaImpl : PhotoLibraryUIModel {
         val item: MediaStoreData
         val accessToken: String?
     }
 
+    @Stable
+    @Immutable
     data class Media(
         override val item: MediaStoreData,
         override val accessToken: String? = null
     ) : MediaImpl
 
+    @Stable
+    @Immutable
     data class Section(val title: String) : PhotoLibraryUIModel
 
+    @Stable
+    @Immutable
     data class SecuredMedia(
         override val item: MediaStoreData,
         override val accessToken: String? = null,

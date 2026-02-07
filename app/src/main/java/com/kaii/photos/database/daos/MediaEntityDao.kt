@@ -21,6 +21,9 @@ interface MediaDao {
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMedia(): Flow<List<MediaStoreData>>
 
+    @Query(value = "SELECT id from media")
+    fun getAllMediaIds(): List<Long>
+
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
     fun getPagedFavouritesDateTaken(): PagingSource<Int, MediaStoreData>
 
@@ -46,6 +49,9 @@ interface MediaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(items: Set<MediaStoreData>)
+
     @Upsert
     fun upsertAll(items: List<MediaStoreData>)
 
@@ -54,4 +60,7 @@ interface MediaDao {
 
     @Delete
     fun deleteEntities(items: List<MediaStoreData>)
+
+    @Query(value = "DELETE FROM media WHERE id IN (:ids)")
+    fun deleteAll(ids: Set<Long>)
 }

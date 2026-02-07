@@ -21,7 +21,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
@@ -45,9 +44,6 @@ class ImmichRepository(
     )
 
     private val immichItems = MutableStateFlow<List<MediaStoreData>>(emptyList())
-
-    private val _hasFiles = MutableStateFlow(true)
-    val hasFiles = _hasFiles.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow = immichItems.flatMapLatest { media ->
@@ -86,8 +82,6 @@ class ImmichRepository(
             accessToken = info.accessToken
         ) { state ->
             if (state is AlbumGetState.Retrieved) {
-                _hasFiles.value = true
-
                 immichItems.value =
                     state.album.assets.fastMap { asset ->
                         MediaStoreData(
@@ -109,7 +103,6 @@ class ImmichRepository(
                         )
                     }
             } else {
-                _hasFiles.value = false
                 immichItems.value = emptyList()
             }
         }.join()

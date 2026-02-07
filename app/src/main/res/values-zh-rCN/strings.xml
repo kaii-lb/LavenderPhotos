@@ -238,8 +238,6 @@
     <string name="search_photo_date">搜索照片的日期</string>
     <string name="search_photo_day">按日搜索</string>
     <string name="edit_desc">薰衣草图库编辑的文件位于 %1$s</string>
-    <string name="custom_album_media_not_custom_title">非自定义媒体</string>
-    <string name="custom_album_media_not_custom_explanation">此相册中的部分媒体属于实际文件夹，薰衣草图库无法在不删除的情况下移除这些媒体，因此将予以忽略。</string>
     <string name="custom_album_remove_media">移除</string>
     <string name="custom_album_remove_media_desc">是否从相册中移除这些项目？</string>
     <string name="action_cannot_be_undone">此操作无法撤销！</string>

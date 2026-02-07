@@ -394,8 +394,6 @@
     <string name="search_photo_date">Buscar pola data da foto</string>
     <string name="search_photo_day">Buscar por día</string>
     <string name="edit_desc">Lavender Photos editou o ficheiro o %1$s</string>
-    <string name="custom_album_media_not_custom_title">Sen multimedia persoal</string>
-    <string name="custom_album_media_not_custom_explanation">Algún multimedia neste álbum pertence a cartafoles reais, Lavender Photos non pode eliminar ese multimedia sen eliminar o cartafol así que vaise ignorar.</string>
     <string name="custom_album_remove_media">Retirar</string>
     <string name="custom_album_remove_media_desc">Retirar estes elementos do álbum?</string>
     <string name="action_cannot_be_undone">A acción non se pode desfacer!</string>

@@ -46,7 +46,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -142,9 +141,7 @@ import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.checkHasFiles
 import com.kaii.photos.helpers.startupUpdateCheck
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -167,8 +164,6 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlin.io.path.Path
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.MainActivity"
@@ -211,6 +206,7 @@ class MainActivity : ComponentActivity() {
             mainViewModel.settings.LookAndFeel.getFollowDarkMode().first()
         }
 
+        // TODO: uncook this
         WorkManager.getInstance(applicationContext)
             .enqueue(OneTimeWorkRequest.Builder(SyncWorker::class).build())
 
@@ -1271,26 +1267,11 @@ fun MainPages(
                         selectedItemsList.clear()
                     }
 
-                    var hasFiles by remember { mutableStateOf(true) }
-                    // TODO
-                    // LaunchedEffect(mediaStoreData.value) {
-                    //     if (stateValue.albumPaths.isNotEmpty()) {
-                    //         withContext(Dispatchers.IO) {
-                    //             hasFiles = stateValue.albumPaths.any { path ->
-                    //                 Path(path).checkHasFiles(
-                    //                     basePath = path.toBasePath()
-                    //                 ) == true
-                    //             }
-                    //         }
-                    //     }
-                    // }
-
                     PhotoGrid(
                         pagingItems = mediaStoreData,
                         albumInfo = stateValue.toAlbumInfo(),
                         viewProperties = ViewProperties.Album,
                         selectedItemsList = selectedItemsList,
-                        hasFiles = hasFiles,
                         isMainPage = true,
                         isMediaPicker = isMediaPicker
                     )
@@ -1311,19 +1292,6 @@ fun MainPages(
                         selectedItemsList.clear()
                     }
 
-                    var hasFiles by remember { mutableStateOf(true) }
-                    LaunchedEffect(mediaStoreData) {
-                        if (mainPhotosPaths.isNotEmpty()) {
-                            withContext(Dispatchers.IO) {
-                                hasFiles = mainPhotosPaths.any { path ->
-                                    Path(path).checkHasFiles(
-                                        basePath = path.toBasePath()
-                                    ) == true
-                                }
-                            }
-                        }
-                    }
-
                     PhotoGrid(
                         pagingItems = mediaStoreData,
                         albumInfo =
@@ -1332,7 +1300,6 @@ fun MainPages(
                                 .toAlbumInfo(),
                         viewProperties = ViewProperties.Album,
                         selectedItemsList = selectedItemsList,
-                        hasFiles = hasFiles,
                         isMainPage = true,
                         isMediaPicker = isMediaPicker
                     )
@@ -1369,19 +1336,12 @@ fun MainPages(
                     }
 
                     val mediaStoreData = favouritesViewModel.mediaFlow.collectAsLazyPagingItems()
-                    var hasFiles by remember { mutableStateOf(true) }
-                    // TODO
-                    // LaunchedEffect(mediaStoreData.value) {
-                    //     delay(PhotoGridConstants.LOADING_TIME)
-                    //     hasFiles = mediaStoreData.value.isNotEmpty()
-                    // }
 
                     PhotoGrid(
                         pagingItems = mediaStoreData,
                         albumInfo = AlbumInfo.Empty,
                         selectedItemsList = selectedItemsList,
                         viewProperties = ViewProperties.Favourites,
-                        hasFiles = hasFiles,
                         isMainPage = true,
                         isMediaPicker = isMediaPicker
                     )
@@ -1401,19 +1361,11 @@ fun MainPages(
 
                     val trashStoreData = trashViewModel.mediaFlow.collectAsLazyPagingItems()
 
-                    var hasFiles by remember { mutableStateOf(true) }
-                    // TODO
-                    // LaunchedEffect(trashStoreData.value) {
-                    //     delay(PhotoGridConstants.LOADING_TIME)
-                    //     hasFiles = trashStoreData.value.isNotEmpty()
-                    // }
-
                     PhotoGrid(
                         pagingItems = trashStoreData,
                         albumInfo = AlbumInfo.Empty,
                         selectedItemsList = selectedItemsList,
                         viewProperties = ViewProperties.Trash,
-                        hasFiles = hasFiles,
                         isMainPage = true,
                         isMediaPicker = isMediaPicker
                     )

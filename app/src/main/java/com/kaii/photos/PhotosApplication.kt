@@ -4,6 +4,7 @@ import android.app.Application
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.sync.SyncWorker
@@ -26,7 +27,11 @@ class PhotosApplication : Application() {
                     scope.launch(Dispatchers.IO) {
                         runCatching {
                             WorkManager.getInstance(applicationContext)
-                                .enqueue(OneTimeWorkRequest.Builder(SyncWorker::class).build())
+                                .enqueueUniqueWork(
+                                    SyncWorker::class.java.name,
+                                    ExistingWorkPolicy.REPLACE,
+                                    OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                                )
                         }
                     }
                 }

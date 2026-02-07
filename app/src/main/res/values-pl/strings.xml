@@ -217,8 +217,6 @@
     <string name="search_photo_name">Wyszukaj zdjęcie</string>
     <string name="search_photo_date">Wyszukaj datę zdjęcia</string>
     <string name="search_photo_day">Szukaj według dnia</string>
-    <string name="custom_album_media_not_custom_title">Multimedia niestandardowe</string>
-    <string name="custom_album_media_not_custom_explanation">Niektóre pliki multimedialne w tym albumie znajdują się w rzeczywistych folderach. Lavender Photos nie może usunąć tych plików multimedialnych bez ich wcześniejszego usunięcia, dlatego zostaną one zignorowane.</string>
     <string name="custom_album_remove_media">Usuń</string>
     <string name="custom_album_remove_media_desc">Usunąć te elementy z albumu?</string>
     <string name="action_cannot_be_undone">Tej czynności nie można cofnąć!</string>

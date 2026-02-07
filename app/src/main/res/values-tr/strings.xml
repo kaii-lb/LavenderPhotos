@@ -887,8 +887,6 @@
     <string name="search_photo_day">Güne göre ara</string>
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenmiş dosya</string>
-    <string name="custom_album_media_not_custom_title">Özel Olmayan Medya</string>
-    <string name="custom_album_media_not_custom_explanation">Bu albümdeki bazı medyalar gerçek klasörlere aittir, Lavender Photos bu medyayı silmeden kaldıramaz, bu yüzden yok sayılacaktır.</string>
     <string name="custom_album_remove_media">Kaldır</string>
     <string name="custom_album_remove_media_desc">Bu öğeler albümden kaldırılsın mı?</string>
     <string name="action_cannot_be_undone">Bu işlem geri alınamaz!</string>

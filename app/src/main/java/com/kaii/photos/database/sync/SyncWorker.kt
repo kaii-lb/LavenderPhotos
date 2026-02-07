@@ -1,59 +1,39 @@
 package com.kaii.photos.database.sync
 
 import android.content.Context
-import androidx.compose.ui.util.fastForEach
-import androidx.room.withTransaction
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.mediastore.SimpleMediaDataSource
-import kotlinx.coroutines.flow.first
+import com.kaii.photos.mediastore.getAllMediaStoreIds
+import com.kaii.photos.mediastore.getMediaStoreDataForIds
+import kotlin.time.Clock
+
+private const val TAG = "com.kaii.photos.database.sync.SyncWorker"
 
 class SyncWorker(
     private val context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(appContext = context, params = params) {
     override suspend fun doWork(): Result {
-        // TODO: try a different approach as to not annihilate memory
-        val source = SimpleMediaDataSource(
-            context = context,
-            paths = emptyList(),
-            reversed = true
-        ).query().associateBy { it.id }
+        val startTime = Clock.System.now()
+        val dao = MediaDatabase.getInstance(context).mediaDao()
 
-        val db = MediaDatabase.getInstance(context)
-        val destination = db.mediaDao().getAllMedia().first().associateBy { it.id }
+        val mediaStoreIds = getAllMediaStoreIds(context)
+        val inAppIds = dao.getAllMediaIds().toSet()
 
-        val addable = mutableListOf<MediaStoreData>()
-        val deletable = mutableListOf<MediaStoreData>()
-
-
-        source.keys.toList().chunked(1000).fastForEach { chunk ->
-            chunk.fastForEach { key ->
-                val value = source[key]!!
-
-                if (key !in destination.keys || value.dateModified != destination[key]!!.dateModified) {
-                    addable.add(value)
-                }
-
-                db.withTransaction {
-                    if (addable.isNotEmpty()) db.mediaDao().upsertAll(addable)
-                }
-
-                addable.clear()
-            }
+        val added = mediaStoreIds - inAppIds
+        if (added.isNotEmpty()) {
+            val newDetails = getMediaStoreDataForIds(added, context)
+            dao.insertAll(newDetails)
         }
 
-        destination.forEach { (key, value) ->
-            if (key !in source.keys) {
-                deletable.add(value)
-            }
-        }
+        val removed = inAppIds - mediaStoreIds
+        if (removed.isNotEmpty()) dao.deleteAll(removed)
 
-        db.withTransaction {
-            if (deletable.isNotEmpty()) db.mediaDao().deleteEntities(deletable)
-        }
+        val endTime = Clock.System.now()
+
+        Log.d(TAG, "Sync worker has finished running. Out of ${mediaStoreIds.size} items there was ${added.size} inserted and ${removed.size} removed. Total time was ${endTime - startTime}")
 
         return Result.success()
     }

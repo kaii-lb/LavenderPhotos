@@ -327,8 +327,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="search_photo_date">Procurar pela data de uma foto</string>
     <string name="search_photo_day">Procurar por dia</string>
     <string name="edit_desc">Lavender Photos editou o arquivo em %1$s</string>
-    <string name="custom_album_media_not_custom_title">Sem Mídia Customizada</string>
-    <string name="custom_album_media_not_custom_explanation">Algumas mídias desse álbum pertencem a diretórios reais. Lavender Photos não consegue remover essas mídias sem apagá-las, portanto estas serão ignoradas.</string>
     <string name="custom_album_remove_media">Remover</string>
     <string name="custom_album_remove_media_desc">Remover estes itens do álbum?</string>
     <string name="action_cannot_be_undone">Esta ação não pode ser desfeita!</string>

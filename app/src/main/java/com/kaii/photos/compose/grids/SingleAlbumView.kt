@@ -23,7 +23,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,11 +41,9 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 fun SingleAlbumView(
@@ -55,9 +52,10 @@ fun SingleAlbumView(
     viewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
-
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
@@ -65,12 +63,10 @@ fun SingleAlbumView(
             allAlbums.first { it.id == albumInfo.id }
         }
     }
-
     LaunchedEffect(dynamicAlbum) {
         viewModel.update(album = dynamicAlbum)
     }
 
-    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
@@ -126,12 +122,6 @@ private fun SingleAlbumViewCommon(
     onBackClick: () -> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
-
-    var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(pagingItems.loadState) {
-        delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = !pagingItems.loadState.source.append.endOfPaginationReached || pagingItems.itemCount != 0
-    }
 
     Scaffold(
         modifier = modifier
@@ -194,8 +184,7 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo,
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (albumInfo.isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
-                isMediaPicker = incomingIntent != null,
-                hasFiles = hasFiles
+                isMediaPicker = incomingIntent != null
             )
 
             SingleAlbumDialog(

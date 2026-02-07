@@ -229,8 +229,6 @@
     <string name="search_photo_date">Поиск по дате фотографии</string>
     <string name="search_photo_day">Поиск по дню</string>
     <string name="edit_desc">Lavender Photos отредактировал файл в %1$s</string>
-    <string name="custom_album_media_not_custom_title">Не свои медиафайлы</string>
-    <string name="custom_album_media_not_custom_explanation">Некоторые медиафайлы в этом альбоме принадлежат реальным папкам. Lavender Photos не может удалить их без удаления, поэтому они будут проигнорированы.</string>
     <string name="custom_album_remove_media">Удалить</string>
     <string name="custom_album_remove_media_desc">Удалить эти элементы из альбома?</string>
     <string name="action_cannot_be_undone">Это действие нельзя отменить!</string>

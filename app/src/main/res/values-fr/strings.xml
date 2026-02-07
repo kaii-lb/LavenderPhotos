@@ -119,7 +119,6 @@
     <string name="search_photo_name">Chercher une photo par son nom</string>
     <string name="search_photo_day">Recherche par jour</string>
     <string name="edit_desc">Lavender Photos a édité ce fichier %1$s</string>
-    <string name="custom_album_media_not_custom_title">Média non personnalisé</string>
     <string name="custom_album_remove_media_desc">Retirer ces médias de l\'album ?</string>
     <string name="action_cannot_be_undone">Cette action ne peut être annulée !</string>
     <string name="show_options">Montrer plus d\'options</string>
@@ -179,7 +178,6 @@
     <string name="search_photo_date">Chercher une photo par sa date</string>
     <string name="media_delete">Supprimer</string>
     <string name="media_trash_confirm">Déplacer les médias sélectionnés dans la corbeille ?</string>
-    <string name="custom_album_media_not_custom_explanation">Certains médias dans cet album appartiennent à de véritables fichiers, Lavender Photos ne peut pas les retirer sans les supprimer donc ils seront ignorés.</string>
     <string name="bottom_sheets_ratio_selected">Ce format de découpe est sélectionné</string>
     <string name="error_views_trash_empty">Les médias mis à la corbeille apparaissent ici</string>
     <string name="bottom_sheets_image_ratio">Format d\'image</string>

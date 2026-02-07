@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -40,7 +39,6 @@ fun ImmichAlbumPage(
     viewModel: ImmichAlbumViewModel
 ) {
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val hasFiles by viewModel.hasFiles.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier
@@ -104,7 +102,6 @@ fun ImmichAlbumPage(
                 selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Immich,
                 isMediaPicker = false, // TODO:
-                hasFiles = hasFiles
             )
         }
     }

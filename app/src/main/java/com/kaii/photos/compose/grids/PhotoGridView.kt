@@ -31,6 +31,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -82,12 +83,14 @@ import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
@@ -103,6 +106,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
 private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
@@ -115,10 +119,9 @@ fun PhotoGrid(
     viewProperties: ViewProperties,
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
-    state: LazyGridState = rememberLazyGridState(),
-    hasFiles: Boolean
+    state: LazyGridState = rememberLazyGridState()
 ) {
-    if (hasFiles) {
+    if (!pagingItems.loadState.source.append.endOfPaginationReached || pagingItems.itemCount != 0) {
         Row(
             modifier = Modifier
                 .fillMaxSize(1f)
@@ -203,6 +206,14 @@ fun DeviceMedia(
         // val resources = LocalResources.current
         // val view = LocalView.current
         // val coroutineScope = rememberCoroutineScope()
+        val navController = LocalNavController.current
+
+        // delays loading items until the "slide in" animation has finished, so that it doesn't lag or stutter
+        var showItems by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            delay(AnimationConstants.DURATION.toLong())
+            showItems = true
+        }
 
         LazyVerticalGrid(
             state = gridState,
@@ -237,11 +248,10 @@ fun DeviceMedia(
             // )
         ) {
             items(
-                count = pagingItems.itemCount,
+                count = if (showItems) pagingItems.itemCount else 0,
                 key = pagingItems.itemKey { it.itemKey() },
                 contentType = pagingItems.itemContentType { it::class },
                 span = { index ->
-                    // TODO: check this
                     if (index < pagingItems.itemCount) {
                         val item = pagingItems[index]
 
@@ -262,10 +272,11 @@ fun DeviceMedia(
                         .wrapContentSize()
                         .animateItem()
                 ) {
-                    val navController = LocalNavController.current
-
                     if (mediaStoreItem == null) {
-                        LoadingMediaStoreItem(useRoundedCorners)
+                        LoadingMediaStoreItem(
+                            item = PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem),
+                            useRoundedCorners
+                        )
                     } else {
                         MediaStoreItem(
                             item = mediaStoreItem,
@@ -446,7 +457,9 @@ private fun MediaStoreItem(
     if (item is PhotoLibraryUIModel.Section) {
         val isSectionSelected by remember {
             derivedStateOf {
-                selectedItemsList.contains(item)
+                // TODO: causes slowdowns
+                // selectedItemsList.contains(item)
+                false
             }
         }
 
@@ -505,7 +518,9 @@ private fun MediaStoreItem(
 
         val isSelected by remember {
             derivedStateOf {
-                selectedItemsList.contains(item)
+                // TODO: causes slowdowns
+                // selectedItemsList.contains(item)
+                false
             }
         }
 
@@ -702,6 +717,7 @@ private fun MediaStoreItem(
 
 @Composable
 private fun LoadingMediaStoreItem(
+    item: PhotoLibraryUIModel,
     useRoundedCorners: Boolean
 ) {
     var showColors by remember { mutableStateOf(false) }
@@ -717,42 +733,41 @@ private fun LoadingMediaStoreItem(
         )
     )
 
-    // TODO
-    // if (item is PhotoLibraryUIModel.Separator) {
-    //     Box(
-    //         modifier = Modifier
-    //             .fillMaxWidth(1f)
-    //             .height(56.dp)
-    //             .background(Color.Transparent)
-    //             .padding(16.dp, 8.dp),
-    //     ) {
-    //         Box(
-    //             modifier = Modifier
-    //                 .align(Alignment.CenterStart)
-    //                 .fillMaxWidth(Random.nextFloat() * 0.5f + 0.5f)
-    //                 .height(24.dp)
-    //                 .clip(CircleShape)
-    //                 .shimmerEffect(
-    //                     containerColor = Color.Transparent,
-    //                     highlightColor = highlightColor,
-    //                     durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 3,
-    //                     delayMillis = -PhotoGridConstants.UPDATE_TIME.toInt() * 2
-    //                 )
-    //         )
-    //     }
-    // } else {
-    Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .padding(2.dp)
-            .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
-            .shimmerEffect(
-                containerColor = Color.Transparent,
-                highlightColor = highlightColor,
-                durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 2
+    if (item is PhotoLibraryUIModel.Section) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .height(56.dp)
+                .background(Color.Transparent)
+                .padding(16.dp, 8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth(Random.nextFloat() * 0.5f + 0.5f)
+                    .height(24.dp)
+                    .clip(CircleShape)
+                    .shimmerEffect(
+                        containerColor = Color.Transparent,
+                        highlightColor = highlightColor,
+                        durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 3,
+                        delayMillis = -PhotoGridConstants.UPDATE_TIME.toInt() * 2
+                    )
             )
-    )
-    // }
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .aspectRatio(1f)
+                .padding(2.dp)
+                .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
+                .shimmerEffect(
+                    containerColor = Color.Transparent,
+                    highlightColor = highlightColor,
+                    durationMillis = AnimationConstants.DURATION_EXTRA_LONG * 2
+                )
+        )
+    }
 }
 
 // private fun Modifier.dragSelectionHandler(

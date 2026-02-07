@@ -234,8 +234,6 @@
     <string name="search_photo_date">Buscar la fecha de una foto</string>
     <string name="search_photo_day">Buscar por día</string>
     <string name="edit_desc">Lavender Photos edito el archivo con %1$s</string>
-    <string name="custom_album_media_not_custom_title">Multimedia No Personalizada</string>
-    <string name="custom_album_media_not_custom_explanation">Alguna Multimedia de este álbum pertenecen a carpetas reales, Lavender Photos no puede eliminar esa multimedia sin eliminarlas, por lo que se ignorarán.</string>
     <string name="custom_album_remove_media">Eliminar</string>
     <string name="custom_album_remove_media_desc">¿Eliminar estos elementos del álbum?</string>
     <string name="action_cannot_be_undone">¡Esta acción no se puede deshacer!</string>

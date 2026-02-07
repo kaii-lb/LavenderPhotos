@@ -220,8 +220,6 @@
     <string name="search_photo_date">ابحث عن تاريخ الصورة</string>
     <string name="search_photo_day">إبحث حسب اليوم</string>
     <string name="edit_desc">تم تحرير الملف في %1$s</string>
-    <string name="custom_album_media_not_custom_title">الوسائط غير المخصصة</string>
-    <string name="custom_album_media_not_custom_explanation">بعض الوسائط الموجودة في هذا الألبوم تنتمي إلى مجلدات فعلية، ولا يمكن إزالة تلك الوسائط دون حذفها، لذا سيتم تجاهلها.</string>
     <string name="custom_album_remove_media">أزل</string>
     <string name="custom_album_remove_media_desc">إزالة هذه العناصر من الألبوم؟</string>
     <string name="action_cannot_be_undone">لا يمكن التراجع عن هذا الإجراء!</string>

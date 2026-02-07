@@ -28,7 +28,6 @@ class ImmichAlbumViewModel(
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
-    val hasFiles = repo.hasFiles
 
     fun refresh() = repo.refresh()
 }

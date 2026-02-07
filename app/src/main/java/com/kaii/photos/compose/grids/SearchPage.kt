@@ -130,8 +130,6 @@ fun SearchPage(
             }
         }
 
-        var hasFiles by remember { mutableStateOf(true) }
-
         LaunchedEffect(searchedForText.value, sortMode) {
             if (searchedForText.value.isEmpty()) {
                 searchViewModel.search(query = "")
@@ -141,14 +139,12 @@ fun SearchPage(
 
             delay(PhotoGridConstants.UPDATE_TIME)
             hideLoadingSpinner = false
-            hasFiles = true
 
             searchViewModel.search(query = searchedForText.value)
 
             hideLoadingSpinner = true
 
             delay(PhotoGridConstants.LOADING_TIME)
-            hasFiles = items.itemCount != 0
             gridState.requestScrollToItem(0)
         }
 
@@ -163,7 +159,6 @@ fun SearchPage(
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,
-                hasFiles = hasFiles,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
                 modifier = Modifier
