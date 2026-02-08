@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.grids
+package com.kaii.photos.compose.pages.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +32,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants

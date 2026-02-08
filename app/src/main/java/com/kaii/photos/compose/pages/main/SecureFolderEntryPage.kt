@@ -1,8 +1,5 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.pages.main
 
-import android.hardware.biometrics.BiometricManager
-import android.hardware.biometrics.BiometricPrompt
-import android.os.CancellationSignal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,28 +37,24 @@ import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import com.kaii.photos.permissions.secure_folder.rememberSecureFolderManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun LockedFolderEntryView() {
-    val navController = LocalNavController.current
+fun SecureFolderEntryPage() {
     val mainViewModel = LocalMainViewModel.current
 
     val context = LocalContext.current
-    val cancellationSignal = remember { CancellationSignal() }
 
-    // TODO: move again to Android/data for space purposes
     // moves media from old dir to new dir for secure folder
     var migrating by remember { mutableStateOf(false) }
     var canOpenSecureFolder by remember { mutableStateOf(true) }
@@ -152,36 +145,7 @@ fun LockedFolderEntryView() {
         }
     }
 
-    val prompt = remember {
-        BiometricPrompt.Builder(context)
-            .setTitle(resources.getString(R.string.secure_unlock))
-            .setSubtitle(resources.getString(R.string.secure_unlock_desc))
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
-            .build()
-    }
 
-    val promptCallback = remember {
-        object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                super.onAuthenticationSucceeded(result)
-                navController.navigate(Screens.SecureFolder)
-            }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                super.onAuthenticationError(errorCode, errString)
-
-                coroutineScope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = resources.getString(R.string.secure_unlock_failed),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.secure_folder
-                        )
-                    )
-                }
-            }
-        }
-    }
 
     var showHelpDialog by remember { mutableStateOf(false) }
     if (showHelpDialog) {
@@ -195,7 +159,9 @@ fun LockedFolderEntryView() {
         }
     }
 
+    val authManager = rememberSecureFolderLaunchManager()
     val isLandscape by rememberDeviceOrientation()
+
     if (isLandscape) {
         Row(
             modifier = Modifier
@@ -212,7 +178,8 @@ fun LockedFolderEntryView() {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.secure_folder),
-                    contentDescription = "Secure Folder Icon",
+                    contentDescription = stringResource(id = R.string.secure_folder),
+                    tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.size(72.dp)
                 )
 
@@ -230,11 +197,7 @@ fun LockedFolderEntryView() {
             ) {
                 Button(
                     onClick = {
-                        prompt.authenticate(
-                            cancellationSignal,
-                            context.mainExecutor,
-                            promptCallback
-                        )
+                        authManager.authenticate()
                     },
                     enabled = canOpenSecureFolder,
                     shapes = ButtonDefaults.shapes(
@@ -274,7 +237,8 @@ fun LockedFolderEntryView() {
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.secure_folder),
-                contentDescription = "Locked Folder Icon",
+                contentDescription = stringResource(id = R.string.secure_folder),
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(72.dp)
             )
 
@@ -282,11 +246,7 @@ fun LockedFolderEntryView() {
 
             Button(
                 onClick = {
-                    prompt.authenticate(
-                        cancellationSignal,
-                        context.mainExecutor,
-                        promptCallback
-                    )
+                    authManager.authenticate()
                 },
                 enabled = canOpenSecureFolder,
                 shapes = ButtonDefaults.shapes(

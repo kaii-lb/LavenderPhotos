@@ -72,7 +72,7 @@ fun IsSelectingTopBar(
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mediaCount: State<Int>,
     sectionCount: State<Int>,
-    getAllMedia: () -> List<MediaStoreData>
+    getAllMedia: () -> List<MediaStoreData> // TODO
 ) {
     TopAppBar(
         title = {
@@ -82,8 +82,7 @@ fun IsSelectingTopBar(
             SelectViewTopBarRightButtons(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = getAllMedia
+                sectionCount = sectionCount
             )
         },
         colors = TopAppBarDefaults.topAppBarColors(

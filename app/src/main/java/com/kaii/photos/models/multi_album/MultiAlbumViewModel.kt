@@ -18,7 +18,7 @@ class MultiAlbumViewModel(
 ) : ViewModel() {
     private val repo = MediaRepository(
         context = context,
-        albumInfo = albumInfo,
+        initialAlbumInfo = albumInfo,
         info = info,
         scope = viewModelScope,
         sortMode = sortMode,
@@ -27,5 +27,12 @@ class MultiAlbumViewModel(
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    fun update(
+        album: AlbumInfo? = null,
+        sortMode: MediaItemSortMode? = null,
+        format: DisplayDateFormat? = null,
+        accessToken: String? = null
+    ) = repo.update(album, sortMode, format, accessToken)
 }
 

@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +47,6 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.datastore.PhotoGrid
@@ -60,7 +58,7 @@ import com.kaii.photos.helpers.tryGetAllAlbums
 import kotlinx.coroutines.launch
 
 @Composable
-fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
+fun GeneralSettingsPage() {
     val mainViewModel = LocalMainViewModel.current
 
     Scaffold(
@@ -298,12 +296,9 @@ fun GeneralSettingsPage(currentTab: MutableState<BottomBarTab>) {
                 var showDialog by remember { mutableStateOf(false) }
 
                 if (showDialog) {
-                    TabCustomizationDialog(
-                        currentTab = currentTab,
-                        closeDialog = {
-                            showDialog = false
-                        }
-                    )
+                    TabCustomizationDialog {
+                        showDialog = false
+                    }
                 }
 
                 PreferencesRow(

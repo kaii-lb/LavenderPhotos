@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.AlertDialog
@@ -75,7 +76,6 @@ import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
@@ -95,6 +95,7 @@ import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import kotlinx.coroutines.launch
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
@@ -384,14 +385,21 @@ fun SingleAlbumDialog(
 @Composable
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
-    currentView: MutableState<BottomBarTab>,
+    pagerState: PagerState,
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mainViewModel: MainViewModel,
     loginState: LoginStateManager
 ) {
-    val vibratorManager = rememberVibratorManager()
     val navController = LocalNavController.current
+    val vibratorManager = rememberVibratorManager()
     val userInfo by loginState.state.collectAsStateWithLifecycle()
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
+
+    val currentTab by remember {
+        derivedStateOf {
+            tabList[pagerState.currentPage]
+        }
+    }
 
     if (showDialog.value) {
         LavenderDialogBase(
@@ -400,7 +408,7 @@ fun MainAppDialog(
             }
         ) {
             TitleCloseRow(
-                title = currentView.value.name,
+                title = currentTab.name,
                 closeOffset = 8.dp,
             ) {
                 showDialog.value = false
@@ -421,7 +429,7 @@ fun MainAppDialog(
                     .wrapContentHeight(),
                 verticalArrangement = Arrangement.spacedBy(space = 2.dp)
             ) {
-                if (currentView.value != DefaultTabs.TabTypes.albums && currentView.value != DefaultTabs.TabTypes.secure) {
+                if (currentTab != DefaultTabs.TabTypes.albums && currentTab != DefaultTabs.TabTypes.secure) {
                     DialogClickableItem(
                         text = stringResource(id = R.string.media_select),
                         iconResId = R.drawable.check_item,
@@ -439,7 +447,7 @@ fun MainAppDialog(
                     }
                 }
 
-                if (currentView.value == DefaultTabs.TabTypes.albums) {
+                if (currentTab == DefaultTabs.TabTypes.albums) {
                     var showAlbumTypeDialog by remember { mutableStateOf(false) }
                     if (showAlbumTypeDialog) {
                         AlbumAddChoiceDialog {
@@ -472,22 +480,26 @@ fun MainAppDialog(
                     text = stringResource(id = R.string.data_and_backup),
                     iconResId = R.drawable.data,
                     // position = if (currentView.value == DefaultTabs.TabTypes.secure && immichUploadTotal == 0) RowPosition.Top else RowPosition.Middle,
-                    position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
+                    position = if (currentTab == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                 ) {
                     showDialog.value = false
                     navController.navigate(MultiScreenViewType.DataAndBackup.name)
                 }
 
-                val showExtraSecureItem by mainViewModel.settings.LookAndFeel.getShowExtraSecureNav()
+                val showExtraSecureItem by mainViewModel.settings.LookAndFeel
+                    .getShowExtraSecureNav()
                     .collectAsStateWithLifecycle(initialValue = false)
+
                 if (showExtraSecureItem) {
+                    val authManager = rememberSecureFolderLaunchManager()
                     DialogClickableItem(
                         text = stringResource(id = R.string.secure_folder),
                         iconResId = R.drawable.secure_folder,
                         position = RowPosition.Middle,
                     ) {
                         showDialog.value = false
-                        currentView.value = DefaultTabs.TabTypes.secure
+
+                        authManager.authenticate()
                     }
                 }
 

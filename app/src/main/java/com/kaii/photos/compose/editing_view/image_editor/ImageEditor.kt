@@ -93,7 +93,6 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ScreenType
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -278,15 +277,16 @@ fun ImageEditor(
                         ) ?: return@launch
 
                         coroutineScope.launch(Dispatchers.Main) {
-                            navController.popBackStack(Screens.SinglePhotoView::class, true)
-                            navController.navigate(
-                                Screens.SinglePhotoView(
-                                    albumInfo = albumInfo!!,
-                                    mediaItemId = item.id,
-                                    nextMediaItemId = navMediaId,
-                                    type = screenType
-                                )
-                            )
+                            // TODO
+                            // navController.popBackStack(Screens.SinglePhotoView::class, true)
+                            // navController.navigate(
+                            //     Screens.SinglePhotoView(
+                            //         albumInfo = albumInfo!!,
+                            //         mediaItemId = item.id,
+                            //         nextMediaItemId = navMediaId,
+                            //         type = screenType
+                            //     )
+                            // )
                         }
                     }
                 },
@@ -297,15 +297,16 @@ fun ImageEditor(
                             uri = uri
                         )?.let { item ->
                             coroutineScope.launch(Dispatchers.IO) {
-                                navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                navController.navigate(
-                                    Screens.SinglePhotoView(
-                                        albumInfo = albumInfo!!,
-                                        mediaItemId = item.id,
-                                        nextMediaItemId = navMediaId,
-                                        type = screenType
-                                    )
-                                )
+                                // TODO
+                                // navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                // navController.navigate(
+                                //     Screens.SinglePhotoView(
+                                //         albumInfo = albumInfo!!,
+                                //         mediaItemId = item.id,
+                                //         nextMediaItemId = navMediaId,
+                                //         type = screenType
+                                //     )
+                                // )
                             }
                         }
                     } else {

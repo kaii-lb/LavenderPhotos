@@ -26,5 +26,11 @@ class SearchViewModel(
     val gridMediaFlow = repo.gridMediaFlow
 
     fun search(query: String) = repo.search(query)
+
+    fun update(
+        sortMode: MediaItemSortMode?,
+        format: DisplayDateFormat?,
+        accessToken: String?
+    ) = repo.update(sortMode, format, accessToken)
 }
 

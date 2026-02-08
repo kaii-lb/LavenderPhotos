@@ -36,7 +36,7 @@ import kotlin.io.path.Path
 
 private const val TAG = "com.kaii.photos.permissions.secure_folder.SecureFolderManager"
 
-class SecureFolderManager(
+class SecureFolderMigrationManager(
     private val context: Context,
     private val appDatabase: MediaDatabase,
     private val albums: SettingsAlbumsListImpl
@@ -62,6 +62,7 @@ class SecureFolderManager(
             } == true
     }
 
+    // TODO: move again to Android/data for space purposes
     suspend fun migrateFromOldDirectory() = withContext(Dispatchers.IO) {
         val oldDir = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE)
         val oldFiles = oldDir.listFiles()
@@ -192,12 +193,12 @@ class SecureFolderManager(
 }
 
 @Composable
-fun rememberSecureFolderManager(): SecureFolderManager {
+fun rememberSecureFolderManager(): SecureFolderMigrationManager {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     return remember(mainViewModel, context) {
-        SecureFolderManager(
+        SecureFolderMigrationManager(
             context = context,
             appDatabase = MediaDatabase.getInstance(context = context),
             albums = mainViewModel.settings.AlbumsList

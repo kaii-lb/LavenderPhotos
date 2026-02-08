@@ -134,7 +134,6 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.ScreenType
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -396,17 +395,18 @@ fun VideoEditorTopBar(
                                 uri = uri
                             )?.let { item ->
                                 coroutineScope.launch(Dispatchers.Main) {
-                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo!!,
-                                            mediaItemId = item.id,
-                                            nextMediaItemId = navMediaId,
-                                            type = screenType
-                                            // isSearchPage = isSearchPage,
-                                            // isFavouritesPage = isFavouritesPage
-                                        )
-                                    )
+                                    // TODO
+                                    // navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                    // navController.navigate(
+                                    //     Screens.SinglePhotoView(
+                                    //         albumInfo = albumInfo!!,
+                                    //         mediaItemId = item.id,
+                                    //         nextMediaItemId = navMediaId,
+                                    //         type = screenType
+                                    //         // isSearchPage = isSearchPage,
+                                    //         // isFavouritesPage = isFavouritesPage
+                                    //     )
+                                    // )
                                 }
                             }
                         } else {
@@ -519,15 +519,16 @@ fun VideoEditorTopBar(
                                 }
 
                                 if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch {
-                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo!!,
-                                            mediaItemId = item.id,
-                                            nextMediaItemId = navMediaId,
-                                            type = screenType
-                                        )
-                                    )
+                                    // TODO:
+                                    // navController.popBackStack(Screens.SinglePhotoView::class, true)
+                                    // navController.navigate(
+                                    //     Screens.SinglePhotoView(
+                                    //         albumInfo = albumInfo!!,
+                                    //         mediaItemId = item.id,
+                                    //         nextMediaItemId = navMediaId,
+                                    //         type = screenType
+                                    //     )
+                                    // )
                                 }
                             }
                         }

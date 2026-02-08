@@ -91,8 +91,6 @@ import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.helpers.ScreenType
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
@@ -206,7 +204,6 @@ fun DeviceMedia(
         // val resources = LocalResources.current
         // val view = LocalView.current
         // val coroutineScope = rememberCoroutineScope()
-        val navController = LocalNavController.current
 
         // delays loading items until the "slide in" animation has finished, so that it doesn't lag or stutter
         var showItems by remember { mutableStateOf(false) }
@@ -215,6 +212,7 @@ fun DeviceMedia(
             showItems = true
         }
 
+        val navController = LocalNavController.current
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -288,92 +286,20 @@ fun DeviceMedia(
                             useRoundedCorners = useRoundedCorners
                         ) {
                             if (!isMediaPicker && mediaStoreItem is PhotoLibraryUIModel.MediaImpl) {
-                                val item = mediaStoreItem.item
                                 val index =
                                     pagingItems.itemSnapshotList
                                         .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
-                                        .indexOf(pagingItems[i])
+                                        .indexOf(mediaStoreItem)
 
-                                when (viewProperties) {
-                                    ViewProperties.Trash -> {
-                                        navController.navigate(
-                                            Screens.Trash.SinglePhoto(
-                                                index = index
-                                            )
-                                        )
+                                if (openVideosExternally && mediaStoreItem.item.type == MediaType.Video) {
+                                    val intent = Intent().apply {
+                                        data = mediaStoreItem.item.uri.toUri() // TODO: immich handling
+                                        action = Intent.ACTION_VIEW
                                     }
 
-                                    ViewProperties.SecureFolder -> {
-                                        navController.navigate(
-                                            Screens.SecureFolder.SinglePhoto(
-                                                index = index
-                                            )
-                                        )
-                                    }
-
-                                    ViewProperties.Favourites -> {
-                                        navController.navigate(
-                                            Screens.Favourites.SinglePhoto(
-                                                index = index,
-                                                nextMediaItemId = null
-                                            )
-                                        )
-                                    }
-
-                                    ViewProperties.Main -> {
-                                        TODO("Implement main grid/single views after moving main pages to own nav views")
-                                    }
-
-                                    ViewProperties.Album -> {
-                                        navController.navigate(
-                                            Screens.Album.SinglePhoto(
-                                                albumInfo = albumInfo,
-                                                index = index,
-                                                nextMediaItemId = null
-                                            )
-                                        )
-                                    }
-
-                                    ViewProperties.CustomAlbum -> {
-                                        navController.navigate(
-                                            Screens.CustomAlbum.SinglePhoto(
-                                                albumInfo = albumInfo,
-                                                index = index,
-                                                nextMediaItemId = null
-                                            )
-                                        )
-                                    }
-
-                                    ViewProperties.Immich -> {
-                                        navController.navigate(
-                                            Screens.Immich.SinglePhoto(
-                                                albumInfo = albumInfo,
-                                                index = index,
-                                                nextMediaItemId = null
-                                            )
-                                        )
-                                    }
-
-                                    // TODO
-                                    else -> {
-                                        if (openVideosExternally && item.type == MediaType.Video) {
-                                            val intent = Intent().apply {
-                                                data = item.uri.toUri() // TODO
-                                                action = Intent.ACTION_VIEW
-                                            }
-
-                                            context.startActivity(intent)
-                                        } else {
-                                            navController.navigate(
-                                                Screens.SinglePhotoView(
-                                                    albumInfo = albumInfo,
-                                                    mediaItemId = item.id,
-                                                    nextMediaItemId = null,
-                                                    type = ScreenType.Search
-                                                )
-                                            )
-                                        }
-                                    }
+                                    context.startActivity(intent)
+                                } else {
+                                    navController.navigate(viewProperties.navigate(albumInfo, index, null))
                                 }
                             }
                         }

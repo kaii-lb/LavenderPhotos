@@ -360,7 +360,7 @@ private fun InitSinglePhotoView(
             ),
             info = immichInfo!!,
             sortMode = currentSortMode,
-            displayDateFormat = displayDateFormat
+            format = displayDateFormat
         )
     )
 

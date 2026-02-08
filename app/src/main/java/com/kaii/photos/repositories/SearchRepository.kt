@@ -39,6 +39,7 @@ import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.repositories.SearchRepository"
 
+// TODO: try to use pure sqlite queries for filtering so we can immediately use paging, instead of loading everything still
 class SearchRepository(
     private val scope: CoroutineScope,
     private val info: ImmichBasicInfo,
@@ -46,9 +47,15 @@ class SearchRepository(
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
+    private data class RoomQueryParams(
+        val items: List<MediaStoreData>,
+        val sortMode: MediaItemSortMode,
+        val format: DisplayDateFormat,
+        val accessToken: String
+    )
+
     private var query = ""
     private val mediaDao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
-    private val searchedMedia = MutableStateFlow(emptyList<MediaStoreData>())
     private val allMedia =
         mediaDao.getAllMedia()
             .stateIn(
@@ -57,8 +64,17 @@ class SearchRepository(
                 initialValue = emptyList()
             )
 
+    private val params = MutableStateFlow(
+        value = RoomQueryParams(
+            items = allMedia.value,
+            sortMode = sortMode,
+            format = format,
+            accessToken = ""
+        )
+    )
+
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val mediaFlow = searchedMedia.debounce(1.seconds).flatMapLatest { media ->
+    val mediaFlow = params.debounce(1.seconds).flatMapLatest { details ->
         Pager(
             config = PagingConfig(
                 pageSize = 100,
@@ -66,21 +82,24 @@ class SearchRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 300
             ),
-            pagingSourceFactory = { ListPagingSource(media = media) }
+            pagingSourceFactory = { ListPagingSource(media = details.items) }
         ).flow.mapToMedia(accessToken = info.accessToken)
     }.cachedIn(scope)
 
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
-        format = format
-    ).cachedIn(scope)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val gridMediaFlow = params.flatMapLatest { details ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = details.sortMode,
+            format = details.format
+        )
+    }.cachedIn(scope)
 
     fun search(
         query: String
     ) = scope.launch(Dispatchers.IO) {
         val query = query.trim()
         if (query.isBlank()) {
-            searchedMedia.value = allMedia.value
+            params.value = params.value.copy(items = allMedia.value)
             return@launch
         }
 
@@ -97,7 +116,20 @@ class SearchRepository(
             final = searchByName(name = query)
         }
 
-        searchedMedia.value = final
+        params.value = params.value.copy(items = final)
+    }
+
+    fun update(
+        sortMode: MediaItemSortMode?,
+        format: DisplayDateFormat?,
+        accessToken: String?
+    ) {
+        val snapshot = params.value
+        params.value = snapshot.copy(
+            sortMode = sortMode ?: snapshot.sortMode,
+            format = format ?: snapshot.format,
+            accessToken = accessToken ?: snapshot.accessToken
+        )
     }
 
     private val formats = listOf(

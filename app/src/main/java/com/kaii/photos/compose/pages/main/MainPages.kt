@@ -1,0 +1,280 @@
+package com.kaii.photos.compose.pages.main
+
+import android.content.Intent
+import android.view.Window
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarExitDirection
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastFilter
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
+import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
+import com.kaii.photos.compose.MediaPickerConfirmButton
+import com.kaii.photos.compose.app_bars.MainAppBottomBar
+import com.kaii.photos.compose.app_bars.MainAppTopBar
+import com.kaii.photos.compose.app_bars.getAppBarContentTransition
+import com.kaii.photos.compose.grids.AlbumsGridView
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.Behaviour
+import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.setupNextScreen
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun MainPages(
+    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    mainPhotosPaths: Set<String>,
+    multiAlbumViewModel: MultiAlbumViewModel,
+    searchViewModel: SearchViewModel,
+    window: Window,
+    incomingIntent: Intent?
+) {
+    val mainViewModel = LocalMainViewModel.current
+
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
+
+    val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
+    val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = null)
+
+    if (defaultTab == null) return
+
+    val pagerState = rememberPagerState(
+        initialPage = tabList.indexOf(defaultTab)
+    ) { tabList.size }
+
+    val coroutineScope = rememberCoroutineScope()
+    BackHandler(
+        enabled = !exitImmediately && pagerState.settledPage != tabList.indexOf(defaultTab)
+    ) {
+        coroutineScope.launch {
+            pagerState.animateScrollToPage(
+                page = tabList.indexOf(defaultTab),
+                animationSpec = AnimationConstants.defaultSpring()
+            )
+        }
+    }
+
+    // TODO
+    val mediaCount = remember { mutableIntStateOf(0) }
+    val sectionCount = remember { mutableIntStateOf(0) }
+
+    val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
+        exitDirection = FloatingToolbarExitDirection.Bottom
+    )
+    Scaffold(
+        topBar = {
+            val alternate by remember {
+                derivedStateOf {
+                    selectedItemsList.isNotEmpty()
+                }
+            }
+
+            MainAppTopBar(
+                alternate = alternate,
+                selectedItemsList = selectedItemsList,
+                pagerState = pagerState,
+                mediaCount = mediaCount,
+                sectionCount = sectionCount
+            )
+        },
+        bottomBar = {
+            if (incomingIntent == null) {
+                MainAppBottomBar(
+                    pagerState = pagerState,
+                    selectedItemsList = selectedItemsList,
+                    tabs = tabList,
+                    scrollBehaviour = scrollBehaviour
+                )
+            }
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(
+                object : NestedScrollConnection {
+                    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+                        scrollBehaviour.onPostScroll(
+                            consumed,
+                            available,
+                            source
+                        )
+
+                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                        scrollBehaviour.onPreScroll(
+                            available,
+                            source
+                        )
+
+                    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+                        scrollBehaviour.onPostFling(
+                            consumed,
+                            available
+                        )
+
+                    override suspend fun onPreFling(available: Velocity): Velocity =
+                        scrollBehaviour.onPreFling(available)
+                }
+            )
+    ) { padding ->
+        val isLandscape by rememberDeviceOrientation()
+
+        val safeDrawingPadding = if (isLandscape) {
+            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+
+            val layoutDirection = LocalLayoutDirection.current
+            val left = safeDrawing.calculateStartPadding(layoutDirection)
+            val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+            Pair(left, right)
+        } else {
+            Pair(0.dp, 0.dp)
+        }
+
+        Box {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .padding(
+                        start = safeDrawingPadding.first,
+                        top = padding.calculateTopPadding(),
+                        end = safeDrawingPadding.second,
+                        bottom = 0.dp
+                    )
+            ) { index ->
+                val tab = tabList[index]
+
+                when {
+                    tab == DefaultTabs.TabTypes.photos -> {
+                        LaunchedEffect(Unit) {
+                            setupNextScreen(
+                                selectedItemsList = selectedItemsList,
+                                window = window
+                            )
+
+                            multiAlbumViewModel.update(
+                                album = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo()
+                            )
+                        }
+
+                        MainGridView(
+                            viewModel = multiAlbumViewModel,
+                            albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
+                            selectedItemsList = selectedItemsList,
+                            isMediaPicker = incomingIntent != null
+                        )
+                    }
+
+                    tab == DefaultTabs.TabTypes.secure -> {
+                        SecureFolderEntryPage()
+                    }
+
+                    tab == DefaultTabs.TabTypes.albums -> {
+                        AlbumsGridView(isMediaPicker = incomingIntent != null)
+                    }
+
+                    tab == DefaultTabs.TabTypes.search -> {
+                        LaunchedEffect(Unit) {
+                            setupNextScreen(
+                                selectedItemsList = selectedItemsList,
+                                window = window
+                            )
+                        }
+
+                        SearchPage(
+                            selectedItemsList = selectedItemsList,
+                            searchViewModel = searchViewModel,
+                            isMediaPicker = incomingIntent != null
+                        )
+                    }
+
+                    tab.isCustom -> {
+                        LaunchedEffect(Unit) {
+                            setupNextScreen(
+                                selectedItemsList = selectedItemsList,
+                                window = window
+                            )
+
+                            multiAlbumViewModel.update(
+                                album = tab.toAlbumInfo()
+                            )
+                        }
+
+                        MainGridView(
+                            viewModel = multiAlbumViewModel,
+                            albumInfo = tab.toAlbumInfo(),
+                            selectedItemsList = selectedItemsList,
+                            isMediaPicker = incomingIntent != null
+                        )
+                    }
+                }
+            }
+
+            if (incomingIntent != null) {
+                val context = LocalContext.current
+                val navController = LocalNavController.current
+
+                AnimatedContent(
+                    targetState = selectedItemsList.isNotEmpty() && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) == true,
+                    transitionSpec = {
+                        getAppBarContentTransition(selectedItemsList.isNotEmpty())
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                ) { state ->
+                    if (!state) {
+                        MainAppBottomBar(
+                            pagerState = pagerState,
+                            tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
+                            selectedItemsList = selectedItemsList,
+                            scrollBehaviour = scrollBehaviour
+                        )
+                    } else {
+                        MediaPickerConfirmButton(
+                            incomingIntent = incomingIntent,
+                            selectedItemsList = selectedItemsList,
+                            contentResolver = context.contentResolver
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -35,8 +36,8 @@ import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.OnBackPressedEffect
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 
@@ -56,7 +57,7 @@ fun TrashedPhotoGridView(
     }
 
     OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) viewModel.cancel()
+        if (destination.hasRoute(Screens.MainPages::class)) viewModel.cancel()
     }
 
     Scaffold(

@@ -1,6 +1,7 @@
 package com.kaii.photos.helpers
 
 import androidx.compose.animation.core.EaseInOutExpo
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import com.kaii.photos.database.entities.MediaStoreData
@@ -56,6 +57,8 @@ object AnimationConstants {
         durationMillis = durationMillis,
         easing = EaseInOutExpo
     )
+
+    fun <T> defaultSpring() = spring<T>(stiffness = Spring.StiffnessMediumLow)
 
     const val DURATION_SHORT = 200
     const val DURATION = 350

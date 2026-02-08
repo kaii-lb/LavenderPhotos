@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.content.res.Configuration
 import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -46,7 +45,6 @@ import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +60,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -87,12 +84,12 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
@@ -100,6 +97,7 @@ import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.mediastore.signature
+import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -108,7 +106,6 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    currentView: MutableState<BottomBarTab>,
     isMediaPicker: Boolean = false
 ) {
     val context = LocalContext.current
@@ -214,13 +211,8 @@ fun AlbumsGridView(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val localConfig = LocalConfiguration.current
         val localDensity = LocalDensity.current
-        var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-        LaunchedEffect(localConfig) {
-            isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-        }
+        val isLandscape by rememberDeviceOrientation()
 
         val lazyGridState = rememberLazyGridState()
         var itemOffset by remember { mutableStateOf(Offset.Zero) }
@@ -243,7 +235,6 @@ fun AlbumsGridView(
 
         SortModeHeader(
             sortMode = sortMode,
-            currentView = currentView,
             progress = pullToRefreshState.distanceFraction.coerceAtMost(1f),
             modifier = Modifier
                 .height(with(localDensity) { headerHeight.toDp() })
@@ -656,7 +647,6 @@ private fun CategoryList(
 @Composable
 private fun SortModeHeader(
     sortMode: AlbumSortMode,
-    currentView: MutableState<BottomBarTab>,
     @FloatRange(0.0, 1.0) progress: Float,
     modifier: Modifier = Modifier
 ) {
@@ -755,9 +745,10 @@ private fun SortModeHeader(
 
         if (!tabList.contains(DefaultTabs.TabTypes.secure)) {
             item {
+                val authManager = rememberSecureFolderLaunchManager()
                 OutlinedButton(
                     onClick = {
-                        currentView.value = DefaultTabs.TabTypes.secure
+                        authManager.authenticate()
                     },
                     colors =
                         if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()

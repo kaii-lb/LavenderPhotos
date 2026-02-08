@@ -84,7 +84,6 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
@@ -127,7 +126,7 @@ fun SecurePhotoView(
         if (hideSecureFolder
             && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
         ) {
-            navController.navigate(MultiScreenViewType.MainScreen.name)
+            navController.navigate(Screens.MainPages)
         }
     }
 
@@ -139,7 +138,7 @@ fun SecurePhotoView(
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
-                            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) != true
                             && !isGettingPermissions.value
                         ) {
                             lastLifecycleState = Lifecycle.State.DESTROYED

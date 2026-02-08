@@ -8,7 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.helpers.AppDirectories
-import com.kaii.photos.permissions.secure_folder.SecureFolderManager
+import com.kaii.photos.permissions.secure_folder.SecureFolderMigrationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
@@ -21,7 +21,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 class SecureFolderMigration {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private val secureFolderManager = SecureFolderManager(
+    private val secureFolderMigrationManager = SecureFolderMigrationManager(
         context = context,
         appDatabase = MediaDatabase.getInstance(context),
         albums = SettingsAlbumsListImpl(
@@ -42,13 +42,13 @@ class SecureFolderMigration {
         val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cat_picture)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outFile.outputStream())
 
-        Assert.assertEquals(secureFolderManager.needsMigrationFromOld, true)
+        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld, true)
 
         runBlocking {
-            secureFolderManager.migrateFromOldDirectory()
+            secureFolderMigrationManager.migrateFromOldDirectory()
         }
 
-        Assert.assertEquals(secureFolderManager.needsMigrationFromOld, false)
+        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld, false)
     }
 
     @Test
@@ -62,11 +62,11 @@ class SecureFolderMigration {
         val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cat_picture)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, file.outputStream())
 
-        Assert.assertEquals(secureFolderManager.needsMigrationFromUnencrypted(), true)
+        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromUnencrypted(), true)
 
-        secureFolderManager.setupMigrationFromUnencrypted()
-        secureFolderManager.migrateFromUnencrypted {}
+        secureFolderMigrationManager.setupMigrationFromUnencrypted()
+        secureFolderMigrationManager.migrateFromUnencrypted {}
 
-        Assert.assertEquals(secureFolderManager.needsMigrationFromUnencrypted(), false)
+        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromUnencrypted(), false)
     }
 }

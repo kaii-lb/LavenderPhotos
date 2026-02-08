@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -22,58 +21,35 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.bumptech.glide.Glide
@@ -84,27 +60,20 @@ import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
-import com.kaii.photos.compose.ErrorPage
-import com.kaii.photos.compose.LockedFolderEntryView
 import com.kaii.photos.compose.PermissionHandler
-import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.MainAppBottomBar
-import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
-import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.grids.FavouritesGridView
-import com.kaii.photos.compose.grids.PhotoGrid
-import com.kaii.photos.compose.grids.SearchPage
 import com.kaii.photos.compose.grids.SecureFolderView
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichMainPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
+import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
@@ -120,15 +89,11 @@ import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Behaviour
-import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.Debugging
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
@@ -199,7 +164,6 @@ class MainActivity : ComponentActivity() {
             mainViewModel.settings.Permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
         }
 
-        // Manifest.permission.MANAGE_MEDIA is optional
         mainViewModel.startupPermissionCheck(applicationContext)
 
         val initialFollowDarkTheme = runBlocking {
@@ -208,7 +172,11 @@ class MainActivity : ComponentActivity() {
 
         // TODO: uncook this
         WorkManager.getInstance(applicationContext)
-            .enqueue(OneTimeWorkRequest.Builder(SyncWorker::class).build())
+            .enqueueUniqueWork(
+                SyncWorker::class.java.name,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequest.Builder(SyncWorker::class).build()
+            )
 
         setContent {
             val continueToApp = remember {
@@ -282,15 +250,6 @@ class MainActivity : ComponentActivity() {
 
         val mainViewModel = LocalMainViewModel.current
 
-        val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
-            .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
-        val currentView = rememberSaveable(
-            inputs = arrayOf(defaultTab),
-            stateSaver = BottomBarTab.TabSaver
-        ) { mutableStateOf(defaultTab) }
-
-        val showDialog = remember { mutableStateOf(false) }
-
         val selectedItemsList = remember { SnapshotStateList<PhotoLibraryUIModel>() }
 
         val context = LocalContext.current
@@ -307,87 +266,29 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-        val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
-
-        if (immichInfo == null) return // TODO: ...remove
-
+        val navController = LocalNavController.current
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
         val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-        val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
+        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+        val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
+        val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-                info = immichInfo!!,
-                sortMode = currentSortMode,
-                displayDateFormat = displayDateFormat
-            )
-        )
-
-        // TODO: split into nav composables with createGraph and use a bottom nav bar
-        // TODO: actually make separators function
-        val searchViewModel: SearchViewModel = viewModel(
-            factory = SearchViewModelFactory(
-                context = context,
-                info = immichInfo!!,
-                sortMode = currentSortMode,
+                info = immichInfo,
+                sortMode = sortMode,
                 format = displayDateFormat
             )
         )
-
-        val navController = LocalNavController.current
-
-        // TODO: move to settings, only update when it actually changes
-        // update main photos view albums list
-        // LaunchedEffect(mainPhotosPaths) {
-        //     Log.d(TAG, "query ALBUMS $mainPhotosPaths")
-        //
-        //     Log.d(TAG, "Refreshing main photos view")
-        //     Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $mainPhotosPaths")
-        //     multiAlbumViewModel.reinitDataSource(
-        //         context = context,
-        //         album = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-        //         sortMode = currentSortMode
-        //     )
-        // }
-        //
-        LaunchedEffect(currentSortMode) {
-            // multiAlbumViewModel.update(
-            //     sortMode = currentSortMode
-            // )
-            // customAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
-
-            // searchViewModel.restart(
-            //     context = context,
-            //     sortMode = currentSortMode
-            // )
-            // searchViewModel.setMedia(
-            //     context = context,
-            //     media = searchViewModel.groupedMedia.value.mapNotNull { (it as? PhotoLibraryUIModel.Media)?.item },
-            //     sortMode = currentSortMode,
-            //     displayDateFormat = displayDateFormat
-            // )
-        }
-        //
-        // LaunchedEffect(displayDateFormat) {
-        //     Log.d(
-        //         TAG,
-        //         "Changing display date format from: ${multiAlbumViewModel.format} to: $displayDateFormat"
-        //     )
-        //     multiAlbumViewModel.changeDisplayDateFormat(context = context, format = displayDateFormat)
-        //     customAlbumViewModel.changeDisplayDateFormat(context = context, displayDateFormat = displayDateFormat)
-        //
-        //     searchViewModel.restart(
-        //         context = context,
-        //         displayDateFormat = displayDateFormat
-        //     )
-        //     searchViewModel.setMedia(
-        //         context = context,
-        //         media = searchViewModel.groupedMedia.value.mapNotNull { (it as? PhotoLibraryUIModel.Media)?.item },
-        //         sortMode = currentSortMode,
-        //         displayDateFormat = displayDateFormat
-        //     )
-        // }
+        val searchViewModel: SearchViewModel = viewModel(
+            factory = SearchViewModelFactory(
+                context = context,
+                info = immichInfo,
+                sortMode = sortMode,
+                format = displayDateFormat
+            )
+        )
 
         val snackbarHostState = remember {
             LavenderSnackbarHostState()
@@ -396,7 +297,7 @@ class MainActivity : ComponentActivity() {
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
                 navController = navController,
-                startDestination = MultiScreenViewType.MainScreen.name,
+                startDestination = Screens.MainPages,
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .background(MaterialTheme.colorScheme.background),
@@ -413,43 +314,92 @@ class MainActivity : ComponentActivity() {
                     slideInHorizontally { width -> -width } + fadeIn()
                 }
             ) {
-                composable(MultiScreenViewType.MainScreen.name) {
-                    setupNextScreen(
-                        selectedItemsList = selectedItemsList,
-                        window = window
-                    )
-
-                    Content(
-                        currentView = currentView,
-                        showDialog = showDialog,
-                        selectedItemsList = selectedItemsList,
-                        multiAlbumViewModel = multiAlbumViewModel,
-                        searchViewModel = searchViewModel
-                    )
-                }
-
-                composable<Screens.SinglePhotoView>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType,
-                        typeOf<List<String>>() to NavType.StringListType
+                navigation<Screens.MainPages>(
+                    startDestination = Screens.MainPages.MainGrid.GridView(
+                        albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths)
                     )
                 ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    composable<Screens.MainPages.MainGrid.GridView>(
+                        typeMap = mapOf(
+                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        )
+                    ) {
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
 
-                    val screen: Screens.SinglePhotoView = it.toRoute()
+                        val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
 
-                    // TODO: move search single photo view into nav graphs
-                    SinglePhotoView(
-                        navController = navController,
-                        viewModel = searchViewModel,
-                        window = window,
-                        mediaItemId = screen.mediaItemId,
-                        nextMediaItemId = screen.nextMediaItemId,
-                        albumInfo = screen.albumInfo
-                    )
+                        multiAlbumViewModel.update(
+                            album = screen.albumInfo,
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
+
+                        MainPages(
+                            selectedItemsList = selectedItemsList,
+                            mainPhotosPaths = mainPhotosPaths,
+                            multiAlbumViewModel = multiAlbumViewModel,
+                            searchViewModel = searchViewModel,
+                            window = window,
+                            incomingIntent = null
+                        )
+                    }
+
+                    composable<Screens.MainPages.MainGrid.SinglePhoto>(
+                        typeMap = mapOf(
+                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        )
+                    ) {
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
+                        multiAlbumViewModel.update(
+                            album = screen.albumInfo,
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
+
+                        SinglePhotoView(
+                            window = window,
+                            viewModel = multiAlbumViewModel,
+                            index = screen.index,
+                            albumInfo = screen.albumInfo,
+                            nextMediaItemId = screen.nextMediaItemId
+                        )
+                    }
+
+                    composable<Screens.MainPages.Search.SinglePhoto>(
+                        typeMap = mapOf(
+                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        )
+                    ) {
+                        setupNextScreen(
+                            selectedItemsList,
+                            window
+                        )
+
+                        val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
+                        searchViewModel.update(
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
+
+                        SinglePhotoView(
+                            window = window,
+                            viewModel = searchViewModel,
+                            index = screen.index,
+                            albumInfo = AlbumInfo.Empty,
+                            nextMediaItemId = screen.nextMediaItemId
+                        )
+                    }
                 }
 
                 navigation<Screens.Album>(
@@ -465,8 +415,13 @@ class MainActivity : ComponentActivity() {
                             window
                         )
 
-                        val screen: Screens.Album.GridView = it.toRoute()
-                        // multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
+                        val screen = it.toRoute<Screens.Album.GridView>()
+                        multiAlbumViewModel.update(
+                            album = screen.albumInfo,
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
@@ -485,7 +440,13 @@ class MainActivity : ComponentActivity() {
                             window
                         )
 
-                        val screen: Screens.Album.SinglePhoto = it.toRoute()
+                        val screen = it.toRoute<Screens.Album.SinglePhoto>()
+                        multiAlbumViewModel.update(
+                            album = screen.albumInfo,
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
 
                         SinglePhotoView(
                             window = window,
@@ -513,8 +474,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 displayDateFormat = displayDateFormat
                             )
                         )
@@ -538,8 +499,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 displayDateFormat = displayDateFormat
                             )
                         )
@@ -579,8 +540,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = TrashViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat
                             )
                         )
@@ -606,8 +567,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = TrashViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat
                             )
                         )
@@ -637,8 +598,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = SecureFolderViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat
                             )
                         )
@@ -659,8 +620,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = SecureFolderViewModelFactory(
                                 context = context,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat
                             )
                         )
@@ -697,8 +658,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat,
                                 apiClient = LocalApiClient.current
                             )
@@ -725,8 +686,8 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = immichInfo!!,
-                                sortMode = currentSortMode,
+                                info = immichInfo,
+                                sortMode = sortMode,
                                 format = displayDateFormat,
                                 apiClient = LocalApiClient.current
                             )
@@ -761,8 +722,8 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
-                                info = immichInfo!!,
-                                sortBy = currentSortMode,
+                                info = immichInfo,
+                                sortBy = sortMode,
                                 displayDateFormat = displayDateFormat
                             )
                         )
@@ -789,8 +750,8 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
-                                info = immichInfo!!,
-                                sortBy = currentSortMode,
+                                info = immichInfo,
+                                sortBy = sortMode,
                                 displayDateFormat = displayDateFormat
                             )
                         )
@@ -897,7 +858,7 @@ class MainActivity : ComponentActivity() {
                         window
                     )
 
-                    GeneralSettingsPage(currentTab = currentView)
+                    GeneralSettingsPage()
                 }
 
                 composable(MultiScreenViewType.SettingsMemoryAndStorageView.name) {
@@ -1087,296 +1048,6 @@ class MainActivity : ComponentActivity() {
                     mainViewModel = mainViewModel
                 )
             }
-        }
-    }
-
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-    @Composable
-    fun Content(
-        currentView: MutableState<BottomBarTab>,
-        showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-        multiAlbumViewModel: MultiAlbumViewModel,
-        searchViewModel: SearchViewModel
-    ) {
-        val mainViewModel = LocalMainViewModel.current
-        val mediaStoreData =
-            multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
-
-        val tabList by mainViewModel.settings.DefaultTabs.getTabList()
-            .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
-
-        val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
-            exitDirection = FloatingToolbarExitDirection.Bottom
-        )
-
-        Scaffold(
-            topBar = {
-                TopBar(
-                    showDialog = showDialog,
-                    selectedItemsList = selectedItemsList,
-                    media = mediaStoreData,
-                    currentView = currentView
-                )
-            },
-            bottomBar = {
-                MainAppBottomBar(
-                    currentView = currentView,
-                    selectedItemsList = selectedItemsList,
-                    tabs = tabList,
-                    scrollBehaviour = scrollBehaviour
-                )
-            },
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .nestedScroll(
-                    object : NestedScrollConnection {
-                        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                            scrollBehaviour.onPostScroll(
-                                consumed,
-                                available,
-                                source
-                            )
-
-                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
-                            scrollBehaviour.onPreScroll(
-                                available,
-                                source
-                            )
-
-                        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
-                            scrollBehaviour.onPostFling(
-                                consumed,
-                                available
-                            )
-
-                        override suspend fun onPreFling(available: Velocity): Velocity =
-                            scrollBehaviour.onPreFling(available)
-                    }
-                )
-        ) { padding ->
-            val isLandscape by rememberDeviceOrientation()
-
-            val safeDrawingPadding = if (isLandscape) {
-                val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
-
-                val layoutDirection = LocalLayoutDirection.current
-                val left = safeDrawing.calculateStartPadding(layoutDirection)
-                val right = safeDrawing.calculateEndPadding(layoutDirection)
-
-                Pair(left, right)
-            } else {
-                Pair(0.dp, 0.dp)
-            }
-
-            val navController = LocalNavController.current
-            val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-            val mainPage by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
-            BackHandler(
-                enabled = navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
-                        && !exitImmediately
-                        && currentView.value != mainPage
-            ) {
-                currentView.value = mainPage
-            }
-
-            Column(
-                modifier = Modifier
-                    .padding(
-                        start = safeDrawingPadding.first,
-                        top = padding.calculateTopPadding(),
-                        end = safeDrawingPadding.second,
-                        bottom = 0.dp
-                    )
-            ) {
-                MainPages(
-                    currentView = currentView,
-                    multiAlbumViewModel = multiAlbumViewModel,
-                    searchViewModel = searchViewModel,
-                    selectedItemsList = selectedItemsList,
-                    isMediaPicker = false
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun TopBar(
-        showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-        media: LazyPagingItems<PhotoLibraryUIModel>,
-        currentView: MutableState<BottomBarTab>
-    ) {
-        val show by remember {
-            derivedStateOf {
-                selectedItemsList.isNotEmpty()
-            }
-        }
-
-        MainAppTopBar(
-            alternate = show,
-            showDialog = showDialog,
-            selectedItemsList = selectedItemsList,
-            media = media,
-            currentView = currentView
-        )
-    }
-}
-
-@Composable
-fun MainPages(
-    currentView: MutableState<BottomBarTab>,
-    multiAlbumViewModel: MultiAlbumViewModel,
-    searchViewModel: SearchViewModel,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    isMediaPicker: Boolean
-) {
-    val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
-
-    val mediaStoreData = multiAlbumViewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-
-    AnimatedContent(
-        targetState = currentView.value,
-        transitionSpec = {
-            if (tabList.indexOf(targetState) > tabList.indexOf(initialState)) {
-                (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                    slideOutHorizontally { width -> -width } + fadeOut())
-            } else {
-                (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
-                    slideOutHorizontally { width -> width } + fadeOut())
-            }.using(
-                SizeTransform(clip = false)
-            )
-        },
-        label = "MainAnimatedContentView"
-    ) { stateValue ->
-        if (stateValue in tabList || stateValue == DefaultTabs.TabTypes.secure) {
-            Log.d(TAG, "Tab needed is $stateValue")
-            when {
-                stateValue.isCustom -> {
-                    // TODO
-                    // LaunchedEffect(stateValue.albumPaths) {
-                    //     multiAlbumViewModel.update(album = stateValue.toAlbumInfo())
-                    // }
-
-                    LaunchedEffect(Unit) {
-                        selectedItemsList.clear()
-                    }
-
-                    PhotoGrid(
-                        pagingItems = mediaStoreData,
-                        albumInfo = stateValue.toAlbumInfo(),
-                        viewProperties = ViewProperties.Album,
-                        selectedItemsList = selectedItemsList,
-                        isMainPage = true,
-                        isMediaPicker = isMediaPicker
-                    )
-                }
-
-                stateValue == DefaultTabs.TabTypes.photos -> {
-                    val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-
-                    LaunchedEffect(mainPhotosPaths) {
-                        // multiAlbumViewModel.update(
-                        //     album = stateValue
-                        //         .copy(albumPaths = mainPhotosPaths)
-                        //         .toAlbumInfo()
-                        // )
-                    }
-
-                    LaunchedEffect(Unit) {
-                        selectedItemsList.clear()
-                    }
-
-                    PhotoGrid(
-                        pagingItems = mediaStoreData,
-                        albumInfo =
-                            stateValue
-                                .copy(albumPaths = mainPhotosPaths)
-                                .toAlbumInfo(),
-                        viewProperties = ViewProperties.Album,
-                        selectedItemsList = selectedItemsList,
-                        isMainPage = true,
-                        isMediaPicker = isMediaPicker
-                    )
-                }
-
-                stateValue == DefaultTabs.TabTypes.secure -> LockedFolderEntryView()
-
-                stateValue == DefaultTabs.TabTypes.albums -> {
-                    AlbumsGridView(currentView)
-                }
-
-                stateValue == DefaultTabs.TabTypes.search -> {
-                    SearchPage(
-                        selectedItemsList = selectedItemsList,
-                        searchViewModel = searchViewModel,
-                        isMediaPicker = isMediaPicker
-                    )
-                }
-
-                stateValue == DefaultTabs.TabTypes.favourites -> {
-                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-                    val favouritesViewModel: FavouritesViewModel = viewModel(
-                        factory = FavouritesViewModelFactory(
-                            context = context,
-                            info = immichInfo,
-                            sortMode = sortMode,
-                            displayDateFormat = displayDateFormat
-                        )
-                    )
-
-                    LaunchedEffect(Unit) {
-                        selectedItemsList.clear()
-                    }
-
-                    val mediaStoreData = favouritesViewModel.gridMediaFlow.collectAsLazyPagingItems()
-
-                    PhotoGrid(
-                        pagingItems = mediaStoreData,
-                        albumInfo = AlbumInfo.Empty,
-                        selectedItemsList = selectedItemsList,
-                        viewProperties = ViewProperties.Favourites,
-                        isMainPage = true,
-                        isMediaPicker = isMediaPicker
-                    )
-                }
-
-                stateValue == DefaultTabs.TabTypes.trash -> {
-                    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-                    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-                    val trashViewModel: TrashViewModel = viewModel(
-                        factory = TrashViewModelFactory(
-                            context = context,
-                            info = immichInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat
-                        )
-                    )
-
-                    val trashStoreData = trashViewModel.gridMediaFlow.collectAsLazyPagingItems()
-
-                    PhotoGrid(
-                        pagingItems = trashStoreData,
-                        albumInfo = AlbumInfo.Empty,
-                        selectedItemsList = selectedItemsList,
-                        viewProperties = ViewProperties.Trash,
-                        isMainPage = true,
-                        isMediaPicker = isMediaPicker
-                    )
-                }
-            }
-        } else {
-            ErrorPage(
-                message = stringResource(id = R.string.tab_non_existent),
-                iconResId = R.drawable.error
-            )
         }
     }
 }

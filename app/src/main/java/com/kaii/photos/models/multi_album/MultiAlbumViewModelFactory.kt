@@ -14,11 +14,11 @@ class MultiAlbumViewModelFactory(
     private val albumInfo: AlbumInfo,
     private val info: ImmichBasicInfo,
     private val sortMode: MediaItemSortMode,
-    private val displayDateFormat: DisplayDateFormat
+    private val format: DisplayDateFormat
 ) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == MultiAlbumViewModel::class.java) {
-			return MultiAlbumViewModel(context, albumInfo, info, sortMode, displayDateFormat) as T
+			return MultiAlbumViewModel(context, albumInfo, info, sortMode, format) as T
 		}
 		throw IllegalArgumentException("${MultiAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.simpleName}!! This should never happen!!")
 	}

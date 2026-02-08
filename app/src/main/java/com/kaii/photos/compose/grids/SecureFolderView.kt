@@ -48,7 +48,6 @@ import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
@@ -97,7 +96,7 @@ fun SecureFolderView(
             && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
         ) {
             viewModel.stopFileObserver()
-            navController.navigate(MultiScreenViewType.MainScreen.name)
+            navController.navigate(Screens.MainPages)
         }
 
         if (lastLifecycleState == Lifecycle.State.DESTROYED) {
@@ -116,7 +115,7 @@ fun SecureFolderView(
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
-                            && navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
+                            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) != true
                             && !isGettingPermissions.value
                         ) {
                             lastLifecycleState = Lifecycle.State.DESTROYED

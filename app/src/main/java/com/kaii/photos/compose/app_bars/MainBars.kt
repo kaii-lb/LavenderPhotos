@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarScrollBehavior
@@ -41,12 +42,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.IntState
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -65,7 +68,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
@@ -83,40 +85,31 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import com.kaii.photos.models.loading.mapToMediaItems
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
-    showDialog: MutableState<Boolean>,
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    media: LazyPagingItems<PhotoLibraryUIModel>,
-    currentView: MutableState<BottomBarTab>,
+    pagerState: PagerState,
+    mediaCount: IntState,
+    sectionCount: IntState,
     isFromMediaPicker: Boolean = false
 ) {
-    val mediaCount = remember {
-        derivedStateOf {
-            media.itemSnapshotList.filter {
-                it !is PhotoLibraryUIModel.Section
-            }.size
-        }
-    }
-    val sectionCount = remember {
-        derivedStateOf {
-            media.itemSnapshotList.size - mediaCount.value
-        }
-    }
-
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
+    val showDialog = rememberSaveable { mutableStateOf(false) }
+
     MainAppDialog(
         showDialog = showDialog,
-        currentView = currentView,
+        pagerState = pagerState,
         selectedItemsList = selectedItemsList,
         mainViewModel = mainViewModel,
         loginState = loginState
@@ -156,7 +149,7 @@ fun MainAppTopBar(
         },
         actions = {
             AnimatedVisibility(
-                visible = currentView.value == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
                 enter = scaleIn(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -214,8 +207,7 @@ fun MainAppTopBar(
             SelectViewTopBarRightButtons(
                 selectedItemsList = selectedItemsList,
                 mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { media.itemSnapshotList.mapToMediaItems() }
+                sectionCount = sectionCount
             )
         },
     )
@@ -224,21 +216,29 @@ fun MainAppTopBar(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainAppBottomBar(
-    currentView: MutableState<BottomBarTab>,
+    pagerState: PagerState,
     tabs: List<BottomBarTab>,
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
+    val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
         .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
+    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
 
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
-                if (mainTab == DefaultTabs.TabTypes.secure || mainTab !in tabs) tabs.first() else mainTab
+                if (defaultTab == DefaultTabs.TabTypes.secure || defaultTab !in tabs) tabs.first() else defaultTab
             )
     )
+
+    val currentTab by remember {
+        derivedStateOf {
+            tabList[pagerState.currentPage]
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -294,7 +294,7 @@ fun MainAppBottomBar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            when (currentView.value) {
+                            when (currentTab) {
                                 DefaultTabs.TabTypes.trash -> {
                                     TrashPhotoGridBottomBarItems(
                                         selectedItemsList = selectedItemsList
@@ -310,9 +310,9 @@ fun MainAppBottomBar(
                                 else -> {
                                     SelectingBottomBarItems(
                                         albumInfo = AlbumInfo(
-                                            id = currentView.value.id,
-                                            name = currentView.value.name,
-                                            paths = currentView.value.albumPaths,
+                                            id = currentTab.id,
+                                            name = currentTab.name,
+                                            paths = currentTab.albumPaths,
                                             isCustomAlbum = false
                                         ),
                                         selectedItemsList = selectedItemsList
@@ -321,6 +321,8 @@ fun MainAppBottomBar(
                             }
                         }
                     } else {
+                        val coroutineScope = rememberCoroutineScope()
+
                         LazyRow(
                             state = state
                         ) {
@@ -328,11 +330,13 @@ fun MainAppBottomBar(
                                 items = tabs
                             ) { tab ->
                                 ToggleButton(
-                                    checked = currentView.value == tab,
+                                    checked = currentTab == tab,
                                     onCheckedChange = {
-                                        if (currentView.value != tab) {
-                                            selectedItemsList.clear()
-                                            currentView.value = tab
+                                        if (currentTab != tab) coroutineScope.launch {
+                                            pagerState.animateScrollToPage(
+                                                page = tabList.indexOf(tab),
+                                                animationSpec = AnimationConstants.defaultSpring()
+                                            )
                                         }
                                     },
                                     shapes = ToggleButtonDefaults.shapes(
@@ -345,7 +349,7 @@ fun MainAppBottomBar(
                                         .height(48.dp)
                                 ) {
                                     AnimatedVisibility(
-                                        visible = currentView.value == tab
+                                        visible = currentTab == tab
                                     ) {
                                         Row(
                                             modifier = Modifier

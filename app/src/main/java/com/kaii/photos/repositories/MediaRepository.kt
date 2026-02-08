@@ -13,19 +13,37 @@ import com.kaii.photos.models.loading.mapToMedia
 import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 
 class MediaRepository(
     context: Context,
+    initialAlbumInfo: AlbumInfo,
     info: ImmichBasicInfo,
-    albumInfo: AlbumInfo,
     scope: CoroutineScope,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
+    private data class RoomQueryParams(
+        val paths: Set<String>,
+        val sortMode: MediaItemSortMode,
+        val format: DisplayDateFormat,
+        val accessToken: String
+    )
+
     private val dao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
 
+    private val params = MutableStateFlow(
+        value = RoomQueryParams(
+            paths = initialAlbumInfo.paths,
+            sortMode = sortMode,
+            format = format,
+            accessToken = ""
+        )
+    )
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow =
+    val mediaFlow = params.flatMapLatest { details ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -34,16 +52,32 @@ class MediaRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) dao.getPagedMediaDateModified(paths = albumInfo.paths)
-                else dao.getPagedMediaDateTaken(paths = albumInfo.paths)
+                if (sortMode.isDateModified) dao.getPagedMediaDateModified(paths = details.paths)
+                else dao.getPagedMediaDateTaken(paths = details.paths)
             }
-        ).flow
-            .mapToMedia(accessToken = info.accessToken)
-            .cachedIn(scope)
+        ).flow.mapToMedia(accessToken = info.accessToken)
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
-        format = format
-    ).cachedIn(scope)
+    val gridMediaFlow = params.flatMapLatest { details ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = details.sortMode,
+            format = details.format
+        )
+    }.cachedIn(scope)
+
+    fun update(
+        album: AlbumInfo?,
+        sortMode: MediaItemSortMode?,
+        format: DisplayDateFormat?,
+        accessToken: String?
+    ) {
+        val snapshot = params.value
+        params.value = snapshot.copy(
+            sortMode = sortMode ?: snapshot.sortMode,
+            format = format ?: snapshot.format,
+            paths = album?.paths ?: snapshot.paths,
+            accessToken = accessToken ?: snapshot.accessToken
+        )
+    }
 }

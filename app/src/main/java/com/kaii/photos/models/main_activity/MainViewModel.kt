@@ -31,19 +31,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 private const val TAG = "com.kaii.photos.models.MainViewModel"
 
 class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
-    init {
-        refreshAlbums(
-            context = context,
-            albums = albumInfo,
-            sortMode = MediaItemSortMode.DateTaken
-        )
-    }
+    private var initialMainPhotosPaths = emptySet<String>()
 
     // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
     private val permList =
@@ -66,9 +62,9 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val permissionQueue = mutableStateListOf<String>()
 
-    val settings = Settings(context, viewModelScope)
+    val settings = Settings(context.applicationContext, viewModelScope)
 
-    val updater = Updater(context = context, coroutineScope = viewModelScope)
+    val updater = Updater(context = context.applicationContext, coroutineScope = viewModelScope)
 
     val displayDateFormat = settings.LookAndFeel.getDisplayDateFormat().stateIn(
         scope = viewModelScope,
@@ -116,12 +112,24 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     private val _mainPhotosAlbums = settings.MainPhotosView.getAlbums()
 
+    init {
+        runBlocking {
+            initialMainPhotosPaths = getMainPhotosAlbums().first()
+        }
+
+        refreshAlbums(
+            context = context.applicationContext,
+            albums = albumInfo,
+            sortMode = MediaItemSortMode.DateTaken
+        )
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = emptySet()
+            initialValue = initialMainPhotosPaths
         )
 
     private fun getMainPhotosAlbums() =

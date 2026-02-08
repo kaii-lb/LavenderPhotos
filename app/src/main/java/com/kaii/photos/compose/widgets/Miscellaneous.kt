@@ -43,7 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -313,8 +312,7 @@ fun SelectViewTopBarLeftButtons(
 fun SelectViewTopBarRightButtons(
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mediaCount: State<Int>,
-    sectionCount: State<Int>,
-    getAllMedia: () -> List<MediaStoreData>
+    sectionCount: State<Int>
 ) {
     Row(
         modifier = Modifier
@@ -322,57 +320,7 @@ fun SelectViewTopBarRightButtons(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        val isTicked by remember {
-            derivedStateOf {
-                selectedItemsList.size == mediaCount.value + sectionCount.value
-            }
-        }
-        val selectAllEnabled by remember {
-            derivedStateOf {
-                mediaCount.value < 2000
-            }
-        }
-
-        IconButton(
-            onClick = {
-                if (isTicked) {
-                    selectedItemsList.clear()
-                    selectedItemsList.add(PhotoLibraryUIModel.Media(
-                        item = MediaStoreData.dummyItem,
-                        accessToken = null // TODO
-                    ))
-                } else {
-                    selectedItemsList.clear()
-
-                    selectedItemsList.addAll(getAllMedia().map { PhotoLibraryUIModel.Media(it) })
-                }
-            },
-            enabled = selectAllEnabled, // limit of 2000 since android can't handle more uris
-            modifier = Modifier
-                .clip(RoundedCornerShape(1000.dp))
-                .size(42.dp)
-                .background(if (isTicked) MaterialTheme.colorScheme.primary else Color.Transparent)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.checklist),
-                contentDescription = "select all items",
-                tint = when {
-                    selectAllEnabled && isTicked -> {
-                        MaterialTheme.colorScheme.onPrimary
-                    }
-
-                    selectAllEnabled -> {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    }
-
-                    else -> {
-                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                    }
-                },
-                modifier = Modifier
-                    .size(24.dp)
-            )
-        }
+        // TODO: figure something out
     }
 }
 

@@ -618,7 +618,6 @@ fun ThumbnailSizeDialog(
 
 @Composable
 fun TabCustomizationDialog(
-    currentTab: MutableState<BottomBarTab>,
     closeDialog: () -> Unit
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -651,8 +650,6 @@ fun TabCustomizationDialog(
                         tabList.toMutableList().apply {
                             if (tab in tabList && tabList.size > 1) {
                                 remove(tab)
-                                if (currentTab.value == tab) currentTab.value =
-                                    tabList[0] // handle tab removal
                             } else if (tab in tabList) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
@@ -693,8 +690,6 @@ fun TabCustomizationDialog(
                             mainViewModel.settings.DefaultTabs.setTabList(
                                 tabList.toMutableList().apply {
                                     remove(tab)
-                                    if (currentTab.value == tab) currentTab.value =
-                                        tabList[0] // handle tab removal
                                 }
                             )
                         } else {

@@ -9,10 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,54 +19,34 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastFilter
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,36 +55,26 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.MainPages
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.MainAppBottomBar
-import com.kaii.photos.compose.app_bars.MainAppTopBar
-import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Behaviour
-import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -192,60 +160,34 @@ class MediaPicker : ComponentActivity() {
         selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
         incomingIntent: Intent
     ) {
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
-        if (immichInfo == null) return // TODO: ...remove
-
-        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-        val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-        val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
-            .collectAsStateWithLifecycle(initialValue = emptySet())
-
         val context = LocalContext.current
-        val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+        val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+        val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+
+        val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
-                info = immichInfo!!,
-                sortMode = currentSortMode,
-                displayDateFormat = displayDateFormat
+                albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
+                info = immichInfo,
+                sortMode = sortMode,
+                format = displayDateFormat
             )
         )
-
         val searchViewModel: SearchViewModel = viewModel(
             factory = SearchViewModelFactory(
                 context = context,
-                info = immichInfo!!,
-                sortMode = currentSortMode,
+                info = immichInfo,
+                sortMode = sortMode,
                 format = displayDateFormat
             )
         )
 
         val navController = LocalNavController.current
-
-        // TODO
-        // LaunchedEffect(albumsList) {
-        //     if (navController.currentBackStackEntry?.destination?.route != MultiScreenViewType.MainScreen.name
-        //         || multiAlbumViewModel.albumInfo.paths.toSet() == albumsList
-        //     ) return@LaunchedEffect
-        //
-        //     Log.d(TAG, "Refreshing main photos view")
-        //     Log.d(TAG, "In view model: ${multiAlbumViewModel.albumInfo.paths} new: $albumsList")
-        //     multiAlbumViewModel.reinitDataSource(
-        //         context = context,
-        //         album = AlbumInfo.createPathOnlyAlbum(albumsList),
-        //         sortMode = currentSortMode
-        //     )
-        // }
-
-        val currentView = rememberSaveable(
-            stateSaver = BottomBarTab.TabSaver
-        ) {
-            mutableStateOf(DefaultTabs.TabTypes.photos)
-        }
-
         NavHost(
             navController = navController,
-            startDestination = MultiScreenViewType.MainScreen.name,
+            startDestination = Screens.MainPages,
             modifier = Modifier
                 .fillMaxSize(1f)
                 .background(MaterialTheme.colorScheme.background),
@@ -278,21 +220,39 @@ class MediaPicker : ComponentActivity() {
                 ) { width -> -width } + fadeIn()
             }
         ) {
-            composable(MultiScreenViewType.MainScreen.name) {
-                setupNextScreen(
-                    selectedItemsList = selectedItemsList,
-                    window = window
+            navigation<Screens.MainPages>(
+                startDestination = Screens.MainPages.MainGrid.GridView(
+                    albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths)
                 )
+            ) {
+                composable<Screens.MainPages.MainGrid.GridView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                    )
+                ) {
+                    setupNextScreen(
+                        selectedItemsList,
+                        window
+                    )
 
-                val tabs by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
-                MainWindow(
-                    multiAlbumViewModel = multiAlbumViewModel,
-                    searchViewModel = searchViewModel,
-                    currentView = currentView,
-                    selectedItemsList = selectedItemsList,
-                    tabs = tabs,
-                    incomingIntent = incomingIntent
-                )
+                    val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
+
+                    multiAlbumViewModel.update(
+                        album = screen.albumInfo,
+                        sortMode = sortMode,
+                        format = displayDateFormat,
+                        accessToken = immichInfo.accessToken
+                    )
+
+                    MainPages(
+                        selectedItemsList = selectedItemsList,
+                        mainPhotosPaths = mainPhotosPaths,
+                        multiAlbumViewModel = multiAlbumViewModel,
+                        searchViewModel = searchViewModel,
+                        window = window,
+                        incomingIntent = null
+                    )
+                }
             }
 
             navigation<Screens.Album>(
@@ -308,13 +268,25 @@ class MediaPicker : ComponentActivity() {
                         window
                     )
 
-                    val screen: Screens.Album.GridView = it.toRoute()
-                    // multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
+                    val screen = it.toRoute<Screens.Album.GridView>()
+                    val storeOwner = remember(it) {
+                        navController.getBackStackEntry(Screens.Album)
+                    }
+                    val viewModel = viewModel<MultiAlbumViewModel>(
+                        viewModelStoreOwner = storeOwner,
+                        factory = MultiAlbumViewModelFactory(
+                            context = context,
+                            albumInfo = screen.albumInfo,
+                            info = immichInfo,
+                            sortMode = sortMode,
+                            format = displayDateFormat
+                        )
+                    )
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
                         selectedItemsList = selectedItemsList,
-                        viewModel = multiAlbumViewModel,
+                        viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
                 }
@@ -334,8 +306,8 @@ class MediaPicker : ComponentActivity() {
                         factory = CustomAlbumViewModelFactory(
                             context = context,
                             albumInfo = screen.albumInfo,
-                            info = immichInfo!!,
-                            sortBy = currentSortMode,
+                            info = immichInfo,
+                            sortBy = sortMode,
                             displayDateFormat = displayDateFormat
                         )
                     )
@@ -361,8 +333,8 @@ class MediaPicker : ComponentActivity() {
                     val viewModel = viewModel<FavouritesViewModel>(
                         factory = FavouritesViewModelFactory(
                             context = context,
-                            info = immichInfo!!,
-                            sortMode = currentSortMode,
+                            info = immichInfo,
+                            sortMode = sortMode,
                             displayDateFormat = displayDateFormat
                         )
                     )
@@ -396,8 +368,8 @@ class MediaPicker : ComponentActivity() {
                     val trashViewModel = viewModel<TrashViewModel>(
                         factory = TrashViewModelFactory(
                             context = context,
-                            info = immichInfo!!,
-                            sortMode = currentSortMode,
+                            info = immichInfo,
+                            sortMode = sortMode,
                             format = displayDateFormat
                         )
                     )
@@ -410,158 +382,6 @@ class MediaPicker : ComponentActivity() {
                 }
             }
         }
-    }
-
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-    @Composable
-    private fun MainWindow(
-        currentView: MutableState<BottomBarTab>,
-        tabs: List<BottomBarTab>,
-        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-        multiAlbumViewModel: MultiAlbumViewModel,
-        searchViewModel: SearchViewModel,
-        incomingIntent: Intent
-    ) {
-        val mainViewModel = LocalMainViewModel.current
-
-        val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
-
-        val showDialog = rememberSaveable { mutableStateOf(false) }
-        val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
-            exitDirection = FloatingToolbarExitDirection.Bottom
-        )
-
-        Scaffold(
-            topBar = {
-                TopBar(
-                    showDialog = showDialog,
-                    selectedItemsList = selectedItemsList,
-                    pagingItems = mediaStoreData,
-                    currentView = currentView
-                )
-            },
-            modifier = Modifier
-                .fillMaxSize(1f)
-                .nestedScroll(
-                    object : NestedScrollConnection {
-                        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                            scrollBehaviour.onPostScroll(
-                                if (selectedItemsList.isEmpty()) consumed else Offset.Zero,
-                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
-                                source
-                            )
-
-                        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
-                            scrollBehaviour.onPreScroll(
-                                if (selectedItemsList.isEmpty()) available else Offset.Zero,
-                                source
-                            )
-
-                        override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
-                            scrollBehaviour.onPostFling(
-                                if (selectedItemsList.isEmpty()) consumed else Velocity.Zero,
-                                available
-                            )
-
-                        override suspend fun onPreFling(available: Velocity): Velocity =
-                            scrollBehaviour.onPreFling(if (selectedItemsList.isEmpty()) available else Velocity.Zero)
-                    }
-                )
-        ) { padding ->
-            val isLandscape by rememberDeviceOrientation()
-
-            val safeDrawingPadding = if (isLandscape) {
-                val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
-
-                val layoutDirection = LocalLayoutDirection.current
-                val left = safeDrawing.calculateStartPadding(layoutDirection)
-                val right = safeDrawing.calculateEndPadding(layoutDirection)
-
-                Pair(left, right)
-            } else {
-                Pair(0.dp, 0.dp)
-            }
-
-            val navController = LocalNavController.current
-            val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-            val mainPage by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
-            BackHandler(
-                enabled = navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name
-                        && !exitImmediately
-                        && currentView.value != mainPage
-            ) {
-                currentView.value = mainPage
-            }
-
-            Box {
-                Column(
-                    modifier = Modifier
-                        .padding(
-                            safeDrawingPadding.first,
-                            padding.calculateTopPadding(),
-                            safeDrawingPadding.second,
-                            0.dp
-                        )
-                ) {
-                    MainPages(
-                        currentView = currentView,
-                        multiAlbumViewModel = multiAlbumViewModel,
-                        searchViewModel = searchViewModel,
-                        selectedItemsList = selectedItemsList,
-                        isMediaPicker = true
-                    )
-                }
-
-                val navController = LocalNavController.current
-                AnimatedContent(
-                    targetState = selectedItemsList.isNotEmpty() && navController.currentBackStackEntry?.destination?.route == MultiScreenViewType.MainScreen.name,
-                    transitionSpec = {
-                        getAppBarContentTransition(selectedItemsList.isNotEmpty())
-                    },
-                    label = "MainBottomBarAnimatedContentView",
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                ) { state ->
-                    if (!state) {
-                        MainAppBottomBar(
-                            currentView = currentView,
-                            tabs = tabs.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            selectedItemsList = selectedItemsList,
-                            scrollBehaviour = scrollBehaviour
-                        )
-                    } else {
-                        MediaPickerConfirmButton(
-                            incomingIntent = incomingIntent,
-                            selectedItemsList = selectedItemsList,
-                            contentResolver = contentResolver
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun TopBar(
-        showDialog: MutableState<Boolean>,
-        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-        pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-        currentView: MutableState<BottomBarTab>
-    ) {
-        val show by remember {
-            derivedStateOf {
-                selectedItemsList.isNotEmpty()
-            }
-        }
-
-        MainAppTopBar(
-            alternate = show,
-            showDialog = showDialog,
-            selectedItemsList = selectedItemsList,
-            media = pagingItems,
-            currentView = currentView,
-            isFromMediaPicker = true
-        )
     }
 }
 
