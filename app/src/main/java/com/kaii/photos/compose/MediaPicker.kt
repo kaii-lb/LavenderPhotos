@@ -105,7 +105,6 @@ import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.datastore.MainPhotosView
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -194,8 +193,10 @@ class MediaPicker : ComponentActivity() {
         selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
         incomingIntent: Intent
     ) {
-        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
+        if (immichInfo == null) return // TODO: ...remove
 
+        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
         val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
         val albumsList by mainViewModel.settings.MainPhotosView.getAlbums()
             .collectAsStateWithLifecycle(initialValue = emptySet())
@@ -205,6 +206,7 @@ class MediaPicker : ComponentActivity() {
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(albumsList),
+                info = immichInfo!!,
                 sortMode = currentSortMode,
                 displayDateFormat = displayDateFormat
             )
@@ -213,14 +215,13 @@ class MediaPicker : ComponentActivity() {
         val searchViewModel: SearchViewModel = viewModel(
             factory = SearchViewModelFactory(
                 context = context,
+                info = immichInfo!!,
                 sortMode = currentSortMode,
-                format = displayDateFormat,
-                separators = true
+                format = displayDateFormat
             )
         )
 
         val navController = LocalNavController.current
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         // TODO
         // LaunchedEffect(albumsList) {
@@ -315,7 +316,7 @@ class MediaPicker : ComponentActivity() {
                     )
 
                     val screen: Screens.Album.GridView = it.toRoute()
-                    multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
+                    // multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
@@ -340,7 +341,7 @@ class MediaPicker : ComponentActivity() {
                         factory = CustomAlbumViewModelFactory(
                             context = context,
                             albumInfo = screen.albumInfo,
-                            info = immichInfo,
+                            info = immichInfo!!,
                             sortBy = currentSortMode,
                             displayDateFormat = displayDateFormat
                         )
@@ -367,7 +368,7 @@ class MediaPicker : ComponentActivity() {
                     val viewModel = viewModel<FavouritesViewModel>(
                         factory = FavouritesViewModelFactory(
                             context = context,
-                            info = immichInfo,
+                            info = immichInfo!!,
                             sortMode = currentSortMode,
                             displayDateFormat = displayDateFormat
                         )
@@ -402,6 +403,7 @@ class MediaPicker : ComponentActivity() {
                     val trashViewModel = viewModel<TrashViewModel>(
                         factory = TrashViewModelFactory(
                             context = context,
+                            info = immichInfo!!,
                             sortMode = currentSortMode,
                             format = displayDateFormat
                         )

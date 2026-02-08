@@ -53,6 +53,7 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MultiScreenViewType
@@ -342,28 +343,26 @@ private fun InitSinglePhotoView(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
+    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
+
+    if (immichInfo == null) return // TODO: ...remove
+
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
     val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-    val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
 
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
+            albumInfo = AlbumInfo.createPathOnlyAlbum(
+                paths = setOf(
+                    incomingData.absolutePath.parent()
+                )
+            ),
+            info = immichInfo!!,
             sortMode = currentSortMode,
             displayDateFormat = displayDateFormat
         )
     )
-
-    LaunchedEffect(Unit) {
-        multiAlbumViewModel.update(
-            album = AlbumInfo.createPathOnlyAlbum(
-                paths = setOf(
-                    incomingData.absolutePath.parent()
-                )
-            )
-        )
-    }
 
     val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
     val index = remember(items.itemCount, items.loadState) {

@@ -55,12 +55,7 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = { ListPagingSource(media = media) }
-        ).flow.mapToMedia(
-            sortMode = sortMode,
-            format = format,
-            accessToken = info.accessToken,
-            separators = false
-        )
+        ).flow.mapToMedia(accessToken = info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -20,7 +20,7 @@ class FavouritesRepository(
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
-    private val dao = MediaDatabase.getInstance(context).mediaDao()
+    val dao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow =
@@ -36,18 +36,12 @@ class FavouritesRepository(
                 else dao.getPagedFavouritesDateTaken()
             }
         ).flow
-            .mapToMedia(
-                sortMode = sortMode,
-                format = format,
-                accessToken = info.accessToken,
-                separators = false
-            )
+            .mapToMedia(accessToken = info.accessToken)
             .cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow =
-        mediaFlow.mapToSeparatedMedia(
-            sortMode = sortMode,
-            format = format
-        ).cachedIn(scope)
+    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
+        sortMode = sortMode,
+        format = format
+    ).cachedIn(scope)
 }

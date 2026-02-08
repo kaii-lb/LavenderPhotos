@@ -6,11 +6,14 @@ import androidx.lifecycle.ViewModelProvider
 import com.kaii.photos.datastore.AlbumInfo
 
 @Suppress("UNCHECKED_CAST")
-class MainViewModelFactory(private val context: Context, private val albumInfo: List<AlbumInfo>) : ViewModelProvider.NewInstanceFactory() {
+class MainViewModelFactory(
+    private val context: Context,
+    private val albumInfo: List<AlbumInfo>
+) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == MainViewModel::class.java) {
 			return MainViewModel(context, albumInfo) as T
 		}
-		throw IllegalArgumentException("MainDataSharingModel: Cannot cast ${modelClass.simpleName} as ${MainViewModel::class.java.simpleName}!! This should never happen!!")
+		throw IllegalArgumentException("${MainViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MainViewModel::class.simpleName}!! This should never happen!!")
 	}
 }

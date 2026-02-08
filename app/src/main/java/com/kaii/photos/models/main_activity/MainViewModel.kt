@@ -140,6 +140,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             }
         }
 
+    // TODO: move to a state holder class
     fun refreshAlbums(
         context: Context,
         albums: List<AlbumInfo>,

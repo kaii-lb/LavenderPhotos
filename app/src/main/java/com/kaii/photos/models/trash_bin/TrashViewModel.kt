@@ -3,18 +3,21 @@ package com.kaii.photos.models.trash_bin
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.repositories.TrashRepository
 
 class TrashViewModel(
     context: Context,
+    info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) : ViewModel() {
     private val repo = TrashRepository(
-        context = context,
         scope = viewModelScope,
+        info = info,
+        context = context,
         sortMode = sortMode,
         format = format
     )
@@ -26,11 +29,6 @@ class TrashViewModel(
         super.onCleared()
         repo.cancel()
     }
-
-    fun update(
-        sortMode: MediaItemSortMode? = null,
-        format: DisplayDateFormat? = null
-    ) = repo.update(sortMode, format)
 
     fun cancel() = repo.cancel()
 

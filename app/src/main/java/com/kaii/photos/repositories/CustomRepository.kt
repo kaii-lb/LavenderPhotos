@@ -26,17 +26,18 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class CustomRepository(
-    private val context: Context,
     private val scope: CoroutineScope,
+    context: Context,
     albumInfo: AlbumInfo,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
+    private val appContext = context.applicationContext
     private val cancellationSignal = CancellationSignal()
     private val dataSource =
         CustomAlbumDataSource(
-            context = context,
+            context = appContext,
             parentId = albumInfo.id,
             sortMode = sortMode,
             cancellationSignal = cancellationSignal
@@ -64,20 +65,14 @@ class CustomRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = { ListPagingSource(media = items) }
-        ).flow.mapToMedia(
-            sortMode = sortMode,
-            format = format,
-            accessToken = info.accessToken,
-            separators = false
-        )
+        ).flow.mapToMedia(accessToken = info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow =
-        mediaFlow.mapToSeparatedMedia(
-            sortMode = sortMode,
-            format = format
-        ).cachedIn(scope)
+    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
+        sortMode = sortMode,
+        format = format
+    ).cachedIn(scope)
 
     fun cancel() = cancellationSignal.cancel()
 
@@ -86,7 +81,7 @@ class CustomRepository(
         albumId: Int
     ) = scope.launch(Dispatchers.IO) {
         items.forEach { item ->
-            context.contentResolver.delete(
+            appContext.contentResolver.delete(
                 LavenderContentProvider.CONTENT_URI,
                 "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
                 arrayOf(item.customId.toString(), albumId.toString())

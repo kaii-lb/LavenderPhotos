@@ -309,12 +309,16 @@ class MainActivity : ComponentActivity() {
 
         val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
         val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
+
+        if (immichInfo == null) return // TODO: ...remove
 
         val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
         val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
             factory = MultiAlbumViewModelFactory(
                 context = context,
                 albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
+                info = immichInfo!!,
                 sortMode = currentSortMode,
                 displayDateFormat = displayDateFormat
             )
@@ -325,9 +329,9 @@ class MainActivity : ComponentActivity() {
         val searchViewModel: SearchViewModel = viewModel(
             factory = SearchViewModelFactory(
                 context = context,
+                info = immichInfo!!,
                 sortMode = currentSortMode,
-                format = displayDateFormat,
-                separators = true
+                format = displayDateFormat
             )
         )
 
@@ -355,9 +359,9 @@ class MainActivity : ComponentActivity() {
         // }
         //
         LaunchedEffect(currentSortMode) {
-            multiAlbumViewModel.update(
-                sortMode = currentSortMode
-            )
+            // multiAlbumViewModel.update(
+            //     sortMode = currentSortMode
+            // )
             // customAlbumViewModel.changeSortMode(context = context, sortMode = currentSortMode)
 
             // searchViewModel.restart(
@@ -395,8 +399,6 @@ class MainActivity : ComponentActivity() {
         val snackbarHostState = remember {
             LavenderSnackbarHostState()
         }
-
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
@@ -471,7 +473,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen: Screens.Album.GridView = it.toRoute()
-                        multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
+                        // multiAlbumViewModel.update(album = screen.albumInfo) // TODO: move to nav-local multialbumviewmodel
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
@@ -518,7 +520,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -543,7 +545,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = FavouritesViewModelFactory(
                                 context = context,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -584,6 +586,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = TrashViewModelFactory(
                                 context = context,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat
                             )
@@ -610,6 +613,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = TrashViewModelFactory(
                                 context = context,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat
                             )
@@ -640,6 +644,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = SecureFolderViewModelFactory(
                                 context = context,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat
                             )
@@ -661,6 +666,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = SecureFolderViewModelFactory(
                                 context = context,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat
                             )
@@ -698,7 +704,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat,
                                 apiClient = LocalApiClient.current
@@ -726,7 +732,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 immichId = screen.albumInfo.immichId,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortMode = currentSortMode,
                                 format = displayDateFormat,
                                 apiClient = LocalApiClient.current
@@ -762,7 +768,7 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortBy = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -790,7 +796,7 @@ class MainActivity : ComponentActivity() {
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 albumInfo = screen.albumInfo,
-                                info = immichInfo,
+                                info = immichInfo!!,
                                 sortBy = currentSortMode,
                                 displayDateFormat = displayDateFormat
                             )
@@ -1259,9 +1265,10 @@ fun MainPages(
             Log.d(TAG, "Tab needed is $stateValue")
             when {
                 stateValue.isCustom -> {
-                    LaunchedEffect(stateValue.albumPaths) {
-                        multiAlbumViewModel.update(album = stateValue.toAlbumInfo())
-                    }
+                    // TODO
+                    // LaunchedEffect(stateValue.albumPaths) {
+                    //     multiAlbumViewModel.update(album = stateValue.toAlbumInfo())
+                    // }
 
                     LaunchedEffect(Unit) {
                         selectedItemsList.clear()
@@ -1281,11 +1288,11 @@ fun MainPages(
                     val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
 
                     LaunchedEffect(mainPhotosPaths) {
-                        multiAlbumViewModel.update(
-                            album = stateValue
-                                .copy(albumPaths = mainPhotosPaths)
-                                .toAlbumInfo()
-                        )
+                        // multiAlbumViewModel.update(
+                        //     album = stateValue
+                        //         .copy(albumPaths = mainPhotosPaths)
+                        //         .toAlbumInfo()
+                        // )
                     }
 
                     LaunchedEffect(Unit) {
@@ -1354,6 +1361,7 @@ fun MainPages(
                     val trashViewModel: TrashViewModel = viewModel(
                         factory = TrashViewModelFactory(
                             context = context,
+                            info = immichInfo,
                             sortMode = sortMode,
                             format = displayDateFormat
                         )

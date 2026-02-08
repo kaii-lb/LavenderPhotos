@@ -20,6 +20,6 @@ class CustomAlbumViewModelFactory(
 		if (modelClass == CustomAlbumViewModel::class.java) {
 			return CustomAlbumViewModel(albumInfo, context, info, sortBy, displayDateFormat) as T
 		}
-		throw IllegalArgumentException("${CustomAlbumViewModel::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${CustomAlbumViewModel::class.simpleName}!! This should never happen!!")
+		throw IllegalArgumentException("${CustomAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${CustomAlbumViewModel::class.simpleName}!! This should never happen!!")
 	}
 }

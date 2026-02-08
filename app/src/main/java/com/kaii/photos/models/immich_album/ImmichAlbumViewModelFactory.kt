@@ -19,6 +19,6 @@ class ImmichAlbumViewModelFactory(
         if (modelClass == ImmichAlbumViewModel::class.java) {
             return ImmichAlbumViewModel(immichId, info, sortMode, format, apiClient) as T
         }
-        throw IllegalArgumentException("${ImmichAlbumViewModel::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${ImmichAlbumViewModel::class.simpleName}!! This should never happen!!")
+        throw IllegalArgumentException("${ImmichAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${ImmichAlbumViewModel::class.simpleName}!! This should never happen!!")
     }
 }

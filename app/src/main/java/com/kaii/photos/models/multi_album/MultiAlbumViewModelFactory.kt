@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 
@@ -11,13 +12,14 @@ import com.kaii.photos.helpers.MediaItemSortMode
 class MultiAlbumViewModelFactory(
     private val context: Context,
     private val albumInfo: AlbumInfo,
+    private val info: ImmichBasicInfo,
     private val sortMode: MediaItemSortMode,
     private val displayDateFormat: DisplayDateFormat
 ) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == MultiAlbumViewModel::class.java) {
-			return MultiAlbumViewModel(context, albumInfo, sortMode, displayDateFormat) as T
+			return MultiAlbumViewModel(context, albumInfo, info, sortMode, displayDateFormat) as T
 		}
-		throw IllegalArgumentException("${MultiAlbumViewModel::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.simpleName}!! This should never happen!!")
+		throw IllegalArgumentException("${MultiAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.simpleName}!! This should never happen!!")
 	}
 }

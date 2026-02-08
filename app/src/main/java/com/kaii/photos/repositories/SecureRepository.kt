@@ -8,7 +8,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SettingsImmichImpl
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -26,8 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -35,11 +33,15 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 
 class SecureRepository(
-    private val context: Context,
     private val scope: CoroutineScope,
+    private val info: ImmichBasicInfo,
+    context: Context,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
+    private val appContext = context.applicationContext
+    private val dao = MediaDatabase.getInstance(appContext).securedItemEntityDao()
+
     private data class TrashFlowParams(
         val items: List<PhotoLibraryUIModel.SecuredMedia>,
         val sortMode: MediaItemSortMode,
@@ -47,23 +49,22 @@ class SecureRepository(
         val accessToken: String
     )
 
-    private val secureFolder = File(context.appSecureFolderDir)
+    private val secureFolder = File(appContext.appSecureFolderDir)
     private var job: Job? = null
 
     private val fileObserver =
-        object : FileObserver(File(context.appSecureFolderDir), CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
+        object : FileObserver(File(appContext.appSecureFolderDir), CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
             override fun onEvent(event: Int, path: String?) {
                 // doesn't matter what event type just refresh
                 if (path != null) {
                     _fileList.value = secureFolder.listFiles()
 
-                    load(context = context)
+                    load(context = appContext)
                 }
             }
         }
 
     private val _fileList = MutableStateFlow(secureFolder.listFiles())
-    private val settings = SettingsImmichImpl(context = context, viewModelScope = scope)
 
     private val params = MutableStateFlow(
         TrashFlowParams(
@@ -77,12 +78,6 @@ class SecureRepository(
     init {
         scope.launch(Dispatchers.IO) {
             load(context = context)
-        }
-
-        scope.launch {
-            settings.getImmichBasicInfo().collectLatest {
-                params.value = params.value.copy(accessToken = it.accessToken)
-            }
         }
     }
 
@@ -122,10 +117,6 @@ class SecureRepository(
     private fun load(context: Context): Job {
         job?.cancel()
         job = scope.launch(Dispatchers.IO) {
-            val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
-            val settings = SettingsImmichImpl(context = context, viewModelScope = scope)
-            val accessToken = settings.getImmichBasicInfo().first().accessToken
-
             val snapshot = _fileList.value?.sortedBy { it.lastModified() } ?: return@launch
 
             val mediaStoreData = params.value.items.toMutableList()
@@ -180,7 +171,7 @@ class SecureRepository(
 
                 val securedItem = PhotoLibraryUIModel.SecuredMedia(
                     item = item,
-                    accessToken = accessToken,
+                    accessToken = info.accessToken,
                     bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
                 )
 

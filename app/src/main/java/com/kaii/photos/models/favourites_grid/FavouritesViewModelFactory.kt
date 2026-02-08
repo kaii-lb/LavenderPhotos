@@ -18,6 +18,6 @@ class FavouritesViewModelFactory(
         if (modelClass == FavouritesViewModel::class.java) {
             return FavouritesViewModel(context, info, sortMode, displayDateFormat) as T
         }
-        throw IllegalArgumentException("FavouritesViewModel: Cannot cast ${modelClass.simpleName} as ${FavouritesViewModel::class.java.simpleName}!! This should never happen!!")
+        throw IllegalArgumentException("${FavouritesViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${FavouritesViewModel::class.simpleName}!! This should never happen!!")
     }
 }

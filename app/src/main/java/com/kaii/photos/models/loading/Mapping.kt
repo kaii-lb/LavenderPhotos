@@ -11,60 +11,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 fun Flow<PagingData<MediaStoreData>>.mapToMedia(
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat,
-    accessToken: String,
-    separators: Boolean = true
+    accessToken: String
 ) = this.map { pagingData ->
-    if (sortMode.isDisabled || !separators) {
-        pagingData.map {
-            PhotoLibraryUIModel.Media(
-                item = it,
-                accessToken = accessToken
-            ) as PhotoLibraryUIModel
-        }
-    } else {
-        pagingData.map {
-            PhotoLibraryUIModel.Media(
-                item = it,
-                accessToken = accessToken
-            )
-        }.insertSeparators { before, after ->
-            val beforeDate: Long?
-            val afterDate: Long?
-
-            when {
-                sortMode.isDateModified -> {
-                    beforeDate = before?.item?.getDateModifiedDay()
-                    afterDate = after?.item?.getDateModifiedDay()
-                }
-
-                else -> {
-                    beforeDate = before?.item?.getDateTakenDay()
-                    afterDate = after?.item?.getDateTakenDay()
-                }
-            }
-
-            when {
-                beforeDate == null && afterDate != null -> PhotoLibraryUIModel.Section(
-                    title = formatDate(
-                        timestamp = afterDate,
-                        sortBy = sortMode,
-                        format = format
-                    )
-                )
-
-                beforeDate != afterDate && afterDate != null -> PhotoLibraryUIModel.Section(
-                    title = formatDate(
-                        timestamp = afterDate,
-                        sortBy = sortMode,
-                        format = format
-                    )
-                )
-
-                else -> null
-            }
-        }
+    pagingData.map {
+        PhotoLibraryUIModel.Media(
+            item = it,
+            accessToken = accessToken
+        ) as PhotoLibraryUIModel
     }
 }
 

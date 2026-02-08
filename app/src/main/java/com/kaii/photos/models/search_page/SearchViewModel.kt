@@ -9,18 +9,18 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.SettingsImmichImpl
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.loading.ListPagingSource
 import com.kaii.photos.models.loading.mapToMedia
+import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -40,20 +40,16 @@ import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.models.search_page.SearchViewModel"
 
-private data class SearchParams(
-    val items: List<MediaStoreData>,
-    val accessToken: String
-)
-
 class SearchViewModel(
     context: Context,
-    private var sortMode: MediaItemSortMode,
-    private var displayDateFormat: DisplayDateFormat,
-    private val separators: Boolean
+    info: ImmichBasicInfo,
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat
 ) : ViewModel() {
     private var query = ""
 
     private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+    private val searchedMedia = MutableStateFlow(emptyList<MediaStoreData>())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val allMedia =
@@ -64,24 +60,8 @@ class SearchViewModel(
                 initialValue = emptyList()
             )
 
-    private val params = MutableStateFlow(
-        value = SearchParams(
-            items = emptyList(),
-            accessToken = ""
-        )
-    )
-    private val settings = SettingsImmichImpl(context = context, viewModelScope = viewModelScope)
-
-    init {
-        viewModelScope.launch {
-            settings.getImmichBasicInfo().collectLatest {
-                params.value = params.value.copy(accessToken = it.accessToken)
-            }
-        }
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val mediaFlow = params.debounce(1.seconds).flatMapLatest { (media, accessToken) ->
+    val mediaFlow = searchedMedia.debounce(1.seconds).flatMapLatest { media ->
         Pager(
             config = PagingConfig(
                 pageSize = 100,
@@ -90,13 +70,13 @@ class SearchViewModel(
                 initialLoadSize = 300
             ),
             pagingSourceFactory = { ListPagingSource(media = media) }
-        ).flow.mapToMedia(
-            sortMode = sortMode,
-            format = displayDateFormat,
-            accessToken = accessToken,
-            separators = separators
-        )
+        ).flow.mapToMedia(accessToken = info.accessToken)
     }.cachedIn(viewModelScope)
+
+    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
+        sortMode = sortMode,
+        format = format
+    ).cachedIn(viewModelScope)
 
     fun search(
         query: String
@@ -105,7 +85,7 @@ class SearchViewModel(
         this@SearchViewModel.query = query
 
         if (query.isEmpty()) {
-            params.value = params.value.copy(items = allMedia.value)
+            searchedMedia.value = allMedia.value
             return@launch
         }
 
@@ -119,26 +99,12 @@ class SearchViewModel(
             final = searchByName(name = query)
         }
 
-        setMedia(
-            media = final,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
+        searchedMedia.value = final
     }
 
-    fun setMedia(
-        media: List<MediaStoreData>,
-        sortMode: MediaItemSortMode,
-        displayDateFormat: DisplayDateFormat
-    ) = viewModelScope.launch(Dispatchers.IO) {
-        this@SearchViewModel.sortMode = sortMode
-        this@SearchViewModel.displayDateFormat = displayDateFormat
-
-        params.value = params.value.copy(items = media)
-    }
-
+    // TODO: remove
     fun clear() {
-        params.value = params.value.copy(items = emptyList())
+        searchedMedia.value = emptyList()
     }
 
     private val formats = listOf(
