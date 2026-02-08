@@ -51,7 +51,7 @@ fun SearchPage(
     val mainViewModel = LocalMainViewModel.current
     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    val items = searchViewModel.mediaFlow.collectAsLazyPagingItems()
+    val items = searchViewModel.gridMediaFlow.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
 
     Column(
@@ -152,9 +152,8 @@ fun SearchPage(
             modifier = Modifier
                 .fillMaxHeight(1f)
         ) {
-            val pagingItems = searchViewModel.mediaFlow.collectAsLazyPagingItems()
             PhotoGrid(
-                pagingItems = pagingItems,
+                pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
                 selectedItemsList = selectedItemsList,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,

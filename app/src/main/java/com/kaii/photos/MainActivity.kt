@@ -335,13 +335,6 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-        // TODO: remove with search moving to its own nav page
-        LaunchedEffect(currentView.value) {
-            if (currentView.value != DefaultTabs.TabTypes.search) {
-                searchViewModel.clear()
-            }
-        }
-
         val navController = LocalNavController.current
 
         // TODO: move to settings, only update when it actually changes
@@ -1243,7 +1236,7 @@ fun MainPages(
     val tabList by mainViewModel.settings.DefaultTabs.getTabList()
         .collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
-    val mediaStoreData = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
+    val mediaStoreData = multiAlbumViewModel.gridMediaFlow.collectAsLazyPagingItems()
     val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
     AnimatedContent(
@@ -1342,7 +1335,7 @@ fun MainPages(
                         selectedItemsList.clear()
                     }
 
-                    val mediaStoreData = favouritesViewModel.mediaFlow.collectAsLazyPagingItems()
+                    val mediaStoreData = favouritesViewModel.gridMediaFlow.collectAsLazyPagingItems()
 
                     PhotoGrid(
                         pagingItems = mediaStoreData,
@@ -1367,7 +1360,7 @@ fun MainPages(
                         )
                     )
 
-                    val trashStoreData = trashViewModel.mediaFlow.collectAsLazyPagingItems()
+                    val trashStoreData = trashViewModel.gridMediaFlow.collectAsLazyPagingItems()
 
                     PhotoGrid(
                         pagingItems = trashStoreData,
