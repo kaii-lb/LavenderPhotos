@@ -70,10 +70,9 @@ data class MediaStoreData(
         return calendar.timeInMillis / 1000
     }
 
-    // TODO
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/
-    fun getDateTakenMonth(): Long {
+    fun getMonthTaken(): Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
             set(Calendar.DAY_OF_MONTH, 1) // months don't start with day numbered 0 :|
