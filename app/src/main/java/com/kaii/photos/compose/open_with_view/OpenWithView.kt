@@ -56,7 +56,6 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -128,7 +127,7 @@ class OpenWithView : ComponentActivity() {
                     LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
                         NavHost(
                             navController = navController,
-                            startDestination = MultiScreenViewType.OpenWithView.name,
+                            startDestination = Screens.OpenWithView,
                             modifier = Modifier
                                 .fillMaxSize(1f),
                             enterTransition = {
@@ -160,7 +159,7 @@ class OpenWithView : ComponentActivity() {
                                 ) { width -> -width } + fadeIn()
                             }
                         ) {
-                            composable(MultiScreenViewType.OpenWithView.name) {
+                            composable<Screens.OpenWithView> {
                                 Content(
                                     uri = uri,
                                     window = window

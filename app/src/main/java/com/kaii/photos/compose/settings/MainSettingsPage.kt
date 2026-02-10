@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
@@ -58,7 +58,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.SettingsGeneralView.name)
+                    navController.navigate(Screens.Settings.MainPage.General)
                 }
             }
 
@@ -73,7 +73,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.PrivacyAndSecurity.name)
+                    navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity)
                 }
             }
 
@@ -88,7 +88,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.SettingsLookAndFeelView.name)
+                    navController.navigate(Screens.Settings.MainPage.LookAndFeel)
                 }
             }
 
@@ -103,7 +103,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.SettingsBehaviourView.name)
+                    navController.navigate(Screens.Settings.MainPage.Behaviour)
                 }
             }
 
@@ -118,7 +118,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.SettingsMemoryAndStorageView.name)
+                    navController.navigate(Screens.Settings.MainPage.MemoryAndStorage)
                 }
             }
 
@@ -133,7 +133,7 @@ fun MainSettingsPage() {
                     modifier = Modifier
                         .padding(0.dp, 6.dp)
                 ) {
-                    navController.navigate(MultiScreenViewType.SettingsDebuggingView.name)
+                    navController.navigate(Screens.Settings.MainPage.Debugging)
                 }
             }
         }

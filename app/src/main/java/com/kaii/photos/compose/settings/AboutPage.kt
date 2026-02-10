@@ -53,15 +53,15 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.FeatureNotAvailableDialog
 import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 
 private const val TAG = "com.kaii.photos.compose.settings.AboutPage"
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun AboutPage(popBackStack: () -> Unit) {
+fun AboutPage() {
     val context = LocalContext.current
     val showVersionInfoDialog = remember { mutableStateOf(false) }
 
@@ -94,9 +94,10 @@ fun AboutPage(popBackStack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
+                    val navController = LocalNavController.current
                     IconButton(
                         onClick = {
-                            popBackStack()
+                            navController.popBackStack()
                         }
                     ) {
                         Icon(
@@ -188,7 +189,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                     position = RowPosition.Middle,
                     goesToOtherPage = true
                 ) {
-                    navController.navigate(MultiScreenViewType.UpdatesPage.name)
+                    navController.navigate(Screens.Settings.Misc.UpdatePage)
                 }
 
                 PreferencesRow(
@@ -238,7 +239,7 @@ fun AboutPage(popBackStack: () -> Unit) {
                     position = RowPosition.Bottom,
                     goesToOtherPage = true
                 ) {
-                    navController.navigate(MultiScreenViewType.LicensePage.name)
+                    navController.navigate(Screens.Settings.Misc.LicensesPage)
                 }
             }
         }

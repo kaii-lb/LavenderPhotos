@@ -86,7 +86,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ImmichMainPage() {
+fun ImmichInfoPage() {
     val navController = LocalNavController.current
 
     val mainViewModel = LocalMainViewModel.current

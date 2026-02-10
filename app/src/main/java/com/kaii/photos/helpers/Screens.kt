@@ -3,23 +3,6 @@ package com.kaii.photos.helpers
 import com.kaii.photos.datastore.AlbumInfo
 import kotlinx.serialization.Serializable
 
-enum class MultiScreenViewType {
-    AboutAndUpdateView,
-    SettingsMainView,
-    SettingsDebuggingView,
-    SettingsGeneralView,
-    SettingsMemoryAndStorageView,
-    SettingsLookAndFeelView,
-    SettingsBehaviourView,
-    OpenWithView,
-    UpdatesPage,
-    DataAndBackup,
-    PrivacyAndSecurity,
-    ImmichMainPage,
-    LicensePage,
-    ExtendedLicensePage
-}
-
 enum class ScreenType {
     Immich,
     Search,
@@ -100,6 +83,9 @@ interface Screens {
     @Serializable
     object Immich : Screens {
         @Serializable
+        object InfoPage
+
+        @Serializable
         data class GridView(
             val albumInfo: AlbumInfo
         ) : Screens
@@ -145,12 +131,6 @@ interface Screens {
         }
 
         @Serializable
-        object Secure : Screens
-
-        @Serializable
-        object Albums : Screens
-
-        @Serializable
         object Search : Screens {
             @Serializable
             data class SinglePhoto(
@@ -164,5 +144,53 @@ interface Screens {
 
         @Serializable
         object Favourites : Screens
+    }
+
+    @Serializable
+    object OpenWithView
+
+    @Serializable
+    object Settings {
+        @Serializable
+        object MainPage {
+            @Serializable
+            object List
+
+            @Serializable
+            object General
+
+            @Serializable
+            object PrivacyAndSecurity
+
+            @Serializable
+            object LookAndFeel
+
+            @Serializable
+            object Behaviour
+
+            @Serializable
+            object MemoryAndStorage
+
+            @Serializable
+            object Debugging
+        }
+
+        @Serializable
+        object Misc {
+            @Serializable
+            object DataAndBackup
+
+            @Serializable
+            object AboutAndUpdates
+
+            @Serializable
+            object UpdatePage
+
+            @Serializable
+            object LicensesPage
+
+            @Serializable
+            object ExtendedLicensePage
+        }
     }
 }

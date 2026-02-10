@@ -71,7 +71,7 @@ import com.kaii.photos.compose.grids.SecureFolderView
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
-import com.kaii.photos.compose.immich.ImmichMainPage
+import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.AboutPage
@@ -81,7 +81,6 @@ import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.ExtendedLicensePage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
 import com.kaii.photos.compose.settings.LicensePage
-import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
@@ -103,7 +102,6 @@ import com.kaii.photos.datastore.User
 import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.startupUpdateCheck
@@ -637,8 +635,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 navigation<Screens.Immich>(
-                    startDestination = Screens.Immich.GridView::class
+                    startDestination = Screens.Immich.InfoPage
                 ) {
+                    composable<Screens.Immich.InfoPage> {
+                        ImmichInfoPage()
+                    }
+
                     composable<Screens.Immich.GridView>(
                         typeMap = mapOf(
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
@@ -766,14 +768,55 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                composable(MultiScreenViewType.AboutAndUpdateView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                navigation<Screens.Settings.MainPage>(
+                    startDestination = Screens.Settings.MainPage.List
+                ) {
+                    composable<Screens.Settings.MainPage.List> {
+                        MainSettingsPage()
+                    }
 
-                    AboutPage {
-                        navController.popBackStack()
+                    composable<Screens.Settings.MainPage.General> {
+                        GeneralSettingsPage()
+                    }
+
+                    composable<Screens.Settings.MainPage.PrivacyAndSecurity> {
+                        PrivacyAndSecurityPage()
+                    }
+
+                    composable<Screens.Settings.MainPage.Behaviour> {
+                        BehaviourSettingsPage()
+                    }
+
+                    composable<Screens.Settings.MainPage.MemoryAndStorage> {
+                        MemoryAndStorageSettingsPage()
+                    }
+
+                    composable<Screens.Settings.MainPage.Debugging> {
+                        DebuggingSettingsPage()
+                    }
+                }
+
+                navigation<Screens.Settings.Misc>(
+                    startDestination = Screens.Settings.Misc.DataAndBackup
+                ) {
+                    composable<Screens.Settings.Misc.DataAndBackup> {
+                        DataAndBackupPage()
+                    }
+
+                    composable<Screens.Settings.Misc.AboutAndUpdates> {
+                        AboutPage()
+                    }
+
+                    composable<Screens.Settings.Misc.UpdatePage> {
+                        UpdatesPage()
+                    }
+
+                    composable<Screens.Settings.Misc.LicensesPage> {
+                        LicensePage()
+                    }
+
+                    composable<Screens.Settings.Misc.ExtendedLicensePage> {
+                        ExtendedLicensePage()
                     }
                 }
 
@@ -834,96 +877,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable(MultiScreenViewType.SettingsMainView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    MainSettingsPage()
-                }
-
-                composable(MultiScreenViewType.SettingsDebuggingView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    DebuggingSettingsPage()
-                }
-
-                composable(MultiScreenViewType.SettingsGeneralView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    GeneralSettingsPage()
-                }
-
-                composable(MultiScreenViewType.SettingsMemoryAndStorageView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    MemoryAndStorageSettingsPage()
-                }
-
-                composable(MultiScreenViewType.SettingsLookAndFeelView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    LookAndFeelSettingsPage()
-                }
-
-                composable(MultiScreenViewType.SettingsBehaviourView.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    BehaviourSettingsPage()
-                }
-
-                composable(MultiScreenViewType.UpdatesPage.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    UpdatesPage()
-                }
-
-                composable(MultiScreenViewType.DataAndBackup.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    DataAndBackupPage()
-                }
-
-                composable(MultiScreenViewType.PrivacyAndSecurity.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    PrivacyAndSecurityPage()
-                }
-
-                composable(MultiScreenViewType.ImmichMainPage.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    ImmichMainPage()
-                }
-
                 composable<Screens.VideoEditor>(
                     typeMap = mapOf(
                         typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
@@ -980,24 +933,6 @@ class MainActivity : ComponentActivity() {
                         isFromOpenWithView = false,
                         screenType = screen.type
                     )
-                }
-
-                composable(MultiScreenViewType.LicensePage.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    LicensePage()
-                }
-
-                composable(MultiScreenViewType.ExtendedLicensePage.name) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
-                    ExtendedLicensePage()
                 }
             }
         }

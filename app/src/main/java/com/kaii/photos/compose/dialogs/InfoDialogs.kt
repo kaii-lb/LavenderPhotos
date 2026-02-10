@@ -79,8 +79,8 @@ import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
@@ -483,7 +483,7 @@ fun MainAppDialog(
                     position = if (currentTab == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
                 ) {
                     showDialog.value = false
-                    navController.navigate(MultiScreenViewType.DataAndBackup.name)
+                    navController.navigate(Screens.Settings.Misc.DataAndBackup)
                 }
 
                 val showExtraSecureItem by mainViewModel.settings.LookAndFeel
@@ -509,7 +509,7 @@ fun MainAppDialog(
                     position = RowPosition.Middle,
                 ) {
                     showDialog.value = false
-                    navController.navigate(MultiScreenViewType.SettingsMainView.name)
+                    navController.navigate(Screens.Settings.MainPage)
                 }
 
                 DialogClickableItem(
@@ -518,7 +518,7 @@ fun MainAppDialog(
                     position = RowPosition.Bottom,
                 ) {
                     showDialog.value = false
-                    navController.navigate(MultiScreenViewType.AboutAndUpdateView.name)
+                    navController.navigate(Screens.Settings.Misc.AboutAndUpdates)
                 }
             }
         }

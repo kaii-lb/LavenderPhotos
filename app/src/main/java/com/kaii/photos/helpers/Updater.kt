@@ -208,7 +208,7 @@ fun startupUpdateCheck(
                             duration = SnackbarDuration.Short,
                             actionIcon = R.drawable.download,
                             action = {
-                                navController.navigate(MultiScreenViewType.UpdatesPage.name)
+                                navController.navigate(Screens.Settings.Misc.UpdatePage)
                             }
                         )
                     )
