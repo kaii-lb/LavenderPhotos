@@ -72,9 +72,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -125,7 +123,7 @@ class MediaPicker : ComponentActivity() {
 
                     else -> 0
                 }
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
+            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
 
             PhotosTheme(
                 theme = followDarkTheme,
@@ -161,7 +159,7 @@ class MediaPicker : ComponentActivity() {
         incomingIntent: Intent
     ) {
         val context = LocalContext.current
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
         val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
         val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
         val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()

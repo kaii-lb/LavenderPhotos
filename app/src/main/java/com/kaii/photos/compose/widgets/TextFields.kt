@@ -75,7 +75,6 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DialogClickableItem
 import com.kaii.photos.compose.dialogs.DialogExpandableItem
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.filename
@@ -325,7 +324,7 @@ fun MainDialogUserInfo(
         val resources = LocalResources.current
         val mainViewModel = LocalMainViewModel.current
 
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         var originalName by remember(loginState, immichInfo) {
             mutableStateOf(

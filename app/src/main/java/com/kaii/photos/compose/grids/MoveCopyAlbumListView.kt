@@ -75,7 +75,6 @@ import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
@@ -303,8 +302,8 @@ fun AlbumsListItem(
 
     val mainViewModel = LocalMainViewModel.current
     val coroutineScope = rememberCoroutineScope()
-    val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
-    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     val filePermissionManager = rememberFilePermissionManager(
         onGranted = {

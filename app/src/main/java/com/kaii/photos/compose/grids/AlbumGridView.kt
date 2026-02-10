@@ -89,9 +89,7 @@ import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -114,10 +112,10 @@ fun AlbumsGridView(
 
     val listOfDirs by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
-    val sortMode by mainViewModel.settings.AlbumsList.getAlbumSortMode()
+    val sortMode by mainViewModel.settings.albums.getAlbumSortMode()
         .collectAsStateWithLifecycle(initialValue = AlbumSortMode.Custom)
 
-    val sortByDescending by mainViewModel.settings.AlbumsList
+    val sortByDescending by mainViewModel.settings.albums
         .getSortByDescending()
         .collectAsStateWithLifecycle(initialValue = true)
 
@@ -200,7 +198,7 @@ fun AlbumsGridView(
         if (albums.value.toSet() != listOfDirs.toSet()) return@LaunchedEffect // we only care for order changes here
 
         // update the list to reflect custom order
-        mainViewModel.settings.AlbumsList.set(albums.value)
+        mainViewModel.settings.albums.set(albums.value)
     }
 
     Column(
@@ -303,7 +301,7 @@ fun AlbumsGridView(
                                     change.position - (targetItem.offset + targetItem.size.center).toOffset()
 
                                 albums.value = newList.distinctBy { it.id }
-                                if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.AlbumsList.setAlbumSortMode(
+                                if (sortMode != AlbumSortMode.Custom) mainViewModel.settings.albums.setAlbumSortMode(
                                     AlbumSortMode.Custom
                                 )
                             } else if (currentLazyItem != null) {
@@ -347,7 +345,7 @@ fun AlbumsGridView(
                     span = { GridItemSpan(maxLineSpan) },
                     key = "FavAndTrash"
                 ) {
-                    val migrateFav by mainViewModel.settings.Versions.getUpdateFav().collectAsStateWithLifecycle(initialValue = true)
+                    val migrateFav by mainViewModel.settings.versions.getUpdateFav().collectAsStateWithLifecycle(initialValue = true)
 
                     CategoryList(
                         navigateToFavourites = {
@@ -651,7 +649,7 @@ private fun SortModeHeader(
     modifier: Modifier = Modifier
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+    val tabList by mainViewModel.settings.defaultTabs.getTabList()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     LazyRow(
@@ -665,12 +663,12 @@ private fun SortModeHeader(
         )
     ) {
         item {
-            val sortByDescending by mainViewModel.settings.AlbumsList.getSortByDescending()
+            val sortByDescending by mainViewModel.settings.albums.getSortByDescending()
                 .collectAsStateWithLifecycle(initialValue = true)
 
             OutlinedIconButton(
                 onClick = {
-                    mainViewModel.settings.AlbumsList.setSortByDescending(!sortByDescending)
+                    mainViewModel.settings.albums.setSortByDescending(!sortByDescending)
                 },
                 enabled = sortMode != AlbumSortMode.Custom
             ) {
@@ -695,7 +693,7 @@ private fun SortModeHeader(
         item {
             OutlinedButton(
                 onClick = {
-                    mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.LastModified)
+                    mainViewModel.settings.albums.setAlbumSortMode(AlbumSortMode.LastModified)
                 },
                 colors =
                     if (sortMode == AlbumSortMode.LastModified) ButtonDefaults.buttonColors()
@@ -712,7 +710,7 @@ private fun SortModeHeader(
         item {
             OutlinedButton(
                 onClick = {
-                    mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Alphabetically)
+                    mainViewModel.settings.albums.setAlbumSortMode(AlbumSortMode.Alphabetically)
                 },
                 colors =
                     if (sortMode == AlbumSortMode.Alphabetically) ButtonDefaults.buttonColors()
@@ -729,7 +727,7 @@ private fun SortModeHeader(
         item {
             OutlinedButton(
                 onClick = {
-                    mainViewModel.settings.AlbumsList.setAlbumSortMode(AlbumSortMode.Custom)
+                    mainViewModel.settings.albums.setAlbumSortMode(AlbumSortMode.Custom)
                 },
                 colors =
                     if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()

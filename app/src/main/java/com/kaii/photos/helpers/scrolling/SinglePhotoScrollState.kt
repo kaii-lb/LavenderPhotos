@@ -19,7 +19,6 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.models.main_activity.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,11 +74,11 @@ class SinglePhotoScrollState(
 
     init {
         coroutineScope.launch {
-            mainViewModel.settings.Video.getMuteOnStart().collect {
+            mainViewModel.settings.video.getMuteOnStart().collect {
                 _videoWasMuted = it && !isOpenWithView
             }
 
-            mainViewModel.settings.Video.getShouldAutoPlay().collect {
+            mainViewModel.settings.video.getShouldAutoPlay().collect {
                 _videoAutoplay.value = it || isOpenWithView
             }
         }
@@ -90,7 +89,7 @@ class SinglePhotoScrollState(
     }
 
     fun resetMute() = coroutineScope.launch {
-        _videoWasMuted = mainViewModel.settings.Video.getMuteOnStart().first() && !isOpenWithView
+        _videoWasMuted = mainViewModel.settings.video.getMuteOnStart().first() && !isOpenWithView
     }
 
     fun setWasMuted(value: Boolean) {

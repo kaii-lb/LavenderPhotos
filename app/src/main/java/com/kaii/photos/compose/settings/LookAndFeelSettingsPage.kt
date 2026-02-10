@@ -47,7 +47,6 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
-import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.datetime.TimeZone
@@ -79,7 +78,7 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
-                val followDarkMode by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
+                val followDarkMode by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
                     .collectAsStateWithLifecycle(initialValue = 0)
 
                 PreferencesThreeStateSwitchRow(
@@ -100,7 +99,7 @@ fun LookAndFeelSettingsPage() {
                     position = RowPosition.Single,
                     showBackground = false
                 ) {
-                    mainViewModel.settings.LookAndFeel.setFollowDarkMode(it)
+                    mainViewModel.settings.lookAndFeel.setFollowDarkMode(it)
                 }
 
                 PreferencesSwitchRow(
@@ -112,7 +111,7 @@ fun LookAndFeelSettingsPage() {
                     checked = followDarkMode == 3,
                     enabled = followDarkMode == 3 || followDarkMode == 1 || (followDarkMode == 0 && isSystemInDarkTheme())
                 ) { checked ->
-                    mainViewModel.settings.LookAndFeel.setFollowDarkMode(if (checked) 3 else 1)
+                    mainViewModel.settings.lookAndFeel.setFollowDarkMode(if (checked) 3 else 1)
                 }
             }
 
@@ -194,7 +193,7 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
-                val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
+                val useRoundedCorners by mainViewModel.settings.lookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.look_and_feel_rounded_corners),
@@ -204,7 +203,7 @@ fun LookAndFeelSettingsPage() {
                     showBackground = false,
                     checked = useRoundedCorners
                 ) { checked ->
-                    mainViewModel.settings.LookAndFeel.setUseRoundedCorners(checked)
+                    mainViewModel.settings.lookAndFeel.setUseRoundedCorners(checked)
                 }
             }
 
@@ -215,7 +214,7 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
-                val showExtraSecure by mainViewModel.settings.LookAndFeel.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
+                val showExtraSecure by mainViewModel.settings.lookAndFeel.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.look_and_feel_extra_secure_nav),
@@ -225,7 +224,7 @@ fun LookAndFeelSettingsPage() {
                     showBackground = false,
                     checked = showExtraSecure
                 ) { checked ->
-                    mainViewModel.settings.LookAndFeel.setShowExtraSecureNav(checked)
+                    mainViewModel.settings.lookAndFeel.setShowExtraSecureNav(checked)
                 }
             }
 
@@ -247,7 +246,7 @@ fun LookAndFeelSettingsPage() {
                         value = currentState.toFloat(),
                         onValueChange = {
                             currentState = it.roundToInt()
-                            mainViewModel.settings.LookAndFeel.setColumnSize(it.roundToInt())
+                            mainViewModel.settings.lookAndFeel.setColumnSize(it.roundToInt())
                         },
                         steps = 3,
                         valueRange = 2f..6f,
@@ -278,7 +277,7 @@ fun LookAndFeelSettingsPage() {
                         value = currentState.toFloat(),
                         onValueChange = {
                             currentState = it.roundToInt()
-                            mainViewModel.settings.LookAndFeel.setAlbumColumnSize(it.roundToInt())
+                            mainViewModel.settings.lookAndFeel.setAlbumColumnSize(it.roundToInt())
                         },
                         steps = 1,
                         valueRange = 2f..4f,
@@ -308,7 +307,7 @@ fun LookAndFeelSettingsPage() {
                     showBackground = false,
                     checked = useBlackBackground
                 ) { checked ->
-                    mainViewModel.settings.LookAndFeel.setUseBlackBackgroundForViews(checked)
+                    mainViewModel.settings.lookAndFeel.setUseBlackBackgroundForViews(checked)
                 }
             }
         }

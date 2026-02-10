@@ -47,7 +47,6 @@ import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.Behaviour
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -69,11 +68,11 @@ fun MainPages(
 ) {
     val mainViewModel = LocalMainViewModel.current
 
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
+    val tabList by mainViewModel.settings.defaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
 
-    val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-    val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = null)
+    val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
+    val defaultTab by mainViewModel.settings.defaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = null)
 
     if (defaultTab == null) return
 

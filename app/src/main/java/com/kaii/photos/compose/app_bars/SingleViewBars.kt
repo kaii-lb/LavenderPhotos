@@ -131,7 +131,6 @@ import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.TextStylingConstants
@@ -433,7 +432,7 @@ fun VideoEditorTopBar(
             var showDropDown by remember { mutableStateOf(false) }
 
             val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             var overwrite by remember { mutableStateOf(false) }
 
             LaunchedEffect(overwriteByDefault) {
@@ -479,7 +478,7 @@ fun VideoEditorTopBar(
                     val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
-                    val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+                    val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
@@ -955,7 +954,7 @@ fun ImageEditorTopBar(
             var showDropDown by remember { mutableStateOf(false) }
 
             val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
 
             LaunchedEffect(overwriteByDefault) {
                 setOverwrite(overwriteByDefault)

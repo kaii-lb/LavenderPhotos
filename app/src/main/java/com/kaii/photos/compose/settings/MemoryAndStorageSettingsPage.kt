@@ -36,8 +36,6 @@ import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.Storage
-import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
@@ -62,7 +60,7 @@ fun MemoryAndStorageSettingsPage() {
             }
 
             item {
-                val autoDeleteInterval by mainViewModel.settings.TrashBin.getAutoDeleteInterval()
+                val autoDeleteInterval by mainViewModel.settings.trashBin.getAutoDeleteInterval()
                     .collectAsStateWithLifecycle(initialValue = 0)
                 val showDeleteIntervalDialog = remember { mutableStateOf(false) }
 
@@ -95,7 +93,7 @@ fun MemoryAndStorageSettingsPage() {
                     showBackground = false,
                     checked = autoDeleteInterval != 0,
                     onSwitchClick = { isChecked ->
-                        mainViewModel.settings.TrashBin.setAutoDeleteInterval(
+                        mainViewModel.settings.trashBin.setAutoDeleteInterval(
                             if (isChecked) 30 else 0
                         )
                     },
@@ -119,9 +117,9 @@ fun MemoryAndStorageSettingsPage() {
             item {
                 val resources = LocalResources.current
                 val showThumbnailSizeDialog = remember { mutableStateOf(false) }
-                val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
+                val thumbnailSize by mainViewModel.settings.storage.getThumbnailSize()
                     .collectAsStateWithLifecycle(initialValue = 0)
-                val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
+                val cacheThumbnails by mainViewModel.settings.storage.getCacheThumbnails()
                     .collectAsStateWithLifecycle(initialValue = true)
 
                 val memoryOrStorage by remember {
@@ -156,7 +154,7 @@ fun MemoryAndStorageSettingsPage() {
                     showBackground = false,
                     checked = cacheThumbnails
                 ) { isChecked ->
-                    mainViewModel.settings.Storage.setCacheThumbnails(isChecked)
+                    mainViewModel.settings.storage.setCacheThumbnails(isChecked)
                 }
 
                 PreferencesSwitchRow(
@@ -167,7 +165,7 @@ fun MemoryAndStorageSettingsPage() {
                     showBackground = false,
                     checked = thumbnailSize != 0,
                     onSwitchClick = { isChecked ->
-                        mainViewModel.settings.Storage.setThumbnailSize(
+                        mainViewModel.settings.storage.setThumbnailSize(
                             if (isChecked) 256 else 0
                         )
                     },
@@ -203,7 +201,7 @@ fun MemoryAndStorageSettingsPage() {
                     dialogTitle = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
                     dialogBody = stringResource(id = R.string.settings_clear_cache_desc)
                 ) {
-                    mainViewModel.settings.Storage.clearThumbnailCache()
+                    mainViewModel.settings.storage.clearThumbnailCache()
                 }
             }
         }

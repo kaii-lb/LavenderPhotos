@@ -75,7 +75,6 @@ import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -111,7 +110,7 @@ fun VideoEditor(
     val isPlaying = remember { mutableStateOf(false) }
 
     val mainViewModel = LocalMainViewModel.current
-    val startMuted by mainViewModel.settings.Video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+    val startMuted by mainViewModel.settings.video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
     val isMuted = remember(startMuted) { mutableStateOf(startMuted) }
 
     /** In Seconds */
@@ -726,12 +725,8 @@ fun VideoEditor(
 
                     videoEditingState.setOffset(
                         Offset(
-                            x = with(localDensity) {
-                                videoEditingState.scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
-                            },
-                            y = with(localDensity) {
-                                videoEditingState.scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
-                            }
+                            x = videoEditingState.scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2),
+                            y = videoEditingState.scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
                         )
                     )
                 }

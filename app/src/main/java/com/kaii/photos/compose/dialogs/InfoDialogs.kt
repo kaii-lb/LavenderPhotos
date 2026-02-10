@@ -75,10 +75,7 @@ import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
@@ -214,7 +211,7 @@ fun SingleAlbumDialog(
                                 name = fileName.value,
                                 paths = setOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
                             )
-                            mainViewModel.settings.AlbumsList.edit(
+                            mainViewModel.settings.albums.edit(
                                 id = dynamicAlbum.id,
                                 newInfo = newInfo
                             )
@@ -263,7 +260,7 @@ fun SingleAlbumDialog(
                     doAction = {
                         val newInfo = dynamicAlbum.copy(name = fileName.value)
 
-                        mainViewModel.settings.AlbumsList.edit(
+                        mainViewModel.settings.albums.edit(
                             id = dynamicAlbum.id,
                             newInfo = newInfo
                         )
@@ -288,7 +285,7 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.remove(dynamicAlbum.id)
+                mainViewModel.settings.albums.remove(dynamicAlbum.id)
                 showDialog.value = false
 
                 try {
@@ -328,7 +325,7 @@ fun SingleAlbumDialog(
                     .height(if (!isEditingFileName.value) 42.dp else 0.dp)
                     .padding(8.dp, 0.dp)
             ) {
-                mainViewModel.settings.AlbumsList.edit(
+                mainViewModel.settings.albums.edit(
                     id = dynamicAlbum.id,
                     newInfo = dynamicAlbum.copy(isPinned = !dynamicAlbum.isPinned)
                 )
@@ -393,7 +390,7 @@ fun MainAppDialog(
     val navController = LocalNavController.current
     val vibratorManager = rememberVibratorManager()
     val userInfo by loginState.state.collectAsStateWithLifecycle()
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
+    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
 
     val currentTab by remember {
         derivedStateOf {
@@ -414,7 +411,7 @@ fun MainAppDialog(
                 showDialog.value = false
             }
 
-            val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+            val alwaysShowInfo by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
             if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
                 MainDialogUserInfo(
                     loginState = userInfo,
@@ -486,7 +483,7 @@ fun MainAppDialog(
                     navController.navigate(Screens.Settings.Misc.DataAndBackup)
                 }
 
-                val showExtraSecureItem by mainViewModel.settings.LookAndFeel
+                val showExtraSecureItem by mainViewModel.settings.lookAndFeel
                     .getShowExtraSecureNav()
                     .collectAsStateWithLifecycle(initialValue = false)
 

@@ -49,8 +49,6 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -156,7 +154,7 @@ fun SingleAlbumViewTopBar(
                                             paths = selectedPaths
                                         )
 
-                                    mainViewModel.settings.AlbumsList.edit(
+                                    mainViewModel.settings.albums.edit(
                                         id = dynamicAlbum.id,
                                         newInfo = newInfo
                                     )
@@ -1003,11 +1001,11 @@ fun FavouritesBottomAppBarItems(
     val mainViewModel = LocalMainViewModel.current
     val showDeleteDialog = remember { mutableStateOf(false) }
 
-    val doNotTrash by mainViewModel.settings.Permissions
+    val doNotTrash by mainViewModel.settings.permissions
         .getDoNotTrash()
         .collectAsStateWithLifecycle(initialValue = true)
 
-    val confirmToDelete by mainViewModel.settings.Permissions
+    val confirmToDelete by mainViewModel.settings.permissions
         .getConfirmToDelete()
         .collectAsStateWithLifecycle(initialValue = true)
 

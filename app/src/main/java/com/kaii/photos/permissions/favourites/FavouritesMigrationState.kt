@@ -18,7 +18,6 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.permissions.MediaPermissionsState
 import com.kaii.photos.permissions.rememberMediaPermissionsState
@@ -145,7 +144,7 @@ fun rememberFavouritesMigrationState(): FavouritesMigrationState {
                 }
             },
             onDone = {
-                mainViewModel.settings.Versions.setUpdateFav(false)
+                mainViewModel.settings.versions.setUpdateFav(false)
             }
         )
     }

@@ -85,9 +85,6 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Behaviour
-import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.Storage
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -178,9 +175,9 @@ fun DeviceMedia(
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val cacheThumbnails by mainViewModel.settings.Storage.getCacheThumbnails()
+        val cacheThumbnails by mainViewModel.settings.storage.getCacheThumbnails()
             .collectAsStateWithLifecycle(initialValue = false)
-        val thumbnailSize by mainViewModel.settings.Storage.getThumbnailSize()
+        val thumbnailSize by mainViewModel.settings.storage.getThumbnailSize()
             .collectAsStateWithLifecycle(initialValue = 0)
 
         val scrollSpeed = remember { mutableFloatStateOf(0f) }
@@ -198,8 +195,8 @@ fun DeviceMedia(
 
         val context = LocalContext.current
         val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
-        val useRoundedCorners by mainViewModel.settings.LookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
-        val openVideosExternally by mainViewModel.settings.Behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
+        val useRoundedCorners by mainViewModel.settings.lookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
+        val openVideosExternally by mainViewModel.settings.behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
 
         // val resources = LocalResources.current
         // val view = LocalView.current

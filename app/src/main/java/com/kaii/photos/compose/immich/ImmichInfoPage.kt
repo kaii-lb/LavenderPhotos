@@ -77,7 +77,6 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
@@ -90,7 +89,7 @@ fun ImmichInfoPage() {
     val navController = LocalNavController.current
 
     val mainViewModel = LocalMainViewModel.current
-    val loginInfo by mainViewModel.settings.Immich.getImmichBasicInfo()
+    val loginInfo by mainViewModel.settings.immich.getImmichBasicInfo()
         .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
     val loginState = rememberLoginState(baseUrl = loginInfo.endpoint)
@@ -151,7 +150,7 @@ fun ImmichInfoPage() {
                             when {
                                 // TODO: move ping to be non blocking
                                 loginState.validateServerAddress(address = value) && serverState.ping(address = value) -> {
-                                    mainViewModel.settings.Immich.setImmichBasicInfo(
+                                    mainViewModel.settings.immich.setImmichBasicInfo(
                                         ImmichBasicInfo(
                                             endpoint = value.removeSuffix("/"),
                                             accessToken = loginInfo.accessToken,
@@ -202,7 +201,7 @@ fun ImmichInfoPage() {
                                 loginState.logout(accessToken = loginInfo.accessToken)
                             }
 
-                            mainViewModel.settings.Immich.setImmichBasicInfo(ImmichBasicInfo.Empty)
+                            mainViewModel.settings.immich.setImmichBasicInfo(ImmichBasicInfo.Empty)
                         }
 
                         showClearEndpointDialog.value = false
@@ -265,7 +264,7 @@ fun ImmichInfoPage() {
                             if (loginInfo.accessToken == "") return@launch
 
                             loginState.logout(accessToken = loginInfo.accessToken).invokeOnCompletion {
-                                mainViewModel.settings.Immich.setImmichBasicInfo(
+                                mainViewModel.settings.immich.setImmichBasicInfo(
                                     ImmichBasicInfo.Empty.copy(endpoint = loginInfo.endpoint)
                                 )
                             }
@@ -509,7 +508,7 @@ fun ImmichInfoPage() {
             }
 
             item {
-                val alwaysShowInfo by mainViewModel.settings.Immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+                val alwaysShowInfo by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.immich_always_show_user_info),
@@ -519,7 +518,7 @@ fun ImmichInfoPage() {
                     showBackground = false,
                     checked = alwaysShowInfo,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Immich.setAlwaysShowUserInfo(checked)
+                        mainViewModel.settings.immich.setAlwaysShowUserInfo(checked)
                     }
                 )
             }

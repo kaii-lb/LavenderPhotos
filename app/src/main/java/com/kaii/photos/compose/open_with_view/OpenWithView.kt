@@ -53,8 +53,7 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Immich
-import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.parent
@@ -98,7 +97,7 @@ class OpenWithView : ComponentActivity() {
                     else -> 0
                 }
 
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
+            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialDarkMode
                 )
@@ -342,12 +341,10 @@ private fun InitSinglePhotoView(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
-    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = null)
-
-    if (immichInfo == null) return // TODO: ...remove
+    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
@@ -357,11 +354,19 @@ private fun InitSinglePhotoView(
                     incomingData.absolutePath.parent()
                 )
             ),
-            info = immichInfo!!,
-            sortMode = currentSortMode,
+            info = immichInfo,
+            sortMode = sortMode,
             format = displayDateFormat
         )
     )
+
+    LaunchedEffect(immichInfo) {
+        multiAlbumViewModel.update(
+            sortMode = sortMode,
+            format = displayDateFormat,
+            accessToken = immichInfo.accessToken
+        )
+    }
 
     val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
     val index = remember(items.itemCount, items.loadState) {

@@ -44,8 +44,6 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Debugging
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
@@ -69,8 +67,8 @@ fun DebuggingSettingsPage() {
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
-				.padding(innerPadding)
-				.background(MaterialTheme.colorScheme.background),
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
@@ -80,7 +78,7 @@ fun DebuggingSettingsPage() {
 
             item {
                 val context = LocalContext.current
-                val shouldRecordLogs by mainViewModel.settings.Debugging.getRecordLogs()
+                val shouldRecordLogs by mainViewModel.settings.debugging.getRecordLogs()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 val coroutineScope = rememberCoroutineScope()
@@ -97,7 +95,7 @@ fun DebuggingSettingsPage() {
                         showLogTypeDialog.value = !showLogTypeDialog.value
                     },
                     onSwitchClick = {
-                        mainViewModel.settings.Debugging.setRecordLogs(it)
+                        mainViewModel.settings.debugging.setRecordLogs(it)
                     }
                 )
 
@@ -206,7 +204,7 @@ fun DebuggingSettingsPage() {
                             ) {
                                 false
                             } else {
-                                mainViewModel.settings.AlbumsList.add(
+                                mainViewModel.settings.albums.add(
                                     listOf(
                                         AlbumInfo(
                                             id = file.hashCode(),
@@ -290,16 +288,16 @@ fun DebuggingSettingsPage() {
                     position = RowPosition.Single,
                     showBackground = false
                 ) {
-                   navController.navigate(
-                       Screens.Immich.GridView(
-                           albumInfo = AlbumInfo(
-                               id = Random.nextInt(),
-                               name = "Immich Album",
-                               paths = emptySet(),
-                               immichId = "a2d6a371-a7b3-4965-815d-e1e61265db6e"
-                           )
-                       )
-                   )
+                    navController.navigate(
+                        Screens.Immich.GridView(
+                            albumInfo = AlbumInfo(
+                                id = Random.nextInt(),
+                                name = "Immich Album",
+                                paths = emptySet(),
+                                immichId = "a2d6a371-a7b3-4965-815d-e1e61265db6e"
+                            )
+                        )
+                    )
                 }
             }
         }

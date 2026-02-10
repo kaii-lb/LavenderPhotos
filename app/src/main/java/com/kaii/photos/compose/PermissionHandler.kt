@@ -68,7 +68,6 @@ import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.RowPosition
 
 @Composable
@@ -92,15 +91,15 @@ fun PermissionHandler(
 
         Row(
             modifier = Modifier
-				.padding(
-					safeDrawingPadding.first,
-					innerPadding.calculateTopPadding() + 8.dp,
-					safeDrawingPadding.second,
-					innerPadding.calculateBottomPadding()
-				)
-				.fillMaxSize()
-				.background(MaterialTheme.colorScheme.background)
-				.padding(16.dp, 8.dp),
+                .padding(
+                    safeDrawingPadding.first,
+                    innerPadding.calculateTopPadding() + 8.dp,
+                    safeDrawingPadding.second,
+                    innerPadding.calculateBottomPadding()
+                )
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp, 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
@@ -321,7 +320,7 @@ fun PermissionHandler(
                                     isGranted = granted
                                 )
 
-                                mainViewModel.settings.Permissions.setIsMediaManager(granted)
+                                mainViewModel.settings.permissions.setIsMediaManager(granted)
                             }
 
                             val resources = LocalResources.current
@@ -364,8 +363,8 @@ fun PermissionHandler(
                 if (!isLandscape) {
                     Box(
                         modifier = Modifier
-							.fillMaxWidth(1f)
-							.height(64.dp)
+                            .fillMaxWidth(1f)
+                            .height(64.dp)
                     ) {
                         FilledTonalButton(
                             onClick = {
@@ -394,8 +393,8 @@ fun PermissionHandler(
             if (isLandscape) {
                 Column(
                     modifier = Modifier
-						.weight(1f)
-						.fillMaxHeight(1f),
+                        .weight(1f)
+                        .fillMaxHeight(1f),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -438,18 +437,18 @@ fun PermissionButton(
 
     Box(
         modifier = Modifier
-			.fillMaxWidth(1f)
-			.height(104.dp)
-			.clip(shape)
-			.background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
-			.then(clickModifier)
-			.padding(16.dp, 12.dp)
+            .fillMaxWidth(1f)
+            .height(104.dp)
+            .clip(shape)
+            .background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
+            .then(clickModifier)
+            .padding(16.dp, 12.dp)
     ) {
         Column(
             modifier = Modifier
-				.wrapContentWidth()
-				.fillMaxHeight(1f)
-				.align(Alignment.CenterStart),
+                .wrapContentWidth()
+                .fillMaxHeight(1f)
+                .align(Alignment.CenterStart),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
         ) {
@@ -475,10 +474,10 @@ fun PermissionButton(
         if (granted) {
             Column(
                 modifier = Modifier
-					.fillMaxHeight(1f)
-					.width(32.dp)
-					.background(MaterialTheme.colorScheme.primary)
-					.align(Alignment.CenterEnd),
+                    .fillMaxHeight(1f)
+                    .width(32.dp)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .align(Alignment.CenterEnd),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -509,10 +508,10 @@ fun PermissionDeniedDialog(
     ) {
         Column(
             modifier = Modifier
-				.wrapContentSize()
-				.clip(RoundedCornerShape(32.dp))
-				.background(MaterialTheme.colorScheme.background)
-				.padding(16.dp),
+                .wrapContentSize()
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -583,20 +582,20 @@ fun FullWidthDialogButton(
 
     Row(
         modifier = modifier
-			.fillMaxWidth(1f)
-			.height(48.dp)
-			.clip(shape)
-			.background(
-				if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-			)
-			.then(
-				if (enabled) {
-					Modifier.clickable {
-						onClick()
-					}
-				} else Modifier
-			)
-			.padding(8.dp),
+            .fillMaxWidth(1f)
+            .height(48.dp)
+            .clip(shape)
+            .background(
+                if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+            )
+            .then(
+                if (enabled) {
+                    Modifier.clickable {
+                        onClick()
+                    }
+                } else Modifier
+            )
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {

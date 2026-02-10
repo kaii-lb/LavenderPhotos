@@ -81,6 +81,7 @@ import com.kaii.photos.compose.settings.DebuggingSettingsPage
 import com.kaii.photos.compose.settings.ExtendedLicensePage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
 import com.kaii.photos.compose.settings.LicensePage
+import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
@@ -91,15 +92,7 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Debugging
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.datastore.Storage
-import com.kaii.photos.datastore.User
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
@@ -159,13 +152,13 @@ class MainActivity : ComponentActivity() {
         )[MainViewModel::class]
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            mainViewModel.settings.Permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+            mainViewModel.settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
         }
 
         mainViewModel.startupPermissionCheck(applicationContext)
 
         val initialFollowDarkTheme = runBlocking {
-            mainViewModel.settings.LookAndFeel.getFollowDarkMode().first()
+            mainViewModel.settings.lookAndFeel.getFollowDarkMode().first()
         }
 
         // TODO: uncook this
@@ -183,7 +176,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
+            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialFollowDarkTheme
                 )
@@ -231,11 +224,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val hasClearedCache by mainViewModel.settings.Versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
+            val hasClearedCache by mainViewModel.settings.versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
             LaunchedEffect(hasClearedCache) {
                 if (!hasClearedCache) {
-                    mainViewModel.settings.Storage.clearThumbnailCache()
-                    mainViewModel.settings.Versions.setHasClearedGlideCache(true)
+                    mainViewModel.settings.storage.clearThumbnailCache()
+                    mainViewModel.settings.versions.setHasClearedGlideCache(true)
                 }
             }
         }
@@ -254,7 +247,7 @@ class MainActivity : ComponentActivity() {
         val logPath = "${context.appStorageDir}/log.txt"
         Log.d(TAG, "Log save path is $logPath")
 
-        val canRecordLogs by mainViewModel.settings.Debugging.getRecordLogs()
+        val canRecordLogs by mainViewModel.settings.debugging.getRecordLogs()
             .collectAsStateWithLifecycle(initialValue = false)
 
         LaunchedEffect(canRecordLogs) {
@@ -265,7 +258,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val navController = LocalNavController.current
-        val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
         val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
         val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
         val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
@@ -783,6 +776,10 @@ class MainActivity : ComponentActivity() {
                         PrivacyAndSecurityPage()
                     }
 
+                    composable<Screens.Settings.MainPage.LookAndFeel> {
+                        LookAndFeelSettingsPage()
+                    }
+
                     composable<Screens.Settings.MainPage.Behaviour> {
                         BehaviourSettingsPage()
                     }
@@ -938,11 +935,11 @@ class MainActivity : ComponentActivity() {
         }
 
         val coroutineScope = rememberCoroutineScope()
-        val checkForUpdatesOnStartup by mainViewModel.settings.Versions.getCheckUpdatesOnStartup()
+        val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
         // TODO: fix not working
-        val firstStartup by mainViewModel.settings.User.getFirstStartup()
+        val firstStartup by mainViewModel.settings.user.getFirstStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
         if (firstStartup) {
@@ -965,9 +962,9 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    mainViewModel.settings.AlbumsList.add(list = tryGetAllAlbums(context = context))
+                    mainViewModel.settings.albums.add(list = tryGetAllAlbums(context = context))
                     isLoading.value = false
-                    mainViewModel.settings.User.setFirstStartup(false)
+                    mainViewModel.settings.user.setFirstStartup(false)
                 }
             }
         }

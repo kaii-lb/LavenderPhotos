@@ -51,7 +51,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.compose.app_bars.WallpaperSetterBottomBar
 import com.kaii.photos.compose.app_bars.WallpaperSetterTopBar
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
-import com.kaii.photos.datastore.LookAndFeel
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
@@ -79,7 +78,7 @@ class WallpaperSetter : ComponentActivity() {
 
                     else -> 0
                 }
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
+            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
 
             PhotosTheme(
                 theme = followDarkTheme,

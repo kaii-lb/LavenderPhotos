@@ -85,8 +85,6 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -744,7 +742,7 @@ fun AlbumAddChoiceDialog(
         ) {
             val mainViewModel = LocalMainViewModel.current
             val activityLauncher = createDirectoryPicker { path, basePath ->
-                if (path != null && basePath != null) mainViewModel.settings.AlbumsList.add(
+                if (path != null && basePath != null) mainViewModel.settings.albums.add(
                     listOf(
                         AlbumInfo(
                             id = (basePath + path).hashCode(),
@@ -814,7 +812,7 @@ fun AddCustomAlbumDialog(
                     isCustomAlbum = true
                 )
 
-                mainViewModel.settings.AlbumsList.add(listOf(albumInfo))
+                mainViewModel.settings.albums.add(listOf(albumInfo))
                 onDismissPrev()
 
                 text.isNotEmpty()
@@ -896,7 +894,7 @@ fun ImmichLoginDialog(
                     password = password.value.trim(),
                     userAgent = System.getProperty("http.agent") ?: ""
                 ).let { state ->
-                    mainViewModel.settings.Immich.setImmichBasicInfo(
+                    mainViewModel.settings.immich.setImmichBasicInfo(
                         if (state is LoginState.LoggedIn) {
                             ImmichBasicInfo(
                                 endpoint = endpoint,

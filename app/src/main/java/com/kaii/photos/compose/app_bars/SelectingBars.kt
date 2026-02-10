@@ -49,7 +49,6 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.moveImageToLockedFolder
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -186,7 +185,7 @@ fun SelectingBottomBarItems(
     }
 
     val mainViewModel = LocalMainViewModel.current
-    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     val permissionState = rememberFilePermissionManager(
         onGranted = {
@@ -209,7 +208,7 @@ fun SelectingBottomBarItems(
         }
     )
 
-    val confirmToDelete by mainViewModel.settings.Permissions
+    val confirmToDelete by mainViewModel.settings.permissions
         .getConfirmToDelete()
         .collectAsStateWithLifecycle(initialValue = true)
 

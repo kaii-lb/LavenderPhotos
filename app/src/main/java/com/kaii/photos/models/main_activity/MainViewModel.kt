@@ -16,10 +16,6 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
-import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.MainPhotosView
-import com.kaii.photos.datastore.PhotoGrid
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.MediaItemSortMode
@@ -66,37 +62,37 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val updater = Updater(context = context.applicationContext, coroutineScope = viewModelScope)
 
-    val displayDateFormat = settings.LookAndFeel.getDisplayDateFormat().stateIn(
+    val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
         initialValue = DisplayDateFormat.Default
     )
 
-    val sortMode = settings.PhotoGrid.getSortMode().stateIn(
+    val sortMode = settings.photoGrid.getSortMode().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
         initialValue = MediaItemSortMode.DateTaken
     )
 
-    val columnSize = settings.LookAndFeel.getColumnSize().stateIn(
+    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 3
     )
 
-    val albumColumnSize = settings.LookAndFeel.getAlbumColumnSize().stateIn(
+    val albumColumnSize = settings.lookAndFeel.getAlbumColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 3
     )
 
-    val useBlackViewBackgroundColor = settings.LookAndFeel.getUseBlackBackgroundForViews().stateIn(
+    val useBlackViewBackgroundColor = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = false
     )
 
-    val topBarDetailsFormat = settings.LookAndFeel.getTopBarDetailsFormat().stateIn(
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,
         initialValue = TopBarDetailsFormat.FileName
@@ -104,13 +100,13 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()
 
-    val allAvailableAlbums = settings.AlbumsList.get().stateIn(
+    val allAvailableAlbums = settings.albums.get().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = emptyList()
     )
 
-    private val _mainPhotosAlbums = settings.MainPhotosView.getAlbums()
+    private val _mainPhotosAlbums = settings.mainPhotosView.getAlbums()
 
     init {
         runBlocking {
@@ -135,7 +131,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
     private fun getMainPhotosAlbums() =
         allAvailableAlbums.combine(
             combine(
-                settings.MainPhotosView.getShowEverything(),
+                settings.mainPhotosView.getShowEverything(),
                 _mainPhotosAlbums
             ) { showAll, mainPaths -> Pair(showAll, mainPaths) }
         ) { albums, pair ->

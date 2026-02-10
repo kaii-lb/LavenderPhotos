@@ -40,7 +40,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
@@ -123,7 +122,7 @@ fun DataAndBackupPage() {
                         backupHelper.exportUnencryptedSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
+                        mainViewModel.settings.albums.add(
                             listOf(
                                 AlbumInfo(
                                     name = albumFile.name,
@@ -159,7 +158,7 @@ fun DataAndBackupPage() {
                         backupHelper.exportRawSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
+                        mainViewModel.settings.albums.add(
                             listOf(
                                 AlbumInfo(
                                     name = albumFile.name,
@@ -248,7 +247,7 @@ fun DataAndBackupPage() {
                         helper.exportFavourites(context = context)
 
                         val favExportDir = helper.getFavExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
+                        mainViewModel.settings.albums.add(
                             listOf(
                                 AlbumInfo(
                                     name = favExportDir.name,

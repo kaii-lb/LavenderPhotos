@@ -90,7 +90,6 @@ import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.editing.DrawableText
@@ -228,14 +227,14 @@ fun ImageEditor(
             val textMeasurer = rememberTextMeasurer()
             val mainViewModel = LocalMainViewModel.current
 
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             var overwrite by remember { mutableStateOf(false) }
 
             LaunchedEffect(overwriteByDefault) {
                 overwrite = overwriteByDefault
             }
 
-            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+            val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
             val navController = LocalNavController.current
 
             var navMediaId by remember { mutableLongStateOf(-1L) }

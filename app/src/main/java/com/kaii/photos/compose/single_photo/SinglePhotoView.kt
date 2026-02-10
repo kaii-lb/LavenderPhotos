@@ -70,7 +70,6 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
@@ -637,7 +636,7 @@ private fun BottomBar(
                     )
                 }
 
-                val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
                 // TODO: look into possibly sharing permission managers?
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
@@ -666,7 +665,7 @@ private fun BottomBar(
                 )
 
                 val showDeleteDialog = remember { mutableStateOf(false) }
-                val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
 
                 if (showDeleteDialog.value) {
                     ConfirmationDialog(

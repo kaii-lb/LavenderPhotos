@@ -13,7 +13,6 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
@@ -201,7 +200,7 @@ fun rememberSecureFolderManager(): SecureFolderMigrationManager {
         SecureFolderMigrationManager(
             context = context,
             appDatabase = MediaDatabase.getInstance(context = context),
-            albums = mainViewModel.settings.AlbumsList
+            albums = mainViewModel.settings.albums
         )
     }
 }

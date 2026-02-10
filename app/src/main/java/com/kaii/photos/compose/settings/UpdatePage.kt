@@ -65,7 +65,6 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
-import com.kaii.photos.datastore.Versions
 import com.kaii.photos.helpers.CheckUpdateState
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
@@ -183,14 +182,14 @@ private fun TopBar() {
         actions = {
             val mainViewModel = LocalMainViewModel.current
             val resources = LocalResources.current
-            val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
+            val showUpdateNotice by mainViewModel.settings.versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
             var showDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(showUpdateNotice) {
                 if (showUpdateNotice) {
                     showDialog = true
 
-                    mainViewModel.settings.Versions.setShowUpdateNotice(false)
+                    mainViewModel.settings.versions.setShowUpdateNotice(false)
                 }
             }
 

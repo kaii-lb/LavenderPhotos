@@ -80,7 +80,6 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.Immich
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.profilePicture
@@ -99,8 +98,8 @@ fun MainAppTopBar(
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
-    val immichInfo by mainViewModel.settings.Immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
 
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
@@ -222,10 +221,10 @@ fun MainAppBottomBar(
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val defaultTab by mainViewModel.settings.DefaultTabs.getDefaultTab()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabList)
+    val defaultTab by mainViewModel.settings.defaultTabs.getDefaultTab()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabItem)
+    val tabList by mainViewModel.settings.defaultTabs.getTabList()
+        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
 
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
