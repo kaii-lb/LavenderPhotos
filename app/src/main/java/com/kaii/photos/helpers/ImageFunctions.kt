@@ -269,7 +269,6 @@ fun moveImageToLockedFolder(
     onDone()
 }
 
-// TODO: all of this
 suspend fun moveImageOutOfLockedFolder(
     list: List<PhotoLibraryUIModel.SecuredMedia>,
     context: Context,

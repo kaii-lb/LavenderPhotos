@@ -1,7 +1,10 @@
 package com.kaii.photos.compose.grids
 
+import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -11,6 +14,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -40,36 +44,45 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.toIntRect
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -89,17 +102,23 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.grid_management.BitmapUriShadowBuilder
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import com.kaii.photos.mediastore.idToUri
 import com.kaii.photos.mediastore.isRawImage
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
@@ -112,6 +131,7 @@ fun PhotoGrid(
     selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
+    selectionManager: SelectionManager = rememberSelectionManager(paths = albumInfo.paths),
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
@@ -127,8 +147,8 @@ fun PhotoGrid(
         ) {
             DeviceMedia(
                 pagingItems = pagingItems,
-                selectedItemsList = selectedItemsList,
                 viewProperties = viewProperties,
+                selectionManager = selectionManager,
                 gridState = state,
                 albumInfo = albumInfo,
                 isMediaPicker = isMediaPicker,
@@ -148,23 +168,19 @@ fun PhotoGrid(
 @Composable
 fun DeviceMedia(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewProperties: ViewProperties,
+    selectionManager: SelectionManager,
     gridState: LazyGridState,
     albumInfo: AlbumInfo,
     isMediaPicker: Boolean,
     isMainPage: Boolean
 ) {
-    val shouldPadUp by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
+    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     BackHandler(
-        enabled = selectedItemsList.isNotEmpty()
+        enabled = isSelecting
     ) {
-        selectedItemsList.clear()
+        selectionManager.clear()
     }
 
     val mainViewModel = LocalMainViewModel.current
@@ -180,27 +196,10 @@ fun DeviceMedia(
         val thumbnailSize by mainViewModel.settings.storage.getThumbnailSize()
             .collectAsStateWithLifecycle(initialValue = 0)
 
-        val scrollSpeed = remember { mutableFloatStateOf(0f) }
-        val isDragSelecting = remember { mutableStateOf(false) }
-        val localDensity = LocalDensity.current
-
-        LaunchedEffect(scrollSpeed.floatValue) {
-            if (scrollSpeed.floatValue != 0f) {
-                while (isActive) {
-                    gridState.scrollBy(scrollSpeed.floatValue)
-                    delay(10)
-                }
-            }
-        }
-
         val context = LocalContext.current
         val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
         val useRoundedCorners by mainViewModel.settings.lookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
         val openVideosExternally by mainViewModel.settings.behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
-
-        // val resources = LocalResources.current
-        // val view = LocalView.current
-        // val coroutineScope = rememberCoroutineScope()
 
         // delays loading items until the "slide in" animation has finished, so that it doesn't lag or stutter
         var showItems by remember { mutableStateOf(false) }
@@ -210,6 +209,8 @@ fun DeviceMedia(
         }
 
         val navController = LocalNavController.current
+        val isDragSelecting = remember { mutableStateOf(false) }
+
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
@@ -219,28 +220,21 @@ fun DeviceMedia(
                     columnSize
                 }
             ),
-            userScrollEnabled = !isDragSelecting.value || selectedItemsList.isEmpty(),
+            userScrollEnabled = !isDragSelecting.value || isSelecting,
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
                 .align(Alignment.TopCenter)
-
-            // TODO
-            // .dragSelectionHandler(
-            //     state = gridState,
-            //     selectedItemsList = selectedItemsList,
-            //     groupedMedia = groupedMedia,
-            //     scrollSpeed = scrollSpeed,
-            //     scrollThreshold = with(localDensity) {
-            //         40.dp.toPx()
-            //     },
-            //     isDragSelecting = isDragSelecting,
-            //     resources = resources,
-            //     view = view,
-            //     coroutineScope = coroutineScope,
-            //     context = context,
-            //     thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-            // )
+                .dragSelectionHandler(
+                    state = gridState,
+                    selectionManager = selectionManager,
+                    gridState = gridState,
+                    pagingItems = pagingItems,
+                    isDragSelecting = isDragSelecting,
+                    context = context,
+                    thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
+                    isSelecting = { isSelecting }
+                )
         ) {
             items(
                 count = if (showItems) pagingItems.itemCount else 0,
@@ -260,51 +254,56 @@ fun DeviceMedia(
                     }
                 }
             ) { i ->
-                val mediaStoreItem = pagingItems[i]
+                val item = pagingItems[i]
 
                 Box(
                     modifier = Modifier
                         .wrapContentSize()
                         .animateItem()
                 ) {
-                    if (mediaStoreItem == null) {
+                    if (item == null) {
                         LoadingMediaStoreItem(
                             item = PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem),
                             useRoundedCorners
                         )
                     } else {
                         MediaStoreItem(
-                            item = mediaStoreItem,
+                            item = item,
                             viewProperties = viewProperties,
-                            selectedItemsList = selectedItemsList,
+                            isSelecting = { isSelecting },
                             thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
                             isDragSelecting = isDragSelecting,
                             isMediaPicker = isMediaPicker,
-                            useRoundedCorners = useRoundedCorners
-                        ) {
-                            if (!isMediaPicker && mediaStoreItem is PhotoLibraryUIModel.MediaImpl) {
-                                val index =
-                                    pagingItems.itemSnapshotList
-                                        .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
-                                        .indexOf(mediaStoreItem)
+                            useRoundedCorners = useRoundedCorners,
+                            selected = selectionManager.isSelected(item),
+                            toggleSelection = {
+                                selectionManager.toggle(item)
+                            },
+                            navigateToItem = {
+                                if (!isMediaPicker && item is PhotoLibraryUIModel.MediaImpl) {
+                                    val index =
+                                        pagingItems.itemSnapshotList
+                                            .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
+                                            .indexOf(item)
 
-                                if (openVideosExternally && mediaStoreItem.item.type == MediaType.Video) {
-                                    val intent = Intent().apply {
-                                        data = mediaStoreItem.item.uri.toUri() // TODO: immich handling
-                                        action = Intent.ACTION_VIEW
+                                    if (openVideosExternally && item.item.type == MediaType.Video) {
+                                        val intent = Intent().apply {
+                                            data = item.item.uri.toUri() // TODO: immich handling
+                                            action = Intent.ACTION_VIEW
+                                        }
+
+                                        context.startActivity(intent)
+                                    } else {
+                                        navController.navigate(viewProperties.navigate(albumInfo, index, null))
                                     }
-
-                                    context.startActivity(intent)
-                                } else {
-                                    navController.navigate(viewProperties.navigate(albumInfo, index, null))
                                 }
                             }
-                        }
+                        )
                     }
                 }
             }
 
-            if (shouldPadUp && !isMainPage) {
+            if (isSelecting && !isMainPage) {
                 item(
                     span = {
                         GridItemSpan(maxLineSpan)
@@ -333,17 +332,18 @@ fun DeviceMedia(
             }
         }
 
+        val localDensity = LocalDensity.current
         val spacerHeight = animateDpAsState(
             targetValue =
                 with(localDensity) {
                     WindowInsets.navigationBars.getBottom(localDensity).toDp() +
                             if (isMainPage) 128.dp
-                            else if (shouldPadUp) 64.dp
+                            else if (isSelecting) 64.dp
                             else 8.dp
                 },
             animationSpec = tween(
                 durationMillis = 350,
-                delayMillis = if (shouldPadUp) 350 else 0
+                delayMillis = if (isSelecting) 350 else 0
             ),
             label = "animate spacer on bottom of photo grid"
         )
@@ -368,24 +368,18 @@ fun DeviceMedia(
 private fun MediaStoreItem(
     item: PhotoLibraryUIModel,
     viewProperties: ViewProperties,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    isSelecting: () -> Boolean,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
     isMediaPicker: Boolean,
     useRoundedCorners: Boolean,
-    onClick: () -> Unit
+    selected: Boolean,
+    toggleSelection: () -> Unit,
+    navigateToItem: () -> Unit
 ) {
     val vibratorManager = rememberVibratorManager()
 
     if (item is PhotoLibraryUIModel.Section) {
-        val isSectionSelected by remember {
-            derivedStateOf {
-                // TODO: causes slowdowns
-                // selectedItemsList.contains(item)
-                false
-            }
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth(1f)
@@ -395,20 +389,7 @@ private fun MediaStoreItem(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                 ) {
-                    // TODO
-                    // if (isSectionSelected) {
-                    //     selectedItemsList.unselectSection(
-                    //         section = item.section,
-                    //         groupedMedia = groupedMedia.value
-                    //     )
-                    // } else {
-                    //     if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData.dummyItem) selectedItemsList.clear()
-                    //
-                    //     selectedItemsList.selectSection(
-                    //         section = item.section,
-                    //         groupedMedia = groupedMedia.value
-                    //     )
-                    // }
+                    toggleSelection()
 
                     vibratorManager.vibrateLong()
                 }
@@ -430,8 +411,8 @@ private fun MediaStoreItem(
             )
 
             ShowSelectedState(
-                isSelected = isSectionSelected,
-                showIcon = selectedItemsList.isNotEmpty(),
+                isSelected = selected,
+                showIcon = isSelecting(),
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
             )
@@ -439,58 +420,36 @@ private fun MediaStoreItem(
     } else {
         item as PhotoLibraryUIModel.MediaImpl
 
-        val isSelected by remember {
-            derivedStateOf {
-                // TODO: causes slowdowns
-                // selectedItemsList.contains(item)
-                false
-            }
-        }
-
         val animatedItemCornerRadius by animateDpAsState(
-            targetValue = if (isSelected) 16.dp else 0.dp,
+            targetValue = if (selected) 16.dp else 0.dp,
             animationSpec = tween(
                 durationMillis = 150,
             ),
             label = "animate corner radius of selected item"
         )
         val animatedItemScale by animateFloatAsState(
-            targetValue = if (isSelected) 0.8f else 1f,
+            targetValue = if (selected) 0.8f else 1f,
             animationSpec = tween(
                 durationMillis = 150
             ),
             label = "animate scale of selected item"
         )
 
-        val onSingleClick: () -> Unit = {
+        val onSingleClick = {
             vibratorManager.vibrateShort()
-            if (selectedItemsList.isNotEmpty() || isMediaPicker) {
-                // TODO
-                // if (isSelected) {
-                //     selectedItemsList.unselectItem(item, groupedMedia.value)
-                // } else {
-                //     if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData.dummyItem) selectedItemsList.clear()
-                //
-                //     selectedItemsList.selectItem(item, groupedMedia.value)
-                // }
+            if (isSelecting() || isMediaPicker) {
+                toggleSelection()
             } else {
-                onClick()
+                navigateToItem()
             }
         }
 
-        val onLongClick: () -> Unit = {
+        val onLongClick = {
             isDragSelecting.value = true
 
             vibratorManager.vibrateLong()
 
-            // TODO
-            // if (isSelected) {
-            //     selectedItemsList.unselectItem(item, groupedMedia.value)
-            // } else {
-            //     if (selectedItemsList.size == 1 && selectedItemsList[0] == MediaStoreData()) selectedItemsList.clear()
-            //
-            //     selectedItemsList.selectItem(item, groupedMedia.value)
-            // }
+            toggleSelection()
         }
 
         Box(
@@ -500,7 +459,7 @@ private fun MediaStoreItem(
                 .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .then(
-                    if (selectedItemsList.isNotEmpty()) {
+                    if (isSelecting()) {
                         Modifier.clickable(
                             enabled = !isDragSelecting.value
                         ) {
@@ -629,8 +588,8 @@ private fun MediaStoreItem(
             }
 
             ShowSelectedState(
-                isSelected = isSelected,
-                showIcon = selectedItemsList.isNotEmpty(),
+                isSelected = selected,
+                showIcon = isSelecting(),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
             )
@@ -693,201 +652,189 @@ private fun LoadingMediaStoreItem(
     }
 }
 
-// private fun Modifier.dragSelectionHandler(
-//     state: LazyGridState,
-//     selectedItemsList: SnapshotStateList<MediaStoreData>,
-//     groupedMedia: State<List<MediaStoreData>>,
-//     scrollSpeed: MutableFloatState,
-//     scrollThreshold: Float,
-//     isDragSelecting: MutableState<Boolean>,
-//     resources: Resources,
-//     view: View,
-//     coroutineScope: CoroutineScope,
-//     context: Context,
-//     thumbnailSettings: Pair<Boolean, Int>
-// ) = pointerInput(groupedMedia.value) {
-//     var initialKey: Int? = null
-//     var currentKey: Int? = null
-//     var isDragAndDropping = false
-//
-//     if (groupedMedia.value.isEmpty()) return@pointerInput
-//
-//     val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
-//         if (it.index in groupedMedia.value.indices) groupedMedia.value[it.index].type != MediaType.Section else false
-//     }?.size?.width
-//
-//     val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1
-//
-//     Log.d(TAG, "grid displays $numberOfHorizontalItems horizontal items")
-//
-//     detectDragGesturesAfterLongPress(
-//         onDragStart = { offset ->
-//             isDragSelecting.value = true
-//
-//             if (selectedItemsList.isNotEmpty()) {
-//                 state.getGridItemAtOffset(
-//                     offset,
-//                     groupedMedia.value.fastMap { it.itemKey() },
-//                     numberOfHorizontalItems
-//                 )?.let { key ->
-//                     val item = groupedMedia.value[key]
-//
-//                     if (item.type != MediaType.Section) {
-//                         if (selectedItemsList.contains(item) && selectedItemsList.filter { it.type != MediaType.Section }.size != 1) {
-//                             isDragAndDropping = true
-//                             coroutineScope.launch(Dispatchers.IO) {
-//                                 val items = selectedItemsList.filter { it.type != MediaType.Section }
-//
-//                                 val clipData = ClipData.newUri(
-//                                     context.contentResolver,
-//                                     resources.getString(R.string.drag_and_drop_data),
-//                                     items.first().uri.toUri()
-//                                 )
-//
-//                                 items.drop(1).forEach {
-//                                     clipData.addItem(ClipData.Item(it.uri))
-//                                 }
-//
-//                                 val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
-//                                     Glide.with(context)
-//                                         .asBitmap()
-//                                         .override(thumbnailSettings.second)
-//                                         .centerCrop()
-//                                         .load(it.uri)
-//                                         .submit()
-//                                         .get()
-//                                 }
-//
-//                                 val shadow = BitmapUriShadowBuilder(
-//                                     view = view,
-//                                     bitmaps = bitmaps,
-//                                     count = items.size,
-//                                     density = Density(density)
-//                                 )
-//
-//                                 view.startDragAndDrop(
-//                                     clipData,
-//                                     shadow,
-//                                     clipData,
-//                                     View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
-//                                 )
-//                             }
-//                         } else {
-//                             isDragAndDropping = false
-//                             initialKey = key
-//                             currentKey = key
-//
-//                             // TODO
-//                             // if (!selectedItemsList.contains(item)) selectedItemsList.selectItem(
-//                             //     item = item,
-//                             //     groupedMedia = groupedMedia.value
-//                             // )
-//                         }
-//                     }
-//                 }
-//             }
-//         },
-//
-//         onDragCancel = {
-//             initialKey = null
-//             scrollSpeed.floatValue = 0f
-//             isDragSelecting.value = false
-//         },
-//
-//         onDragEnd = {
-//             initialKey = null
-//             scrollSpeed.floatValue = 0f
-//             isDragSelecting.value = false
-//         },
-//
-//         onDrag = { change, _ ->
-//             if (initialKey != null && !isDragAndDropping) {
-//                 val distanceFromBottom = state.layoutInfo.viewportSize.height - change.position.y
-//                 val distanceFromTop = change.position.y // for clarity
-//
-//                 scrollSpeed.floatValue = when {
-//                     distanceFromBottom < scrollThreshold -> scrollThreshold - distanceFromBottom
-//                     distanceFromTop < scrollThreshold -> -scrollThreshold + distanceFromTop
-//                     else -> 0f
-//                 }
-//
-//                 state.getGridItemAtOffset(
-//                     change.position,
-//                     groupedMedia.value.fastMap { it.itemKey() },
-//                     numberOfHorizontalItems
-//                 )?.let { key ->
-//                     if (currentKey != key) {
-//                         selectedItemsList.apply {
-//                             // TODO
-//                             // val toBeRemoved =
-//                             //     if (initialKey!! <= currentKey!!) groupedMedia.value.subList(
-//                             //         initialKey!!,
-//                             //         currentKey!! + 1
-//                             //     )
-//                             //     else groupedMedia.value.subList(currentKey!!, initialKey!! + 1)
-//                             //
-//                             // unselectAll(
-//                             //     items = toBeRemoved.filter {
-//                             //         it.type != MediaType.Section
-//                             //     },
-//                             //     groupedMedia = groupedMedia.value
-//                             // )
-//                             //
-//                             // val toBeAdded =
-//                             //     if (initialKey!! <= key) groupedMedia.value.subList(initialKey!!, key + 1)
-//                             //     else groupedMedia.value.subList(key, initialKey!! + 1)
-//                             //
-//                             // selectAll(
-//                             //     items = toBeAdded.filter {
-//                             //         it.type != MediaType.Section
-//                             //     },
-//                             //     groupedMedia = groupedMedia.value
-//                             // )
-//                         }
-//
-//                         currentKey = key
-//                     }
-//                 }
-//             }
-//         }
-//     )
-// }
+private fun Modifier.dragSelectionHandler(
+    state: LazyGridState,
+    selectionManager: SelectionManager,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    gridState: LazyGridState,
+    isDragSelecting: MutableState<Boolean>,
+    context: Context,
+    thumbnailSettings: Pair<Boolean, Int>,
+    isSelecting: () -> Boolean
+) = composed {
+    val localDensity = LocalDensity.current
+    val resources = LocalResources.current
+    val view = LocalView.current
+    val coroutineScope = rememberCoroutineScope()
+    val scrollSpeed = remember { mutableFloatStateOf(0f) }
 
-// @Suppress("UNCHECKED_CAST")
-//         /** make sure [T] is the same type as state keys */
-// fun <T : Any> LazyGridState.getGridItemAtOffset(
-//     offset: Offset,
-//     keys: List<T>,
-//     numberOfHorizontalItems: Int
-// ): Int? {
-//     var key: T? = null
-//
-//     // scan the entire row for this item
-//     // if theres only one or two items on a row and user drag selects to the empty space they get selected
-//     for (i in 1..numberOfHorizontalItems) {
-//         val possibleItem = layoutInfo.visibleItemsInfo.find { item ->
-//             val stretched = item.size.toIntRect().let {
-//                 IntRect(
-//                     top = it.top,
-//                     bottom = it.bottom,
-//                     left = it.left,
-//                     right = it.right * i
-//                 )
-//             }
-//
-//             stretched.contains(offset.round() - item.offset)
-//         }
-//
-//         if (possibleItem != null) {
-//             key = possibleItem.key as T
-//             break
-//         }
-//     }
-//
-//     val found = keys.find {
-//         it == key
-//     } ?: return null
-//
-//     return keys.indexOf(found)
-// }
+    LaunchedEffect(scrollSpeed.floatValue) {
+        if (scrollSpeed.floatValue != 0f) {
+            while (isActive) {
+                gridState.scrollBy(scrollSpeed.floatValue)
+                delay(10)
+            }
+        }
+    }
+
+    pointerInput(pagingItems) {
+        var initialIndex: Int? = null
+        var isDragAndDropping = false
+
+        val scrollThreshold = with(localDensity) {
+            60.dp.toPx()
+        }
+
+        if (pagingItems.itemCount == 0) return@pointerInput
+
+        val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
+            if (it.index in 0..pagingItems.itemCount) {
+                pagingItems[it.index] is PhotoLibraryUIModel.MediaImpl
+            } else false
+        }?.size?.width
+
+        val numberOfHorizontalItems = itemWidth?.let { state.layoutInfo.viewportSize.width / it } ?: 1
+
+        detectDragGesturesAfterLongPress(
+            onDragStart = { offset ->
+                isDragSelecting.value = true
+
+                if (isSelecting()) {
+                    state.getGridItemAtOffset(
+                        offset = offset,
+                        numberOfHorizontalItems = numberOfHorizontalItems
+                    )?.let { index ->
+                        val item = pagingItems[index]
+
+                        if (item is PhotoLibraryUIModel.MediaImpl) {
+                            val selected = selectionManager.isSelected(item)
+
+                            if (selected) {
+                                isDragAndDropping = true
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    val items = selectionManager.selection.first().values.flatMap { list ->
+                                        list.map { item ->
+                                            idToUri(
+                                                id = item.id,
+                                                isImage = item.isImage
+                                            )
+                                        }
+                                    }
+
+                                    val clipData = ClipData.newUri(
+                                        context.contentResolver,
+                                        resources.getString(R.string.drag_and_drop_data),
+                                        items.first()
+                                    )
+
+                                    items.drop(1).forEach {
+                                        clipData.addItem(ClipData.Item(it))
+                                    }
+
+                                    val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
+                                        Glide.with(context)
+                                            .asBitmap()
+                                            .override(thumbnailSettings.second)
+                                            .centerCrop()
+                                            .load(it)
+                                            .submit()
+                                            .get()
+                                    }
+
+                                    val shadow = BitmapUriShadowBuilder(
+                                        view = view,
+                                        bitmaps = bitmaps,
+                                        count = items.size,
+                                        density = Density(density)
+                                    )
+
+                                    view.startDragAndDrop(
+                                        clipData,
+                                        shadow,
+                                        clipData,
+                                        View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
+                                    )
+                                }
+                            } else {
+                                isDragAndDropping = false
+                                initialIndex = index
+
+                                selectionManager.addMedia(item.item)
+                            }
+                        }
+                    }
+                }
+            },
+
+            onDragCancel = {
+                initialIndex = null
+                scrollSpeed.floatValue = 0f
+                isDragSelecting.value = false
+            },
+
+            onDragEnd = {
+                initialIndex = null
+                scrollSpeed.floatValue = 0f
+                isDragSelecting.value = false
+            },
+
+            onDrag = { change, _ ->
+                if (initialIndex != null && !isDragAndDropping) {
+                    val distanceFromBottom = state.layoutInfo.viewportSize.height - change.position.y
+                    val distanceFromTop = change.position.y // for clarity
+
+                    scrollSpeed.floatValue = when {
+                        distanceFromBottom < scrollThreshold -> scrollThreshold - distanceFromBottom
+                        distanceFromTop < scrollThreshold -> -scrollThreshold + distanceFromTop
+                        else -> 0f
+                    }
+
+                    state.getGridItemAtOffset(
+                        offset = change.position,
+                        numberOfHorizontalItems = numberOfHorizontalItems
+                    )?.let { endIndex ->
+                        if (initialIndex != null && endIndex != -1) {
+                            val (lower, upper) = if (initialIndex!! < endIndex) initialIndex!! to endIndex else endIndex to initialIndex!!
+
+                            selectionManager.updateSelection(
+                                (lower..upper).mapNotNull {
+                                    (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+fun LazyGridState.getGridItemAtOffset(
+    offset: Offset,
+    numberOfHorizontalItems: Int
+): Int? {
+    // scan the entire row for this item
+    // if theres only one or two items on a row and user drag selects to the empty space they get selected
+    for (i in 1..numberOfHorizontalItems) {
+        val possibleItem = layoutInfo.visibleItemsInfo.find { item ->
+            val stretched = item.size.toIntRect().let {
+                IntRect(
+                    top = it.top,
+                    bottom = it.bottom,
+                    left = it.left,
+                    right = it.right * i
+                )
+            }
+
+            stretched.contains(offset.round() - item.offset)
+        }
+
+        if (possibleItem != null) {
+            return possibleItem.index
+        }
+    }
+
+    return null
+}
 

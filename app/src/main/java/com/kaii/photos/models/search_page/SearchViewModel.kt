@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.SearchRepository
 
 class SearchViewModel(

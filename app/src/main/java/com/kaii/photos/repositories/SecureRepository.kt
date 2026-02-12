@@ -10,16 +10,16 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.loading.SecuredListPagingSource
-import com.kaii.photos.models.loading.mapToMedia
+import com.kaii.photos.models.loading.mapToSecuredMedia
 import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,11 +91,7 @@ class SecureRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
-        ).flow.mapToMedia(
-            sortMode = params.sortMode,
-            format = params.format,
-            separators = false
-        )
+        ).flow.mapToSecuredMedia(accessToken = params.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

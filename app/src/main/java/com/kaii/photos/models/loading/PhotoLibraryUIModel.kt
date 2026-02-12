@@ -25,7 +25,10 @@ sealed interface PhotoLibraryUIModel {
 
     @Stable
     @Immutable
-    data class Section(val title: String) : PhotoLibraryUIModel
+    data class Section(
+        val title: String,
+        val timestamp: Long
+    ) : PhotoLibraryUIModel
 
     @Stable
     @Immutable
@@ -62,7 +65,7 @@ sealed interface PhotoLibraryUIModel {
 
     fun itemKey() =
         if (this is MediaImpl) item.absolutePath + item.displayName + item.id
-        else (this as Section).title
+        else (this as Section).timestamp.toString()
 }
 
 fun List<PhotoLibraryUIModel>.mapToMediaItems() = mapNotNull { if (it is PhotoLibraryUIModel.MediaImpl) it.item else null }

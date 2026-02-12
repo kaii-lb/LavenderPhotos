@@ -1079,6 +1079,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_tools">Tools</string>
     <string name="media_information">Information</string>
     <string name="media_is_raw">This is a RAW image</string>
+    <string name="media_select_limit_reached">Selection limit reached!</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>

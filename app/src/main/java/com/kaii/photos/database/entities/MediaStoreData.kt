@@ -58,17 +58,7 @@ data class MediaStoreData(
 
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/
-    fun getDateTakenDay(): Long {
-        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateTaken * 1000
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        return calendar.timeInMillis / 1000
-    }
+    fun getDateTakenDay() = epochToDayStart(timestamp = dateTaken)
 
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
     /** its returned in unix epoch seconds*/
@@ -85,15 +75,8 @@ data class MediaStoreData(
         return calendar.timeInMillis / 1000
     }
 
-    fun getDateModifiedDay(): Long {
-        val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
-            timeInMillis = dateModified * 1000
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        return calendar.timeInMillis / 1000
-    }
+    fun getDateModifiedDay() = epochToDayStart(timestamp = dateModified)
 }
+
+/** @param timestamp should be in seconds */
+fun epochToDayStart(timestamp: Long) = timestamp - (timestamp % 86400)

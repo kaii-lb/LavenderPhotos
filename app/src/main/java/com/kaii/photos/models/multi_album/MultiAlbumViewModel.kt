@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.MediaRepository
 
 class MultiAlbumViewModel(

@@ -7,7 +7,7 @@ import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.models.loading.mapToMedia
 import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope

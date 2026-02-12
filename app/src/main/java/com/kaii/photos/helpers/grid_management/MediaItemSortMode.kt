@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers
+package com.kaii.photos.helpers.grid_management
 
 enum class MediaItemSortMode {
     DateTaken,

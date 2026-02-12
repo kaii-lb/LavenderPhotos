@@ -8,15 +8,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface MediaDao {
+interface MediaDao : BaseDao {
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC")
-    fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
+    override fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
-    fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
+    override fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMedia(): Flow<List<MediaStoreData>>
@@ -38,6 +39,11 @@ interface MediaDao {
 
     @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
     fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
+
+    @Query(value = "SELECT id," +
+            "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+            "from media WHERE dateTaken BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)")
+    override fun mediaInDateTaken(timestamp: Long, paths: Set<String>): List<SelectionManager.SelectedItem>
 
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
     suspend fun linkToImmich(

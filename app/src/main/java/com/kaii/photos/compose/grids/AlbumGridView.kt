@@ -91,9 +91,9 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import kotlinx.coroutines.Dispatchers

@@ -18,9 +18,9 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
