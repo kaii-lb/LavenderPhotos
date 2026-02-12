@@ -20,12 +20,11 @@ import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -37,6 +36,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalMainViewModel
@@ -50,7 +50,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.setupNextScreen
@@ -59,7 +59,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainPages(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     mainPhotosPaths: Set<String>,
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
@@ -92,34 +91,27 @@ fun MainPages(
         }
     }
 
-    // TODO
-    val mediaCount = remember { mutableIntStateOf(0) }
-    val sectionCount = remember { mutableIntStateOf(0) }
-
     val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
         exitDirection = FloatingToolbarExitDirection.Bottom
     )
+
+    var paths by remember { mutableStateOf(emptySet<String>()) }
+    val selectionManager = rememberSelectionManager(paths = paths)
+
+    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     Scaffold(
         topBar = {
-            val alternate by remember {
-                derivedStateOf {
-                    selectedItemsList.isNotEmpty()
-                }
-            }
-
             MainAppTopBar(
-                alternate = alternate,
-                selectedItemsList = selectedItemsList,
-                pagerState = pagerState,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount
+                alternate = isSelecting,
+                selectionManager = selectionManager,
+                pagerState = pagerState
             )
         },
         bottomBar = {
             if (incomingIntent == null) {
                 MainAppBottomBar(
                     pagerState = pagerState,
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     tabs = tabList,
                     scrollBehaviour = scrollBehaviour
                 )
@@ -170,6 +162,7 @@ fun MainPages(
         Box {
             HorizontalPager(
                 state = pagerState,
+                userScrollEnabled = !isSelecting,
                 modifier = Modifier
                     .padding(
                         start = safeDrawingPadding.first,
@@ -183,10 +176,9 @@ fun MainPages(
                 when {
                     tab == DefaultTabs.TabTypes.photos -> {
                         LaunchedEffect(Unit) {
-                            setupNextScreen(
-                                selectedItemsList = selectedItemsList,
-                                window = window
-                            )
+                            setupNextScreen(window = window)
+                            selectionManager.clear()
+                            paths = mainPhotosPaths
 
                             multiAlbumViewModel.update(
                                 album = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo()
@@ -195,8 +187,8 @@ fun MainPages(
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
+                            selectionManager = selectionManager,
                             albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
-                            selectedItemsList = selectedItemsList,
                             isMediaPicker = incomingIntent != null
                         )
                     }
@@ -211,25 +203,23 @@ fun MainPages(
 
                     tab == DefaultTabs.TabTypes.search -> {
                         LaunchedEffect(Unit) {
-                            setupNextScreen(
-                                selectedItemsList = selectedItemsList,
-                                window = window
-                            )
+                            selectionManager.clear()
+                            paths = emptySet()
+                            setupNextScreen(window = window)
                         }
 
                         SearchPage(
-                            selectedItemsList = selectedItemsList,
                             searchViewModel = searchViewModel,
+                            selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null
                         )
                     }
 
                     tab.isCustom -> {
                         LaunchedEffect(Unit) {
-                            setupNextScreen(
-                                selectedItemsList = selectedItemsList,
-                                window = window
-                            )
+                            setupNextScreen(window = window)
+                            selectionManager.clear()
+                            paths = tab.albumPaths
 
                             multiAlbumViewModel.update(
                                 album = tab.toAlbumInfo()
@@ -239,7 +229,7 @@ fun MainPages(
                         MainGridView(
                             viewModel = multiAlbumViewModel,
                             albumInfo = tab.toAlbumInfo(),
-                            selectedItemsList = selectedItemsList,
+                            selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null
                         )
                     }
@@ -250,10 +240,13 @@ fun MainPages(
                 val context = LocalContext.current
                 val navController = LocalNavController.current
 
+                val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
+                val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
                 AnimatedContent(
-                    targetState = selectedItemsList.isNotEmpty() && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) == true,
+                    targetState = isSelecting && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) == true,
                     transitionSpec = {
-                        getAppBarContentTransition(selectedItemsList.isNotEmpty())
+                        getAppBarContentTransition(isSelecting)
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -262,13 +255,13 @@ fun MainPages(
                         MainAppBottomBar(
                             pagerState = pagerState,
                             tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            selectedItemsList = selectedItemsList,
-                            scrollBehaviour = scrollBehaviour
+                            scrollBehaviour = scrollBehaviour,
+                            selectionManager = selectionManager
                         )
                     } else {
                         MediaPickerConfirmButton(
                             incomingIntent = incomingIntent,
-                            selectedItemsList = selectedItemsList,
+                            uris = selectedItemsList.fastMap { it.toUri() },
                             contentResolver = context.contentResolver
                         )
                     }

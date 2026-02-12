@@ -21,11 +21,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
@@ -34,17 +34,17 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: FavouritesViewModel,
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
 
     val navController = LocalNavController.current
     Scaffold(
@@ -54,16 +54,15 @@ fun FavouritesGridView(
                 WindowInsets.navigationBars
             ),
         topBar = {
-            FavouritesViewTopAppBar(
-                selectedItemsList = selectedItemsList,
-                pagingItems = pagingItems
-            ) {
+            FavouritesViewTopAppBar(selectionManager = selectionManager) {
                 navController.popBackStack()
             }
         },
         bottomBar = {
+            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -72,7 +71,7 @@ fun FavouritesGridView(
                 )
             ) {
                 FavouritesViewBottomAppBar(
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     incomingIntent = incomingIntent
                 )
             }
@@ -106,7 +105,7 @@ fun FavouritesGridView(
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = AlbumInfo.Empty,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 viewProperties = ViewProperties.Favourites,
                 isMediaPicker = incomingIntent != null
             )

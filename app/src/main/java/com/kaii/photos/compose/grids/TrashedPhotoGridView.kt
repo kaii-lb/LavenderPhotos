@@ -22,11 +22,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
@@ -38,22 +38,23 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.trash_bin.TrashViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridView(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: TrashViewModel,
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
 
+    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     BackHandler(
-        enabled = selectedItemsList.isNotEmpty()
+        enabled = isSelecting
     ) {
-        selectedItemsList.clear()
+        selectionManager.clear()
     }
 
     OnBackPressedEffect { destination ->
@@ -66,8 +67,7 @@ fun TrashedPhotoGridView(
         topBar = {
             val navController = LocalNavController.current
             TrashedPhotoGridViewTopBar(
-                selectedItemsList = selectedItemsList,
-                pagingItems = pagingItems,
+                selectionManager = selectionManager,
                 deleteAll = {
                     viewModel.deleteAll()
                 },
@@ -79,7 +79,7 @@ fun TrashedPhotoGridView(
         },
         bottomBar = {
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -88,7 +88,7 @@ fun TrashedPhotoGridView(
                 )
             ) {
                 TrashedPhotoGridViewBottomBar(
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     incomingIntent = incomingIntent
                 )
             }
@@ -126,8 +126,8 @@ fun TrashedPhotoGridView(
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = AlbumInfo.Empty,
-                selectedItemsList = selectedItemsList,
                 viewProperties = ViewProperties.Trash,
+                selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null
             )
         }

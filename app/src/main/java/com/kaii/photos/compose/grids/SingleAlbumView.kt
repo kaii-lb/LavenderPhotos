@@ -22,7 +22,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -40,6 +39,8 @@ import com.kaii.photos.compose.dialogs.SingleAlbumDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -47,7 +48,6 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -64,10 +64,12 @@ fun SingleAlbumView(
         }
     }
 
+    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
+        selectionManager = selectionManager,
         navController = navController,
         incomingIntent = incomingIntent,
         onBackClick = {
@@ -79,7 +81,6 @@ fun SingleAlbumView(
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
@@ -95,10 +96,12 @@ fun SingleAlbumView(
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
+        selectionManager = selectionManager,
         navController = navController,
         incomingIntent = incomingIntent,
         onBackClick = {
@@ -112,7 +115,7 @@ fun SingleAlbumView(
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     navController: NavHostController,
     incomingIntent: Intent?,
     modifier: Modifier = Modifier,
@@ -126,16 +129,17 @@ private fun SingleAlbumViewCommon(
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                pagingItems = pagingItems,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 showDialog = showDialog,
                 isMediaPicker = incomingIntent != null,
                 onBackClick = onBackClick
             )
         },
         bottomBar = {
+            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -145,7 +149,7 @@ private fun SingleAlbumViewCommon(
             ) {
                 SingleAlbumViewBottomBar(
                     albumInfo = albumInfo,
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     incomingIntent = incomingIntent
                 )
             }
@@ -179,7 +183,7 @@ private fun SingleAlbumViewCommon(
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 viewProperties = if (albumInfo.isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
                 isMediaPicker = incomingIntent != null
             )
@@ -188,7 +192,7 @@ private fun SingleAlbumViewCommon(
                 showDialog = showDialog,
                 albumId = albumInfo.id,
                 navController = navController,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 itemCount = pagingItems.itemCount // TODO
             )
         }

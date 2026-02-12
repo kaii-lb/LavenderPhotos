@@ -50,6 +50,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
@@ -145,13 +146,11 @@ fun SecureFolderView(
     if (hideSecureFolder) return
 
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberSelectionManager(pagingItems = items)
 
     Scaffold(
         topBar = {
-            SecureFolderViewTopAppBar(
-                pagingItems = items,
-                selectedItemsList = selectedItemsList
-            ) {
+            SecureFolderViewTopAppBar(selectionManager = selectionManager) {
                 navController.popBackStack()
             }
         },
@@ -167,7 +166,7 @@ fun SecureFolderView(
             ) {
                 SecureFolderViewBottomAppBar(
                     pagingItems = items,
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     isGettingPermissions = isGettingPermissions
                 )
             }
@@ -207,7 +206,7 @@ fun SecureFolderView(
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 viewProperties = ViewProperties.SecureFolder
             )
         }

@@ -1,19 +1,18 @@
 package com.kaii.photos.compose.pages.main
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 
 @Composable
 fun MainGridView(
     viewModel: MultiAlbumViewModel,
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     isMediaPicker: Boolean
 ) {
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
@@ -21,7 +20,7 @@ fun MainGridView(
     PhotoGrid(
         pagingItems = items,
         albumInfo = albumInfo,
-        selectedItemsList = selectedItemsList,
+        selectionManager = selectionManager,
         viewProperties = ViewProperties.Main,
         // isMainPage = true, // TODO: figure out why this causes the grid to reset to top
         isMediaPicker = isMediaPicker

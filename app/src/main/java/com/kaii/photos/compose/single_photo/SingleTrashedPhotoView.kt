@@ -327,7 +327,7 @@ private fun BottomBar(
 
                             setTrashedOnPhotoList(
                                 context = context,
-                                list = listOf(item),
+                                list = listOf(item.uri.toUri()),
                                 trashed = false
                             )
                         }

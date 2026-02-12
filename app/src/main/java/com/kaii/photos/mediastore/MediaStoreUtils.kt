@@ -415,9 +415,3 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
 
     return null
 }
-
-fun idToUri(id: Long, isImage: Boolean): Uri {
-    val uriParentPath =
-        if (isImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-    return ContentUris.withAppendedId(uriParentPath, id)
-}

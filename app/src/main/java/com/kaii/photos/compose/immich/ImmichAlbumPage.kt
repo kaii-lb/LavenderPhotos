@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -26,19 +25,19 @@ import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun ImmichAlbumPage(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     modifier: Modifier = Modifier,
     viewModel: ImmichAlbumViewModel
 ) {
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberSelectionManager(pagingItems = items)
 
     Scaffold(
         modifier = modifier
@@ -47,8 +46,7 @@ fun ImmichAlbumPage(
             val navController = LocalNavController.current
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                pagingItems = items,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 showDialog = remember { mutableStateOf(false) },
                 isMediaPicker = false, // TODO:
                 onBackClick = {
@@ -99,7 +97,7 @@ fun ImmichAlbumPage(
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 viewProperties = ViewProperties.Immich,
                 isMediaPicker = false, // TODO:
             )

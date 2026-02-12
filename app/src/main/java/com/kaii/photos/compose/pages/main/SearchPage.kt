@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -36,7 +35,7 @@ import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -45,8 +44,8 @@ import kotlinx.datetime.Month
 
 @Composable
 fun SearchPage(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     searchViewModel: SearchViewModel,
+    selectionManager: SelectionManager,
     isMediaPicker: Boolean
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -156,7 +155,7 @@ fun SearchPage(
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
-                selectedItemsList = selectedItemsList,
+                selectionManager = selectionManager,
                 viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
                 state = gridState,
                 isMainPage = true,

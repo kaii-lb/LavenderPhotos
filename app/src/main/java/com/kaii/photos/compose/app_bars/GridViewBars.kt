@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -33,11 +32,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMapNotNull
-import androidx.core.net.toUri
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
-import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -47,21 +45,23 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import com.kaii.photos.models.loading.mapToMediaItems
 import com.kaii.photos.permissions.favourites.rememberListFavouritesState
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.io.File
 
 // private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
 
@@ -69,8 +69,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SingleAlbumViewTopBar(
     albumInfo: AlbumInfo,
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     showDialog: MutableState<Boolean>,
     isMediaPicker: Boolean = false,
     onBackClick: () -> Unit
@@ -84,22 +83,7 @@ fun SingleAlbumViewTopBar(
         }
     }
 
-    val show by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
-    val mediaCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.mapToMediaItems().size
-        }
-    }
-    val sectionCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.size - mediaCount.value
-        }
-    }
+    val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     AnimatedContent(
         targetState = show,
@@ -293,12 +277,7 @@ fun SingleAlbumViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
-            )
+            IsSelectingTopBar(selectionManager = selectionManager)
         }
     }
 }
@@ -306,22 +285,23 @@ fun SingleAlbumViewTopBar(
 @Composable
 fun SingleAlbumViewBottomBar(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     incomingIntent: Intent? = null
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
             SelectingBottomBarItems(
                 albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList
+                selectionManager = selectionManager
             )
         }
     } else {
         val context = LocalContext.current
+        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            selectedItemsList = selectedItemsList,
+            uris = selectedItemsList.fastMap { it.toUri() },
             contentResolver = context.contentResolver
         )
     }
@@ -330,8 +310,7 @@ fun SingleAlbumViewBottomBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrashedPhotoGridViewTopBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     deleteAll: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -344,22 +323,7 @@ fun TrashedPhotoGridViewTopBar(
         action = deleteAll
     )
 
-    val show by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
-    val mediaCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.mapToMediaItems().size
-        }
-    }
-    val sectionCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.size - mediaCount.value
-        }
-    }
+    val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     AnimatedContent(
         targetState = show,
@@ -414,31 +378,27 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
-            )
+            IsSelectingTopBar(selectionManager = selectionManager)
         }
     }
 }
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     incomingIntent: Intent?
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
-            TrashPhotoGridBottomBarItems(selectedItemsList = selectedItemsList)
+            TrashPhotoGridBottomBarItems(selectionManager = selectionManager)
         }
     } else {
         val context = LocalContext.current
+        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            selectedItemsList = selectedItemsList,
+            uris = selectedItemsList.fastMap { it.toUri() },
             contentResolver = context.contentResolver
         )
     }
@@ -446,27 +406,20 @@ fun TrashedPhotoGridViewBottomBar(
 
 @Composable
 fun TrashPhotoGridBottomBarItems(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>
+    selectionManager: SelectionManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.fastMapNotNull {
-                if (it is PhotoLibraryUIModel.MediaImpl && it != MediaStoreData.dummyItem) it.item
-                else null
-            }
-        }
-    }
+    val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
     IconButton(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri.toUri() },
+                    uris = selectedItemsList.fastMap { it.toUri() },
                     context = context,
-                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                    hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
         }
@@ -484,11 +437,11 @@ fun TrashPhotoGridBottomBarItems(
             mainViewModel.launch(Dispatchers.IO) {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsWithoutSection,
+                    list = selectedItemsList.fastMap { it.toUri() },
                     trashed = false
                 )
 
-                selectedItemsList.clear()
+                selectionManager.clear()
             }
         }
     )
@@ -499,7 +452,7 @@ fun TrashPhotoGridBottomBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_restore)
     ) {
         permissionState.get(
-            uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+            uris = selectedItemsList.map { it.toUri() }
         )
     }
 
@@ -524,16 +477,16 @@ fun TrashPhotoGridBottomBarItems(
         mainViewModel.launch(Dispatchers.IO) {
             permanentlyDeletePhotoList(
                 context = context,
-                list = selectedItemsWithoutSection.map { it.uri.toUri() }
+                list = selectedItemsList.fastMap { it.toUri() }
             )
 
-            selectedItemsList.clear()
+            selectionManager.clear()
         }
     }
 
     IconButton(
         onClick = {
-            if (selectedItemsWithoutSection.isNotEmpty()) {
+            if (selectedItemsList.isNotEmpty()) {
                 showPermaDeleteDialog.value = true
             }
         }
@@ -548,33 +501,15 @@ fun TrashPhotoGridBottomBarItems(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecureFolderViewTopAppBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     onBackClicked: () -> Unit
 ) {
-    val show by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
-    val mediaCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.filter {
-                it is PhotoLibraryUIModel.MediaImpl
-            }.size
-        }
-    }
-    val sectionCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.size - mediaCount.value
-        }
-    }
+    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     AnimatedContent(
-        targetState = show,
+        targetState = isSelecting,
         transitionSpec = {
-            getAppBarContentTransition(show)
+            getAppBarContentTransition(isSelecting)
         },
         label = "SecureFolderGridViewBottomBarAnimatedContent"
     ) { target ->
@@ -609,12 +544,7 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
-            )
+            IsSelectingTopBar(selectionManager = selectionManager)
         }
     }
 }
@@ -622,7 +552,7 @@ fun SecureFolderViewTopAppBar(
 // TODO
 @Composable
 fun SecureFolderViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     isGettingPermissions: MutableState<Boolean>
 ) {
@@ -631,11 +561,7 @@ fun SecureFolderViewBottomAppBar(
         val resources = LocalResources.current
         val coroutineScope = rememberCoroutineScope()
 
-        // val selectedItemsWithoutSection by remember {
-        //     derivedStateOf {
-        //         selectedItemsList.mapToMediaItems()
-        //     }
-        // }
+        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
         var showLoadingDialog by remember { mutableStateOf(false) }
         var loadingDialogTitle by remember { mutableStateOf(resources.getString(R.string.secure_decrypting)) }
@@ -656,26 +582,31 @@ fun SecureFolderViewBottomAppBar(
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
 
-                        // TODO
-                        // selectedItemsWithoutSection.forEach { item ->
-                        //     val iv = item.bytes?.getIv()
-                        //     if (iv == null) {
-                        //         Log.e(TAG, "IV for ${item.displayName} was null, aborting decrypt")
-                        //         return@async
-                        //     }
-                        //
-                        //     val originalFile = File(item.absolutePath)
-                        //     val cachedFile = File(context.cacheDir, item.displayName)
-                        //
-                        //     EncryptionManager.decryptInputStream(
-                        //         inputStream = originalFile.inputStream(),
-                        //         outputStream = cachedFile.outputStream(),
-                        //         iv = iv
-                        //     )
-                        //
-                        //     cachedFile.deleteOnExit()
-                        //     cachedPaths.add(Pair(cachedFile.absolutePath, item.type))
-                        // }
+                        val items = mutableListOf<PhotoLibraryUIModel.SecuredMedia>()
+
+                        for (i in 0..pagingItems.itemCount) {
+                            val item = pagingItems[i] as? PhotoLibraryUIModel.SecuredMedia
+
+                            if (item != null && item.item.id in selectedItemsList.fastMap { it.id }) {
+                                items.add(item)
+                            }
+                        }
+
+                        items.forEach { item ->
+                            val iv = item.bytes?.getIv() ?: return@async
+
+                            val originalFile = File(item.item.absolutePath)
+                            val cachedFile = File(context.cacheDir, item.item.displayName)
+
+                            EncryptionManager.decryptInputStream(
+                                inputStream = originalFile.inputStream(),
+                                outputStream = cachedFile.outputStream(),
+                                iv = iv
+                            )
+
+                            cachedFile.deleteOnExit()
+                            cachedPaths.add(Pair(cachedFile.absolutePath, item.item.type))
+                        }
 
                         showLoadingDialog = false
 
@@ -828,28 +759,10 @@ fun SecureFolderViewBottomAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesViewTopAppBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     onBackClick: () -> Unit
 ) {
-    val show by remember {
-        derivedStateOf {
-            selectedItemsList.isNotEmpty()
-        }
-    }
-
-    val mediaCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.filter {
-                it !is PhotoLibraryUIModel.Section
-            }.size
-        }
-    }
-    val sectionCount = remember {
-        derivedStateOf {
-            pagingItems.itemSnapshotList.size - mediaCount.value
-        }
-    }
+    val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     AnimatedContent(
         targetState = show,
@@ -886,33 +799,27 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { pagingItems.itemSnapshotList.mapToMediaItems() }
-            )
+            IsSelectingTopBar(selectionManager = selectionManager)
         }
     }
 }
 
 @Composable
 fun FavouritesViewBottomAppBar(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     incomingIntent: Intent?
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
-            FavouritesBottomAppBarItems(
-                selectedItemsList = selectedItemsList
-            )
+            FavouritesBottomAppBarItems(selectionManager = selectionManager)
         }
     } else {
         val context = LocalContext.current
+        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            selectedItemsList = selectedItemsList,
+            uris = selectedItemsList.fastMap { it.toUri() },
             contentResolver = context.contentResolver
         )
     }
@@ -920,25 +827,20 @@ fun FavouritesViewBottomAppBar(
 
 @Composable
 fun FavouritesBottomAppBarItems(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>
+    selectionManager: SelectionManager
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val applicationDatabase = LocalAppDatabase.current
 
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.mapToMediaItems()
-        }
-    }
+    val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
     IconButton(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri.toUri() },
+                    uris = selectedItemsList.fastMap { it.toUri() },
                     context = context,
-                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                    hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
         }
@@ -950,12 +852,13 @@ fun FavouritesBottomAppBarItems(
     }
 
     val show = remember { mutableStateOf(false) }
+
     MoveCopyAlbumListView(
         show = show,
         selectedItemsList = selectedItemsList,
         isMoving = false,
-        groupedMedia = null,
-        insetsPadding = WindowInsets.statusBars
+        insetsPadding = WindowInsets.statusBars,
+        clear = {}
     )
 
     IconButton(
@@ -971,7 +874,7 @@ fun FavouritesBottomAppBarItems(
 
     val showUnFavDialog = remember { mutableStateOf(false) }
     val favState = rememberListFavouritesState {
-        selectedItemsList.clear()
+        selectionManager.clear()
     }
 
     ConfirmationDialog(
@@ -982,7 +885,7 @@ fun FavouritesBottomAppBarItems(
         coroutineScope.launch {
             favState.setFavourite(
                 favourite = false,
-                list = selectedItemsWithoutSection.map { it.uri.toUri() }
+                list = selectedItemsList.fastMap { it.toUri() }
             )
         }
     }
@@ -1016,17 +919,17 @@ fun FavouritesBottomAppBarItems(
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.map { it.uri.toUri() }
+                        list = selectedItemsList.fastMap { it.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection,
+                        list = selectedItemsList.fastMap { it.toUri() },
                         trashed = true
                     )
                 }
 
-                selectedItemsList.clear()
+                selectionManager.clear()
             }
         }
     )
@@ -1042,7 +945,7 @@ fun FavouritesBottomAppBarItems(
             //     dao.deleteEntityById(it.id)
             // }
             permissionState.get(
-                uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+                uris = selectedItemsList.fastMap { it.toUri() }
             )
         }
     }
@@ -1058,7 +961,7 @@ fun FavouritesBottomAppBarItems(
                     //     dao.deleteEntityById(it.id)
                     // }
                     permissionState.get(
-                        uris = selectedItemsWithoutSection.map { it.uri.toUri() }
+                        uris = selectedItemsList.fastMap { it.toUri() }
                     )
                 }
             }

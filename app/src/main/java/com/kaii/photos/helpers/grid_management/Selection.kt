@@ -1,19 +1,23 @@
 package com.kaii.photos.helpers.grid_management
 
+import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
+import android.provider.MediaStore
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.LazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -37,14 +41,22 @@ class SelectionManager(
     data class SelectedItem(
         val id: Long,
         val isImage: Boolean
-    )
+    ) {
+        fun toUri(): Uri {
+            val uriParentPath =
+                if (isImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            return ContentUris.withAppendedId(uriParentPath, id)
+        }
+    }
 
     private val _selection = mutableStateMapOf<Long, List<SelectedItem>>()
-    val selection = snapshotFlow { _selection.toMap() }
+    val selection = snapshotFlow { _selection.values.flatten() }
 
     private val _sections = mutableStateListOf<Long>()
 
     val enabled = selection.map { it.isNotEmpty() }
+
+    val count = selection.map { it.size }
 
     fun toggle(item: PhotoLibraryUIModel) {
         if (item is PhotoLibraryUIModel.MediaImpl) {
@@ -198,21 +210,33 @@ fun rememberSelectionManager(
     val sortMode by LocalMainViewModel.current.sortMode.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
 
+    val set by rememberUpdatedState(paths)
+
     return remember(sortMode, context) {
         SelectionManager(
             sortMode = sortMode,
             scope = coroutineScope,
             context = context,
             getMediaInDate = { timestamp ->
-                MediaDatabase.getInstance(context).mediaDao()
-                    .mediaInDateTaken(timestamp = timestamp, paths = paths)
+                val dao = MediaDatabase.getInstance(context).mediaDao()
+
+                when {
+                    // search
+                    set.isEmpty() -> dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+
+                    sortMode.isDateModified -> dao.mediaInDateModified(timestamp = timestamp, paths = paths)
+
+                    else -> dao.mediaInDateTaken(timestamp = timestamp, paths = paths)
+                }
             }
         )
     }
 }
 
 @Composable
-fun rememberSelectionManager(media: State<List<MediaStoreData>>): SelectionManager {
+fun rememberSelectionManager(
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>
+): SelectionManager {
     val context = LocalContext.current
     val sortMode by LocalMainViewModel.current.sortMode.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
@@ -223,20 +247,24 @@ fun rememberSelectionManager(media: State<List<MediaStoreData>>): SelectionManag
             scope = coroutineScope,
             context = context,
             getMediaInDate = { timestamp ->
-                media.value.filter { item ->
-                    val key = when {
-                        sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
+                (0..<pagingItems.itemCount).mapNotNull {
+                    val item = (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
 
-                        sortMode.isDateModified -> item.getDateModifiedDay()
+                    if (item != null) {
+                        val key = when {
+                            sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
 
-                        sortMode.isDisabled -> 0
+                            sortMode.isDateModified -> item.getDateModifiedDay()
 
-                        else -> item.getDateTakenDay()
-                    }
+                            sortMode.isDisabled -> 0
 
-                    key in timestamp..timestamp + 86400
-                }.map {
-                    SelectionManager.SelectedItem(it.id, it.type == MediaType.Image)
+                            else -> item.getDateTakenDay()
+                        }
+
+                        if (key in timestamp..timestamp + 86400) {
+                            SelectionManager.SelectedItem(item.id, item.type == MediaType.Image)
+                        } else null
+                    } else null
                 }
             }
         )

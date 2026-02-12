@@ -52,7 +52,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,6 +81,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.exif.MediaData
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
@@ -89,7 +89,6 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
@@ -102,7 +101,7 @@ fun SingleAlbumDialog(
     showDialog: MutableState<Boolean>,
     albumId: Int,
     navController: NavHostController,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     itemCount: Int
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -171,13 +170,9 @@ fun SingleAlbumDialog(
                     .padding(8.dp, 0.dp)
             ) {
                 showDialog.value = false
-                selectedItemsList.clear()
-                selectedItemsList.add(
-                    PhotoLibraryUIModel.Media(
-                        item = MediaStoreData.dummyItem,
-                        accessToken = null
-                    )
-                )
+
+                // TODO
+                // selectionManager.toggleSelection()
             }
 
 
@@ -383,7 +378,7 @@ fun SingleAlbumDialog(
 fun MainAppDialog(
     showDialog: MutableState<Boolean>,
     pagerState: PagerState,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     mainViewModel: MainViewModel,
     loginState: LoginStateManager
 ) {
@@ -433,13 +428,8 @@ fun MainAppDialog(
                         position = RowPosition.Top,
                     ) {
                         showDialog.value = false
-                        selectedItemsList.clear()
-                        selectedItemsList.add(
-                            PhotoLibraryUIModel.Media(
-                                item = MediaStoreData.dummyItem,
-                                accessToken = null
-                            )
-                        )
+                        // TODO
+                        // selectionManager.toggleSelectMode()
                         vibratorManager.vibrateShort()
                     }
                 }

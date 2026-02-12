@@ -26,6 +26,7 @@ import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
@@ -79,7 +80,7 @@ fun setFavouriteOnMedia(
 /** @param list is a list of pairs of item uri and its absolute path */
 suspend fun setTrashedOnPhotoList(
     context: Context,
-    list: List<MediaStoreData>,
+    list: List<Uri>,
     trashed: Boolean
 ) {
     val contentResolver = context.contentResolver
@@ -87,6 +88,7 @@ suspend fun setTrashedOnPhotoList(
     val currentTimeMillis = System.currentTimeMillis()
     val trashedValues = ContentValues().apply {
         put(MediaColumns.IS_TRASHED, trashed)
+        put(MediaColumns.DATE_MODIFIED, currentTimeMillis)
     }
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -106,15 +108,18 @@ suspend fun setTrashedOnPhotoList(
     setFavouriteOnMedia(
         context = context,
         favourite = false,
-        list = list.map { it.uri.toUri() }
+        list = list
     )
 
     try {
-        list.forEachIndexed { index, media ->
+        list.forEachIndexed { index, uri ->
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-            File(media.absolutePath).setLastModified(currentTimeMillis)
-            contentResolver.update(media.uri.toUri(), trashedValues, null)
+            // TODO: do this oneshot instead of for every uri
+            contentResolver.getAbsolutePathFromUri(uri)?.let {
+                File(it).setLastModified(currentTimeMillis)
+            }
+            contentResolver.update(uri, trashedValues, null)
 
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
             percentage.floatValue = (index + 1f) / list.size

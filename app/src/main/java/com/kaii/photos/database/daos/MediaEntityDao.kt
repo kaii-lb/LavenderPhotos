@@ -40,10 +40,24 @@ interface MediaDao : BaseDao {
     @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
     fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
 
-    @Query(value = "SELECT id," +
-            "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
-            "from media WHERE dateTaken BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)")
-    override fun mediaInDateTaken(timestamp: Long, paths: Set<String>): List<SelectionManager.SelectedItem>
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)"
+    )
+    override fun mediaInDateTaken(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400"
+    )
+    override fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
 
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
     suspend fun linkToImmich(

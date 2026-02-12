@@ -42,12 +42,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -67,16 +65,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.R
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import java.io.File
 
 @Composable
@@ -274,7 +272,7 @@ fun ShowSelectedState(
 
 @Composable
 fun SelectViewTopBarLeftButtons(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager
 ) {
     SplitButton(
         primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
@@ -290,8 +288,9 @@ fun SelectViewTopBarLeftButtons(
             )
         },
         secondaryContent = {
+            val count by selectionManager.count.collectAsStateWithLifecycle(initialValue = 0)
             Text(
-                text = selectedItemsList.filter { it !is PhotoLibraryUIModel.Section && (it as PhotoLibraryUIModel.MediaImpl).item != MediaStoreData.dummyItem }.size.toString(),
+                text = count.toString(),
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 modifier = Modifier
@@ -300,19 +299,17 @@ fun SelectViewTopBarLeftButtons(
             )
         },
         primaryAction = {
-            selectedItemsList.clear()
+            selectionManager.clear()
         },
         secondaryAction = {
-            selectedItemsList.clear()
+            selectionManager.clear()
         }
     )
 }
 
 @Composable
 fun SelectViewTopBarRightButtons(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    mediaCount: State<Int>,
-    sectionCount: State<Int>
+    selectionManager: SelectionManager
 ) {
     Row(
         modifier = Modifier
@@ -320,7 +317,7 @@ fun SelectViewTopBarRightButtons(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        // TODO: figure something out
+        // TODO: figure something out or remove
     }
 }
 

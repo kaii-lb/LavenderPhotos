@@ -42,7 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.IntState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,17 +80,15 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     pagerState: PagerState,
-    mediaCount: IntState,
-    sectionCount: IntState,
     isFromMediaPicker: Boolean = false
 ) {
     val context = LocalContext.current
@@ -109,7 +105,7 @@ fun MainAppTopBar(
     MainAppDialog(
         showDialog = showDialog,
         pagerState = pagerState,
-        selectedItemsList = selectedItemsList,
+        selectionManager = selectionManager,
         mainViewModel = mainViewModel,
         loginState = loginState
     )
@@ -200,15 +196,11 @@ fun MainAppTopBar(
             }
         },
         alternateTitle = {
-            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
+            SelectViewTopBarLeftButtons(selectionManager = selectionManager)
         },
         alternateActions = {
-            SelectViewTopBarRightButtons(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount
-            )
-        },
+            SelectViewTopBarRightButtons(selectionManager = selectionManager)
+        }
     )
 }
 
@@ -217,7 +209,7 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     pagerState: PagerState,
     tabs: List<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -274,6 +266,8 @@ fun MainAppBottomBar(
                     windowInfo.containerSize.width.toDp() * 0.9f
                 }),
             content = {
+                val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
+
                 AnimatedContent(
                     targetState = selectedItemsList.isNotEmpty(),
                     transitionSpec = {
@@ -295,15 +289,11 @@ fun MainAppBottomBar(
                         ) {
                             when (currentTab) {
                                 DefaultTabs.TabTypes.trash -> {
-                                    TrashPhotoGridBottomBarItems(
-                                        selectedItemsList = selectedItemsList
-                                    )
+                                    TrashPhotoGridBottomBarItems(selectionManager = selectionManager)
                                 }
 
                                 DefaultTabs.TabTypes.favourites -> {
-                                    FavouritesBottomAppBarItems(
-                                        selectedItemsList = selectedItemsList
-                                    )
+                                    FavouritesBottomAppBarItems(selectionManager = selectionManager)
                                 }
 
                                 else -> {
@@ -314,7 +304,7 @@ fun MainAppBottomBar(
                                             paths = currentTab.albumPaths,
                                             isCustomAlbum = false
                                         ),
-                                        selectedItemsList = selectedItemsList
+                                        selectionManager = selectionManager
                                     )
                                 }
                             }

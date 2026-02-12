@@ -5,9 +5,9 @@ import android.app.Activity.RESULT_OK
 import android.content.ClipData
 import android.content.ContentResolver
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatDelegate
@@ -35,9 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -78,8 +75,6 @@ import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import com.kaii.photos.models.loading.mapToMediaItems
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -92,7 +87,7 @@ import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlin.reflect.typeOf
 
-private const val TAG = "com.kaii.photos.compose.MediaPicker"
+// private const val TAG = "com.kaii.photos.compose.MediaPicker"
 
 class MediaPicker : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,7 +106,6 @@ class MediaPicker : ComponentActivity() {
         val incomingIntent = intent
 
         setContent {
-            val selectedItemsList = remember { mutableStateListOf<PhotoLibraryUIModel>() }
             val mainViewModel: MainViewModel = viewModel(
                 factory = MainViewModelFactory(applicationContext, emptyList())
             )
@@ -144,7 +138,6 @@ class MediaPicker : ComponentActivity() {
                     window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
                     Content(
                         mainViewModel = mainViewModel,
-                        selectedItemsList = selectedItemsList,
                         incomingIntent = incomingIntent
                     )
                 }
@@ -155,7 +148,6 @@ class MediaPicker : ComponentActivity() {
     @Composable
     private fun Content(
         mainViewModel: MainViewModel,
-        selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
         incomingIntent: Intent
     ) {
         val context = LocalContext.current
@@ -228,13 +220,9 @@ class MediaPicker : ComponentActivity() {
                         typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     )
                 ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window)
 
                     val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
-
                     multiAlbumViewModel.update(
                         album = screen.albumInfo,
                         sortMode = sortMode,
@@ -243,7 +231,6 @@ class MediaPicker : ComponentActivity() {
                     )
 
                     MainPages(
-                        selectedItemsList = selectedItemsList,
                         mainPhotosPaths = mainPhotosPaths,
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
@@ -261,10 +248,7 @@ class MediaPicker : ComponentActivity() {
                         typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     )
                 ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window)
 
                     val screen = it.toRoute<Screens.Album.GridView>()
                     val storeOwner = remember(it) {
@@ -283,7 +267,6 @@ class MediaPicker : ComponentActivity() {
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
-                        selectedItemsList = selectedItemsList,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
@@ -298,6 +281,8 @@ class MediaPicker : ComponentActivity() {
                         typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                     )
                 ) {
+                    setupNextScreen(window)
+
                     val screen = it.toRoute<Screens.CustomAlbum.GridView>()
 
                     val viewModel: CustomAlbumViewModel = viewModel(
@@ -312,7 +297,6 @@ class MediaPicker : ComponentActivity() {
 
                     SingleAlbumView(
                         albumInfo = screen.albumInfo,
-                        selectedItemsList = selectedItemsList,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
@@ -323,10 +307,7 @@ class MediaPicker : ComponentActivity() {
                 startDestination = Screens.Favourites.GridView
             ) {
                 composable<Screens.Favourites.GridView> {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window)
 
                     val viewModel = viewModel<FavouritesViewModel>(
                         factory = FavouritesViewModelFactory(
@@ -338,18 +319,12 @@ class MediaPicker : ComponentActivity() {
                     )
 
                     FavouritesGridView(
-                        selectedItemsList = selectedItemsList,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
                 }
 
                 composable<Screens.Favourites.MigrationPage> {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
-
                     FavouritesMigrationPage()
                 }
             }
@@ -358,10 +333,7 @@ class MediaPicker : ComponentActivity() {
                 startDestination = Screens.Trash.GridView
             ) {
                 composable<Screens.Trash.GridView> {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window)
 
                     val trashViewModel = viewModel<TrashViewModel>(
                         factory = TrashViewModelFactory(
@@ -373,7 +345,6 @@ class MediaPicker : ComponentActivity() {
                     )
 
                     TrashedPhotoGridView(
-                        selectedItemsList = selectedItemsList,
                         viewModel = trashViewModel,
                         incomingIntent = incomingIntent
                     )
@@ -386,7 +357,7 @@ class MediaPicker : ComponentActivity() {
 @Composable
 fun MediaPickerConfirmButton(
     incomingIntent: Intent,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
+    uris: List<Uri>,
     contentResolver: ContentResolver
 ) {
     val context = LocalContext.current
@@ -405,10 +376,6 @@ fun MediaPickerConfirmButton(
                 if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                     || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
                 ) {
-                    val uris = selectedItemsList.mapToMediaItems().map { it.uri.toUri() }
-
-                    Log.d(TAG, "Selected items are $selectedItemsList")
-
                     val resultIntent = Intent().apply {
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -421,13 +388,10 @@ fun MediaPickerConfirmButton(
 
                     activity.setResult(RESULT_OK, resultIntent)
                 } else {
-                    val first = (selectedItemsList.first { it is PhotoLibraryUIModel.MediaImpl } as PhotoLibraryUIModel.MediaImpl).item
                     val resultIntent = Intent().apply {
-                        data = first.uri.toUri()
+                        data = uris.first()
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
-
-                    Log.d(TAG, "Selected item is $first")
 
                     activity.setResult(RESULT_OK, resultIntent)
                 }
@@ -436,6 +400,7 @@ fun MediaPickerConfirmButton(
             },
             shape = CircleShape,
             elevation = ButtonDefaults.elevatedButtonElevation(),
+            enabled = uris.isNotEmpty(),
             modifier = Modifier
                 .width(160.dp)
                 .height(52.dp)

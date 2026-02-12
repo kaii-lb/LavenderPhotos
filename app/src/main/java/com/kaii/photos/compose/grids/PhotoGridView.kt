@@ -50,7 +50,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -77,6 +76,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toIntRect
+import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -104,14 +104,12 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.grid_management.BitmapUriShadowBuilder
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
-import com.kaii.photos.mediastore.idToUri
 import com.kaii.photos.mediastore.isRawImage
 import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
@@ -128,10 +126,9 @@ private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 fun PhotoGrid(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
-    selectionManager: SelectionManager = rememberSelectionManager(paths = albumInfo.paths),
+    selectionManager: SelectionManager,
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
@@ -712,14 +709,7 @@ private fun Modifier.dragSelectionHandler(
                             if (selected) {
                                 isDragAndDropping = true
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    val items = selectionManager.selection.first().values.flatMap { list ->
-                                        list.map { item ->
-                                            idToUri(
-                                                id = item.id,
-                                                isImage = item.isImage
-                                            )
-                                        }
-                                    }
+                                    val items = selectionManager.selection.first().fastMap { it.toUri() }
 
                                     val clipData = ClipData.newUri(
                                         context.contentResolver,

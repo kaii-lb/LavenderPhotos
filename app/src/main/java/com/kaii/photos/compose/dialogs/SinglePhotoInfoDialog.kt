@@ -50,7 +50,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,8 +76,8 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
 import com.kaii.photos.helpers.exif.getExifDataForMedia
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.permissions.files.rememberMediaRenamer
 import kotlinx.coroutines.Dispatchers
@@ -512,9 +511,9 @@ private fun RowScope.IconContent(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
+        modifier = Modifier.weight(1f),
         onMoveMedia = onMoveMedia,
-        dismiss = dismiss,
-        modifier = Modifier.weight(1f)
+        dismiss = dismiss
     )
 }
 
@@ -530,9 +529,9 @@ private fun ColumnScope.IconContent(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
+        modifier = Modifier.weight(1f),
         onMoveMedia = onMoveMedia,
-        dismiss = dismiss,
-        modifier = Modifier.weight(1f)
+        dismiss = dismiss
     )
 }
 
@@ -541,9 +540,9 @@ private fun IconContentImpl(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
+    modifier: Modifier,
     onMoveMedia: () -> Unit,
-    dismiss: () -> Unit,
-    modifier: Modifier
+    dismiss: () -> Unit
 ) {
     val file = remember(currentMediaItem) { File(currentMediaItem.absolutePath) }
     var originalFileName by remember(file) {
@@ -625,20 +624,14 @@ private fun IconContentImpl(
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
 
-        val stateList = SnapshotStateList<PhotoLibraryUIModel>()
-        stateList.add(PhotoLibraryUIModel.Media(
-            item = currentMediaItem,
-            accessToken = null // TODO
-        ))
-
         MoveCopyAlbumListView(
             show = show,
-            selectedItemsList = stateList,
+            selectedItemsList = listOf(SelectionManager.SelectedItem(currentMediaItem.id, currentMediaItem.type == MediaType.Image)),
             isMoving = isMoving,
-            groupedMedia = null,
             insetsPadding = WindowInsets.statusBars,
             onMoveMedia = onMoveMedia,
-            dismissInfoDialog = dismiss
+            dismissInfoDialog = dismiss,
+            clear = {}
         )
 
         IconButton(

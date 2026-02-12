@@ -31,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -105,7 +104,6 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -241,8 +239,6 @@ class MainActivity : ComponentActivity() {
 
         val mainViewModel = LocalMainViewModel.current
 
-        val selectedItemsList = remember { SnapshotStateList<PhotoLibraryUIModel>() }
-
         val context = LocalContext.current
         val logPath = "${context.appStorageDir}/log.txt"
         Log.d(TAG, "Log save path is $logPath")
@@ -315,12 +311,9 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
+
+                        setupNextScreen(window = window)
 
                         multiAlbumViewModel.update(
                             album = screen.albumInfo,
@@ -330,7 +323,6 @@ class MainActivity : ComponentActivity() {
                         )
 
                         MainPages(
-                            selectedItemsList = selectedItemsList,
                             mainPhotosPaths = mainPhotosPaths,
                             multiAlbumViewModel = multiAlbumViewModel,
                             searchViewModel = searchViewModel,
@@ -344,11 +336,6 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
                         multiAlbumViewModel.update(
                             album = screen.albumInfo,
@@ -371,11 +358,6 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
                         searchViewModel.update(
                             sortMode = sortMode,
@@ -401,12 +383,9 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.Album.GridView>()
+                        setupNextScreen(window = window)
+
                         multiAlbumViewModel.update(
                             album = screen.albumInfo,
                             sortMode = sortMode,
@@ -416,7 +395,6 @@ class MainActivity : ComponentActivity() {
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
-                            selectedItemsList = selectedItemsList,
                             viewModel = multiAlbumViewModel
                         )
                     }
@@ -426,11 +404,6 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.Album.SinglePhoto>()
                         multiAlbumViewModel.update(
                             album = screen.albumInfo,
@@ -453,10 +426,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.Favourites.GridView
                 ) {
                     composable<Screens.Favourites.GridView> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
+                        setupNextScreen(window = window)
 
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.Favourites)
@@ -471,18 +441,10 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        FavouritesGridView(
-                            selectedItemsList = selectedItemsList,
-                            viewModel = viewModel
-                        )
+                        FavouritesGridView(viewModel = viewModel)
                     }
 
                     composable<Screens.Favourites.SinglePhoto> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.Favourites)
                         }
@@ -506,11 +468,6 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Favourites.MigrationPage> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         FavouritesMigrationPage()
                     }
                 }
@@ -519,10 +476,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.Trash.GridView
                 ) {
                     composable<Screens.Trash.GridView> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
+                        setupNextScreen(window = window)
 
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.Trash)
@@ -537,18 +491,10 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        TrashedPhotoGridView(
-                            selectedItemsList = selectedItemsList,
-                            viewModel = viewModel
-                        )
+                        TrashedPhotoGridView(viewModel = viewModel)
                     }
 
                     composable<Screens.Trash.SinglePhoto> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val screen = it.toRoute<Screens.Trash.SinglePhoto>()
 
                         val storeOwner = remember(it) {
@@ -576,10 +522,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.SecureFolder.GridView
                 ) {
                     composable<Screens.SecureFolder.GridView> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
+                        setupNextScreen(window = window)
 
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.SecureFolder)
@@ -599,11 +542,6 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.SecureFolder.SinglePhoto> {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
-
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.SecureFolder)
                         }
@@ -639,10 +577,7 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        setupNextScreen(
-                            selectedItemsList,
-                            window
-                        )
+                        setupNextScreen(window = window)
 
                         val screen = it.toRoute<Screens.Immich.GridView>()
 
@@ -662,7 +597,6 @@ class MainActivity : ComponentActivity() {
 
                         ImmichAlbumPage(
                             albumInfo = screen.albumInfo,
-                            selectedItemsList = selectedItemsList,
                             viewModel = viewModel
                         )
                     }
@@ -707,6 +641,8 @@ class MainActivity : ComponentActivity() {
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
+                        setupNextScreen(window = window)
+
                         val screen = it.toRoute<Screens.CustomAlbum.GridView>()
 
                         val storeOwner = remember(it) {
@@ -725,7 +661,6 @@ class MainActivity : ComponentActivity() {
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
-                            selectedItemsList = selectedItemsList,
                             viewModel = viewModel
                         )
                     }
@@ -858,10 +793,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window = window)
 
                     val screen: Screens.ImageEditor = it.toRoute()
 
@@ -915,10 +847,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) {
-                    setupNextScreen(
-                        selectedItemsList,
-                        window
-                    )
+                    setupNextScreen(window)
 
                     val screen = it.toRoute<Screens.VideoEditor>()
 
@@ -984,11 +913,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun setupNextScreen(
-    selectedItemsList: SnapshotStateList<PhotoLibraryUIModel>,
-    window: Window
-) {
-    selectedItemsList.clear()
+fun setupNextScreen(window: Window) {
     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
     setBarVisibility(
