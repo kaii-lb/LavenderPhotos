@@ -224,9 +224,7 @@ fun rememberSelectionManager(
                     // search
                     set.isEmpty() -> dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
 
-                    sortMode.isDateModified -> dao.mediaInDateModified(timestamp = timestamp, paths = paths)
-
-                    else -> dao.mediaInDateTaken(timestamp = timestamp, paths = paths)
+                    else -> dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
                 }
             }
         )

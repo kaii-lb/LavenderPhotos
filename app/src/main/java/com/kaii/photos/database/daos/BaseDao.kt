@@ -9,6 +9,6 @@ interface BaseDao {
 
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    fun mediaInDateTaken(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
     fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 }

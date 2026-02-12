@@ -321,6 +321,11 @@ class MainActivity : ComponentActivity() {
                             format = displayDateFormat,
                             accessToken = immichInfo.accessToken
                         )
+                        searchViewModel.update(
+                            sortMode = sortMode,
+                            format = displayDateFormat,
+                            accessToken = immichInfo.accessToken
+                        )
 
                         MainPages(
                             mainPhotosPaths = mainPhotosPaths,

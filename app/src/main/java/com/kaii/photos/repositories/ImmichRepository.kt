@@ -31,7 +31,7 @@ class ImmichRepository(
     private val immichId: String,
     private val info: ImmichBasicInfo,
     private val scope: CoroutineScope,
-    sortMode: MediaItemSortMode,
+    private val sortMode: MediaItemSortMode,
     format: DisplayDateFormat,
     apiClient: ApiClient
 ) {
@@ -96,6 +96,9 @@ class ImmichRepository(
                             customId = null,
                             favourited = asset.isFavorite
                         )
+                    }.sortedByDescending {
+                        if (sortMode.isDateModified) it.dateModified
+                        else it.dateTaken
                     }
             } else {
                 immichItems.value = emptyList()

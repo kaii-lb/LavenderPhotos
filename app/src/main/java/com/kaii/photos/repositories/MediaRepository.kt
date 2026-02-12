@@ -52,7 +52,7 @@ class MediaRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) dao.getPagedMediaDateModified(paths = details.paths)
+                if (details.sortMode.isDateModified) dao.getPagedMediaDateModified(paths = details.paths)
                 else dao.getPagedMediaDateTaken(paths = details.paths)
             }
         ).flow.mapToMedia(accessToken = info.accessToken)

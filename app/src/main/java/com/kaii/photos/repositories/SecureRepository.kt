@@ -97,7 +97,7 @@ class SecureRepository(
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
-            sortMode = params.sortMode,
+            sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
         )
     }.cachedIn(scope)
@@ -174,7 +174,11 @@ class SecureRepository(
                 mediaStoreData.add(securedItem)
             }
 
-            params.value = params.value.copy(items = mediaStoreData)
+            params.value = params.value.copy(
+                items = mediaStoreData.sortedByDescending {
+                    it.item.dateModified
+                }
+            )
         }
 
         return job!!

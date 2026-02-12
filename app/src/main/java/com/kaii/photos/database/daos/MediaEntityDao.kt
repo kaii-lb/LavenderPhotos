@@ -20,7 +20,10 @@ interface MediaDao : BaseDao {
     override fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
-    fun getAllMedia(): Flow<List<MediaStoreData>>
+    fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
+
+    @Query(value = "SELECT * from media ORDER BY dateModified DESC")
+    fun getAllMediaDateModified(): Flow<List<MediaStoreData>>
 
     @Query(value = "SELECT id from media")
     fun getAllMediaIds(): List<Long>
@@ -47,7 +50,7 @@ interface MediaDao : BaseDao {
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)"
     )
-    override fun mediaInDateTaken(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    override fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
     @Query(
         value = "SELECT id," +

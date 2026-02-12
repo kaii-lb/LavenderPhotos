@@ -95,7 +95,7 @@ fun MainPages(
         exitDirection = FloatingToolbarExitDirection.Bottom
     )
 
-    var paths by remember { mutableStateOf(emptySet<String>()) }
+    var paths by remember { mutableStateOf(mainPhotosPaths) }
     val selectionManager = rememberSelectionManager(paths = paths)
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)

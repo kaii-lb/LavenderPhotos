@@ -19,10 +19,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -40,6 +39,7 @@ import kotlin.time.Instant
 private const val TAG = "com.kaii.photos.repositories.SearchRepository"
 
 // TODO: try to use pure sqlite queries for filtering so we can immediately use paging, instead of loading everything still
+@OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
     private val scope: CoroutineScope,
     private val info: ImmichBasicInfo,
@@ -56,22 +56,29 @@ class SearchRepository(
 
     private var query = ""
     private val mediaDao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
-    private val allMedia =
-        mediaDao.getAllMedia()
-            .stateIn(
-                scope = scope,
-                started = SharingStarted.Eagerly,
-                initialValue = emptyList()
-            )
 
     private val params = MutableStateFlow(
         value = RoomQueryParams(
-            items = allMedia.value,
+            items = emptyList(),
             sortMode = sortMode,
             format = format,
             accessToken = ""
         )
     )
+
+    private var allMedia = emptyList<MediaStoreData>()
+
+    init {
+        scope.launch {
+            params.flatMapLatest { details ->
+                if (details.sortMode.isDateModified) mediaDao.getAllMediaDateModified()
+                else mediaDao.getAllMediaDateTaken()
+            }.collectLatest {
+                params.value = params.value.copy(items = it)
+                allMedia = it
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val mediaFlow = params.debounce(1.seconds).flatMapLatest { details ->
@@ -99,7 +106,7 @@ class SearchRepository(
     ) = scope.launch(Dispatchers.IO) {
         val query = query.trim()
         if (query.isBlank()) {
-            params.value = params.value.copy(items = allMedia.value)
+            params.value = params.value.copy(items = allMedia)
             return@launch
         }
 
@@ -147,9 +154,7 @@ class SearchRepository(
     )
 
     private fun searchByName(name: String): List<MediaStoreData> {
-        val list = allMedia.value
-
-        return list.filter { data ->
+        return allMedia.filter { data ->
             data.type != MediaType.Section && data.displayName.lowercase().contains(name.lowercase())
         }
     }
@@ -174,8 +179,7 @@ class SearchRepository(
 
         if (parsed == null) return emptyList()
 
-        val list = allMedia.value
-        return list.filter { data ->
+        return allMedia.filter { data ->
             val date = data.getDateTakenDay().toLocalDate()
 
             data.type != MediaType.Section && date.day == parsed.day && date.month == parsed.month && date.year == parsed.year
@@ -187,15 +191,13 @@ class SearchRepository(
         if (unpacked.size !in 2..3) return emptyList()
 
         try {
-            val list = allMedia.value
-
             // dayNumber month year
             if (unpacked[0].length <= 2) {
                 val month = Month.valueOf(unpacked[1].uppercase()).number
                 val year = unpacked.getOrNull(2)?.toIntOrNull()
 
                 unpacked[0].toIntOrNull()?.let { day ->
-                    return list.filter { data ->
+                    return allMedia.filter { data ->
                         val date = data.getDateTakenDay().toLocalDate()
 
                         data.type != MediaType.Section && date.day == day && date.month.number == month && year?.let { date.year == year } ?: true
@@ -208,7 +210,7 @@ class SearchRepository(
                 val month = Month.valueOf(unpacked[0].uppercase()).number
                 val year = unpacked[1].toIntOrNull() ?: 0
 
-                return list.filter { data ->
+                return allMedia.filter { data ->
                     val date = data.getDateTakenDay().toLocalDate()
 
                     data.type != MediaType.Section && date.month.number == month && date.year == year
@@ -219,7 +221,7 @@ class SearchRepository(
             val month = Month.valueOf(unpacked[1].uppercase()).number
             val year = unpacked.getOrNull(2)?.toIntOrNull()
 
-            return list.filter { data ->
+            return allMedia.filter { data ->
                 val date = data.getDateTakenDay().toLocalDate()
 
                 data.type != MediaType.Section && date.dayOfWeek.isoDayNumber == day && date.month.number == month && year?.let { date.year == year } ?: true
