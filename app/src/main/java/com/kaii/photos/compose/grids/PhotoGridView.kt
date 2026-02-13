@@ -13,7 +13,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -217,7 +216,7 @@ fun DeviceMedia(
                     columnSize
                 }
             ),
-            userScrollEnabled = !isDragSelecting.value || isSelecting,
+            userScrollEnabled = !isDragSelecting.value,
             modifier = Modifier
                 .testTag("mainlazycolumn")
                 .fillMaxSize(1f)
@@ -229,8 +228,7 @@ fun DeviceMedia(
                     pagingItems = pagingItems,
                     isDragSelecting = isDragSelecting,
                     context = context,
-                    thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                    isSelecting = { isSelecting }
+                    thumbnailSettings = Pair(cacheThumbnails, thumbnailSize)
                 )
         ) {
             items(
@@ -455,25 +453,15 @@ private fun MediaStoreItem(
                 .padding(2.dp)
                 .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .then(
-                    if (isSelecting()) {
-                        Modifier.clickable(
-                            enabled = !isDragSelecting.value
-                        ) {
-                            if (isMediaPicker) {
-                                onLongClick()
-                            } else {
-                                onSingleClick()
-                            }
-                        }
+                .clickable(
+                    enabled = !isDragSelecting.value
+                ) {
+                    if (isMediaPicker) {
+                        onLongClick()
                     } else {
-                        Modifier.combinedClickable(
-                            onClick = onSingleClick,
-
-                            onLongClick = onLongClick
-                        )
+                        onSingleClick()
                     }
-                )
+                }
         ) {
             // TODO: possibly move to a less messy and horrible decrypting implementation
             var model by remember { mutableStateOf<Any?>(null) }
@@ -656,8 +644,7 @@ private fun Modifier.dragSelectionHandler(
     gridState: LazyGridState,
     isDragSelecting: MutableState<Boolean>,
     context: Context,
-    thumbnailSettings: Pair<Boolean, Int>,
-    isSelecting: () -> Boolean
+    thumbnailSettings: Pair<Boolean, Int>
 ) = composed {
     val localDensity = LocalDensity.current
     val resources = LocalResources.current
@@ -675,7 +662,8 @@ private fun Modifier.dragSelectionHandler(
     }
 
     pointerInput(pagingItems) {
-        var initialIndex: Int? = null
+        var initialKey: Int? = null
+        var currentKey: Int? = null
         var isDragAndDropping = false
 
         val scrollThreshold = with(localDensity) {
@@ -696,80 +684,82 @@ private fun Modifier.dragSelectionHandler(
             onDragStart = { offset ->
                 isDragSelecting.value = true
 
-                if (isSelecting()) {
-                    state.getGridItemAtOffset(
-                        offset = offset,
-                        numberOfHorizontalItems = numberOfHorizontalItems
-                    )?.let { index ->
-                        val item = pagingItems[index]
+                state.getGridItemAtOffset(
+                    offset = offset,
+                    keys = (0..<pagingItems.itemCount).map { pagingItems[it]?.itemKey() },
+                    numberOfHorizontalItems = numberOfHorizontalItems
+                )?.let { index ->
+                    val item = pagingItems[index]
 
-                        if (item is PhotoLibraryUIModel.MediaImpl) {
-                            val selected = selectionManager.isSelected(item)
+                    if (item is PhotoLibraryUIModel.MediaImpl) {
+                        val selected = selectionManager.isSelected(item)
 
-                            if (selected) {
-                                isDragAndDropping = true
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    val items = selectionManager.selection.first().fastMap { it.toUri() }
+                        if (selected) {
+                            isDragAndDropping = true
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val items = selectionManager.selection.first().fastMap { it.toUri() }
 
-                                    val clipData = ClipData.newUri(
-                                        context.contentResolver,
-                                        resources.getString(R.string.drag_and_drop_data),
-                                        items.first()
-                                    )
+                                val clipData = ClipData.newUri(
+                                    context.contentResolver,
+                                    resources.getString(R.string.drag_and_drop_data),
+                                    items.first()
+                                )
 
-                                    items.drop(1).forEach {
-                                        clipData.addItem(ClipData.Item(it))
-                                    }
-
-                                    val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
-                                        Glide.with(context)
-                                            .asBitmap()
-                                            .override(thumbnailSettings.second)
-                                            .centerCrop()
-                                            .load(it)
-                                            .submit()
-                                            .get()
-                                    }
-
-                                    val shadow = BitmapUriShadowBuilder(
-                                        view = view,
-                                        bitmaps = bitmaps,
-                                        count = items.size,
-                                        density = Density(density)
-                                    )
-
-                                    view.startDragAndDrop(
-                                        clipData,
-                                        shadow,
-                                        clipData,
-                                        View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
-                                    )
+                                items.drop(1).forEach {
+                                    clipData.addItem(ClipData.Item(it))
                                 }
-                            } else {
-                                isDragAndDropping = false
-                                initialIndex = index
 
-                                selectionManager.addMedia(item.item)
+                                val bitmaps = items.take(3).map { // limit to 3 so we don't overstress the rendering/loading of bitmaps
+                                    Glide.with(context)
+                                        .asBitmap()
+                                        .override(thumbnailSettings.second)
+                                        .centerCrop()
+                                        .load(it)
+                                        .submit()
+                                        .get()
+                                }
+
+                                val shadow = BitmapUriShadowBuilder(
+                                    view = view,
+                                    bitmaps = bitmaps,
+                                    count = items.size,
+                                    density = Density(density)
+                                )
+
+                                view.startDragAndDrop(
+                                    clipData,
+                                    shadow,
+                                    clipData,
+                                    View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_OPAQUE
+                                )
                             }
+                        } else {
+                            isDragAndDropping = false
+                            initialKey = index
+                            currentKey = index
+
+                            selectionManager.addMedia(item.item)
                         }
                     }
                 }
             },
 
             onDragCancel = {
-                initialIndex = null
+                initialKey = null
                 scrollSpeed.floatValue = 0f
                 isDragSelecting.value = false
             },
 
             onDragEnd = {
-                initialIndex = null
+                initialKey = null
                 scrollSpeed.floatValue = 0f
                 isDragSelecting.value = false
             },
 
             onDrag = { change, _ ->
-                if (initialIndex != null && !isDragAndDropping) {
+                isDragSelecting.value = true
+
+                if (initialKey != null && !isDragAndDropping) {
                     val distanceFromBottom = state.layoutInfo.viewportSize.height - change.position.y
                     val distanceFromTop = change.position.y // for clarity
 
@@ -781,16 +771,35 @@ private fun Modifier.dragSelectionHandler(
 
                     state.getGridItemAtOffset(
                         offset = change.position,
+                        keys = (0..<pagingItems.itemCount).map { pagingItems[it]?.itemKey() },
                         numberOfHorizontalItems = numberOfHorizontalItems
-                    )?.let { endIndex ->
-                        if (initialIndex != null && endIndex != -1) {
-                            val (lower, upper) = if (initialIndex!! < endIndex) initialIndex!! to endIndex else endIndex to initialIndex!!
-
-                            selectionManager.updateSelection(
-                                (lower..upper).mapNotNull {
-                                    (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                    )?.let { index ->
+                        if (currentKey != index) {
+                            val toBeRemoved =
+                                if (initialKey!! <= currentKey!!) {
+                                    (initialKey!!..currentKey!!).mapNotNull {
+                                        (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                                    }
+                                } else {
+                                    (currentKey!!..initialKey!!).mapNotNull {
+                                        (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                                    }
                                 }
-                            )
+
+                            val toBeAdded =
+                                if (initialKey!! <= index) {
+                                    (initialKey!!..index).mapNotNull {
+                                        (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                                    }
+                                } else {
+                                    (index..initialKey!!).mapNotNull {
+                                        (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
+                                    }
+                                }
+
+                            selectionManager.updateSelection(added = toBeAdded, removed = toBeRemoved)
+
+                            currentKey = index
                         }
                     }
                 }
@@ -800,10 +809,13 @@ private fun Modifier.dragSelectionHandler(
 }
 
 @Suppress("UNCHECKED_CAST")
-fun LazyGridState.getGridItemAtOffset(
+fun <T> LazyGridState.getGridItemAtOffset(
     offset: Offset,
+    keys: List<T>,
     numberOfHorizontalItems: Int
 ): Int? {
+    var key: T? = null
+
     // scan the entire row for this item
     // if theres only one or two items on a row and user drag selects to the empty space they get selected
     for (i in 1..numberOfHorizontalItems) {
@@ -821,10 +833,15 @@ fun LazyGridState.getGridItemAtOffset(
         }
 
         if (possibleItem != null) {
-            return possibleItem.index
+            key = possibleItem.key as T
+            break
         }
     }
 
-    return null
+    val found = keys.find {
+        it == key
+    } ?: return null
+
+    return keys.indexOf(found)
 }
 
