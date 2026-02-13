@@ -326,7 +326,7 @@ fun AlbumsListItem(
             .clickable {
                 if (!album.isCustomAlbum) {
                     dirPermissionManager.start(
-                        directories = setOf(album.mainPath)
+                        directories = album.paths
                     )
                 } else {
                     show.value = false

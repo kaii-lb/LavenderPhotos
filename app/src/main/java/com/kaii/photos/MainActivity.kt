@@ -867,12 +867,11 @@ class MainActivity : ComponentActivity() {
         val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
-        // TODO: fix not working
         val firstStartup by mainViewModel.settings.user.getFirstStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
         if (firstStartup) {
-            val showFirstStartupDialog = remember { mutableStateOf(false) }
+            val showFirstStartupDialog = remember { mutableStateOf(true) }
             val isLoading = remember { mutableStateOf(true) }
             val findingAlbumsOnDevice = stringResource(id = R.string.finding_albums_on_device)
 
@@ -880,22 +879,26 @@ class MainActivity : ComponentActivity() {
                 dialogTitle = stringResource(id = R.string.first_startup_dialog_title),
                 dialogBody = stringResource(id = R.string.first_startup_dialog_body),
                 showDialog = showFirstStartupDialog,
-                confirmButtonLabel = stringResource(id = R.string.first_startup_dialog_confirm_title)
-            ) {
-                mainViewModel.launch(Dispatchers.IO) {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.LoadingEvent(
-                            message = findingAlbumsOnDevice,
-                            icon = R.drawable.art_track,
-                            isLoading = isLoading
+                confirmButtonLabel = stringResource(id = R.string.first_startup_dialog_confirm_title),
+                action = {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = findingAlbumsOnDevice,
+                                icon = R.drawable.art_track,
+                                isLoading = isLoading
+                            )
                         )
-                    )
 
-                    mainViewModel.settings.albums.add(list = tryGetAllAlbums(context = context))
-                    isLoading.value = false
-                    mainViewModel.settings.user.setFirstStartup(false)
+                        mainViewModel.settings.albums.add(list = tryGetAllAlbums(context = context))
+                        isLoading.value = false
+                        mainViewModel.settings.user.setFirstStartup()
+                    }
+                },
+                onCancel = {
+                    mainViewModel.settings.user.setFirstStartup()
                 }
-            }
+            )
         }
 
         // so it only checks once

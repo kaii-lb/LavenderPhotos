@@ -313,16 +313,16 @@ class SettingsVersionImpl(
 }
 
 class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val firstStartup = booleanPreferencesKey("first_startup")
+    private val firstStartup = booleanPreferencesKey("user_first_startup")
 
     fun getFirstStartup(): Flow<Boolean> =
         context.datastore.data.map {
-            it[firstStartup] == true
+            it[firstStartup] != false
         }
 
-    fun setFirstStartup(value: Boolean) = viewModelScope.launch {
+    fun setFirstStartup() = viewModelScope.launch {
         context.datastore.edit {
-            it[firstStartup] = value
+            it[firstStartup] = false
         }
     }
 }

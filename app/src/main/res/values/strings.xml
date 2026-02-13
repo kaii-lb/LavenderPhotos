@@ -645,7 +645,7 @@
 
     <!-- First Startup -->
     <string name="first_startup_dialog_title">Find all albums on device?</string>
-    <string name="first_startup_dialog_body">Searches for every albums on this device and adds it to Lavender Photos.\nNote: Old users WILL have their albums erased if this option is used.</string>
+    <string name="first_startup_dialog_body">Searches for every album/folder on this device and adds them to Lavender Photos\' albums tab.</string>
     <string name="first_startup_dialog_confirm_title">Search!</string>
 
     <!-- Albums -->

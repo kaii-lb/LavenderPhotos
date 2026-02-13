@@ -4,7 +4,6 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.runtime.saveable.listSaver
 import androidx.navigation.NavType
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
@@ -165,33 +164,6 @@ data class BottomBarTab(
     val isCustom: Boolean = false,
     val storedNameIndex: Int? = null
 ) {
-    companion object {
-        @Suppress("UNCHECKED_CAST") // if the type changes and this doesn't then something always went really bad
-        val TabSaver =
-            listSaver(
-                save = {
-                    listOf(
-                        it.name,
-                        it.albumPaths,
-                        it.icon.ordinal,
-                        it.id,
-                        it.isCustom,
-                        it.storedNameIndex
-                    )
-                },
-                restore = {
-                    BottomBarTab(
-                        name = it[0] as String,
-                        albumPaths = it[1] as Set<String>,
-                        icon = StoredDrawable.entries[it[2] as Int],
-                        id = it[3] as Int,
-                        isCustom = it[4] as Boolean,
-                        storedNameIndex = it[2] as Int
-                    )
-                }
-            )
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -266,7 +238,6 @@ data class AlbumInfo(
 
         other as AlbumInfo
 
-        if (id != other.id) return false
         if (isCustomAlbum != other.isCustomAlbum) return false
         if (name != other.name) return false
         if (paths != other.paths) return false // as a set since we don't care about the order
