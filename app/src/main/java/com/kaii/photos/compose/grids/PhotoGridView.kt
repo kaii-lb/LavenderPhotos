@@ -162,7 +162,7 @@ fun PhotoGrid(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceMedia(
+private fun DeviceMedia(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,

@@ -211,9 +211,7 @@ class MediaPicker : ComponentActivity() {
             }
         ) {
             navigation<Screens.MainPages>(
-                startDestination = Screens.MainPages.MainGrid.GridView(
-                    albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths)
-                )
+                startDestination = Screens.MainPages.MainGrid.GridView
             ) {
                 composable<Screens.MainPages.MainGrid.GridView>(
                     typeMap = mapOf(
@@ -222,9 +220,7 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     setupNextScreen(window)
 
-                    val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
                     multiAlbumViewModel.update(
-                        album = screen.albumInfo,
                         sortMode = sortMode,
                         format = displayDateFormat,
                         accessToken = immichInfo.accessToken

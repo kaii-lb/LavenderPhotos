@@ -118,9 +118,7 @@ interface Screens {
         @Serializable
         object MainGrid : Screens {
             @Serializable
-            data class GridView(
-                val albumInfo: AlbumInfo
-            ) : Screens
+            object GridView : Screens
 
             @Serializable
             data class SinglePhoto(

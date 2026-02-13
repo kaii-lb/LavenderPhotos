@@ -106,6 +106,18 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         initialValue = emptyList()
     )
 
+    val defaultTab = settings.defaultTabs.getDefaultTab().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = settings.defaultTabs.defaultTabItem
+    )
+
+    val tabList = settings.defaultTabs.getTabList().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = settings.defaultTabs.defaultTabList
+    )
+
     private val _mainPhotosAlbums = settings.mainPhotosView.getAlbums()
 
     init {

@@ -302,21 +302,16 @@ class MainActivity : ComponentActivity() {
                 }
             ) {
                 navigation<Screens.MainPages>(
-                    startDestination = Screens.MainPages.MainGrid.GridView(
-                        albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths)
-                    )
+                    startDestination = Screens.MainPages.MainGrid.GridView
                 ) {
                     composable<Screens.MainPages.MainGrid.GridView>(
                         typeMap = mapOf(
                             typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
                         )
                     ) {
-                        val screen = it.toRoute<Screens.MainPages.MainGrid.GridView>()
-
                         setupNextScreen(window = window)
 
                         multiAlbumViewModel.update(
-                            album = screen.albumInfo,
                             sortMode = sortMode,
                             format = displayDateFormat,
                             accessToken = immichInfo.accessToken

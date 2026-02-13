@@ -67,13 +67,10 @@ fun MainPages(
 ) {
     val mainViewModel = LocalMainViewModel.current
 
-    val tabList by mainViewModel.settings.defaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
+    val defaultTab by mainViewModel.defaultTab.collectAsStateWithLifecycle()
+    val tabList by mainViewModel.tabList.collectAsStateWithLifecycle()
 
     val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-    val defaultTab by mainViewModel.settings.defaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = null)
-
-    if (defaultTab == null) return
 
     val pagerState = rememberPagerState(
         initialPage = tabList.indexOf(defaultTab)
@@ -99,6 +96,7 @@ fun MainPages(
     val selectionManager = rememberSelectionManager(paths = paths)
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
     Scaffold(
         topBar = {
             MainAppTopBar(
@@ -113,6 +111,7 @@ fun MainPages(
                     pagerState = pagerState,
                     selectionManager = selectionManager,
                     tabs = tabList,
+                    defaultTab = defaultTab,
                     scrollBehaviour = scrollBehaviour
                 )
             }
@@ -174,6 +173,25 @@ fun MainPages(
                 val tab = tabList[index]
 
                 when {
+                    tab.isCustom -> {
+                        LaunchedEffect(Unit) {
+                            setupNextScreen(window = window)
+                            selectionManager.clear()
+                            paths = tab.albumPaths
+
+                            multiAlbumViewModel.update(
+                                album = tab.toAlbumInfo()
+                            )
+                        }
+
+                        MainGridView(
+                            viewModel = multiAlbumViewModel,
+                            albumInfo = tab.toAlbumInfo(),
+                            selectionManager = selectionManager,
+                            isMediaPicker = incomingIntent != null
+                        )
+                    }
+
                     tab == DefaultTabs.TabTypes.photos -> {
                         LaunchedEffect(Unit) {
                             setupNextScreen(window = window)
@@ -214,25 +232,6 @@ fun MainPages(
                             isMediaPicker = incomingIntent != null
                         )
                     }
-
-                    tab.isCustom -> {
-                        LaunchedEffect(Unit) {
-                            setupNextScreen(window = window)
-                            selectionManager.clear()
-                            paths = tab.albumPaths
-
-                            multiAlbumViewModel.update(
-                                album = tab.toAlbumInfo()
-                            )
-                        }
-
-                        MainGridView(
-                            viewModel = multiAlbumViewModel,
-                            albumInfo = tab.toAlbumInfo(),
-                            selectionManager = selectionManager,
-                            isMediaPicker = incomingIntent != null
-                        )
-                    }
                 }
             }
 
@@ -255,6 +254,7 @@ fun MainPages(
                         MainAppBottomBar(
                             pagerState = pagerState,
                             tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
+                            defaultTab = defaultTab,
                             scrollBehaviour = scrollBehaviour,
                             selectionManager = selectionManager
                         )

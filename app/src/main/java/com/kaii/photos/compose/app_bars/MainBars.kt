@@ -48,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -209,15 +210,10 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     pagerState: PagerState,
     tabs: List<BottomBarTab>,
+    defaultTab: BottomBarTab,
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val defaultTab by mainViewModel.settings.defaultTabs.getDefaultTab()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabItem)
-    val tabList by mainViewModel.settings.defaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
-
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
@@ -225,9 +221,9 @@ fun MainAppBottomBar(
             )
     )
 
-    val currentTab by remember {
+    val currentTab by retain {
         derivedStateOf {
-            tabList[pagerState.currentPage]
+            tabs[pagerState.currentPage]
         }
     }
 
@@ -323,7 +319,7 @@ fun MainAppBottomBar(
                                     onCheckedChange = {
                                         if (currentTab != tab) coroutineScope.launch {
                                             pagerState.animateScrollToPage(
-                                                page = tabList.indexOf(tab),
+                                                page = tabs.indexOf(tab),
                                                 animationSpec = AnimationConstants.defaultSpring()
                                             )
                                         }
