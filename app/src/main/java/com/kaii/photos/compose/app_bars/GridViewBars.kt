@@ -422,7 +422,8 @@ fun TrashPhotoGridBottomBarItems(
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.share),
@@ -459,7 +460,8 @@ fun TrashPhotoGridBottomBarItems(
     IconButton(
         onClick = {
             showRestoreDialog.value = true
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.untrash),
@@ -489,7 +491,8 @@ fun TrashPhotoGridBottomBarItems(
             if (selectedItemsList.isNotEmpty()) {
                 showPermaDeleteDialog.value = true
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.delete),
@@ -613,7 +616,8 @@ fun SecureFolderViewBottomAppBar(
                         shareMultipleSecuredImages(paths = cachedPaths, context = context)
                     }.await()
                 }
-            }
+            },
+            enabled = selectedItemsList.isNotEmpty()
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.share),
@@ -684,7 +688,8 @@ fun SecureFolderViewBottomAppBar(
         IconButton(
             onClick = {
                 showRestoreDialog.value = true
-            }
+            },
+            enabled = selectedItemsList.isNotEmpty()
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.unlock),
@@ -746,7 +751,8 @@ fun SecureFolderViewBottomAppBar(
         IconButton(
             onClick = {
                 showPermaDeleteDialog.value = true
-            }
+            },
+            enabled = selectedItemsList.isNotEmpty()
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.delete),
@@ -843,7 +849,8 @@ fun FavouritesBottomAppBarItems(
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.share),
@@ -864,7 +871,8 @@ fun FavouritesBottomAppBarItems(
     IconButton(
         onClick = {
             show.value = true
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.copy),
@@ -893,7 +901,8 @@ fun FavouritesBottomAppBarItems(
     IconButton(
         onClick = {
             showUnFavDialog.value = true
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.unfavourite),
@@ -965,7 +974,8 @@ fun FavouritesBottomAppBarItems(
                     )
                 }
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.delete),

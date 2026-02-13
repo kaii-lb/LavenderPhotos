@@ -121,7 +121,8 @@ fun SelectingBottomBarItems(
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.share),
@@ -144,7 +145,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !albumInfo.isCustomAlbum
+        enabled = !albumInfo.isCustomAlbum && !selectedItemsList.isEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),
@@ -156,7 +157,8 @@ fun SelectingBottomBarItems(
         onClick = {
             isMoving = false
             show.value = true
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.copy),
@@ -230,7 +232,8 @@ fun SelectingBottomBarItems(
             else permissionState.get( // TODO: handle custom albums
                 uris = selectedItemsList.fastMap { it.toUri() }
             )
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.delete),
@@ -283,7 +286,8 @@ fun SelectingBottomBarItems(
                     }.toSet()
                 )
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.secure_folder),

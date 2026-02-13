@@ -266,10 +266,10 @@ fun MainAppBottomBar(
                     windowInfo.containerSize.width.toDp() * 0.9f
                 }),
             content = {
-                val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
+                val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
                 AnimatedContent(
-                    targetState = selectedItemsList.isNotEmpty(),
+                    targetState = isSelecting,
                     transitionSpec = {
                         (slideInHorizontally() + fadeIn()).togetherWith(
                             scaleOut(

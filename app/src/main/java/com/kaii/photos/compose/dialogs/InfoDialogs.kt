@@ -171,8 +171,7 @@ fun SingleAlbumDialog(
             ) {
                 showDialog.value = false
 
-                // TODO
-                // selectionManager.toggleSelection()
+                selectionManager.enterSelectMode()
             }
 
 
@@ -428,8 +427,7 @@ fun MainAppDialog(
                         position = RowPosition.Top,
                     ) {
                         showDialog.value = false
-                        // TODO
-                        // selectionManager.toggleSelectMode()
+                        selectionManager.enterSelectMode()
                         vibratorManager.vibrateShort()
                     }
                 }

@@ -57,7 +57,8 @@ class SelectionManager(
 
     private var _sections by mutableStateOf<List<Long>>(emptyList())
 
-    val enabled = selection.map { it.isNotEmpty() }
+    private var manualEnable by mutableStateOf(false)
+    val enabled = snapshotFlow { _selection.isNotEmpty() || manualEnable }
 
     @OptIn(FlowPreview::class)
     val count = selection.map { it.size }.debounce(25.milliseconds)
@@ -77,9 +78,14 @@ class SelectionManager(
             _sections.contains(getKey(item))
         }
 
+    fun enterSelectMode() {
+        manualEnable = true
+    }
+
     fun clear() {
         _selection = emptyMap()
         _sections = emptyList()
+        manualEnable = false
     }
 
     fun addAll(items: List<PhotoLibraryUIModel?>) = scope.launch(Dispatchers.IO) {
@@ -151,6 +157,21 @@ class SelectionManager(
             } else {
                 sections.remove(key)
             }
+        }
+
+        // hardcoded android limit for handling uris
+        if (snapshot.values.flatten().size >= 2000) {
+            scope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvents.MessageEvent(
+                        message = context.resources.getString(R.string.media_select_limit_reached),
+                        icon = R.drawable.lists,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
+
+            return@launch
         }
 
         _selection = snapshot
