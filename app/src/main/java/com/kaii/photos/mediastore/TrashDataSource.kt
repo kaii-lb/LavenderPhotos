@@ -158,6 +158,6 @@ class TrashDataSource(
 
         cursor.close()
 
-        return holderMap
+        return holderMap.sortedByDescending { it.dateModified }
     }
 }

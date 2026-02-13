@@ -67,7 +67,7 @@ class TrashRepository(
     }.cachedIn(scope)
 
     val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
+        sortMode = if (sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
         format = format
     ).cachedIn(scope)
 
