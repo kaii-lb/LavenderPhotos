@@ -21,7 +21,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -42,7 +44,7 @@ private const val TAG = "com.kaii.photos.repositories.SearchRepository"
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
     private val scope: CoroutineScope,
-    private val info: ImmichBasicInfo,
+    info: ImmichBasicInfo,
     context: Context,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
@@ -62,7 +64,7 @@ class SearchRepository(
             items = emptyList(),
             sortMode = sortMode,
             format = format,
-            accessToken = ""
+            accessToken = info.accessToken
         )
     )
 
@@ -70,12 +72,12 @@ class SearchRepository(
 
     init {
         scope.launch {
-            params.flatMapLatest { details ->
-                if (details.sortMode.isDateModified) mediaDao.getAllMediaDateModified()
+            params.mapLatest { it.sortMode.isDateModified }.distinctUntilChanged().flatMapLatest { isDateModified ->
+                if (isDateModified) mediaDao.getAllMediaDateModified()
                 else mediaDao.getAllMediaDateTaken()
             }.collectLatest {
-                params.value = params.value.copy(items = it)
                 allMedia = it
+                search(query, true)
             }
         }
     }
@@ -90,7 +92,7 @@ class SearchRepository(
                 initialLoadSize = 300
             ),
             pagingSourceFactory = { ListPagingSource(media = details.items) }
-        ).flow.mapToMedia(accessToken = info.accessToken)
+        ).flow.mapToMedia(accessToken = details.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -102,15 +104,17 @@ class SearchRepository(
     }.cachedIn(scope)
 
     fun search(
-        query: String
+        query: String,
+        ignoreSameQueryCheck: Boolean = false
     ) = scope.launch(Dispatchers.IO) {
         val query = query.trim()
         if (query.isBlank()) {
+            this@SearchRepository.query = query
             params.value = params.value.copy(items = allMedia)
             return@launch
         }
 
-        if (this@SearchRepository.query == query) return@launch
+        if (this@SearchRepository.query == query && !ignoreSameQueryCheck) return@launch
         this@SearchRepository.query = query
 
         var final = searchByDateFormat(query = query)
@@ -191,6 +195,39 @@ class SearchRepository(
         if (unpacked.size !in 2..3) return emptyList()
 
         try {
+            // year
+            if (unpacked[0].lowercase() == "#year:" && unpacked[1].toIntOrNull() != null && unpacked[1].length == 4 && unpacked.size == 2) {
+                val year = unpacked[1].toInt()
+
+                return allMedia.filter { data ->
+                    val date = data.getDateTakenDay().toLocalDate()
+
+                    date.year == year
+                }
+            }
+
+            // month
+            if (unpacked[0].lowercase() == "#month:" && Month.entries.indexOfFirst { it.name == unpacked[1].uppercase() } != -1 && unpacked.size == 2) {
+                val month = Month.valueOf(unpacked[1].uppercase()).number
+
+                return allMedia.filter { data ->
+                    val date = data.getDateTakenDay().toLocalDate()
+
+                    date.month.number == month
+                }
+            }
+
+            // day
+            if (unpacked[0].lowercase() == "#day:" && DayOfWeek.entries.indexOfFirst { it.name == unpacked[1].uppercase() } != -1 && unpacked.size == 2) {
+                val day = DayOfWeek.valueOf(unpacked[1].uppercase()).isoDayNumber
+
+                return allMedia.filter { data ->
+                    val date = data.getDateTakenDay().toLocalDate()
+
+                    date.dayOfWeek.isoDayNumber == day
+                }
+            }
+
             // dayNumber month year
             if (unpacked[0].length <= 2) {
                 val month = Month.valueOf(unpacked[1].uppercase()).number
@@ -206,7 +243,7 @@ class SearchRepository(
             }
 
             // month year
-            if (unpacked[0].length > 2 && unpacked[1].length == 4) {
+            if (unpacked[0].length > 2 && unpacked[1].toIntOrNull() != null) {
                 val month = Month.valueOf(unpacked[0].uppercase()).number
                 val year = unpacked[1].toIntOrNull() ?: 0
 
@@ -221,6 +258,8 @@ class SearchRepository(
             val month = Month.valueOf(unpacked[1].uppercase()).number
             val year = unpacked.getOrNull(2)?.toIntOrNull()
 
+            println("DAY $day $month $year")
+
             return allMedia.filter { data ->
                 val date = data.getDateTakenDay().toLocalDate()
 
@@ -228,6 +267,7 @@ class SearchRepository(
             }
         } catch (e: IllegalArgumentException) {
             Log.d(TAG, e.toString())
+            e.printStackTrace()
 
             return emptyList()
         }

@@ -14,19 +14,15 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
@@ -38,7 +34,6 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
 
@@ -59,21 +54,7 @@ fun SearchPage(
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val coroutineScope = rememberCoroutineScope()
-        val scrollBackToTop = {
-            coroutineScope.launch {
-                gridState.animateScrollToItem(0)
-            }
-        }
-
         val searchedForText = rememberSaveable { mutableStateOf("") }
-
-        var hideLoadingSpinner by remember { mutableStateOf(false) }
-        val showLoadingSpinner by remember {
-            derivedStateOf {
-                if (items.loadState.source == LoadState.Loading) true else !hideLoadingSpinner
-            }
-        }
 
         Column(
             modifier = Modifier
@@ -94,58 +75,36 @@ fun SearchPage(
                     resources.getString(R.string.search_photo_name),
                     resources.getString(R.string.search_photo_date),
                     "$month $year",
-                    resources.getString(R.string.search_photo_day),
                     "$day $month $year",
-                    "$date $month $year"
+                    "$date $month $year",
+                    "#Year: $year",
+                    "#Month: $month",
+                    "#Day: $day"
                 )
             }
-            val placeholder = remember { placeholdersList.random() }
 
             ClearableTextField(
                 text = searchedForText,
-                placeholder = placeholder,
+                placeholder = placeholdersList.random(),
                 icon = R.drawable.search,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .height(56.dp)
                     .padding(8.dp, 0.dp),
-                onConfirm = {
-                    if (!showLoadingSpinner) {
-                        scrollBackToTop()
-                    }
-                },
+                onConfirm = {},
                 onClear = {
                     searchedForText.value = ""
-                    scrollBackToTop()
                 }
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        LaunchedEffect(hideLoadingSpinner) {
-            if (!hideLoadingSpinner) {
-                delay(10000)
-                hideLoadingSpinner = true
-            }
-        }
-
         LaunchedEffect(searchedForText.value, sortMode) {
-            if (searchedForText.value.isEmpty()) {
-                searchViewModel.search(query = "")
-                hideLoadingSpinner = true
-                return@LaunchedEffect
-            }
-
-            delay(PhotoGridConstants.UPDATE_TIME)
-            hideLoadingSpinner = false
-
             searchViewModel.search(query = searchedForText.value)
 
-            hideLoadingSpinner = true
-
-            delay(PhotoGridConstants.LOADING_TIME)
-            gridState.requestScrollToItem(0)
+            delay(PhotoGridConstants.UPDATE_TIME)
+            gridState.scrollToItem(0)
         }
 
         Box(
