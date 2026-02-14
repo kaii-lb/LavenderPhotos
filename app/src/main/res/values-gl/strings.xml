@@ -542,4 +542,10 @@
     <string name="debugging_spawn_loading_snackbar_desc">Depurar as snackbars de lavender sempre que compose decida facer algo estúpido</string>
     <string name="debugging_spawn_loading_snackbar">Ter acceso ao Snackbar de carga</string>
     <string name="debugging_spawn_message_snackbar">Ter acceso ao Snackbar das mensaxes</string>
+    <string name="privacy_scroll_mode">Modo privado</string>
+    <string name="privacy_scroll_mode_enabled">Modo privado: Activado</string>
+    <string name="privacy_scroll_mode_disabled">Modo privado: Desactivado</string>
+    <string name="privacy_scroll_mode_prompt">Xestión do acceso ao desprazamento e accións</string>
+    <string name="privacy_scroll_mode_fail">Fallou o cambio do modo privado</string>
+    <string name="privacy_scroll_mode_exit_tried">Modo privado activado</string>
 </resources>
