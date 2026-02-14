@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -78,8 +79,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.WallpaperSetter
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
@@ -372,6 +373,7 @@ fun ExplanationDialog(
                 text = explanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Justify,
                 modifier = Modifier.wrapContentSize()
             )
         },
@@ -394,6 +396,7 @@ fun AnnotatedExplanationDialog(
                 text = annotatedExplanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Justify,
                 modifier = Modifier.wrapContentSize()
             )
         },
@@ -412,8 +415,10 @@ private fun ExplanationDialogBase(
     showPreviousDialog?.value = false
 
     LavenderDialogBase(
+        usePlatformDefaultWidth = false,
         modifier = Modifier
-            .animateContentSize(),
+            .animateContentSize()
+            .width(300.dp),
         onDismiss = onDismiss
     ) {
         Text(

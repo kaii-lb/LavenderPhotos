@@ -58,12 +58,16 @@ object AnimationConstants {
         easing = EaseInOutExpo
     )
 
-    fun <T> defaultSpring() = spring<T>(stiffness = Spring.StiffnessMediumLow)
+    fun <T> defaultSpring() = spring<T>(
+        dampingRatio = Spring.DampingRatioLowBouncy,
+        stiffness = Spring.StiffnessMediumLow
+    )
 
     const val DURATION_SHORT = 200
     const val DURATION = 350
     const val DURATION_LONG = 600
     const val DURATION_EXTRA_LONG = 1200
+    const val DURATION_EXTRA_EXTRA_LONG = 2000
 }
 
 

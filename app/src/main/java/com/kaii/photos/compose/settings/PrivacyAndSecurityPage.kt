@@ -38,9 +38,12 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.permissions.StartupManager
 
 @Composable
-fun PrivacyAndSecurityPage() {
+fun PrivacyAndSecurityPage(
+    startupManager: StartupManager
+) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
@@ -69,7 +72,7 @@ fun PrivacyAndSecurityPage() {
                     ) { _ ->
                         val granted = MediaStore.canManageMedia(context)
 
-                        mainViewModel.onPermissionResult(
+                        startupManager.onPermissionResult(
                             permission = Manifest.permission.MANAGE_MEDIA,
                             isGranted = granted
                         )

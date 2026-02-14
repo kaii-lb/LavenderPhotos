@@ -69,6 +69,9 @@ interface MediaDao : BaseDao {
         immichThumbnail: String
     )
 
+    @Query(value = "SELECT (SELECT COUNT(id) from media LIMIT 1) = 0")
+    fun isEmpty(): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 

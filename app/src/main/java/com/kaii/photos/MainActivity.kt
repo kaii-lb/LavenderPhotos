@@ -48,18 +48,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
-import com.kaii.photos.compose.PermissionHandler
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -72,6 +67,8 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
+import com.kaii.photos.compose.pages.PermissionHandler
+import com.kaii.photos.compose.pages.StartupProcessingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
@@ -89,7 +86,6 @@ import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
@@ -114,6 +110,7 @@ import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -153,31 +150,18 @@ class MainActivity : ComponentActivity() {
             mainViewModel.settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
         }
 
-        mainViewModel.startupPermissionCheck(applicationContext)
+        val startupManager = StartupManager(context = applicationContext)
+        mainViewModel.launch { startupManager.checkState() }
 
         val initialFollowDarkTheme = runBlocking {
             mainViewModel.settings.lookAndFeel.getFollowDarkMode().first()
         }
 
-        // TODO: uncook this
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniqueWork(
-                SyncWorker::class.java.name,
-                ExistingWorkPolicy.REPLACE,
-                OneTimeWorkRequest.Builder(SyncWorker::class).build()
-            )
-
         setContent {
-            val continueToApp = remember {
-                mutableStateOf(
-                    mainViewModel.checkCanPass()
-                )
-            }
+            val startupState by startupManager.state.collectAsStateWithLifecycle()
 
             val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(
-                    initialValue = initialFollowDarkTheme
-                )
+                .collectAsStateWithLifecycle(initialValue = initialFollowDarkTheme)
 
             PhotosTheme(
                 theme = followDarkTheme,
@@ -190,33 +174,28 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
-                val apiClient = remember {
-                    ApiClient()
-                }
 
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal,
                     LocalMainViewModel provides mainViewModel,
                     LocalAppDatabase provides applicationDatabase,
-                    LocalApiClient provides apiClient
+                    LocalApiClient provides mainViewModel.apiClient
                 ) {
                     AnimatedContent(
-                        targetState = continueToApp.value,
+                        targetState = startupState,
                         transitionSpec = {
-                            (slideInHorizontally { width -> width } + fadeIn())
-                                .togetherWith(
-                                    slideOutHorizontally { width -> -width } + fadeOut()
-                                )
-                                .using(
-                                    SizeTransform(clip = false)
-                                )
-                        },
-                        label = "PermissionHandlerToMainViewAnimatedContent"
-                    ) { stateValue ->
-                        if (!stateValue) {
-                            PermissionHandler(continueToApp)
-                        } else {
-                            SetContentForActivity()
+                            val enter = slideInHorizontally { width -> width } + fadeIn()
+                            val exit = slideOutHorizontally { width -> -width } + fadeOut()
+
+                            enter.togetherWith(exit).using(SizeTransform(clip = false))
+                        }
+                    ) { state ->
+                        when (state) {
+                            StartupManager.State.MissingPermissions -> PermissionHandler(startupManager = startupManager)
+
+                            StartupManager.State.NeedsIndexing -> StartupProcessingPage(startupManager = startupManager)
+
+                            else -> SetContentForActivity(startupManager = startupManager)
                         }
                     }
                 }
@@ -234,7 +213,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
-    private fun SetContentForActivity() {
+    private fun SetContentForActivity(startupManager: StartupManager) {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val mainViewModel = LocalMainViewModel.current
@@ -708,7 +687,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Settings.MainPage.PrivacyAndSecurity> {
-                        PrivacyAndSecurityPage()
+                        PrivacyAndSecurityPage(startupManager = startupManager)
                     }
 
                     composable<Screens.Settings.MainPage.LookAndFeel> {

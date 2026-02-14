@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.pages
 
 import android.Manifest
 import android.app.Activity
@@ -10,6 +10,12 @@ import android.provider.MediaStore
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -68,11 +74,13 @@ import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.permissions.StartupManager
 
 @Composable
 fun PermissionHandler(
-    continueToApp: MutableState<Boolean>
+    startupManager: StartupManager
 ) {
     Scaffold { innerPadding ->
         val isLandscape by rememberDeviceOrientation()
@@ -131,6 +139,7 @@ fun PermissionHandler(
                 }
             }
 
+            val mainViewModel = LocalMainViewModel.current
             Column(
                 modifier = Modifier
                     .weight(1f),
@@ -146,7 +155,6 @@ fun PermissionHandler(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                val mainViewModel = LocalMainViewModel.current
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(
                         space = 4.dp,
@@ -167,7 +175,7 @@ fun PermissionHandler(
                             val readMediaImageLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.RequestPermission()
                             ) { granted ->
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_MEDIA_IMAGES,
                                     isGranted = granted
                                 )
@@ -181,7 +189,7 @@ fun PermissionHandler(
                                 val granted =
                                     context.checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
 
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_MEDIA_IMAGES,
                                     isGranted = granted
                                 )
@@ -194,7 +202,7 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_read_images),
                                 description = stringResource(id = R.string.permissions_read_images_desc),
                                 position = RowPosition.Top,
-                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_IMAGES)
+                                granted = startupManager.permissionGranted(permission = Manifest.permission.READ_MEDIA_IMAGES)
                             ) {
                                 readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
 
@@ -215,7 +223,7 @@ fun PermissionHandler(
                             val readMediaVideoLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.RequestPermission()
                             ) { granted ->
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_MEDIA_VIDEO,
                                     isGranted = granted
                                 )
@@ -229,7 +237,7 @@ fun PermissionHandler(
                                 val granted =
                                     context.checkSelfPermission(Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
 
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_MEDIA_VIDEO,
                                     isGranted = granted
                                 )
@@ -242,7 +250,7 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_read_videos),
                                 description = stringResource(id = R.string.permissions_read_videos_desc),
                                 position = RowPosition.Middle,
-                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_MEDIA_VIDEO)
+                                granted = startupManager.permissionGranted(Manifest.permission.READ_MEDIA_VIDEO)
                             ) {
                                 readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
 
@@ -263,7 +271,7 @@ fun PermissionHandler(
                             val readExternalStorageLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.RequestPermission()
                             ) { granted ->
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_EXTERNAL_STORAGE,
                                     isGranted = granted
                                 )
@@ -277,7 +285,7 @@ fun PermissionHandler(
                                 val granted =
                                     context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.READ_EXTERNAL_STORAGE,
                                     isGranted = granted
                                 )
@@ -290,7 +298,7 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_read_external_storage),
                                 description = stringResource(id = R.string.permissions_read_external_storage_desc),
                                 position = RowPosition.Top,
-                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.READ_EXTERNAL_STORAGE)
+                                granted = startupManager.permissionGranted(permission = Manifest.permission.READ_EXTERNAL_STORAGE)
                             ) {
                                 readExternalStorageLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
 
@@ -315,7 +323,7 @@ fun PermissionHandler(
                             ) { _ ->
                                 val granted = MediaStore.canManageMedia(context)
 
-                                mainViewModel.onPermissionResult(
+                                startupManager.onPermissionResult(
                                     permission = Manifest.permission.MANAGE_MEDIA,
                                     isGranted = granted
                                 )
@@ -328,7 +336,7 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_manage_media),
                                 description = stringResource(id = R.string.permissions_manage_media_desc),
                                 position = RowPosition.Bottom,
-                                granted = !mainViewModel.permissionQueue.contains(Manifest.permission.MANAGE_MEDIA)
+                                granted = startupManager.permissionGranted(permission = Manifest.permission.MANAGE_MEDIA)
                             ) {
                                 val intent = Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA)
                                 manageMediaLauncher.launch(intent)
@@ -378,9 +386,11 @@ fun PermissionHandler(
 
                         Button(
                             onClick = {
-                                continueToApp.value = true
+                                mainViewModel.launch {
+                                    startupManager.checkState()
+                                }
                             },
-                            enabled = mainViewModel.checkCanPass(),
+                            enabled = startupManager.checkPermissions(),
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
                         ) {
@@ -398,12 +408,13 @@ fun PermissionHandler(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val mainViewModel = LocalMainViewModel.current
                     Button(
                         onClick = {
-                            continueToApp.value = true
+                            mainViewModel.launch {
+                                startupManager.checkState()
+                            }
                         },
-                        enabled = mainViewModel.checkCanPass()
+                        enabled = startupManager.checkPermissions()
                     ) {
                         Text(text = stringResource(id = R.string.permissions_continue))
                     }
@@ -435,12 +446,17 @@ fun PermissionButton(
 
     val clickModifier = if (!granted) Modifier.clickable { onClick() } else Modifier
 
+    val color by animateColorAsState(
+        targetValue = if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary,
+        animationSpec = AnimationConstants.expressiveSpring()
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth(1f)
             .height(104.dp)
             .clip(shape)
-            .background(if (!granted) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primary)
+            .background(color)
             .then(clickModifier)
             .padding(16.dp, 12.dp)
     ) {
@@ -471,13 +487,18 @@ fun PermissionButton(
             )
         }
 
-        if (granted) {
+        AnimatedVisibility(
+            visible = granted,
+            enter = scaleIn(animationSpec = AnimationConstants.expressiveSpring()) + fadeIn(),
+            exit = scaleOut(animationSpec = AnimationConstants.expressiveSpring()) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxHeight(1f)
                     .width(32.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.CenterEnd),
+                    .background(MaterialTheme.colorScheme.primary),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

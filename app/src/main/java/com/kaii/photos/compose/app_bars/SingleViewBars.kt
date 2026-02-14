@@ -112,7 +112,6 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
 import com.kaii.photos.compose.editing_view.EditorApp
@@ -126,6 +125,7 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditorCropContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation

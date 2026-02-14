@@ -72,7 +72,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.RadioButtonRow
 import com.kaii.photos.datastore.BottomBarTab

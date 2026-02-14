@@ -1,18 +1,12 @@
 package com.kaii.photos.models.main_activity
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.CancellationSignal
-import android.os.Environment
-import android.provider.MediaStore
-import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
@@ -32,31 +26,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-private const val TAG = "com.kaii.photos.models.MainViewModel"
-
 class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
     private var initialMainPhotosPaths = emptySet<String>()
 
-    // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
-    private val permList =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            listOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.MANAGE_MEDIA
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            listOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.MANAGE_MEDIA
-            )
-        } else {
-            listOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        }
-
-    val permissionQueue = mutableStateListOf<String>()
+    val apiClient = ApiClient()
 
     val settings = Settings(context.applicationContext, viewModelScope)
 
@@ -189,54 +162,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             cancellationSignal.cancel()
             albumsThumbnailsMap[album.id] = media
         }
-    }
-
-    fun startupPermissionCheck(context: Context) {
-        permList.forEach { perm ->
-            val granted = when (perm) {
-                Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
-                    Environment.isExternalStorageManager()
-                }
-
-                Manifest.permission.MANAGE_MEDIA -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaStore.canManageMedia(
-                        context
-                    )
-                    else false
-                }
-
-                else -> {
-                    context.checkSelfPermission(
-                        perm
-                    ) == PackageManager.PERMISSION_GRANTED
-                }
-            }
-
-            if (!granted && !permissionQueue.contains(perm)) permissionQueue.add(perm)
-            else permissionQueue.remove(perm)
-
-            Log.d(TAG, "Permission $perm has been granted $granted")
-        }
-    }
-
-    fun onPermissionResult(
-        permission: String,
-        isGranted: Boolean
-    ) {
-        if (!isGranted && !permissionQueue.contains(permission)) permissionQueue.add(permission)
-        else if (isGranted) permissionQueue.remove(permission)
-
-        permissionQueue.forEach { Log.d(TAG, "PERMISSION DENIED $it") }
-    }
-
-    fun checkCanPass(): Boolean {
-        val manageMedia = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
-        } else {
-            false
-        }
-
-        return permissionQueue.isEmpty() || manageMedia
     }
 
     /** launch tasks on the mainViewModel scope */

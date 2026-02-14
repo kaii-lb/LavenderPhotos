@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
@@ -18,20 +19,26 @@ class PhotosApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // TODO: move to per-folder thing
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val dao = MediaDatabase.getInstance(applicationContext).mediaDao()
+
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
                     scope.launch(Dispatchers.IO) {
                         runCatching {
-                            WorkManager.getInstance(applicationContext)
-                                .enqueueUniqueWork(
-                                    SyncWorker::class.java.name,
-                                    ExistingWorkPolicy.REPLACE,
-                                    OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                                )
+                            // if its empty then the app hasn't finished startup processing, and we shouldn't mess with that
+                            // if it *is* empty and we have finished startup processing, then another SyncWorker will be
+                            // launching by the app, and the dao won't be empty anymore
+                            if (!dao.isEmpty()) {
+                                WorkManager.getInstance(applicationContext)
+                                    .enqueueUniqueWork(
+                                        SyncWorker::class.java.name,
+                                        ExistingWorkPolicy.REPLACE,
+                                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                                    )
+                            }
                         }
                     }
                 }
