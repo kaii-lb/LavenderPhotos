@@ -74,6 +74,12 @@ interface MediaDao : BaseDao {
     @Query(value = "SELECT (SELECT COUNT(id) from media LIMIT 1) = 0")
     fun isEmpty(): Boolean
 
+    @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
+    fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)
+
+    @Query(value = "SELECT id FROM media WHERE favourited = 1")
+    fun getFavouritedIds(): List<Long>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 

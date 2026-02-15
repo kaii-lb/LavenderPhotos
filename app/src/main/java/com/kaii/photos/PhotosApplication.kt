@@ -22,6 +22,7 @@ class PhotosApplication : Application() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val dao = MediaDatabase.getInstance(applicationContext).mediaDao()
 
+        // TODO: try to limit how many can run per second
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {

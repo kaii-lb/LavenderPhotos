@@ -1,7 +1,9 @@
 package com.kaii.photos.mediastore
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
@@ -17,11 +19,39 @@ fun getAllMediaStoreIds(context: Context): Set<Long> {
     val cursor =
         context.contentResolver.query(
             MEDIA_STORE_FILE_URI,
-            arrayOf(MediaColumns._ID),
+            arrayOf(MediaColumns._ID, FileColumns.MEDIA_TYPE),
             "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
             null,
             null,
         ) ?: return emptySet()
+
+    val ids = mutableSetOf<Long>()
+
+    val idCol = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+
+    while (cursor.moveToNext()) {
+        ids.add(cursor.getLong(idCol))
+    }
+
+    cursor.close()
+
+    return ids
+}
+
+fun getAllFavouritedMediaStoreIds(context: Context): Set<Long> {
+    val bundle = Bundle()
+    bundle.putInt(MediaStore.QUERY_ARG_MATCH_FAVORITE, MediaStore.MATCH_ONLY)
+    bundle.putString(
+        ContentResolver.QUERY_ARG_SQL_SELECTION,
+        "(${MediaColumns.IS_FAVORITE} = 1 AND ((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO})))"
+    )
+
+    val cursor = context.contentResolver.query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(MediaColumns._ID, MediaColumns.IS_FAVORITE, FileColumns.MEDIA_TYPE),
+        bundle,
+        null
+    ) ?: return emptySet()
 
     val ids = mutableSetOf<Long>()
 
