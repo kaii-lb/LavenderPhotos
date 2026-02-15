@@ -11,6 +11,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.entities.MediaStoreData
@@ -414,4 +415,44 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
     }
 
     return null
+}
+
+fun ContentResolver.getPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>> {
+    val param = "(" + list.joinToString(",") { "?" } + ")"
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            FileColumns.MEDIA_TYPE
+        ),
+        "${MediaColumns._ID} IN $param",
+        list.fastMapNotNull { it.lastPathSegment }.toTypedArray(),
+        null
+    )
+
+    val paths = mutableListOf<Pair<Uri, String>>()
+
+    mediaCursor?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+        val absolutePathColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val mediaTypeColumn = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val absolutePath = cursor.getString(absolutePathColumn)
+            val mediaType = cursor.getInt(mediaTypeColumn)
+
+            val uriParentPath =
+                if (mediaType == FileColumns.MEDIA_TYPE_IMAGE) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+            val uri = ContentUris.withAppendedId(uriParentPath, id)
+
+            paths.add(Pair(uri, absolutePath))
+        }
+    }
+
+    return paths
 }

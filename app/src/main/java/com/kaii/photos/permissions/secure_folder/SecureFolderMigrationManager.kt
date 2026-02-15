@@ -7,6 +7,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -18,9 +19,9 @@ import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.filename
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.helpers.toRelativePath
@@ -152,11 +153,16 @@ class SecureFolderMigrationManager(
 
         Log.d(TAG, "Creating a backup of the secure folder media...")
         copyImageListToPath(
-            list = mediaItems,
+            list = mediaItems.fastMap {
+                SelectionManager.SelectedItem(
+                    id = it.id,
+                    isImage = it.type == MediaType.Image,
+                    parentPath = it.parentPath
+                )
+            },
             context = context,
             destination = context.appRestoredFilesDir,
             overwriteDate = true,
-            basePath = baseInternalStorageDirectory,
             overrideDisplayName = { displayName ->
                 val extension = displayName.replaceBeforeLast(".", "")
 

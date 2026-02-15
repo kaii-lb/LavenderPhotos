@@ -19,7 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 class FilePermissionsState(
-    private val context: Context
+    private val context: Context,
+    private val onGranted: () -> Unit
 ) {
     internal var launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>? = null
 
@@ -42,7 +43,10 @@ class FilePermissionsState(
     }
 
     fun get(uris: List<Uri>) {
-        if (checkGranted(uris = uris)) return
+        if (checkGranted(uris = uris)) {
+            onGranted()
+            return
+        }
 
         launcher!!.launch(createSenderRequest(uris = uris))
     }
@@ -56,7 +60,8 @@ fun rememberFilePermissionManager(
     val context = LocalContext.current
     val state = remember {
         FilePermissionsState(
-            context = context
+            context = context,
+            onGranted = onGranted
         )
     }
 

@@ -46,7 +46,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -67,8 +66,10 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
@@ -77,8 +78,6 @@ import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private const val TAG = "com.kaii.photos.compose.grids.MoveCopyAlbumListView"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -258,6 +257,7 @@ fun AlbumsListItem(
 
     val mainViewModel = LocalMainViewModel.current
     val coroutineScope = rememberCoroutineScope()
+    val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
     val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
@@ -267,30 +267,26 @@ fun AlbumsListItem(
                 if (isMoving && album.paths.size == 1) {
                     onMoveMedia()
 
-                    // TODO
-                    // moveImageListToPath(
-                    //     context = context,
-                    //     list = selectedItemsList,
-                    //     destination = album.mainPath,
-                    //     preserveDate = preserveDate,
-                    //     basePath = album.mainPath.toBasePath()
-                    // )
+                    moveImageListToPath(
+                        context = context,
+                        list = selectedItemsList,
+                        destination = album.mainPath,
+                        preserveDate = preserveDate
+                    )
                 } else {
                     val list = mutableListOf<MediaStoreData>()
 
                     album.paths.forEach { path ->
-                        // TODO:
-                        // copyImageListToPath(
-                        //     context = context,
-                        //     list = selectedItemsWithoutSection,
-                        //     destination = path,
-                        //     overwriteDate = preserveDate,
-                        //     basePath = path.toBasePath()
-                        // ) { media ->
-                        //     if (isMoving && !list.contains(media)) {
-                        //         list.add(media)
-                        //     }
-                        // }
+                        copyImageListToPath(
+                            context = context,
+                            list = selectedItemsList,
+                            destination = path,
+                            overwriteDate = preserveDate
+                        ) { media ->
+                            if (isMoving && !list.contains(media)) {
+                                list.add(media)
+                            }
+                        }
                     }
 
                     if (list.isNotEmpty()) {
@@ -317,7 +313,6 @@ fun AlbumsListItem(
         }
     )
 
-    val resources = LocalResources.current
     Row(
         modifier = modifier
             .height(88.dp)

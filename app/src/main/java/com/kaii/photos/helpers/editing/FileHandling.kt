@@ -65,6 +65,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
@@ -464,14 +465,13 @@ suspend fun saveVideo(
     return@withContext copyImageListToPath(
         context = context,
         list = listOf(
-            media.copy(
-                uri = newUri.toString(),
-                absolutePath = tempFileCrop.absolutePath,
-                mimeType = "video/mp4"
+            SelectionManager.SelectedItem(
+                id = newUri.lastPathSegment!!.toLong(),
+                isImage = false,
+                parentPath = tempFileCrop.absolutePath // TODO: check this if videos are not exporting
             )
         ),
         destination = absolutePath.parent(),
-        basePath = absolutePath.toBasePath(),
         overwriteDate = false,
         showProgressSnackbar = false,
         overrideDisplayName = {

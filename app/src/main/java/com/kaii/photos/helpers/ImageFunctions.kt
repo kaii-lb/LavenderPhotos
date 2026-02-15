@@ -29,10 +29,10 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
@@ -117,13 +117,12 @@ suspend fun setTrashedOnPhotoList(
     )
 
     try {
+        val map = context.contentResolver.getPathsFromUriList(list = list).toMap()
+
         list.forEachIndexed { index, uri ->
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-            // TODO: do this oneshot instead of for every uri
-            contentResolver.getAbsolutePathFromUri(uri)?.let {
-                File(it).setLastModified(currentTimeMillis)
-            }
+            File(map[uri]!!).setLastModified(currentTimeMillis)
             contentResolver.update(uri, trashedValues, null)
 
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
@@ -449,11 +448,10 @@ fun renameDirectory(
 /** @param destination where to move said files to, should be relative*/
 suspend fun moveImageListToPath(
     context: Context,
-    list: List<MediaStoreData>,
+    list: List<SelectionManager.SelectedItem>,
     destination: String,
-    basePath: String,
     preserveDate: Boolean
-) {
+) = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -468,12 +466,17 @@ suspend fun moveImageListToPath(
         )
     )
 
-    list.forEachIndexed { index, media ->
+    val items = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
+
+    items.forEachIndexed { index, media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
             destination = destination,
-            basePath = basePath,
+            basePath = media.absolutePath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = preserveDate,
             onInsert = { original, new ->
@@ -494,14 +497,13 @@ suspend fun moveImageListToPath(
 @param overrideDisplayName should not contain file extension */
 suspend fun copyImageListToPath(
     context: Context,
-    list: List<MediaStoreData>,
+    list: List<SelectionManager.SelectedItem>,
     destination: String,
-    basePath: String,
     overwriteDate: Boolean,
     showProgressSnackbar: Boolean = true,
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
-): MutableList<Uri> {
+): MutableList<Uri> = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -518,14 +520,18 @@ suspend fun copyImageListToPath(
         )
     }
 
-    val newUris = mutableListOf<Uri>()
+    val items = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
 
-    list.forEachIndexed { index, media ->
+    val newUris = mutableListOf<Uri>()
+    items.forEachIndexed { index, media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
             destination = destination,
-            basePath = basePath,
+            basePath = media.absolutePath.toBasePath(),
             overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = overwriteDate,
@@ -543,5 +549,5 @@ suspend fun copyImageListToPath(
 
     percentage.floatValue = 1f
 
-    return newUris
+    return@withContext newUris
 }
