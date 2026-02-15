@@ -242,7 +242,7 @@ fun SecurePhotoView(
 
         if (showInfoDialog) {
             SingleSecurePhotoInfoDialog(
-                currentMediaItem = currentMediaItem.item,
+                currentMediaItem = currentMediaItem,
                 privacyMode = scrollState.privacyMode,
                 dismiss = {
                     showInfoDialog = false
