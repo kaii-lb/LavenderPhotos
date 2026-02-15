@@ -10,12 +10,12 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.paging.ListPagingSource
+import com.kaii.photos.helpers.paging.mapToMedia
+import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
 import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
-import com.kaii.photos.models.loading.ListPagingSource
-import com.kaii.photos.models.loading.mapToMedia
-import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

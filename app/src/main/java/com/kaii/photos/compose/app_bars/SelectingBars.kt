@@ -46,6 +46,7 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
@@ -253,15 +254,14 @@ fun SelectingBottomBarItems(
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
-                // TODO
-                // moveImageToLockedFolder(
-                //     list = selectedItemsWithoutSection,
-                //     context = context,
-                //     applicationDatabase = appDatabase
-                // ) {
-                //     selectionManager.clear()
-                //     showLoadingDialog = false
-                // }
+                moveMediaToSecureFolder(
+                    list = selectedItemsList,
+                    context = context,
+                    applicationDatabase = appDatabase
+                ) {
+                    selectionManager.clear()
+                    showLoadingDialog = false
+                }
             }
         }
     )

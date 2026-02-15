@@ -41,8 +41,8 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 
 @Composable

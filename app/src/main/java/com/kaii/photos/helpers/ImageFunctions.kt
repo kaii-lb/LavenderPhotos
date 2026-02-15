@@ -14,6 +14,7 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -23,15 +24,19 @@ import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
@@ -174,7 +179,12 @@ fun shareSecuredImage(absolutePath: String, context: Context) {
         putExtra(Intent.EXTRA_STREAM, uri)
     }
 
-    context.startActivity(Intent.createChooser(intent, "Share secured image"))
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            context.resources.getString(R.string.secure_share_media)
+        )
+    )
 }
 
 /** @param paths is a list of absolute paths and [MediaType]s of items */
@@ -186,29 +196,54 @@ fun shareMultipleSecuredImages(
         it.second == MediaType.Video
     }
 
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND_MULTIPLE
-        type = if (hasVideos) "video/*" else "image/*"
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-
     val fileUris = ArrayList(
         paths.map {
             FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
         }
     )
 
-    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND_MULTIPLE
+        type = if (hasVideos) "video/*" else "image/*"
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        putExtra(Intent.EXTRA_STREAM, fileUris)
+    }
 
-    context.startActivity(Intent.createChooser(intent, null))
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            context.resources.getString(R.string.secure_share_media)
+        )
+    )
 }
 
-fun moveImageToLockedFolder(
+@JvmName("moveSelectedItemsToSecureFolder")
+suspend fun moveMediaToSecureFolder(
+    list: List<SelectionManager.SelectedItem>,
+    context: Context,
+    applicationDatabase: MediaDatabase,
+    onDone: () -> Unit
+) = withContext(Dispatchers.IO) {
+    val media = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
+
+    moveMediaToSecureFolder(
+        list = media.toList(),
+        context = context,
+        applicationDatabase = applicationDatabase,
+        onDone = onDone
+    )
+}
+
+@JvmName("moveMediaToSecureFolder")
+suspend fun moveMediaToSecureFolder(
     list: List<MediaStoreData>,
     context: Context,
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
-) {
+) = withContext(Dispatchers.IO) {
     val lastModified = System.currentTimeMillis()
     val metadataRetriever = MediaMetadataRetriever()
 
@@ -347,12 +382,15 @@ suspend fun moveImageOutOfLockedFolder(
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
-fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) {
+suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) = withContext(Dispatchers.IO) {
+    val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
+
     try {
         list.forEach { path ->
             File(path).let { file ->
                 file.delete()
                 getSecuredCacheImageForFile(file = file, context = context).delete()
+                dao.deleteEntityBySecuredPath(securedPath = path)
             }
         }
     } catch (e: Throwable) {

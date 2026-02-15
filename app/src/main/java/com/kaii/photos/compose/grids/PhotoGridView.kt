@@ -103,6 +103,7 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.grid_management.BitmapUriShadowBuilder
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
@@ -110,7 +111,6 @@ import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.isRawImage
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -673,7 +673,7 @@ private fun Modifier.dragSelectionHandler(
         if (pagingItems.itemCount == 0) return@pointerInput
 
         val itemWidth = state.layoutInfo.visibleItemsInfo.firstOrNull {
-            if (it.index in 0..pagingItems.itemCount) {
+            if (it.index in 0..<pagingItems.itemCount) {
                 pagingItems[it.index] is PhotoLibraryUIModel.MediaImpl
             } else false
         }?.size?.width

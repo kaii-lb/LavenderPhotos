@@ -10,11 +10,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,6 +36,9 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
+import com.kaii.lavender.snackbars.LavenderSnackbarController
+import com.kaii.lavender.snackbars.LavenderSnackbarEvents
+import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -49,14 +52,19 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.grid_management.toSecureMedia
+import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
+import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.permissions.favourites.rememberListFavouritesState
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -552,7 +560,6 @@ fun SecureFolderViewTopAppBar(
     }
 }
 
-// TODO
 @Composable
 fun SecureFolderViewBottomAppBar(
     selectionManager: SelectionManager,
@@ -584,16 +591,7 @@ fun SecureFolderViewBottomAppBar(
                         showLoadingDialog = true
 
                         val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
-
-                        val items = mutableListOf<PhotoLibraryUIModel.SecuredMedia>()
-
-                        for (i in 0..pagingItems.itemCount) {
-                            val item = pagingItems[i] as? PhotoLibraryUIModel.SecuredMedia
-
-                            if (item != null && item.item.id in selectedItemsList.fastMap { it.id }) {
-                                items.add(item)
-                            }
-                        }
+                        val items = selectedItemsList.toSecureMedia(context = context)
 
                         items.forEach { item ->
                             val iv = item.bytes?.getIv() ?: return@async
@@ -625,64 +623,53 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
-        // val mainViewModel = LocalMainViewModel.current
+        val mainViewModel = LocalMainViewModel.current
+        val appDatabase = LocalAppDatabase.current
         val showRestoreDialog = remember { mutableStateOf(false) }
-        val runRestoreAction = remember { mutableStateOf(false) }
 
-        // TODO
-        // val restoredFilesDir = remember { context.appRestoredFilesDir }
-        // val applicationDatabase = LocalAppDatabase.current
-        // GetDirectoryPermissionAndRun(
-        //     absoluteDirPaths =
-        //         selectedItemsWithoutSection.fastMap {
-        //             it.bytes?.getOriginalPath()?.getParentFromPath() ?: restoredFilesDir
-        //         }.fastDistinctBy {
-        //             it
-        //         },
-        //     shouldRun = runRestoreAction,
-        //     onGranted = { grantedList ->
-        //         mainViewModel.launch(Dispatchers.IO) {
-        //             val hasPermission = selectedItemsWithoutSection.fastFilter { selected ->
-        //                 (selected.bytes?.getOriginalPath()?.getParentFromPath()
-        //                     ?: restoredFilesDir) in grantedList
-        //             }
-        //
-        //             val newList = groupedMedia.value.toMutableList()
-        //
-        //             moveImageOutOfLockedFolder(
-        //                 list = hasPermission,
-        //                 context = context,
-        //                 applicationDatabase = applicationDatabase
-        //             ) {
-        //                 showLoadingDialog = false
-        //                 isGettingPermissions.value = false
-        //             }
-        //
-        //             newList.removeAll(selectedItemsList.fastFilter { selected ->
-        //                 selected.section in hasPermission.fastMap { it.section }
-        //             }.toSet())
-        //
-        //             selectedItemsList.clear()
-        //             groupedMedia.value = newList
-        //         }
-        //     },
-        //     onRejected = {
-        //         isGettingPermissions.value = false
-        //         showLoadingDialog = false
-        //     }
-        // )
+        val restorePermissionState = rememberDirectoryPermissionManager(
+            onGranted = {
+                mainViewModel.launch(Dispatchers.IO) {
+                    moveImageOutOfLockedFolder(
+                        list = selectedItemsList.toSecureMedia(context = context),
+                        context = context,
+                        applicationDatabase = appDatabase
+                    ) {
+                        selectionManager.clear()
+                        showLoadingDialog = false
+                        isGettingPermissions.value = false
+                    }
+                }
+            },
+            onRejected = {
+                isGettingPermissions.value = false
+                showLoadingDialog = false
+
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = resources.getString(R.string.secure_restore_failed),
+                            icon = R.drawable.unlock,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
+            }
+        )
 
         ConfirmationDialog(
             showDialog = showRestoreDialog,
             dialogTitle = stringResource(id = R.string.media_restore_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_restore)
         ) {
-            loadingDialogTitle =
-                resources.getString(R.string.media_restore_processing)
+            loadingDialogTitle = resources.getString(R.string.media_restore_processing)
             showLoadingDialog = true
 
             isGettingPermissions.value = true
-            runRestoreAction.value = true
+
+            restorePermissionState.start(
+                directories = selectedItemsList.fastMap { it.parentPath.parent() }.distinct().toSet()
+            )
         }
 
         IconButton(
@@ -697,55 +684,24 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
+
         val showPermaDeleteDialog = remember { mutableStateOf(false) }
-        val runPermaDeleteAction = remember { mutableStateOf(false) }
-
-        LaunchedEffect(runPermaDeleteAction.value) {
-            if (runPermaDeleteAction.value) {
-                loadingDialogTitle = "Deleting Files"
-                showLoadingDialog = true
-
-                // TODO
-                // mainViewModel.launch(Dispatchers.IO) {
-                //     val newList = groupedMedia.value.toMutableList()
-                //
-                //     permanentlyDeleteSecureFolderImageList(
-                //         list = selectedItemsWithoutSection.map { it.absolutePath },
-                //         context = context
-                //     )
-                //
-                //
-                //     selectedItemsWithoutSection.forEach {
-                //         newList.remove(it)
-                //     }
-                //
-                //     newList.filter {
-                //         it.type == MediaType.Section
-                //     }.forEach { item ->
-                //         // remove sections which no longer have any children
-                //         val filtered = newList.filter { newItem ->
-                //             newItem.getLastModifiedDay() == item.getLastModifiedDay()
-                //         }
-                //
-                //         if (filtered.size == 1) newList.remove(item)
-                //     }
-                //
-                //     selectedItemsList.clear()
-                //     groupedMedia.value = newList
-                //
-                //     showLoadingDialog = false
-                //     runPermaDeleteAction.value = false
-                // }
-            }
-        }
-
         ConfirmationDialogWithBody(
             showDialog = showPermaDeleteDialog,
             dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
             dialogBody = stringResource(id = R.string.action_cannot_be_undone),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
-            runPermaDeleteAction.value = true
+            mainViewModel.launch(Dispatchers.IO) {
+                permanentlyDeleteSecureFolderImageList(
+                    list = selectedItemsList.toSecureMedia(context = context).fastMap {
+                        it.item.absolutePath
+                    },
+                    context = context
+                )
+
+                selectionManager.clear()
+            }
         }
 
         IconButton(

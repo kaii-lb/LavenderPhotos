@@ -41,13 +41,13 @@ import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.saket.telephoto.zoomable.ZoomSpec

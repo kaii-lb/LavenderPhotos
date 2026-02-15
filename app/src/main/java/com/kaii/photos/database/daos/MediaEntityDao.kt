@@ -45,7 +45,8 @@ interface MediaDao : BaseDao {
 
     @Query(
         value = "SELECT id," +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)"
@@ -54,7 +55,8 @@ interface MediaDao : BaseDao {
 
     @Query(
         value = "SELECT id," +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400"

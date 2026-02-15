@@ -14,13 +14,12 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.parent
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.paging.SecuredListPagingSource
+import com.kaii.photos.helpers.paging.mapToSecuredMedia
+import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
-import com.kaii.photos.models.loading.SecuredListPagingSource
-import com.kaii.photos.models.loading.mapToSecuredMedia
-import com.kaii.photos.models.loading.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -156,7 +155,7 @@ class SecureRepository(
                     dateTaken = file.lastModified() / 1000,
                     displayName = file.name,
                     absolutePath = file.absolutePath,
-                    parentPath = file.absolutePath.parent(),
+                    parentPath = originalPath,
                     size = 0L,
                     immichUrl = null, // TODO
                     immichThumbnail = null,
@@ -174,10 +173,14 @@ class SecureRepository(
                 mediaStoreData.add(securedItem)
             }
 
+            val presentPaths = _fileList.value!!.map { it.absolutePath }
             params.value = params.value.copy(
-                items = mediaStoreData.sortedByDescending {
-                    it.item.dateModified
-                }
+                items = mediaStoreData
+                    .filter { media ->
+                        media.item.absolutePath in presentPaths
+                    }.sortedByDescending {
+                        it.item.dateModified
+                    }
             )
         }
 

@@ -82,7 +82,7 @@ import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingColors
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

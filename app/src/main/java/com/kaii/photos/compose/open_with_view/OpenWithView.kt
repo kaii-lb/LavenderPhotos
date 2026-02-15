@@ -56,9 +56,9 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel

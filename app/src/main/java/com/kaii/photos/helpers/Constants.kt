@@ -5,7 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 
 object PhotoGridConstants {
     const val LOADING_TIME = 5000L

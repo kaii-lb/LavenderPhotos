@@ -9,8 +9,8 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.models.loading.mapToMedia
-import com.kaii.photos.models.loading.mapToSeparatedMedia
+import com.kaii.photos.helpers.paging.mapToMedia
+import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

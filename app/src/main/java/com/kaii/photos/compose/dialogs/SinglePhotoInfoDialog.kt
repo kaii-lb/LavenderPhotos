@@ -626,7 +626,13 @@ private fun IconContentImpl(
 
         MoveCopyAlbumListView(
             show = show,
-            selectedItemsList = listOf(SelectionManager.SelectedItem(currentMediaItem.id, currentMediaItem.type == MediaType.Image)),
+            selectedItemsList = listOf(
+                SelectionManager.SelectedItem(
+                    id = currentMediaItem.id,
+                    isImage = currentMediaItem.type == MediaType.Image,
+                    parentPath = currentMediaItem.parentPath
+                )
+            ),
             isMoving = isMoving,
             insetsPadding = WindowInsets.statusBars,
             onMoveMedia = onMoveMedia,

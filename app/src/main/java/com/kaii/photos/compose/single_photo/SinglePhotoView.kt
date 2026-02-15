@@ -74,8 +74,10 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.moveMediaToSecureFolder
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -87,7 +89,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.permissions.favourites.rememberFavouritesState
@@ -275,7 +276,7 @@ private fun SinglePhotoViewCommon(
     LaunchedEffect(currentIndex, items) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..items.itemCount && items.itemCount != 0) {
+                if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
                     ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
                 } else {
                     MediaStoreData.dummyItem
@@ -565,9 +566,15 @@ private fun BottomBar(
 
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
-                            moveImageToLockedFolder(
-                                list = listOf(currentItem),
+                        mainViewModel.launch {
+                            moveMediaToSecureFolder(
+                                list = listOf(
+                                    SelectionManager.SelectedItem(
+                                        id = currentItem.id,
+                                        isImage = currentItem.type == MediaType.Image,
+                                        parentPath = currentItem.parentPath
+                                    )
+                                ),
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {

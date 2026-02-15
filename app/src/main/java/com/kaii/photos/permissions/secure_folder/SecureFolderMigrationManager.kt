@@ -21,7 +21,7 @@ import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.filename
-import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaType
@@ -179,7 +179,7 @@ class SecureFolderMigrationManager(
         )
 
         Log.d(TAG, "Encrypting secure folder media...")
-        moveImageToLockedFolder(
+        moveMediaToSecureFolder(
             list = mediaItems,
             context = context,
             applicationDatabase = appDatabase,

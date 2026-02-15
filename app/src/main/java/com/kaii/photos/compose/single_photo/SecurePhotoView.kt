@@ -89,13 +89,13 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -178,7 +178,7 @@ fun SecurePhotoView(
     val resources = LocalResources.current
     val currentMediaItem by remember {
         derivedStateOf {
-            if (state.currentPage in 0..items.itemCount && items.itemCount != 0) {
+            if (state.currentPage in 0..<items.itemCount && items.itemCount != 0) {
                 items[state.currentPage] as PhotoLibraryUIModel.SecuredMedia
             } else {
                 PhotoLibraryUIModel.SecuredMedia(
@@ -212,7 +212,10 @@ fun SecurePhotoView(
                 visible = appBarsVisible.value,
                 securedMedia = currentMediaItem,
                 privacyMode = scrollState.privacyMode,
-                isGettingPermissions = isGettingPermissions
+                isGettingPermissions = isGettingPermissions,
+                getMediaCount = {
+                    items.itemCount
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -250,14 +253,14 @@ fun SecurePhotoView(
     }
 }
 
-// TODO: handle 0 items left case
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BottomBar(
     visible: Boolean,
     securedMedia: PhotoLibraryUIModel.SecuredMedia,
     privacyMode: Boolean,
-    isGettingPermissions: MutableState<Boolean>
+    isGettingPermissions: MutableState<Boolean>,
+    getMediaCount: () -> Int
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -273,6 +276,11 @@ private fun BottomBar(
             title = stringResource(id = R.string.media_restore_processing),
             body = stringResource(id = R.string.media_restore_processing_desc)
         )
+    }
+
+    val navController = LocalNavController.current
+    if (getMediaCount() == 0) {
+        navController.popBackStack()
     }
 
     val permissionManager = rememberDirectoryPermissionManager(

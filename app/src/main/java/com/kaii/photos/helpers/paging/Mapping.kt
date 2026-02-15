@@ -1,4 +1,4 @@
-package com.kaii.photos.models.loading
+package com.kaii.photos.helpers.paging
 
 import androidx.paging.PagingData
 import androidx.paging.insertSeparators

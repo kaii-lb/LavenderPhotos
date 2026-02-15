@@ -2,7 +2,6 @@ package com.kaii.photos.compose.grids
 
 import android.view.Window
 import android.view.WindowManager
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,10 +25,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -48,10 +46,10 @@ import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,7 +65,6 @@ fun SecureFolderView(
 ) {
     val context = LocalContext.current
 
-    val selectedItemsList = remember { SnapshotStateList<PhotoLibraryUIModel>() }
     val navController = LocalNavController.current
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -81,22 +78,18 @@ fun SecureFolderView(
         mutableStateOf(false)
     }
 
-    BackHandler {
-        viewModel.stopFileObserver()
+    OnBackPressedEffect {
         window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        navController.popBackStack()
     }
 
     LaunchedEffect(Unit) {
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        viewModel.attachFileObserver()
     }
 
     LaunchedEffect(hideSecureFolder, lastLifecycleState) {
         if (hideSecureFolder
             && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
         ) {
-            viewModel.stopFileObserver()
             navController.navigate(Screens.MainPages)
         }
 
@@ -126,7 +119,6 @@ fun SecureFolderView(
                     Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
                         if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null && !isGettingPermissions.value) {
                             lastLifecycleState = Lifecycle.State.STARTED
-                            viewModel.attachFileObserver()
 
                             hideSecureFolder = true
                         }
@@ -155,8 +147,10 @@ fun SecureFolderView(
             }
         },
         bottomBar = {
+            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),

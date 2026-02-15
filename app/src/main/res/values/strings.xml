@@ -779,6 +779,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="secure_unlock_failed">Failed to authenticate :&lt;</string>
     <string name="secure_unlock_short">Unlock Folder</string>
     <string name="secure_move_out">Move media out of Secure Folder?</string>
+    <string name="secure_restore_failed">Failed restoring media</string>
+    <string name="secure_share_media">Share secured media</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>

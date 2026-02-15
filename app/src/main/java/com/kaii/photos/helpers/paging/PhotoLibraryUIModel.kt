@@ -1,4 +1,4 @@
-package com.kaii.photos.models.loading
+package com.kaii.photos.helpers.paging
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable

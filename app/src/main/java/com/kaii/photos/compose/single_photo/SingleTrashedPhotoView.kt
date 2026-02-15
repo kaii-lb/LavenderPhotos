@@ -75,11 +75,11 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.models.loading.PhotoLibraryUIModel
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -120,7 +120,7 @@ private fun SingleTrashedPhotoViewImpl(
     LaunchedEffect(currentIndex) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..items.itemCount && items.itemCount != 0) {
+                if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
                     ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
                 } else {
                     MediaStoreData.dummyItem

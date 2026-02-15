@@ -25,7 +25,12 @@ class SecureFolderViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    fun attachFileObserver() = repo.attachFileObserver()
+    init {
+        repo.attachFileObserver()
+    }
 
-    fun stopFileObserver() = repo.detachFileObserver()
+    override fun onCleared() {
+        super.onCleared()
+        repo.detachFileObserver()
+    }
 }
