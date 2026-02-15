@@ -70,11 +70,11 @@ fun MainPages(
     val defaultTab by mainViewModel.defaultTab.collectAsStateWithLifecycle()
     val tabList by mainViewModel.tabList.collectAsStateWithLifecycle()
 
-    val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-
     val pagerState = rememberPagerState(
         initialPage = tabList.indexOf(defaultTab)
     ) { tabList.size }
+
+    val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
 
     val coroutineScope = rememberCoroutineScope()
     BackHandler(

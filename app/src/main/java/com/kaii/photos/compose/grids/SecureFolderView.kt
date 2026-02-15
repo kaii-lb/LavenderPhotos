@@ -22,11 +22,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
@@ -46,13 +45,11 @@ import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 
 // private const val TAG = "com.kaii.photos.compose.grids.LockedFolderView"
@@ -64,67 +61,37 @@ fun SecureFolderView(
     viewModel: SecureFolderViewModel
 ) {
     val context = LocalContext.current
-
     val navController = LocalNavController.current
-
+    val mainViewModel = LocalMainViewModel.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var lastLifecycleState by rememberSaveable {
-        mutableStateOf(Lifecycle.State.STARTED)
-    }
-    var hideSecureFolder by rememberSaveable {
-        mutableStateOf(false)
-    }
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val isGettingPermissions = rememberSaveable {
         mutableStateOf(false)
     }
 
-    OnBackPressedEffect {
-        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-    }
-
-    LaunchedEffect(Unit) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-    }
-
-    LaunchedEffect(hideSecureFolder, lastLifecycleState) {
-        if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
-        ) {
-            navController.navigate(Screens.MainPages)
-        }
-
-        if (lastLifecycleState == Lifecycle.State.DESTROYED) {
-            withContext(Dispatchers.IO) {
-                File(context.appSecureVideoCacheDir).listFiles()?.forEach {
-                    it.delete()
-                }
-            }
-        }
-    }
-
-    val lifecycleState = lifecycleOwner.lifecycle.currentStateAsState()
-    DisposableEffect(lifecycleState.value, isGettingPermissions.value) {
+    DisposableEffect(lifecycleState) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) == false
-                            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) != true
+                        // if not navigating to single photo view
+                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            lastLifecycleState = Lifecycle.State.DESTROYED
+                            if (event == Lifecycle.Event.ON_DESTROY) mainViewModel.launch(Dispatchers.IO) {
+                                File(context.appSecureVideoCacheDir).listFiles()?.forEach {
+                                    it.delete()
+                                }
+                            }
+
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                            navController.popBackStack(route = Screens.MainPages.MainGrid.GridView::class, inclusive = false)
                         }
                     }
 
-                    Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null && !isGettingPermissions.value) {
-                            lastLifecycleState = Lifecycle.State.STARTED
-
-                            hideSecureFolder = true
-                        }
+                    else -> {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     }
-
-                    else -> {}
                 }
             }
 
@@ -134,8 +101,6 @@ fun SecureFolderView(
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
-
-    if (hideSecureFolder) return
 
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberSelectionManager(pagingItems = items)
@@ -159,7 +124,6 @@ fun SecureFolderView(
                 )
             ) {
                 SecureFolderViewBottomAppBar(
-                    pagingItems = items,
                     selectionManager = selectionManager,
                     isGettingPermissions = isGettingPermissions
                 )

@@ -45,7 +45,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -86,6 +85,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
@@ -111,49 +111,37 @@ fun SecurePhotoView(
     index: Int,
     window: Window
 ) {
-    LaunchedEffect(Unit) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
     val navController = LocalNavController.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
 
-    var lastLifecycleState by rememberSaveable { mutableStateOf(Lifecycle.State.STARTED) }
-    var hideSecureFolder by rememberSaveable { mutableStateOf(false) }
+
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(hideSecureFolder) {
-        if (hideSecureFolder
-            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
-        ) {
-            navController.navigate(Screens.MainPages)
-        }
-    }
-
-    // TODO: immediately pop the backstack without hideSecureFolder
-    DisposableEffect(key1 = lifecycleOwner.lifecycle.currentStateAsState().value, isGettingPermissions.value) {
+    DisposableEffect(lifecycleState) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
-
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder::class) == true
-                            && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) != true
+                        // if not navigating to grid view view
+                        if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.GridView::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            lastLifecycleState = Lifecycle.State.DESTROYED
+                            if (event == Lifecycle.Event.ON_DESTROY) mainViewModel.launch(Dispatchers.IO) {
+                                File(context.appSecureVideoCacheDir).listFiles()?.forEach {
+                                    it.delete()
+                                }
+                            }
+
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                            navController.popBackStack(route = Screens.MainPages.MainGrid.GridView::class, inclusive = false)
                         }
                     }
 
-                    Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START, Lifecycle.Event.ON_CREATE -> {
-                        if (lastLifecycleState == Lifecycle.State.DESTROYED && navController.currentBackStackEntry != null && !isGettingPermissions.value) {
-                            lastLifecycleState = Lifecycle.State.STARTED
-
-                            hideSecureFolder = true
-                        }
+                    else -> {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     }
-
-                    else -> {}
                 }
             }
 
@@ -163,8 +151,6 @@ fun SecurePhotoView(
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
-
-    if (hideSecureFolder) return
 
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 

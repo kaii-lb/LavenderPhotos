@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
@@ -54,7 +53,6 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.toSecureMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
-import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
@@ -563,7 +561,6 @@ fun SecureFolderViewTopAppBar(
 @Composable
 fun SecureFolderViewBottomAppBar(
     selectionManager: SelectionManager,
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     isGettingPermissions: MutableState<Boolean>
 ) {
     IsSelectingBottomAppBar {
