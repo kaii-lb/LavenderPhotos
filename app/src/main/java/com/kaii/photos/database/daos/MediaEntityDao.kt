@@ -60,6 +60,16 @@ interface MediaDao : BaseDao {
                 "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1"
+    )
+    fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400"
     )
     override fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>

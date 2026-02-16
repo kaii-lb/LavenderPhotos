@@ -34,7 +34,7 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
+import com.kaii.photos.helpers.grid_management.rememberFavSelectionManager
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +44,7 @@ fun FavouritesGridView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
+    val selectionManager = rememberFavSelectionManager()
 
     val navController = LocalNavController.current
     Scaffold(

@@ -818,7 +818,7 @@ fun FavouritesBottomAppBarItems(
         selectedItemsList = selectedItemsList,
         isMoving = false,
         insetsPadding = WindowInsets.statusBars,
-        clear = {}
+        clear = selectionManager::clear
     )
 
     IconButton(
