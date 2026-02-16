@@ -93,7 +93,6 @@ class ImmichRepository(
                             immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
                             hash = "", // TODO
                             size = 0L, // TODO
-                            customId = null,
                             favourited = asset.isFavorite
                         )
                     }.sortedByDescending {

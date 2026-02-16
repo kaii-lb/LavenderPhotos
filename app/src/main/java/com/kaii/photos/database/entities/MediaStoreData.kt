@@ -33,7 +33,6 @@ data class MediaStoreData(
     val immichThumbnail: String?,
     val hash: String?,
     val size: Long,
-    val customId: Long?,
     val favourited: Boolean
 ) {
     companion object {
@@ -51,7 +50,6 @@ data class MediaStoreData(
             immichThumbnail = null,
             hash = null,
             size = 0L,
-            customId = null,
             favourited = false
         )
     }

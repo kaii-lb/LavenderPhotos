@@ -289,7 +289,6 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
                 displayName = displayName,
                 absolutePath = absolutePath,
                 parentPath = absolutePath.parent(),
-                customId = null,
                 immichUrl = null,
                 immichThumbnail = null,
                 hash = null,

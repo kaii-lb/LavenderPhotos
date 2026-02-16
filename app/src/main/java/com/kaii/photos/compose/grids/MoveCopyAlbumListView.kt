@@ -64,6 +64,8 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItemEntity
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -72,8 +74,6 @@ import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -228,7 +228,6 @@ fun AlbumsListItem(
     val context = LocalContext.current
 
     val mainViewModel = LocalMainViewModel.current
-    val coroutineScope = rememberCoroutineScope()
     val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
     val filePermissionManager = rememberFilePermissionManager(
@@ -298,52 +297,18 @@ fun AlbumsListItem(
                 } else {
                     show.value = false
 
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val data = mutableListOf<String>()
-                        context.contentResolver.query(
-                            LavenderContentProvider.CONTENT_URI,
-                            arrayOf(LavenderMediaColumns.URI, LavenderMediaColumns.PARENT_ID),
-                            "${LavenderMediaColumns.PARENT_ID} = ?",
-                            arrayOf("${album.info.id}"),
-                            null
-                        )?.use { cursor ->
-                            while (cursor.moveToNext()) {
-                                val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
-                                val uri = cursor.getString(uriCol)
-
-                                data.add(uri)
-                            }
-                        }
-
-                        // TODO:
-                        // val inserted = context.contentResolver.bulkInsert(
-                        //     LavenderContentProvider.CONTENT_URI,
-                        //     items
-                        //         .fastFilter { media ->
-                        //             media.uri !in data
-                        //         }.fastMap { media ->
-                        //             ContentValues().apply {
-                        //                 // no id since the content provider handles that on its own
-                        //                 put(LavenderMediaColumns.URI, media.uri)
-                        //                 put(LavenderMediaColumns.PARENT_ID, album.id)
-                        //                 put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
-                        //                 put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)
-                        //             }
-                        //         }.toTypedArray()
-                        // )
-
-                        // Log.d(TAG, "Number of inserted items: $inserted")
-                        // Log.d(TAG, "Got album id ${album.id}")
-                        //
-                        // if (inserted == 0) {
-                        //     LavenderSnackbarController.pushEvent(
-                        //         LavenderSnackbarEvents.MessageEvent(
-                        //             message = resources.getString(R.string.albums_already_contains_all),
-                        //             icon = R.drawable.error_2,
-                        //             duration = SnackbarDuration.Short
-                        //         )
-                        //     )
-                        // }
+                    // TODO: possibly make this less messy
+                    mainViewModel.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .upsertAll(
+                                items = selectedItemsList.fastMap {
+                                    CustomItemEntity(
+                                        mediaId = it.id,
+                                        album = album.info.id
+                                    )
+                                }
+                            )
                     }
 
                     clear()

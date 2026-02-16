@@ -343,6 +343,7 @@ fun VideoEditorBottomBar(
     }
 }
 
+// TODO: if album is custom, add edited media to album
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -893,6 +894,7 @@ fun ImageEditorBottomBar(
     }
 }
 
+// TODO: if album is custom, add edited media to album
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImageEditorTopBar(

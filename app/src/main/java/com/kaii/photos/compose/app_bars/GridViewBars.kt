@@ -69,8 +69,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.io.File
 
-// private const val TAG = "com.kaii.photos.compose.app_bars.GridViewBars"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(

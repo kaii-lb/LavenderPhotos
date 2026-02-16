@@ -283,7 +283,6 @@ suspend fun saveVideo(
         immichUrl = null,
         immichThumbnail = null,
         hash = null,
-        customId = null,
         parentPath = file.absolutePath.parent(),
         favourited = false
     )
@@ -699,7 +698,6 @@ suspend fun saveImage(
         type = MediaType.Image,
         mimeType = "image/png",
         uri = uri.toString(),
-        customId = null,
         size = 0L,
         immichUrl = null,
         immichThumbnail = null,

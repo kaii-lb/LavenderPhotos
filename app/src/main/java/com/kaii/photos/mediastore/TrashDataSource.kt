@@ -146,7 +146,6 @@ class TrashDataSource(
                     absolutePath = absolutePath,
                     parentPath = absolutePath.parent(),
                     size = size,
-                    customId = null,
                     immichUrl = null,
                     immichThumbnail = null,
                     hash = null,

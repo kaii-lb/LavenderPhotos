@@ -389,7 +389,8 @@ private fun SinglePhotoViewCommon(
                 currentMediaItem = mediaItem,
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
-                isTouchLocked = scrollState.privacyMode,
+                privacyMode = scrollState.privacyMode,
+                isCustomAlbum = albumInfo.isCustomAlbum,
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()
@@ -613,7 +614,7 @@ private fun BottomBar(
                     onClick = {
                         showMoveToSecureFolderDialog.value = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode
+                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !isCustom
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),

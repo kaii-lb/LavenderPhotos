@@ -29,10 +29,5 @@ class CustomAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    override fun onCleared() {
-        super.onCleared()
-        repo.cancel()
-    }
-
     fun remove(items: Set<MediaStoreData>) = repo.remove(items, albumInfo.id)
 }

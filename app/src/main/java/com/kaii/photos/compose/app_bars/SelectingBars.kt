@@ -44,6 +44,7 @@ import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
@@ -56,8 +57,6 @@ import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-private const val TAG = "com.kaii.photos.compose.app_bars.SelectingBars"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,14 +212,12 @@ fun SelectingBottomBarItems(
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
             mainViewModel.launch(Dispatchers.IO) {
-                selectedItemsList.forEach { item ->
-                    // TODO: move custom albums into database
-                    // context.contentResolver.delete(
-                    //     LavenderContentProvider.CONTENT_URI,
-                    //     "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                    //     arrayOf(item.customId.toString(), albumInfo.id.toString())
-                    // )
-                }
+                MediaDatabase.getInstance(context)
+                    .customDao()
+                    .deleteAll(
+                        ids = selectedItemsList.fastMap { it.id }.toSet(),
+                        album = albumInfo.id
+                    )
 
                 selectionManager.clear()
             }
@@ -229,10 +226,24 @@ fun SelectingBottomBarItems(
 
     IconButton(
         onClick = {
-            if (confirmToDelete) showDeleteDialog.value = true
-            else permissionState.get( // TODO: handle custom albums
-                uris = selectedItemsList.fastMap { it.toUri() }
-            )
+            if (confirmToDelete) {
+                showDeleteDialog.value = true
+            } else if (!albumInfo.isCustomAlbum) {
+                permissionState.get(
+                    uris = selectedItemsList.fastMap { it.toUri() }
+                )
+            } else {
+                mainViewModel.launch(Dispatchers.IO) {
+                    MediaDatabase.getInstance(context)
+                        .customDao()
+                        .deleteAll(
+                            ids = selectedItemsList.fastMap { it.id }.toSet(),
+                            album = albumInfo.id
+                        )
+
+                    selectionManager.clear()
+                }
+            }
         },
         enabled = selectedItemsList.isNotEmpty()
     ) {
@@ -287,7 +298,7 @@ fun SelectingBottomBarItems(
                 )
             }
         },
-        enabled = selectedItemsList.isNotEmpty()
+        enabled = selectedItemsList.isNotEmpty() && !albumInfo.isCustomAlbum
     ) {
         Icon(
             painter = painterResource(id = R.drawable.secure_folder),

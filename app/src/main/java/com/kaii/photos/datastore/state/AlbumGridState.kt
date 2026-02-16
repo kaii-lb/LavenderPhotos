@@ -14,7 +14,6 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +39,8 @@ class AlbumGridState(
         val signature: ObjectKey
     )
 
-    private val dao = MediaDatabase.getInstance(context).mediaDao()
+    private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+    private val customDao = MediaDatabase.getInstance(context).customDao()
 
     private val _albums = MutableStateFlow(emptyList<Album>())
     val albums = _albums.asStateFlow()
@@ -53,7 +53,6 @@ class AlbumGridState(
                 Triple(pair.first,  pair.second, sortMode)
             }.distinctUntilChanged().collectLatest { (albums, mediaSortMode, albumSortMode) ->
                 refresh(
-                    context = context,
                     albums = albums,
                     mediaSortMode = mediaSortMode,
                     albumSortMode = albumSortMode
@@ -63,7 +62,6 @@ class AlbumGridState(
     }
 
     private fun refresh(
-        context: Context,
         albums: List<AlbumInfo>,
         mediaSortMode: MediaItemSortMode,
         albumSortMode: AlbumSortMode
@@ -73,19 +71,16 @@ class AlbumGridState(
 
             val media = if (!album.isCustomAlbum) {
                 if (mediaSortMode.isDateModified) {
-                    dao.getThumbnailForAlbumDateModified(paths = album.paths)
+                    mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
                 } else {
-                    dao.getThumbnailForAlbumDateTaken(paths = album.paths)
+                    mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
                 } ?: MediaStoreData.dummyItem
             } else {
-                val datasource = CustomAlbumDataSource(
-                    context = context,
-                    parentId = album.id,
-                    sortMode = mediaSortMode,
-                    cancellationSignal = cancellationSignal
-                )
-
-                datasource.query().getOrElse(0) { MediaStoreData.dummyItem }
+                if (mediaSortMode.isDateModified) {
+                    customDao.getThumbnailForAlbumDateModified(album = album.id)
+                } else {
+                    customDao.getThumbnailForAlbumDateTaken(album = album.id)
+                } ?: MediaStoreData.dummyItem
             }
 
             cancellationSignal.cancel()

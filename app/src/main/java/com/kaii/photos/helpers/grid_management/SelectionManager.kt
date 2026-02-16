@@ -332,6 +332,30 @@ fun rememberFavSelectionManager(): SelectionManager {
 }
 
 @Composable
+fun rememberCustomSelectionManager(albumId: Int): SelectionManager {
+    val context = LocalContext.current
+    val sortMode by LocalMainViewModel.current.sortMode.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
+
+    return remember(sortMode, albumId) {
+        SelectionManager(
+            sortMode = sortMode,
+            scope = coroutineScope,
+            context = context,
+            getMediaInDate = { timestamp ->
+                val dao = MediaDatabase.getInstance(context).customDao()
+
+                dao.mediaInDateRange(
+                    timestamp = timestamp,
+                    album = albumId,
+                    dateModified = sortMode.isDateModified
+                )
+            }
+        )
+    }
+}
+
+@Composable
 fun rememberSelectionManager(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>
 ): SelectionManager {

@@ -13,12 +13,12 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface MediaDao : BaseDao {
+interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC")
-    override fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
+    fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
-    override fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
+    fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
@@ -52,7 +52,7 @@ interface MediaDao : BaseDao {
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)"
     )
-    override fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
     @Query(
         value = "SELECT id," +
@@ -72,7 +72,7 @@ interface MediaDao : BaseDao {
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400"
     )
-    override fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
 
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")

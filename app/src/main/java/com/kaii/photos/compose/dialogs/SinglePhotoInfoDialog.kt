@@ -93,7 +93,8 @@ fun SinglePhotoInfoDialog(
     currentMediaItem: MediaStoreData,
     sheetState: SheetState,
     showMoveCopyOptions: Boolean,
-    isTouchLocked: Boolean,
+    privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     dismiss: () -> Unit,
     onMoveMedia: () -> Unit,
     togglePrivacyMode: () -> Unit
@@ -155,9 +156,10 @@ fun SinglePhotoInfoDialog(
                         Content(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
+                            privacyMode = privacyMode,
+                            isCustomAlbum = isCustomAlbum,
                             onMoveMedia = onMoveMedia,
                             dismiss = dismiss,
-                            privacyMode = isTouchLocked,
                             togglePrivacyMode = togglePrivacyMode
                         )
                     }
@@ -175,7 +177,8 @@ fun SinglePhotoInfoDialog(
                         Content(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
-                            privacyMode = isTouchLocked,
+                            privacyMode = privacyMode,
+                            isCustomAlbum = isCustomAlbum,
                             onMoveMedia = onMoveMedia,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
@@ -192,6 +195,7 @@ private fun Content(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
@@ -271,6 +275,7 @@ private fun Content(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
+                    isCustomAlbum = isCustomAlbum,
                     onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
@@ -292,6 +297,7 @@ private fun Content(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
+                    isCustomAlbum = isCustomAlbum,
                     onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
@@ -504,6 +510,7 @@ private fun RowScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
@@ -511,6 +518,7 @@ private fun RowScope.IconContent(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
+        isCustomAlbum = isCustomAlbum,
         modifier = Modifier.weight(1f),
         onMoveMedia = onMoveMedia,
         dismiss = dismiss
@@ -522,6 +530,7 @@ private fun ColumnScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
@@ -529,6 +538,7 @@ private fun ColumnScope.IconContent(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
+        isCustomAlbum = isCustomAlbum,
         modifier = Modifier.weight(1f),
         onMoveMedia = onMoveMedia,
         dismiss = dismiss
@@ -540,6 +550,7 @@ private fun IconContentImpl(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     modifier: Modifier,
     onMoveMedia: () -> Unit,
     dismiss: () -> Unit
@@ -645,7 +656,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode,
+            enabled = !privacyMode && !isCustomAlbum,
             modifier = modifier
                 .height(48.dp)
         ) {

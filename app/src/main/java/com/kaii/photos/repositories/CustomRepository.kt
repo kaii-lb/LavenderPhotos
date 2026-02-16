@@ -1,28 +1,20 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.os.CancellationSignal
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class CustomRepository(
@@ -34,29 +26,10 @@ class CustomRepository(
     format: DisplayDateFormat
 ) {
     private val appContext = context.applicationContext
-    private val cancellationSignal = CancellationSignal()
-    private val dataSource =
-        CustomAlbumDataSource(
-            context = appContext,
-            parentId = albumInfo.id,
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal
-        )
-
-    private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
-
-    private val media = MutableStateFlow(emptyList<MediaStoreData>())
-
-    init {
-        scope.launch(Dispatchers.IO) {
-            getMediaDataFlow().collectLatest { items ->
-                media.value = items
-            }
-        }
-    }
+    private val dao = MediaDatabase.getInstance(appContext).customDao()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow = media.flatMapLatest { items ->
+    val mediaFlow =
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -64,9 +37,11 @@ class CustomRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 100
             ),
-            pagingSourceFactory = { ListPagingSource(media = items) }
-        ).flow.mapToMedia(accessToken = info.accessToken)
-    }.cachedIn(scope)
+            pagingSourceFactory = {
+                if (sortMode.isDateModified) dao.getPagedMediaDateModified(album = albumInfo.id)
+                else dao.getPagedMediaDateTaken(album = albumInfo.id)
+            }
+        ).flow.mapToMedia(accessToken = info.accessToken).cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
@@ -74,18 +49,14 @@ class CustomRepository(
         format = format
     ).cachedIn(scope)
 
-    fun cancel() = cancellationSignal.cancel()
-
     fun remove(
         items: Set<MediaStoreData>,
         albumId: Int
     ) = scope.launch(Dispatchers.IO) {
-        items.forEach { item ->
-            appContext.contentResolver.delete(
-                LavenderContentProvider.CONTENT_URI,
-                "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                arrayOf(item.customId.toString(), albumId.toString())
-            )
+        items.map {
+            it.id
+        }.let { ids ->
+            dao.deleteAll(ids = ids.toSet(), album = albumId)
         }
     }
 }

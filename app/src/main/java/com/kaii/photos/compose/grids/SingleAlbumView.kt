@@ -41,6 +41,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -99,7 +100,7 @@ fun SingleAlbumView(
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
+    val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,

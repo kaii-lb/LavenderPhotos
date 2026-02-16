@@ -167,7 +167,6 @@ class FavouritesDataSource(
                     immichThumbnail = null,
                     immichUrl = null,
                     hash = null,
-                    customId = null,
                     parentPath = absolutePath.parent(),
                     favourited = true
                 )

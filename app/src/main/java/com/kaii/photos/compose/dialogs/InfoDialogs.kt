@@ -73,6 +73,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.RowPosition
@@ -91,8 +92,6 @@ import com.kaii.photos.helpers.renameDirectory
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.models.main_activity.MainViewModel
@@ -296,11 +295,12 @@ fun SingleAlbumDialog(
                 showDialog.value = false
 
                 try {
-                    context.contentResolver.delete(
-                        LavenderContentProvider.CONTENT_URI,
-                        "${LavenderMediaColumns.PARENT_ID} = ?",
-                        arrayOf("${dynamicAlbum.id}")
-                    )
+                    // TODO: possible make less messy
+                    mainViewModel.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .deleteAlbum(album = dynamicAlbum.id)
+                    }
 
                     context.contentResolver.releasePersistableUriPermission(
                         context.getExternalStorageContentUriFromAbsolutePath(

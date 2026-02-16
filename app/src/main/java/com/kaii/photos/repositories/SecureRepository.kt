@@ -160,7 +160,6 @@ class SecureRepository(
                     immichUrl = null, // TODO
                     immichThumbnail = null,
                     hash = null,
-                    customId = null,
                     favourited = false
                 )
 

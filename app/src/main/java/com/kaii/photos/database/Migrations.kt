@@ -2,10 +2,14 @@ package com.kaii.photos.database
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import androidx.core.net.toUri
 import androidx.room.OnConflictStrategy
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
+import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.toMediaType
 
@@ -46,7 +50,6 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
                     hash = null,
                     immichUrl = null,
                     immichThumbnail = null,
-                    customId = null,
                     favourited = true,
                     parentPath = "",
                     size = 0L
@@ -80,5 +83,38 @@ class Migration4to5(val context: Context) : Migration(startVersion = 4, endVersi
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("DROP TABLE secureditementity")
         db.execSQL("CREATE TABLE IF NOT EXISTS `secureditementity` (`originalPath` TEXT NOT NULL, `secured_path` TEXT NOT NULL, `iv` BLOB NOT NULL, PRIMARY KEY(`originalPath`))")
+    }
+}
+
+class Migration9To10(val context: Context) : Migration(startVersion = 9, endVersion = 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        val cursor = context.contentResolver.query(
+            LavenderContentProvider.CONTENT_URI,
+            arrayOf(
+                LavenderMediaColumns.URI,
+                LavenderMediaColumns.PARENT_ID
+            ),
+            null,
+            null
+        ) ?: return
+
+        val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
+        val parentCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.PARENT_ID)
+
+        while (cursor.moveToNext()) {
+            val uri = cursor.getString(uriCol)
+            val parent = cursor.getInt(parentCol)
+
+            db.insert(
+                table = "custom_media",
+                conflictAlgorithm = SQLiteDatabase.CONFLICT_REPLACE,
+                values = ContentValues().apply {
+                    put("mediaId", uri.toUri().lastPathSegment!!.toLong())
+                    put("album", parent)
+                }
+            )
+        }
+
+        cursor.close()
     }
 }

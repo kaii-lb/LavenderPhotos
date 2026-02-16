@@ -225,7 +225,8 @@ private fun SingleTrashedPhotoViewImpl(
                     currentMediaItem = mediaItem,
                     sheetState = sheetState,
                     showMoveCopyOptions = false,
-                    isTouchLocked = scrollState.privacyMode,
+                    privacyMode = scrollState.privacyMode,
+                    isCustomAlbum = false,
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()
