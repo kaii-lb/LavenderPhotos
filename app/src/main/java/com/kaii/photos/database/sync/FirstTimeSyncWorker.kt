@@ -10,7 +10,7 @@ import com.kaii.photos.mediastore.chunkLoadMediaData
 import com.kaii.photos.mediastore.getAllMediaStoreIds
 import kotlin.time.Clock
 
-private const val TAG = "com.kaii.photos.database.sync.SyncWorker"
+private const val TAG = "com.kaii.photos.database.sync.FirstTimeSyncWorker"
 
 class FirstTimeSyncWorker(
     private val context: Context,
