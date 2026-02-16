@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
@@ -80,6 +81,11 @@ interface MediaDao : BaseDao {
     @Query(value = "SELECT id FROM media WHERE favourited = 1")
     fun getFavouritedIds(): List<Long>
 
+    @Query(value = "SELECT id, parentPath FROM media")
+    fun getMediaStoreParentPaths(): Map<
+            @MapColumn(columnName = "id") Long,
+            @MapColumn(columnName = "parentPath") String>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 
@@ -88,6 +94,9 @@ interface MediaDao : BaseDao {
 
     @Upsert
     fun upsertAll(items: List<MediaStoreData>)
+
+    @Query(value = "UPDATE media SET parentPath = :path WHERE id IN (:ids)")
+    fun upsertPath(ids: List<Long>, path: String)
 
     @Query(value = "DELETE FROM media WHERE id = :id")
     fun deleteById(id: Long)

@@ -399,7 +399,7 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
             MediaColumns._ID,
             MediaColumns.DATA
         ),
-        "${MediaColumns._ID} = ?",
+        "${MediaColumns._ID} = ? AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
         arrayOf(uri.lastPathSegment!!),
         null
     )
@@ -427,7 +427,7 @@ fun ContentResolver.getPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>
             MediaColumns.DATA,
             FileColumns.MEDIA_TYPE
         ),
-        "${MediaColumns._ID} IN $param",
+        "${MediaColumns._ID} IN $param AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
         list.fastMapNotNull { it.lastPathSegment }.toTypedArray(),
         null
     )

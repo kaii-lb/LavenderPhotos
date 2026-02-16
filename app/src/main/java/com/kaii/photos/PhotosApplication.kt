@@ -22,22 +22,32 @@ class PhotosApplication : Application() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val dao = MediaDatabase.getInstance(applicationContext).mediaDao()
 
-        // TODO: try to limit how many can run per second
+        var instanceCount = 0
+
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
+
+                    if (instanceCount >= 10) return
+
                     scope.launch(Dispatchers.IO) {
                         runCatching {
                             // if its empty then the app hasn't finished startup processing, and we shouldn't mess with that
                             // if it *is* empty and we have finished startup processing, then another SyncWorker will be
                             // launching by the app, and the dao won't be empty anymore
                             if (!dao.isEmpty()) {
+                                instanceCount += 1
                                 WorkManager.getInstance(applicationContext)
                                     .enqueueUniqueWork(
                                         SyncWorker::class.java.name,
                                         ExistingWorkPolicy.REPLACE,
                                         OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                                    ).result.addListener(
+                                        {
+                                            instanceCount -= 1
+                                        },
+                                        mainExecutor
                                     )
                             }
                         }

@@ -188,11 +188,11 @@ fun SingleAlbumDialog(
             val context = LocalContext.current
             val fileName = remember { mutableStateOf(dynamicAlbum.name) }
 
-            if (dynamicAlbum.paths.size == 1 && !dynamicAlbum.isCustomAlbum) {
-                val permissionManager = rememberDirectoryPermissionManager(
-                    onGranted = {
-                        Log.d(TAG, "Running rename ${fileName.value} ${dynamicAlbum.name}")
-                        if (fileName.value != dynamicAlbum.name) {
+            val permissionManager = rememberDirectoryPermissionManager(
+                onGranted = {
+                    Log.d(TAG, "Running rename ${fileName.value} ${dynamicAlbum.name}")
+                    if (fileName.value != dynamicAlbum.name) {
+                        if (dynamicAlbum.paths.size == 1) {
                             Log.d(TAG, "Running rename - passed first check")
                             val basePath = dynamicAlbum.mainPath.toBasePath()
                             val currentVolumes = MediaStore.getExternalVolumeNames(context)
@@ -215,11 +215,25 @@ fun SingleAlbumDialog(
                                 name = fileName.value,
                                 paths = setOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
                             )
+
+                            albums.filter { album ->
+                                album.paths.any { it.startsWith(dynamicAlbum.mainPath) }
+                            }.forEach { album ->
+                                mainViewModel.settings.albums.edit(
+                                    id = album.id,
+                                    newInfo = album.copy(
+                                        paths = album.paths.map {
+                                            if (it.startsWith(dynamicAlbum.mainPath)) it.replace(dynamicAlbum.mainPath, newInfo.mainPath)
+                                            else it
+                                        }.toSet()
+                                    )
+                                )
+                            }
+
                             mainViewModel.settings.albums.edit(
                                 id = dynamicAlbum.id,
                                 newInfo = newInfo
                             )
-                            showDialog.value = false
 
                             try {
                                 context.contentResolver.releasePersistableUriPermission(
@@ -233,47 +247,36 @@ fun SingleAlbumDialog(
                                 Log.d(TAG, "Couldn't release permission for ${newInfo.mainPath}")
                                 e.printStackTrace()
                             }
+                        } else {
+                            mainViewModel.settings.albums.edit(
+                                id = dynamicAlbum.id,
+                                newInfo = dynamicAlbum.copy(
+                                    name = fileName.value
+                                )
+                            )
                         }
-                    }
-                )
 
-                AnimatableTextField(
-                    state = isEditingFileName,
-                    string = fileName,
-                    rowPosition = RowPosition.Middle,
-                    enabled = dynamicAlbum.paths.all { !it.checkPathIsDownloads() },
-                    modifier = Modifier
-                        .padding(8.dp, 0.dp),
-                    doAction = {
-                        permissionManager.start(
-                            directories = dynamicAlbum.paths
-                        )
-                    },
-                    resetAction = {
-                        fileName.value = dynamicAlbum.name
+                        showDialog.value = false
                     }
-                )
-            } else {
-                AnimatableTextField(
-                    state = isEditingFileName,
-                    string = fileName,
-                    rowPosition = RowPosition.Middle,
-                    enabled = dynamicAlbum.paths.all { !it.checkPathIsDownloads() },
-                    modifier = Modifier
-                        .padding(8.dp, 0.dp),
-                    doAction = {
-                        val newInfo = dynamicAlbum.copy(name = fileName.value)
+                }
+            )
 
-                        mainViewModel.settings.albums.edit(
-                            id = dynamicAlbum.id,
-                            newInfo = newInfo
-                        )
-                    },
-                    resetAction = {
-                        fileName.value = dynamicAlbum.name
-                    }
-                )
-            }
+            AnimatableTextField(
+                state = isEditingFileName,
+                string = fileName,
+                rowPosition = RowPosition.Middle,
+                enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
+                modifier = Modifier
+                    .padding(8.dp, 0.dp),
+                doAction = {
+                    permissionManager.start(
+                        directories = dynamicAlbum.paths
+                    )
+                },
+                resetAction = {
+                    fileName.value = dynamicAlbum.name
+                }
+            )
 
             DialogClickableItem(
                 text = stringResource(id = R.string.albums_remove),

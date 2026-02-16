@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,15 +58,17 @@ fun SingleAlbumView(
     val mainViewModel = LocalMainViewModel.current
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
-    // TODO: update the repo with new album data
     val dynamicAlbum by remember {
         derivedStateOf {
             allAlbums.first { it.id == albumInfo.id }
         }
     }
 
-    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+    LaunchedEffect(dynamicAlbum) {
+        viewModel.update(album = dynamicAlbum)
+    }
 
+    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = dynamicAlbum,
