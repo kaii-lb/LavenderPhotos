@@ -100,7 +100,7 @@ class CustomAlbumDataSource(
             val uri = cursor.getString(uriCol).toUri()
             val id = cursor.getLong(idCol)
 
-            val new = context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)?.copy(customId = id)
+            val new = context.contentResolver.getMediaStoreDataFromUri(uri = uri)?.copy(customId = id)
 
             new?.let { items.add(it) }
         }

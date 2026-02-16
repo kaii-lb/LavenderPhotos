@@ -148,7 +148,7 @@ class SecureFolderMigrationManager(
         onDone: () -> Unit
     ) = withContext(Dispatchers.IO) {
         val mediaItems = uris.mapNotNull { uri ->
-            context.contentResolver.getMediaStoreDataFromUri(context = context, uri = uri)
+            context.contentResolver.getMediaStoreDataFromUri(uri = uri)
         }
 
         Log.d(TAG, "Creating a backup of the secure folder media...")

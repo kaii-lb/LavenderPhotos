@@ -285,7 +285,7 @@ private fun Content(uri: Uri, window: Window) {
     LaunchedEffect(uri) {
         withContext(Dispatchers.IO) {
             incomingData = try {
-                context.contentResolver.getMediaStoreDataFromUri(context, uri) ?: MediaStoreData.dummyItem
+                context.contentResolver.getMediaStoreDataFromUri(uri = uri) ?: MediaStoreData.dummyItem
             } catch (e: Throwable) {
                 Log.d(TAG, "Couldn't decode incoming data!\n${e.message}")
                 MediaStoreData.dummyItem

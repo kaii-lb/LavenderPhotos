@@ -390,7 +390,6 @@ fun VideoEditorTopBar(
                             showDialog.value = true
                         } else if (!isFromOpenWithView) coroutineScope.launch(Dispatchers.IO) {
                             context.contentResolver.getMediaStoreDataFromUri(
-                                context = context,
                                 uri = uri
                             )?.let { item ->
                                 coroutineScope.launch(Dispatchers.Main) {
@@ -485,11 +484,10 @@ fun VideoEditorTopBar(
 
                             // mainViewModel so it doesn't die if user exits before video is saved
                             // not using Dispatchers.IO since transformer needs to be on main thread
-                            mainViewModel.launch(Dispatchers.IO) {
-                                val item = context.contentResolver.getMediaStoreDataFromUri(
-                                    context = context,
-                                    uri = uri
-                                ) ?: return@launch
+                            mainViewModel.launch {
+                                // val item = context.contentResolver.getMediaStoreDataFromUri(
+                                //     uri = uri
+                                // ) ?: return@launch
 
                                 navMediaId = saveVideo(
                                     context = context,

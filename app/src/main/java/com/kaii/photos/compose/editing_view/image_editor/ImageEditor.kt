@@ -270,10 +270,9 @@ fun ImageEditor(
                     )
 
                     if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch(Dispatchers.IO) { // need to be on main thread
-                        val item = context.contentResolver.getMediaStoreDataFromUri(
-                            context = context,
-                            uri = uri
-                        ) ?: return@launch
+                        // val item = context.contentResolver.getMediaStoreDataFromUri(
+                        //     uri = uri
+                        // ) ?: return@launch
 
                         coroutineScope.launch(Dispatchers.Main) {
                             // TODO
@@ -292,7 +291,6 @@ fun ImageEditor(
                 navigateBack = {
                     if (!isFromOpenWithView) mainViewModel.launch(Dispatchers.Main) {
                         context.contentResolver.getMediaStoreDataFromUri(
-                            context = context,
                             uri = uri
                         )?.let { item ->
                             coroutineScope.launch(Dispatchers.IO) {

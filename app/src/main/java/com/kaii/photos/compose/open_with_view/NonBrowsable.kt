@@ -350,7 +350,7 @@ private fun BottomBar(
                                 )
 
                                 contentUri?.let {
-                                    context.contentResolver.getMediaStoreDataFromUri(context = context, uri = contentUri)?.absolutePath?.let { absolutePath ->
+                                    context.contentResolver.getMediaStoreDataFromUri(uri = contentUri)?.absolutePath?.let { absolutePath ->
                                         context.contentResolver.copyUriToUri(
                                             from = uri,
                                             to = contentUri

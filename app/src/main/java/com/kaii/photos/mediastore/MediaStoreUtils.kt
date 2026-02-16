@@ -212,7 +212,7 @@ fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType
     return null
 }
 
-fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaStoreData? {
+fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
     val mediaCursor = query(
         MEDIA_STORE_FILE_URI,
         arrayOf(
