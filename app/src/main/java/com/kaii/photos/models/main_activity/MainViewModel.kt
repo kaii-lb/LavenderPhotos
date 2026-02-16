@@ -1,21 +1,16 @@
 package com.kaii.photos.models.main_activity
 
 import android.content.Context
-import android.os.CancellationSignal
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.lavender.immichintegration.clients.ApiClient
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,8 +66,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         initialValue = TopBarDetailsFormat.FileName
     )
 
-    val albumsThumbnailsMap = mutableStateMapOf<Int, MediaStoreData>()
-
     val allAvailableAlbums = settings.albums.get().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -97,12 +90,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         runBlocking {
             initialMainPhotosPaths = getMainPhotosAlbums().first()
         }
-
-        refreshAlbums(
-            context = context.applicationContext,
-            albums = albumInfo,
-            sortMode = MediaItemSortMode.DateTaken
-        )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -128,41 +115,6 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
                 pair.second
             }
         }
-
-    // TODO: move to a state holder class
-    fun refreshAlbums(
-        context: Context,
-        albums: List<AlbumInfo>,
-        sortMode: MediaItemSortMode
-    ) = viewModelScope.launch(Dispatchers.IO) {
-        if (albums.toSet() == albumInfo.toSet()) return@launch
-
-        val dao = MediaDatabase.getInstance(context).mediaDao()
-
-        albums.forEach { album ->
-            val cancellationSignal = CancellationSignal()
-
-            val media = if (!album.isCustomAlbum) {
-                if (sortMode.isDateModified) {
-                    dao.getThumbnailForAlbumDateModified(paths = album.paths)
-                } else {
-                    dao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                } ?: MediaStoreData.dummyItem
-            } else {
-                val datasource = CustomAlbumDataSource(
-                    context = context,
-                    parentId = album.id,
-                    sortMode = sortMode,
-                    cancellationSignal = cancellationSignal
-                )
-
-                datasource.query().getOrElse(0) { MediaStoreData.dummyItem }
-            }
-
-            cancellationSignal.cancel()
-            albumsThumbnailsMap[album.id] = media
-        }
-    }
 
     /** launch tasks on the mainViewModel scope */
     fun launch(

@@ -48,6 +48,7 @@ import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -94,6 +95,7 @@ fun MainPages(
 
     var paths by remember { mutableStateOf(mainPhotosPaths) }
     val selectionManager = rememberSelectionManager(paths = paths)
+    val albumGridState = rememberAlbumGridState()
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -216,7 +218,10 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.albums -> {
-                        AlbumsGridView(isMediaPicker = incomingIntent != null)
+                        AlbumsGridView(
+                            gridState = albumGridState,
+                            isMediaPicker = incomingIntent != null
+                        )
                     }
 
                     tab == DefaultTabs.TabTypes.search -> {

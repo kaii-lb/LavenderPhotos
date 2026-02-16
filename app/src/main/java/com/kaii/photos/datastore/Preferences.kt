@@ -66,7 +66,6 @@ class SettingsAlbumsListImpl(
 ) {
     private val oldAlbumsKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
-    private val sortModeOrderKey = booleanPreferencesKey("album_sort_mode_order")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
     private val albumsKey = stringPreferencesKey("album_items_key")
 
@@ -212,22 +211,12 @@ class SettingsAlbumsListImpl(
     }
 
     fun getAlbumSortMode(): Flow<AlbumSortMode> = context.datastore.data.map {
-        AlbumSortMode.entries[it[sortModeKey] ?: AlbumSortMode.LastModified.ordinal]
-    }
-
-    fun setSortByDescending(descending: Boolean) = viewModelScope.launch {
-        context.datastore.edit {
-            it[sortModeOrderKey] = descending
-        }
-    }
-
-    fun getSortByDescending() = context.datastore.data.map {
-        it[sortModeOrderKey] != false
+        AlbumSortMode.entries[it[sortModeKey] ?: AlbumSortMode.LastModifiedDesc.ordinal]
     }
 
     fun getAutoDetect() = context.datastore.data.map {
         it[autoDetectAlbumsKey] != false
-    }//.stateIn(scope = viewModelScope, initialValue = true, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000))
+    }
 
     fun setAutoDetect(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {

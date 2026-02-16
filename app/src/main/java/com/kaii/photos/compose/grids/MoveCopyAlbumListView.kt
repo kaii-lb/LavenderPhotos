@@ -58,16 +58,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -77,7 +78,6 @@ import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -90,43 +90,20 @@ fun MoveCopyAlbumListView(
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
-    val originalAlbumsList by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-    val albumToThumbnailMapping = mainViewModel.albumsThumbnailsMap
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+    val albumGridState = rememberAlbumGridState()
+    val originalAlbumsList by albumGridState.albums.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
     val searchedForText = remember { mutableStateOf("") }
 
     val state = rememberLazyListState()
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-
     LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
-        withContext(Dispatchers.IO) {
-            if (mainViewModel.albumInfo.toSet() != originalAlbumsList.toSet()) {
-                mainViewModel.refreshAlbums(
-                    context = context,
-                    albums = originalAlbumsList,
-                    sortMode = sortMode
-                )
-            }
-        }
-
         albumsList = originalAlbumsList.filter {
-            it.name.contains(searchedForText.value, true)
-        }.sortedByDescending { album ->
-            val dateToSortBy =
-                if (sortMode == MediaItemSortMode.DateModified) albumToThumbnailMapping[album.id]?.dateModified ?: 0L
-                else albumToThumbnailMapping[album.id]?.dateTaken ?: 0L
-
-            (if (album.isCustomAlbum) 1L else 0L) or dateToSortBy
+            it.info.name.contains(searchedForText.value, true)
         }
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
@@ -206,15 +183,11 @@ fun MoveCopyAlbumListView(
                     items(
                         count = albumsList.size,
                         key = {
-                            albumsList[it].id
+                            albumsList[it].info.id
                         }
                     ) { index ->
-                        val album = albumsList[index]
-                        val mediaItem = albumToThumbnailMapping[album.id] ?: MediaStoreData.dummyItem
-
                         AlbumsListItem(
-                            album = album,
-                            data = mediaItem,
+                            album = albumsList[index],
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,
@@ -241,8 +214,7 @@ fun MoveCopyAlbumListView(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumsListItem(
-    album: AlbumInfo,
-    data: MediaStoreData,
+    album: AlbumGridState.Album,
     position: RowPosition,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
@@ -264,19 +236,19 @@ fun AlbumsListItem(
             show.value = false
 
             mainViewModel.launch(Dispatchers.IO) {
-                if (isMoving && album.paths.size == 1) {
+                if (isMoving && album.info.paths.size == 1) {
                     onMoveMedia()
 
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsList,
-                        destination = album.mainPath,
+                        destination = album.info.mainPath,
                         preserveDate = preserveDate
                     )
                 } else {
                     val list = mutableListOf<MediaStoreData>()
 
-                    album.paths.forEach { path ->
+                    album.info.paths.forEach { path ->
                         copyImageListToPath(
                             context = context,
                             list = selectedItemsList,
@@ -319,9 +291,9 @@ fun AlbumsListItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                if (!album.isCustomAlbum) {
+                if (!album.info.isCustomAlbum) {
                     dirPermissionManager.start(
-                        directories = album.paths
+                        directories = album.info.paths
                     )
                 } else {
                     show.value = false
@@ -332,7 +304,7 @@ fun AlbumsListItem(
                             LavenderContentProvider.CONTENT_URI,
                             arrayOf(LavenderMediaColumns.URI, LavenderMediaColumns.PARENT_ID),
                             "${LavenderMediaColumns.PARENT_ID} = ?",
-                            arrayOf("${album.id}"),
+                            arrayOf("${album.info.id}"),
                             null
                         )?.use { cursor ->
                             while (cursor.moveToNext()) {
@@ -383,19 +355,22 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = data.uri,
-            contentDescription = album.mainPath,
+            model = album.thumbnail,
+            contentDescription = album.info.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
-        )
+        ) {
+            it.signature(album.signature)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+        }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = album.name,
+            text = album.info.name,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
             color = MaterialTheme.colorScheme.onSurface,
@@ -403,7 +378,7 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if (album.isCustomAlbum) {
+        if (album.info.isCustomAlbum) {
             Icon(
                 painter = painterResource(id = R.drawable.art_track),
                 contentDescription = stringResource(id = R.string.albums_is_custom),

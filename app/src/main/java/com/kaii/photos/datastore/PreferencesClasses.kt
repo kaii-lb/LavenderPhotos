@@ -12,8 +12,26 @@ import kotlinx.serialization.json.Json
 // order is important
 enum class AlbumSortMode {
     LastModified,
+    LastModifiedDesc,
     Alphabetically,
-    Custom
+    AlphabeticallyDesc,
+    Custom;
+
+    val isDescending: Boolean
+        get() = this == LastModifiedDesc || this == AlphabeticallyDesc
+
+    fun flip(): AlbumSortMode =
+        when (this) {
+            LastModified -> LastModifiedDesc
+            LastModifiedDesc -> LastModified
+            Alphabetically -> AlphabeticallyDesc
+            AlphabeticallyDesc -> Alphabetically
+            else -> Custom
+        }
+
+    fun byDirection(descending: Boolean): AlbumSortMode =
+        if (!descending || isDescending) this
+        else this.flip()
 }
 
 object DefaultTabs {
