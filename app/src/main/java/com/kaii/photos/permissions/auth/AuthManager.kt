@@ -85,3 +85,32 @@ fun rememberSecureFolderAuthManager(): AuthManager {
         )
     }
 }
+
+@Composable
+fun rememberExportAuthManager(
+    onSuccess: () -> Unit
+): AuthManager {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val coroutineScope = rememberCoroutineScope()
+
+    return remember {
+        AuthManager(
+            context = context,
+            title = resources.getString(R.string.data_and_backup),
+            subtitle = resources.getString(R.string.exporting_backup),
+            onSuccess = onSuccess,
+            onFailure = {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = resources.getString(R.string.secure_unlock_failed),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.secure_folder
+                        )
+                    )
+                }
+            }
+        )
+    }
+}

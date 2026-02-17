@@ -1,10 +1,9 @@
 package com.kaii.photos.helpers
 
 import android.content.Context
-import android.os.CancellationSignal
 import android.util.Log
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.mediastore.FavouritesDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
@@ -70,7 +69,7 @@ class DataAndBackupHelper(
     fun getFavExportDir(context: Context) =
         File(
             File(context.appStorageDir, EXPORT_DIR),
-            FAV_DIR + "_taken_" + getCurrentDate() + ".zip"
+            FAV_DIR + "_taken_" + getCurrentDate()
         )
 
     fun getFavZipFile(context: Context) =
@@ -197,19 +196,20 @@ class DataAndBackupHelper(
         return zipFile.absolutePath
     }
 
-    fun exportFavourites(context: Context) {
+    suspend fun exportFavourites(context: Context) = withContext(Dispatchers.IO) {
         val exportDir = getFavExportDir(context = context)
         if (!exportDir.exists()) exportDir.mkdirs()
 
-        val mediaStore = FavouritesDataSource(context = context, cancellationSignal = CancellationSignal())
+        val items = MediaDatabase.getInstance(context)
+            .mediaDao()
+            .getAllFavourites()
+            .fastMap {
+                File(it.absolutePath)
+            }
 
-        val items = mediaStore.query().map { File(it.absolutePath) }
+        if (items.isEmpty()) return@withContext
 
-        if (items.isEmpty()) return
-
-        items.forEach { favItem ->
-            val favFile = File(favItem.absolutePath)
-
+        items.forEach { favFile ->
             val destination = File(exportDir, favFile.name)
             if (!destination.exists()) favFile.copyTo(destination)
         }
@@ -227,9 +227,12 @@ class DataAndBackupHelper(
 
         zipOutputStream.setLevel(Deflater.DEFAULT_COMPRESSION)
 
-        val mediaStore = FavouritesDataSource(context = context, cancellationSignal = CancellationSignal())
-
-        val items = mediaStore.query().map { File(it.absolutePath) }
+        val items = MediaDatabase.getInstance(context)
+            .mediaDao()
+            .getAllFavourites()
+            .fastMap {
+                File(it.absolutePath)
+            }
 
         if (items.isEmpty()) {
             zipOutputStream.close()

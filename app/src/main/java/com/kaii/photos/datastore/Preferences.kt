@@ -148,7 +148,7 @@ class SettingsAlbumsListImpl(
                 split.map {
                     it.copy(
                         paths = it.paths.map { path ->
-                            if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path
+                            if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
                             else path
                         }.toSet()
                     )
