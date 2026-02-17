@@ -20,6 +20,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
+    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath IN (:paths)")
+    fun countMediaInPaths(paths: Set<String>): Int
+
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
 

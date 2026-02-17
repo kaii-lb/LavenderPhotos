@@ -16,6 +16,9 @@ interface CustomEntityDao {
     @Query(value = "SELECT media.* FROM media JOIN custom_media ON custom_media.mediaId = media.id WHERE album = :album ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(album: Int): PagingSource<Int, MediaStoreData>
 
+    @Query(value = "SELECT COUNT(id) FROM custom_media WHERE album = :album")
+    fun countMediaInAlbum(album: Int): Int
+
     @Query(value = "SELECT media.* FROM media JOIN custom_media ON custom_media.mediaId = media.id WHERE album = :album ORDER BY dateTaken DESC LIMIT 1")
     fun getThumbnailForAlbumDateTaken(album: Int): MediaStoreData?
 

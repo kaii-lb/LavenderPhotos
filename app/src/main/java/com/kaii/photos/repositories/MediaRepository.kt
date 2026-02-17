@@ -12,9 +12,11 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.withContext
 
 class MediaRepository(
     context: Context,
@@ -79,5 +81,9 @@ class MediaRepository(
             paths = album?.paths ?: snapshot.paths,
             accessToken = accessToken ?: snapshot.accessToken
         )
+    }
+
+    suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+        return@withContext dao.countMediaInPaths(paths = params.value.paths)
     }
 }

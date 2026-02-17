@@ -78,7 +78,8 @@ fun SingleAlbumView(
         incomingIntent = incomingIntent,
         onBackClick = {
             navController.popBackStack()
-        }
+        },
+        mediaCount = viewModel::getMediaCount
     )
 }
 
@@ -110,7 +111,8 @@ fun SingleAlbumView(
         incomingIntent = incomingIntent,
         onBackClick = {
             navController.popBackStack()
-        }
+        },
+        mediaCount = viewModel::getMediaCount
     )
 }
 
@@ -123,7 +125,8 @@ private fun SingleAlbumViewCommon(
     navController: NavHostController,
     incomingIntent: Intent?,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    mediaCount: suspend () -> Int
 ) {
     val showDialog = remember { mutableStateOf(false) }
 
@@ -197,7 +200,7 @@ private fun SingleAlbumViewCommon(
                 albumId = albumInfo.id,
                 navController = navController,
                 selectionManager = selectionManager,
-                itemCount = pagingItems.itemCount // TODO
+                itemCount = mediaCount
             )
         }
     }

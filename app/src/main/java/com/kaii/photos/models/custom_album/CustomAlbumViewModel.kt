@@ -19,8 +19,8 @@ class CustomAlbumViewModel(
 ) : ViewModel() {
     private val repo = CustomRepository(
         context = context,
-        scope = viewModelScope,
         albumInfo = albumInfo,
+        scope = viewModelScope,
         info = info,
         sortMode = sortMode,
         format = format
@@ -30,4 +30,5 @@ class CustomAlbumViewModel(
     val gridMediaFlow = repo.gridMediaFlow
 
     fun remove(items: Set<MediaStoreData>) = repo.remove(items, albumInfo.id)
+    suspend fun getMediaCount() = repo.getMediaCount()
 }

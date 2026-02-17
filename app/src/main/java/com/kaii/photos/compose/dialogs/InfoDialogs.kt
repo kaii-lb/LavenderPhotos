@@ -48,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -111,7 +112,7 @@ fun SingleAlbumDialog(
     albumId: Int,
     navController: NavHostController,
     selectionManager: SelectionManager,
-    itemCount: Int
+    itemCount: suspend () -> Int
 ) {
     val mainViewModel = LocalMainViewModel.current
     val albums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
@@ -372,9 +373,14 @@ fun SingleAlbumDialog(
                         iconResId = R.drawable.folder,
                     )
 
+                    var mediaCount by remember { mutableIntStateOf(0) }
+                    LaunchedEffect(Unit) {
+                        mediaCount = itemCount()
+                    }
+
                     DialogInfoText(
                         firstText = stringResource(id = R.string.albums_item_count),
-                        secondText = itemCount.toString(),
+                        secondText = mediaCount.toString(),
                         iconResId = R.drawable.data,
                     )
 

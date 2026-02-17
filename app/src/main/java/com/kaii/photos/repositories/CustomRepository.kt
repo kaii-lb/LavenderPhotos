@@ -16,11 +16,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CustomRepository(
     private val scope: CoroutineScope,
+    private val albumInfo: AlbumInfo,
     context: Context,
-    albumInfo: AlbumInfo,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
@@ -58,5 +59,9 @@ class CustomRepository(
         }.let { ids ->
             dao.deleteAll(ids = ids.toSet(), album = albumId)
         }
+    }
+
+    suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+        return@withContext dao.countMediaInAlbum(album = albumInfo.id)
     }
 }

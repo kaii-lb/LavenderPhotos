@@ -34,5 +34,7 @@ class MultiAlbumViewModel(
         format: DisplayDateFormat? = null,
         accessToken: String? = null
     ) = repo.update(album, sortMode, format, accessToken)
+
+    suspend fun getMediaCount() = repo.getMediaCount()
 }
 
