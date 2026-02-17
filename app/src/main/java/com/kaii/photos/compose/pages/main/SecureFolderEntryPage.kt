@@ -42,9 +42,9 @@ import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.appRestoredFilesDir
+import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import com.kaii.photos.permissions.secure_folder.rememberSecureFolderManager
 import kotlinx.coroutines.launch
 
@@ -159,7 +159,7 @@ fun SecureFolderEntryPage() {
         }
     }
 
-    val authManager = rememberSecureFolderLaunchManager()
+    val authManager = rememberSecureFolderAuthManager()
     val isLandscape by rememberDeviceOrientation()
 
     if (isLandscape) {

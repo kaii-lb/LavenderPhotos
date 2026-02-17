@@ -89,7 +89,7 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
+import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -638,7 +638,7 @@ private fun SortModeHeader(
 
         if (!tabList.contains(DefaultTabs.TabTypes.secure)) {
             item {
-                val authManager = rememberSecureFolderLaunchManager()
+                val authManager = rememberSecureFolderAuthManager()
                 OutlinedButton(
                     onClick = {
                         authManager.authenticate()

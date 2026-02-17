@@ -1,4 +1,4 @@
-package com.kaii.photos.permissions.secure_folder
+package com.kaii.photos.permissions.auth
 
 import android.content.Context
 import android.hardware.biometrics.BiometricManager
@@ -9,25 +9,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalResources
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.Screens
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class SecureFolderLaunchManager(
+class AuthManager(
     private val context: Context,
-    navController: NavController,
-    scope: CoroutineScope
+    title: String,
+    subtitle: String,
+    onSuccess: () -> Unit,
+    onFailure: () -> Unit
 ) {
     private val cancellationSignal = CancellationSignal()
     private val prompt =
         BiometricPrompt.Builder(context)
-            .setTitle(context.resources.getString(R.string.secure_unlock))
-            .setSubtitle(context.resources.getString(R.string.secure_unlock_desc))
+            .setTitle(title)
+            .setSubtitle(subtitle)
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
             .build()
 
@@ -36,21 +37,13 @@ class SecureFolderLaunchManager(
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
                 super.onAuthenticationSucceeded(result)
 
-                navController.navigate(route = Screens.SecureFolder.GridView)
+                onSuccess()
             }
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
                 super.onAuthenticationError(errorCode, errString)
 
-                scope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = context.resources.getString(R.string.secure_unlock_failed),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.secure_folder
-                        )
-                    )
-                }
+                onFailure()
             }
         }
 
@@ -64,16 +57,31 @@ class SecureFolderLaunchManager(
 }
 
 @Composable
-fun rememberSecureFolderLaunchManager(): SecureFolderLaunchManager {
+fun rememberSecureFolderAuthManager(): AuthManager {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val navController = LocalNavController.current
     val coroutineScope = rememberCoroutineScope()
 
     return remember {
-        SecureFolderLaunchManager(
+        AuthManager(
             context = context,
-            navController = navController,
-            scope = coroutineScope
+            title = resources.getString(R.string.secure_unlock),
+            subtitle = resources.getString(R.string.secure_unlock_desc),
+            onSuccess = {
+                navController.navigate(route = Screens.SecureFolder.GridView)
+            },
+            onFailure = {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = resources.getString(R.string.secure_unlock_failed),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.secure_folder
+                        )
+                    )
+                }
+            }
         )
     }
 }

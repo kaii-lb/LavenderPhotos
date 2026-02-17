@@ -95,8 +95,8 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.models.main_activity.MainViewModel
+import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
-import com.kaii.photos.permissions.secure_folder.rememberSecureFolderLaunchManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -489,7 +489,7 @@ fun MainAppDialog(
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 if (showExtraSecureItem) {
-                    val authManager = rememberSecureFolderLaunchManager()
+                    val authManager = rememberSecureFolderAuthManager()
                     DialogClickableItem(
                         text = stringResource(id = R.string.secure_folder),
                         iconResId = R.drawable.secure_folder,
