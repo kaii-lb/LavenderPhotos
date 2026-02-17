@@ -277,44 +277,48 @@ fun SingleAlbumDialog(
                 }
             )
 
-            DialogClickableItem(
-                text = stringResource(id = R.string.albums_remove),
-                iconResId = R.drawable.delete,
-                position = RowPosition.Middle,
-                enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
-                modifier = Modifier
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    )
-                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
-                    .padding(8.dp, 0.dp)
-            ) {
-                mainViewModel.settings.albums.remove(dynamicAlbum.id)
-                showDialog.value = false
+            val autoDetectAlbums by mainViewModel.settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
 
-                try {
-                    // TODO: possible make less messy
-                    mainViewModel.launch(Dispatchers.IO) {
-                        MediaDatabase.getInstance(context)
-                            .customDao()
-                            .deleteAlbum(album = dynamicAlbum.id)
+            if (!autoDetectAlbums) {
+                DialogClickableItem(
+                    text = stringResource(id = R.string.albums_remove),
+                    iconResId = R.drawable.delete,
+                    position = RowPosition.Middle,
+                    enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
+                    modifier = Modifier
+                        .animateContentSize(
+                            animationSpec = tween(
+                                durationMillis = 500
+                            )
+                        )
+                        .height(if (!isEditingFileName.value) 42.dp else 0.dp)
+                        .padding(8.dp, 0.dp)
+                ) {
+                    mainViewModel.settings.albums.remove(dynamicAlbum.id)
+                    showDialog.value = false
+
+                    try {
+                        // TODO: possible make less messy
+                        mainViewModel.launch(Dispatchers.IO) {
+                            MediaDatabase.getInstance(context)
+                                .customDao()
+                                .deleteAlbum(album = dynamicAlbum.id)
+                        }
+
+                        context.contentResolver.releasePersistableUriPermission(
+                            context.getExternalStorageContentUriFromAbsolutePath(
+                                dynamicAlbum.mainPath,
+                                true
+                            ),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } catch (e: Throwable) {
+                        Log.d(TAG, "Couldn't release permission for ${dynamicAlbum.mainPath}")
+                        e.printStackTrace()
                     }
 
-                    context.contentResolver.releasePersistableUriPermission(
-                        context.getExternalStorageContentUriFromAbsolutePath(
-                            dynamicAlbum.mainPath,
-                            true
-                        ),
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                } catch (e: Throwable) {
-                    Log.d(TAG, "Couldn't release permission for ${dynamicAlbum.mainPath}")
-                    e.printStackTrace()
+                    navController.popBackStack()
                 }
-
-                navController.popBackStack()
             }
 
             DialogClickableItem(

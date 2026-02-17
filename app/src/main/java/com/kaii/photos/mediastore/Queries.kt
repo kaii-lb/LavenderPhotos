@@ -9,16 +9,14 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
 
 fun getAllMediaStoreIds(context: Context): Set<Long> {
     val cursor =
         context.contentResolver.query(
             MEDIA_STORE_FILE_URI,
-            arrayOf(MediaColumns._ID, FileColumns.MEDIA_TYPE),
+            arrayOf(MediaColumns._ID),
             "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
             null,
             null,

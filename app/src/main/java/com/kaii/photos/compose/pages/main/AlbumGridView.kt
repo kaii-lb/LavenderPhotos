@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.grids
+package com.kaii.photos.compose.pages.main
 
 import androidx.annotation.FloatRange
 import androidx.compose.animation.AnimatedContent

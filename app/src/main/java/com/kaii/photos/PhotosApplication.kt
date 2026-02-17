@@ -9,7 +9,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncWorker
-import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
+import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

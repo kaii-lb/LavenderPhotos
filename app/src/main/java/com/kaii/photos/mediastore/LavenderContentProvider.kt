@@ -1,4 +1,4 @@
-package com.kaii.photos.mediastore.content_provider
+package com.kaii.photos.mediastore
 
 import android.content.ContentProvider
 import android.content.ContentUris

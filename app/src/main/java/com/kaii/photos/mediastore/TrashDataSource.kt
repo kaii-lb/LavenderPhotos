@@ -16,7 +16,6 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose

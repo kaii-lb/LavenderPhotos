@@ -8,8 +8,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.mediastore.LavenderContentProvider
+import com.kaii.photos.mediastore.LavenderMediaColumns
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.toMediaType
 

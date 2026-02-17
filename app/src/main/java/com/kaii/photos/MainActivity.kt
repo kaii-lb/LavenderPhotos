@@ -93,7 +93,6 @@ import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.startupUpdateCheck
-import com.kaii.photos.helpers.tryGetAllAlbums
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -869,7 +868,7 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        mainViewModel.settings.albums.add(list = tryGetAllAlbums(context = context))
+                        mainViewModel.settings.albums.setAutoDetect(true)
                         isLoading.value = false
                         mainViewModel.settings.user.setFirstStartup()
                     }

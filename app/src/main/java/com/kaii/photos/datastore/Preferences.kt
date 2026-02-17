@@ -176,6 +176,19 @@ class SettingsAlbumsListImpl(
         }
     }
 
+    fun removeAll(albums: List<Int>) = viewModelScope.launch {
+        context.datastore.edit { data ->
+            val list = data[albumsKey] ?: jsonDefaultAlbumsList
+            val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
+
+            present.removeIf {
+                it.id in albums
+            }
+
+            data[albumsKey] = json.encodeToString(present)
+        }
+    }
+
     fun edit(
         id: Int,
         newInfo: AlbumInfo

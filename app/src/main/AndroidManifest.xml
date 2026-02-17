@@ -166,7 +166,7 @@
         </provider>
 
         <provider
-            android:name=".mediastore.content_provider.LavenderContentProvider"
+            android:name=".mediastore.LavenderContentProvider"
             android:authorities="com.kaii.photos.content_provider"
             android:enabled="true"
             android:exported="false" />

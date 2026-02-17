@@ -7,12 +7,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
@@ -23,14 +25,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AlbumGridState(
+    private val scope: CoroutineScope,
+    private val albumsFlow: Flow<List<AlbumInfo>>,
     context: Context,
-    albumsFlow: Flow<List<AlbumInfo>>,
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
-    private val scope: CoroutineScope
+    allAlbumsFlow: Flow<Boolean>,
+    updateAlbums: (added: List<AlbumInfo>, removed: List<Int>) -> Unit
 ) {
     data class Album(
         val info: AlbumInfo,
@@ -57,6 +62,33 @@ class AlbumGridState(
                     mediaSortMode = mediaSortMode,
                     albumSortMode = albumSortMode
                 )
+            }
+        }
+
+        scope.launch(Dispatchers.IO) {
+            allAlbumsFlow.distinctUntilChanged().collectLatest {
+                if (it) {
+                    val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+
+                    mediaDao
+                        .getAllAlbums()
+                        .distinctUntilChanged()
+                        .collectLatest { list ->
+                            updateAlbums(
+                                list.fastMap { album ->
+                                    AlbumInfo(
+                                        id = album.hashCode(),
+                                        name = album.filename(),
+                                        paths = setOf(album)
+                                    )
+                                },
+                                albumsFlow.first().fastMapNotNull { album ->
+                                    if (mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null) album.id
+                                    else null
+                                }
+                            )
+                        }
+                }
             }
         }
     }
@@ -132,11 +164,16 @@ fun rememberAlbumGridState(): AlbumGridState {
 
     return remember {
         AlbumGridState(
+            scope = coroutineScope,
             context = context,
             albumsFlow = mainViewModel.settings.albums.get(),
             sortModeFlow = mainViewModel.sortMode,
             albumSortModeFlow = mainViewModel.settings.albums.getAlbumSortMode(),
-            scope = coroutineScope
+            allAlbumsFlow = mainViewModel.settings.albums.getAutoDetect(),
+            updateAlbums = { added, removed ->
+                mainViewModel.settings.albums.add(added)
+                mainViewModel.settings.albums.removeAll(removed)
+            }
         )
     }
 }

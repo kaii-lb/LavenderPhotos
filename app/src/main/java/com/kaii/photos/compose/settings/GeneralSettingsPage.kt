@@ -25,7 +25,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
@@ -50,7 +49,7 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.tryGetAllAlbums
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -160,7 +159,6 @@ fun GeneralSettingsPage() {
                 val findingAlbums = stringResource(id = R.string.finding_albums_on_device)
                 val foundAlbums = stringResource(id = R.string.albums_found)
 
-                val context = LocalContext.current
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_auto_detect),
                     summary = stringResource(id = R.string.albums_auto_detect_desc),
@@ -170,7 +168,7 @@ fun GeneralSettingsPage() {
                     checked = autoDetectAlbums
                 ) { checked ->
                     // as to keep the MutableState alive even if the user leaves the screen
-                    mainViewModel.launch {
+                    mainViewModel.launch(Dispatchers.IO) {
                         if (!isAlreadyLoading.value) {
                             isAlreadyLoading.value = true
 
@@ -183,9 +181,6 @@ fun GeneralSettingsPage() {
                                     )
                                 )
 
-                                mainViewModel.settings.albums.add(
-                                    list = tryGetAllAlbums(context = context)
-                                )
                                 isAlreadyLoading.value = false
                             }
 

@@ -1,10 +1,14 @@
 package com.kaii.photos.mediastore
 
+import android.net.Uri
 import android.os.Parcelable
+import android.provider.MediaStore
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
 import kotlinx.parcelize.Parcelize
+
+val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
 
 @Immutable
 @Parcelize

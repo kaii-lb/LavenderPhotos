@@ -96,6 +96,9 @@ interface MediaDao {
             @MapColumn(columnName = "id") Long,
             @MapColumn(columnName = "parentPath") String>
 
+    @Query(value = "SELECT DISTINCT parentPath FROM media")
+    fun getAllAlbums(): Flow<List<String>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: MediaStoreData)
 

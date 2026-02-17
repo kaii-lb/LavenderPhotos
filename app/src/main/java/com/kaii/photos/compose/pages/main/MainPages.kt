@@ -45,7 +45,6 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
-import com.kaii.photos.compose.grids.AlbumsGridView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.rememberAlbumGridState

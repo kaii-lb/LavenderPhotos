@@ -23,7 +23,6 @@ import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
-import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
