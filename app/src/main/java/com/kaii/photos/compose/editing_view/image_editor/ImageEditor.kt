@@ -91,7 +91,6 @@ import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -100,7 +99,6 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.helpers.editing.saveImage
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -113,8 +111,7 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?,
-    screenType: ScreenType
+    albumInfo: AlbumInfo?
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -269,43 +266,21 @@ fun ImageEditor(
                         isFromOpenWithView = isFromOpenWithView
                     )
 
-                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch(Dispatchers.IO) { // need to be on main thread
-                        // val item = context.contentResolver.getMediaStoreDataFromUri(
-                        //     uri = uri
-                        // ) ?: return@launch
+                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("editIndex", 0)
 
-                        coroutineScope.launch(Dispatchers.Main) {
-                            // TODO
-                            // navController.popBackStack(Screens.SinglePhotoView::class, true)
-                            // navController.navigate(
-                            //     Screens.SinglePhotoView(
-                            //         albumInfo = albumInfo!!,
-                            //         mediaItemId = item.id,
-                            //         nextMediaItemId = navMediaId,
-                            //         type = screenType
-                            //     )
-                            // )
-                        }
+                        navController.popBackStack()
                     }
                 },
                 navigateBack = {
-                    if (!isFromOpenWithView) mainViewModel.launch(Dispatchers.Main) {
-                        context.contentResolver.getMediaStoreDataFromUri(
-                            uri = uri
-                        )?.let { item ->
-                            coroutineScope.launch(Dispatchers.IO) {
-                                // TODO
-                                // navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                // navController.navigate(
-                                //     Screens.SinglePhotoView(
-                                //         albumInfo = albumInfo!!,
-                                //         mediaItemId = item.id,
-                                //         nextMediaItemId = navMediaId,
-                                //         type = screenType
-                                //     )
-                                // )
-                            }
-                        }
+                    if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("editIndex", 0)
+
+                            navController.popBackStack()
                     } else {
                         navController.popBackStack()
                     }

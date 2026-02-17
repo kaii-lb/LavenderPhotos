@@ -322,10 +322,11 @@ class MainActivity : ComponentActivity() {
                             accessToken = immichInfo.accessToken
                         )
 
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
                             viewModel = multiAlbumViewModel,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             albumInfo = screen.albumInfo,
                             nextMediaItemId = screen.nextMediaItemId
                         )
@@ -343,10 +344,11 @@ class MainActivity : ComponentActivity() {
                             accessToken = immichInfo.accessToken
                         )
 
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
                             viewModel = searchViewModel,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             albumInfo = AlbumInfo.Empty,
                             nextMediaItemId = screen.nextMediaItemId
                         )
@@ -390,10 +392,11 @@ class MainActivity : ComponentActivity() {
                             accessToken = immichInfo.accessToken
                         )
 
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
                             viewModel = multiAlbumViewModel,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             albumInfo = screen.albumInfo,
                             nextMediaItemId = screen.nextMediaItemId
                         )
@@ -437,10 +440,11 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             viewModel = viewModel,
                             window = window,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             nextMediaItemId = screen.nextMediaItemId
                         )
                     }
@@ -600,11 +604,12 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             navController = navController,
                             viewModel = viewModel,
                             window = window,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             nextMediaItemId = screen.nextMediaItemId,
                             albumInfo = screen.albumInfo
                         )
@@ -664,10 +669,11 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
+                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             albumInfo = screen.albumInfo,
                             viewModel = viewModel,
-                            index = screen.index,
+                            index = editIndex ?: screen.index,
                             window = window,
                             nextMediaItemId = screen.nextMediaItemId
                         )
@@ -779,8 +785,7 @@ class MainActivity : ComponentActivity() {
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
-                        albumInfo = screen.albumInfo,
-                        screenType = screen.type
+                        albumInfo = screen.albumInfo
                     )
                 }
 
@@ -834,8 +839,7 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         albumInfo = screen.albumInfo,
                         window = window,
-                        isFromOpenWithView = false,
-                        screenType = screen.type
+                        isFromOpenWithView = false
                     )
                 }
             }

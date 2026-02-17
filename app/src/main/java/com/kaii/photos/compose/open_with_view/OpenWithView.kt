@@ -212,8 +212,7 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     albumInfo = null,
-                                    isFromOpenWithView = true,
-                                    screenType = screen.type
+                                    isFromOpenWithView = true
                                 )
                             }
 
@@ -265,8 +264,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    albumInfo = null,
-                                    screenType = screen.type
+                                    albumInfo = null
                                 )
                             }
                         }

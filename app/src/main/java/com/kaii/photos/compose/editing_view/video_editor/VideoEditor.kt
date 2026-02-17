@@ -76,7 +76,6 @@ import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
 import com.kaii.photos.helpers.editing.DrawableText
@@ -104,8 +103,7 @@ fun VideoEditor(
     absolutePath: String,
     albumInfo: AlbumInfo?,
     window: Window,
-    isFromOpenWithView: Boolean,
-    screenType: ScreenType
+    isFromOpenWithView: Boolean
 ) {
     val isPlaying = remember { mutableStateOf(false) }
 
@@ -376,9 +374,7 @@ fun VideoEditor(
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
-                isFromOpenWithView = isFromOpenWithView,
-                albumInfo = albumInfo,
-                screenType = screenType
+                isFromOpenWithView = isFromOpenWithView
             )
         },
         bottomBar = {

@@ -3,13 +3,6 @@ package com.kaii.photos.helpers
 import com.kaii.photos.datastore.AlbumInfo
 import kotlinx.serialization.Serializable
 
-enum class ScreenType {
-    Immich,
-    Search,
-    Favourites,
-    Normal
-}
-
 interface Screens {
     @Serializable
     object Album : Screens {
@@ -68,16 +61,14 @@ interface Screens {
         val absolutePath: String,
         val uri: String,
         val dateTaken: Long,
-        val albumInfo: AlbumInfo,
-        val type: ScreenType
+        val albumInfo: AlbumInfo
     ) : Screens
 
     @Serializable
     data class VideoEditor(
         val uri: String,
         val absolutePath: String,
-        val albumInfo: AlbumInfo,
-        val type: ScreenType
+        val albumInfo: AlbumInfo
     ) : Screens
 
     @Serializable

@@ -37,7 +37,7 @@ class LavenderContentProvider : ContentProvider() {
         }
 
         override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-            db?.execSQL("DROP TABLE IF EXISTS $TABLE_NAME") // TODO: don't drop table perhaps
+            db?.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
             onCreate(db)
         }
     }

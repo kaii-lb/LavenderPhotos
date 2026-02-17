@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -71,7 +72,6 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.ScreenType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -118,7 +118,6 @@ fun SinglePhotoView(
         startIndex = index,
         nextMediaItemId = nextMediaItemId,
         albumInfo = albumInfo,
-        screenType = ScreenType.Normal,
         isOpenWithDefaultView = isOpenWithDefaultView,
         removeFromCustom = { item ->
             viewModel.remove(items = setOf(item))
@@ -145,7 +144,6 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
-        screenType = ScreenType.Normal,
         nextMediaItemId = nextMediaItemId
     )
 }
@@ -168,7 +166,6 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
-        screenType = ScreenType.Search,
         nextMediaItemId = nextMediaItemId
     )
 }
@@ -190,7 +187,6 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
-        screenType = ScreenType.Favourites,
         nextMediaItemId = nextMediaItemId
     )
 }
@@ -213,7 +209,6 @@ fun SinglePhotoView(
         navController = navController,
         window = window,
         isOpenWithDefaultView = false,
-        screenType = ScreenType.Immich,
         nextMediaItemId = nextMediaItemId
     )
 }
@@ -228,7 +223,6 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    screenType: ScreenType,
     nextMediaItemId: Long?,
     removeFromCustom: (MediaStoreData) -> Unit = {}
 ) {
@@ -236,6 +230,10 @@ private fun SinglePhotoViewCommon(
         initialPage = startIndex
     ) {
         items.itemCount
+    }
+
+    LaunchedEffect(rememberUpdatedState(startIndex).value) {
+        state.scrollToPage(startIndex)
     }
 
     LaunchedEffect(Unit) {
@@ -341,8 +339,7 @@ private fun SinglePhotoViewCommon(
                                     absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri,
                                     dateTaken = mediaItem.dateTaken,
-                                    albumInfo = albumInfo,
-                                    type = screenType
+                                    albumInfo = albumInfo
                                 )
                             )
                         } else {
@@ -350,8 +347,7 @@ private fun SinglePhotoViewCommon(
                                 Screens.VideoEditor(
                                     uri = mediaItem.uri,
                                     absolutePath = mediaItem.absolutePath,
-                                    albumInfo = albumInfo,
-                                    type = screenType
+                                    albumInfo = albumInfo
                                 )
                             )
                         }
