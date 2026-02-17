@@ -33,6 +33,7 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.getPathsFromUriList
+import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
@@ -110,14 +111,21 @@ suspend fun setTrashedOnPhotoList(
         )
     )
 
-    setFavouriteOnMedia(
-        context = context,
-        favourite = false,
-        list = list
-    )
+    try {
+        setFavouriteOnMedia(
+            context = context,
+            favourite = false,
+            list = list
+        )
+    } catch (e: Throwable) {
+        Log.d(TAG, "Failed setting fav on trash list. ${e.message}")
+        e.printStackTrace()
+    }
 
     try {
-        val map = context.contentResolver.getPathsFromUriList(list = list).toMap()
+        val map =
+            if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
+            else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
 
         list.forEachIndexed { index, uri ->
             // order is very important!

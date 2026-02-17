@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
@@ -425,8 +426,58 @@ fun ContentResolver.getPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>
             MediaColumns.DATA,
             FileColumns.MEDIA_TYPE
         ),
-        "${MediaColumns._ID} IN $param AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
-        list.fastMapNotNull { it.lastPathSegment }.toTypedArray(),
+        "${MediaColumns._ID} IN $param",
+        list.fastMapNotNull { it.lastPathSegment!! }.toTypedArray(),
+        null
+    )
+
+    val paths = mutableListOf<Pair<Uri, String>>()
+
+    mediaCursor?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+        val absolutePathColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val mediaTypeColumn = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val absolutePath = cursor.getString(absolutePathColumn)
+            val mediaType = cursor.getInt(mediaTypeColumn)
+
+            val uriParentPath =
+                if (mediaType == FileColumns.MEDIA_TYPE_IMAGE) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+            val uri = ContentUris.withAppendedId(uriParentPath, id)
+
+            paths.add(Pair(uri, absolutePath))
+        }
+    }
+
+    return paths
+}
+
+fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>> {
+    val param = "(" + list.joinToString(",") { "?" } + ")"
+
+    val bundle = Bundle()
+    bundle.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
+    bundle.putString(
+        ContentResolver.QUERY_ARG_SQL_SELECTION,
+        "${MediaColumns._ID} IN $param AND ${MediaColumns.IS_TRASHED} = 1"
+    )
+    bundle.putStringArray(
+        ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+        list.fastMapNotNull { it.lastPathSegment!! }.toTypedArray()
+    )
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            FileColumns.MEDIA_TYPE
+        ),
+        bundle,
         null
     )
 

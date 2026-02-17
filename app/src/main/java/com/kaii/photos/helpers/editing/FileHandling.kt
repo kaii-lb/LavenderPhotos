@@ -62,14 +62,12 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
@@ -80,6 +78,7 @@ import java.io.File
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 
 private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
 
@@ -287,9 +286,8 @@ suspend fun saveVideo(
         favourited = false
     )
 
-    val tempPath = context.appStorageDir + "/cache/${media.displayName}"
+    val tempFile = File(context.cacheDir, "/${media.displayName}")
 
-    val tempFile = File(tempPath)
     if (tempFile.exists()) tempFile.delete()
     if (tempFile.parentFile?.exists() != true) tempFile.parentFile?.mkdirs()
     tempFile.createNewFile()
@@ -310,7 +308,7 @@ suspend fun saveVideo(
                 }
 
                 // not using newMedia.uri since we don't have access to that after deletion
-                context.contentResolver.getUriFromAbsolutePath(absolutePath = tempPath, type = MediaType.Video)?.let { newUri ->
+                context.contentResolver.getUriFromAbsolutePath(absolutePath = tempFile.absolutePath, type = MediaType.Video)?.let { newUri ->
                     context.contentResolver.update(
                         newUri,
                         ContentValues().apply {
@@ -353,7 +351,7 @@ suspend fun saveVideo(
     // TODO: SEVERELY inefficient please fix
     transformer.start(
         editedMediaItem,
-        tempPath
+        tempFile.absolutePath
     )
 
     while (completions == 0) {
@@ -404,24 +402,21 @@ suspend fun saveVideo(
         )
     }
 
-    val mediaUri = context.contentResolver.getUriFromAbsolutePath(tempFile.absolutePath, MediaType.Video)
-    if (mediaUri == null) {
+    if (!tempFile.exists() && tempFile.length() <= 0) {
         percentage.floatValue = 1f
         onFailure()
         return@withContext -1L
     }
 
     val finalMediaItem = MediaItem.Builder()
-        .setUri(mediaUri)
+        .setUri(tempFile.toUri())
         .build()
 
     val finalEditedMediaItem = EditedMediaItem.Builder(finalMediaItem)
         .setEffects(Effects(emptyList(), modList))
         .build()
 
-    val tempPathCrop = context.appStorageDir + "/cache/crop-${media.displayName}"
-
-    val tempFileCrop = File(tempPathCrop)
+    val tempFileCrop = File(context.cacheDir, "/crop-${media.displayName}")
     if (tempFileCrop.exists()) tempFileCrop.delete()
     if (tempFileCrop.parentFile?.exists() != true) tempFileCrop.parentFile?.mkdirs()
     tempFileCrop.createNewFile()
@@ -444,9 +439,7 @@ suspend fun saveVideo(
     }
     delay(1000)
 
-    val newUri = context.contentResolver.getUriFromAbsolutePath(tempFileCrop.absolutePath, MediaType.Video)
-
-    if (newUri == null) {
+    if (!tempFileCrop.exists() && tempFileCrop.length() <= 0) {
         percentage.floatValue = 1f
         onFailure()
         return@withContext -1L
@@ -461,29 +454,50 @@ suspend fun saveVideo(
         )
     }
 
-    return@withContext copyImageListToPath(
+    val newUri = context.contentResolver.insertMedia(
         context = context,
-        list = listOf(
-            SelectionManager.SelectedItem(
-                id = newUri.lastPathSegment!!.toLong(),
-                isImage = false,
-                parentPath = tempFileCrop.absolutePath // TODO: check this if videos are not exporting
-            )
+        media = MediaStoreData(
+            id = 0L,
+            uri = "",
+            absolutePath = tempFileCrop.absolutePath.replaceFirst("crop-", ""),
+            parentPath = tempFileCrop.absolutePath.parent(),
+            displayName = tempFileCrop.name.replaceFirst("crop-", ""),
+            dateTaken = Clock.System.now().epochSeconds,
+            dateModified = Clock.System.now().epochSeconds,
+            mimeType = "video/mp4",
+            type = MediaType.Video,
+            immichUrl = null,
+            immichThumbnail = null,
+            hash = null,
+            size = tempFileCrop.length(),
+            favourited = false
         ),
+        basePath = tempFileCrop.absolutePath.toBasePath(),
         destination = absolutePath.parent(),
-        overwriteDate = false,
-        showProgressSnackbar = false,
-        overrideDisplayName = {
-            it.replaceFirst("crop-", "")
-        },
-        onSingleItemDone = { data ->
-            permanentlyDeletePhotoList(context, listOf(data.uri.toUri()))
-            if (tempFile.exists()) tempFile.delete()
-
-            body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
-            percentage.floatValue = 1f
+        currentVolumes = MediaStore.getExternalVolumeNames(context),
+        preserveDate = false,
+        overrideDisplayName = null,
+        onInsert = { _, new ->
+            context.contentResolver.copyUriToUri(
+                from = tempFileCrop.toUri(),
+                to = new
+            )
         }
-    ).first().lastPathSegment?.toLongOrNull() ?: -1L
+    )
+
+    if (newUri == null) {
+        percentage.floatValue = 1f
+        onFailure()
+        return@withContext -1L
+    }
+
+    if (tempFileCrop.exists()) tempFileCrop.delete()
+    if (tempFile.exists()) tempFile.delete()
+
+    body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
+    percentage.floatValue = 1f
+
+    return@withContext newUri.lastPathSegment?.toLongOrNull() ?: -1L
 }
 
 /** return the id of the newly created image, or -1 if an error occurs */
