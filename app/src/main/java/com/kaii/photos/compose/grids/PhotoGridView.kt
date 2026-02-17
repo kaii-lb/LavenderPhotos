@@ -3,6 +3,7 @@ package com.kaii.photos.compose.grids
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.os.Vibrator
 import android.util.Log
 import android.view.View
 import androidx.activity.compose.BackHandler
@@ -197,15 +198,19 @@ private fun DeviceMedia(
         val useRoundedCorners by mainViewModel.settings.lookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
         val openVideosExternally by mainViewModel.settings.behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
 
-        // delays loading items until the "slide in" animation has finished, so that it doesn't lag or stutter
-        var showItems by remember { mutableStateOf(false) }
-        LaunchedEffect(Unit) {
-            delay(AnimationConstants.DURATION.toLong())
-            showItems = true
-        }
-
+        val resources = LocalResources.current
         val navController = LocalNavController.current
+        val vibratorManager = rememberVibratorManager()
         val isDragSelecting = remember { mutableStateOf(false) }
+
+        val prefix = remember(resources) {
+            viewProperties.prefix?.let {
+                ViewProperties.getText(
+                    id = viewProperties.prefix,
+                    resources = resources
+                ) + " "
+            } ?: ""
+        }
 
         LazyVerticalGrid(
             state = gridState,
@@ -232,7 +237,7 @@ private fun DeviceMedia(
                 )
         ) {
             items(
-                count = if (showItems) pagingItems.itemCount else 0,
+                count = pagingItems.itemCount,
                 key = pagingItems.itemKey { it.itemKey() },
                 contentType = pagingItems.itemContentType { it::class },
                 span = { index ->
@@ -256,44 +261,58 @@ private fun DeviceMedia(
                         .wrapContentSize()
                         .animateItem()
                 ) {
-                    if (item == null) {
-                        LoadingMediaStoreItem(
-                            item = PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem),
-                            useRoundedCorners
-                        )
-                    } else {
-                        MediaStoreItem(
-                            item = item,
-                            viewProperties = viewProperties,
-                            isSelecting = { isSelecting },
-                            thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
-                            isDragSelecting = isDragSelecting,
-                            isMediaPicker = isMediaPicker,
-                            useRoundedCorners = useRoundedCorners,
-                            selected = selectionManager.isSelected(item),
-                            toggleSelection = {
-                                selectionManager.toggle(item)
-                            },
-                            navigateToItem = {
-                                if (!isMediaPicker && item is PhotoLibraryUIModel.MediaImpl) {
-                                    val index =
-                                        pagingItems.itemSnapshotList
-                                            .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
-                                            .indexOf(item)
+                    when (item) {
+                        null -> {
+                            LoadingItem(
+                                item = PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem),
+                                useRoundedCorners
+                            )
+                        }
 
-                                    if (openVideosExternally && item.item.type == MediaType.Video) {
-                                        val intent = Intent().apply {
-                                            data = item.item.uri.toUri() // TODO: immich handling
-                                            action = Intent.ACTION_VIEW
+                        is PhotoLibraryUIModel.Section -> {
+                            SectionItem(
+                                item = item,
+                                selected = selectionManager.isSelected(item),
+                                vibratorManager = vibratorManager,
+                                prefix = prefix,
+                                isSelecting = { isSelecting },
+                                toggleSelection = { selectionManager.toggle(item) }
+                            )
+                        }
+
+                        is PhotoLibraryUIModel.MediaImpl -> {
+                            MediaItem(
+                                item = item,
+                                isSecureMedia = viewProperties == ViewProperties.SecureFolder,
+                                vibratorManager = vibratorManager,
+                                isSelecting = { isSelecting },
+                                thumbnailSettings = Pair(cacheThumbnails, thumbnailSize),
+                                isDragSelecting = isDragSelecting,
+                                isMediaPicker = isMediaPicker,
+                                useRoundedCorners = useRoundedCorners,
+                                selected = selectionManager.isSelected(item),
+                                toggleSelection = { selectionManager.toggle(item) },
+                                navigateToItem = {
+                                    if (!isMediaPicker) {
+                                        val index =
+                                            pagingItems.itemSnapshotList
+                                                .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
+                                                .indexOf(item)
+
+                                        if (openVideosExternally && item.item.type == MediaType.Video) {
+                                            val intent = Intent().apply {
+                                                data = item.item.uri.toUri() // TODO: immich handling
+                                                action = Intent.ACTION_VIEW
+                                            }
+
+                                            context.startActivity(intent)
+                                        } else {
+                                            navController.navigate(viewProperties.navigate(albumInfo, index, null))
                                         }
-
-                                        context.startActivity(intent)
-                                    } else {
-                                        navController.navigate(viewProperties.navigate(albumInfo, index, null))
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -358,11 +377,54 @@ private fun DeviceMedia(
     }
 }
 
+@Composable
+private fun SectionItem(
+    item: PhotoLibraryUIModel.Section,
+    selected: Boolean,
+    isSelecting: () -> Boolean,
+    vibratorManager: Vibrator,
+    prefix: String,
+    toggleSelection: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(56.dp)
+            .background(Color.Transparent)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+                toggleSelection()
+
+                vibratorManager.vibrateLong()
+            }
+            .padding(16.dp, 8.dp),
+    ) {
+        Text(
+            text = prefix + item.title,
+            fontSize = TextUnit(16f, TextUnitType.Sp),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+        )
+
+        ShowSelectedState(
+            isSelected = selected,
+            showIcon = isSelecting(),
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+        )
+    }
+}
+
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun MediaStoreItem(
-    item: PhotoLibraryUIModel,
-    viewProperties: ViewProperties,
+private fun MediaItem(
+    item: PhotoLibraryUIModel.MediaImpl,
+    isSecureMedia: Boolean,
+    vibratorManager: Vibrator,
     isSelecting: () -> Boolean,
     thumbnailSettings: Pair<Boolean, Int>,
     isDragSelecting: MutableState<Boolean>,
@@ -372,218 +434,164 @@ private fun MediaStoreItem(
     toggleSelection: () -> Unit,
     navigateToItem: () -> Unit
 ) {
-    val vibratorManager = rememberVibratorManager()
+    val animatedItemCornerRadius by animateDpAsState(
+        targetValue = if (selected) 16.dp else 0.dp,
+        animationSpec = tween(
+            durationMillis = 150,
+        ),
+        label = "animate corner radius of selected item"
+    )
+    val animatedItemScale by animateFloatAsState(
+        targetValue = if (selected) 0.8f else 1f,
+        animationSpec = tween(
+            durationMillis = 150
+        ),
+        label = "animate scale of selected item"
+    )
 
-    if (item is PhotoLibraryUIModel.Section) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .height(56.dp)
-                .background(Color.Transparent)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) {
-                    toggleSelection()
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .padding(2.dp)
+            .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            .clickable(
+                enabled = !isDragSelecting.value
+            ) {
+                if (isMediaPicker) {
+                    isDragSelecting.value = true
 
                     vibratorManager.vibrateLong()
-                }
-                .padding(16.dp, 8.dp),
-        ) {
-            val resources = LocalResources.current
-            Text(
-                text = (viewProperties.prefix?.let {
-                    ViewProperties.getText(
-                        id = viewProperties.prefix,
-                        resources = resources
-                    ) + " "
-                } ?: "") + item.title,
-                fontSize = TextUnit(16f, TextUnitType.Sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-            )
 
-            ShowSelectedState(
-                isSelected = selected,
-                showIcon = isSelecting(),
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-            )
-        }
-    } else {
-        item as PhotoLibraryUIModel.MediaImpl
-
-        val animatedItemCornerRadius by animateDpAsState(
-            targetValue = if (selected) 16.dp else 0.dp,
-            animationSpec = tween(
-                durationMillis = 150,
-            ),
-            label = "animate corner radius of selected item"
-        )
-        val animatedItemScale by animateFloatAsState(
-            targetValue = if (selected) 0.8f else 1f,
-            animationSpec = tween(
-                durationMillis = 150
-            ),
-            label = "animate scale of selected item"
-        )
-
-        val onSingleClick = {
-            vibratorManager.vibrateShort()
-            if (isSelecting() || isMediaPicker) {
-                toggleSelection()
-            } else {
-                navigateToItem()
-            }
-        }
-
-        val onLongClick = {
-            isDragSelecting.value = true
-
-            vibratorManager.vibrateLong()
-
-            toggleSelection()
-        }
-
-        Box(
-            modifier = Modifier
-                .aspectRatio(1f)
-                .padding(2.dp)
-                .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .clickable(
-                    enabled = !isDragSelecting.value
-                ) {
-                    if (isMediaPicker) {
-                        onLongClick()
-                    } else {
-                        onSingleClick()
-                    }
-                }
-        ) {
-            // TODO: possibly move to a less messy and horrible decrypting implementation
-            var model by remember { mutableStateOf<Any?>(null) }
-            val context = LocalContext.current
-            val isSecureMedia =
-                remember(viewProperties) { viewProperties == ViewProperties.SecureFolder }
-
-            LaunchedEffect(isSecureMedia) {
-                if (!isSecureMedia || model != null) return@LaunchedEffect
-
-                item as PhotoLibraryUIModel.SecuredMedia
-
-                model =
-                    withContext(Dispatchers.IO) {
-                        try {
-                            val thumbnailIv =
-                                item.bytes!!.getThumbnailIv() // get thumbnail iv from video
-
-                            EncryptionManager.decryptBytes(
-                                bytes = getSecuredCacheImageForFile(
-                                    fileName = item.item.displayName,
-                                    context = context
-                                ).readBytes(),
-                                iv = thumbnailIv
-                            )
-                        } catch (e: Throwable) {
-                            Log.d(TAG, e.toString())
-                            e.printStackTrace()
-
-                            item.item.uri.toUri().path
-                        }
-                    }
-            }
-
-            GlideImage(
-                model = when {
-                    isSecureMedia -> model
-
-                    item.item.immichUrl != null -> ImmichInfo(
-                        thumbnail = item.item.immichThumbnail!!,
-                        original = item.item.immichUrl!!,
-                        hash = item.item.hash!!,
-                        accessToken = item.accessToken!!,
-                        useThumbnail = true
-                    )
-
-                    else -> item.item.uri
-                },
-                contentDescription = item.item.displayName,
-                contentScale = ContentScale.Crop,
-                failure = placeholder(R.drawable.broken_image),
-                modifier = Modifier
-                    .fillMaxSize(1f)
-                    .align(Alignment.Center)
-                    .scale(animatedItemScale)
-                    .clip(RoundedCornerShape(animatedItemCornerRadius))
-            ) {
-                if (isSecureMedia) {
-                    it.signature(item.signature())
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                } else if (thumbnailSettings.second == 0) {
-                    it.signature(item.signature())
-                        .diskCacheStrategy(
-                            if (thumbnailSettings.first) DiskCacheStrategy.ALL
-                            else DiskCacheStrategy.NONE
-                        )
+                    toggleSelection()
                 } else {
-                    it.signature(item.signature())
-                        .diskCacheStrategy(
-                            if (thumbnailSettings.first) DiskCacheStrategy.ALL
-                            else DiskCacheStrategy.NONE
+                    vibratorManager.vibrateShort()
+                    if (isSelecting()) {
+                        toggleSelection()
+                    } else {
+                        navigateToItem()
+                    }
+                }
+            }
+    ) {
+        // TODO: possibly move to a less messy and horrible decrypting implementation
+        var model by remember { mutableStateOf<Any?>(null) }
+        val context = LocalContext.current
+
+        LaunchedEffect(isSecureMedia) {
+            if (!isSecureMedia || model != null) return@LaunchedEffect
+
+            item as PhotoLibraryUIModel.SecuredMedia
+
+            model =
+                withContext(Dispatchers.IO) {
+                    try {
+                        val thumbnailIv =
+                            item.bytes!!.getThumbnailIv() // get thumbnail iv from video
+
+                        EncryptionManager.decryptBytes(
+                            bytes = getSecuredCacheImageForFile(
+                                fileName = item.item.displayName,
+                                context = context
+                            ).readBytes(),
+                            iv = thumbnailIv
                         )
-                        .override(thumbnailSettings.second)
-                }
-            }
+                    } catch (e: Throwable) {
+                        Log.d(TAG, e.toString())
+                        e.printStackTrace()
 
-            if (item.item.type == MediaType.Video) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(2.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.movie_filled),
-                        contentDescription = stringResource(id = R.string.file_is_a_video),
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .align(Alignment.Center)
-                    )
+                        item.item.uri.toUri().path
+                    }
                 }
-            }
-
-            if (item.item.isRawImage()) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(2.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.raw_on),
-                        contentDescription = stringResource(id = R.string.media_is_raw),
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .align(Alignment.Center)
-                    )
-                }
-            }
-
-            ShowSelectedState(
-                isSelected = selected,
-                showIcon = isSelecting(),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-            )
         }
+
+        GlideImage(
+            model = when {
+                isSecureMedia -> model
+
+                item.item.immichUrl != null -> ImmichInfo(
+                    thumbnail = item.item.immichThumbnail!!,
+                    original = item.item.immichUrl!!,
+                    hash = item.item.hash!!,
+                    accessToken = item.accessToken!!,
+                    useThumbnail = true
+                )
+
+                else -> item.item.uri
+            },
+            contentDescription = item.item.displayName,
+            contentScale = ContentScale.Crop,
+            failure = placeholder(R.drawable.broken_image),
+            modifier = Modifier
+                .fillMaxSize(1f)
+                .align(Alignment.Center)
+                .scale(animatedItemScale)
+                .clip(RoundedCornerShape(animatedItemCornerRadius))
+        ) {
+            if (isSecureMedia) {
+                it.signature(item.signature())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+            } else if (thumbnailSettings.second == 0) {
+                it.signature(item.signature())
+                    .diskCacheStrategy(
+                        if (thumbnailSettings.first) DiskCacheStrategy.ALL
+                        else DiskCacheStrategy.NONE
+                    )
+            } else {
+                it.signature(item.signature())
+                    .diskCacheStrategy(
+                        if (thumbnailSettings.first) DiskCacheStrategy.ALL
+                        else DiskCacheStrategy.NONE
+                    )
+                    .override(thumbnailSettings.second)
+            }
+        }
+
+        if (item.item.type == MediaType.Video) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(2.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.movie_filled),
+                    contentDescription = stringResource(id = R.string.file_is_a_video),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
+        if (item.item.isRawImage()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(2.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.raw_on),
+                    contentDescription = stringResource(id = R.string.media_is_raw),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
+        ShowSelectedState(
+            isSelected = selected,
+            showIcon = isSelecting(),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+        )
     }
 }
 
 @Composable
-private fun LoadingMediaStoreItem(
+private fun LoadingItem(
     item: PhotoLibraryUIModel,
     useRoundedCorners: Boolean
 ) {
