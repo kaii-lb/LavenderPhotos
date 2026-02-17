@@ -79,7 +79,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.kaii.photos.R
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawingColors
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
@@ -563,22 +562,18 @@ fun FloatingScrollbar(
                                 .background(MaterialTheme.colorScheme.secondaryContainer)
                                 .padding(8.dp, 4.dp)
                         ) {
-                            // last index to "reach" even the last items
-                            val item by remember {
+                            var lastDate by remember { mutableStateOf<Long?>(null) }
+                            val date by remember {
                                 derivedStateOf {
-                                    pagingItems[targetIndex] ?: PhotoLibraryUIModel.Media(
-                                        item = MediaStoreData.dummyItem,
-                                        accessToken = null // TODO
-                                    )
+                                    val dateTaken = (pagingItems.peek(targetIndex) as? PhotoLibraryUIModel.MediaImpl)?.item?.dateTaken ?: lastDate
+                                    lastDate = dateTaken
+                                    dateTaken
                                 }
                             }
 
                             val format = remember { SimpleDateFormat("MMM yyyy", Locale.getDefault()) }
-                            val formatted = remember(item) {
-                                format.format(
-                                    Date(
-                                        (item as? PhotoLibraryUIModel.MediaImpl)?.item?.let { it.dateTaken * 1000 } ?: 0L
-                                ))
+                            val formatted = remember(date) {
+                                format.format(Date((date ?: 0L) * 1000L))
                             }
 
                             Text(

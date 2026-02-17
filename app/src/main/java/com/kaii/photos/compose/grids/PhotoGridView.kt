@@ -317,7 +317,7 @@ private fun DeviceMedia(
                 }
             }
 
-            if (isSelecting && !isMainPage) {
+            if (isSelecting || isMainPage) {
                 item(
                     span = {
                         GridItemSpan(maxLineSpan)
@@ -326,21 +326,7 @@ private fun DeviceMedia(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(1f)
-                            .height(80.dp)
-                    )
-                }
-            }
-
-            if (isMainPage) {
-                item(
-                    span = {
-                        GridItemSpan(maxLineSpan)
-                    }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .height(120.dp)
+                            .height(128.dp)
                     )
                 }
             }
@@ -351,9 +337,8 @@ private fun DeviceMedia(
             targetValue =
                 with(localDensity) {
                     WindowInsets.navigationBars.getBottom(localDensity).toDp() +
-                            if (isMainPage) 128.dp
-                            else if (isSelecting) 64.dp
-                            else 8.dp
+                            if (isMainPage || isSelecting) 128.dp
+                            else 64.dp
                 },
             animationSpec = tween(
                 durationMillis = 350,

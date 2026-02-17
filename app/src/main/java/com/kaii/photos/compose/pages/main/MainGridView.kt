@@ -22,7 +22,7 @@ fun MainGridView(
         albumInfo = albumInfo,
         selectionManager = selectionManager,
         viewProperties = ViewProperties.Main,
-        // isMainPage = true, // TODO: figure out why this causes the grid to reset to top
+        isMainPage = true,
         isMediaPicker = isMediaPicker
     )
 }
