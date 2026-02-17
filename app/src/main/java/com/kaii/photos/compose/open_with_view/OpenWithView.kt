@@ -379,7 +379,6 @@ private fun InitSinglePhotoView(
             window = window,
             viewModel = multiAlbumViewModel,
             index = index,
-            nextMediaItemId = null,
             albumInfo = AlbumInfo.createPathOnlyAlbum(
                 paths = setOf(
                     incomingData.absolutePath.parent()

@@ -106,7 +106,6 @@ fun SinglePhotoView(
     window: Window,
     viewModel: CustomAlbumViewModel,
     index: Int,
-    nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -116,7 +115,6 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         startIndex = index,
-        nextMediaItemId = nextMediaItemId,
         albumInfo = albumInfo,
         isOpenWithDefaultView = isOpenWithDefaultView,
         removeFromCustom = { item ->
@@ -132,7 +130,6 @@ fun SinglePhotoView(
     viewModel: MultiAlbumViewModel,
     index: Int,
     albumInfo: AlbumInfo,
-    nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false,
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -143,8 +140,7 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = isOpenWithDefaultView,
-        nextMediaItemId = nextMediaItemId
+        isOpenWithDefaultView = isOpenWithDefaultView
     )
 }
 
@@ -154,8 +150,7 @@ fun SinglePhotoView(
     viewModel: SearchViewModel,
     window: Window,
     index: Int,
-    albumInfo: AlbumInfo,
-    nextMediaItemId: Long?
+    albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
@@ -165,8 +160,7 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false,
-        nextMediaItemId = nextMediaItemId
+        isOpenWithDefaultView = false
     )
 }
 
@@ -175,8 +169,7 @@ fun SinglePhotoView(
 fun SinglePhotoView(
     viewModel: FavouritesViewModel,
     window: Window,
-    index: Int,
-    nextMediaItemId: Long?
+    index: Int
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
@@ -186,8 +179,7 @@ fun SinglePhotoView(
         albumInfo = AlbumInfo.Empty,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false,
-        nextMediaItemId = nextMediaItemId
+        isOpenWithDefaultView = false
     )
 }
 
@@ -197,8 +189,7 @@ fun SinglePhotoView(
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
-    albumInfo: AlbumInfo,
-    nextMediaItemId: Long?
+    albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
@@ -208,8 +199,7 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = navController,
         window = window,
-        isOpenWithDefaultView = false,
-        nextMediaItemId = nextMediaItemId
+        isOpenWithDefaultView = false
     )
 }
 
@@ -223,7 +213,6 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    nextMediaItemId: Long?,
     removeFromCustom: (MediaStoreData) -> Unit = {}
 ) {
     val state = rememberPagerState(
@@ -236,31 +225,7 @@ private fun SinglePhotoViewCommon(
         state.scrollToPage(startIndex)
     }
 
-    LaunchedEffect(Unit) {
-        var trials = 0
-
-        do {
-            val index = items.itemSnapshotList.indexOfFirst { item ->
-                item is PhotoLibraryUIModel.MediaImpl && item.item.id == nextMediaItemId
-            }
-
-            trials += 1
-
-            if (trials >= 20) break
-
-            if (index == -1) {
-                delay(1000)
-            } else {
-                state.animateScrollToPage(
-                    page = index,
-                    animationSpec = AnimationConstants.expressiveTween(
-                        durationMillis = AnimationConstants.DURATION_LONG
-                    )
-                )
-            }
-        } while (index == -1)
-    }
-
+    // TODO: update this better, its causing a lot of issues
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
             startIndex

@@ -31,13 +31,13 @@ enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
     val prefix: Int?,
-    val navigate: (AlbumInfo, Int, Long?) -> Screens
+    val navigate: (AlbumInfo, Int) -> Screens
 ) {
     Trash(
         emptyText = R.string.error_views_trash_empty,
         emptyIconResId = R.drawable.delete,
         prefix = R.string.error_views_trash_prefix,
-        navigate = { _, index, _ ->
+        navigate = { _, index ->
             Screens.Trash.SinglePhoto(
                 index = index
             )
@@ -47,11 +47,10 @@ enum class ViewProperties(
         emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
         prefix = null,
-        navigate = { albumInfo, index, next ->
+        navigate = { albumInfo, index ->
             Screens.Album.SinglePhoto(
                 albumInfo = albumInfo,
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -59,11 +58,10 @@ enum class ViewProperties(
         emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
         prefix = null,
-        navigate = { albumInfo, index, next ->
+        navigate = { albumInfo, index ->
             Screens.CustomAlbum.SinglePhoto(
                 albumInfo = albumInfo,
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -71,10 +69,9 @@ enum class ViewProperties(
         emptyText = R.string.error_views_search_empty,
         emptyIconResId = R.drawable.search,
         prefix = null,
-        navigate = { _, index, next ->
+        navigate = { _, index ->
             Screens.MainPages.Search.SinglePhoto(
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -82,10 +79,9 @@ enum class ViewProperties(
         emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,
         prefix = null,
-        navigate = { _, index, next ->
+        navigate = { _, index ->
             Screens.MainPages.Search.SinglePhoto(
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -93,7 +89,7 @@ enum class ViewProperties(
         emptyText = R.string.error_views_secure_empty,
         emptyIconResId = R.drawable.secure_folder,
         prefix = R.string.error_views_secure_prefix,
-        navigate = { _, index, _ ->
+        navigate = { _, index ->
             Screens.SecureFolder.SinglePhoto(
                 index = index
             )
@@ -103,10 +99,9 @@ enum class ViewProperties(
         emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
         prefix = null,
-        navigate = { _, index, next ->
+        navigate = { _, index ->
             Screens.Favourites.SinglePhoto(
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -114,11 +109,10 @@ enum class ViewProperties(
         emptyText = R.string.immich_server_not_loading,
         emptyIconResId = R.drawable.cloud_off,
         prefix = null,
-        navigate = { albumInfo, index, next ->
+        navigate = { albumInfo, index ->
             Screens.Immich.SinglePhoto(
                 albumInfo = albumInfo,
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     ),
@@ -126,11 +120,10 @@ enum class ViewProperties(
         emptyText = R.string.error_views_main_empty,
         emptyIconResId = R.drawable.photogrid,
         prefix = null,
-        navigate = { albumInfo, index, next ->
+        navigate = { albumInfo, index ->
             Screens.MainPages.MainGrid.SinglePhoto(
                 albumInfo = albumInfo,
-                index = index,
-                nextMediaItemId = next
+                index = index
             )
         }
     );

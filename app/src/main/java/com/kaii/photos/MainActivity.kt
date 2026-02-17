@@ -327,8 +327,7 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             viewModel = multiAlbumViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = screen.albumInfo,
-                            nextMediaItemId = screen.nextMediaItemId
+                            albumInfo = screen.albumInfo
                         )
                     }
 
@@ -349,8 +348,7 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             viewModel = searchViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = AlbumInfo.Empty,
-                            nextMediaItemId = screen.nextMediaItemId
+                            albumInfo = AlbumInfo.Empty
                         )
                     }
                 }
@@ -397,8 +395,7 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             viewModel = multiAlbumViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = screen.albumInfo,
-                            nextMediaItemId = screen.nextMediaItemId
+                            albumInfo = screen.albumInfo
                         )
                     }
                 }
@@ -444,8 +441,7 @@ class MainActivity : ComponentActivity() {
                         SinglePhotoView(
                             viewModel = viewModel,
                             window = window,
-                            index = editIndex ?: screen.index,
-                            nextMediaItemId = screen.nextMediaItemId
+                            index = editIndex ?: screen.index
                         )
                     }
 
@@ -610,7 +606,6 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             window = window,
                             index = editIndex ?: screen.index,
-                            nextMediaItemId = screen.nextMediaItemId,
                             albumInfo = screen.albumInfo
                         )
                     }
@@ -674,8 +669,7 @@ class MainActivity : ComponentActivity() {
                             albumInfo = screen.albumInfo,
                             viewModel = viewModel,
                             index = editIndex ?: screen.index,
-                            window = window,
-                            nextMediaItemId = screen.nextMediaItemId
+                            window = window
                         )
                     }
                 }

@@ -427,7 +427,7 @@ fun ContentResolver.getPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>
             FileColumns.MEDIA_TYPE
         ),
         "${MediaColumns._ID} IN $param",
-        list.fastMapNotNull { it.lastPathSegment!! }.toTypedArray(),
+        list.fastMapNotNull { it.lastPathSegment }.toTypedArray(),
         null
     )
 
@@ -467,7 +467,7 @@ fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, St
     )
     bundle.putStringArray(
         ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
-        list.fastMapNotNull { it.lastPathSegment!! }.toTypedArray()
+        list.fastMapNotNull { it.lastPathSegment }.toTypedArray()
     )
 
     val mediaCursor = query(

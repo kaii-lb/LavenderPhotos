@@ -14,8 +14,7 @@ interface Screens {
         @Serializable
         data class SinglePhoto(
             val albumInfo: AlbumInfo,
-            val index: Int,
-            val nextMediaItemId: Long?
+            val index: Int
         ) : Screens
     }
 
@@ -40,8 +39,7 @@ interface Screens {
 
         @Serializable
         data class SinglePhoto(
-            val index: Int,
-            val nextMediaItemId: Long?
+            val index: Int
         ) : Screens
     }
 
@@ -84,8 +82,7 @@ interface Screens {
         @Serializable
         data class SinglePhoto(
             val albumInfo: AlbumInfo,
-            val index: Int,
-            val nextMediaItemId: Long?,
+            val index: Int
         ) : Screens
     }
 
@@ -99,8 +96,7 @@ interface Screens {
         @Serializable
         data class SinglePhoto(
             val index: Int,
-            val albumInfo: AlbumInfo,
-            val nextMediaItemId: Long?,
+            val albumInfo: AlbumInfo
         ) : Screens
     }
 
@@ -114,8 +110,7 @@ interface Screens {
             @Serializable
             data class SinglePhoto(
                 val albumInfo: AlbumInfo,
-                val index: Int,
-                val nextMediaItemId: Long?,
+                val index: Int
             ) : Screens
         }
 
@@ -123,8 +118,7 @@ interface Screens {
         object Search : Screens {
             @Serializable
             data class SinglePhoto(
-                val index: Int,
-                val nextMediaItemId: Long?,
+                val index: Int
             ) : Screens
         }
 

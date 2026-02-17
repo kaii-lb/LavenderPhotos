@@ -307,7 +307,7 @@ private fun DeviceMedia(
 
                                             context.startActivity(intent)
                                         } else {
-                                            navController.navigate(viewProperties.navigate(albumInfo, index, null))
+                                            navController.navigate(viewProperties.navigate(albumInfo, index))
                                         }
                                     }
                                 }
