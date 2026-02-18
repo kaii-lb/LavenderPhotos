@@ -374,7 +374,8 @@ fun VideoEditor(
                 lastSavedModCount = lastSavedModCount,
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
-                isFromOpenWithView = isFromOpenWithView
+                isFromOpenWithView = isFromOpenWithView,
+                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum }
             )
         },
         bottomBar = {

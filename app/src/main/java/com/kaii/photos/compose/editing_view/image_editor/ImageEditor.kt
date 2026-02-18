@@ -89,8 +89,11 @@ import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItemEntity
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -100,6 +103,7 @@ import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.helpers.editing.saveImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -266,6 +270,20 @@ fun ImageEditor(
                         isFromOpenWithView = isFromOpenWithView
                     )
 
+                    delay(PhotoGridConstants.UPDATE_TIME * 2)
+                    if (albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .upsertAll(
+                                listOf(
+                                    CustomItemEntity(
+                                        mediaId = navMediaId,
+                                        album = albumInfo!!.id
+                                    )
+                                )
+                            )
+                    }
+
                     if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
                         navController.previousBackStackEntry
                             ?.savedStateHandle
@@ -276,11 +294,11 @@ fun ImageEditor(
                 },
                 navigateBack = {
                     if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
-                            navController.previousBackStackEntry
-                                ?.savedStateHandle
-                                ?.set("editIndex", 0)
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("editIndex", 0)
 
-                            navController.popBackStack()
+                        navController.popBackStack()
                     } else {
                         navController.popBackStack()
                     }

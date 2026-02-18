@@ -129,6 +129,8 @@ import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItemEntity
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
@@ -341,7 +343,6 @@ fun VideoEditorBottomBar(
     }
 }
 
-// TODO: if album is custom, add edited media to album
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -355,7 +356,8 @@ fun VideoEditorTopBar(
     lastSavedModCount: MutableIntState,
     containerDimens: Size,
     canvasSize: Size,
-    isFromOpenWithView: Boolean
+    isFromOpenWithView: Boolean,
+    customAlbumId: Int?
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -494,7 +496,20 @@ fun VideoEditorTopBar(
                                     }
                                 }
 
-                                delay(PhotoGridConstants.UPDATE_TIME)
+                                delay(PhotoGridConstants.UPDATE_TIME * 2)
+                                if (customAlbumId != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                                    MediaDatabase.getInstance(context)
+                                        .customDao()
+                                        .upsertAll(
+                                            listOf(
+                                                CustomItemEntity(
+                                                    mediaId = navMediaId,
+                                                    album = customAlbumId
+                                                )
+                                            )
+                                        )
+                                }
+
                                 if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
                                     navController.previousBackStackEntry
                                         ?.savedStateHandle

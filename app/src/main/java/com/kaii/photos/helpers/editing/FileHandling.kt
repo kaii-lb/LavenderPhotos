@@ -497,7 +497,13 @@ suspend fun saveVideo(
     body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
     percentage.floatValue = 1f
 
-    return@withContext newUri.lastPathSegment?.toLongOrNull() ?: -1L
+    val path = absolutePath.toBasePath() + newUri.path!!.substringAfterLast("/document/").substringAfterLast(":")
+    val contentUri = context.contentResolver.getUriFromAbsolutePath(
+        absolutePath = path,
+        type = MediaType.Video
+    )
+
+    return@withContext contentUri?.lastPathSegment?.toLongOrNull() ?: -1L
 }
 
 /** return the id of the newly created image, or -1 if an error occurs */
