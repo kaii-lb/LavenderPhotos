@@ -74,7 +74,6 @@ import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
@@ -83,7 +82,6 @@ import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -145,23 +143,10 @@ private fun SingleTrashedPhotoViewImpl(
     }
 
     val coroutineScope = rememberCoroutineScope()
-    fun onMoveMedia() {
-        coroutineScope.launch {
-            state.animateScrollToPage(
-                page = (currentIndex + 1) % items.itemCount,
-                animationSpec = AnimationConstants.expressiveTween(
-                    durationMillis = AnimationConstants.DURATION
-                )
-            )
-            delay(AnimationConstants.DURATION_SHORT.toLong())
-        }
-    }
-
     var showDialog by remember { mutableStateOf(false) }
     TrashDeleteDialog(
         showDialog = showDialog,
         onDelete = {
-            onMoveMedia()
             runPermaDeleteAction.value = true
         },
         onDismiss = {
@@ -176,7 +161,7 @@ private fun SingleTrashedPhotoViewImpl(
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = mediaItem,
+                mediaItem = { mediaItem },
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
@@ -189,13 +174,10 @@ private fun SingleTrashedPhotoViewImpl(
         bottomBar = {
             BottomBar(
                 visible = appBarsVisible.value,
-                item = mediaItem,
+                item = { mediaItem },
                 privacyMode = scrollState.privacyMode,
                 showDeleteDialog = {
                     showDialog = true
-                },
-                onMoveMedia = {
-                    onMoveMedia()
                 }
             )
         },
@@ -233,9 +215,6 @@ private fun SingleTrashedPhotoViewImpl(
                             showInfoDialog = false
                         }
                     },
-                    onMoveMedia = {
-                        onMoveMedia()
-                    },
                     togglePrivacyMode = scrollState::togglePrivacyMode
                 )
             }
@@ -255,10 +234,9 @@ private fun SingleTrashedPhotoViewImpl(
 @Composable
 private fun BottomBar(
     visible: Boolean,
-    item: MediaStoreData,
+    item: () -> MediaStoreData,
     privacyMode: Boolean,
-    showDeleteDialog: () -> Unit,
-    onMoveMedia: () -> Unit
+    showDeleteDialog: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -292,6 +270,7 @@ private fun BottomBar(
                 floatingActionButton = {
                     FilledIconButton(
                         onClick = {
+                            val item = item()
                             shareImage(
                                 uri = item.uri.toUri(),
                                 context = context,
@@ -324,11 +303,9 @@ private fun BottomBar(
                 val permissionManager = rememberFilePermissionManager(
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-                            onMoveMedia()
-
                             setTrashedOnPhotoList(
                                 context = context,
-                                list = listOf(item.uri.toUri()),
+                                list = listOf(item().uri.toUri()),
                                 trashed = false
                             )
                         }
@@ -340,7 +317,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            permissionManager.get(uris = listOf(item.uri.toUri()))
+                            permissionManager.get(uris = listOf(item().uri.toUri()))
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

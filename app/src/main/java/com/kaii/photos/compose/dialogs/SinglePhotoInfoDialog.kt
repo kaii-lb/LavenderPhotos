@@ -96,7 +96,6 @@ fun SinglePhotoInfoDialog(
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
     dismiss: () -> Unit,
-    onMoveMedia: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -158,7 +157,6 @@ fun SinglePhotoInfoDialog(
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             isCustomAlbum = isCustomAlbum,
-                            onMoveMedia = onMoveMedia,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -179,7 +177,6 @@ fun SinglePhotoInfoDialog(
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             isCustomAlbum = isCustomAlbum,
-                            onMoveMedia = onMoveMedia,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -196,7 +193,6 @@ private fun Content(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    onMoveMedia: () -> Unit,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -276,7 +272,6 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     isCustomAlbum = isCustomAlbum,
-                    onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
             }
@@ -298,7 +293,6 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     isCustomAlbum = isCustomAlbum,
-                    onMoveMedia = onMoveMedia,
                     dismiss = dismiss
                 )
             }
@@ -511,7 +505,6 @@ private fun RowScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -520,7 +513,6 @@ private fun RowScope.IconContent(
         privacyMode = privacyMode,
         isCustomAlbum = isCustomAlbum,
         modifier = Modifier.weight(1f),
-        onMoveMedia = onMoveMedia,
         dismiss = dismiss
     )
 }
@@ -531,7 +523,6 @@ private fun ColumnScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -540,7 +531,6 @@ private fun ColumnScope.IconContent(
         privacyMode = privacyMode,
         isCustomAlbum = isCustomAlbum,
         modifier = Modifier.weight(1f),
-        onMoveMedia = onMoveMedia,
         dismiss = dismiss
     )
 }
@@ -552,7 +542,6 @@ private fun IconContentImpl(
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
     modifier: Modifier,
-    onMoveMedia: () -> Unit,
     dismiss: () -> Unit
 ) {
     val file = remember(currentMediaItem) { File(currentMediaItem.absolutePath) }
@@ -646,7 +635,6 @@ private fun IconContentImpl(
             ),
             isMoving = isMoving,
             insetsPadding = WindowInsets.statusBars,
-            onMoveMedia = onMoveMedia,
             dismissInfoDialog = dismiss,
             clear = {}
         )

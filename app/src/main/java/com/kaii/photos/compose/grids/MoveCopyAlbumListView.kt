@@ -86,7 +86,6 @@ fun MoveCopyAlbumListView(
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
     insetsPadding: WindowInsets,
-    onMoveMedia: () -> Unit = {},
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit
 ) {
@@ -192,7 +191,6 @@ fun MoveCopyAlbumListView(
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,
                             show = show,
-                            onMoveMedia = onMoveMedia,
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,
                             modifier = Modifier
@@ -220,7 +218,6 @@ fun AlbumsListItem(
     isMoving: Boolean,
     show: MutableState<Boolean>,
     modifier: Modifier,
-    onMoveMedia: () -> Unit,
     dismissInfoDialog: () -> Unit,
     clear: () -> Unit
 ) {
@@ -236,8 +233,6 @@ fun AlbumsListItem(
 
             mainViewModel.launch(Dispatchers.IO) {
                 if (isMoving && album.info.paths.size == 1) {
-                    onMoveMedia()
-
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsList,
@@ -261,8 +256,6 @@ fun AlbumsListItem(
                     }
 
                     if (list.isNotEmpty()) {
-                        onMoveMedia()
-
                         permanentlyDeletePhotoList(
                             context = context,
                             list = list.fastMap { it.uri.toUri() }

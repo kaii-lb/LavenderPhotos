@@ -183,7 +183,7 @@ fun SecurePhotoView(
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = currentMediaItem.item,
+                mediaItem = { currentMediaItem.item },
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 isOpenWithDefaultView = false,

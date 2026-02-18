@@ -130,6 +130,7 @@ import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
@@ -366,7 +367,6 @@ fun VideoEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                val context = LocalContext.current
                 val showDialog = remember { mutableStateOf(false) }
 
                 if (showDialog.value) {
@@ -494,6 +494,7 @@ fun VideoEditorTopBar(
                                     }
                                 }
 
+                                delay(PhotoGridConstants.UPDATE_TIME)
                                 if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
                                     navController.previousBackStackEntry
                                         ?.savedStateHandle
@@ -1022,7 +1023,7 @@ fun ImageEditorTopBar(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalTime::class)
 @Composable
 fun SingleViewTopBar(
-    mediaItem: MediaStoreData,
+    mediaItem: () -> MediaStoreData,
     visible: Boolean,
     showInfoDialog: Boolean,
     privacyMode: Boolean,
@@ -1108,7 +1109,7 @@ fun SingleViewTopBar(
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 
                 Text(
-                    text = topBarDetailsFormat.format(context, mediaItem.displayName, mediaItem.dateTaken),
+                    text = topBarDetailsFormat.format(context, mediaItem().displayName, mediaItem().dateTaken),
                     fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -1124,7 +1125,6 @@ fun SingleViewTopBar(
                         .padding(8.dp)
                 )
             }
-
         }
 
         AnimatedVisibility(

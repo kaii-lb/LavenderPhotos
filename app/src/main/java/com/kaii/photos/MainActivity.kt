@@ -778,8 +778,7 @@ class MainActivity : ComponentActivity() {
                     ImageEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
-                        isFromOpenWithView = false,
-                        albumInfo = screen.albumInfo
+                        isFromOpenWithView = false
                     )
                 }
 
