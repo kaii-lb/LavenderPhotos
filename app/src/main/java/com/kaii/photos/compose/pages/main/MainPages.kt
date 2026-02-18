@@ -4,6 +4,7 @@ import android.content.Intent
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -33,6 +34,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
@@ -77,12 +79,14 @@ fun MainPages(
     val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
 
     val coroutineScope = rememberCoroutineScope()
+    val windowWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+
     BackHandler(
         enabled = !exitImmediately && pagerState.settledPage != tabList.indexOf(defaultTab)
     ) {
         coroutineScope.launch {
-            pagerState.animateScrollToPage(
-                page = tabList.indexOf(defaultTab),
+            pagerState.animateScrollBy(
+                value = windowWidth * -(pagerState.currentPage - tabList.indexOf(defaultTab)) - pagerState.currentPageOffsetFraction * windowWidth,
                 animationSpec = AnimationConstants.defaultSpring()
             )
         }

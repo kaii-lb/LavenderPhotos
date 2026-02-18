@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -306,6 +307,7 @@ fun MainAppBottomBar(
                             }
                         }
                     } else {
+                        val windowWidth = LocalWindowInfo.current.containerSize.width.toFloat()
                         val coroutineScope = rememberCoroutineScope()
 
                         LazyRow(
@@ -318,8 +320,8 @@ fun MainAppBottomBar(
                                     checked = currentTab == tab,
                                     onCheckedChange = {
                                         if (currentTab != tab) coroutineScope.launch {
-                                            pagerState.animateScrollToPage(
-                                                page = tabs.indexOf(tab),
+                                            pagerState.animateScrollBy(
+                                                value = windowWidth * -(pagerState.currentPage - tabs.indexOf(tab)) - pagerState.currentPageOffsetFraction * windowWidth,
                                                 animationSpec = AnimationConstants.defaultSpring()
                                             )
                                         }

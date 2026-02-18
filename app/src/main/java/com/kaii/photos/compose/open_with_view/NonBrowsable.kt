@@ -370,8 +370,7 @@ private fun BottomBar(
                                                     Screens.ImageEditor(
                                                         absolutePath = absolutePath,
                                                         uri = contentUri.toString(),
-                                                        dateTaken = currentTime / 1000,
-                                                        albumInfo = AlbumInfo.Empty
+                                                        dateTaken = currentTime / 1000
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(

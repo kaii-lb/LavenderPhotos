@@ -211,7 +211,6 @@ class OpenWithView : ComponentActivity() {
                                 ImageEditor(
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
-                                    albumInfo = null,
                                     isFromOpenWithView = true
                                 )
                             }
