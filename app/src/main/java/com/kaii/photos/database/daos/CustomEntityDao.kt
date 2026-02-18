@@ -33,7 +33,7 @@ interface CustomEntityDao {
                 "JOIN custom_media ON media.id = custom_media.mediaId " +
                 "WHERE " +
                 "CASE WHEN :dateModified = 1 THEN media.dateModified ELSE media.dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400 AND custom_media.album = :album"
+                "BETWEEN :timestamp AND :timestamp+86400 AND custom_media.album = :album LIMIT 2000"
     )
     fun mediaInDateRange(timestamp: Long, album: Int, dateModified: Boolean): List<SelectionManager.SelectedItem>
 

@@ -53,7 +53,7 @@ interface MediaDao {
                 "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths)"
+                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths) LIMIT 2000"
     )
     fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
@@ -63,7 +63,7 @@ interface MediaDao {
                 "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1"
+                "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1 LIMIT 2000"
     )
     fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
@@ -73,7 +73,7 @@ interface MediaDao {
                 "absolutePath as parentPath " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400"
+                "BETWEEN :timestamp AND :timestamp+86400 LIMIT 2000"
     )
     fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 

@@ -59,7 +59,7 @@ class SelectionManager(
     private var _sections by mutableStateOf<List<Long>>(emptyList())
 
     private var manualEnable by mutableStateOf(false)
-    val enabled = snapshotFlow { _selection.isNotEmpty() || manualEnable }
+    val enabled = snapshotFlow { _selection.values.flatten().isNotEmpty() || manualEnable }
 
     @OptIn(FlowPreview::class)
     val count = selection.map { it.size }.debounce(25.milliseconds)
@@ -225,6 +225,20 @@ class SelectionManager(
             sections.removeAll { it == timestamp }
         } else {
             snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp))
+
+            // hardcoded android limit for handling uris
+            if (snapshot[timestamp]!!.size >= 2000) {
+                scope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvents.MessageEvent(
+                            message = context.resources.getString(R.string.media_select_limit_reached),
+                            icon = R.drawable.lists,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
+            }
+
             sections.add(timestamp)
         }
 
@@ -391,7 +405,7 @@ fun rememberSelectionManager(
                             )
                         } else null
                     } else null
-                }
+                }.take(2000)
             }
         )
     }
