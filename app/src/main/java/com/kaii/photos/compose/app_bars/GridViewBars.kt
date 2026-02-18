@@ -900,10 +900,6 @@ fun FavouritesBottomAppBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
         coroutineScope.launch {
-            // TODO: bulk delete
-            // selectedItemsWithoutSection.forEach {
-            //     dao.deleteEntityById(it.id)
-            // }
             permissionState.get(
                 uris = selectedItemsList.fastMap { it.toUri() }
             )
@@ -916,10 +912,6 @@ fun FavouritesBottomAppBarItems(
                 showDeleteDialog.value = true
             } else {
                 coroutineScope.launch {
-                    // TODO: bulk delete
-                    // selectedItemsWithoutSection.forEach {
-                    //     dao.deleteEntityById(it.id)
-                    // }
                     permissionState.get(
                         uris = selectedItemsList.fastMap { it.toUri() }
                     )
