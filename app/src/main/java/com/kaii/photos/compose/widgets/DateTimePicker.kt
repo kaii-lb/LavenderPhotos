@@ -23,6 +23,7 @@ import androidx.compose.material3.getSelectedDate
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,10 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -87,11 +90,14 @@ fun DateTimePicker(
 
         LavenderDialogBase(
             onDismiss = onDismiss,
-            usePlatformDefaultWidth = false
+            usePlatformDefaultWidth = false,
+            modifier = Modifier
+                .padding(24.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    density = LocalDensity.current.density * 0.825f
+                )
             ) {
                 DatePicker(
                     state = datePickerState,
@@ -102,17 +108,17 @@ fun DateTimePicker(
                         todayDateBorderColor = MaterialTheme.colorScheme.secondary
                     )
                 )
-
-                ConfirmCancelRow(
-                    onCancel = onDismiss,
-                    onConfirm = {
-                        datePickerState.getSelectedDate()?.let { selectedDate = it.toKotlinLocalDate() }
-                        showTimePicker = true
-                        showDatePicker = false
-                    },
-                    confirmColors = ButtonDefaults.buttonColors()
-                )
             }
+
+            ConfirmCancelRow(
+                onCancel = onDismiss,
+                onConfirm = {
+                    datePickerState.getSelectedDate()?.let { selectedDate = it.toKotlinLocalDate() }
+                    showTimePicker = true
+                    showDatePicker = false
+                },
+                confirmColors = ButtonDefaults.buttonColors()
+            )
         }
     }
 
