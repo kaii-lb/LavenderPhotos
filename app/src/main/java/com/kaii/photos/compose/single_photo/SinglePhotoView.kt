@@ -320,7 +320,8 @@ private fun SinglePhotoViewCommon(
                                 Screens.ImageEditor(
                                     absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri,
-                                    dateTaken = mediaItem.dateTaken
+                                    dateTaken = mediaItem.dateTaken,
+                                    albumInfo = albumInfo
                                 )
                             )
                         } else {

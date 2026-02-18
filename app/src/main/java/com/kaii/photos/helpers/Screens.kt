@@ -58,7 +58,8 @@ interface Screens {
     data class ImageEditor(
         val absolutePath: String,
         val uri: String,
-        val dateTaken: Long
+        val dateTaken: Long,
+        val albumInfo: AlbumInfo
     ) : Screens
 
     @Serializable
