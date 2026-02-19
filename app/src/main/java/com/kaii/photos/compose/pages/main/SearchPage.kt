@@ -14,10 +14,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -39,14 +38,15 @@ import kotlinx.datetime.Month
 
 @Composable
 fun SearchPage(
-    searchViewModel: SearchViewModel,
+    viewModel: SearchViewModel,
+    searchedForText: MutableState<String>,
     selectionManager: SelectionManager,
     isMediaPicker: Boolean
 ) {
     val mainViewModel = LocalMainViewModel.current
     val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
-    val items = searchViewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
 
     Column(
@@ -54,8 +54,6 @@ fun SearchPage(
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val searchedForText = rememberSaveable { mutableStateOf("") }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth(1f)
@@ -101,7 +99,7 @@ fun SearchPage(
         Spacer(modifier = Modifier.height(8.dp))
 
         LaunchedEffect(searchedForText.value, sortMode) {
-            searchViewModel.search(query = searchedForText.value)
+            viewModel.search(query = searchedForText.value)
 
             delay(PhotoGridConstants.UPDATE_TIME)
             gridState.scrollToItem(0)

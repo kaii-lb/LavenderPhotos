@@ -25,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -56,6 +58,7 @@ import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.setupNextScreen
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -163,10 +166,21 @@ fun MainPages(
             Pair(0.dp, 0.dp)
         }
 
+        val searchedForText = rememberSaveable { mutableStateOf("") }
+        LaunchedEffect(pagerState) {
+            snapshotFlow { pagerState.currentPage }.collectLatest {
+                setupNextScreen(window = window)
+                selectionManager.clear()
+                searchViewModel.search(query = "")
+                searchedForText.value = ""
+            }
+        }
+
         Box {
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = !isSelecting,
+                beyondViewportPageCount = 1,
                 modifier = Modifier
                     .padding(
                         start = safeDrawingPadding.first,
@@ -180,8 +194,6 @@ fun MainPages(
                 when {
                     tab.isCustom -> {
                         LaunchedEffect(Unit) {
-                            setupNextScreen(window = window)
-                            selectionManager.clear()
                             paths = tab.albumPaths
 
                             multiAlbumViewModel.update(
@@ -199,12 +211,12 @@ fun MainPages(
 
                     tab == DefaultTabs.TabTypes.photos -> {
                         LaunchedEffect(Unit) {
-                            setupNextScreen(window = window)
-                            selectionManager.clear()
                             paths = mainPhotosPaths
 
                             multiAlbumViewModel.update(
-                                album = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo()
+                                album = tab.copy(
+                                    albumPaths = mainPhotosPaths
+                                ).toAlbumInfo()
                             )
                         }
 
@@ -229,13 +241,12 @@ fun MainPages(
 
                     tab == DefaultTabs.TabTypes.search -> {
                         LaunchedEffect(Unit) {
-                            selectionManager.clear()
                             paths = emptySet()
-                            setupNextScreen(window = window)
                         }
 
                         SearchPage(
-                            searchViewModel = searchViewModel,
+                            viewModel = searchViewModel,
+                            searchedForText =  searchedForText,
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null
                         )
