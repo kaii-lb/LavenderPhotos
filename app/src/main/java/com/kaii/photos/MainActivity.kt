@@ -68,7 +68,7 @@ import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
-import com.kaii.photos.compose.pages.StartupProcessingPage
+import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
@@ -192,7 +192,10 @@ class MainActivity : ComponentActivity() {
                         when (state) {
                             StartupManager.State.MissingPermissions -> PermissionHandler(startupManager = startupManager)
 
-                            StartupManager.State.NeedsIndexing -> StartupProcessingPage(startupManager = startupManager)
+                            StartupManager.State.NeedsIndexing -> StartupLoadingPage(
+                                startupManager = startupManager,
+                                window = window
+                            )
 
                             else -> SetContentForActivity(startupManager = startupManager)
                         }

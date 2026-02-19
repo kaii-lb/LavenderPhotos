@@ -236,7 +236,8 @@ class MediaPicker : ComponentActivity() {
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
                         window = window,
-                        incomingIntent = null
+                        incomingIntent = null,
+                        blur = false
                     )
                 }
             }

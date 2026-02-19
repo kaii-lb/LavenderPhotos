@@ -32,7 +32,7 @@ class StartupManager(
 
     private var launchedFirstTimSyncWorker = false
 
-    // READ_MEDIA_VIDEO isn't necessary as its bundled with READ_MEDIA_IMAGES
+    // READ_MEDIA_VIDEO isn't necessary as it's bundled with READ_MEDIA_IMAGES
     private val permList =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             listOf(
@@ -125,6 +125,10 @@ class StartupManager(
 
             else -> _state.value = State.MissingPermissions
         }
+    }
+
+    fun skipIndexing() {
+        _state.value = State.Successful
     }
 
     suspend fun launchFirstTimeSyncWorker(

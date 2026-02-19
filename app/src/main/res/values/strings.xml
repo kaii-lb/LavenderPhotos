@@ -1238,4 +1238,5 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="startup_processing_progress">Done: %s</string>
     <string name="startup_processing_explanation">Why the wait?</string>
     <string name="startup_processing_explanation_desc">Lavender Photos indexes media on your device to provide accurate dates, faster loading times, and better features. This is a <b>one-time</b> operation, and should take around <i>30s to 2mins</i> depending on how many items there are on your device. If you interrupt the processes, it will resume on the next launch.</string>
+    <string name="startup_processing_skip">Skip</string>
 </resources>

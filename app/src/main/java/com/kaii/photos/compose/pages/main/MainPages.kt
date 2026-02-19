@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarExitDirection
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -68,7 +70,8 @@ fun MainPages(
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
     window: Window,
-    incomingIntent: Intent?
+    incomingIntent: Intent?,
+    blur: Boolean = false
 ) {
     val mainViewModel = LocalMainViewModel.current
 
@@ -124,8 +127,13 @@ fun MainPages(
                 )
             }
         },
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier
             .fillMaxSize()
+            .then(
+                if (blur) Modifier.blur(48.dp)
+                else Modifier
+            )
             .nestedScroll(
                 object : NestedScrollConnection {
                     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
@@ -246,7 +254,7 @@ fun MainPages(
 
                         SearchPage(
                             viewModel = searchViewModel,
-                            searchedForText =  searchedForText,
+                            searchedForText = searchedForText,
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null
                         )

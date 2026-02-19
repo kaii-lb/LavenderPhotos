@@ -10,7 +10,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -66,7 +67,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun StartupProcessingPage(startupManager: StartupManager) {
+fun ProcessingPage(startupManager: StartupManager) {
     var itemCount by remember { mutableIntStateOf(0) }
     var currentProgress by remember { mutableFloatStateOf(0f) }
 
@@ -126,7 +127,7 @@ fun StartupProcessingPage(startupManager: StartupManager) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent
                 )
             )
         },
@@ -148,21 +149,43 @@ fun StartupProcessingPage(startupManager: StartupManager) {
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .fillMaxWidth()
+                    .height(48.dp)
                     .offset(y = (-24).dp)
             ) {
-                FilledTonalButton(
-                    onClick = {
-                        showInfoDialog = true
-                    }
+                val waitLabel = stringResource(id = R.string.startup_processing_explanation)
+                val skipLabel = stringResource(id = R.string.startup_processing_skip)
+
+                ButtonGroup(
+                    overflowIndicator = {},
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 8.dp,
+                        alignment = Alignment.CenterHorizontally
+                    ),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 56.dp)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.startup_processing_explanation),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
+                    toggleableItem(
+                        checked = showInfoDialog,
+                        onCheckedChange = {
+                            showInfoDialog = true
+                        },
+                        weight = 1f,
+                        label = waitLabel
+                    )
+
+                    clickableItem(
+                        onClick = {
+                            startupManager.skipIndexing()
+                        },
+                        weight = 0.65f,
+                        label = skipLabel
                     )
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { paddingValues ->
         Column(
             verticalArrangement = Arrangement.spacedBy(
@@ -173,7 +196,6 @@ fun StartupProcessingPage(startupManager: StartupManager) {
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
         ) {
             val color = MaterialTheme.colorScheme.primary
             val iconSize = 160.dp
@@ -265,7 +287,6 @@ fun StartupProcessingPage(startupManager: StartupManager) {
                     )
                 }
             }
-
         }
     }
 }
