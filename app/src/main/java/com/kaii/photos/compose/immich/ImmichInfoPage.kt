@@ -148,7 +148,6 @@ fun ImmichInfoPage() {
                         errorMessage = resources.getString(R.string.immich_server_url_invalid),
                         onConfirm = { value ->
                             when {
-                                // TODO: move ping to be non blocking
                                 loginState.validateServerAddress(address = value) && serverState.ping(address = value) -> {
                                     mainViewModel.settings.immich.setImmichBasicInfo(
                                         ImmichBasicInfo(

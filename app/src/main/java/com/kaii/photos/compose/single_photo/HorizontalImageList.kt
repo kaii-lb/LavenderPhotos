@@ -282,7 +282,6 @@ fun GlideView(
             .fillMaxSize()
     ) {
         it.signature(item.signature())
-            // TODO: cache invalidation for immich
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .downsample(DownsampleStrategy.FIT_CENTER)
             .error(if (isHidden) R.drawable.empty_image else R.drawable.broken_image)

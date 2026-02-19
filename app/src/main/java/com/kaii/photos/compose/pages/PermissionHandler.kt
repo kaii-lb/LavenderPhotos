@@ -609,12 +609,9 @@ fun FullWidthDialogButton(
             .background(
                 if (enabled) color else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
             )
-            .then(
-                if (enabled) {
-                    Modifier.clickable {
-                        onClick()
-                    }
-                } else Modifier
+            .clickable(
+                enabled = enabled,
+                onClick = onClick
             )
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
