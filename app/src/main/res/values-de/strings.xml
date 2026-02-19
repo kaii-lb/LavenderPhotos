@@ -22,7 +22,6 @@
     <string name="albums_is_custom">Das ist ein benutzerdefiniertes Album</string>
     <string name="albums_custom">Benutzerdefiniertes Album</string>
     <string name="albums_non_existent">Es gibt keine solchen Alben</string>
-    <string name="albums_already_contains_all">Album enthält bereits alle Dateien</string>
     <string name="albums_remove">Album von Liste entfernen</string>
     <string name="albums_info">Albuminformation</string>
     <string name="albums_path">Pfad</string>
@@ -33,7 +32,6 @@
     <string name="albums_folder">Ordner Album</string>
     <string name="albums_add_failed">Alben konnten nicht hinzugefügt werden :&lt;</string>
     <string name="tabs">Tabs</string>
-    <string name="tab_non_existent">Dieser Tab existiert nicht!</string>
     <string name="tabs_default">Standard Tab</string>
     <string name="tabs_default_desc">Dieser Tab wird beim Starten von Lavender Photos automatisch geöffnet</string>
     <string name="tabs_customize">Tabs bearbeiten</string>

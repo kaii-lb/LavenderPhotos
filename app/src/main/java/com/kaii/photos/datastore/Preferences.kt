@@ -33,8 +33,6 @@ class Settings(val context: Context, val viewModelScope: CoroutineScope) {
 
     val permissions = SettingsPermissionsImpl(context, viewModelScope)
 
-    val trashBin = SettingsTrashBinImpl(context, viewModelScope)
-
     val albums = SettingsAlbumsListImpl(context, viewModelScope)
 
     val versions = SettingsVersionImpl(context, viewModelScope)
@@ -397,24 +395,6 @@ class SettingsPermissionsImpl(
     fun setDoNotTrash(value: Boolean) = viewModelScope.launch {
         context.datastore.edit {
             it[doNotTrashKey] = value
-        }
-    }
-}
-
-class SettingsTrashBinImpl(
-    private val context: Context,
-    private val viewModelScope: CoroutineScope
-) {
-    private val autoDeleteIntervalKey = intPreferencesKey("auto_delete_trash_interval")
-
-    fun getAutoDeleteInterval(): Flow<Int> =
-        context.datastore.data.map {
-            it[autoDeleteIntervalKey] ?: 30
-        }
-
-    fun setAutoDeleteInterval(value: Int) = viewModelScope.launch {
-        context.datastore.edit {
-            it[autoDeleteIntervalKey] = value
         }
     }
 }

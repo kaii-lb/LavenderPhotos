@@ -75,8 +75,6 @@
     <string name="albums_clear_list_desc">カメラとダウンロード以外のアルバムをすべて削除します</string>
     <string name="albums_media_sorting_desc">写真とビデオのグリッド内の並び順を設定します</string>
     <string name="albums_non_existent">アルバムは見つかりません</string>
-    <string name="albums_already_contains_all">アルバムには既にすべての項目が含まれています</string>
-    <string name="tab_non_existent">このタブは存在しません！</string>
     <string name="tabs_default_desc">Lavender Photos の起動時にこのタブを自動で開きます</string>
     <string name="tabs_customize_desc">ボトムバーで利用可能なタブを変更します</string>
     <string name="tabs_max_reached">5 つ以上のタブは追加できません</string>

@@ -10,7 +10,6 @@
     <string name="albums_folder">Тека альбому</string>
     <string name="albums_add_failed">Не вдалося додати альбоми :&lt;</string>
     <string name="tabs">Вкладки</string>
-    <string name="tab_non_existent">Ця вкладка не існує!</string>
     <string name="app_name">Фото</string>
     <string name="tabs_default">Вкладка за замовчуванням</string>
     <string name="tabs_default_desc">Lavender Photos автоматично відкриватиме цю вкладку після запуску застосунку</string>
@@ -114,7 +113,6 @@
     <string name="albums_is_custom">Це користувацький альбом</string>
     <string name="albums_custom">Користувацький альбом</string>
     <string name="albums_non_existent">Таких альбомів не існує</string>
-    <string name="albums_already_contains_all">Усі елементи вже є в альбомі</string>
     <string name="albums_remove">Видалити альбом зі списку</string>
     <string name="albums_info">Інформація про альбом</string>
     <string name="albums_id">ID</string>
@@ -155,11 +153,6 @@
     <string name="settings_clear">Очистити</string>
     <string name="settings_clear_cache_desc">Це видалить увесь кеш мініатюр на цьому пристрої, звільняючи сховище. Завантаження мініатюр при наступному запуску триватиме довше.</string>
     <string name="settings_about_and_updates">Про програму та оновлення</string>
-    <string name="trash_auto_delete">Автоматичне очищення кошика через</string>
-    <string name="trash_days">дні(в)</string>
-    <string name="trash_no_auto_delete">Автовидалення кошика вимкнено</string>
-    <string name="trash_auto_delete_interval">Інтервал автоматичного видалення</string>
-    <string name="trash_auto_delete_notice">Фотографії у кошику, старші за цю дату, будуть остаточно видалені</string>
     <string name="trash_empty">Очистити кошик?</string>
     <string name="trash_empty_desc">Це видаляє всі елементи з кошика, цю дію не можна скасувати</string>
     <string name="trash_empty_confirm">Очистити</string>
@@ -191,7 +184,6 @@
     <string name="media_okay">ОК</string>
     <string name="search_photo_name">Пошук за назвою фото</string>
     <string name="search_photo_date">Пошук за датою фото</string>
-    <string name="search_photo_day">Пошук за днем</string>
     <string name="custom_album_remove_media">Видалити</string>
     <string name="custom_album_remove_media_desc">Видалити ці елементи з альбому?</string>
     <string name="action_cannot_be_undone">Цю дію не можна скасувати!</string>
@@ -216,7 +208,6 @@
     <string name="error_views_secure_prefix">Захищено</string>
     <string name="error_views_favourites_empty">Додайте найцінніші спогади!</string>
     <string name="error_views_folder_non_existent">Тека не існує</string>
-    <string name="error_views_error_page">Це сторінка помилки</string>
     <string name="first_startup_dialog_confirm_title">Знайти!</string>
     <string name="direct_path_album">Використайте прямий шлях для додавання альбому</string>
     <string name="albums_main_list">Основний список альбомів</string>
@@ -240,8 +231,6 @@
     <string name="permissions_overwrite_date_on_move">Перезаписувати дату при переміщенні</string>
     <string name="permissions_overwrite_date_on_move_desc">Встановлювати дату скопійованих/переміщених файлів на поточну, щоб вони були найновішими</string>
     <string name="permissions_needed">Потрібен дозвіл</string>
-    <string name="permissions_needed_desc">Lavender Photos потрібен дозвіл на доступ до цього альбому. Будь ласка, на наступному екрані оберіть \"Використовувати цю папку\", щоб надати дозвіл. Це одноразовий дозвіл.</string>
-    <string name="permissions_grant">Надати</string>
     <string name="first_startup_dialog_body">Шукає всі альбоми на цьому пристрої та додає їх у Lavender Photos.\nПримітка: У старих користувачів альбоми будуть видалені, якщо скористатися цією опцією.</string>
     <string name="video_seek_icon_desc">Показує напрям перемотування відео</string>
     <string name="media">Медіафайли</string>

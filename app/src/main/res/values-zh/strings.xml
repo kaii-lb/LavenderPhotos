@@ -22,7 +22,6 @@
     <string name="albums_is_custom">这是一个自定义相册</string>
     <string name="albums_custom">自定义相册</string>
     <string name="albums_non_existent">该相册不存在</string>
-    <string name="albums_already_contains_all">相册已包含全部项目</string>
     <string name="albums_remove">从列表删除该相册</string>
     <string name="albums_info">相册信息</string>
     <string name="albums_path">路径</string>
@@ -32,7 +31,6 @@
     <string name="albums_folder">文件夹相册</string>
     <string name="albums_add_failed">添加相册失败 :&lt;</string>
     <string name="tabs">标签页</string>
-    <string name="tab_non_existent">此标签页不存在！</string>
     <string name="tabs_default">默认标签页</string>
     <string name="tabs_default_desc">薰衣草图库将在启动时自动打开此标签页</string>
     <string name="tabs_customize">自定义标签页</string>
@@ -187,11 +185,6 @@
     <string name="settings_clear_cache_desc">此操作将清除设备上的所有缩略图缓存以释放存储空间，下次启动时加载缩略图将会需要更长时间。</string>
     <string name="settings_about_and_updates">关于与更新</string>
     <string name="trash_bin">回收站</string>
-    <string name="trash_auto_delete">之后自动清理回收站项目</string>
-    <string name="trash_days">天</string>
-    <string name="trash_no_auto_delete">回收站中的项目将不会自动删除</string>
-    <string name="trash_auto_delete_interval">自动删除间隔</string>
-    <string name="trash_auto_delete_notice">回收站中早于此时间的照片将被永久删除</string>
     <string name="trash_empty">清空回收站？</string>
     <string name="trash_empty_desc">此操作将删除回收站中的所有项目，且无法撤销</string>
     <string name="trash_empty_confirm">清空</string>
@@ -203,8 +196,6 @@
     <string name="permissions_overwrite_date_on_move">移动时覆盖日期</string>
     <string name="permissions_overwrite_date_on_move_desc">启用后，移动或复制的媒体文件日期将设置为当前时间，并显示为最新项目</string>
     <string name="permissions_needed">需要权限</string>
-    <string name="permissions_needed_desc">薰衣草图库需要获取访问此相册的权限。请在下一界面选择「使用此文件夹」以授予权限。此授权仅需进行一次。</string>
-    <string name="permissions_grant">授予</string>
     <string name="media">媒体</string>
     <string name="sort_indicator">按标记排序</string>
     <string name="sort_mode">媒体排序模式</string>
@@ -237,7 +228,6 @@
     <string name="media_okay">确定</string>
     <string name="search_photo_name">搜索照片名称</string>
     <string name="search_photo_date">搜索照片的日期</string>
-    <string name="search_photo_day">按日搜索</string>
     <string name="edit_desc">薰衣草图库编辑的文件位于 %1$s</string>
     <string name="custom_album_remove_media">移除</string>
     <string name="custom_album_remove_media_desc">是否从相册中移除这些项目？</string>
@@ -264,5 +254,4 @@
     <string name="error_views_secure_prefix">保护于</string>
     <string name="error_views_favourites_empty">珍藏您最珍贵的回忆！</string>
     <string name="error_views_folder_non_existent">文件夹不存在</string>
-    <string name="error_views_error_page">这是一个错误页面</string>
 </resources>

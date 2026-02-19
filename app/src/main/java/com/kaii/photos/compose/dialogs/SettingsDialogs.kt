@@ -505,60 +505,6 @@ fun SortModeSelectorDialog(
 }
 
 @Composable
-fun DeleteIntervalDialog(
-    showDialog: MutableState<Boolean>,
-    initialValue: Int
-) {
-    var deleteInterval by remember { mutableIntStateOf(initialValue) }
-    val mainViewModel = LocalMainViewModel.current
-
-    SelectableButtonListDialog(
-        title = stringResource(id = R.string.trash_auto_delete_interval),
-        body = stringResource(id = R.string.trash_auto_delete_notice),
-        showDialog = showDialog,
-        buttons = {
-            RadioButtonRow(
-                text = "3" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 3
-            ) {
-                deleteInterval = 3
-            }
-
-            RadioButtonRow(
-                text = "10" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 10
-            ) {
-                deleteInterval = 10
-            }
-
-            RadioButtonRow(
-                text = "15" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 15
-            ) {
-                deleteInterval = 15
-            }
-
-            RadioButtonRow(
-                text = "30" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 30
-            ) {
-                deleteInterval = 30
-            }
-
-            RadioButtonRow(
-                text = "60" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 60
-            ) {
-                deleteInterval = 60
-            }
-        },
-        onConfirm = {
-            mainViewModel.settings.trashBin.setAutoDeleteInterval(deleteInterval)
-        }
-    )
-}
-
-@Composable
 fun ThumbnailSizeDialog(
     showDialog: MutableState<Boolean>,
     initialValue: Int

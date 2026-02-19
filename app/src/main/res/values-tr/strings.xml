@@ -553,7 +553,6 @@
     <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medya ekleyin</string>
     <string name="albums_folder_desc">Bir klasörden medya yükle</string>
     <string name="albums_non_existent">Böyle bir albüm mevcut değil</string>
-    <string name="albums_already_contains_all">Albüm zaten tüm öğeleri içeriyor</string>
     <string name="albums_remove">Albümü listeden kaldır</string>
     <string name="albums_pin">Bu albümü sabitle</string>
     <string name="albums_unpin">Bu albümün sabitlemesini kaldır</string>
@@ -567,7 +566,6 @@
     <string name="albums_add_failed">Albümler eklenemedi :&lt;</string>
     <!-- Tabs -->
     <string name="tabs">Sekmeler</string>
-    <string name="tab_non_existent">Bu sekme mevcut değil!</string>
     <string name="tabs_default">Varsayılan Sekme</string>
     <string name="tabs_default_desc">Lavender Photos başlangıçta bu sekmeyi otomatik olarak açacaktır</string>
     <string name="tabs_customize">Sekmeleri Özelleştir</string>
@@ -815,17 +813,9 @@
     <string name="settings_behaviour_desc">Uygulamanın nasıl çalıştığını değiştirin</string>
     <string name="settings_navigation_exit_immediately">Hemen Çık</string>
     <string name="settings_navigation_exit_immediately_desc">Geri düğmesine basıldığında ana fotoğraf görünümüne geri dönmeyi atlar</string>
-    <string name="settings_views">Görünümler</string>
-    <string name="settings_rotate_in_views">Döndürmeye İzin Ver</string>
-    <string name="settings_rotate_in_views_desc">Medya görüntülerken hareketle döndürmeyi etkinleştirir</string>
     <!-- Trash -->
     <string name="trash_bin_short">Çöp</string>
     <string name="trash_bin">Çöp Kutusu</string>
-    <string name="trash_auto_delete">Çöp kutusundaki öğeleri %s gün sonra otomatik olarak siler</string>
-    <string name="trash_days">gün</string>
-    <string name="trash_no_auto_delete">Çöp kutusundaki öğeler otomatik olarak silinmeyecek</string>
-    <string name="trash_auto_delete_interval">Otomatik silme aralığı</string>
-    <string name="trash_auto_delete_notice">Bu tarihten eski olan çöp kutusundaki fotoğraflar kalıcı olarak silinecektir</string>
     <string name="trash_empty">Çöp kutusu boşaltılsın mı?</string>
     <string name="trash_empty_desc">Bu, çöp kutusundaki tüm öğeleri siler, bu işlem geri alınamaz</string>
     <string name="trash_empty_confirm">Boşalt</string>
@@ -838,8 +828,6 @@
     <string name="permissions_overwrite_date_on_move">Taşımada tarihi koru</string>
     <string name="permissions_overwrite_date_on_move_desc">Kopyalama veya taşıma sırasında medyanın tarihini korur</string>
     <string name="permissions_needed">İzin Gerekli</string>
-    <string name="permissions_needed_desc">Lavender Photos\'un bu albüme erişmek için izne ihtiyacı var. Lütfen bir sonraki ekranda "Bu Klasörü Kullan" seçeneğini seçerek izni verin. Bu tek seferlik bir izindir.</string>
-    <string name="permissions_grant">İzin Ver</string>
     <string name="permissions_do_not_trash">Çöp Kutusunu Kullanma</string>
     <string name="permissions_do_not_trash_desc">Öğeleri önce Çöp Kutusuna taşımadan hemen ve kalıcı olarak sil</string>
     <!-- Media -->
@@ -884,7 +872,6 @@
     <!-- Search -->
     <string name="search_photo_name">Bir fotoğraf ara</string>
     <string name="search_photo_date">Bir fotoğrafın tarihini ara</string>
-    <string name="search_photo_day">Güne göre ara</string>
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenmiş dosya</string>
     <string name="custom_album_remove_media">Kaldır</string>
@@ -903,8 +890,6 @@
     <string name="none">Yok</string>
     <string name="pixels">Piksel</string>
     <string name="paths_should_be_relative">Yol göreceli olmalıdır</string>
-    <string name="today">Bugün</string>
-    <string name="yesterday">Dün</string>
     <string name="help">Yardım</string>
     <string name="apply">Uygula</string>
     <!-- Bottom Sheets -->
@@ -929,7 +914,6 @@
     <string name="error_views_secure_prefix">Güvenceye Alınma Tarihi</string>
     <string name="error_views_favourites_empty">En değerli anılarınızı ekleyin!</string>
     <string name="error_views_folder_non_existent">Klasör mevcut değil</string>
-    <string name="error_views_error_page">Bu bir hata sayfasıdır</string>
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Stil</string>
     <string name="look_and_feel_date_format">Tarih Formatı</string>
@@ -968,28 +952,13 @@
     <string name="immich_clear_endpoint_desc">Bu sunucu adresini kaldırmak istediğinizden emin misiniz?</string>
     <string name="immich_logout">Çıkış Yapılsın mı?</string>
     <string name="immich_logout_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
-    <string name="immich_done">tamamlandı</string>
-    <string name="immich_sync_status">Senkronizasyon durumu:</string>
     <string name="immich_email">E-posta:</string>
     <string name="immich_set_pfp_fail">Profil Resmi ayarlanamadı</string>
     <string name="immich_set_pfp_success">Profil resmi güncellendi!</string>
-    <string name="immich_operation_complete">İşlem tamamlandı!</string>
     <string name="immich_state_unknown">Bilinmiyor</string>
-    <string name="immich_state_loading">Yükleniyor…</string>
-    <string name="immich_sync_album">Albümü ve Immich\'i Senkronize Et</string>
-    <string name="immich_sync_album_out_of_sync_desc">"Ekstra: Albüm: %1$s. Immich: %2$s"</string>
-    <string name="immich_album_delete">Bu albüm kaldırılsın mı?</string>
-    <string name="immich_album_delete_desc">Bu albümü Immich senkronizasyonundan kaldırır</string>
-    <string name="immich_album_delete_include_media">İçeriği Immich\'ten sil</string>
-    <string name="immich_album_delete_full">Albümü Kaldır</string>
     <string name="immich_auth_passowrd">Parola</string>
     <string name="immich_auth_email">E-posta</string>
-    <string name="immich_continuing_in_bg">Yedeklemeye arka planda devam ediliyor</string>
-    <string name="immich_main_dialog_sync_state">Senkronize ediliyor: %2$d üzerinden %1$d</string>
     <string name="immich_uuid">Immich UUID</string>
-    <string name="immich_failed_refreshing_albums">Albümler yenilenemedi</string>
-    <string name="immich_failed_uploading_albums">Albüm yüklenemedi</string>
-    <string name="immich_server_info">Sunucu Bilgisi</string>
     <string name="immich_server_info_desc">Sürüm: %1$s. Yapı: %2$s</string>
     <string name="immich_server_storage">Sunucu Depolaması</string>
     <string name="immich_server_storage_desc">%2$s alanın %1$s kadarı kullanılıyor</string>

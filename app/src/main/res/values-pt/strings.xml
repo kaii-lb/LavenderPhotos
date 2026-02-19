@@ -10,7 +10,6 @@
     <string name="add_album">Adicionar álbum</string>
     <string name="direct_path_album">Use o caminho de uma pasta para adicionar um álbum</string>
     <string name="albums_main_list">Lista Principal de Álbuns</string>
-    <string name="error_views_error_page">Esta é uma página de erro</string>
     <string name="albums_selected">Álbuns Selecionados</string>
     <string name="albums_auto_detect">Detectar álbuns automaticamente</string>
     <string name="albums_clear_list_desc">Remover todos os álbuns, exceto Câmera e Download</string>
@@ -18,11 +17,9 @@
     <string name="albums_media_sorting_desc">Define a ordenação de fotos e vídeos em grades</string>
     <string name="albums_is_custom">Este é um álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
-    <string name="albums_already_contains_all">O álbum já contém todos os itens</string>
     <string name="albums_remove">Remover álbum da lista</string>
     <string name="albums_info">Informações do álbum</string>
     <string name="albums_path">Caminho</string>
-    <string name="tab_non_existent">Esta aba não existe!</string>
     <string name="tabs_default">Aba Padrão</string>
     <string name="tabs_default_desc">O Lavender Photos abrirá esta aba automaticamente ao iniciar</string>
     <string name="tabs_customize">Personalizar Abas</string>

@@ -22,7 +22,6 @@
     <string name="albums_is_custom">Это пользовательский альбом</string>
     <string name="albums_custom">Пользовательский альбом</string>
     <string name="albums_non_existent">Таких альбомов не существует</string>
-    <string name="albums_already_contains_all">Альбом уже содержит все элементы</string>
     <string name="albums_remove">Удалить альбом из списка</string>
     <string name="albums_info">Информация об альбоме</string>
     <string name="albums_path">Путь</string>
@@ -33,7 +32,6 @@
     <string name="albums_folder">Папка Альбом</string>
     <string name="albums_add_failed">Не удалось добавить альбомы :(</string>
     <string name="tabs">Вкладки</string>
-    <string name="tab_non_existent">Эта вкладка не существует!</string>
     <string name="tabs_default">Вкладка по умолчанию</string>
     <string name="tabs_default_desc">Lavender Photos автоматически откроет эту вкладку при запуске</string>
     <string name="tabs_customize">Настройка вкладок</string>
@@ -177,11 +175,6 @@
     <string name="settings_clear_cache_desc">Это удалит все кэши миниатюр на этом устройстве, освобождая хранилище. Загрузка миниатюр при следующем запуске займёт больше времени.</string>
     <string name="settings_about_and_updates">О программе и обновления</string>
     <string name="trash_bin">Корзина</string>
-    <string name="trash_auto_delete">Автоматическое удаление из корзины через %s дней</string>
-    <string name="trash_days">дней</string>
-    <string name="trash_no_auto_delete">Фото в корзине не будут автоматически удалены</string>
-    <string name="trash_auto_delete_interval">Интервал автоматического удаления</string>
-    <string name="trash_auto_delete_notice">Фотографии в корзине старше этой даты будут удалены без возможности восстановления</string>
     <string name="trash_empty">Очистить корзину?</string>
     <string name="trash_empty_desc">Это удалит все объекты из корзины, это действие нельзя откатить</string>
     <string name="trash_empty_confirm">Очистить</string>
@@ -193,8 +186,6 @@
     <string name="permissions_overwrite_date_on_move">Оставлять дату при перемещении</string>
     <string name="permissions_overwrite_date_on_move_desc">Дата скопированных и перемещённых медиафайлов остаётся как была</string>
     <string name="permissions_needed">Требуется разрешение</string>
-    <string name="permissions_needed_desc">Приложению Lavender Photos требуется разрешение на доступ к этому альбому. Предоставьте разрешение, выбрав «Использовать эту папку» на следующем экране. Это разрешение предоставляется один раз.</string>
-    <string name="permissions_grant">Предоставить</string>
     <string name="media">Медиафайлы</string>
     <string name="sort_indicator">Сортировать по индикатору</string>
     <string name="sort_mode">Режим сортировки медиафайлов</string>
@@ -227,7 +218,6 @@
     <string name="media_okay">Хорошо</string>
     <string name="search_photo_name">Поиск фотографии</string>
     <string name="search_photo_date">Поиск по дате фотографии</string>
-    <string name="search_photo_day">Поиск по дню</string>
     <string name="edit_desc">Lavender Photos отредактировал файл в %1$s</string>
     <string name="custom_album_remove_media">Удалить</string>
     <string name="custom_album_remove_media_desc">Удалить эти элементы из альбома?</string>
@@ -254,7 +244,6 @@
     <string name="error_views_secure_prefix">Защищён в папке</string>
     <string name="error_views_favourites_empty">Добавьте самые ценные воспоминания!</string>
     <string name="error_views_folder_non_existent">Папка не существует</string>
-    <string name="error_views_error_page">Это страница с ошибкой</string>
     <string name="updates_notice_desc"><![CDATA[
 <p>Этот обновлятель загружает APK-файлы из <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, что
 означает, что они не проходят дополнительную проверку и тестирование, проводимые IzzyOnDroid, F-Droid или где-либо ещё.
@@ -896,9 +885,6 @@
     <string name="settings_behaviour_desc">Изменить работу приложения</string>
     <string name="settings_navigation_exit_immediately">Немедленный выход</string>
     <string name="settings_navigation_exit_immediately_desc">Пропускает возврат к основному виду фотографий при нажатии кнопки «Назад»</string>
-    <string name="settings_views">Виды</string>
-    <string name="settings_rotate_in_views">Разрешить поворот</string>
-    <string name="settings_rotate_in_views_desc">Включает поворот жестом при просмотре медиафайлов</string>
     <string name="settings_about_unknown_version">Не удалось получить номер версии</string>
     <string name="trash_bin_short">Корзина</string>
     <string name="permissions_do_not_trash">Не использовать корзину</string>
@@ -936,8 +922,6 @@
     <string name="wallpaper_lockscreen">Экран блокировки</string>
     <string name="wallpaper_Both">Оба экрана</string>
     <string name="wallpaper_scrollable">Прокручиваемый</string>
-    <string name="today">Сегодня</string>
-    <string name="yesterday">Вчера</string>
     <string name="help">Справка</string>
     <string name="apply">Применить</string>
     <string name="close">Закрыть</string>
@@ -988,28 +972,13 @@
     <string name="immich_clear_endpoint_desc">Вы уверены, что хотите удалить этот адрес сервера?</string>
     <string name="immich_logout">Выйти?</string>
     <string name="immich_logout_desc">Вы уверены, что хотите выйти из этой учётки?</string>
-    <string name="immich_done">готово</string>
-    <string name="immich_sync_status">Состояние синхронизации:</string>
     <string name="immich_email">Электронная почта:</string>
     <string name="immich_set_pfp_fail">Не удалось установить фото профиля</string>
     <string name="immich_set_pfp_success">Фото профиля обновлено!</string>
-    <string name="immich_operation_complete">Операция завершена!</string>
     <string name="immich_state_unknown">Неизвестно</string>
-    <string name="immich_state_loading">Загрузка…</string>
-    <string name="immich_sync_album">Синхронизация альбома и Immich</string>
-    <string name="immich_sync_album_out_of_sync_desc">Дополнительно в: Альбом: %1$s. Immich: %2$s</string>
-    <string name="immich_album_delete">Удалить этот альбом?</string>
-    <string name="immich_album_delete_desc">Удаляет этот альбом из синхронизации Immich</string>
-    <string name="immich_album_delete_include_media">Удалить содержимое из Immich</string>
-    <string name="immich_album_delete_full">Удалить альбом</string>
     <string name="immich_auth_passowrd">Пароль</string>
     <string name="immich_auth_email">Электронная почта</string>
-    <string name="immich_continuing_in_bg">Продолжение резервного копирования в фоновом режиме</string>
-    <string name="immich_main_dialog_sync_state">Синхронизация: %1$d из %2$d</string>
     <string name="immich_uuid">ИД в Immich</string>
-    <string name="immich_failed_refreshing_albums">Не удалось обновить альбомы</string>
-    <string name="immich_failed_uploading_albums">Не удалось закачать альбом</string>
-    <string name="immich_server_info">Информация о сервере</string>
     <string name="immich_server_info_desc">Версия: %1$s. Сборка: %2$s</string>
     <string name="immich_server_storage">Серверное хранилище</string>
     <string name="immich_server_storage_desc">%1$s из %2$s использовано</string>
@@ -1057,7 +1026,6 @@
     <string name="exif_date_changed_failed">Не удалось изменить дату</string>
     <string name="favourites_migration_in_progress_short">В процессе</string>
     <string name="favourites_migration_done">Перенос выполнен!</string>
-    <string name="favourites_migration_in_progress">Перенос в процессе</string>
     <string name="favourites_migration_desc">Favourites has been updated to bring a better experience, which means syncing favourites across all apps that support it, flawless management, and even more performance!\n\nВсе ваши ранее добавленные в избранное элементы будут перенесены.\n\nПожалуйста, держите телефон включённым и это приложение открытым.</string>
     <string name="favourites_migration_started">Перенос начат!</string>
     <string name="export_location">Расположение</string>

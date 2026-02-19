@@ -12,7 +12,6 @@
     <string name="dev_title">Arendaja</string>
     <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
     <string name="error_views_folder_non_existent">Kausta pole olemas</string>
-    <string name="error_views_error_page">See on veateate leht</string>
     <string name="albums_media_sorting">Meedia järjestamine</string>
     <string name="albums_media_sorting_desc">Määrab fotode ja videote järjestuse ruudustikus</string>
     <string name="tabs_add">Lisa vahekaart</string>
@@ -59,14 +58,12 @@
     <string name="albums_clear_list_desc">Eemalda kõik albumid, välja arvatud Kaamera ja Allalaadimiste kaustad</string>
     <string name="albums_clear_list_done">Albumite loend on tühjendatud</string>
     <string name="tabs">Vahekaardid</string>
-    <string name="tab_non_existent">Seda vahekaarti pole olemas!</string>
     <string name="tabs_default">Vaikimisi vahekaart</string>
     <string name="tabs_default_desc">Käivitamisel avab Lavender Photos automaatselt selle vahekaardi</string>
     <string name="tabs_customize">Kohenda vahekaarte</string>
     <string name="tabs_customize_desc">Lisa ja muuda alumisel ribal kuvatavaid vahekaarte</string>
     <string name="tabs_navigate_to">Mine lehele: %s$1</string>
     <string name="albums_non_existent">Selliseid albumeid ei leidu</string>
-    <string name="albums_already_contains_all">Albumis juba on kõik objektid olemas</string>
     <string name="albums_add_failed">Albumite hulka lisamine ei õnnestunud :&lt;</string>
     <string name="albums_folder">Albumkaust</string>
     <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
@@ -136,9 +133,7 @@
     <string name="settings_storage">Andmeruum</string>
     <string name="settings_memory">Mälu</string>
     <string name="settings_clear">Eemalda</string>
-    <string name="trash_days">päeva</string>
     <string name="permissions">Õigused</string>
-    <string name="permissions_grant">Anna õigused</string>
     <string name="media">Meedium</string>
     <string name="sort_date">Kuupäev</string>
     <string name="sort_name">Nimi</string>

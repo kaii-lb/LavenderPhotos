@@ -10,7 +10,6 @@
     <string name="albums_is_custom">Este es un álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
     <string name="albums_non_existent">No existen tales álbumes</string>
-    <string name="albums_already_contains_all">El álbum ya contiene todos los artículos</string>
     <string name="albums_remove">Eliminar álbum de la lista</string>
     <string name="albums_info">Información del Álbum</string>
     <string name="albums_path">Ruta</string>
@@ -21,7 +20,6 @@
     <string name="albums_folder">Álbum de Carpetas</string>
     <string name="albums_add_failed">Error al agregar álbumes :&lt;</string>
     <string name="tabs">Pestañas</string>
-    <string name="tab_non_existent">¡Esta pestaña no existe!</string>
     <string name="tabs_default">Pestaña Predeterminada</string>
     <string name="tabs_default_desc">Lavender Photos abrirá automáticamente esta pestaña al inicio</string>
     <string name="tabs_customize">Personalizar Pestañas</string>
@@ -182,11 +180,6 @@
     <string name="settings_clear_cache_desc">Esto borrará todas las cachés de miniaturas en este dispositivo, liberando almacenamiento. La carga de miniaturas tardará más en el próximo inicio.</string>
     <string name="settings_about_and_updates">Acerca de y Actualizaciones</string>
     <string name="trash_bin">Papelera</string>
-    <string name="trash_auto_delete">Auto elimina los elementos en la papelera después de %s días</string>
-    <string name="trash_days">días</string>
-    <string name="trash_no_auto_delete">Los elementos en la papelera no se eliminarán automáticamente</string>
-    <string name="trash_auto_delete_interval">Intervalo de borrado automático</string>
-    <string name="trash_auto_delete_notice">Las fotos en la papelera anteriores a esta fecha se eliminarán permanentemente</string>
     <string name="trash_empty">¿Vaciar Papelera?</string>
     <string name="trash_empty_desc">Esto elimina todos los elementos de la papelera, esta acción no se puede deshacer</string>
     <string name="trash_empty_confirm">Vacío</string>
@@ -198,8 +191,6 @@
     <string name="permissions_overwrite_date_on_move">Preservar la fecha al mover</string>
     <string name="permissions_overwrite_date_on_move_desc">Mantiene la fecha de los medios al copiar o mover</string>
     <string name="permissions_needed">Permiso Necesario</string>
-    <string name="permissions_needed_desc">Lavender Photos necesita permiso para acceder a este álbum. Otorgue el permiso seleccionando Usar esta carpeta en la siguiente pantalla.Este es un permiso de una sola vez.</string>
-    <string name="permissions_grant">Otorgar</string>
     <string name="media">Multimedia</string>
     <string name="sort_indicator">Ordenar por indicador</string>
     <string name="sort_mode">Modo de Clasificación de Multimedia</string>
@@ -232,7 +223,6 @@
     <string name="media_okay">Ok</string>
     <string name="search_photo_name">Buscar una foto</string>
     <string name="search_photo_date">Buscar la fecha de una foto</string>
-    <string name="search_photo_day">Buscar por día</string>
     <string name="edit_desc">Lavender Photos edito el archivo con %1$s</string>
     <string name="custom_album_remove_media">Eliminar</string>
     <string name="custom_album_remove_media_desc">¿Eliminar estos elementos del álbum?</string>
@@ -259,7 +249,6 @@
     <string name="error_views_secure_prefix">Asegurado</string>
     <string name="error_views_favourites_empty">¡Añade tus recuerdos más preciados!</string>
     <string name="error_views_folder_non_existent">La carpeta no existe</string>
-    <string name="error_views_error_page">Esta es una página de error</string>
     <string name="changelog"><![CDATA[
     <u><h2>v1.2.0!:</h2></u>
     <br><b><h4>- Errores corregidos:</h4></b>
@@ -873,9 +862,6 @@
     <string name="settings_behaviour_desc">Cambia como funciona la app</string>
     <string name="settings_navigation_exit_immediately">Salir Inmediatamente</string>
     <string name="settings_navigation_exit_immediately_desc">Omite volver a la vista principal de fotos al presionar el botón Atrás</string>
-    <string name="settings_views">Vistas</string>
-    <string name="settings_rotate_in_views">Permitir Rotación</string>
-    <string name="settings_rotate_in_views_desc">Permite la rotación por gestos al ver medios</string>
     <string name="trash_bin_short">Basura</string>
     <string name="permissions_do_not_trash">No usar la Papelera</string>
     <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
@@ -891,8 +877,6 @@
     <string name="wallpaper_lockscreen">Pantalla de Bloqueo</string>
     <string name="wallpaper_Both">Ambas Pantallas</string>
     <string name="wallpaper_scrollable">Desplazable</string>
-    <string name="today">Hoy</string>
-    <string name="yesterday">Ayer</string>
     <string name="help">Ayuda</string>
     <string name="apply">Aplicar</string>
     <string name="bottom_sheets_sixteen_by_nine">16:9 (horizontal)</string>
@@ -935,28 +919,13 @@
     <string name="immich_clear_endpoint_desc">¿Está seguro de que desea eliminar esta dirección de servidor?</string>
     <string name="immich_logout">¿Cerrar sesión?</string>
     <string name="immich_logout_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
-    <string name="immich_done">hecho</string>
-    <string name="immich_sync_status">Estado de sincronización:</string>
     <string name="immich_email">Email:</string>
     <string name="immich_set_pfp_fail">No se pudo establecer la imagen de Perfil</string>
     <string name="immich_set_pfp_success">¡Foto de perfil actualizada!</string>
-    <string name="immich_operation_complete">¡Operación completa!</string>
     <string name="immich_state_unknown">Desconocido</string>
-    <string name="immich_state_loading">Cargando…</string>
-    <string name="immich_sync_album">Sincronizar Álbum e Immich</string>
-    <string name="immich_sync_album_out_of_sync_desc">Extra en: Álbum: %1$s. Immich: %2$s</string>
-    <string name="immich_album_delete">¿Eliminar este álbum?</string>
-    <string name="immich_album_delete_desc">Elimina este álbum de Immich sync</string>
-    <string name="immich_album_delete_include_media">Eliminar contenido de Immich</string>
-    <string name="immich_album_delete_full">Eliminar Álbum</string>
     <string name="immich_auth_passowrd">Contraseña</string>
     <string name="immich_auth_email">Email</string>
-    <string name="immich_continuing_in_bg">Continuando copia de seguridad en segundo plano</string>
-    <string name="immich_main_dialog_sync_state">Sincronizando: %1$d de %2$d</string>
     <string name="immich_uuid">Immich UUID</string>
-    <string name="immich_failed_refreshing_albums">Error refrescando álbumes</string>
-    <string name="immich_failed_uploading_albums">Error cargando álbum</string>
-    <string name="immich_server_info">Info del Servidor</string>
     <string name="immich_server_info_desc">Versión: %1$s. Compilación: %2$s</string>
     <string name="immich_server_storage">Almacenamiento en Servidor</string>
     <string name="immich_server_storage_desc">%1$s de %2$s usado</string>

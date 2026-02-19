@@ -22,7 +22,6 @@
     <string name="albums_is_custom">To jest album niestandardowy</string>
     <string name="albums_custom">Album niestandardowy</string>
     <string name="albums_non_existent">Nie istnieją takie albumy</string>
-    <string name="albums_already_contains_all">Album zawiera już wszystkie elementy</string>
     <string name="albums_remove">Usuń album z listy</string>
     <string name="albums_info">Informacje o albumie</string>
     <string name="albums_path">Ścieżka</string>
@@ -32,7 +31,6 @@
     <string name="albums_type">Typ albumu</string>
     <string name="albums_add_failed">Nie udało się dodać albumów :&lt;</string>
     <string name="tabs">Karty</string>
-    <string name="tab_non_existent">Ta karta nie istnieje!</string>
     <string name="tabs_default">Domyślna karta</string>
     <string name="tabs_default_desc">Lavender Photos automatycznie otworzy tę kartę podczas uruchamiania</string>
     <string name="tabs_customize">Dostosuj karty</string>
@@ -168,11 +166,6 @@
     <string name="settings_clear_cache_desc">Spowoduje to usunięcie wszystkich pamięci podręcznych miniatur na tym urządzeniu, co zwolni miejsce. Ładowanie miniatur potrwa dłużej przy następnym uruchomieniu.</string>
     <string name="settings_about_and_updates">Informacje i aktualizacje</string>
     <string name="trash_bin">Kosz</string>
-    <string name="trash_auto_delete">Automatyczne usuwanie elementów z kosza po %s dniach</string>
-    <string name="trash_days">dni</string>
-    <string name="trash_no_auto_delete">Elementy w koszu nie zostaną automatycznie usunięte</string>
-    <string name="trash_auto_delete_interval">Interwał automatycznego usuwania</string>
-    <string name="trash_auto_delete_notice">Zdjęcia w koszu starsze niż ta data zostaną trwale usunięte</string>
     <string name="trash_empty">Opróżnić kosz?</string>
     <string name="trash_empty_desc">Spowoduje to usunięcie wszystkich elementów z kosza. Tej czynności nie można cofnąć</string>
     <string name="trash_empty_confirm">Opróżnij</string>
@@ -184,8 +177,6 @@
     <string name="permissions_overwrite_date_on_move">Zachowaj datę podczas przenoszenia</string>
     <string name="permissions_overwrite_date_on_move_desc">Zachowuje datę multimediów podczas kopiowania lub przenoszenia</string>
     <string name="permissions_needed">Wymagane pozwolenie</string>
-    <string name="permissions_needed_desc">Lavender Photos potrzebuje pozwolenia na dostęp do tego albumu. Udziel pozwolenia, wybierając opcję „Użyj tego folderu” na następnym ekranie. To pozwolenie jest jednorazowe.</string>
-    <string name="permissions_grant">Zezwól</string>
     <string name="sort_indicator">Sortuj według wskaźnika</string>
     <string name="sort_mode">Tryb sortowania multimediów</string>
     <string name="sort_date">Data</string>
@@ -216,7 +207,6 @@
     <string name="media_okay">Ok</string>
     <string name="search_photo_name">Wyszukaj zdjęcie</string>
     <string name="search_photo_date">Wyszukaj datę zdjęcia</string>
-    <string name="search_photo_day">Szukaj według dnia</string>
     <string name="custom_album_remove_media">Usuń</string>
     <string name="custom_album_remove_media_desc">Usunąć te elementy z albumu?</string>
     <string name="action_cannot_be_undone">Tej czynności nie można cofnąć!</string>
@@ -242,7 +232,6 @@
     <string name="error_views_secure_prefix">Zabezpieczono:</string>
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
-    <string name="error_views_error_page">To jest strona błędu</string>
     <string name="updates_notice_desc"><![CDATA[
             <p>Ten aktualizator pobiera pliki APK z serwisu <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, co
                 oznacza, że nie przechodzą one dodatkowej kontroli i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne podmioty.
@@ -343,9 +332,6 @@
     <string name="settings_behaviour_desc">Zmień sposób działania aplikacji</string>
     <string name="settings_navigation_exit_immediately">Wyjdź natychmiast</string>
     <string name="settings_navigation_exit_immediately_desc">Pomija powrót do głównego widoku zdjęć po naciśnięciu przycisku Wstecz</string>
-    <string name="settings_views">Widoki</string>
-    <string name="settings_rotate_in_views">Zezwól na obrót</string>
-    <string name="settings_rotate_in_views_desc">Umożliwia obracanie gestem podczas przeglądania multimediów</string>
     <string name="trash_bin_short">Kosz</string>
     <string name="permissions_do_not_trash">Nie używaj kosza</string>
     <string name="permissions_do_not_trash_desc">Natychmiastowe i trwałe usuwanie elementów bez przenoszenia ich najpierw do kosza</string>
@@ -363,8 +349,6 @@
     <string name="wallpaper_lockscreen">Ekran blokady</string>
     <string name="wallpaper_Both">Oba ekrany</string>
     <string name="wallpaper_scrollable">Przewijalny</string>
-    <string name="today">Dzisiaj</string>
-    <string name="yesterday">Wczoraj</string>
     <string name="help">Pomoc</string>
     <string name="apply">Zastosuj</string>
     <string name="bottom_sheets_sixteen_by_nine">16:9 (poziomo)</string>
@@ -407,28 +391,13 @@
     <string name="immich_clear_endpoint_desc">Czy na pewno chcesz usunąć ten adres serwera?</string>
     <string name="immich_logout">Wylogować?</string>
     <string name="immich_logout_desc">Czy na pewno chcesz wylogować się z tego konta?</string>
-    <string name="immich_done">zrobione</string>
-    <string name="immich_sync_status">Status synchronizacji:</string>
     <string name="immich_email">Email:</string>
     <string name="immich_set_pfp_fail">Nie można ustawić zdjęcia profilowego</string>
     <string name="immich_set_pfp_success">Zaktualizowano zdjęcie profilowe!</string>
-    <string name="immich_operation_complete">Operacja zakończona!</string>
     <string name="immich_state_unknown">Nieznany</string>
-    <string name="immich_state_loading">Ładowanie…</string>
-    <string name="immich_sync_album">Synchronizuj album i Immich</string>
-    <string name="immich_sync_album_out_of_sync_desc">Dodatkowo w: Album: %1$s. Immich: %2$s</string>
-    <string name="immich_album_delete">Usunąć ten album?</string>
-    <string name="immich_album_delete_desc">Usuwa ten album z synchronizacji Immich</string>
-    <string name="immich_album_delete_include_media">Usuń zawartość z Immich</string>
-    <string name="immich_album_delete_full">Usuń album</string>
     <string name="immich_auth_passowrd">Hasło</string>
     <string name="immich_auth_email">Email</string>
-    <string name="immich_continuing_in_bg">Kontynuacja tworzenia kopii zapasowej w tle</string>
-    <string name="immich_main_dialog_sync_state">Synchronizacja: %1$d z %2$d</string>
     <string name="immich_uuid">Immich UUID</string>
-    <string name="immich_failed_refreshing_albums">Nieudane odświeżanie albumów</string>
-    <string name="immich_failed_uploading_albums">Nie udało się przesłać albumu</string>
-    <string name="immich_server_info">Informacje o serwerze</string>
     <string name="immich_server_info_desc">Wersja: %1$s. Kompilacja: %2$s</string>
     <string name="immich_server_storage">Pamięć masowa serwera</string>
     <string name="immich_server_storage_desc">Wykorzystano %1$s z %2$s</string>
@@ -531,7 +500,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="favourites_migration_notice">Ulubione</string>
     <string name="favourites_migration_desc">To sposób na śledzenie najlepszych momentów. Dzięki Lavender Photos oznacza to synchronizację ulubionych we wszystkich aplikacjach, które ją obsługują, bezproblemowe zarządzanie i wysoce wydajny system!\n\nJeśli korzystasz z poprzedniej wersji Lavender Photos, wszystkie Twoje poprzednie ulubione elementy zostaną przeniesione do nowego systemu.\n\nProszę, nie wyłączaj telefonu i nie wyłączaj tej aplikacji.</string>
     <string name="favourites_migration_started">Migracja rozpoczęta!</string>
-    <string name="favourites_migration_in_progress">Migracja w toku</string>
     <string name="favourites_migration_in_progress_short">W toku</string>
     <string name="favourites_migration_done">Migracja zakończona!</string>
     <string name="favourites_migration_declined">Uprawnienia odrzucone!</string>

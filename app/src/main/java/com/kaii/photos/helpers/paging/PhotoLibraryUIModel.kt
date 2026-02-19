@@ -2,7 +2,6 @@ package com.kaii.photos.helpers.paging
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.paging.ItemSnapshotList
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.mediastore.signature
 
@@ -67,7 +66,3 @@ sealed interface PhotoLibraryUIModel {
         if (this is MediaImpl) item.absolutePath + item.displayName + item.id
         else (this as Section).timestamp.toString()
 }
-
-fun List<PhotoLibraryUIModel>.mapToMediaItems() = mapNotNull { if (it is PhotoLibraryUIModel.MediaImpl) it.item else null }
-fun ItemSnapshotList<PhotoLibraryUIModel>.mapToMediaItems() = mapNotNull { if (it is PhotoLibraryUIModel.MediaImpl) it.item else null }
-

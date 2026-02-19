@@ -28,7 +28,6 @@
     <string name="albums_folder">Thư mục album</string>
     <string name="albums_add_failed">Không thêm album được :(</string>
     <string name="tabs">Các tab</string>
-    <string name="tab_non_existent">Tab này không tồn tại!</string>
     <string name="tabs_default">Tab mặc định</string>
     <string name="tabs_default_desc">Lavender sẽ tự động mở tab này khi mở ứng dụng</string>
     <string name="tabs_customize">Các tab tùy chỉnh</string>
@@ -116,7 +115,6 @@
     <string name="albums_custom_desc">Thêm phương tiện bất kì từ mọi nơi</string>
     <string name="albums_folder_desc">Tải phương tiện từ một thư mục</string>
     <string name="albums_non_existent">Không có album nào như vậy tồn tại</string>
-    <string name="albums_already_contains_all">Album đã chứa tất cả các mục</string>
     <string name="albums_remove">Loại bỏ danh sách album</string>
     <string name="albums_pin">Ghim album này</string>
     <string name="albums_unpin">Bỏ ghim album này</string>

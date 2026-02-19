@@ -31,7 +31,6 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.DeleteIntervalDialog
 import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
@@ -55,61 +54,6 @@ fun MemoryAndStorageSettingsPage() {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            item {
-                PreferencesSeparatorText(text = stringResource(id = R.string.trash_bin))
-            }
-
-            item {
-                val autoDeleteInterval by mainViewModel.settings.trashBin.getAutoDeleteInterval()
-                    .collectAsStateWithLifecycle(initialValue = 0)
-                val showDeleteIntervalDialog = remember { mutableStateOf(false) }
-
-                val resources = LocalResources.current
-                val autoDelete by remember {
-                    derivedStateOf {
-                        resources.getString(
-                            R.string.trash_auto_delete,
-                            autoDeleteInterval.toString()
-                        )
-                    }
-                }
-                val noAutoDelete = stringResource(id = R.string.trash_no_auto_delete)
-
-                val summary by remember {
-                    derivedStateOf {
-                        if (autoDeleteInterval != 0) {
-                            autoDelete
-                        } else {
-                            noAutoDelete
-                        }
-                    }
-                }
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.trash_auto_delete_interval),
-                    iconResID = R.drawable.auto_delete,
-                    summary = summary,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    checked = autoDeleteInterval != 0,
-                    onSwitchClick = { isChecked ->
-                        mainViewModel.settings.trashBin.setAutoDeleteInterval(
-                            if (isChecked) 30 else 0
-                        )
-                    },
-                    onRowClick = { _ ->
-                        showDeleteIntervalDialog.value = true
-                    }
-                )
-
-                if (showDeleteIntervalDialog.value) {
-                    DeleteIntervalDialog(
-                        showDialog = showDeleteIntervalDialog,
-                        initialValue = autoDeleteInterval
-                    )
-                }
-            }
-
             item {
                 PreferencesSeparatorText(text = stringResource(id = R.string.settings_storage))
             }

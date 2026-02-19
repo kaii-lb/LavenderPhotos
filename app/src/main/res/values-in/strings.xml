@@ -8,9 +8,7 @@
     <string name="albums_auto_detect">Deteksi album secara otomatis</string>
     <string name="albums_auto_detect_desc">Mendeteksi semua folder dengan media di perangkat ini dan menambahkannya ke layar album</string>
     <string name="albums_non_existent">Tidak ada album seperti itu</string>
-    <string name="albums_already_contains_all">Album sudah mengandung semua item</string>
     <string name="tabs">Tabs</string>
-    <string name="tab_non_existent">Tab ini tidak ada!</string>
     <string name="tabs_default">Tab Bawaan</string>
     <string name="tabs_default_desc">Foto Lavender Photos akan terbuka otomatis di tab ini saat memulai</string>
     <string name="updates_checking">Memeriksa Pembaruan</string>
@@ -184,10 +182,6 @@
     <string name="settings_storage_thumbnails_clear_cache">Bersihkan cache thumbnail</string>
     <string name="settings_clear_cache_desc">Ini akan menghapus semua cache thumbnail di perangkat ini, membebaskan penyimpanan. Pemuatan thumbnail akan memakan waktu di startup berikutnya.</string>
     <string name="trash_bin">Keranjang Sampah</string>
-    <string name="trash_auto_delete">Otomatis hapus item di keranjang sampah setelah</string>
-    <string name="trash_days">hari</string>
-    <string name="trash_no_auto_delete">Item di keranjang sampah tidak akan dihapus secara otomatis</string>
-    <string name="trash_auto_delete_interval">Interval penghapusan otomatis</string>
     <string name="media_delete">Hapus</string>
     <string name="bottom_sheets_ratio_selected">Rasio pemotongan ini dipilih</string>
     <string name="error_views_trash_empty">Item yang dibuang muncul disini</string>
@@ -197,7 +191,6 @@
     <string name="media_delete_permanently_confirm">Hapus %1$s secara permanen?</string>
     <string name="media_cancel">Batal</string>
     <string name="media_restore">Kembalikan</string>
-    <string name="search_photo_day">Cari oleh hari</string>
     <string name="bottom_sheets_enter_text">Masukan Teks</string>
     <string name="bottom_sheets_freeform">Freeform</string>
     <string name="bottom_sheets_image_ratio">Rasio Gambar</string>
@@ -210,7 +203,6 @@
     <string name="error_views_secure_prefix">Diamankan Pada</string>
     <string name="error_views_favourites_empty">Tambahkan memori berharga anda!</string>
     <string name="error_views_folder_non_existent">Folder tidak ada</string>
-    <string name="error_views_error_page">Ini adalah laman error</string>
     <string name="albums_custom">Kustom Album</string>
     <string name="albums_remove">Hilangkan album dari daftar</string>
     <string name="albums_info">Informasi Album</string>

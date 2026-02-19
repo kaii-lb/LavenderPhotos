@@ -22,7 +22,6 @@
     <string name="albums_is_custom">Dette er et brugerdefineret album</string>
     <string name="albums_custom">Brugerdefineret Album</string>
     <string name="albums_non_existent">Det album findes ikke</string>
-    <string name="albums_already_contains_all">Album indeholder allerede alle genstande</string>
     <string name="albums_remove">Fjern album fra liste</string>
     <string name="albums_info">Album Information</string>
     <string name="albums_path">Sti</string>
@@ -33,7 +32,6 @@
     <string name="albums_folder">Mappe Album</string>
     <string name="albums_add_failed">Kunne ikke tilføje album :&lt;</string>
     <string name="tabs">Faneblade</string>
-    <string name="tab_non_existent">Dette faneblad eksisterer ikke!</string>
     <string name="tabs_default">Standard Faneblad</string>
     <string name="tabs_default_desc">Lavender Photos vil automatisk åbne dette faneblad ved opstart</string>
     <string name="tabs_customize">Tilpas Faneblade</string>
