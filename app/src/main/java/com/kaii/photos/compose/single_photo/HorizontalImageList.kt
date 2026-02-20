@@ -2,7 +2,9 @@ package com.kaii.photos.compose.single_photo
 
 import android.util.Log
 import android.view.Window
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,6 +36,7 @@ import androidx.paging.compose.itemKey
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
@@ -41,6 +45,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
@@ -77,6 +82,7 @@ fun HorizontalImageList(
     isSecuredMedia: Boolean = false
 ) {
     val mainViewModel = LocalMainViewModel.current
+    val windowSize = LocalWindowInfo.current.containerSize / 4
 
     val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
     val useCache by mainViewModel.settings.storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
@@ -120,17 +126,31 @@ fun HorizontalImageList(
                     .fillMaxSize()
             ) {
                 if (blurBackground) {
+                    var targetAlpha by remember { mutableFloatStateOf(0f) }
+                    val animatedAlpha by animateFloatAsState(
+                        targetValue = targetAlpha,
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.DURATION
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        targetAlpha = 0.8f
+                    }
+
                     GlideImage(
                         model = media.item.uri.toUri(),
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
+                        loading = placeholder(R.drawable.broken_image),
                         modifier = Modifier
                             .fillMaxSize()
                             .blur(48.dp)
-                            .alpha(0.8f)
+                            .alpha(animatedAlpha)
                     ) {
                         it.signature(media.signature())
-                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                            .override(windowSize.width, windowSize.height)
                     }
                 }
 
@@ -206,6 +226,18 @@ fun HorizontalImageList(
                     }
 
                 if (blurBackground) {
+                    var targetAlpha by remember { mutableFloatStateOf(0f) }
+                    val animatedAlpha by animateFloatAsState(
+                        targetValue = targetAlpha,
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.DURATION
+                        )
+                    )
+
+                    LaunchedEffect(Unit) {
+                        targetAlpha = 0.8f
+                    }
+
                     GlideImage(
                         model = glideModel,
                         contentScale = ContentScale.Crop,
@@ -213,10 +245,11 @@ fun HorizontalImageList(
                         modifier = Modifier
                             .fillMaxSize()
                             .blur(48.dp)
-                            .alpha(0.8f)
+                            .alpha(animatedAlpha)
                     ) {
                         it.signature(media.signature())
                             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                            .override(windowSize.width, windowSize.height)
                     }
                 }
 
