@@ -45,6 +45,8 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.delay
@@ -127,12 +129,14 @@ private fun SingleAlbumViewCommon(
     var showInfoDialog by remember { mutableStateOf(false) }
 
     if (showInfoDialog) {
+        val vibratorManager = rememberVibratorManager()
         AlbumInfoDialog(
             albumInfo = albumInfo,
             sheetState = sheetState,
             itemCount = mediaCount,
             albumSize = albumSize,
             toggleSelectionMode = {
+                vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
                 coroutineScope.launch {
                     sheetState.hide()

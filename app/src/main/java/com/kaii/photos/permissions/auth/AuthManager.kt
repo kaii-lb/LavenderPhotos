@@ -14,7 +14,9 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AuthManager(
@@ -57,7 +59,9 @@ class AuthManager(
 }
 
 @Composable
-fun rememberSecureFolderAuthManager(): AuthManager {
+fun rememberSecureFolderAuthManager(
+    extraAction: (() -> Unit)? = null
+): AuthManager {
     val context = LocalContext.current
     val resources = LocalResources.current
     val navController = LocalNavController.current
@@ -69,7 +73,14 @@ fun rememberSecureFolderAuthManager(): AuthManager {
             title = resources.getString(R.string.secure_unlock),
             subtitle = resources.getString(R.string.secure_unlock_desc),
             onSuccess = {
-                navController.navigate(route = Screens.SecureFolder.GridView)
+                coroutineScope.launch {
+                    if (extraAction != null) {
+                        extraAction()
+                        delay(AnimationConstants.DURATION.toLong())
+                    }
+
+                    navController.navigate(route = Screens.SecureFolder.GridView)
+                }
             },
             onFailure = {
                 coroutineScope.launch {

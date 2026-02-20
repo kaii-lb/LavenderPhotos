@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 interface Screens {
     @Serializable
-    object Album : Screens {
+    object Album {
         @Serializable
         data class GridView(
             val albumInfo: AlbumInfo
@@ -19,7 +19,7 @@ interface Screens {
     }
 
     @Serializable
-    object Trash : Screens {
+    object Trash {
         @Serializable
         object GridView : Screens
 
@@ -30,7 +30,7 @@ interface Screens {
     }
 
     @Serializable
-    object Favourites : Screens {
+    object Favourites {
         @Serializable
         object GridView : Screens
 
@@ -44,7 +44,7 @@ interface Screens {
     }
 
     @Serializable
-    object SecureFolder : Screens {
+    object SecureFolder {
         @Serializable
         object GridView : Screens
 
@@ -70,9 +70,9 @@ interface Screens {
     ) : Screens
 
     @Serializable
-    object Immich : Screens {
+    object Immich {
         @Serializable
-        object InfoPage
+        object InfoPage: Screens
 
         @Serializable
         data class GridView(
@@ -87,7 +87,7 @@ interface Screens {
     }
 
     @Serializable
-    object CustomAlbum : Screens {
+    object CustomAlbum {
         @Serializable
         data class GridView(
             val albumInfo: AlbumInfo
@@ -101,7 +101,7 @@ interface Screens {
     }
 
     @Serializable
-    object MainPages : Screens {
+    object MainPages {
         @Serializable
         object MainGrid : Screens {
             @Serializable
@@ -135,45 +135,39 @@ interface Screens {
     @Serializable
     object Settings {
         @Serializable
-        object MainPage {
+        object MainPage : Screens {
             @Serializable
-            object List
+            object General : Screens
 
             @Serializable
-            object General
+            object PrivacyAndSecurity : Screens
 
             @Serializable
-            object PrivacyAndSecurity
+            object LookAndFeel : Screens
 
             @Serializable
-            object LookAndFeel
+            object Behaviour : Screens
 
             @Serializable
-            object Behaviour
+            object MemoryAndStorage : Screens
 
             @Serializable
-            object MemoryAndStorage
-
-            @Serializable
-            object Debugging
+            object Debugging : Screens
         }
 
         @Serializable
         object Misc {
             @Serializable
-            object DataAndBackup
+            object DataAndBackup : Screens
 
             @Serializable
-            object AboutAndUpdates
+            object UpdatePage : Screens
 
             @Serializable
-            object UpdatePage
+            object LicensesPage : Screens
 
             @Serializable
-            object LicensesPage
-
-            @Serializable
-            object ExtendedLicensePage
+            object ExtendedLicensePage : Screens
         }
     }
 }

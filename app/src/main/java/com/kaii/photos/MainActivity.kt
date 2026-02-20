@@ -70,7 +70,6 @@ import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
-import com.kaii.photos.compose.settings.AboutPage
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
 import com.kaii.photos.compose.settings.DebuggingSettingsPage
@@ -78,7 +77,6 @@ import com.kaii.photos.compose.settings.ExtendedLicensePage
 import com.kaii.photos.compose.settings.GeneralSettingsPage
 import com.kaii.photos.compose.settings.LicensePage
 import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
-import com.kaii.photos.compose.settings.MainSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
 import com.kaii.photos.compose.settings.UpdatesPage
@@ -678,12 +676,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 navigation<Screens.Settings.MainPage>(
-                    startDestination = Screens.Settings.MainPage.List
+                    startDestination = Screens.Settings.MainPage.General
                 ) {
-                    composable<Screens.Settings.MainPage.List> {
-                        MainSettingsPage()
-                    }
-
                     composable<Screens.Settings.MainPage.General> {
                         GeneralSettingsPage()
                     }
@@ -714,10 +708,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable<Screens.Settings.Misc.DataAndBackup> {
                         DataAndBackupPage()
-                    }
-
-                    composable<Screens.Settings.Misc.AboutAndUpdates> {
-                        AboutPage()
                     }
 
                     composable<Screens.Settings.Misc.UpdatePage> {

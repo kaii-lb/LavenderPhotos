@@ -285,9 +285,7 @@ private fun SinglePhotoViewCommon(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
+    val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
         topBar = {
@@ -300,6 +298,7 @@ private fun SinglePhotoViewCommon(
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
+                        delay(50)
                         sheetState.partialExpand()
                     }
                 }

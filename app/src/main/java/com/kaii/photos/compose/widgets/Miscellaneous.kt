@@ -71,6 +71,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -385,9 +386,11 @@ fun AnimatedImmichBackupIcon(
         //     )
         // )
 
+        val context = LocalContext.current
+        val alwaysShowInfo by LocalMainViewModel.current.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
         UpdatableProfileImage(
-            loggedIn = state is LoginState.LoggedIn,
-            pfpUrl = (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
+            loggedIn = alwaysShowInfo || state !is LoginState.LoggedOut,
+            pfpUrl = if (alwaysShowInfo && state is LoginState.LoggedOut) context.profilePicture else (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
             modifier = Modifier
                 .size(28.dp) // TODO
                 .clip(CircleShape)

@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarScrollBehavior
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -42,6 +43,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -50,7 +52,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,7 +74,7 @@ import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
-import com.kaii.photos.compose.dialogs.MainAppDialog
+import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
@@ -84,8 +85,12 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
@@ -102,15 +107,32 @@ fun MainAppTopBar(
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
-    val showDialog = rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val vibratorManager = rememberVibratorManager()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showMainDialog by remember { mutableStateOf(false) }
 
-    MainAppDialog(
-        showDialog = showDialog,
-        pagerState = pagerState,
-        selectionManager = selectionManager,
-        mainViewModel = mainViewModel,
-        loginState = loginState
-    )
+    if (showMainDialog) {
+        MainDialog(
+            sheetState = sheetState,
+            loginState = loginState,
+            coroutineScope = coroutineScope,
+            toggleSelectMode = {
+                vibratorManager.vibrateShort()
+                selectionManager.enterSelectMode()
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showMainDialog = false
+                }
+            },
+            dismiss = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showMainDialog = false
+                }
+            }
+        )
+    }
 
     LaunchedEffect(immichInfo) {
         loginState.refresh(
@@ -179,7 +201,11 @@ fun MainAppTopBar(
                 AnimatedLoginIcon(
                     state = userInfo
                 ) {
-                    showDialog.value = true
+                    coroutineScope.launch {
+                        showMainDialog = true
+                        delay(50)
+                        sheetState.expand()
+                    }
                 }
             } else {
                 val context = LocalContext.current

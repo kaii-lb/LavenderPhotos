@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,12 +33,14 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -46,9 +49,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.darkenColor
 
 @Composable
@@ -653,7 +658,7 @@ fun PreferenceRowWithCustomBody(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f)
             )
 
-            Column (
+            Column(
                 modifier = Modifier
                     .fillMaxWidth(1f),
                 verticalArrangement = Arrangement.Center,
@@ -661,6 +666,132 @@ fun PreferenceRowWithCustomBody(
             ) {
                 content()
             }
+        }
+    }
+}
+
+@Composable
+fun ExpressiveDialogRow(
+    title: String,
+    icon: Painter,
+    position: RowPosition,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    onClick: () -> Unit
+) {
+    val (shape, _) = getDefaultShapeSpacerForPosition(
+        position = position,
+        cornerRadius = 32.dp,
+        innerCornerRadius = 8.dp
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .clip(shape)
+            .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
+            .clickable(onClick = onClick, enabled = enabled)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 12.dp,
+            alignment = Alignment.Start
+        )
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = title,
+            tint =
+                MaterialTheme.colorScheme
+                    .contentColorFor(containerColor)
+                    .copy(alpha = if (enabled) 1f else 0.6f)
+        )
+
+        Text(
+            text = title,
+            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+            color =
+                MaterialTheme.colorScheme
+                    .contentColorFor(containerColor)
+                    .copy(alpha = if (enabled) 1f else 0.6f)
+        )
+    }
+}
+
+@Composable
+fun ExpressiveDialogRowWithAction(
+    title: String,
+    icon: Painter,
+    actionIcon: Painter,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    actionContainerColor: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit,
+    onActionClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 6.dp,
+            alignment = Alignment.Start
+        )
+    ) {
+        Row(
+            modifier = modifier
+                .weight(1f)
+                .height(60.dp)
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 8.dp, bottomStart = 32.dp, bottomEnd = 8.dp))
+                .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
+                .clickable(onClick = onClick, enabled = enabled)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 12.dp,
+                alignment = Alignment.Start
+            )
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = title,
+                tint =
+                    MaterialTheme.colorScheme
+                        .contentColorFor(containerColor)
+                        .copy(alpha = if (enabled) 1f else 0.6f)
+            )
+
+            Text(
+                text = title,
+                fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                color =
+                    MaterialTheme.colorScheme
+                        .contentColorFor(containerColor)
+                        .copy(alpha = if (enabled) 1f else 0.6f)
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .width(64.dp)
+                .height(60.dp)
+                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 32.dp, bottomStart = 8.dp, bottomEnd = 32.dp))
+                .background(actionContainerColor)
+                .clickable(onClick = onActionClick, enabled = enabled)
+                .padding(12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = actionIcon,
+                contentDescription = title,
+                tint =
+                    MaterialTheme.colorScheme
+                        .contentColorFor(actionContainerColor)
+                        .copy(alpha = if (enabled) 1f else 0.6f),
+                modifier = Modifier
+                    .offset(x = (-2).dp)
+            )
         }
     }
 }

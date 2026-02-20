@@ -82,6 +82,7 @@ import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -157,6 +158,7 @@ private fun SingleTrashedPhotoViewImpl(
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
         topBar = {
@@ -167,7 +169,11 @@ private fun SingleTrashedPhotoViewImpl(
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = false,
                 expandInfoDialog = {
-                    showInfoDialog = true
+                    coroutineScope.launch {
+                        showInfoDialog = true
+                        delay(50)
+                        sheetState.partialExpand()
+                    }
                 }
             )
         },
@@ -199,9 +205,6 @@ private fun SingleTrashedPhotoViewImpl(
                 }
             }
 
-            val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = false
-            )
             if (showInfoDialog) {
                 SinglePhotoInfoDialog(
                     currentMediaItem = mediaItem,

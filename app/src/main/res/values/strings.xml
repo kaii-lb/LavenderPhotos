@@ -715,7 +715,7 @@
     <!-- App -->
     <string name="app_icon">App Icon</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_name">kaii-lb</string>
+    <string name="dev_name" translatable="false">kaii-lb</string>
     <string name="dev_title">Developer</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy">There isn\'t one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.</string>
@@ -1101,6 +1101,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="close">Close</string>
     <string name="changelog_name">Changelog</string>
     <string name="drag_and_drop_data">Lavender Photos Drag-And-Drop Data</string>
+    <string name="management">Management</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

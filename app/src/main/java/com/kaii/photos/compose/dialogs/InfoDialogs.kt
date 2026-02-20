@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.AlertDialog
@@ -36,8 +35,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,31 +49,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
-import com.kaii.photos.helpers.rememberVibratorManager
-import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,153 +68,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun MainAppDialog(
-    showDialog: MutableState<Boolean>,
-    pagerState: PagerState,
-    selectionManager: SelectionManager,
-    mainViewModel: MainViewModel,
-    loginState: LoginStateManager
-) {
-    val navController = LocalNavController.current
-    val vibratorManager = rememberVibratorManager()
-    val userInfo by loginState.state.collectAsStateWithLifecycle()
-    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.defaultTabs.defaultTabList)
-
-    val currentTab by remember {
-        derivedStateOf {
-            tabList[pagerState.currentPage]
-        }
-    }
-
-    if (showDialog.value) {
-        LavenderDialogBase(
-            onDismiss = {
-                showDialog.value = false
-            }
-        ) {
-            TitleCloseRow(
-                title = currentTab.name,
-                closeOffset = 8.dp,
-            ) {
-                showDialog.value = false
-            }
-
-            val alwaysShowInfo by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
-            if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
-                MainDialogUserInfo(
-                    loginState = userInfo,
-                    uploadPfp = loginState::uploadPfp,
-                    setUsername = loginState::updateUsername
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .wrapContentHeight(),
-                verticalArrangement = Arrangement.spacedBy(space = 2.dp)
-            ) {
-                if (currentTab != DefaultTabs.TabTypes.albums && currentTab != DefaultTabs.TabTypes.secure) {
-                    DialogClickableItem(
-                        text = stringResource(id = R.string.media_select),
-                        iconResId = R.drawable.check_item,
-                        position = RowPosition.Top,
-                    ) {
-                        showDialog.value = false
-                        selectionManager.enterSelectMode()
-                        vibratorManager.vibrateShort()
-                    }
-                }
-
-                if (currentTab == DefaultTabs.TabTypes.albums) {
-                    var showAlbumTypeDialog by remember { mutableStateOf(false) }
-                    if (showAlbumTypeDialog) {
-                        AlbumAddChoiceDialog {
-                            showAlbumTypeDialog = false
-                        }
-                    }
-
-                    DialogClickableItem(
-                        text = stringResource(id = R.string.add_album),
-                        iconResId = R.drawable.add,
-                        position = RowPosition.Top,
-                    ) {
-                        showAlbumTypeDialog = true
-                    }
-                }
-
-                // TODO
-                // val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-                // val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
-
-                // if (immichUploadTotal != 0) {
-                //     DialogClickableItem(
-                //         text = stringResource(id = R.string.immich_main_dialog_sync_state, immichUploadCount, immichUploadTotal),
-                //         iconResId = R.drawable.cloud_upload,
-                //         position = if (currentView.value == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
-                //     )
-                // }
-
-                DialogClickableItem(
-                    text = stringResource(id = R.string.data_and_backup),
-                    iconResId = R.drawable.data,
-                    // position = if (currentView.value == DefaultTabs.TabTypes.secure && immichUploadTotal == 0) RowPosition.Top else RowPosition.Middle,
-                    position = if (currentTab == DefaultTabs.TabTypes.secure) RowPosition.Top else RowPosition.Middle,
-                ) {
-                    showDialog.value = false
-                    navController.navigate(Screens.Settings.Misc.DataAndBackup)
-                }
-
-                val showExtraSecureItem by mainViewModel.settings.lookAndFeel
-                    .getShowExtraSecureNav()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
-                if (showExtraSecureItem) {
-                    val authManager = rememberSecureFolderAuthManager()
-                    DialogClickableItem(
-                        text = stringResource(id = R.string.secure_folder),
-                        iconResId = R.drawable.secure_folder,
-                        position = RowPosition.Middle,
-                    ) {
-                        showDialog.value = false
-
-                        authManager.authenticate()
-                    }
-                }
-
-                DialogClickableItem(
-                    text = stringResource(id = R.string.settings),
-                    iconResId = R.drawable.settings,
-                    position = RowPosition.Middle,
-                ) {
-                    showDialog.value = false
-                    navController.navigate(Screens.Settings.MainPage)
-                }
-
-                DialogClickableItem(
-                    text = stringResource(id = R.string.settings_about_and_updates),
-                    iconResId = R.drawable.info,
-                    position = RowPosition.Bottom,
-                ) {
-                    showDialog.value = false
-                    navController.navigate(Screens.Settings.Misc.AboutAndUpdates)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun FeatureNotAvailableDialog(onDismiss: () -> Unit) {
-    ExplanationDialog(
-        title = stringResource(id = R.string.not_available),
-        explanation = stringResource(id = R.string.not_available_desc),
-        onDismiss = onDismiss
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
