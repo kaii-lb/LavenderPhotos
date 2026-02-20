@@ -258,8 +258,7 @@ data class AlbumInfo(
 
         if (isCustomAlbum != other.isCustomAlbum) return false
         if (name != other.name) return false
-        if (paths != other.paths) return false // as a set since we don't care about the order
-        if (mainPath != other.mainPath) return false
+        if (paths != other.paths) return false
         if (isPinned != other.isPinned) return false
 
         return true
@@ -273,6 +272,19 @@ data class AlbumInfo(
         result = 31 * result + mainPath.hashCode()
         result = 31 * result + isPinned.hashCode()
         return result
+    }
+
+    fun equalsIgnoringPinned(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AlbumInfo
+
+        if (isCustomAlbum != other.isCustomAlbum) return false
+        if (name != other.name) return false
+        if (paths != other.paths) return false
+
+        return true
     }
 }
 

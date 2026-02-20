@@ -26,12 +26,11 @@
     <string name="albums_custom_desc">Adicione qualquer mídia de qualquer lugar</string>
     <string name="albums_folder_desc">Carregar mídia de um diretório</string>
     <string name="albums_non_existent">Não existem álbuns desse tipo</string>
-    <string name="albums_remove">Remover álbum da lista</string>
+    <string name="albums_remove_desc">Remover álbum da lista</string>
     <string name="albums_pin">Fixar este álbum</string>
     <string name="albums_unpin">Desafixar este álbum</string>
     <string name="albums_info">Informações do álbum</string>
     <string name="albums_path">Caminho</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Contagem de Itens</string>
     <string name="albums_name">Nome do Álbum</string>
     <string name="albums_type">Tipo de Álbum</string>

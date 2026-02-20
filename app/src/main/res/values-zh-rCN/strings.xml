@@ -22,7 +22,7 @@
     <string name="albums_is_custom">这是一个自定义相册</string>
     <string name="albums_custom">自定义相册</string>
     <string name="albums_non_existent">该相册不存在</string>
-    <string name="albums_remove">从列表删除该相册</string>
+    <string name="albums_remove_desc">从列表删除该相册</string>
     <string name="albums_info">相册信息</string>
     <string name="albums_path">路径</string>
     <string name="albums_item_count">项目数量</string>
@@ -55,7 +55,6 @@
     <string name="version_info">版本信息</string>
     <string name="updates">更新</string>
     <string name="updates_desc">保持应用为最新版本</string>
-    <string name="albums_id">Id</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_check_desc">应用启动时检查新版本，需手动安装</string>
     <string name="updates_whats_new">什么变化</string>

@@ -180,8 +180,7 @@
     <string name="albums_is_custom">Ceci est un album personnalisé</string>
     <string name="albums_custom">Album Personnalisé</string>
     <string name="albums_info">Infos sur l\'album</string>
-    <string name="albums_id">Identifiant</string>
-    <string name="albums_remove">Retirer l\'album de la liste</string>
+    <string name="albums_remove_desc">Retirer l\'album de la liste</string>
     <string name="albums_clear_list_done">Liste d\'albums effacée</string>
     <string name="albums_path">Chemin</string>
     <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles</string>

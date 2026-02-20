@@ -22,10 +22,9 @@
     <string name="albums_is_custom">Das ist ein benutzerdefiniertes Album</string>
     <string name="albums_custom">Benutzerdefiniertes Album</string>
     <string name="albums_non_existent">Es gibt keine solchen Alben</string>
-    <string name="albums_remove">Album von Liste entfernen</string>
+    <string name="albums_remove_desc">Album von Liste entfernen</string>
     <string name="albums_info">Albuminformation</string>
     <string name="albums_path">Pfad</string>
-    <string name="albums_id">ID</string>
     <string name="albums_item_count">Anzahl der Dateien</string>
     <string name="albums_name">Albumname</string>
     <string name="albums_type">Albumtyp</string>

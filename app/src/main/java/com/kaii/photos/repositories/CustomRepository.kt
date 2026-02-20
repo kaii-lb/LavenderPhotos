@@ -64,4 +64,8 @@ class CustomRepository(
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
         return@withContext dao.countMediaInAlbum(album = albumInfo.id)
     }
+
+    suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+        return@withContext dao.mediaSize(album = albumInfo.id)
+    }
 }

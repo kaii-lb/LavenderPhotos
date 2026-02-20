@@ -113,9 +113,8 @@
     <string name="albums_is_custom">Це користувацький альбом</string>
     <string name="albums_custom">Користувацький альбом</string>
     <string name="albums_non_existent">Таких альбомів не існує</string>
-    <string name="albums_remove">Видалити альбом зі списку</string>
+    <string name="albums_remove_desc">Видалити альбом зі списку</string>
     <string name="albums_info">Інформація про альбом</string>
-    <string name="albums_id">ID</string>
     <string name="tabs_customize">Налаштування вкладок</string>
     <string name="tabs_customize_desc">Обрати вкладки для нижньої панелі</string>
     <string name="tabs_navigate_to">Перейти на сторінку %s$1</string>

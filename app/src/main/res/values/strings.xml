@@ -672,17 +672,20 @@
     <string name="albums_custom_desc">Add any media from anywhere</string>
     <string name="albums_folder_desc">Load media from a folder</string>
     <string name="albums_non_existent">No such albums exist</string>
-    <string name="albums_remove">Remove album from list</string>
+    <string name="albums_remove">Remove</string>
+    <string name="albums_remove_desc">Remove album from list?</string>
     <string name="albums_pin">Pin this album</string>
     <string name="albums_unpin">Unpin this album</string>
     <string name="albums_info">Album Info</string>
-    <string name="albums_path">Path</string>
-    <string name="albums_id">Id</string>
-    <string name="albums_item_count">Item Count</string>
+    <string name="albums_path">Path:</string>
+    <string name="albums_paths">Paths:</string>
+    <string name="albums_item_count">Item Count:</string>
     <string name="albums_name">Album Name</string>
     <string name="albums_type">Album Type</string>
     <string name="albums_folder">Folder Album</string>
     <string name="albums_add_failed">Failed to add albums :&lt;</string>
+    <string name="albums_immich_not_backed_up">Not backed up</string>
+    <string name="albums_rename_failure">Invalid album name</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
@@ -1177,7 +1180,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_auth_passowrd">Password</string>
     <string name="immich_auth_email">Email</string>
-    <string name="immich_uuid">Immich UUID</string>
+    <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
     <string name="immich_server_storage">Server Storage</string>

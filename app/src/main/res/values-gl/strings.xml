@@ -27,12 +27,11 @@
     <string name="albums_custom_desc">Engade calquera multimedia desde calquera orixe</string>
     <string name="albums_folder_desc">Cargar multimedia desde un cartafol</string>
     <string name="albums_non_existent">Non existen tales álbums</string>
-    <string name="albums_remove">Retirar álbum da lista</string>
+    <string name="albums_remove_desc">Retirar álbum da lista</string>
     <string name="albums_pin">Fixar este álbum</string>
     <string name="albums_unpin">Non fixar este álbum</string>
     <string name="albums_info">Info sobre o álbum</string>
     <string name="albums_path">Ruta</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Número elementos</string>
     <string name="albums_name">Nome do álbum</string>
     <string name="albums_type">Tipo de álbum</string>

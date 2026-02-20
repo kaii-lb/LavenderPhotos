@@ -7,7 +7,6 @@ import android.content.Intent
 import android.location.Geocoder
 import android.os.Build
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -82,6 +80,7 @@ import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.permissions.files.rememberMediaRenamer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -98,11 +97,6 @@ fun SinglePhotoInfoDialog(
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        sheetState.partialExpand()
-    }
-
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
         LocalRippleConfiguration provides
@@ -132,15 +126,6 @@ fun SinglePhotoInfoDialog(
             CompositionLocalProvider(
                 LocalRippleConfiguration provides RippleConfiguration()
             ) {
-                BackHandler(
-                    enabled = !WindowInsets.isImeVisible
-                ) {
-                    coroutineScope.launch {
-                        sheetState.hide()
-                        dismiss()
-                    }
-                }
-
                 if (isLandscape) {
                     Row(
                         modifier = Modifier
@@ -212,8 +197,8 @@ private fun Content(
 
     var location by remember { mutableStateOf("") }
     LaunchedEffect(mediaData) {
-        with(Dispatchers.IO) {
-            val latLong = mediaData[MediaData.LatLong] as? DoubleArray ?: return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            val latLong = mediaData[MediaData.LatLong] as? DoubleArray ?: return@withContext
 
             Log.d(TAG, "this is running")
 

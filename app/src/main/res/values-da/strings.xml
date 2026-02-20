@@ -22,10 +22,9 @@
     <string name="albums_is_custom">Dette er et brugerdefineret album</string>
     <string name="albums_custom">Brugerdefineret Album</string>
     <string name="albums_non_existent">Det album findes ikke</string>
-    <string name="albums_remove">Fjern album fra liste</string>
+    <string name="albums_remove_desc">Fjern album fra liste</string>
     <string name="albums_info">Album Information</string>
     <string name="albums_path">Sti</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Antal Genstande</string>
     <string name="albums_name">Album Navn</string>
     <string name="albums_type">Album Type</string>

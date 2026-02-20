@@ -17,7 +17,7 @@
     <string name="albums_media_sorting_desc">Define a ordenação de fotos e vídeos em grades</string>
     <string name="albums_is_custom">Este é um álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
-    <string name="albums_remove">Remover álbum da lista</string>
+    <string name="albums_remove_desc">Remover álbum da lista</string>
     <string name="albums_info">Informações do álbum</string>
     <string name="albums_path">Caminho</string>
     <string name="tabs_default">Aba Padrão</string>

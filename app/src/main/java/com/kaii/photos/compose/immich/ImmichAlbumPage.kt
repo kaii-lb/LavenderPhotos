@@ -12,14 +12,11 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.grids.PhotoGrid
@@ -43,15 +40,11 @@ fun ImmichAlbumPage(
         modifier = modifier
             .fillMaxSize(),
         topBar = {
-            val navController = LocalNavController.current
             SingleAlbumViewTopBar(
-                albumInfo = albumInfo,
+                albumInfo = { albumInfo },
                 selectionManager = selectionManager,
-                showDialog = remember { mutableStateOf(false) },
-                isMediaPicker = false, // TODO:
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                isMediaPicker = false, // TODO
+                showDialog = {} // TODO
             )
         },
         bottomBar = {

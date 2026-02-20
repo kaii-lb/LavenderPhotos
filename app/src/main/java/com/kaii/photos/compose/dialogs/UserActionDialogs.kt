@@ -355,7 +355,7 @@ fun TextEntryDialog(
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single,
-            enabled = !showError && isLoading
+            enabled = !showError && !isLoading
         ) {
             coroutineScope.launch(Dispatchers.IO) {
                 isLoading = true

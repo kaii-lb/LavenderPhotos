@@ -10,10 +10,9 @@
     <string name="albums_is_custom">Este es un álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
     <string name="albums_non_existent">No existen tales álbumes</string>
-    <string name="albums_remove">Eliminar álbum de la lista</string>
+    <string name="albums_remove_desc">Eliminar álbum de la lista</string>
     <string name="albums_info">Información del Álbum</string>
     <string name="albums_path">Ruta</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Recuento de Artículos</string>
     <string name="albums_name">Nombre del Álbum</string>
     <string name="albums_type">Tipo de Álbum</string>

@@ -3,14 +3,9 @@ package com.kaii.photos.compose.dialogs
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
@@ -19,10 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,8 +27,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -48,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -58,30 +48,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.AnimatableTextField
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.checkPathIsDownloads
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.getDecryptCacheForFile
@@ -89,15 +72,11 @@ import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.rememberVibratorManager
-import com.kaii.photos.helpers.renameDirectory
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
-import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -105,295 +84,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
-
-@Composable
-fun SingleAlbumDialog(
-    showDialog: MutableState<Boolean>,
-    albumId: Int,
-    navController: NavHostController,
-    selectionManager: SelectionManager,
-    itemCount: suspend () -> Int
-) {
-    val mainViewModel = LocalMainViewModel.current
-    val albums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-    val dynamicAlbum by remember {
-        derivedStateOf {
-            albums.first { it.id == albumId }
-        }
-    }
-
-    if (showDialog.value) {
-        LavenderDialogBase(
-            verticalArrangement = Arrangement.spacedBy(space = 2.dp),
-            onDismiss = {
-                showDialog.value = false
-            },
-            modifier = Modifier
-                .wrapContentHeight(unbounded = true)
-        ) {
-            val isEditingFileName = remember { mutableStateOf(false) }
-
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-            ) {
-                val textWidth = this.maxWidth - 48.dp - 24.dp
-
-                IconButton(
-                    onClick = {
-                        showDialog.value = false
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(0.dp, 0.dp, 0.dp, 4.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.close),
-                        contentDescription = "Close dialog button",
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
-
-                AnimatableText(
-                    first = stringResource(id = R.string.media_rename),
-                    second = dynamicAlbum.name,
-                    state = isEditingFileName.value,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .widthIn(max = textWidth) // for button and right side
-                        .padding(4.dp, 0.dp, 0.dp, 4.dp)
-                )
-            }
-
-            DialogClickableItem(
-                text = stringResource(id = R.string.media_select),
-                iconResId = R.drawable.check_item,
-                position = RowPosition.Top,
-                modifier = Modifier
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    )
-                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
-                    .padding(8.dp, 0.dp)
-            ) {
-                showDialog.value = false
-
-                selectionManager.enterSelectMode()
-            }
-
-
-            val context = LocalContext.current
-            val fileName = remember { mutableStateOf(dynamicAlbum.name) }
-
-            val permissionManager = rememberDirectoryPermissionManager(
-                onGranted = {
-                    Log.d(TAG, "Running rename ${fileName.value} ${dynamicAlbum.name}")
-                    if (fileName.value != dynamicAlbum.name) {
-                        if (dynamicAlbum.paths.size == 1) {
-                            Log.d(TAG, "Running rename - passed first check")
-                            val basePath = dynamicAlbum.mainPath.toBasePath()
-                            val currentVolumes = MediaStore.getExternalVolumeNames(context)
-                            val volumeName =
-                                if (basePath == baseInternalStorageDirectory) "primary"
-                                else currentVolumes.find {
-                                    val possible =
-                                        basePath.replace("/storage/", "").removeSuffix("/")
-                                    it == possible || it == possible.lowercase()
-                                }
-
-                            renameDirectory(
-                                context = context,
-                                absolutePath = dynamicAlbum.mainPath,
-                                newName = fileName.value,
-                                base = volumeName!!
-                            )
-
-                            val newInfo = dynamicAlbum.copy(
-                                name = fileName.value,
-                                paths = setOf(dynamicAlbum.mainPath.replace(dynamicAlbum.name, fileName.value))
-                            )
-
-                            albums.filter { album ->
-                                album.paths.any { it.startsWith(dynamicAlbum.mainPath) }
-                            }.forEach { album ->
-                                mainViewModel.settings.albums.edit(
-                                    id = album.id,
-                                    newInfo = album.copy(
-                                        paths = album.paths.map {
-                                            if (it.startsWith(dynamicAlbum.mainPath)) it.replace(dynamicAlbum.mainPath, newInfo.mainPath)
-                                            else it
-                                        }.toSet()
-                                    )
-                                )
-                            }
-
-                            mainViewModel.settings.albums.edit(
-                                id = dynamicAlbum.id,
-                                newInfo = newInfo
-                            )
-
-                            try {
-                                context.contentResolver.releasePersistableUriPermission(
-                                    context.getExternalStorageContentUriFromAbsolutePath(
-                                        absolutePath = newInfo.mainPath,
-                                        trimDoc = true
-                                    ),
-                                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                )
-                            } catch (e: Throwable) {
-                                Log.d(TAG, "Couldn't release permission for ${newInfo.mainPath}")
-                                e.printStackTrace()
-                            }
-                        } else {
-                            mainViewModel.settings.albums.edit(
-                                id = dynamicAlbum.id,
-                                newInfo = dynamicAlbum.copy(
-                                    name = fileName.value
-                                )
-                            )
-                        }
-
-                        showDialog.value = false
-                    }
-                }
-            )
-
-            AnimatableTextField(
-                state = isEditingFileName,
-                string = fileName,
-                rowPosition = RowPosition.Middle,
-                enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
-                modifier = Modifier
-                    .padding(8.dp, 0.dp),
-                doAction = {
-                    permissionManager.start(
-                        directories = dynamicAlbum.paths
-                    )
-                },
-                resetAction = {
-                    fileName.value = dynamicAlbum.name
-                }
-            )
-
-            val autoDetectAlbums by mainViewModel.settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
-
-            if (!autoDetectAlbums) {
-                DialogClickableItem(
-                    text = stringResource(id = R.string.albums_remove),
-                    iconResId = R.drawable.delete,
-                    position = RowPosition.Middle,
-                    enabled = !dynamicAlbum.mainPath.checkPathIsDownloads(),
-                    modifier = Modifier
-                        .animateContentSize(
-                            animationSpec = tween(
-                                durationMillis = 500
-                            )
-                        )
-                        .height(if (!isEditingFileName.value) 42.dp else 0.dp)
-                        .padding(8.dp, 0.dp)
-                ) {
-                    mainViewModel.settings.albums.remove(dynamicAlbum.id)
-                    showDialog.value = false
-
-                    try {
-                        // TODO: possible make less messy
-                        mainViewModel.launch(Dispatchers.IO) {
-                            MediaDatabase.getInstance(context)
-                                .customDao()
-                                .deleteAlbum(album = dynamicAlbum.id)
-                        }
-
-                        context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(
-                                dynamicAlbum.mainPath,
-                                true
-                            ),
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for ${dynamicAlbum.mainPath}")
-                        e.printStackTrace()
-                    }
-
-                    navController.popBackStack()
-                }
-            }
-
-            DialogClickableItem(
-                text =
-                    if (dynamicAlbum.isPinned) stringResource(id = R.string.albums_unpin)
-                    else stringResource(id = R.string.albums_pin),
-                iconResId = R.drawable.pin,
-                position = RowPosition.Middle,
-                modifier = Modifier
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    )
-                    .height(if (!isEditingFileName.value) 42.dp else 0.dp)
-                    .padding(8.dp, 0.dp)
-            ) {
-                mainViewModel.settings.albums.edit(
-                    id = dynamicAlbum.id,
-                    newInfo = dynamicAlbum.copy(isPinned = !dynamicAlbum.isPinned)
-                )
-            }
-
-            val expanded = remember { mutableStateOf(false) }
-
-            Column(
-                modifier = Modifier
-                    .animateContentSize(
-                        animationSpec = tween(
-                            durationMillis = 500
-                        )
-                    )
-                    .then(
-                        if (!isEditingFileName.value) Modifier
-                            .wrapContentHeight(unbounded = true)
-                        else Modifier.height(0.dp)
-                    )
-                    .padding(8.dp, 0.dp, 8.dp, 6.dp)
-            ) {
-                DialogExpandableItem(
-                    text = stringResource(id = R.string.albums_info),
-                    iconResId = R.drawable.info,
-                    position = RowPosition.Bottom,
-                    expanded = expanded
-                ) {
-                    DialogInfoText(
-                        firstText = if (!dynamicAlbum.isCustomAlbum) stringResource(id = R.string.albums_path) else stringResource(
-                            id = R.string.albums_id
-                        ),
-                        secondText = if (!dynamicAlbum.isCustomAlbum) dynamicAlbum.mainPath else dynamicAlbum.id.toString(),
-                        iconResId = R.drawable.folder,
-                    )
-
-                    var mediaCount by remember { mutableIntStateOf(0) }
-                    LaunchedEffect(Unit) {
-                        mediaCount = itemCount()
-                    }
-
-                    DialogInfoText(
-                        firstText = stringResource(id = R.string.albums_item_count),
-                        secondText = mediaCount.toString(),
-                        iconResId = R.drawable.data,
-                    )
-
-                    DialogInfoText(
-                        firstText = stringResource(id = R.string.immich_uuid),
-                        secondText = dynamicAlbum.immichId,
-                        iconResId = R.drawable.cloud_done,
-                    )
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable

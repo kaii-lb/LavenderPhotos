@@ -22,10 +22,9 @@
     <string name="albums_is_custom">Это пользовательский альбом</string>
     <string name="albums_custom">Пользовательский альбом</string>
     <string name="albums_non_existent">Таких альбомов не существует</string>
-    <string name="albums_remove">Удалить альбом из списка</string>
+    <string name="albums_remove_desc">Удалить альбом из списка</string>
     <string name="albums_info">Информация об альбоме</string>
     <string name="albums_path">Путь</string>
-    <string name="albums_id">ИД</string>
     <string name="albums_item_count">Количество элементов</string>
     <string name="albums_name">Название альбома</string>
     <string name="albums_type">Тип альбома</string>

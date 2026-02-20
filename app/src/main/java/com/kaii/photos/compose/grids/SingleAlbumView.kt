@@ -17,26 +17,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
-import com.kaii.photos.compose.dialogs.SingleAlbumDialog
+import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
@@ -46,6 +47,8 @@ import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SingleAlbumView(
@@ -55,7 +58,6 @@ fun SingleAlbumView(
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
-    val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
@@ -72,14 +74,11 @@ fun SingleAlbumView(
     val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = dynamicAlbum,
+        albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
-        navController = navController,
         incomingIntent = incomingIntent,
-        onBackClick = {
-            navController.popBackStack()
-        },
-        mediaCount = viewModel::getMediaCount
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
     )
 }
 
@@ -89,7 +88,6 @@ fun SingleAlbumView(
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
@@ -105,14 +103,11 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = dynamicAlbum,
+        albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
-        navController = navController,
         incomingIntent = incomingIntent,
-        onBackClick = {
-            navController.popBackStack()
-        },
-        mediaCount = viewModel::getMediaCount
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
     )
 }
 
@@ -120,15 +115,38 @@ fun SingleAlbumView(
 @Composable
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-    albumInfo: AlbumInfo,
+    albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
-    navController: NavHostController,
     incomingIntent: Intent?,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit,
-    mediaCount: suspend () -> Int
+    mediaCount: suspend () -> Int,
+    albumSize: suspend () -> String
 ) {
-    val showDialog = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showInfoDialog by remember { mutableStateOf(false) }
+
+    if (showInfoDialog) {
+        AlbumInfoDialog(
+            albumInfo = albumInfo,
+            sheetState = sheetState,
+            itemCount = mediaCount,
+            albumSize = albumSize,
+            toggleSelectionMode = {
+                selectionManager.enterSelectMode()
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showInfoDialog = false
+                }
+            },
+            dismiss = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showInfoDialog = false
+                }
+            }
+        )
+    }
 
     Scaffold(
         modifier = modifier
@@ -137,9 +155,14 @@ private fun SingleAlbumViewCommon(
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
                 selectionManager = selectionManager,
-                showDialog = showDialog,
                 isMediaPicker = incomingIntent != null,
-                onBackClick = onBackClick
+                showDialog = {
+                    coroutineScope.launch {
+                        showInfoDialog = true
+                        delay(50)
+                        sheetState.expand()
+                    }
+                }
             )
         },
         bottomBar = {
@@ -189,18 +212,10 @@ private fun SingleAlbumViewCommon(
         ) {
             PhotoGrid(
                 pagingItems = pagingItems,
-                albumInfo = albumInfo,
+                albumInfo = albumInfo(),
                 selectionManager = selectionManager,
-                viewProperties = if (albumInfo.isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
+                viewProperties = if (albumInfo().isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
                 isMediaPicker = incomingIntent != null
-            )
-
-            SingleAlbumDialog(
-                showDialog = showDialog,
-                albumId = albumInfo.id,
-                navController = navController,
-                selectionManager = selectionManager,
-                itemCount = mediaCount
             )
         }
     }

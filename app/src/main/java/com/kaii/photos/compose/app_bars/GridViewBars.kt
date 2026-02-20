@@ -16,7 +16,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,21 +71,11 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
-    albumInfo: AlbumInfo,
+    albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
-    showDialog: MutableState<Boolean>,
     isMediaPicker: Boolean = false,
-    onBackClick: () -> Unit
+    showDialog: () -> Unit
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val normalAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-
-    val dynamicAlbum by remember {
-        derivedStateOf {
-            normalAlbums.firstOrNull { it.id == albumInfo.id } ?: albumInfo
-        }
-    }
-
     val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
     AnimatedContent(
@@ -105,8 +94,12 @@ fun SingleAlbumViewTopBar(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 navigationIcon = {
+                    val navController = LocalNavController.current
+
                     IconButton(
-                        onClick = onBackClick,
+                        onClick = {
+                            navController.popBackStack()
+                        }
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
@@ -119,7 +112,7 @@ fun SingleAlbumViewTopBar(
                 },
                 title = {
                     Text(
-                        text = dynamicAlbum.name,
+                        text = albumInfo().name,
                         fontSize = TextUnit(18f, TextUnitType.Sp),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -129,28 +122,29 @@ fun SingleAlbumViewTopBar(
                     )
                 },
                 actions = {
-                    if (!isMediaPicker && !dynamicAlbum.isCustomAlbum) {
+                    if (!isMediaPicker && !albumInfo().isCustomAlbum) {
                         var showPathsDialog by remember { mutableStateOf(false) }
 
                         if (showPathsDialog) {
                             AlbumPathsDialog(
-                                albumInfo = dynamicAlbum,
+                                albumInfo = albumInfo(),
                                 onConfirm = { selectedPaths ->
+                                    val album = albumInfo()
                                     val newInfo =
-                                        dynamicAlbum.copy(
-                                            id = dynamicAlbum.id,
+                                        album.copy(
+                                            id = album.id,
                                             paths = selectedPaths
                                         )
 
                                     mainViewModel.settings.albums.edit(
-                                        id = dynamicAlbum.id,
+                                        id = album.id,
                                         newInfo = newInfo
                                     )
 
                                     navController.popBackStack()
                                     navController.navigate(
                                         route =
-                                            if (albumInfo.isCustomAlbum) {
+                                            if (album.isCustomAlbum) {
                                                 Screens.CustomAlbum.GridView(
                                                     albumInfo = newInfo
                                                 )
@@ -266,9 +260,7 @@ fun SingleAlbumViewTopBar(
                     // }
 
                     IconButton(
-                        onClick = {
-                            showDialog.value = true
-                        },
+                        onClick = showDialog
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.settings),
@@ -288,14 +280,14 @@ fun SingleAlbumViewTopBar(
 
 @Composable
 fun SingleAlbumViewBottomBar(
-    albumInfo: AlbumInfo,
+    albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
     incomingIntent: Intent? = null
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
             SelectingBottomBarItems(
-                albumInfo = albumInfo,
+                albumInfo = albumInfo(),
                 selectionManager = selectionManager
             )
         }

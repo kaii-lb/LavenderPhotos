@@ -22,10 +22,9 @@
     <string name="albums_is_custom">To jest album niestandardowy</string>
     <string name="albums_custom">Album niestandardowy</string>
     <string name="albums_non_existent">Nie istnieją takie albumy</string>
-    <string name="albums_remove">Usuń album z listy</string>
+    <string name="albums_remove_desc">Usuń album z listy</string>
     <string name="albums_info">Informacje o albumie</string>
     <string name="albums_path">Ścieżka</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Liczba pozycji</string>
     <string name="albums_name">Nazwa albumu</string>
     <string name="albums_type">Typ albumu</string>

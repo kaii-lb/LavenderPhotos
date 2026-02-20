@@ -86,4 +86,8 @@ class MediaRepository(
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
         return@withContext dao.countMediaInPaths(paths = params.value.paths)
     }
+
+    suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+        return@withContext dao.mediaSize(paths = params.value.paths)
+    }
 }

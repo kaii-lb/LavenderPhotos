@@ -282,8 +282,12 @@ private fun SinglePhotoViewCommon(
         (context as Activity).finish()
     }
 
+    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
 
     Scaffold(
         topBar = {
@@ -294,7 +298,10 @@ private fun SinglePhotoViewCommon(
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
                 expandInfoDialog = {
-                    showInfoDialog = true
+                    coroutineScope.launch {
+                        showInfoDialog = true
+                        sheetState.partialExpand()
+                    }
                 }
             )
         },
@@ -341,12 +348,7 @@ private fun SinglePhotoViewCommon(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = false
-        )
         if (showInfoDialog) {
-            val coroutineScope = rememberCoroutineScope()
-
             SinglePhotoInfoDialog(
                 currentMediaItem = mediaItem,
                 showMoveCopyOptions = true,

@@ -20,10 +20,9 @@
     <string name="albums_is_custom">這是一個自定義相簿</string>
     <string name="albums_custom">自定義相簿</string>
     <string name="albums_non_existent">不存在的相簿</string>
-    <string name="albums_remove">移除列表所有的相簿</string>
+    <string name="albums_remove_desc">移除列表所有的相簿</string>
     <string name="albums_info">相簿資訊</string>
     <string name="albums_path">路徑</string>
-    <string name="albums_id">ID</string>
     <string name="albums_item_count">項目數量</string>
     <string name="albums_name">相簿名稱</string>
     <string name="albums_type">相簿類型</string>

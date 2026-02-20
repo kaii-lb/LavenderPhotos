@@ -553,12 +553,11 @@
     <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medya ekleyin</string>
     <string name="albums_folder_desc">Bir klasörden medya yükle</string>
     <string name="albums_non_existent">Böyle bir albüm mevcut değil</string>
-    <string name="albums_remove">Albümü listeden kaldır</string>
+    <string name="albums_remove_desc">Albümü listeden kaldır</string>
     <string name="albums_pin">Bu albümü sabitle</string>
     <string name="albums_unpin">Bu albümün sabitlemesini kaldır</string>
     <string name="albums_info">Albüm Bilgisi</string>
     <string name="albums_path">Yol</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Öğe Sayısı</string>
     <string name="albums_name">Albüm Adı</string>
     <string name="albums_type">Albüm Türü</string>

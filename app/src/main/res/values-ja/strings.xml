@@ -27,9 +27,8 @@
     <string name="albums_main_list">メインアルバムの一覧</string>
     <string name="albums_selected">選択済みのアルバム</string>
     <string name="albums_media_sorting">メディアの並べ替え</string>
-    <string name="albums_remove">一覧からアルバムを削除</string>
+    <string name="albums_remove_desc">一覧からアルバムを削除</string>
     <string name="albums_path">パス</string>
-    <string name="albums_id">ID</string>
     <string name="albums_item_count">項目数</string>
     <string name="albums_add_failed">アルバムの追加に失敗しました :&lt;</string>
     <string name="app_name_full">Lavender Photos</string>

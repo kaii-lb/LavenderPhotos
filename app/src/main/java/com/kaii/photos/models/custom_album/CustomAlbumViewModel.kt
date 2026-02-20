@@ -31,4 +31,13 @@ class CustomAlbumViewModel(
 
     fun remove(items: Set<MediaStoreData>) = repo.remove(items, albumInfo.id)
     suspend fun getMediaCount() = repo.getMediaCount()
+    suspend fun getMediaSize(): String {
+        val bytes = repo.getMediaSize()
+
+        if (bytes >= 1_000_000_000) {
+            return ((bytes.toDouble() / 1_000_000_0).toLong() / 100.0).toString() + " GB"
+        }
+
+        return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+    }
 }

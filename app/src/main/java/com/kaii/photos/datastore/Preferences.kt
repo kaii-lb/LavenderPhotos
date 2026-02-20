@@ -80,8 +80,8 @@ class SettingsAlbumsListImpl(
 
             val present = json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList()
 
-            val missing = list.filter {
-                it.name.isNotBlank() && it !in present
+            val missing = list.filter { album ->
+                album.name.isNotBlank() && !present.any { album.equalsIgnoringPinned(it) }
             }
 
             present.addAll(missing)
@@ -93,7 +93,7 @@ class SettingsAlbumsListImpl(
     fun get() = context.datastore.data.map { data ->
         var list = data[oldAlbumsKey] ?: jsonDefaultAlbumsList
 
-        val isPreV083 = list.startsWith(",") // if list starts with a , then its using an old version of list storing system, move to new version
+        val isPreV083 = list.startsWith(",") // if list starts with a "," then its using an old version of list storing system, move to new version
         val isPreV095 = list.startsWith(separator)
 
         when {
@@ -814,7 +814,7 @@ class SettingsImmichImpl(
     private val immichToken = byteArrayPreferencesKey("immich_token")
     private val username = stringPreferencesKey("immich_username")
     private val alwaysShowUserInfo =
-        booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and user name, even if not logged in.
+        booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and username, even if not logged in.
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty

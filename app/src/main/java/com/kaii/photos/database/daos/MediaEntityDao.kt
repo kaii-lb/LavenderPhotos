@@ -23,6 +23,9 @@ interface MediaDao {
     @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath IN (:paths)")
     fun countMediaInPaths(paths: Set<String>): Int
 
+    @Query(value = "SELECT SUM(size) FROM media WHERE parentPath IN (:paths)")
+    fun mediaSize(paths: Set<String>): Long
+
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
 
