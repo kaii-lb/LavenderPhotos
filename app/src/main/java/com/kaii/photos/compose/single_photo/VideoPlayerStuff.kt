@@ -1151,9 +1151,17 @@ fun rememberPlayerView(
 ): PlayerView {
     val context = LocalContext.current
     val resources = LocalResources.current
+    val mainViewModel = LocalMainViewModel.current
+    val useBlackBackground by mainViewModel.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
+    val blurViews by mainViewModel.blurViews.collectAsStateWithLifecycle()
 
-    val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
-    val backgroundColor = if (useBlackBackground) Color.Black.toArgb() else MaterialTheme.colorScheme.background.toArgb()
+    val backgroundColor = when {
+        blurViews -> Color.Transparent.toArgb()
+
+        useBlackBackground -> Color.Black.toArgb()
+
+        else -> MaterialTheme.colorScheme.background.toArgb()
+    }
 
     val playerView = remember {
         PlayerView(

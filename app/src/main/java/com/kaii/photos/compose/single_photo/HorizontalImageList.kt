@@ -19,6 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
@@ -29,9 +32,11 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
@@ -71,7 +76,11 @@ fun HorizontalImageList(
     appBarsVisible: MutableState<Boolean>,
     isSecuredMedia: Boolean = false
 ) {
+    val mainViewModel = LocalMainViewModel.current
+
     val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
+    val useCache by mainViewModel.settings.storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
+    val blurBackground by mainViewModel.blurViews.collectAsStateWithLifecycle()
 
     HorizontalPager(
         state = state,
@@ -108,8 +117,23 @@ fun HorizontalImageList(
         if (media.item.type == MediaType.Video) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize(1f)
+                    .fillMaxSize()
             ) {
+                if (blurBackground) {
+                    GlideImage(
+                        model = media.item.uri.toUri(),
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .blur(48.dp)
+                            .alpha(0.8f)
+                    ) {
+                        it.signature(media.signature())
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    }
+                }
+
                 // TODO: handle immich
                 VideoPlayer(
                     item = media.item,
@@ -166,6 +190,36 @@ fun HorizontalImageList(
                     }
                 }
 
+                val glideModel =
+                    when {
+                        isSecuredMedia -> model
+
+                        media.item.immichUrl != null -> ImmichInfo(
+                            thumbnail = media.item.immichThumbnail!!,
+                            original = media.item.immichUrl!!,
+                            hash = media.item.hash!!,
+                            accessToken = media.accessToken!!,
+                            useThumbnail = false
+                        )
+
+                        else -> media.item.uri
+                    }
+
+                if (blurBackground) {
+                    GlideImage(
+                        model = glideModel,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .blur(48.dp)
+                            .alpha(0.8f)
+                    ) {
+                        it.signature(media.signature())
+                            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                    }
+                }
+
                 if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
                         state = rememberMotionPhotoState(uri = motionPhoto.uri),
@@ -174,23 +228,11 @@ fun HorizontalImageList(
                         window = window,
                         glideImageView = @Composable { modifier ->
                             GlideView(
-                                model =
-                                    when {
-                                        isSecuredMedia -> model
-
-                                        media.item.immichUrl != null -> ImmichInfo(
-                                            thumbnail = media.item.immichThumbnail!!,
-                                            original = media.item.immichUrl!!,
-                                            hash = media.item.hash!!,
-                                            accessToken = media.accessToken!!,
-                                            useThumbnail = false
-                                        )
-
-                                        else -> media.item.uri
-                                    },
+                                model = glideModel,
                                 item = media.item,
                                 zoomableState = zoomableState,
                                 window = window,
+                                useCache = useCache,
                                 appBarsVisible = appBarsVisible,
                                 modifier = modifier,
                                 disableSetBarVisibility = true
@@ -199,23 +241,11 @@ fun HorizontalImageList(
                     )
                 } else {
                     GlideView(
-                        model =
-                            when {
-                                isSecuredMedia -> model
-
-                                media.item.immichUrl != null -> ImmichInfo(
-                                    thumbnail = media.item.immichThumbnail!!,
-                                    original = media.item.immichUrl!!,
-                                    hash = media.item.hash!!,
-                                    accessToken = media.accessToken!!,
-                                    useThumbnail = false
-                                )
-
-                                else -> media.item.uri
-                            },
+                        model = glideModel,
                         item = media.item,
                         zoomableState = zoomableState,
                         window = window,
+                        useCache = useCache,
                         appBarsVisible = appBarsVisible,
                         isHidden = isSecuredMedia,
                         modifier = Modifier
@@ -244,7 +274,7 @@ fun GlideView(
     window: Window,
     appBarsVisible: MutableState<Boolean>,
     modifier: Modifier = Modifier,
-    useCache: Boolean = true,
+    useCache: Boolean,
     disableSetBarVisibility: Boolean = false,
     isHidden: Boolean = false
 ) {

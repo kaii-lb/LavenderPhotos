@@ -1150,6 +1150,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_extra_secure_nav_desc">Shows an option to navigate to Secure Folder from the app\'s main dialog</string>
     <string name="look_and_feel_rounded_corners">Rounded Thumbnail Corners</string>
     <string name="look_and_feel_rounded_corners_desc">Circular corners on thumbnails in photo grids</string>
+    <string name="look_and_feel_views">Views</string>
+    <string name="look_and_feel_views_blur">Background Blur</string>
+    <string name="look_and_feel_views_blur_desc">Fill the background with a blurred version of the current image</string>
 
     <!-- Immich -->
     <string name="immich">Immich</string>

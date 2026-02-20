@@ -60,6 +60,12 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
         initialValue = false
     )
 
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
     val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Lazily,

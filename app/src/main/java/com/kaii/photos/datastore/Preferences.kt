@@ -474,6 +474,7 @@ class SettingsLookAndFeelImpl(
     private val showExtraSecureNav = booleanPreferencesKey("look_and_feel_extra_secure")
     private val useRoundedCorners = booleanPreferencesKey("look_and_feel_use_rounded_corners") // for photo grid
     private val topBarDetailsFormat = intPreferencesKey("look_and_feel_top_bar_details_format")
+    private val blurForViews = booleanPreferencesKey("look_and_feel_blur_views")
 
     /** 0 is follow system
      * 1 is dark
@@ -570,6 +571,17 @@ class SettingsLookAndFeelImpl(
     fun setTopBarDetailsFormat(format: TopBarDetailsFormat) = viewModelScope.launch {
         context.datastore.edit {
             it[topBarDetailsFormat] = TopBarDetailsFormat.entries.indexOf(format)
+        }
+    }
+
+    fun getBlurViews(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[blurForViews] ?: false
+        }
+
+    fun setBlurViews(value: Boolean) = viewModelScope.launch {
+        context.datastore.edit {
+            it[blurForViews] = value
         }
     }
 }

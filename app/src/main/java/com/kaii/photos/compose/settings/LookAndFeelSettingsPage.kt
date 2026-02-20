@@ -297,6 +297,12 @@ fun LookAndFeelSettingsPage() {
             }
 
             item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.look_and_feel_views)
+                )
+            }
+
+            item {
                 val useBlackBackground by mainViewModel.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
 
                 PreferencesSwitchRow(
@@ -308,6 +314,21 @@ fun LookAndFeelSettingsPage() {
                     checked = useBlackBackground
                 ) { checked ->
                     mainViewModel.settings.lookAndFeel.setUseBlackBackgroundForViews(checked)
+                }
+            }
+
+            item {
+                val blur by mainViewModel.blurViews.collectAsStateWithLifecycle(initialValue = false)
+
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_views_blur),
+                    summary = stringResource(id = R.string.look_and_feel_views_blur_desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.lens_blur,
+                    showBackground = false,
+                    checked = blur
+                ) { checked ->
+                    mainViewModel.settings.lookAndFeel.setBlurViews(checked)
                 }
             }
         }
