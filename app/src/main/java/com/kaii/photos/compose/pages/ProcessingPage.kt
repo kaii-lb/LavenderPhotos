@@ -184,7 +184,7 @@ fun ProcessingPage(startupManager: StartupManager) {
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+        containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f),
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { paddingValues ->
         Column(

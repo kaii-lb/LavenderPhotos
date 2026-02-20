@@ -131,7 +131,7 @@ fun MainPages(
         modifier = Modifier
             .fillMaxSize()
             .then(
-                if (blur) Modifier.blur(48.dp)
+                if (blur) Modifier.blur(64.dp)
                 else Modifier
             )
             .nestedScroll(
