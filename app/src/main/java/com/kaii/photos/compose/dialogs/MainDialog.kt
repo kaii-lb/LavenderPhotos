@@ -434,4 +434,21 @@ fun LazyListScope.settingsColumnItems(
             }
         )
     }
+
+    item {
+        PreferencesSeparatorText(
+            text = stringResource(id = R.string.debugging_development)
+        )
+    }
+
+    item {
+        ExpressiveDialogRow(
+            title = stringResource(id = R.string.debugging),
+            icon = painterResource(id = R.drawable.bug_report),
+            position = RowPosition.Single,
+            onClick = {
+                navController.navigate(Screens.Settings.MainPage.Debugging)
+            }
+        )
+    }
 }
