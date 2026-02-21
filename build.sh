@@ -26,7 +26,11 @@ fi
 declare -a abis=("arm64-v8a" "armeabi-v7a")
 
 for abi in ${abis[@]}; do
-	./apksigner/apksigner -J-enable-native-access=ALL-UNNAMED sign --in ./app/build/outputs/apk/$path/app-$abi-$target.apk --out outputs/"photos_signed_${tag}_${abi}.apk" --key keys/releasekey.pk8 --cert keys/releasekey.x509.pem
+	unaligned="./app/build/outputs/apk/$path/app-$abi-$target.apk"
+	aligned="./app/build/outputs/apk/$path/app-$abi-$target-aligned.apk"
+	if [ -f $aligned ]; then rm $aligned; fi
+	zipalign -v -p 4 $unaligned $aligned 1>/dev/null
+	apksigner -J-enable-native-access=ALL-UNNAMED sign --in $aligned --out outputs/"photos_signed_${tag}_${abi}.apk" --key keys/releasekey.pk8 --cert keys/releasekey.x509.pem
 done
 
 echo "Signed!"
