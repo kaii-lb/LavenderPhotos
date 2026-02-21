@@ -1,8 +1,10 @@
 package com.kaii.photos.models.immich_album
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.lavender.immichintegration.clients.ApiClient
+import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -11,19 +13,21 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
-    private val immichId: String,
-    private val info: ImmichBasicInfo,
-    private val sortMode: MediaItemSortMode,
-    private val format: DisplayDateFormat,
-    private val apiClient: ApiClient
+    albumInfo: AlbumInfo,
+    info: ImmichBasicInfo,
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat,
+    apiClient: ApiClient,
+    context: Context
 ) : ViewModel() {
     private val repo = ImmichRepository(
-        immichId = immichId,
+        albumInfo = albumInfo,
         info = info,
         scope = viewModelScope,
         sortMode = sortMode,
         format = format,
-        apiClient = apiClient
+        apiClient = apiClient,
+        context = context
     )
 
     val mediaFlow = repo.mediaFlow

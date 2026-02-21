@@ -808,6 +808,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
     <string name="debugging_desc">Tools for debugging issues</string>
+    <string name="debugging_development">Development</string>
     <string name="logs">Logs</string>
     <string name="record_logs">Record Logs</string>
     <string name="record_logs_desc">Store logs for debugging. Tap to view.</string>

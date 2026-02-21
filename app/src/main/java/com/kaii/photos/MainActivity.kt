@@ -566,11 +566,12 @@ class MainActivity : ComponentActivity() {
                         val viewModel = viewModel<ImmichAlbumViewModel>(
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
-                                immichId = screen.albumInfo.immichId,
+                                albumInfo = screen.albumInfo,
                                 info = immichInfo,
                                 sortMode = sortMode,
                                 format = displayDateFormat,
-                                apiClient = LocalApiClient.current
+                                apiClient = LocalApiClient.current,
+                                context = context
                             )
                         )
 
@@ -593,11 +594,12 @@ class MainActivity : ComponentActivity() {
                         val viewModel = viewModel<ImmichAlbumViewModel>(
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
-                                immichId = screen.albumInfo.immichId,
+                                albumInfo = screen.albumInfo,
                                 info = immichInfo,
                                 sortMode = sortMode,
                                 format = displayDateFormat,
-                                apiClient = LocalApiClient.current
+                                apiClient = LocalApiClient.current,
+                                context = context
                             )
                         )
 

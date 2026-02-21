@@ -54,7 +54,6 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import kotlin.random.Random
 
 @Composable
 fun DebuggingSettingsPage() {
@@ -291,10 +290,10 @@ fun DebuggingSettingsPage() {
                     navController.navigate(
                         Screens.Immich.GridView(
                             albumInfo = AlbumInfo(
-                                id = Random.nextInt(),
+                                id = 1234561212,
                                 name = "Immich Album",
                                 paths = emptySet(),
-                                immichId = "a2d6a371-a7b3-4965-815d-e1e61265db6e"
+                                immichId = "6f8489e9-103a-4355-9036-6df2f828cba8"
                             )
                         )
                     )

@@ -40,6 +40,9 @@ interface CustomEntityDao {
     )
     fun mediaInDateRange(timestamp: Long, album: Int, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
+    @Query(value = "SELECT mediaId FROM custom_media WHERE album = :album")
+    fun getAllIdsIn(album: Int): List<Long>
+
     @Upsert
     fun upsertAll(items: List<CustomItemEntity>)
 
