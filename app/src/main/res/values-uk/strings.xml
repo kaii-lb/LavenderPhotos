@@ -26,13 +26,9 @@
     <string name="updates_whats_new">Що нового</string>
     <string name="updates">Оновлення</string>
     <string name="version_info">Версія</string>
-    <string name="dev_title">Розробник</string>
     <string name="privacy_policy_title">Політика конфіденційності</string>
     <string name="privacy_policy">Жодної! Ваші дані не залишають ваш пристрій. Жоден штучний інтелект не навчається на них, жодних алгоритмів збору інформації - нічого подібного. Lavender Photos був і завжди буде застосунком із фокусом на приватність.</string>
-    <string name="i_swear_were_not_bad">ми справді не використовуємо Ваші дані</string>
     <string name="support">Підтримати нас</string>
-    <string name="support_desc">допоможіть нам підтримувати застосунок</string>
-    <string name="updates_desc">оновлюйте застосунок</string>
     <string name="updates_check">Перевірити оновлення</string>
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
     <string name="updates_start">Почати оновлення</string>
@@ -67,7 +63,6 @@
     <string name="settings_theme_follow">Застосунок завжди в системній темі</string>
     <string name="first_startup_dialog_title">Знайти всі альбоми на пристрої?</string>
     <string name="return_to_previous_page">Повернутися на попередню сторінку</string>
-    <string name="app_icon">Іконка застосунку</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="locked_folder_help_bottom">Захищені дані неможливо відновити, якщо Ви забули пароль або видалили відбиток пальця.</string>
     <string name="secure_folder">Захищена тека</string>
@@ -189,8 +184,6 @@
     <string name="show_options">Показати додаткові параметри</string>
     <string name="set_as_wallpaper">Встановити як шпалери</string>
     <string name="more_info">Додаткова інформація</string>
-    <string name="not_available">Недоступно</string>
-    <string name="not_available_desc">Ця функція ще недоступна, оскільки застосунок перебуває у Beta-версії. Будь ласка, зачекайте на майбутній реліз.</string>
     <string name="none">Нема</string>
     <string name="pixels">Пікселі</string>
     <string name="paths_should_be_relative">Шлях має бути відносним</string>

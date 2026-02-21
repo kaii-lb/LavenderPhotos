@@ -44,17 +44,12 @@
     <string name="tabs_max_reached">Нельзя добавить более 16 вкладок</string>
     <string name="tabs_min_reached">Должна быть хотя бы одна вкладка</string>
     <string name="return_to_previous_page">Вернуться на предыдущую страницу</string>
-    <string name="app_icon">Значок приложения</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_title">Разработчик</string>
     <string name="privacy_policy_title">Условия конфиденциальности</string>
     <string name="privacy_policy">А её и нет! Ваши данные хранятся только на этом устройстве. На нём не обучается искусственный интеллект, нет алгоритмов для сбора информации, ничего. Lavender Photos всегда было и будет приложением-галереей, ориентированным на конфиденциальность.</string>
-    <string name="i_swear_were_not_bad">Мы действительно не используем ваши данные</string>
     <string name="support">Поддержка и пожертвования</string>
-    <string name="support_desc">Помогите мне поддерживать приложение в рабочем состоянии</string>
     <string name="version_info">Информация о версии</string>
     <string name="updates">Обновления</string>
-    <string name="updates_desc">Поддерживайте актуальность приложения</string>
     <string name="updates_check">Проверка обновлений</string>
     <string name="updates_check_desc">Уведомление о новой версии при открытии приложения. Не устанавливает обновление автоматически</string>
     <string name="updates_whats_new">Что нового</string>
@@ -224,8 +219,6 @@
     <string name="show_options">Показать дополнительные параметры</string>
     <string name="set_as_wallpaper">Установить как обои</string>
     <string name="more_info">Подробнее</string>
-    <string name="not_available">Недоступно</string>
-    <string name="not_available_desc">Эта функция пока недоступна, так как приложение находится в стадии бета-тестирования. Пожалуйста, дождитесь выхода следующей версии.</string>
     <string name="none">Нету</string>
     <string name="pixels">Пиксели</string>
     <string name="paths_should_be_relative">Путь должен быть относительным</string>
@@ -261,9 +254,7 @@
     <string name="albums_unpin">Открепить альбом</string>
     <string name="navigation">Навигация</string>
     <string name="translation">Перевод</string>
-    <string name="translation_desc">распространите Lavender Photos по всему миру!</string>
     <string name="licenses">Лицензии</string>
-    <string name="licenses_desc">используемое программное обеспечение с открытым исходным кодом</string>
     <string name="licenses_extra">Дополнительные сведения</string>
     <string name="licenses_extra_desc">Просмотреть более подробную информацию о лицензиях</string>
     <string name="special_thanks_to">Особая благодарность:</string>
@@ -954,7 +945,6 @@
     <string name="look_and_feel_rounded_corners">Закруглённые углы миниатюр</string>
     <string name="look_and_feel_rounded_corners_desc">Закруглённые углы на миниатюрах в фотосетках</string>
     <string name="immich_title">Резервное копирование Immich</string>
-    <string name="immich_desc">Резервное копирование на собственный сервер Immich</string>
     <string name="immich_account">Учётная запись Immich</string>
     <string name="immich_login_unavailable">Не авторизовано</string>
     <string name="immich_login_unavailable_desc">В данный момент нет подключённой учётки Immich</string>
@@ -972,8 +962,6 @@
     <string name="immich_logout">Выйти?</string>
     <string name="immich_logout_desc">Вы уверены, что хотите выйти из этой учётки?</string>
     <string name="immich_email">Электронная почта:</string>
-    <string name="immich_set_pfp_fail">Не удалось установить фото профиля</string>
-    <string name="immich_set_pfp_success">Фото профиля обновлено!</string>
     <string name="immich_state_unknown">Неизвестно</string>
     <string name="immich_auth_passowrd">Пароль</string>
     <string name="immich_auth_email">Электронная почта</string>

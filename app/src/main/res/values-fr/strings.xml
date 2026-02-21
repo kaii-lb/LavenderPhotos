@@ -25,13 +25,10 @@
     <string name="return_to_previous_page">Retourner à la page précédente</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="dev_name">kaii-lb</string>
-    <string name="dev_title">Développeur</string>
     <string name="privacy_policy_title">Politique de Confidentialité</string>
     <string name="support">Contributions &amp; Dons</string>
-    <string name="support_desc">aidez-moi à garder cette appli en vie</string>
     <string name="version_info">Infos de version</string>
     <string name="updates">Mises à jour</string>
-    <string name="updates_desc">gardez cette appli à jour</string>
     <string name="updates_check">Vérifier les mises à jour</string>
     <string name="updates_check_desc">Vous informe d\'une nouvelle version quand vous ouvrez cette appli. N\'installe pas automatiquement la mise à jour</string>
     <string name="updates_whats_new">Quoi de neuf</string>
@@ -63,13 +60,11 @@
     <string name="locked_folder_help_top">Le Dossier-Cadenas est un dossier sécurisé pour vos images et vidéos sur cet appareil.\nLes médias sécurisés ne sont jamais téléversés nulle part et restent toujours sur l\'appareil, encryptés avec une clé unique propre au mot de passe de votre ou aux données d\'empreinte digitales de votre appareil.</string>
     <string name="locked_folder_help_bottom">Les données sécurisées ne peuvent pas être récupérées si le mot de passe est oublié ou si l\'empreinte digitale est retirée de l\'appareil.</string>
     <string name="albums_type">Type d\'album</string>
-    <string name="app_icon">Icône de l\'appli</string>
     <string name="tabs_navigate_to">Ouvrir la page %s$1</string>
     <string name="tabs_albums_incl">Albums inclus</string>
     <string name="tabs_add">Ajouter un onglet</string>
     <string name="tabs_customize">Personnaliser les onglets</string>
     <string name="tabs_name">Nom de l\'onglet</string>
-    <string name="i_swear_were_not_bad">on utilise vraiment pas vos données</string>
     <string name="export_raw_backup_desc">Exporte un dossier contenant tous vos médias sécurisés, brutes (encryptés ou non)</string>
     <string name="export_fav_to_zip_desc">Exporte un fichier zip contenant tous vos médias favoris</string>
     <string name="secure_decrypting">Fichiers en cours de décryptage</string>
@@ -120,8 +115,6 @@
     <string name="show_options">Montrer plus d\'options</string>
     <string name="set_as_wallpaper">Utiliser comme fond d\'écran</string>
     <string name="more_info">Plus d\'infos</string>
-    <string name="not_available">Indisponible</string>
-    <string name="not_available_desc">Cette fonctionnalité n\'es pas encore disponible car cette appli est en phase de Bêta, merci d\'attendre un prochaine version.</string>
     <string name="pixels">Pixels</string>
     <string name="paths_should_be_relative">Le chemin doit être relatif</string>
     <string name="bottom_sheets_enter_text">Entrer le texte</string>

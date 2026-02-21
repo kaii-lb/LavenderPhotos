@@ -44,17 +44,12 @@
     <string name="tabs_max_reached">Nicht mehr als 18 Tabs möglich</string>
     <string name="tabs_min_reached">Mindestens ein Tab benötigt</string>
     <string name="return_to_previous_page">Zu vorheriger Seite zurückkehren</string>
-    <string name="app_icon">Appsymbol</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_title">Entwickler</string>
     <string name="privacy_policy_title">Datenschutzerklärung</string>
     <string name="privacy_policy">Es gibt keine! Die Daten bleiben alle auf Deinem Gerät. Es wird keine KI darauf trainiert, keine Algorithmen zum Sammeln von Informationen, nichts. Lavender Photos ist und bleibt eine auf Datenschutz ausgerichtete Galerie-App.</string>
-    <string name="i_swear_were_not_bad">Wir sammeln Deine Daten wirklich nicht</string>
     <string name="support">Unterstützen &amp; Spenden</string>
-    <string name="support_desc">Hilf mir, die App am Leben zu erhalten</string>
     <string name="version_info">Versionsinfo</string>
     <string name="updates">Aktualisierungen</string>
-    <string name="updates_desc">Halte die App auf dem neuesten Stand</string>
     <string name="updates_check">Auf Updates überprüfen</string>
     <string name="updates_check_desc">Benachrichtigt über neue Version, wenn die App geöffnet. Installiert die Aktualisierung nicht automatisch</string>
     <string name="updates_whats_new">Neuerungen</string>
@@ -90,7 +85,6 @@
     <string name="navigation">Navigation</string>
     <string name="translation">Übersetzung</string>
     <string name="licenses">Lizenzen</string>
-    <string name="licenses_desc">Genutzte Open Source Software</string>
     <string name="licenses_extra">Zusätzliche Details</string>
     <string name="licenses_extra_desc">Detaillierte Lizenzinformationen anzeigen</string>
     <string name="special_thanks_to">Besonderer Dank geht an:</string>
@@ -137,7 +131,6 @@
     <string name="navigation_search">Suche</string>
     <string name="navigation_favourites">Favoriten</string>
     <string name="navigation_trash">Gelöscht</string>
-    <string name="translation_desc">Lavender Photos weltweit verbreiten</string>
     <string name="updates_failed_download">Konnte Update nicht herunterladen</string>
     <string name="updates_no_changelog">Keine Änderungen angegeben</string>
     <string name="secure_export_failed">Exportieren des Backups fehlgeschlagen!</string>

@@ -73,17 +73,12 @@
     <string name="tabs_customize">Kustomisasi Tab</string>
     <string name="tabs_customize_desc">Ubah tab apa yang tersedia di bar bawah</string>
     <string name="return_to_previous_page">Kembali ke laman sebelumnya</string>
-    <string name="app_icon">Ikon Aplikasi</string>
     <string name="app_name_full">Foto Lavender</string>
-    <string name="dev_title">Pengembang</string>
     <string name="privacy_policy_title">Kebijakan Privasi</string>
     <string name="privacy_policy">Tidak ada sama sekali! Tidak ada satupun dari data anda pergi kemanapun kecuali hanya di perangkat ini. Tidak ada AI yang dilatih darinya, tidak ada algoritma untuk memanen informasi, tidak ada. Foto Lavender sudah dan selalu akan menjadi aplikasi galeri yang berfokus pada privasi.</string>
-    <string name="i_swear_were_not_bad">kita benar-benar tidak menggunakan data anda</string>
     <string name="support">Support &amp; Donasio</string>
-    <string name="support_desc">bantu saya menjaga aplikasi ini tetap hidup</string>
     <string name="version_info">Info Versi</string>
     <string name="updates">Pembaruan</string>
-    <string name="updates_desc">menjaga aplikasi up to date</string>
     <string name="updates_check">Periksa untuk Pembaruan</string>
     <string name="updates_check_desc">Memberitahu versi baru saat anda membuka aplikasi. Tidak menginstal-otomatis pembaruannya</string>
     <string name="updates_whats_new">Apa yang baru</string>

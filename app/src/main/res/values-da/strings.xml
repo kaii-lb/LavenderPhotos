@@ -44,17 +44,12 @@
     <string name="tabs_max_reached">Kan ikke tilføje mere end 5 faneblade</string>
     <string name="tabs_min_reached">Der skal være mindst ét faneblad</string>
     <string name="return_to_previous_page">Returnér til forrige side</string>
-    <string name="app_icon">App Ikon</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_title">Udvikler</string>
     <string name="privacy_policy_title">Privatlivspolitik</string>
     <string name="privacy_policy">Der er ikke en! Intet af dit data forlader din enhed. Ingen AI trænes på det, ingen algoritmer høster din information, intet. Lavender Photos har altid været og vil altid være en privatlivs-fokuseret galleri app.</string>
-    <string name="i_swear_were_not_bad">vi bruger virkeligt ikke dit data</string>
     <string name="support">Støtte &amp; Donationer</string>
-    <string name="support_desc">hjælp mig med at holde appen i live</string>
     <string name="version_info">Versions-information</string>
     <string name="updates">Opdateringer</string>
-    <string name="updates_desc">hold appen opdateret</string>
     <string name="updates_check">Tjek om der er opdateringer</string>
     <string name="updates_check_desc">Notificerer om nye opdateringer når du åbner appen. Installerer ikke opdateringen</string>
     <string name="updates_whats_new">Hvad er nyt</string>

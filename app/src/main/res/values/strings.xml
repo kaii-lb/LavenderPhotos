@@ -713,27 +713,20 @@
     <string name="navigation_trash">Trash</string>
 
     <!-- App -->
-    <string name="app_icon">App Icon</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="dev_name" translatable="false">kaii-lb</string>
-    <string name="dev_title">Developer</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy">There isn\'t one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.</string>
-    <string name="i_swear_were_not_bad">we really don\'t use your data</string>
     <string name="support">Support &amp; Donations</string>
-    <string name="support_desc">help me keep the app alive</string>
     <string name="version_info">Version Info</string>
     <string name="translation">Translation</string>
-    <string name="translation_desc">bring Lavender Photos worldwide!</string>
     <string name="licenses">Licenses</string>
-    <string name="licenses_desc">open source software used</string>
     <string name="licenses_extra">Extra Details</string>
     <string name="licenses_extra_desc">View more detailed information on licenses</string>
     <string name="special_thanks_to">Special thanks to:</string>
 
     <!-- Updates -->
     <string name="updates">Updates</string>
-    <string name="updates_desc">keep the app up to date</string>
     <string name="updates_check">Check for Updates</string>
     <string name="updates_check_desc">Notifies of new version when you open the app. Does not auto-install the update</string>
     <string name="updates_whats_new">What\'s new</string>
@@ -1091,8 +1084,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="wallpaper_Both">Both Screens</string>
     <string name="wallpaper_scrollable">Scrollable</string>
     <string name="more_info">More Info</string>
-    <string name="not_available">Not Available</string>
-    <string name="not_available_desc">This feature is not available yet as the app is in Beta, please wait for a future release.</string>
     <string name="none">None</string>
     <string name="pixels">Pixels</string>
     <string name="paths_should_be_relative">Path needs to be relative</string>
@@ -1158,7 +1149,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Immich -->
     <string name="immich">Immich</string>
     <string name="immich_title">Immich Backup</string>
-    <string name="immich_desc">Backup to self-hosted Immich server</string>
     <string name="immich_account">Immich Account</string>
     <string name="immich_login_unavailable">Not Logged In</string>
     <string name="immich_login_unavailable_desc">No immich account connected</string>
@@ -1178,9 +1168,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_logout">Logout?</string>
     <string name="immich_logout_desc">Are you sure you want to logout from this account?</string>
     <string name="immich_email">Email:</string>
-    <string name="immich_set_pfp_fail">Unable to set Profile Picture</string>
-    <string name="immich_set_pfp_success">Updated profile picture!</string>
-    <string name="immich_set_pfp_loading">Updating profile picture</string>
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_auth_passowrd">Password</string>
     <string name="immich_auth_email">Email</string>

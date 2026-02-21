@@ -33,17 +33,12 @@
     <string name="tabs_max_reached">Não é possível adicionar mais de 5 abas</string>
     <string name="tabs_min_reached">Pelo menos uma aba precisa existir</string>
     <string name="return_to_previous_page">Voltar para a página anterior</string>
-    <string name="app_icon">Ícone do aplicativo</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_title">Desenvolvedor</string>
     <string name="privacy_policy_title">política de Privacidade</string>
     <string name="privacy_policy">Não existe! Nenhum dos seus dados vai para lugar nenhum além deste dispositivo. Nenhuma IA é treinada nele, nenhum algoritmo para coletar informações, nada. O Lavender Photos foi e sempre será um aplicativo de galeria focado em privacidade.</string>
-    <string name="i_swear_were_not_bad">nós realmente não usamos seus dados</string>
     <string name="support">Apoio e Doações</string>
-    <string name="support_desc">me ajude a manter o aplicativo vivo</string>
     <string name="version_info">Informações da versão</string>
     <string name="updates">Atualizações</string>
-    <string name="updates_desc">mantenha o aplicativo atualizado</string>
     <string name="updates_check">Verificar atualizações</string>
     <string name="updates_check_desc">Notifica sobre uma nova versão ao abrir o aplicativo. A atualização não instala automaticamente</string>
     <string name="updates_whats_new">O que há de novo</string>

@@ -32,13 +32,10 @@
     <string name="tabs_default">預設分頁</string>
     <string name="tabs_default_desc">Lavender Photos 會在啟動時自動開啟此分頁</string>
     <string name="tabs_customize">自訂分頁</string>
-    <string name="dev_title">開發者</string>
     <string name="privacy_policy_title">隱私政策</string>
-    <string name="i_swear_were_not_bad">我們不會使用您的數據</string>
     <string name="support">支援&amp;贊助</string>
     <string name="version_info">版本資訊</string>
     <string name="updates">更新</string>
-    <string name="updates_desc">使應用程式保持最新</string>
     <string name="updates_check">檢查更新</string>
     <string name="updates_whats_new">有什麼新的</string>
     <string name="updates_notice">下載通知</string>
@@ -50,7 +47,6 @@
     <string name="updates_start">開始更新</string>
     <string name="secure_folder">安全資料夾</string>
     <string name="app_name">圖片</string>
-    <string name="support_desc">幫助我維護應用程式的動力</string>
     <string name="updates_check_desc">開啟應用時提醒更新。不會自動翁安裝更新</string>
     <string name="locked_folder_help_bottom">如果忘記密碼或指紋已移除則無法恢復安全數據。</string>
 </resources>

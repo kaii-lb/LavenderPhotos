@@ -32,17 +32,12 @@
     <string name="tabs_max_reached">No se pueden agregar más de 8 pestañas</string>
     <string name="tabs_min_reached">Debe existir al menos una pestaña</string>
     <string name="return_to_previous_page">Volver a la página anterior</string>
-    <string name="app_icon">Icono de la Aplicación</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_title">Desarrollador</string>
     <string name="privacy_policy_title">Política de Privacidad</string>
     <string name="privacy_policy">¡No hay ninguna! Ninguno de sus datos va a ninguna parte excepto a este dispositivo. Ninguna IA es entrenada con ello, no hay algoritmos para recopilar información, nada. Lavender Photos tiene y siempre será una aplicación de galería centrada en la privacidad.</string>
-    <string name="i_swear_were_not_bad">Nosotros realmente no usamos tus datos</string>
     <string name="support">Apoyo y Donaciones</string>
-    <string name="support_desc">ayúdame a mantener viva la aplicación</string>
     <string name="version_info">Información de la Versión</string>
     <string name="updates">Actualizaciones</string>
-    <string name="updates_desc">mantén la aplicación actualizada</string>
     <string name="updates_check">Buscar Actualizaciones</string>
     <string name="updates_check_desc">Notifica la nueva versión cuando abres la aplicación. No instala automáticamente la actualización</string>
     <string name="updates_whats_new">Qué hay de nuevo</string>
@@ -229,8 +224,6 @@
     <string name="show_options">Mostrar más opciones</string>
     <string name="set_as_wallpaper">Establecer como Fondo de pantalla</string>
     <string name="more_info">Más Información</string>
-    <string name="not_available">No Disponible</string>
-    <string name="not_available_desc">Esta función aún no está disponible ya que la aplicación está en versión beta, espere una versión futura.</string>
     <string name="none">Ninguna</string>
     <string name="pixels">Píxeles</string>
     <string name="paths_should_be_relative">La ruta debe ser relativa</string>
@@ -784,9 +777,7 @@
     <string name="albums_unpin">Desanclar este álbum</string>
     <string name="navigation">Navegación</string>
     <string name="translation">Traducción</string>
-    <string name="translation_desc">¡Lleva Lavender Photos a todo el mundo!</string>
     <string name="licenses">Licencias</string>
-    <string name="licenses_desc">software de código abierto utilizado</string>
     <string name="licenses_extra">Detalles Extra</string>
     <string name="licenses_extra_desc">Ver información más detallada sobre licencias</string>
     <string name="special_thanks_to">Un agradecimiento especial a:</string>
@@ -901,7 +892,6 @@
     <string name="look_and_feel_extra_secure_nav_desc">Muestra una opción para navegar a la Carpeta segura desde el cuadro de diálogo principal de la app</string>
     <string name="immich">Immich</string>
     <string name="immich_title">Copia de Seguridad de Immich</string>
-    <string name="immich_desc">Copia de seguridad en el servidor Immich autohospedado</string>
     <string name="immich_account">Cuenta Immich</string>
     <string name="immich_login_unavailable">No Ha Iniciado Sesión</string>
     <string name="immich_login_unavailable_desc">Ninguna cuenta de immich está conectada actualmente</string>
@@ -919,8 +909,6 @@
     <string name="immich_logout">¿Cerrar sesión?</string>
     <string name="immich_logout_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
     <string name="immich_email">Email:</string>
-    <string name="immich_set_pfp_fail">No se pudo establecer la imagen de Perfil</string>
-    <string name="immich_set_pfp_success">¡Foto de perfil actualizada!</string>
     <string name="immich_state_unknown">Desconocido</string>
     <string name="immich_auth_passowrd">Contraseña</string>
     <string name="immich_auth_email">Email</string>

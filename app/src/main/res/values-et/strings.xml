@@ -9,7 +9,6 @@
     <string name="first_startup_dialog_confirm_title">Otsi!</string>
     <string name="albums_name">Albumi nimi</string>
     <string name="albums_type">Albumi tüüp</string>
-    <string name="dev_title">Arendaja</string>
     <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
     <string name="error_views_folder_non_existent">Kausta pole olemas</string>
     <string name="albums_media_sorting">Meedia järjestamine</string>
@@ -22,10 +21,8 @@
     <string name="tabs_max_reached">Sa ei saa lisada üle viie vahekaardi</string>
     <string name="tabs_min_reached">Olemas peab olema vähemalt üks vahekaart</string>
     <string name="return_to_previous_page">Tagasi eelmisele lehele</string>
-    <string name="app_icon">Rakenduse ikoon</string>
     <string name="version_info">Versiooniteave</string>
     <string name="updates">Uuendused</string>
-    <string name="updates_desc">hoia rakendus uuendatuna</string>
     <string name="updates_check">Kontrolli uuendusi</string>
     <string name="updates_check_desc">Teavitab rakenduse avamisel uuenduse olemasolust, kuid ei paigalda seda</string>
     <string name="updates_whats_new">Mida on meil uut</string>
@@ -42,11 +39,9 @@
     <string name="albums_path">Asukoht</string>
     <string name="albums_item_count">Objekte</string>
     <string name="app_name_full">Lavender - Sinu fotod</string>
-    <string name="support_desc">aita mul rakendust pidevas arenemas hoida</string>
     <string name="support">Kasutajatugi ja toetused</string>
     <string name="secure_folder">Turvaline kaust</string>
     <string name="more_info">Lisateave</string>
-    <string name="not_available">Pole saadaval</string>
     <string name="direct_path_album">Kasuta albumi lisamiseks täpset asukohta</string>
     <string name="albums_main_list">Albumite põhiline loend</string>
     <string name="albums_main_list_selected">Siia valitud albumid saavad olema nähtavad põhilises fotovaates</string>
@@ -66,7 +61,6 @@
     <string name="albums_add_failed">Albumite hulka lisamine ei õnnestunud :&lt;</string>
     <string name="albums_folder">Albumkaust</string>
     <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
-    <string name="i_swear_were_not_bad">me tõesti ei kasuta sinu andmeid</string>
     <string name="updates_notice">Teade allalaadimise kohta</string>
     <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
     <string name="secure_encrypting">Failid on krüptimisel</string>

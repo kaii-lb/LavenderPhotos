@@ -44,17 +44,12 @@
     <string name="tabs_max_reached">لا يمكن إضافة أكثر من 16 علامات تبويب</string>
     <string name="tabs_min_reached">يجب أن توجد علامة تبويب واحدة على الأقل</string>
     <string name="return_to_previous_page">العودة إلى الصفحة السابقة</string>
-    <string name="app_icon">أيقونة التطبيق</string>
     <string name="app_name_full">لافندر</string>
-    <string name="dev_title">المطور</string>
     <string name="privacy_policy_title">سياسة الخصوصية</string>
     <string name="privacy_policy">ليس هناك سياسة ! لا شيء من بياناتك يذهب إلى أي مكان غير هذا الجهاز. لا يتم تدريب AI على ذلك ، لا توجد خوارزميات لحصاد المعلومات ، لا شيء. صور Lavender وستكون دائمًا تطبيقًا معرضًا يركز على الخصوصية.</string>
-    <string name="i_swear_were_not_bad">نحن حقا لا نستخدم بياناتك</string>
     <string name="support">الدعم والتبرعات</string>
-    <string name="support_desc">ساعدني في الحفاظ على التطبيق</string>
     <string name="version_info">معلومات الإصدار</string>
     <string name="updates">التحديثات</string>
-    <string name="updates_desc">تحديث التطبيق</string>
     <string name="updates_check">تحقق للحصول على التحديثات</string>
     <string name="updates_check_desc">ينبه عن الإصدارات الجديدة عند فتح التطبيق. لا تثبت التحديث تلقائيًا</string>
     <string name="updates_whats_new">ما الجديد</string>
@@ -215,8 +210,6 @@
     <string name="show_options">إظهار المزيد من الخيارات</string>
     <string name="set_as_wallpaper">تعيين كخلفية</string>
     <string name="more_info">مزيد من المعلومات</string>
-    <string name="not_available">غير متوفر</string>
-    <string name="not_available_desc">هذه الميزة غير متاحة بعد لأن التطبيق في مرحلة تجريبية، لذا يرجى الانتظار لإصدار مستقبلي.</string>
     <string name="none">لا أحد</string>
     <string name="pixels">بكسل</string>
     <string name="paths_should_be_relative">يجب أن يكون المسار نسبيًا</string>
@@ -253,9 +246,7 @@
     <string name="navigation_favourites">المفضلات</string>
     <string name="navigation_trash">سلة المهملات</string>
     <string name="translation">ترجمة</string>
-    <string name="translation_desc">صور لافندر في جميع أنحاء العالم!</string>
     <string name="licenses">التراخيص</string>
-    <string name="licenses_desc">البرمجيات مفتوحة المصدر المستخدمة</string>
     <string name="licenses_extra">تفاصيل اضافية</string>
     <string name="licenses_extra_desc">عرض معلومات مفصلة التراخيص</string>
     <string name="special_thanks_to">شكر خاص ل:</string>
@@ -280,7 +271,6 @@
     <string name="favourites_migration_desc">هذه طريقة لتتبع أفضل لحظاتك؛ مع Lavender Photos، هذا يعني أن المفضلة تتم مزامنتها عبر جميع التطبيقات التي تدعمها، مع إدارة لا تشوبها شائبة، ونظام عالي الأداء!\n\nإذا كنت قادمًا من إصدار سابق من Lavender Photos، فسيتم ترحيل جميع العناصر المفضلة السابقة لديك إلى النظام الجديد.\n\nيرجى إبقاء هاتفك قيد التشغيل وفتح هذا التطبيق.</string>
     <string name="favourites_migration_started">بدأت الهجرة!</string>
     <string name="favourites_migration_none">لا توجد عناصر لترحيلها</string>
-    <string name="favourites_migration_in_progress">الهجرة قيد التقدم</string>
     <string name="favourites_migration_in_progress_short">قيد التقدم</string>
     <string name="favourites_migration_done">تم الترحيل!</string>
     <string name="favourites_migration_declined">تم رفض الأذونات!</string>
