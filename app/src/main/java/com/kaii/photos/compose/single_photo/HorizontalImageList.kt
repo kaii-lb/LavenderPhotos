@@ -135,7 +135,7 @@ fun HorizontalImageList(
                     )
 
                     LaunchedEffect(Unit) {
-                        targetAlpha = 0.8f
+                        targetAlpha = 0.5f
                     }
 
                     GlideImage(
@@ -235,7 +235,7 @@ fun HorizontalImageList(
                     )
 
                     LaunchedEffect(Unit) {
-                        targetAlpha = 0.8f
+                        targetAlpha = 0.5f
                     }
 
                     GlideImage(
