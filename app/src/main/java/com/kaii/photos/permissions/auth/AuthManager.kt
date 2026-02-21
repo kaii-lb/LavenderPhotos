@@ -16,6 +16,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -60,12 +61,12 @@ class AuthManager(
 
 @Composable
 fun rememberSecureFolderAuthManager(
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
     extraAction: (() -> Unit)? = null
 ): AuthManager {
     val context = LocalContext.current
     val resources = LocalResources.current
     val navController = LocalNavController.current
-    val coroutineScope = rememberCoroutineScope()
 
     return remember {
         AuthManager(

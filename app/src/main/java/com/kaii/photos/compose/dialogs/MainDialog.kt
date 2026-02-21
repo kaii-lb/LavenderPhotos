@@ -229,7 +229,10 @@ fun MainDialog(
 
                     if (extraSecureFolderEntry) {
                         item {
-                            val authManager = rememberSecureFolderAuthManager(extraAction = dismiss)
+                            val authManager = rememberSecureFolderAuthManager(
+                                coroutineScope = coroutineScope,
+                                extraAction = dismiss
+                            )
 
                             ExpressiveDialogRow(
                                 title = stringResource(id = R.string.secure_folder),
