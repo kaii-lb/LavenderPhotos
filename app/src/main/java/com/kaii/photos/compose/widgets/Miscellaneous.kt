@@ -53,7 +53,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -67,16 +66,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.ObjectKey
 import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
-import java.io.File
 
 @Composable
 fun SplitButton(
@@ -337,35 +332,6 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun UpdatableProfileImage(
-    loggedIn: Boolean,
-    pfpUrl: String,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val pfpPath = remember(loggedIn) {
-        if (loggedIn) {
-            val file = File(context.profilePicture)
-
-            if (file.exists()) file.absolutePath else R.drawable.account_circle
-        } else R.drawable.account_circle
-    }
-
-    GlideImage(
-        model = pfpPath,
-        contentDescription = "User profile picture",
-        contentScale = ContentScale.Crop,
-        modifier = modifier
-    ) {
-        it
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
-            .skipMemoryCache(true)
-            .signature(ObjectKey(if (pfpPath is String) pfpUrl else 0))
-    }
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
 fun AnimatedImmichBackupIcon(
     state: LoginState,
     modifier: Modifier = Modifier
@@ -459,15 +425,11 @@ fun AnimatedLoginIcon(
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)
-                    .clickable {
-                        onClick()
-                    }
+                    .clickable(onClick = onClick)
             )
         } else {
             IconButton(
-                onClick = {
-                    onClick()
-                }
+                onClick = onClick
             ) {
                 Icon(
                     painter = painterResource(R.drawable.settings),

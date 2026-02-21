@@ -184,7 +184,7 @@ fun MainDialog(
             ) {
                 LazyColumn(
                     modifier = Modifier
-                        .padding(top = 0.dp, start = 24.dp, bottom = 24.dp, end = 24.dp),
+                        .padding(start = 24.dp, end = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(
                         space = 4.dp,
                         alignment = Alignment.Top
@@ -198,8 +198,8 @@ fun MainDialog(
                         if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
                             MainDialogUserInfo(
                                 loginState = userInfo,
-                                uploadPfp = loginState::uploadPfp,
-                                setUsername = loginState::updateUsername
+                                coroutineScope = coroutineScope,
+                                dismiss = dismiss
                             )
                         } else {
                             Text(

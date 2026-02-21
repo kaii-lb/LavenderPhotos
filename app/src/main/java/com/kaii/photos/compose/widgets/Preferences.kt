@@ -689,7 +689,7 @@ fun ExpressiveDialogRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(60.dp)
+            .height(56.dp)
             .clip(shape)
             .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
             .clickable(onClick = onClick, enabled = enabled)
@@ -711,7 +711,7 @@ fun ExpressiveDialogRow(
 
         Text(
             text = title,
-            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+            fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
             color =
                 MaterialTheme.colorScheme
                     .contentColorFor(containerColor)
@@ -742,7 +742,7 @@ fun ExpressiveDialogRowWithAction(
         Row(
             modifier = modifier
                 .weight(1f)
-                .height(60.dp)
+                .height(56.dp)
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 8.dp, bottomStart = 32.dp, bottomEnd = 8.dp))
                 .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
                 .clickable(onClick = onClick, enabled = enabled)
@@ -764,7 +764,7 @@ fun ExpressiveDialogRowWithAction(
 
             Text(
                 text = title,
-                fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
                 color =
                     MaterialTheme.colorScheme
                         .contentColorFor(containerColor)
@@ -774,8 +774,8 @@ fun ExpressiveDialogRowWithAction(
 
         Box(
             modifier = Modifier
-                .width(64.dp)
-                .height(60.dp)
+                .width(60.dp)
+                .height(56.dp)
                 .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 32.dp, bottomStart = 8.dp, bottomEnd = 32.dp))
                 .background(actionContainerColor)
                 .clickable(onClick = onActionClick, enabled = enabled)
