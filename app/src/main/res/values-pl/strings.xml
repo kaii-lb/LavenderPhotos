@@ -542,4 +542,10 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="exif_enter_time">Wprowadź czas</string>
     <string name="exif_date_changed_failed">Nie udało się zmienić daty</string>
     <string name="favourites_migration_none">Brak elementów do migracji</string>
+    <string name="privacy_scroll_mode">Tryb Prywatności</string>
+    <string name="privacy_scroll_mode_enabled">Tryb Prywatności: Włączony</string>
+    <string name="privacy_scroll_mode_disabled">Tryb Prywatności: Wyłączony</string>
+    <string name="privacy_scroll_mode_prompt">Zarządzaj dostępem do przewijania i akcji</string>
+    <string name="privacy_scroll_mode_fail">Nie udało się zmienić trybu prywatności</string>
+    <string name="privacy_scroll_mode_exit_tried">Tryb prywatności włączony</string>
 </resources>
