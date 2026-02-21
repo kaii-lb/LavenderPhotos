@@ -2,7 +2,6 @@ package com.kaii.photos.database.daos
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
@@ -80,7 +79,6 @@ interface MediaDao {
     )
     fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
-
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
     suspend fun linkToImmich(
         hash: String,
@@ -113,15 +111,6 @@ interface MediaDao {
 
     @Upsert
     fun upsertAll(items: List<MediaStoreData>)
-
-    @Query(value = "UPDATE media SET parentPath = :path WHERE id IN (:ids)")
-    fun upsertPath(ids: List<Long>, path: String)
-
-    @Query(value = "DELETE FROM media WHERE id = :id")
-    fun deleteById(id: Long)
-
-    @Delete
-    fun deleteEntities(items: List<MediaStoreData>)
 
     @Query(value = "DELETE FROM media WHERE id IN (:ids)")
     fun deleteAll(ids: Set<Long>)

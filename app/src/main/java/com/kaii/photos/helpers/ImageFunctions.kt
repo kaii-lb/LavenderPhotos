@@ -298,7 +298,6 @@ suspend fun moveMediaToSecureFolder(
                 context = context,
                 list = listOf(mediaItem.uri.toUri())
             )
-            applicationDatabase.mediaDao().deleteById(mediaItem.id)
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
             e.printStackTrace()
