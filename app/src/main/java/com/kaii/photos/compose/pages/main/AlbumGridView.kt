@@ -86,9 +86,11 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.launch
 
@@ -148,6 +150,8 @@ fun AlbumsGridView(
                 lockHeader = false
             }
         }
+
+        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
         LazyVerticalGrid(
             state = lazyGridState,
@@ -281,6 +285,7 @@ fun AlbumsGridView(
                 AlbumGridItem(
                     album = album,
                     isSelected = selectedItem == album,
+                    info = immichInfo,
                     modifier = Modifier
                         .zIndex(
                             if (selectedItem == album) 1f
@@ -307,8 +312,19 @@ fun AlbumsGridView(
                 ) {
                     navController.navigate(
                         route =
-                            if (album.info.isCustomAlbum) Screens.CustomAlbum.GridView(albumInfo = album.info)
-                            else Screens.Album.GridView(albumInfo = album.info)
+                            when {
+                                album.info.isCustomAlbum && album.info.immichId.isNotBlank() -> {
+                                    Screens.Immich.GridView(albumInfo = album.info)
+                                }
+
+                                album.info.isCustomAlbum -> {
+                                    Screens.CustomAlbum.GridView(albumInfo = album.info)
+                                }
+
+                                else -> {
+                                    Screens.Album.GridView(albumInfo = album.info)
+                                }
+                            }
                     )
                 }
             }
@@ -334,6 +350,7 @@ fun AlbumsGridView(
 private fun AlbumGridItem(
     album: AlbumGridState.Album,
     isSelected: Boolean,
+    info: ImmichBasicInfo,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -397,7 +414,14 @@ private fun AlbumGridItem(
             ) { state ->
                 if (state) {
                     GlideImage(
-                        model = album.thumbnail,
+                        model =
+                            if (album.info.immichId.isNotBlank()) ImmichInfo(
+                                thumbnail = album.thumbnail,
+                                original = album.thumbnail,
+                                hash = "",
+                                accessToken = info.accessToken,
+                                useThumbnail = true
+                            ) else album.thumbnail,
                         contentDescription = album.info.name,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.broken_image),

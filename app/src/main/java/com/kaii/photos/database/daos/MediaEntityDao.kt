@@ -31,7 +31,8 @@ interface MediaDao {
     @Query(value = "SELECT * from media ORDER BY dateModified DESC")
     fun getAllMediaDateModified(): Flow<List<MediaStoreData>>
 
-    @Query(value = "SELECT id from media")
+    /** gets only mediastore ids, not immich-only ones */
+    @Query(value = "SELECT id FROM media WHERE uri LIKE 'content://%'")
     fun getAllMediaIds(): List<Long>
 
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")

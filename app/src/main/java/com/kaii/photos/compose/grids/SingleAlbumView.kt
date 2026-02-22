@@ -48,6 +48,7 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -79,6 +80,7 @@ fun SingleAlbumView(
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
+        viewProperties = ViewProperties.Album,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize
     )
@@ -108,6 +110,37 @@ fun SingleAlbumView(
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
+        viewProperties = ViewProperties.CustomAlbum,
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
+    )
+}
+
+@Composable
+fun SingleAlbumView(
+    albumInfo: AlbumInfo,
+    viewModel: ImmichAlbumViewModel,
+    incomingIntent: Intent? = null
+) {
+    val mainViewModel = LocalMainViewModel.current
+
+    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            allAlbums.first { it.id == albumInfo.id }
+        }
+    }
+
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
+
+    SingleAlbumViewCommon(
+        pagingItems = pagingItems,
+        albumInfo = { dynamicAlbum },
+        selectionManager = selectionManager,
+        incomingIntent = incomingIntent,
+        viewProperties = ViewProperties.Immich,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize
     )
@@ -120,6 +153,7 @@ private fun SingleAlbumViewCommon(
     albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
+    viewProperties: ViewProperties,
     modifier: Modifier = Modifier,
     mediaCount: suspend () -> Int,
     albumSize: suspend () -> String
@@ -218,7 +252,7 @@ private fun SingleAlbumViewCommon(
                 pagingItems = pagingItems,
                 albumInfo = albumInfo(),
                 selectionManager = selectionManager,
-                viewProperties = if (albumInfo().isCustomAlbum) ViewProperties.CustomAlbum else ViewProperties.Album,
+                viewProperties = viewProperties,
                 isMediaPicker = incomingIntent != null
             )
         }

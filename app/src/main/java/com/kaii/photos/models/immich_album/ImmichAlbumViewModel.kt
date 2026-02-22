@@ -9,6 +9,8 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.ImmichRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
@@ -30,8 +32,28 @@ class ImmichAlbumViewModel(
         context = context
     )
 
+    init {
+        viewModelScope.launch {
+            while (true) {
+                refresh()
+                delay(5000)
+            }
+        }
+    }
+
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
     fun refresh() = repo.refresh()
+
+    suspend fun getMediaCount() = repo.getMediaCount()
+    suspend fun getMediaSize(): String {
+        val bytes = repo.getMediaSize()
+
+        if (bytes >= 1_000_000_000) {
+            return ((bytes.toDouble() / 1_000_000_0).toLong() / 100.0).toString() + " GB"
+        }
+
+        return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+    }
 }

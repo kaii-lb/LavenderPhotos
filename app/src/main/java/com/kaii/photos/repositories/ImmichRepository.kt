@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -39,7 +40,7 @@ class ImmichRepository(
     private val albumInfo: AlbumInfo,
     private val info: ImmichBasicInfo,
     private val scope: CoroutineScope,
-    private val sortMode: MediaItemSortMode,
+    sortMode: MediaItemSortMode,
     format: DisplayDateFormat,
     apiClient: ApiClient,
     context: Context
@@ -112,15 +113,17 @@ class ImmichRepository(
                     }
 
                 val mediaIds = customDao.getAllIdsIn(album = albumInfo.id).toSet()
-                val diff = mediaIds - items.fastMap { it.id }.toSet()
+                val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
-                mediaDao.deleteAll(ids = diff)
-                mediaDao.insertAll(items = items.toSet())
+                customDao.deleteAll(ids = deleted, album = albumInfo.id) // TODO: remove from media if only this album has these items
+                mediaDao.upsertAll(items = items.filter { it.id !in mediaIds })
 
+                val added = items.fastMap { it.id }.toSet() - mediaIds
                 customDao.upsertAll(
-                    items.fastMap {
+                    added.map {
                         CustomItemEntity(
-                            mediaId = it.id,
+                            id = it.toInt(),
+                            mediaId = it,
                             album = albumInfo.id
                         )
                     }
@@ -182,6 +185,14 @@ class ImmichRepository(
                 }
             }
         }
+    }
+
+    suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+        return@withContext customDao.countMediaInAlbum(album = albumInfo.id)
+    }
+
+    suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+        return@withContext customDao.mediaSize(album = albumInfo.id)
     }
 
     @OptIn(ExperimentalUuidApi::class)

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "95fe0c6feb62bde40671138169c152e4",
+    "identityHash": "cdf0eb86b9e19aba48dcb57893a68762",
     "entities": [
       {
         "tableName": "media",
@@ -262,7 +262,7 @@
       },
       {
         "tableName": "custom_media",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mediaId` INTEGER NOT NULL, `album` INTEGER NOT NULL, FOREIGN KEY(`mediaId`) REFERENCES `media`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mediaId` INTEGER NOT NULL, `album` INTEGER NOT NULL, FOREIGN KEY(`mediaId`) REFERENCES `media`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -306,7 +306,7 @@
           {
             "table": "media",
             "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
+            "onUpdate": "CASCADE",
             "columns": [
               "mediaId"
             ],
@@ -361,7 +361,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '95fe0c6feb62bde40671138169c152e4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cdf0eb86b9e19aba48dcb57893a68762')"
     ]
   }
 }

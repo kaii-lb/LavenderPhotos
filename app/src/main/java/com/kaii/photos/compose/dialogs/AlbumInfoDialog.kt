@@ -450,7 +450,7 @@ private fun IconContentImpl(
         navController.popBackStack()
     }
 
-    if (!autoDetect || albumInfo().isCustomAlbum) {
+    if (!autoDetect || (albumInfo().isCustomAlbum && albumInfo().immichId.isBlank())) {
         IconButton(
             onClick = {
                 showDeleteDialog.value = true

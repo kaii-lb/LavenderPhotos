@@ -11,7 +11,8 @@ import androidx.room.PrimaryKey
         entity = MediaStoreData::class,
         parentColumns = arrayOf("id"),
         childColumns = arrayOf("mediaId"),
-        onDelete = ForeignKey.CASCADE
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE
     )],
     indices = [
         Index(value = ["mediaId"], orders = [Index.Order.DESC])

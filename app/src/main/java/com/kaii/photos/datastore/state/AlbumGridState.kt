@@ -3,19 +3,28 @@ package com.kaii.photos.datastore.state
 import android.content.Context
 import android.os.CancellationSignal
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
+import com.kaii.lavender.immichintegration.clients.ApiClient
+import com.kaii.lavender.immichintegration.serialization.albums.AlbumsGetAllState
+import com.kaii.lavender.immichintegration.state_managers.AllAlbumsState
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,15 +36,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class AlbumGridState(
     private val scope: CoroutineScope,
     private val albumsFlow: Flow<List<AlbumInfo>>,
+    private val apiClient: ApiClient,
+    private val info: Flow<ImmichBasicInfo>,
     context: Context,
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
-    updateAlbums: (added: List<AlbumInfo>, removed: List<Int>) -> Unit
+    private val checkLoggedIn: suspend () -> Boolean,
+    private val updateAlbums: (added: List<AlbumInfo>, removed: List<Int>) -> Unit
 ) {
     data class Album(
         val info: AlbumInfo,
@@ -55,13 +68,14 @@ class AlbumGridState(
             albumsFlow.combine(sortModeFlow) { albums, sortMode ->
                 Pair(albums, sortMode)
             }.combine(albumSortModeFlow) { pair, sortMode ->
-                Triple(pair.first,  pair.second, sortMode)
+                Triple(pair.first, pair.second, sortMode)
             }.distinctUntilChanged().collectLatest { (albums, mediaSortMode, albumSortMode) ->
                 refresh(
                     albums = albums,
                     mediaSortMode = mediaSortMode,
                     albumSortMode = albumSortMode
                 )
+                refreshImmichAlbums()
             }
         }
 
@@ -83,12 +97,48 @@ class AlbumGridState(
                                     )
                                 },
                                 albumsFlow.first().fastMapNotNull { album ->
-                                    if (mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null) album.id
-                                    else null
+                                    album.id.takeIf {
+                                        !album.isCustomAlbum && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+                                    }
                                 }
                             )
                         }
                 }
+            }
+        }
+    }
+
+    private suspend fun refreshImmichAlbums() {
+        if (!checkLoggedIn()) return
+
+        val immichInfo = info.first()
+        val albumState = AllAlbumsState(
+            baseUrl = immichInfo.endpoint,
+            apiClient = apiClient,
+            coroutineScope = scope
+        )
+
+        albumState.load(immichInfo.accessToken).join()
+
+        albumState.state.value.let { state ->
+            if (state is AlbumsGetAllState.Retrieved) {
+                val albumIds = state.albums.fastMap { it.id }
+                val removedOrImmichIdChanged = _albums.value.fastMapNotNull { album ->
+                    album.info.id.takeIf { album.info.immichId !in albumIds && album.info.isCustomAlbum && album.info.immichId.isNotBlank() }
+                }
+
+                updateAlbums(
+                    state.albums.fastMap { album ->
+                        AlbumInfo(
+                            id = Random.nextInt(),
+                            name = album.albumName,
+                            paths = emptySet(),
+                            isCustomAlbum = true,
+                            immichId = album.id
+                        )
+                    },
+                    removedOrImmichIdChanged
+                )
             }
         }
     }
@@ -119,7 +169,7 @@ class AlbumGridState(
 
             Album(
                 info = album,
-                thumbnail = media.uri,
+                thumbnail = media.immichThumbnail?.takeIf { album.immichId.isNotBlank() && it.isNotBlank() } ?: media.uri,
                 date = if (mediaSortMode.isDateModified) media.dateModified else media.dateTaken,
                 signature = media.signature()
             )
@@ -162,7 +212,11 @@ fun rememberAlbumGridState(): AlbumGridState {
     val mainViewModel = LocalMainViewModel.current
     val coroutineScope = rememberCoroutineScope()
 
-    return remember {
+    val info by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val loginState = rememberLoginState(baseUrl = info.endpoint)
+
+
+    return remember(loginState) {
         AlbumGridState(
             scope = coroutineScope,
             context = context,
@@ -170,6 +224,17 @@ fun rememberAlbumGridState(): AlbumGridState {
             sortModeFlow = mainViewModel.sortMode,
             albumSortModeFlow = mainViewModel.settings.albums.getAlbumSortMode(),
             allAlbumsFlow = mainViewModel.settings.albums.getAutoDetect(),
+            info = mainViewModel.settings.immich.getImmichBasicInfo(),
+            apiClient = mainViewModel.apiClient,
+            checkLoggedIn = {
+                loginState.refresh(
+                    accessToken = info.accessToken,
+                    pfpSavePath = context.profilePicture,
+                    previousPfpUrl = context.profilePicture
+                ).join()
+
+                loginState.state.value is LoginState.LoggedIn
+            },
             updateAlbums = { added, removed ->
                 mainViewModel.settings.albums.add(added)
                 mainViewModel.settings.albums.removeAll(removed)

@@ -64,7 +64,6 @@ import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SecureFolderView
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
-import com.kaii.photos.compose.immich.ImmichAlbumPage
 import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
@@ -575,7 +574,7 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        ImmichAlbumPage(
+                        SingleAlbumView(
                             albumInfo = screen.albumInfo,
                             viewModel = viewModel
                         )
