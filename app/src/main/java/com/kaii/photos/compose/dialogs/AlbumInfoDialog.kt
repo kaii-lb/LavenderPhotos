@@ -477,27 +477,29 @@ private fun InfoContent(
         modifier = modifier
             .clip(RoundedCornerShape(32.dp))
     ) {
-        item {
-            val context = LocalContext.current
-            val resources = LocalResources.current
+        if (!albumInfo().isCustomAlbum) {
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
 
-            TallDialogInfoRow(
-                title =
-                    if (albumInfo().paths.size > 1) stringResource(id = R.string.albums_paths)
-                    else stringResource(id = R.string.albums_path),
-                info = albumInfo().paths.joinToString(separator = ",") { it },
-                icon = R.drawable.folder,
-                position = RowPosition.Top,
-                onClick = {
-                    val clipboardManager =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clipData = ClipData.newPlainText(
-                        resources.getString(R.string.albums_path),
-                        albumInfo().paths.joinToString(separator = ",") { it }
-                    )
-                    clipboardManager.setPrimaryClip(clipData)
-                }
-            )
+                TallDialogInfoRow(
+                    title =
+                        if (albumInfo().paths.size > 1) stringResource(id = R.string.albums_paths)
+                        else stringResource(id = R.string.albums_path),
+                    info = albumInfo().paths.joinToString(separator = ",") { it },
+                    icon = R.drawable.folder,
+                    position = RowPosition.Top,
+                    onClick = {
+                        val clipboardManager =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipData = ClipData.newPlainText(
+                            resources.getString(R.string.albums_path),
+                            albumInfo().paths.joinToString(separator = ",") { it }
+                        )
+                        clipboardManager.setPrimaryClip(clipData)
+                    }
+                )
+            }
         }
 
         item {
