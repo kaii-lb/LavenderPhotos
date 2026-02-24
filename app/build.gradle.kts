@@ -123,6 +123,7 @@ dependencies {
     implementation(libs.androidx.rules)
     implementation(libs.androidx.paging.common)
     implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.runtime)
 
     val media3Version = "1.9.2"
     implementation("androidx.media3:media3-transformer:$media3Version")

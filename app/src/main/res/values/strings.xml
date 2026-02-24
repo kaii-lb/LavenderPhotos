@@ -1070,6 +1070,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
     <string name="search_photo_date">Search for a photo\'s date</string>
+    <string name="search_by_name">Name</string>
+    <string name="search_by_date">Date</string>
 
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>

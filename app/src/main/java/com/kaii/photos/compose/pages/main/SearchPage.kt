@@ -13,40 +13,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.PhotoGrid
-import com.kaii.photos.compose.widgets.ClearableTextField
+import com.kaii.photos.compose.widgets.SearchTextField
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
 import kotlinx.coroutines.delay
-import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Month
+import kotlinx.coroutines.launch
 
 @Composable
 fun SearchPage(
     viewModel: SearchViewModel,
-    searchedForText: MutableState<String>,
     selectionManager: SelectionManager,
     isMediaPicker: Boolean
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
-    val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
 
     Column(
@@ -62,58 +51,41 @@ fun SearchPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val resources = LocalResources.current
-            val placeholdersList = remember {
-                val month = Month.entries.random().name.toPascalCase()
-                val day = DayOfWeek.entries.random().name.toPascalCase()
-                val date = (1..31).random()
-                val year = (2016..2024).random()
+            val coroutineScope = rememberCoroutineScope()
+            val query by viewModel.query.collectAsStateWithLifecycle()
 
-                listOf(
-                    resources.getString(R.string.search_photo_name),
-                    resources.getString(R.string.search_photo_date),
-                    "$month $year",
-                    "$day $month $year",
-                    "$date $month $year",
-                    "#Year: $year",
-                    "#Month: $month",
-                    "#Day: $day"
-                )
-            }
-
-            ClearableTextField(
-                text = searchedForText,
-                placeholder = placeholdersList.random(),
-                icon = R.drawable.search,
+            SearchTextField(
+                query = query,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .height(56.dp)
                     .padding(8.dp, 0.dp),
-                onConfirm = {},
-                onClear = {
-                    searchedForText.value = ""
+                onQueryChange = { text ->
+                    coroutineScope.launch {
+                        viewModel.search(query = text)
+
+                        delay(PhotoGridConstants.UPDATE_TIME)
+                        gridState.scrollToItem(0)
+                    }
+                },
+                onSearchModeChange = { mode ->
+                    viewModel.update(mode = mode)
                 }
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        LaunchedEffect(searchedForText.value, sortMode) {
-            viewModel.search(query = searchedForText.value)
-
-            delay(PhotoGridConstants.UPDATE_TIME)
-            gridState.scrollToItem(0)
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxHeight(1f)
         ) {
+            val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
                 selectionManager = selectionManager,
-                viewProperties = if (searchedForText.value == "") ViewProperties.SearchLoading else ViewProperties.SearchNotFound,
+                viewProperties = ViewProperties.SearchNotFound,
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
@@ -122,13 +94,4 @@ fun SearchPage(
             )
         }
     }
-}
-
-fun String.toPascalCase(): String {
-    return this.lowercase().split(Regex("[\\s_-]+")) // Split by spaces, underscores, or hyphens
-        .joinToString("") { word ->
-            word.replaceFirstChar {
-                it.uppercase()
-            }
-        }
 }

@@ -2,9 +2,12 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.StringRes
+import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
+import androidx.paging.PagingSource
+import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -13,77 +16,70 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.MediaType
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration.Companion.seconds
+import kotlinx.datetime.onDay
+import kotlinx.datetime.plusMonth
+import kotlinx.datetime.plusYear
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.repositories.SearchRepository"
 
-// TODO: try to use pure sqlite queries for filtering so we can immediately use paging, instead of loading everything still
+enum class SearchMode(
+    @param:StringRes val nameId: Int
+) {
+    Name(nameId = R.string.search_by_name),
+    Date(nameId = R.string.search_by_date)
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
-    private val scope: CoroutineScope,
     info: ImmichBasicInfo,
     context: Context,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
     private data class RoomQueryParams(
-        val items: List<MediaStoreData>,
+        val source: PagingSource<Int, MediaStoreData>,
         val sortMode: MediaItemSortMode,
         val format: DisplayDateFormat,
-        val accessToken: String
+        val accessToken: String,
+        val mode: SearchMode
     )
 
-    private var query = ""
-    private val mediaDao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
+    private val dao = MediaDatabase.getInstance(context.applicationContext).searchDao()
 
     private val params = MutableStateFlow(
         value = RoomQueryParams(
-            items = emptyList(),
+            source = ListPagingSource(media = emptyList()),
             sortMode = sortMode,
             format = format,
-            accessToken = info.accessToken
+            accessToken = info.accessToken,
+            mode = SearchMode.Name
         )
     )
 
-    private var allMedia = emptyList<MediaStoreData>()
-
-    init {
-        scope.launch {
-            params.mapLatest { it.sortMode.isDateModified }.distinctUntilChanged().flatMapLatest { isDateModified ->
-                if (isDateModified) mediaDao.getAllMediaDateModified()
-                else mediaDao.getAllMediaDateTaken()
-            }.collectLatest {
-                allMedia = it
-                search(query, true)
-            }
-        }
-    }
+    private val _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val mediaFlow = params.debounce(1.seconds).flatMapLatest { details ->
+    val mediaFlow = params.flatMapLatest { details ->
         Pager(
             config = PagingConfig(
                 pageSize = 100,
@@ -91,9 +87,9 @@ class SearchRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 300
             ),
-            pagingSourceFactory = { ListPagingSource(media = details.items) }
+            pagingSourceFactory = { details.source }
         ).flow.mapToMedia(accessToken = details.accessToken)
-    }.cachedIn(scope)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { details ->
@@ -101,46 +97,83 @@ class SearchRepository(
             sortMode = details.sortMode,
             format = details.format
         )
-    }.cachedIn(scope)
+    }
 
-    fun search(
+    suspend fun search(
         query: String,
         ignoreSameQueryCheck: Boolean = false
-    ) = scope.launch(Dispatchers.IO) {
-        val query = query.trim()
-        if (query.isBlank()) {
-            this@SearchRepository.query = query
-            params.value = params.value.copy(items = allMedia)
-            return@launch
+    ) = withContext(Dispatchers.IO) {
+        val search = query.trim()
+        if (this@SearchRepository._query.value == query && !ignoreSameQueryCheck) return@withContext
+        this@SearchRepository._query.value = query // use query to include spaces
+
+        val dateModified = params.value.sortMode.isDateModified
+        if (search.isBlank()) {
+            params.value = params.value.copy(
+                source = dao.getAll(dateModified = dateModified)
+            )
+
+            return@withContext
         }
 
-        if (this@SearchRepository.query == query && !ignoreSameQueryCheck) return@launch
-        this@SearchRepository.query = query
+        val source = when (params.value.mode) {
+            SearchMode.Name -> {
+                dao.searchByName(query = "%${search}%", dateModified = dateModified)
+            }
 
-        var final = searchByDateFormat(query = query)
-
-        if (final.isEmpty()) {
-            final = searchByDateNames(query = query)
+            SearchMode.Date -> {
+                searchByDate(query = search)
+            }
         }
 
-        if (final.isEmpty()) {
-            final = searchByName(name = query)
-        }
+        println("SOURCE $source")
 
-        params.value = params.value.copy(items = final)
+        params.value = params.value.copy(source = source)
     }
 
     fun update(
         sortMode: MediaItemSortMode?,
         format: DisplayDateFormat?,
-        accessToken: String?
+        accessToken: String?,
+        mode: SearchMode?
     ) {
         val snapshot = params.value
         params.value = snapshot.copy(
             sortMode = sortMode ?: snapshot.sortMode,
             format = format ?: snapshot.format,
-            accessToken = accessToken ?: snapshot.accessToken
+            accessToken = accessToken ?: snapshot.accessToken,
+            mode = mode ?: snapshot.mode
         )
+    }
+
+    private fun searchByDate(query: String): PagingSource<Int, MediaStoreData> {
+        var source = searchByDateFormat(query)
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByDayNumberMonthYear(query)
+        }
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByDayMonthYear(query)
+        }
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByYearMonth(query)
+        }
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByYear(query)
+        }
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByMonth(query)
+        }
+
+        if (source::class == ListPagingSource::class) {
+            source = searchByDay(query)
+        }
+
+        return source
     }
 
     private val formats = listOf(
@@ -157,14 +190,8 @@ class SearchRepository(
         "M d yyyy"
     )
 
-    private fun searchByName(name: String): List<MediaStoreData> {
-        return allMedia.filter { data ->
-            data.type != MediaType.Section && data.displayName.lowercase().contains(name.lowercase())
-        }
-    }
-
     @OptIn(FormatStringsInDatetimeFormats::class, ExperimentalTime::class)
-    private fun searchByDateFormat(query: String): List<MediaStoreData> {
+    private fun searchByDateFormat(query: String): PagingSource<Int, MediaStoreData> {
         var parsed: LocalDate? = null
 
         for (format in formats) {
@@ -181,102 +208,128 @@ class SearchRepository(
             }
         }
 
-        if (parsed == null) return emptyList()
+        if (parsed == null) return ListPagingSource(media = emptyList())
 
-        return allMedia.filter { data ->
-            val date = data.getDateTakenDay().toLocalDate()
+        val start = LocalDate(parsed.year, parsed.month, parsed.day).atStartOfDayIn(TimeZone.currentSystemDefault())
 
-            data.type != MediaType.Section && date.day == parsed.day && date.month == parsed.month && date.year == parsed.year
+        return dao.searchBetweenDates(
+            startDate = start.epochSeconds,
+            endDate = start.plus(1.days).epochSeconds,
+            dateModified = params.value.sortMode.isDateModified
+        )
+    }
+
+    private fun searchByYear(query: String): PagingSource<Int, MediaStoreData> {
+        return query.trim().toIntOrNull()?.let { yearDate ->
+            val year = YearMonth(year = yearDate, month = 1)
+
+            dao.searchBetweenDates(
+                startDate = year.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+                endDate = year.plusYear().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+                dateModified = params.value.sortMode.isDateModified
+            )
+        } ?: ListPagingSource(media = emptyList())
+    }
+
+    private fun searchByMonth(query: String): PagingSource<Int, MediaStoreData> {
+        val dateModified = params.value.sortMode.isDateModified
+
+        val search = query.trim().uppercase()
+
+        return if (search in Month.entries.fastMap { it.name }) {
+            val month = Month.valueOf(search).number.toString().padStart(2, '0')
+            dao.searchByMonth(month = month, dateModified = dateModified)
+        } else {
+            ListPagingSource(media = emptyList())
         }
     }
 
-    private fun searchByDateNames(query: String): List<MediaStoreData> {
-        val unpacked = query.split(" ")
-        if (unpacked.size !in 2..3) return emptyList()
+    private fun searchByDay(query: String): PagingSource<Int, MediaStoreData> {
+        val dateModified = params.value.sortMode.isDateModified
 
-        try {
-            // year
-            if (unpacked[0].lowercase() == "#year:" && unpacked[1].toIntOrNull() != null && unpacked[1].length == 4 && unpacked.size == 2) {
-                val year = unpacked[1].toInt()
+        val search = query.trim().uppercase()
 
-                return allMedia.filter { data ->
-                    val date = data.getDateTakenDay().toLocalDate()
-
-                    date.year == year
-                }
-            }
-
-            // month
-            if (unpacked[0].lowercase() == "#month:" && Month.entries.indexOfFirst { it.name == unpacked[1].uppercase() } != -1 && unpacked.size == 2) {
-                val month = Month.valueOf(unpacked[1].uppercase()).number
-
-                return allMedia.filter { data ->
-                    val date = data.getDateTakenDay().toLocalDate()
-
-                    date.month.number == month
-                }
-            }
-
-            // day
-            if (unpacked[0].lowercase() == "#day:" && DayOfWeek.entries.indexOfFirst { it.name == unpacked[1].uppercase() } != -1 && unpacked.size == 2) {
-                val day = DayOfWeek.valueOf(unpacked[1].uppercase()).isoDayNumber
-
-                return allMedia.filter { data ->
-                    val date = data.getDateTakenDay().toLocalDate()
-
-                    date.dayOfWeek.isoDayNumber == day
-                }
-            }
-
-            // dayNumber month year
-            if (unpacked[0].length <= 2) {
-                val month = Month.valueOf(unpacked[1].uppercase()).number
-                val year = unpacked.getOrNull(2)?.toIntOrNull()
-
-                unpacked[0].toIntOrNull()?.let { day ->
-                    return allMedia.filter { data ->
-                        val date = data.getDateTakenDay().toLocalDate()
-
-                        data.type != MediaType.Section && date.day == day && date.month.number == month && year?.let { date.year == year } ?: true
-                    }
-                }
-            }
-
-            // month year
-            if (unpacked[0].length > 2 && unpacked[1].toIntOrNull() != null) {
-                val month = Month.valueOf(unpacked[0].uppercase()).number
-                val year = unpacked[1].toIntOrNull() ?: 0
-
-                return allMedia.filter { data ->
-                    val date = data.getDateTakenDay().toLocalDate()
-
-                    data.type != MediaType.Section && date.month.number == month && date.year == year
-                }
-            }
-
-            val day = DayOfWeek.valueOf(unpacked[0].uppercase()).isoDayNumber
-            val month = Month.valueOf(unpacked[1].uppercase()).number
-            val year = unpacked.getOrNull(2)?.toIntOrNull()
-
-            println("DAY $day $month $year")
-
-            return allMedia.filter { data ->
-                val date = data.getDateTakenDay().toLocalDate()
-
-                data.type != MediaType.Section && date.dayOfWeek.isoDayNumber == day && date.month.number == month && year?.let { date.year == year } ?: true
-            }
-        } catch (e: IllegalArgumentException) {
-            Log.d(TAG, e.toString())
-            e.printStackTrace()
-
-            return emptyList()
+        return if (search in DayOfWeek.entries.fastMap { it.name }) {
+            val day = DayOfWeek.valueOf(search).isoDayNumber.toString()
+            dao.searchByDay(day = day, dateModified = dateModified)
+        } else {
+            ListPagingSource(media = emptyList())
         }
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun Long.toLocalDate() = Instant.fromEpochSeconds(
-        epochSeconds = this
-    ).toLocalDateTime(
-        timeZone = TimeZone.currentSystemDefault()
-    ).date
+    private fun searchByYearMonth(query: String): PagingSource<Int, MediaStoreData> {
+        val search = query.trim().uppercase().split(" ")
+        val emptySource = ListPagingSource(media = emptyList())
+
+        if (search.size < 2) return emptySource
+
+        val month = search[0]
+        val year = search[1].toIntOrNull()
+
+        if (year == null || month !in Month.entries.fastMap { it.name }) return emptySource
+
+        val yearMonth = YearMonth(
+            year = year,
+            month = Month.valueOf(month).number
+        )
+
+        return dao.searchBetweenDates(
+            startDate = yearMonth.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+            endDate = yearMonth.plusMonth().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+            dateModified = params.value.sortMode.isDateModified
+        )
+    }
+
+    private fun searchByDayNumberMonthYear(query: String): PagingSource<Int, MediaStoreData> {
+        val search = query.trim().uppercase().split(" ")
+        val emptySource = ListPagingSource(media = emptyList())
+
+        if (search.size < 3) return emptySource
+
+        val day = search[0].toIntOrNull()
+        val month = search[1]
+        val year = search[2].toIntOrNull()
+
+        if (day == null || year == null || month !in Month.entries.fastMap { it.name }) return emptySource
+
+        val yearMonth = YearMonth(
+            year = year,
+            month = Month.valueOf(month).number
+        )
+
+        if (day < yearMonth.days.start.day || day > yearMonth.days.endInclusive.day) return emptySource
+
+        val start = yearMonth.onDay(day).atStartOfDayIn(TimeZone.currentSystemDefault())
+
+        return dao.searchBetweenDates(
+            startDate = start.epochSeconds,
+            endDate = start.plus(1.days).epochSeconds,
+            dateModified = params.value.sortMode.isDateModified
+        )
+    }
+
+    private fun searchByDayMonthYear(query: String): PagingSource<Int, MediaStoreData> {
+        val search = query.trim().uppercase().split(" ")
+        val emptySource = ListPagingSource(media = emptyList())
+
+        if (search.size < 3) return emptySource
+
+        val dayName = search[0]
+        val month = search[1]
+        val year = search[2].toIntOrNull()
+
+        if (year == null || month !in Month.entries.fastMap { it.name } || dayName !in DayOfWeek.entries.fastMap { it.name }) return emptySource
+
+        val yearMonth = YearMonth(
+            year = year,
+            month = Month.valueOf(month).number
+        )
+
+        return dao.searchForDaysInMonthYear(
+            startDate = yearMonth.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+            endDate = yearMonth.plusMonth().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
+            day = DayOfWeek.valueOf(dayName).isoDayNumber.toString(),
+            dateModified = params.value.sortMode.isDateModified
+        )
+    }
 }

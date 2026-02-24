@@ -9,6 +9,7 @@ profileinstaller = "1.4.1"
 documentfile = "1.1.0"
 rules = "1.7.0"
 paging = "3.4.1"
+runtime = "1.10.3"
 
 [libraries]
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
@@ -19,6 +20,7 @@ androidx-documentfile = { group = "androidx.documentfile", name = "documentfile"
 androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
 androidx-paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "paging" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -65,16 +65,6 @@ enum class ViewProperties(
             )
         }
     ),
-    SearchLoading(
-        emptyText = R.string.error_views_search_empty,
-        emptyIconResId = R.drawable.search,
-        prefix = null,
-        navigate = { _, index ->
-            Screens.MainPages.Search.SinglePhoto(
-                index = index
-            )
-        }
-    ),
     SearchNotFound(
         emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,

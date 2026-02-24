@@ -72,7 +72,7 @@ enum class TopBarDetailsFormat(
     FileName(
         description = R.string.look_and_feel_date_format_filename,
         icon = R.drawable.clarify,
-        format = { context, name, datetime ->
+        format = { _, name, _ ->
             name
         }
     ),
@@ -80,7 +80,7 @@ enum class TopBarDetailsFormat(
     Date(
         description = R.string.look_and_feel_date_format_date_taken,
         icon = R.drawable.acute,
-        format = { context, name, datetime ->
+        format = { _, _, datetime ->
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
                 .toJavaLocalDateTime()
@@ -91,7 +91,7 @@ enum class TopBarDetailsFormat(
     DateTime(
         description = R.string.look_and_feel_date_format_datetime_taken,
         icon = R.drawable.overview_filled,
-        format = { context, name, datetime ->
+        format = { context, _, datetime ->
             val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
 
             Instant.fromEpochSeconds(datetime)
@@ -105,4 +105,13 @@ enum class TopBarDetailsFormat(
                 )
         }
     )
+}
+
+fun String.toPascalCase(): String {
+    return this.lowercase().split(Regex("[\\s_-]+")) // Split by spaces, underscores, or hyphens
+        .joinToString("") { word ->
+            word.replaceFirstChar {
+                it.uppercase()
+            }
+        }
 }

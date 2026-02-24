@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -174,13 +175,18 @@ fun MainPages(
             Pair(0.dp, 0.dp)
         }
 
-        val searchedForText = rememberSaveable { mutableStateOf("") }
+        // reset search query on
+        var lastPage by rememberSaveable { mutableIntStateOf(0) }
         LaunchedEffect(pagerState) {
             snapshotFlow { pagerState.currentPage }.collectLatest {
                 setupNextScreen(window = window)
                 selectionManager.clear()
-                searchViewModel.search(query = "")
-                searchedForText.value = ""
+
+                if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
+                    searchViewModel.search(query = "")
+                }
+
+                lastPage = it
             }
         }
 
@@ -254,7 +260,6 @@ fun MainPages(
 
                         SearchPage(
                             viewModel = searchViewModel,
-                            searchedForText = searchedForText,
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null
                         )

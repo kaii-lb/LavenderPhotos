@@ -11,6 +11,7 @@ import androidx.room.migration.AutoMigrationSpec
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.FavouritedItemEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TrashedItemEntityDao
@@ -48,6 +49,7 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun securedItemEntityDao(): SecuredMediaItemEntityDao
     abstract fun customDao(): CustomEntityDao
     abstract fun taskDao(): SyncTaskDao
+    abstract fun searchDao(): SearchDao
 
     companion object {
         @Volatile
