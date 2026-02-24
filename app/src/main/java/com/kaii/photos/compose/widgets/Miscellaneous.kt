@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -303,20 +302,6 @@ fun SelectViewTopBarLeftButtons(
     )
 }
 
-@Composable
-fun SelectViewTopBarRightButtons(
-    selectionManager: SelectionManager
-) {
-    Row(
-        modifier = Modifier
-            .wrapContentWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        // TODO: figure something out or remove
-    }
-}
-
 /** return true if the device is in landscape mode, false otherwise */
 @Composable
 fun rememberDeviceOrientation(): MutableState<Boolean> {
@@ -401,10 +386,11 @@ fun AnimatedImmichBackupIcon(
 @Composable
 fun AnimatedLoginIcon(
     state: LoginState,
+    alwaysShowPfp: Boolean,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = state is LoginState.LoggedIn && state.pfpUrl.isNotBlank(),
+        targetState = alwaysShowPfp || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -419,7 +405,6 @@ fun AnimatedLoginIcon(
             .padding(end = 4.dp)
     ) { visible ->
         if (visible) {
-            // TODO
             AnimatedImmichBackupIcon(
                 state = state,
                 modifier = Modifier

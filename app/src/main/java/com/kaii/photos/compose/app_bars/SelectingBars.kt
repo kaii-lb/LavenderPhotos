@@ -43,7 +43,6 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -67,12 +66,9 @@ fun IsSelectingTopBar(
         title = {
             SelectViewTopBarLeftButtons(selectionManager = selectionManager)
         },
-        actions = {
-            SelectViewTopBarRightButtons(selectionManager = selectionManager)
-        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background
-        ),
+        )
     )
 }
 

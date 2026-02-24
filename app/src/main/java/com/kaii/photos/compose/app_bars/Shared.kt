@@ -181,7 +181,6 @@ fun DualFunctionTopAppBar(
     title: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit,
     alternateTitle: @Composable () -> Unit,
-    alternateActions: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = @Composable {}
 ) {
     val mainViewModel = LocalMainViewModel.current
@@ -228,42 +227,7 @@ fun DualFunctionTopAppBar(
                 }
             }
         },
-        actions = {
-            AnimatedContent(
-                targetState = alternated,
-                transitionSpec = {
-                    if (alternated) {
-                        (slideInVertically(
-                            animationSpec = AnimationConstants.expressiveSpring()
-                        ) { height -> height } + fadeIn()).togetherWith(
-                            slideOutVertically(
-                                animationSpec = AnimationConstants.expressiveSpring()
-                            ) { height -> -height } + fadeOut())
-                    } else {
-                        (slideInVertically(
-                            animationSpec = AnimationConstants.expressiveSpring()
-                        ) { height -> -height } + fadeIn()).togetherWith(
-                            slideOutVertically(
-                                animationSpec = AnimationConstants.expressiveSpring()
-                            ) { height -> height } + fadeOut())
-                    }.using(
-                        SizeTransform(clip = false)
-                    )
-                },
-                label = "Dual Function App Bar Animation"
-            ) { alternate ->
-                if (alternate) {
-                    alternateActions()
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        actions()
-                    }
-                }
-            }
-        },
+        actions = actions
     )
 }
 

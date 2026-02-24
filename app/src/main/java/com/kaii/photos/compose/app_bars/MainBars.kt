@@ -77,7 +77,6 @@ import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -103,6 +102,7 @@ fun MainAppTopBar(
 
     val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
     val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+    val alwaysShowPfp by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
 
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
@@ -199,7 +199,8 @@ fun MainAppTopBar(
 
             if (!isFromMediaPicker) {
                 AnimatedLoginIcon(
-                    state = userInfo
+                    state = userInfo,
+                    alwaysShowPfp = alwaysShowPfp
                 ) {
                     coroutineScope.launch {
                         showMainDialog = true
@@ -225,9 +226,6 @@ fun MainAppTopBar(
         },
         alternateTitle = {
             SelectViewTopBarLeftButtons(selectionManager = selectionManager)
-        },
-        alternateActions = {
-            SelectViewTopBarRightButtons(selectionManager = selectionManager)
         }
     )
 }
