@@ -3,6 +3,7 @@ package com.kaii.photos.models.immich_album
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -41,8 +42,8 @@ class ImmichAlbumViewModel(
         }
     }
 
-    val mediaFlow = repo.mediaFlow
-    val gridMediaFlow = repo.gridMediaFlow
+    val mediaFlow = repo.mediaFlow.cachedIn(viewModelScope)
+    val gridMediaFlow = repo.gridMediaFlow.cachedIn(viewModelScope)
 
     fun refresh() = repo.refresh()
 

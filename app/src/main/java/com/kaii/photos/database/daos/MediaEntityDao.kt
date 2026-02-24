@@ -105,14 +105,14 @@ interface MediaDao {
     fun getAllAlbums(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(vararg items: MediaStoreData)
+    suspend fun insert(vararg items: MediaStoreData)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(items: Set<MediaStoreData>)
+    suspend fun insertAll(items: Set<MediaStoreData>)
 
     @Upsert
-    fun upsertAll(items: List<MediaStoreData>)
+    suspend fun upsertAll(items: List<MediaStoreData>)
 
     @Query(value = "DELETE FROM media WHERE id IN (:ids)")
-    fun deleteAll(ids: Set<Long>)
+    suspend fun deleteAll(ids: Set<Long>)
 }

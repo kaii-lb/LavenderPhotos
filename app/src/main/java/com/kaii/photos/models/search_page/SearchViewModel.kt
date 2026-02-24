@@ -43,7 +43,7 @@ class SearchViewModel(
     ) {
         viewModelScope.launch {
             repo.update(sortMode, format, accessToken, mode)
-            repo.search(query.value, true)
+            repo.search(query.value)
         }
     }
 }

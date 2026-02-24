@@ -15,7 +15,7 @@ import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TrashedItemEntityDao
-import com.kaii.photos.database.entities.CustomItemEntity
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -29,7 +29,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
             TrashedItemEntity::class,
             FavouritedItemEntity::class,
             SecuredItemEntity::class,
-            CustomItemEntity::class,
+            CustomItem::class,
             SyncTask::class
         ],
     version = 11,
@@ -39,7 +39,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         AutoMigration(from = 6, to = 7, spec = DeleteDupeEntityTable::class),
         AutoMigration(from = 7, to = 8, spec = DeleteOldMediaTable::class),
         AutoMigration(from = 8, to = 9, spec = DropCustomIdColumnSpec::class),
-        AutoMigration(from = 10, to = 11)
+        AutoMigration(from = 10, to = 11, spec = DropOldCustomTable::class)
     ]
 )
 abstract class MediaDatabase : RoomDatabase() {
@@ -85,3 +85,6 @@ class DeleteOldMediaTable : AutoMigrationSpec
     columnName = "customId"
 )
 class DropCustomIdColumnSpec : AutoMigrationSpec
+
+@DeleteTable(tableName = "custom_media")
+class DropOldCustomTable : AutoMigrationSpec

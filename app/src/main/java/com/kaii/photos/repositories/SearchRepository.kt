@@ -16,13 +16,11 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -56,7 +54,7 @@ class SearchRepository(
     format: DisplayDateFormat
 ) {
     private data class RoomQueryParams(
-        val source: PagingSource<Int, MediaStoreData>,
+        val query: String,
         val sortMode: MediaItemSortMode,
         val format: DisplayDateFormat,
         val accessToken: String,
@@ -67,7 +65,7 @@ class SearchRepository(
 
     private val params = MutableStateFlow(
         value = RoomQueryParams(
-            source = ListPagingSource(media = emptyList()),
+            query = "",
             sortMode = sortMode,
             format = format,
             accessToken = info.accessToken,
@@ -87,7 +85,25 @@ class SearchRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 300
             ),
-            pagingSourceFactory = { details.source }
+            pagingSourceFactory = {
+                when {
+                    details.query.isBlank() -> {
+                        dao.getAll(dateModified = details.sortMode.isDateModified)
+                    }
+
+                    details.mode == SearchMode.Name -> {
+                        dao.searchByName(query = "%${details.query}%", dateModified = details.sortMode.isDateModified)
+                    }
+
+                    details.mode == SearchMode.Date -> {
+                        searchByDate(query = details.query)
+                    }
+
+                    else -> {
+                        dao.getAll(dateModified = details.sortMode.isDateModified)
+                    }
+                }
+            }
         ).flow.mapToMedia(accessToken = details.accessToken)
     }
 
@@ -99,36 +115,11 @@ class SearchRepository(
         )
     }
 
-    suspend fun search(
-        query: String,
-        ignoreSameQueryCheck: Boolean = false
-    ) = withContext(Dispatchers.IO) {
-        val search = query.trim()
-        if (this@SearchRepository._query.value == query && !ignoreSameQueryCheck) return@withContext
-        this@SearchRepository._query.value = query // use query to include spaces
-
-        val dateModified = params.value.sortMode.isDateModified
-        if (search.isBlank()) {
-            params.value = params.value.copy(
-                source = dao.getAll(dateModified = dateModified)
-            )
-
-            return@withContext
-        }
-
-        val source = when (params.value.mode) {
-            SearchMode.Name -> {
-                dao.searchByName(query = "%${search}%", dateModified = dateModified)
-            }
-
-            SearchMode.Date -> {
-                searchByDate(query = search)
-            }
-        }
-
-        println("SOURCE $source")
-
-        params.value = params.value.copy(source = source)
+    fun search(
+        query: String
+    ) {
+        _query.value = query
+        params.value = params.value.copy(query = query)
     }
 
     fun update(

@@ -130,7 +130,7 @@ import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItemEntity
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
@@ -502,8 +502,8 @@ fun VideoEditorTopBar(
                                         .customDao()
                                         .upsertAll(
                                             listOf(
-                                                CustomItemEntity(
-                                                    mediaId = navMediaId,
+                                                CustomItem(
+                                                    id = navMediaId,
                                                     album = customAlbumId
                                                 )
                                             )

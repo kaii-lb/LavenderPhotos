@@ -15,9 +15,8 @@ import java.util.Locale
     tableName = "media",
     indices = [
         Index(value = ["dateTaken"], orders = [Index.Order.DESC]),
-        Index(value = ["hash"]),
-        Index(value = ["immichUrl"], unique = true)
-    ],
+        Index(value = ["absolutePath"])
+    ]
 )
 data class MediaStoreData(
     @PrimaryKey val id: Long,

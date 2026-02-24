@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "cdf0eb86b9e19aba48dcb57893a68762",
+    "identityHash": "7cb29643f6627867bea7fe5c2b796acd",
     "entities": [
       {
         "tableName": "media",
@@ -109,22 +109,13 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_media_dateTaken` ON `${TABLE_NAME}` (`dateTaken` DESC)"
           },
           {
-            "name": "index_media_hash",
+            "name": "index_media_absolutePath",
             "unique": false,
             "columnNames": [
-              "hash"
+              "absolutePath"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_hash` ON `${TABLE_NAME}` (`hash`)"
-          },
-          {
-            "name": "index_media_immichUrl",
-            "unique": true,
-            "columnNames": [
-              "immichUrl"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_media_immichUrl` ON `${TABLE_NAME}` (`immichUrl`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_absolutePath` ON `${TABLE_NAME}` (`absolutePath`)"
           }
         ]
       },
@@ -261,18 +252,12 @@
         }
       },
       {
-        "tableName": "custom_media",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mediaId` INTEGER NOT NULL, `album` INTEGER NOT NULL, FOREIGN KEY(`mediaId`) REFERENCES `media`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "tableName": "custom_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `album` INTEGER NOT NULL, PRIMARY KEY(`id`, `album`), FOREIGN KEY(`id`) REFERENCES `media`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "mediaId",
-            "columnName": "mediaId",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -284,31 +269,32 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
-            "id"
+            "id",
+            "album"
           ]
         },
         "indices": [
           {
-            "name": "index_custom_media_mediaId",
+            "name": "index_custom_items_id",
             "unique": false,
             "columnNames": [
-              "mediaId"
+              "id"
             ],
             "orders": [
               "DESC"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_custom_media_mediaId` ON `${TABLE_NAME}` (`mediaId` DESC)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_custom_items_id` ON `${TABLE_NAME}` (`id` DESC)"
           }
         ],
         "foreignKeys": [
           {
             "table": "media",
             "onDelete": "CASCADE",
-            "onUpdate": "CASCADE",
+            "onUpdate": "NO ACTION",
             "columns": [
-              "mediaId"
+              "id"
             ],
             "referencedColumns": [
               "id"
@@ -361,7 +347,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cdf0eb86b9e19aba48dcb57893a68762')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7cb29643f6627867bea7fe5c2b796acd')"
     ]
   }
 }

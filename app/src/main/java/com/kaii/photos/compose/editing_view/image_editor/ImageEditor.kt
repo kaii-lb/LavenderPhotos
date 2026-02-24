@@ -90,7 +90,7 @@ import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItemEntity
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -276,8 +276,8 @@ fun ImageEditor(
                             .customDao()
                             .upsertAll(
                                 listOf(
-                                    CustomItemEntity(
-                                        mediaId = navMediaId,
+                                    CustomItem(
+                                        id = navMediaId,
                                         album = albumInfo!!.id
                                     )
                                 )

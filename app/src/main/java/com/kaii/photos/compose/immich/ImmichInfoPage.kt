@@ -244,7 +244,7 @@ fun ImmichInfoPage() {
                         pfpSavePath = context.profilePicture,
                         previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
                     ).invokeOnCompletion {
-                        serverState.fetch(apiKey = loginInfo.accessToken)
+                        serverState.fetch(accessToken = loginInfo.accessToken)
 
                         isLoadingInfo = false
                     }

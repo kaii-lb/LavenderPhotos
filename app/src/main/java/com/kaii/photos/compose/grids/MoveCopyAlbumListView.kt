@@ -65,7 +65,7 @@ import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItemEntity
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -296,8 +296,8 @@ fun AlbumsListItem(
                             .customDao()
                             .upsertAll(
                                 items = selectedItemsList.fastMap {
-                                    CustomItemEntity(
-                                        mediaId = it.id,
+                                    CustomItem(
+                                        id = it.id,
                                         album = album.info.id
                                     )
                                 }

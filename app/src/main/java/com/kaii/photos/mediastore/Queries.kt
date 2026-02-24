@@ -141,7 +141,7 @@ suspend fun getMediaStoreDataForIds(
 suspend fun chunkLoadMediaData(
     ids: Set<Long>,
     context: Context,
-    onLoadChunk: (chunk: Set<MediaStoreData>) -> Unit
+    onLoadChunk: suspend (chunk: Set<MediaStoreData>) -> Unit
 ) = withContext(Dispatchers.IO) {
     val items = mutableSetOf<MediaStoreData>()
     val syncManager = SyncManager(context)

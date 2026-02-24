@@ -6,14 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
+import androidx.room.withTransaction
 import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.lavender.immichintegration.serialization.albums.AlbumGetState
 import com.kaii.lavender.immichintegration.serialization.assets.AssetType
 import com.kaii.lavender.immichintegration.serialization.assets.UploadAssetRequest
 import com.kaii.lavender.immichintegration.state_managers.AlbumsStateManager
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItemEntity
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
@@ -46,9 +46,7 @@ class ImmichRepository(
     context: Context
 ) {
     private val appContext = context.applicationContext
-    private val customDao = MediaDatabase.getInstance(appContext).customDao()
-    private val taskDao = MediaDatabase.getInstance(appContext).taskDao()
-    private val mediaDao = MediaDatabase.getInstance(appContext).mediaDao()
+    private val db = MediaDatabase.getInstance(appContext)
 
     private val albumState = mutableStateOf(
         AlbumsStateManager(
@@ -58,7 +56,6 @@ class ImmichRepository(
         )
     )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow =
         Pager(
             config = PagingConfig(
@@ -68,16 +65,16 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) customDao.getPagedMediaDateModified(album = albumInfo.id)
-                else customDao.getPagedMediaDateTaken(album = albumInfo.id)
+                if (sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = albumInfo.id)
+                else db.customDao().getPagedMediaDateTaken(album = albumInfo.id)
             }
-        ).flow.mapToMedia(accessToken = info.accessToken).cachedIn(scope)
+        ).flow.mapToMedia(accessToken = info.accessToken)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
         sortMode = sortMode,
         format = format
-    ).cachedIn(scope)
+    )
 
     init {
         refresh()
@@ -87,54 +84,55 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun refetch() {
-        albumState.value.getInfo(
+        val state = albumState.value.getInfo(
             id = Uuid.parse(albumInfo.immichId),
             accessToken = info.accessToken
-        ) { state ->
-            if (state is AlbumGetState.Retrieved) {
-                val items =
-                    state.album.assets.fastMap { asset ->
-                        MediaStoreData(
-                            id = Uuid.parse(asset.id).toLongs { a, _ -> a },
-                            uri = "${info.endpoint}/api/assets/${asset.id}/original",
-                            dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
-                            dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
-                            type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
-                            absolutePath = "",
-                            parentPath = "",
-                            displayName = asset.originalFileName,
-                            mimeType = asset.originalMimeType,
-                            immichUrl = "${info.endpoint}/api/assets/${asset.id}/original",
-                            immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
-                            hash = asset.checksum,
-                            size = asset.exifInfo?.fileSizeInByte ?: 0L,
-                            favourited = asset.isFavorite
-                        )
-                    }
+        )
 
-                val mediaIds = customDao.getAllIdsIn(album = albumInfo.id).toSet()
-                val deleted = mediaIds - items.fastMap { it.id }.toSet()
+        if (state is AlbumGetState.Retrieved) {
+            val items =
+                state.album.assets.fastMap { asset ->
+                    MediaStoreData(
+                        id = Uuid.parse(asset.id).toLongs { a, _ -> a },
+                        uri = "${info.endpoint}/api/assets/${asset.id}/original",
+                        dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
+                        dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
+                        type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
+                        absolutePath = "",
+                        parentPath = "",
+                        displayName = asset.originalFileName,
+                        mimeType = asset.originalMimeType,
+                        immichUrl = "${info.endpoint}/api/assets/${asset.id}/original",
+                        immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
+                        hash = asset.checksum,
+                        size = asset.exifInfo?.fileSizeInByte ?: 0L,
+                        favourited = asset.isFavorite
+                    )
+                }
 
-                customDao.deleteAll(ids = deleted, album = albumInfo.id) // TODO: remove from media if only this album has these items
-                mediaDao.upsertAll(items = items.filter { it.id !in mediaIds })
+            val mediaIds = db.customDao().getAllIdsIn(album = albumInfo.id).toSet()
+            val added = items.fastMap { it.id }.toSet() - mediaIds
+            val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
-                val added = items.fastMap { it.id }.toSet() - mediaIds
-                customDao.upsertAll(
-                    added.map {
-                        CustomItemEntity(
-                            id = it.toInt(),
-                            mediaId = it,
+            db.withTransaction {
+                db.mediaDao().upsertAll(items = items.filter { it.id !in mediaIds })
+
+                db.customDao().deleteAll(ids = deleted, album = albumInfo.id)
+                db.customDao().upsertAll(
+                    items = added.map {
+                        CustomItem(
+                            id = it,
                             album = albumInfo.id
                         )
                     }
                 )
             }
-        }.join()
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun upload(ids: List<Long>) {
-        val media = mediaDao
+        val media = db.mediaDao()
             .getAllMediaDateTaken()
             .first()
             .filter { it.id in ids }
@@ -155,7 +153,7 @@ class ImmichRepository(
             deviceId = Build.MODEL,
             onItemDone = {},
             onResult = { success ->
-                taskDao.insert(
+                db.taskDao().insert(
                     task = SyncTask(
                         dateModified = Clock.System.now().epochSeconds,
                         status = if (success) SyncTaskStatus.Synced else SyncTaskStatus.Waiting,
@@ -168,7 +166,7 @@ class ImmichRepository(
     }
 
     suspend fun syncUploads() {
-        val unsynced = taskDao.getUnsyncedTasks()
+        val unsynced = db.taskDao().getUnsyncedTasks()
 
         unsynced.forEach { task ->
             when (task.type) {
@@ -188,17 +186,17 @@ class ImmichRepository(
     }
 
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
-        return@withContext customDao.countMediaInAlbum(album = albumInfo.id)
+        return@withContext db.customDao().countMediaInAlbum(album = albumInfo.id)
     }
 
     suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
-        return@withContext customDao.mediaSize(album = albumInfo.id)
+        return@withContext db.customDao().mediaSize(album = albumInfo.id)
     }
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun uploadAssets(task: SyncTask) {
         val ids = task.itemIds.fastMap { it.toLong() }
-        val media = mediaDao
+        val media = db.mediaDao()
             .getAllMediaDateTaken()
             .first()
             .filter { it.id in ids }
@@ -220,7 +218,7 @@ class ImmichRepository(
             onItemDone = {},
             onResult = { success ->
                 if (success) {
-                    taskDao.update(task = task.copy(status = SyncTaskStatus.Synced))
+                    db.taskDao().update(task = task.copy(status = SyncTaskStatus.Synced))
                 }
             }
         )
