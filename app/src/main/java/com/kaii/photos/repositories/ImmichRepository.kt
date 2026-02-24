@@ -111,6 +111,7 @@ class ImmichRepository(
                 }
 
             val mediaIds = db.customDao().getAllIdsIn(album = albumInfo.id).toSet()
+            val orphans = db.customDao().getOrphanImmichItems().toSet()
             val added = items.fastMap { it.id }.toSet() - mediaIds
             val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
@@ -118,14 +119,9 @@ class ImmichRepository(
                 db.mediaDao().upsertAll(items = items.filter { it.id !in mediaIds })
 
                 db.customDao().deleteAll(ids = deleted, album = albumInfo.id)
-                db.customDao().upsertAll(
-                    items = added.map {
-                        CustomItem(
-                            id = it,
-                            album = albumInfo.id
-                        )
-                    }
-                )
+                db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = albumInfo.id) })
+
+                db.mediaDao().deleteAll(orphans.map { it.id }.toSet())
             }
         }
     }

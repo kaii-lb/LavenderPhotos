@@ -9,6 +9,8 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.CustomRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CustomAlbumViewModel(
     private val albumInfo: AlbumInfo,
@@ -29,7 +31,11 @@ class CustomAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    fun remove(items: Set<MediaStoreData>) = repo.remove(items, albumInfo.id)
+    fun remove(items: Set<MediaStoreData>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.remove(items, albumInfo.id)
+        }
+    }
     suspend fun getMediaCount() = repo.getMediaCount()
     suspend fun getMediaSize(): String {
         val bytes = repo.getMediaSize()

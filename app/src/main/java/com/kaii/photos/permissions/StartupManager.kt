@@ -11,8 +11,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
+import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,7 +107,7 @@ class StartupManager(
 
     suspend fun checkState() = withContext(Dispatchers.IO) {
         val permsGranted = checkPermissions()
-        val needsIndexing = MediaDatabase.getInstance(context).mediaDao().isEmpty()
+        val needsIndexing = SyncManager(context.applicationContext).getGeneration() <= 0
 
         when {
             permsGranted && !needsIndexing -> {

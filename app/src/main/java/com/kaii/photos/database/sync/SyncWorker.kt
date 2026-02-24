@@ -2,6 +2,7 @@ package com.kaii.photos.database.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
@@ -17,16 +18,20 @@ class SyncWorker(
 ) : CoroutineWorker(appContext = context, params = params) {
     override suspend fun doWork(): Result {
         val startTime = Clock.System.now()
-        val dao = MediaDatabase.getInstance(context).mediaDao()
+
+        val db = MediaDatabase.getInstance(context)
+        val dao = db.mediaDao()
 
         val mediaStoreIds = getAllMediaStoreIds(context)
         val inAppIds = dao.getAllMediaIds().toSet()
 
         val removed = inAppIds - mediaStoreIds
-        if (removed.isNotEmpty()) dao.deleteAll(removed)
-
         val added = loadMediaDataDelta(context = context)
-        dao.upsertAll(items = added)
+        db.withTransaction {
+            if (removed.isNotEmpty()) dao.deleteAll(removed)
+
+            if (added.isNotEmpty()) dao.upsertAll(items = added)
+        }
 
         val endTime = Clock.System.now()
 

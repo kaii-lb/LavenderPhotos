@@ -7,7 +7,7 @@ import android.os.Looper
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +20,7 @@ class PhotosApplication : Application() {
         super.onCreate()
 
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val dao = MediaDatabase.getInstance(applicationContext).mediaDao()
+        val syncManager = SyncManager(applicationContext)
 
         var instanceCount = 0
 
@@ -36,7 +36,7 @@ class PhotosApplication : Application() {
                             // if its empty then the app hasn't finished startup processing, and we shouldn't mess with that
                             // if it *is* empty and we have finished startup processing, then another SyncWorker will be
                             // launching by the app, and the dao won't be empty anymore
-                            if (!dao.isEmpty()) {
+                            if (syncManager.getGeneration() > 0L) {
                                 instanceCount += 1
                                 WorkManager.getInstance(applicationContext)
                                     .enqueueUniqueWork(

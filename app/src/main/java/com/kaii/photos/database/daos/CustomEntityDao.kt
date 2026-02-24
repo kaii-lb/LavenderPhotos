@@ -43,6 +43,12 @@ interface CustomEntityDao {
     @Query(value = "SELECT id FROM custom_items WHERE album = :album")
     suspend fun getAllIdsIn(album: Int): List<Long>
 
+    @Query(
+        value = "SELECT media.* FROM media LEFT JOIN custom_items ON custom_items.id = media.id " +
+                "WHERE media.uri LIKE 'http%' AND custom_items.id IS NULL"
+    )
+    suspend fun getOrphanImmichItems(): List<MediaStoreData>
+
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)
 

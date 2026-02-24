@@ -87,9 +87,6 @@ interface MediaDao {
         immichThumbnail: String
     )
 
-    @Query(value = "SELECT (SELECT COUNT(id) from media LIMIT 1) = 0")
-    fun isEmpty(): Boolean
-
     @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
     fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)
 

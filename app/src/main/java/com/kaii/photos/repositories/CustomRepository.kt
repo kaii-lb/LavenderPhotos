@@ -15,12 +15,11 @@ import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class CustomRepository(
-    private val scope: CoroutineScope,
     private val albumInfo: AlbumInfo,
+    scope: CoroutineScope,
     context: Context,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
@@ -50,15 +49,11 @@ class CustomRepository(
         format = format
     ).cachedIn(scope)
 
-    fun remove(
+    suspend fun remove(
         items: Set<MediaStoreData>,
         albumId: Int
-    ) = scope.launch(Dispatchers.IO) {
-        items.map {
-            it.id
-        }.let { ids ->
-            dao.deleteAll(ids = ids.toSet(), album = albumId)
-        }
+    ) {
+        dao.deleteAll(ids = items.map { it.id }.toSet(), album = albumId)
     }
 
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
