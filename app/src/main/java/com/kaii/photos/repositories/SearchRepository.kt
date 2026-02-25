@@ -19,7 +19,6 @@ import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -43,7 +42,8 @@ enum class SearchMode(
     @param:StringRes val nameId: Int
 ) {
     Name(nameId = R.string.search_by_name),
-    Date(nameId = R.string.search_by_date)
+    Date(nameId = R.string.search_by_date),
+    Tag(nameId = R.string.search_by_tag)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,9 +72,6 @@ class SearchRepository(
             mode = SearchMode.Name
         )
     )
-
-    private val _query = MutableStateFlow("")
-    val query = _query.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val mediaFlow = params.flatMapLatest { details ->
@@ -118,7 +115,6 @@ class SearchRepository(
     fun search(
         query: String
     ) {
-        _query.value = query
         params.value = params.value.copy(query = query)
     }
 

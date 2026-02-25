@@ -1069,9 +1069,11 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
-    <string name="search_photo_date">Search for a photo\'s date</string>
+    <string name="search_photo_tag">Search for a tag</string>
     <string name="search_by_name">Name</string>
     <string name="search_by_date">Date</string>
+    <string name="search_by_tag">Tag</string>
+    <string name="search_no_tags_found">No tags added yet…</string>
 
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>

@@ -1,15 +1,27 @@
 package com.kaii.photos.compose.widgets
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -26,24 +38,28 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,33 +67,49 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.toPascalCase
 import com.kaii.photos.repositories.SearchMode
-import kotlinx.coroutines.delay
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Month
+
+@Preview
+@Composable
+private fun SearchTextFieldPreview() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(top = 64.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        SearchTextField(
+            onQueryChange = {},
+            onSearchModeChange = {},
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SearchTextField(
-    query: String,
     modifier: Modifier = Modifier,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onQueryChange: (text: String) -> Unit,
     onSearchModeChange: (mode: SearchMode) -> Unit
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
     var searchQuery by retain { mutableStateOf("") }
     var searchMode by retain { mutableStateOf(SearchMode.Name) }
+    var searchingForTags by remember { mutableStateOf(false) }
 
-    val updatedQuery by rememberUpdatedState(query)
-    LaunchedEffect(updatedQuery) {
-        delay(1000)
-        searchQuery = updatedQuery
-        onQueryChange(searchQuery)
+    BackHandler(
+        enabled = searchQuery.isNotEmpty()
+    ) {
+        searchQuery = ""
     }
 
     val resources = LocalResources.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val placeholdersList = remember(searchMode) {
         val month = Month.entries.random().name.toPascalCase()
         val day = DayOfWeek.entries.random().name.toPascalCase()
@@ -85,9 +117,8 @@ fun SearchTextField(
         val year = (2016..2024).random().toString()
 
         when (searchMode) {
-            SearchMode.Name -> listOf(
-                resources.getString(R.string.search_photo_name),
-                resources.getString(R.string.search_photo_date)
+            SearchMode.Name, SearchMode.Tag -> listOf(
+                resources.getString(R.string.search_photo_name)
             )
 
             SearchMode.Date -> listOf(
@@ -109,7 +140,9 @@ fun SearchTextField(
         singleLine = true,
         placeholder = {
             Text(
-                text = placeholdersList.random(),
+                text =
+                    if (searchingForTags) stringResource(id = R.string.search_photo_tag)
+                    else placeholdersList.random(),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
             )
         },
@@ -215,8 +248,42 @@ fun SearchTextField(
                 keyboardController?.hide()
             }
         ),
-        visualTransformation = visualTransformation,
         shape = CircleShape,
         modifier = modifier
     )
+
+    val keyboardVisible by rememberUpdatedState(WindowInsets.ime.getBottom(LocalDensity.current) > 0)
+    AnimatedVisibility(
+        visible = keyboardVisible && searchMode == SearchMode.Tag,
+        enter = scaleIn(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(), transformOrigin = TransformOrigin(0.5f, 0f)),
+        exit = fadeOut() + scaleOut(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(), transformOrigin = TransformOrigin(0.5f, 0f)),
+        modifier = Modifier
+            .offset(y = 64.dp)
+    ) {
+        TagDisplay(
+            tags = emptyList(), // TODO
+            selectedTags = emptyList(), // TODO
+            searchingForTags = searchingForTags,
+            searchQuery = searchQuery,
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth()
+                .dropShadow(
+                    shape = RoundedCornerShape(24.dp),
+                    shadow = Shadow(
+                        radius = 8.dp,
+                        color = Color.Black.copy(alpha = 0.6f)
+                    )
+                ),
+            onTagClick = {
+
+            },
+            onTagRemove = {
+
+            },
+            onToggleSearchingForTags = {
+                searchingForTags = it
+            }
+        )
+    }
 }

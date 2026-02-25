@@ -27,8 +27,6 @@ class SearchViewModel(
     val mediaFlow = repo.mediaFlow.cachedIn(viewModelScope)
     val gridMediaFlow = repo.gridMediaFlow.cachedIn(viewModelScope)
 
-    val query = repo.query
-
     fun search(query: String) {
         viewModelScope.launch {
             repo.search(query)
@@ -43,7 +41,6 @@ class SearchViewModel(
     ) {
         viewModelScope.launch {
             repo.update(sortMode, format, accessToken, mode)
-            repo.search(query.value)
         }
     }
 }
