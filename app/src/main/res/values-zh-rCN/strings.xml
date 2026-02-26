@@ -220,7 +220,6 @@
     <string name="media_confirm">确认</string>
     <string name="media_okay">确定</string>
     <string name="search_photo_name">搜索照片</string>
-    <string name="search_photo_date">搜索照片的日期</string>
     <string name="edit_desc">薰衣草图库编辑的文件位于 %1$s</string>
     <string name="custom_album_remove_media">移除</string>
     <string name="custom_album_remove_media_desc">是否从相册中移除这些项目？</string>
@@ -239,7 +238,6 @@
     <string name="error_views_trash_empty">已删除的项目将显示在此处</string>
     <string name="error_views_trash_prefix">删除于：</string>
     <string name="error_views_album_empty">此相册为空</string>
-    <string name="error_views_search_empty">搜索照片吧！</string>
     <string name="error_views_search_not_found">未找到匹配项</string>
     <string name="error_views_secure_empty">您的媒体尚未受保护！</string>
     <string name="error_views_secure_prefix">保护于：</string>
@@ -367,7 +365,6 @@
     <string name="look_and_feel_nav">导航</string>
     <string name="look_and_feel_extra_secure_nav">额外安全文件夹入口</string>
     <string name="look_and_feel_extra_secure_nav_desc">在应用主对话框中显示安全文件夹导航选项</string>
-    <string name="immich">Immich</string>
     <string name="immich_title">Immich 备份</string>
     <string name="immich_account">Immich 账户</string>
     <string name="immich_login_unavailable">未登录</string>

@@ -369,7 +369,6 @@
     <string name="media_information">Información</string>
     <string name="media_is_raw">Esta é unha imaxe RAW</string>
     <string name="search_photo_name">Buscar unha foto</string>
-    <string name="search_photo_date">Buscar pola data da foto</string>
     <string name="edit_desc">Lavender Photos editou o ficheiro o %1$s</string>
     <string name="custom_album_remove_media">Retirar</string>
     <string name="custom_album_remove_media_desc">Retirar estes elementos do álbum?</string>
@@ -407,7 +406,6 @@
     <string name="error_views_trash_empty">Aquí vense os elementos no lixo</string>
     <string name="error_views_trash_prefix">No lixo:</string>
     <string name="error_views_album_empty">Este álbum está baleiro</string>
-    <string name="error_views_search_empty">Buscar algunhas fotos!</string>
     <string name="error_views_search_not_found">Non se atopan coincidencias</string>
     <string name="error_views_secure_empty">Non tes ningún multimedia protexido!</string>
     <string name="error_views_secure_prefix">Protexido:</string>
@@ -433,7 +431,6 @@
     <string name="look_and_feel_nav">Navegación</string>
     <string name="look_and_feel_extra_secure_nav">Entrada de Cartafol Extra Protexido</string>
     <string name="look_and_feel_rounded_corners_desc">Cantos redondeados nas miniaturas nas grellas</string>
-    <string name="immich">Immich</string>
     <string name="immich_title">Copia de apoio Immich</string>
     <string name="immich_account">Conta Immich</string>
     <string name="immich_login_unavailable">Sen conexión</string>

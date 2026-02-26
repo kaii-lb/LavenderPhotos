@@ -863,7 +863,6 @@
     <string name="media_information">Bilgi</string>
     <!-- Search -->
     <string name="search_photo_name">Bir fotoğraf ara</string>
-    <string name="search_photo_date">Bir fotoğrafın tarihini ara</string>
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenmiş dosya</string>
     <string name="custom_album_remove_media">Kaldır</string>
@@ -898,7 +897,6 @@
     <string name="error_views_trash_empty">Çöpe atılan öğeler burada görünür</string>
     <string name="error_views_trash_prefix">Çöpe Atılma Tarihi</string>
     <string name="error_views_album_empty">Bu albüm boş</string>
-    <string name="error_views_search_empty">Birkaç fotoğraf arayın!</string>
     <string name="error_views_search_not_found">Herhangi bir eşleşme bulunamadı</string>
     <string name="error_views_secure_empty">Medyalarınızın hiçbiri korunmuyor!</string>
     <string name="error_views_secure_prefix">Güvenceye Alınma Tarihi</string>
@@ -923,7 +921,6 @@
     <string name="look_and_feel_rounded_corners">Yuvarlak Küçük Resim Köşeleri</string>
     <string name="look_and_feel_rounded_corners_desc">Fotoğraf ızgaralarındaki küçük resimlerde dairesel köşeler</string>
     <!-- Immich -->
-    <string name="immich">Immich</string>
     <string name="immich_title">Immich Yedekleme</string>
     <string name="immich_account">Immich Hesabı</string>
     <string name="immich_login_unavailable">Giriş Yapılmadı</string>

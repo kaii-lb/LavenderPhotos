@@ -177,7 +177,6 @@
     <string name="media_confirm">Підтвердити</string>
     <string name="media_okay">ОК</string>
     <string name="search_photo_name">Пошук за назвою фото</string>
-    <string name="search_photo_date">Пошук за датою фото</string>
     <string name="custom_album_remove_media">Видалити</string>
     <string name="custom_album_remove_media_desc">Видалити ці елементи з альбому?</string>
     <string name="action_cannot_be_undone">Цю дію не можна скасувати!</string>
@@ -229,7 +228,6 @@
     <string name="media_secure">Захистити</string>
     <string name="media_secure_confirm">Перемістити цей %1$s до захищеної теки?</string>
     <string name="edit_desc">Lavender Photos відредагував файл %1$s</string>
-    <string name="error_views_search_empty">Знайти фото!</string>
     <string name="updates_notice_desc"><![CDATA[
             <p>Цей оновлювач завантажує APK-файли з <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, 
                 що означає, що вони не проходять додаткову перевірку та тестування, яке виконують IzzyOnDroid, F-Droid або інші сервіси.

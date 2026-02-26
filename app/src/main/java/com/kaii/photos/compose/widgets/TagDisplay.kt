@@ -192,6 +192,7 @@ private fun TagFlowRow(
                             exit = fadeOut() + scaleOut(animationSpec = AnimationConstants.defaultSpring()),
                             modifier = Modifier
                                 .animatePlacement()
+                                .padding(4.dp)
                         ) {
                             TagItem(
                                 tag = tag,
@@ -208,7 +209,7 @@ private fun TagFlowRow(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TagItem(
+fun TagItem(
     tag: Tag,
     selected: Boolean,
     modifier: Modifier = Modifier,

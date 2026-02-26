@@ -216,7 +216,6 @@
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Ok</string>
     <string name="search_photo_name">Buscar una foto</string>
-    <string name="search_photo_date">Buscar la fecha de una foto</string>
     <string name="edit_desc">Lavender Photos edito el archivo con %1$s</string>
     <string name="custom_album_remove_media">Eliminar</string>
     <string name="custom_album_remove_media_desc">¿Eliminar estos elementos del álbum?</string>
@@ -235,7 +234,6 @@
     <string name="error_views_trash_empty">Los elementos eliminados aparecen aquí</string>
     <string name="error_views_trash_prefix">Enviado a la Papelera</string>
     <string name="error_views_album_empty">Este álbum está vacío</string>
-    <string name="error_views_search_empty">¡Busca algunas fotos!</string>
     <string name="error_views_search_not_found">No se puede encontrar ninguna coincidencia</string>
     <string name="error_views_secure_empty">¡Nada de tu multimedia está protegida!</string>
     <string name="error_views_secure_prefix">Asegurado</string>
@@ -890,7 +888,6 @@
     <string name="look_and_feel_nav">Navegación</string>
     <string name="look_and_feel_extra_secure_nav">Entrada Extra de Carpeta Segura</string>
     <string name="look_and_feel_extra_secure_nav_desc">Muestra una opción para navegar a la Carpeta segura desde el cuadro de diálogo principal de la app</string>
-    <string name="immich">Immich</string>
     <string name="immich_title">Copia de Seguridad de Immich</string>
     <string name="immich_account">Cuenta Immich</string>
     <string name="immich_login_unavailable">No Ha Iniciado Sesión</string>

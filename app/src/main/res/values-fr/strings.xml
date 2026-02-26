@@ -158,14 +158,12 @@
     <string name="sort_date">Date</string>
     <string name="media_copy">Copier</string>
     <string name="none">Aucun</string>
-    <string name="search_photo_date">Chercher une photo par sa date</string>
     <string name="media_delete">Supprimer</string>
     <string name="media_trash_confirm">Déplacer les médias sélectionnés dans la corbeille ?</string>
     <string name="bottom_sheets_ratio_selected">Ce format de découpe est sélectionné</string>
     <string name="error_views_trash_empty">Les médias mis à la corbeille apparaissent ici</string>
     <string name="bottom_sheets_image_ratio">Format d\'image</string>
     <string name="error_views_trash_prefix">Mis à la corbeille le</string>
-    <string name="error_views_search_empty">Cherchez des photos !</string>
     <string name="bottom_sheets_square">Carré</string>
     <string name="albums_clear_list">Effacer la liste d\'albums</string>
     <string name="albums_clear_list_desc">Enlève tous les albums à l\'exception de Appareil Photo et Téléchargements</string>

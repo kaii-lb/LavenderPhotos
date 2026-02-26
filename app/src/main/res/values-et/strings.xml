@@ -33,7 +33,6 @@
     <string name="updates_checking">Kontrollin uuendusi</string>
     <string name="updates_start">Käivita uuendamine</string>
     <string name="error_views_album_empty">See album on tühi</string>
-    <string name="error_views_search_empty">Otsi fotosid!</string>
     <string name="albums_remove_desc">Eemalda album loendist</string>
     <string name="albums_info">Albumi teave</string>
     <string name="albums_path">Asukoht</string>

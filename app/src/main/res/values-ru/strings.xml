@@ -211,7 +211,6 @@
     <string name="media_confirm">Подтвердить</string>
     <string name="media_okay">Хорошо</string>
     <string name="search_photo_name">Поиск фотографии</string>
-    <string name="search_photo_date">Поиск по дате фотографии</string>
     <string name="edit_desc">Lavender Photos отредактировал файл в %1$s</string>
     <string name="custom_album_remove_media">Удалить</string>
     <string name="custom_album_remove_media_desc">Удалить эти элементы из альбома?</string>
@@ -230,7 +229,6 @@
     <string name="error_views_trash_empty">Здесь отображаются элементы, удалённые из альбома</string>
     <string name="error_views_trash_prefix">Удалён в корзину</string>
     <string name="error_views_album_empty">Этот альбом пуст</string>
-    <string name="error_views_search_empty">Найти несколько фотографий!</string>
     <string name="error_views_search_not_found">Не удалось найти совпадений</string>
     <string name="error_views_secure_empty">Ни один из ваших медиафайлов не защищён!</string>
     <string name="error_views_secure_prefix">Защищён в папке</string>
@@ -1000,7 +998,6 @@
     <string name="exif_mp">Мегапиксели:</string>
     <string name="exif_res">Разрешение:</string>
     <string name="exif_size">Размер:</string>
-    <string name="immich">Immich</string>
     <string name="media_is_raw">Это необработанное RAW изображение</string>
     <string name="drag_and_drop_data">Перетаскивание данных для создания фотографий в Lavender</string>
     <string name="updates_no_changelog">Журнал изменений не доступен</string>

@@ -304,7 +304,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="media_tools">Ferramentas</string>
     <string name="media_information">Informação</string>
     <string name="search_photo_name">Procurar por uma foto</string>
-    <string name="search_photo_date">Procurar pela data de uma foto</string>
     <string name="edit_desc">Lavender Photos editou o arquivo em %1$s</string>
     <string name="custom_album_remove_media">Remover</string>
     <string name="custom_album_remove_media_desc">Remover estes itens do álbum?</string>
@@ -335,7 +334,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="error_views_trash_empty">Itens excluídos serão exibidos aqui</string>
     <string name="error_views_trash_prefix">Excluído</string>
     <string name="error_views_album_empty">Este álbum está vazio</string>
-    <string name="error_views_search_empty">Pesquise por algumas fotos!</string>
     <string name="error_views_search_not_found">Incapaz de encontrar quaisquer correspondências</string>
     <string name="error_views_secure_empty">Nenhuma das suas mídias está protegida!</string>
     <string name="error_views_secure_prefix">Protegido</string>
@@ -371,7 +369,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="look_and_feel_extra_secure_nav_desc">Exibe uma opção para navegar no Diretório Protegido a partir do da janela principal do App</string>
     <string name="look_and_feel_rounded_corners">Cantos de Miniatura Arredondados</string>
     <string name="look_and_feel_rounded_corners_desc">Cantos arredondados nas miniaturas de fotos na grade</string>
-    <string name="immich">Immich</string>
     <string name="immich_title">Backup do Immich</string>
     <string name="immich_account">Conta do Immich</string>
     <string name="immich_login_unavailable">Deslogado</string>

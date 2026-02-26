@@ -202,7 +202,6 @@
     <string name="media_confirm">تأكيد</string>
     <string name="media_okay">حسنا</string>
     <string name="search_photo_name">إبحث</string>
-    <string name="search_photo_date">ابحث عن تاريخ الصورة</string>
     <string name="edit_desc">تم تحرير الملف في %1$s</string>
     <string name="custom_album_remove_media">أزل</string>
     <string name="custom_album_remove_media_desc">إزالة هذه العناصر من الألبوم؟</string>
@@ -221,7 +220,6 @@
     <string name="error_views_trash_empty">تظهر العناصر المحذوفة هنا</string>
     <string name="error_views_trash_prefix">تم حذف في التاريخ</string>
     <string name="error_views_album_empty">هذا الألبوم فارغ</string>
-    <string name="error_views_search_empty">ابحث عن بعض الصور!</string>
     <string name="error_views_search_not_found">لم يتم العثور على أي تطابقات</string>
     <string name="error_views_secure_empty">لا يتم حماية أي من الوسائط الخاصة بك!</string>
     <string name="error_views_secure_prefix">تم تأمينه في تاريخ</string>

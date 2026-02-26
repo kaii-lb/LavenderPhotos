@@ -597,8 +597,8 @@ fun FullWidthDialogButton(
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(
         position,
-        cornerRadius = 24.dp,
-        innerCornerRadius = 4.dp
+        cornerRadius = 32.dp,
+        innerCornerRadius = 8.dp
     )
 
     Row(

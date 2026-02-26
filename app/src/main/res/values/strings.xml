@@ -824,8 +824,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="debugging_loading">Debugging…</string>
     <string name="debugging_spawn_message_snackbar">Spawn Message Snackbar</string>
     <string name="debugging_spawn_message_snackbar_desc">Like deprecate a feature and not add an equivalent :D</string>
-    <string name="debugging_navigate_immich_album">Test Immich Album</string>
-    <string name="debugging_navigate_immich_album_desc">Opens a test immich album page with a hardcoded album id</string>
 
     <!-- Video -->
     <string name="video">Video</string>
@@ -1116,7 +1114,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="error_views_trash_empty">Trashed items show up here</string>
     <string name="error_views_trash_prefix">Trashed:</string>
     <string name="error_views_album_empty">This album is empty</string>
-    <string name="error_views_search_empty">Search for some photos!</string>
     <string name="error_views_search_not_found">Unable to find any matches</string>
     <string name="error_views_secure_empty">None of your media is protected!</string>
     <string name="error_views_secure_prefix">Secured:</string>
@@ -1152,7 +1149,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_views_blur_desc">Fill the background with a blurred version of the current image</string>
 
     <!-- Immich -->
-    <string name="immich">Immich</string>
     <string name="immich_title">Immich Backup</string>
     <string name="immich_account">Immich Account</string>
     <string name="immich_login_unavailable">Not Logged In</string>
@@ -1241,4 +1237,17 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!--  Main Dialog  -->
     <string name="main_dialog_greeting">Hi, %s!</string>
+
+    <!--  Tags  -->
+    <string name="tags_add">Add a tag!</string>
+    <string name="tags_exists">Tag already exists!</string>
+    <string name="tags_applied">Applied:</string>
+    <string name="tags_none_applied">No Tags Applied</string>
+    <string name="tags_available">Available:</string>
+    <string name="tags_add_some">Add some tags!</string>
+    <string name="tags_name">Name: %s</string>
+    <string name="tags_type">Type: %s</string>
+    <string name="tags_path">Path: %s</string>
+    <string name="tags_favourited_true">Favourite: Yes</string>
+    <string name="tags_favourited_false">Favourite: No</string>
 </resources>
