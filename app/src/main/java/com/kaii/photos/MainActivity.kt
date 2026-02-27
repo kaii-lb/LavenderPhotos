@@ -44,6 +44,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
@@ -76,6 +79,7 @@ import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -838,6 +842,18 @@ class MainActivity : ComponentActivity() {
                 updater.startupUpdateCheck(navController)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // run work manager immediately after user navigates back to app
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                SyncWorker::class.java.name,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequest.Builder(SyncWorker::class).build()
+            )
     }
 }
 
