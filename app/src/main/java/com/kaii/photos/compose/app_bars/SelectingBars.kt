@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.app_bars
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,20 +20,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
@@ -43,52 +40,35 @@ import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.getParentFromPath
-import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.moveMediaToSecureFolder
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.mediastore.getAbsolutePathFromUri
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-private const val TAG = "com.kaii.photos.compose.app_bars.SelectingBars"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    mediaCount: State<Int>,
-    sectionCount: State<Int>,
-    getAllMedia: () -> List<MediaStoreData>
+    selectionManager: SelectionManager
 ) {
     TopAppBar(
         title = {
-            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
-        },
-        actions = {
-            SelectViewTopBarRightButtons(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = getAllMedia
-            )
+            SelectViewTopBarLeftButtons(selectionManager = selectionManager)
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background
-        ),
+        )
     )
 }
 
@@ -121,28 +101,24 @@ fun IsSelectingBottomAppBar(
 @Composable
 fun SelectingBottomBarItems(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>
+    selectionManager: SelectionManager
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData.dummyItem
-            }
-        }
-    }
+
+    val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
     IconButton(
         onClick = {
-            coroutineScope.launch {
+            coroutineScope.launch(Dispatchers.IO) {
                 shareMultipleImages(
-                    uris = selectedItemsWithoutSection.map { it.uri },
+                    uris = selectedItemsList.fastMap { it.toUri() },
                     context = context,
-                    hasVideos = selectedItemsWithoutSection.any { it.type == MediaType.Video }
+                    hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
             }
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.share),
@@ -156,7 +132,7 @@ fun SelectingBottomBarItems(
         show = show,
         selectedItemsList = selectedItemsList,
         isMoving = isMoving,
-        groupedMedia = null,
+        clear = selectionManager::clear,
         insetsPadding = WindowInsets.statusBars
     )
 
@@ -165,7 +141,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !albumInfo.isCustomAlbum
+        enabled = !albumInfo.isCustomAlbum && !selectedItemsList.isEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),
@@ -177,7 +153,8 @@ fun SelectingBottomBarItems(
         onClick = {
             isMoving = false
             show.value = true
-        }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.copy),
@@ -185,89 +162,86 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
-    val runDeleteAction = remember { mutableStateOf(false) }
-
     val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
-    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.fastMapNotNull { it.uri },
-        shouldRun = runDeleteAction,
+    val permissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection.fastMap { it.uri }
+                        list = selectedItemsList.fastMap { it.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsWithoutSection,
-                        trashed = true,
-                        appDatabase = applicationDatabase
+                        list = selectedItemsList.fastMap { it.toUri() },
+                        trashed = true
                     )
                 }
 
-                selectedItemsList.clear()
+                selectionManager.clear()
             }
         }
     )
 
-    val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete()
+    val confirmToDelete by mainViewModel.settings.permissions
+        .getConfirmToDelete()
         .collectAsStateWithLifecycle(initialValue = true)
 
+    val showDeleteDialog = remember { mutableStateOf(false) }
     if (!albumInfo.isCustomAlbum) {
         ConfirmationDialog(
             showDialog = showDeleteDialog,
             dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
-            runDeleteAction.value = true
+            permissionState.get(
+                uris = selectedItemsList.fastMap { it.toUri() }
+            )
         }
     } else {
-        var showExplanationDialog by remember { mutableStateOf(false) }
-        if (showExplanationDialog) {
-            ExplanationDialog(
-                title = stringResource(id = R.string.custom_album_media_not_custom_title),
-                explanation = stringResource(id = R.string.custom_album_media_not_custom_explanation)
-            ) {
-                showExplanationDialog = false
-            }
-        }
-
         ConfirmationDialog(
             showDialog = showDeleteDialog,
             dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
-            if (selectedItemsWithoutSection.any { it.customId == null }) {
-                showExplanationDialog = true
-            }
-
             mainViewModel.launch(Dispatchers.IO) {
-                selectedItemsWithoutSection.forEach { item ->
-                    Log.d(
-                        TAG,
-                        "Removed this many rows: " + context.contentResolver.delete(
-                            LavenderContentProvider.CONTENT_URI,
-                            "${LavenderMediaColumns.ID} = ? AND ${LavenderMediaColumns.PARENT_ID} = ?",
-                            arrayOf(item.customId.toString(), albumInfo.id.toString())
-                        )
+                MediaDatabase.getInstance(context)
+                    .customDao()
+                    .deleteAll(
+                        ids = selectedItemsList.fastMap { it.id }.toSet(),
+                        album = albumInfo.id
                     )
-                }
-                selectedItemsList.clear()
+
+                selectionManager.clear()
             }
         }
     }
 
     IconButton(
         onClick = {
-            if (confirmToDelete) showDeleteDialog.value = true
-            else runDeleteAction.value = true
-        }
+            if (confirmToDelete) {
+                showDeleteDialog.value = true
+            } else if (!albumInfo.isCustomAlbum) {
+                permissionState.get(
+                    uris = selectedItemsList.fastMap { it.toUri() }
+                )
+            } else {
+                mainViewModel.launch(Dispatchers.IO) {
+                    MediaDatabase.getInstance(context)
+                        .customDao()
+                        .deleteAll(
+                            ids = selectedItemsList.fastMap { it.id }.toSet(),
+                            album = albumInfo.id
+                        )
+
+                    selectionManager.clear()
+                }
+            }
+        },
+        enabled = selectedItemsList.isNotEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.delete),
@@ -275,25 +249,7 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val moveToSecureFolder = remember { mutableStateOf(false) }
-    val tryGetDirPermission = remember { mutableStateOf(false) }
-
     var showLoadingDialog by remember { mutableStateOf(false) }
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = selectedItemsWithoutSection.fastMap {
-            it.absolutePath.getParentFromPath()
-        }.fastDistinctBy {
-            it
-        },
-        shouldRun = tryGetDirPermission,
-        onGranted = {
-            showLoadingDialog = true
-            moveToSecureFolder.value = true
-        },
-        onRejected = {}
-    )
-
     if (showLoadingDialog) {
         LoadingDialog(
             title = stringResource(id = R.string.secure_encrypting),
@@ -302,27 +258,43 @@ fun SelectingBottomBarItems(
     }
 
     val appDatabase = LocalAppDatabase.current
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
-        shouldRun = moveToSecureFolder,
+    val filePermissionState = rememberFilePermissionManager(
         onGranted = {
             mainViewModel.launch(Dispatchers.IO) {
-                moveImageToLockedFolder(
-                    list = selectedItemsWithoutSection,
+                moveMediaToSecureFolder(
+                    list = selectedItemsList,
                     context = context,
                     applicationDatabase = appDatabase
                 ) {
-                    selectedItemsList.clear()
+                    selectionManager.clear()
                     showLoadingDialog = false
                 }
             }
         }
     )
 
+    val dirPermissionManager = rememberDirectoryPermissionManager(
+        onGranted = {
+            showLoadingDialog = true
+            filePermissionState.get(
+                uris = selectedItemsList.map { it.toUri() }
+            )
+        }
+    )
+
     IconButton(
         onClick = {
-            if (selectedItemsWithoutSection.isNotEmpty()) tryGetDirPermission.value = true
-        }
+            if (selectedItemsList.isNotEmpty()) {
+                dirPermissionManager.start(
+                    directories = selectedItemsList.fastMapNotNull {
+                        context.contentResolver.getAbsolutePathFromUri(it.toUri())?.parent()
+                    }.fastDistinctBy {
+                        it
+                    }.toSet()
+                )
+            }
+        },
+        enabled = selectedItemsList.isNotEmpty() && !albumInfo.isCustomAlbum
     ) {
         Icon(
             painter = painterResource(id = R.drawable.secure_folder),

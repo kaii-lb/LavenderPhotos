@@ -4,12 +4,16 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.json.responseJson
 import com.kaii.lavender.snackbars.LavenderSnackbarController
@@ -17,7 +21,6 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.R
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import com.kaii.photos.models.main_activity.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -31,6 +34,12 @@ class Updater(
     private val context: Context,
     private val coroutineScope: CoroutineScope
 ) {
+    enum class State {
+        Checking,
+        Failed,
+        Succeeded
+    }
+
     private val currentVersionCode = BuildConfig.VERSION_CODE
 
     private var githubResponseBody: MutableState<JSONObject?> = mutableStateOf(null)
@@ -72,10 +81,10 @@ class Updater(
             }
     }
 
-    fun refresh(onRefresh: (state: CheckUpdateState) -> Unit) {
+    fun refresh(onRefresh: (state: State) -> Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             async {
-                onRefresh(CheckUpdateState.Checking)
+                onRefresh(State.Checking)
                 val url = "https://api.github.com/repos/kaii-lb/LavenderPhotos/releases/latest"
 
                 val body = try {
@@ -88,7 +97,7 @@ class Updater(
                             Log.e(TAG, error.message.toString())
                             error.printStackTrace()
 
-                            onRefresh(CheckUpdateState.Failed)
+                            onRefresh(State.Failed)
                             return@async
                         }
                     )
@@ -96,7 +105,7 @@ class Updater(
                     Log.e(TAG, e.toString())
                     e.printStackTrace()
 
-                    onRefresh(CheckUpdateState.Failed)
+                    onRefresh(State.Failed)
                     return@async
                 }
 
@@ -106,7 +115,7 @@ class Updater(
                 Log.d(TAG, "github version code is ${githubVersionCode.value}")
                 Log.d(TAG, "app has updates? ${hasUpdates.value}")
 
-                onRefresh(CheckUpdateState.Succeeded)
+                onRefresh(State.Succeeded)
             }.await()
         }
     }
@@ -178,46 +187,47 @@ class Updater(
                 .replace("</p>", "</p><br>")
                 .replace("<p>\n\n", "<p>")
         } ?: context.resources.getString(R.string.updates_no_changelog)
-}
 
+    fun startupUpdateCheck(navController: NavController) {
+        refresh { state ->
+            when (state) {
+                State.Succeeded -> {
+                    if (hasUpdates.value) {
+                        Log.d(TAG, "Update found! Notifying user...")
 
-enum class CheckUpdateState {
-    Checking,
-    Failed,
-    Succeeded
-}
+                        coroutineScope.launch {
+                            LavenderSnackbarController.pushEvent(
+                                LavenderSnackbarEvents.ActionEvent(
+                                    message = context.resources.getString(R.string.updates_new_version_available),
+                                    icon = R.drawable.error_2,
+                                    duration = SnackbarDuration.Short,
+                                    actionIcon = R.drawable.download,
+                                    action = {
+                                        navController.navigate(Screens.Settings.Misc.UpdatePage)
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
 
-fun startupUpdateCheck(
-    text: String,
-    coroutineScope: CoroutineScope,
-    navController: NavHostController,
-    mainViewModel: MainViewModel
-) = mainViewModel.updater.refresh { state ->
-    Log.d(TAG, "Checking for app updates...")
-
-    when (state) {
-        CheckUpdateState.Succeeded -> {
-            if (mainViewModel.updater.hasUpdates.value) {
-                Log.d(TAG, "Update found! Notifying user...")
-
-                coroutineScope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.ActionEvent(
-                            message = text,
-                            icon = R.drawable.error_2,
-                            duration = SnackbarDuration.Short,
-                            actionIcon = R.drawable.download,
-                            action = {
-                                navController.navigate(MultiScreenViewType.UpdatesPage.name)
-                            }
-                        )
-                    )
+                else -> {
+                    Log.d(TAG, "No update found.")
                 }
             }
         }
+    }
+}
 
-        else -> {
-            Log.d(TAG, "No update found.")
-        }
+@Composable
+fun rememberUpdater(): Updater {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    return remember {
+        Updater(
+            context = context,
+            coroutineScope = coroutineScope
+        )
     }
 }

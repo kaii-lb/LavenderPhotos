@@ -4,20 +4,22 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 
 @Suppress("UNCHECKED_CAST")
 class MultiAlbumViewModelFactory(
-	private val context: Context,
-	private val albumInfo: AlbumInfo,
-	private val sortBy: MediaItemSortMode,
-	private val displayDateFormat: DisplayDateFormat
+    private val context: Context,
+    private val albumInfo: AlbumInfo,
+    private val info: ImmichBasicInfo,
+    private val sortMode: MediaItemSortMode,
+    private val format: DisplayDateFormat
 ) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == MultiAlbumViewModel::class.java) {
-			return MultiAlbumViewModel(context, albumInfo, sortBy, displayDateFormat) as T
+			return MultiAlbumViewModel(context, albumInfo, info, sortMode, format) as T
 		}
-		throw IllegalArgumentException("MultiAlbumViewModel: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.java.simpleName}!! This should never happen!!")
+		throw IllegalArgumentException("${MultiAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.simpleName}!! This should never happen!!")
 	}
 }

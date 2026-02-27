@@ -27,9 +27,6 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.Behaviour
-import com.kaii.photos.datastore.Editing
-import com.kaii.photos.datastore.Video
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
@@ -54,7 +51,7 @@ fun BehaviourSettingsPage() {
             }
 
             item {
-                val shouldAutoPlay by mainViewModel.settings.Video.getShouldAutoPlay()
+                val shouldAutoPlay by mainViewModel.settings.video.getShouldAutoPlay()
                     .collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
@@ -66,13 +63,13 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Video.setShouldAutoPlay(checked)
+                        mainViewModel.settings.video.setShouldAutoPlay(checked)
                     }
                 )
             }
 
             item {
-                val muteOnStart by mainViewModel.settings.Video.getMuteOnStart()
+                val muteOnStart by mainViewModel.settings.video.getMuteOnStart()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
@@ -84,13 +81,13 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Video.setMuteOnStart(checked)
+                        mainViewModel.settings.video.setMuteOnStart(checked)
                     }
                 )
             }
 
             item {
-                val openVideosExternally by mainViewModel.settings.Behaviour.getOpenVideosExternally()
+                val openVideosExternally by mainViewModel.settings.behaviour.getOpenVideosExternally()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
@@ -102,7 +99,7 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Behaviour.setOpenVideosExternally(checked)
+                        mainViewModel.settings.behaviour.setOpenVideosExternally(checked)
                     }
                 )
             }
@@ -113,7 +110,7 @@ fun BehaviourSettingsPage() {
             }
 
             item {
-                val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault()
+                val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
@@ -125,13 +122,13 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Editing.setOverwriteByDefault(checked)
+                        mainViewModel.settings.editing.setOverwriteByDefault(checked)
                     }
                 )
             }
 
             item {
-                val exitOnSave by mainViewModel.settings.Editing.getExitOnSave()
+                val exitOnSave by mainViewModel.settings.editing.getExitOnSave()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
@@ -143,7 +140,7 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Editing.setExitOnSave(checked)
+                        mainViewModel.settings.editing.setExitOnSave(checked)
                     }
                 )
             }
@@ -153,7 +150,7 @@ fun BehaviourSettingsPage() {
             }
 
             item {
-                val exitImmediately by mainViewModel.settings.Behaviour.getExitImmediately()
+                val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 PreferencesSwitchRow(
@@ -165,7 +162,7 @@ fun BehaviourSettingsPage() {
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = { checked ->
-                        mainViewModel.settings.Behaviour.setExitImmediately(checked)
+                        mainViewModel.settings.behaviour.setExitImmediately(checked)
                     }
                 )
             }

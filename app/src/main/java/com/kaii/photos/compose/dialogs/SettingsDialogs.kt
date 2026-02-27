@@ -72,22 +72,18 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.RadioButtonRow
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.LookAndFeel
-import com.kaii.photos.datastore.PhotoGrid
-import com.kaii.photos.datastore.Storage
 import com.kaii.photos.datastore.StoredDrawable
-import com.kaii.photos.datastore.TrashBin
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.helpers.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode.Companion.presentableName
 import com.kaii.photos.reorderable_lists.ReorderableItem
 import com.kaii.photos.reorderable_lists.ReorderableLazyList
 import com.kaii.photos.reorderable_lists.rememberReorderableListState
@@ -422,12 +418,12 @@ fun AddTabDialog(
         ) {
             if (tabList.size < 8) {
                 if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
-                    mainViewModel.settings.DefaultTabs.setTabList(
+                    mainViewModel.settings.defaultTabs.setTabList(
                         tabList.toMutableList().apply {
                             add(
                                 BottomBarTab(
                                     name = tabName,
-                                    albumPaths = selectedAlbums,
+                                    albumPaths = selectedAlbums.toSet(),
                                     icon = selectedItem!!,
                                     id = tabList.size,
                                     isCustom = true
@@ -501,65 +497,11 @@ fun SortModeSelectorDialog(
         val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
-                mainViewModel.settings.PhotoGrid.setSortMode(chosenSortMode)
+                mainViewModel.settings.photoGrid.setSortMode(chosenSortMode)
                 dismiss()
             }
         )
     }
-}
-
-@Composable
-fun DeleteIntervalDialog(
-    showDialog: MutableState<Boolean>,
-    initialValue: Int
-) {
-    var deleteInterval by remember { mutableIntStateOf(initialValue) }
-    val mainViewModel = LocalMainViewModel.current
-
-    SelectableButtonListDialog(
-        title = stringResource(id = R.string.trash_auto_delete_interval),
-        body = stringResource(id = R.string.trash_auto_delete_notice),
-        showDialog = showDialog,
-        buttons = {
-            RadioButtonRow(
-                text = "3" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 3
-            ) {
-                deleteInterval = 3
-            }
-
-            RadioButtonRow(
-                text = "10" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 10
-            ) {
-                deleteInterval = 10
-            }
-
-            RadioButtonRow(
-                text = "15" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 15
-            ) {
-                deleteInterval = 15
-            }
-
-            RadioButtonRow(
-                text = "30" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 30
-            ) {
-                deleteInterval = 30
-            }
-
-            RadioButtonRow(
-                text = "60" + stringResource(id = R.string.trash_days),
-                checked = deleteInterval == 60
-            ) {
-                deleteInterval = 60
-            }
-        },
-        onConfirm = {
-            mainViewModel.settings.TrashBin.setAutoDeleteInterval(deleteInterval)
-        }
-    )
 }
 
 @Composable
@@ -611,18 +553,17 @@ fun ThumbnailSizeDialog(
             }
         },
         onConfirm = {
-            mainViewModel.settings.Storage.setThumbnailSize(thumbnailSize)
+            mainViewModel.settings.storage.setThumbnailSize(thumbnailSize)
         }
     )
 }
 
 @Composable
 fun TabCustomizationDialog(
-    currentTab: MutableState<BottomBarTab>,
     closeDialog: () -> Unit
 ) {
     val mainViewModel = LocalMainViewModel.current
-    val tabList by mainViewModel.settings.DefaultTabs.getTabList()
+    val tabList by mainViewModel.settings.defaultTabs.getTabList()
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
 
@@ -647,12 +588,10 @@ fun TabCustomizationDialog(
                     iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
                     opacity = if (tab in tabList) 1f else 0.5f
                 ) {
-                    mainViewModel.settings.DefaultTabs.setTabList(
+                    mainViewModel.settings.defaultTabs.setTabList(
                         tabList.toMutableList().apply {
                             if (tab in tabList && tabList.size > 1) {
                                 remove(tab)
-                                if (currentTab.value == tab) currentTab.value =
-                                    tabList[0] // handle tab removal
                             } else if (tab in tabList) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
@@ -690,11 +629,9 @@ fun TabCustomizationDialog(
                         iconResId = R.drawable.delete
                     ) {
                         if (tabList.size > 1) {
-                            mainViewModel.settings.DefaultTabs.setTabList(
+                            mainViewModel.settings.defaultTabs.setTabList(
                                 tabList.toMutableList().apply {
                                     remove(tab)
-                                    if (currentTab.value == tab) currentTab.value =
-                                        tabList[0] // handle tab removal
                                 }
                             )
                         } else {
@@ -810,8 +747,8 @@ fun DefaultTabSelectorDialog(
         val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
-                mainViewModel.settings.DefaultTabs.setTabList(tabListDynamic)
-                mainViewModel.settings.DefaultTabs.setDefaultTab(selectedTab)
+                mainViewModel.settings.defaultTabs.setTabList(tabListDynamic)
+                mainViewModel.settings.defaultTabs.setDefaultTab(selectedTab)
 
                 dismissDialog()
             }
@@ -861,7 +798,7 @@ fun DateFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.LookAndFeel.setDisplayDateFormat(item)
+                    mainViewModel.settings.lookAndFeel.setDisplayDateFormat(item)
                     onDismiss()
                 }
             }
@@ -911,7 +848,7 @@ fun TopBarDetailsFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.LookAndFeel.setTopBarDetailsFormat(item)
+                    mainViewModel.settings.lookAndFeel.setTopBarDetailsFormat(item)
                     onDismiss()
                 }
             }

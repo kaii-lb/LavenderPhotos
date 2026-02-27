@@ -39,6 +39,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.LocalAppDatabase
@@ -50,12 +51,13 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.LookAndFeel
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.main_activity.MainViewModel
 import com.kaii.photos.models.main_activity.MainViewModelFactory
@@ -95,7 +97,7 @@ class OpenWithView : ComponentActivity() {
                     else -> 0
                 }
 
-            val followDarkTheme by mainViewModel.settings.LookAndFeel.getFollowDarkMode()
+            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialDarkMode
                 )
@@ -124,7 +126,7 @@ class OpenWithView : ComponentActivity() {
                     LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
                         NavHost(
                             navController = navController,
-                            startDestination = MultiScreenViewType.OpenWithView.name,
+                            startDestination = Screens.OpenWithView,
                             modifier = Modifier
                                 .fillMaxSize(1f),
                             enterTransition = {
@@ -156,7 +158,7 @@ class OpenWithView : ComponentActivity() {
                                 ) { width -> -width } + fadeIn()
                             }
                         ) {
-                            composable(MultiScreenViewType.OpenWithView.name) {
+                            composable<Screens.OpenWithView> {
                                 Content(
                                     uri = uri,
                                     window = window
@@ -210,9 +212,7 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     albumInfo = null,
-                                    isFromOpenWithView = true,
-                                    isSearchPage = false,
-                                    isFavouritesPage = false
+                                    isFromOpenWithView = true
                                 )
                             }
 
@@ -264,9 +264,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    albumInfo = null,
-                                    isSearchPage = false,
-                                    isFavouritesPage = false
+                                    albumInfo = null
                                 )
                             }
                         }
@@ -285,7 +283,7 @@ private fun Content(uri: Uri, window: Window) {
     LaunchedEffect(uri) {
         withContext(Dispatchers.IO) {
             incomingData = try {
-                context.contentResolver.getMediaStoreDataFromUri(context, uri) ?: MediaStoreData.dummyItem
+                context.contentResolver.getMediaStoreDataFromUri(uri = uri) ?: MediaStoreData.dummyItem
             } catch (e: Throwable) {
                 Log.d(TAG, "Couldn't decode incoming data!\n${e.message}")
                 MediaStoreData.dummyItem
@@ -340,44 +338,53 @@ private fun InitSinglePhotoView(
 ) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
-    val navController = rememberNavController()
+
+    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
 
     val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-    val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
 
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-            sortBy = currentSortMode,
-            displayDateFormat = displayDateFormat
+            albumInfo = AlbumInfo.createPathOnlyAlbum(
+                paths = setOf(
+                    incomingData.absolutePath.parent()
+                )
+            ),
+            info = immichInfo,
+            sortMode = sortMode,
+            format = displayDateFormat
         )
     )
 
-    LaunchedEffect(Unit) {
-        multiAlbumViewModel.reinitDataSource(
-            context = context,
-            album = AlbumInfo.createPathOnlyAlbum(
-                paths = listOf(
-                    incomingData.absolutePath.split("/").dropLast(1).joinToString("/")
-                )
-            ),
-            sortMode = multiAlbumViewModel.sortMode
+    LaunchedEffect(immichInfo) {
+        multiAlbumViewModel.update(
+            sortMode = sortMode,
+            format = displayDateFormat,
+            accessToken = immichInfo.accessToken
         )
     }
 
-    SinglePhotoView(
-        navController = navController,
-        window = window,
-        viewModel = multiAlbumViewModel,
-        mediaItemId = incomingData.id,
-        nextMediaItemId = null,
-        albumInfo = AlbumInfo.createPathOnlyAlbum(
-            paths = listOf(
-                incomingData.absolutePath.split("/").dropLast(1).joinToString("/")
-            )
-        ),
-        isOpenWithDefaultView = true
-    )
+    val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
+    val index = remember(items.itemCount, items.loadState) {
+        (0 until items.itemCount).find {
+            val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
+            item?.id == incomingData.id
+        }
+    }
+
+    if (index != null) {
+        SinglePhotoView(
+            window = window,
+            viewModel = multiAlbumViewModel,
+            index = index,
+            albumInfo = AlbumInfo.createPathOnlyAlbum(
+                paths = setOf(
+                    incomingData.absolutePath.parent()
+                )
+            ),
+            isOpenWithDefaultView = true
+        )
+    }
 }

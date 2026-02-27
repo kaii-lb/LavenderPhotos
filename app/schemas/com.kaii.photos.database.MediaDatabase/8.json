@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "0aca62183de3a102f8d0998ffa2fc1ec",
+    "identityHash": "47f3ce7fe3b99499983017a579d225e9",
     "entities": [
       {
-        "tableName": "MediaEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `date_taken` INTEGER NOT NULL, `mime_type` TEXT NOT NULL, `display_name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "tableName": "media",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `uri` TEXT NOT NULL, `absolutePath` TEXT NOT NULL, `parentPath` TEXT NOT NULL, `displayName` TEXT NOT NULL, `dateTaken` INTEGER NOT NULL, `dateModified` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `type` TEXT NOT NULL, `immichUrl` TEXT, `immichThumbnail` TEXT, `hash` TEXT, `size` INTEGER NOT NULL, `customId` INTEGER, `favourited` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -15,21 +15,83 @@
             "notNull": true
           },
           {
-            "fieldPath": "dateTaken",
-            "columnName": "date_taken",
-            "affinity": "INTEGER",
+            "fieldPath": "uri",
+            "columnName": "uri",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "mimeType",
-            "columnName": "mime_type",
+            "fieldPath": "absolutePath",
+            "columnName": "absolutePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentPath",
+            "columnName": "parentPath",
             "affinity": "TEXT",
             "notNull": true
           },
           {
             "fieldPath": "displayName",
-            "columnName": "display_name",
+            "columnName": "displayName",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateTaken",
+            "columnName": "dateTaken",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateModified",
+            "columnName": "dateModified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mimeType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "immichUrl",
+            "columnName": "immichUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "immichThumbnail",
+            "columnName": "immichThumbnail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hash",
+            "columnName": "hash",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customId",
+            "columnName": "customId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "favourited",
+            "columnName": "favourited",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -38,7 +100,38 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_media_dateTaken",
+            "unique": false,
+            "columnNames": [
+              "dateTaken"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_dateTaken` ON `${TABLE_NAME}` (`dateTaken` DESC)"
+          },
+          {
+            "name": "index_media_hash",
+            "unique": false,
+            "columnNames": [
+              "hash"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_hash` ON `${TABLE_NAME}` (`hash`)"
+          },
+          {
+            "name": "index_media_immichUrl",
+            "unique": true,
+            "columnNames": [
+              "immichUrl"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_media_immichUrl` ON `${TABLE_NAME}` (`immichUrl`)"
+          }
+        ]
       },
       {
         "tableName": "TrashedItemEntity",
@@ -175,7 +268,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0aca62183de3a102f8d0998ffa2fc1ec')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '47f3ce7fe3b99499983017a579d225e9')"
     ]
   }
 }

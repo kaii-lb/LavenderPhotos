@@ -5,31 +5,28 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.compose.ui.util.fastFirstOrNull
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaEntity
-import com.kaii.photos.datastore.SQLiteQuery
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.exif.setDateTakenForMedia
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
-import com.kaii.photos.mediastore.MediaDataSource.Companion.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.Path
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -68,7 +65,7 @@ suspend fun ContentResolver.insertMedia(
 
     if (preserveDate) {
         setDateForMedia(
-            uri = media.uri,
+            uri = media.uri.toUri(),
             type = media.type,
             dateTaken = media.dateTaken
         )
@@ -93,7 +90,7 @@ suspend fun ContentResolver.insertMedia(
         )
 
         newUri?.let { contentUri ->
-            onInsert(media.uri, contentUri)
+            onInsert(media.uri.toUri(), contentUri)
 
             if (!preserveDate) { // change date to most recent
                 setDateForMedia(
@@ -116,10 +113,7 @@ suspend fun ContentResolver.insertMedia(
         val directory = DocumentFile.fromTreeUri(context, fullUriPath)
         Log.d(TAG, "Directory URI path ${directory?.uri}")
 
-        val createdFile = directory?.createFile(
-            media.mimeType ?: Files.probeContentType(Path(media.absolutePath)),
-            fileName
-        )
+        val createdFile = directory?.createFile(media.mimeType, fileName)
 
         if (createdFile == null) {
             Log.e(TAG, "Unable to create document file for directory $destination and file ${file.absolutePath}")
@@ -129,7 +123,7 @@ suspend fun ContentResolver.insertMedia(
         val fileToBeSavedTo = DocumentFile.fromSingleUri(context, createdFile.uri)
 
         fileToBeSavedTo?.let { savedToFile ->
-            onInsert(media.uri, savedToFile.uri)
+            onInsert(media.uri.toUri(), savedToFile.uri)
 
             if (!preserveDate) { // change date to most recent
                 setDateForMedia(
@@ -218,7 +212,7 @@ fun ContentResolver.getUriFromAbsolutePath(absolutePath: String, type: MediaType
     return null
 }
 
-fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaStoreData? {
+fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
     val mediaCursor = query(
         MEDIA_STORE_FILE_URI,
         arrayOf(
@@ -229,6 +223,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             MediaColumns.DATE_TAKEN,
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
+            MediaColumns.IS_FAVORITE
         ),
         "${MediaColumns._ID} = ?",
         arrayOf(uri.lastPathSegment),
@@ -243,9 +238,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
         val dateModifiedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
         val dateTakenColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
         val dateAddedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
-
-        val dao = MediaDatabase.getInstance(context).mediaEntityDao()
-        val allEntities = dao.getAll()
+        val favouritedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
         while (cursor.moveToNext()) {
             val contentId = cursor.getLong(contentIdColNum)
@@ -255,6 +248,7 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             val dateAdded = cursor.getLong(dateAddedColumn)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
+            val favourited = cursor.getInt(favouritedColumn) == 1
 
             Log.d(TAG, "Searching absolute path $absolutePath")
 
@@ -264,26 +258,12 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
                 if (mimeType.contains("image")) MediaType.Image
                 else MediaType.Video
 
-            val possibleDateTaken = allEntities.fastFirstOrNull { it.id == contentId }?.dateTaken
             val dateTaken =
                 when {
-                    possibleDateTaken != null && possibleDateTaken > 0L -> possibleDateTaken
-
                     mediaStoreDateTaken > 0L -> mediaStoreDateTaken
 
                     type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified).let { exifDateTaken ->
-                            dao.insertEntity(
-                                MediaEntity(
-                                    id = contentId,
-                                    dateTaken = exifDateTaken,
-                                    mimeType = mimeType,
-                                    displayName = displayName
-                                )
-                            )
-
-                            exifDateTaken
-                        }
+                        getDateTakenForMedia(absolutePath, dateModified)
                     }
 
                     dateAdded > 0L -> dateAdded
@@ -302,43 +282,23 @@ fun ContentResolver.getMediaStoreDataFromUri(context: Context, uri: Uri): MediaS
             return MediaStoreData(
                 type = type,
                 id = contentId,
-                uri = contentUri,
+                uri = contentUri.toString(),
                 mimeType = mimeType,
                 dateModified = dateModified,
                 dateTaken = dateTaken,
                 displayName = displayName,
-                absolutePath = absolutePath
+                absolutePath = absolutePath,
+                parentPath = absolutePath.parent(),
+                immichUrl = null,
+                immichThumbnail = null,
+                hash = null,
+                size = 0L,
+                favourited = favourited
             )
         }
     }
 
     return null
-}
-
-/** returns the media store query and the individual paths
- * albums needed cuz the query has ? instead of the actual paths for...reasons */
-fun getSQLiteQuery(albums: List<String>): SQLiteQuery {
-    if (albums.isEmpty()) {
-        return SQLiteQuery(query = "", paths = null, basePaths = null)
-    }
-
-    val colName = FileColumns.RELATIVE_PATH
-    val base = "($colName = ?)"
-
-    val list = mutableListOf<String>()
-    var string = base
-    val firstAlbum = albums.first().toRelativePath().removeSuffix("/").removePrefix("/")
-    list.add("$firstAlbum/")
-
-    for (i in 1..<albums.size) {
-        val album = albums[i].toRelativePath().removeSuffix("/").removePrefix("/")
-
-        string += " OR $base"
-        list.add("$album/")
-    }
-
-    val query = "AND ($string)"
-    return SQLiteQuery(query = query, paths = list, basePaths = albums.map { it.toBasePath() }.distinct())
 }
 
 private fun getStorageContentUri(
@@ -438,7 +398,7 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
             MediaColumns._ID,
             MediaColumns.DATA
         ),
-        "${MediaColumns._ID} = ?",
+        "${MediaColumns._ID} = ? AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
         arrayOf(uri.lastPathSegment!!),
         null
     )
@@ -454,4 +414,94 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
     }
 
     return null
+}
+
+fun ContentResolver.getPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>> {
+    val param = "(" + list.joinToString(",") { "?" } + ")"
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            FileColumns.MEDIA_TYPE
+        ),
+        "${MediaColumns._ID} IN $param",
+        list.fastMapNotNull { it.lastPathSegment }.toTypedArray(),
+        null
+    )
+
+    val paths = mutableListOf<Pair<Uri, String>>()
+
+    mediaCursor?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+        val absolutePathColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val mediaTypeColumn = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val absolutePath = cursor.getString(absolutePathColumn)
+            val mediaType = cursor.getInt(mediaTypeColumn)
+
+            val uriParentPath =
+                if (mediaType == FileColumns.MEDIA_TYPE_IMAGE) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+            val uri = ContentUris.withAppendedId(uriParentPath, id)
+
+            paths.add(Pair(uri, absolutePath))
+        }
+    }
+
+    return paths
+}
+
+fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, String>> {
+    val param = "(" + list.joinToString(",") { "?" } + ")"
+
+    val bundle = Bundle()
+    bundle.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
+    bundle.putString(
+        ContentResolver.QUERY_ARG_SQL_SELECTION,
+        "${MediaColumns._ID} IN $param AND ${MediaColumns.IS_TRASHED} = 1"
+    )
+    bundle.putStringArray(
+        ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+        list.fastMapNotNull { it.lastPathSegment }.toTypedArray()
+    )
+
+    val mediaCursor = query(
+        MEDIA_STORE_FILE_URI,
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            FileColumns.MEDIA_TYPE
+        ),
+        bundle,
+        null
+    )
+
+    val paths = mutableListOf<Pair<Uri, String>>()
+
+    mediaCursor?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+        val absolutePathColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+        val mediaTypeColumn = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val absolutePath = cursor.getString(absolutePathColumn)
+            val mediaType = cursor.getInt(mediaTypeColumn)
+
+            val uriParentPath =
+                if (mediaType == FileColumns.MEDIA_TYPE_IMAGE) MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+            val uri = ContentUris.withAppendedId(uriParentPath, id)
+
+            paths.add(Pair(uri, absolutePath))
+        }
+    }
+
+    return paths
 }

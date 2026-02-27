@@ -36,12 +36,12 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -53,309 +53,254 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalAppDatabase
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
-import com.kaii.photos.database.entities.MediaEntity
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.getParentFromPath
-import com.kaii.photos.helpers.mapSync
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.moveImageToLockedFolder
+import com.kaii.photos.helpers.moveMediaToSecureFolder
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.permissions.favourites.rememberFavouritesState
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
+    albumInfo: AlbumInfo,
     window: Window,
     viewModel: CustomAlbumViewModel,
-    mediaItemId: Long,
-    albumInfo: AlbumInfo,
-    nextMediaItemId: Long?,
+    index: Int,
     isOpenWithDefaultView: Boolean = false
 ) {
-    val mediaStoreData = viewModel.mediaFlow.mapSync {
-        it.filter { item ->
-            item.type != MediaType.Section
-        }
-    }.collectAsStateWithLifecycle()
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val startIndex = remember {
-        mediaStoreData.value.indexOfFirst { item ->
-            item.id == nextMediaItemId || item.id == mediaItemId
+    SinglePhotoViewCommon(
+        items = items,
+        navController = LocalNavController.current,
+        window = window,
+        startIndex = index,
+        albumInfo = albumInfo,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        removeFromCustom = { item ->
+            viewModel.remove(items = setOf(item))
         }
-    }
-
-    if (mediaStoreData.value.isNotEmpty()) {
-        SinglePhotoViewCommon(
-            navController = navController,
-            window = window,
-            startIndex = startIndex,
-            nextMediaItemId = nextMediaItemId,
-            mediaStoreData = mediaStoreData,
-            albumInfo = albumInfo,
-            isSearchPage = false,
-            isFavouritesPage = false,
-            isOpenWithDefaultView = isOpenWithDefaultView
-        )
-    }
+    )
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
     window: Window,
     viewModel: MultiAlbumViewModel,
-    mediaItemId: Long,
+    index: Int,
     albumInfo: AlbumInfo,
-    nextMediaItemId: Long?,
     isOpenWithDefaultView: Boolean = false,
 ) {
-    val mediaStoreData = viewModel.mediaFlow.mapSync {
-        it.filter { item ->
-            item.type != MediaType.Section
-        }
-    }.collectAsStateWithLifecycle()
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val startIndex = remember(mediaStoreData.value.isEmpty()) {
-        mediaStoreData.value.indexOfFirst { item ->
-            item.id == nextMediaItemId || item.id == mediaItemId
-        }
-    }
-
-    if (mediaStoreData.value.isNotEmpty()) {
-        SinglePhotoViewCommon(
-            mediaStoreData = mediaStoreData,
-            startIndex = startIndex,
-            albumInfo = albumInfo,
-            navController = navController,
-            window = window,
-            isOpenWithDefaultView = isOpenWithDefaultView,
-            isSearchPage = false,
-            isFavouritesPage = false,
-            nextMediaItemId = nextMediaItemId
-        )
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = albumInfo,
+        navController = LocalNavController.current,
+        window = window,
+        isOpenWithDefaultView = isOpenWithDefaultView
+    )
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
     viewModel: SearchViewModel,
     window: Window,
-    mediaItemId: Long,
-    albumInfo: AlbumInfo,
-    nextMediaItemId: Long?
+    index: Int,
+    albumInfo: AlbumInfo
 ) {
-    val mediaStoreData = viewModel.groupedMedia.mapSync {
-        it.filter { item ->
-            item.type != MediaType.Section
-        }
-    }.collectAsStateWithLifecycle()
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val context = LocalContext.current
-    val allData by viewModel.mediaFlow.collectAsStateWithLifecycle()
-    LaunchedEffect(allData) {
-        viewModel.search(
-            search = viewModel.query,
-            context = context
-        )
-    }
-
-    val startIndex = remember(mediaStoreData.value.isEmpty()) {
-        mediaStoreData.value.indexOfFirst { item ->
-            item.id == mediaItemId
-        }
-    }
-
-    if (mediaStoreData.value.isNotEmpty()) {
-        SinglePhotoViewCommon(
-            mediaStoreData = mediaStoreData,
-            startIndex = startIndex,
-            albumInfo = albumInfo,
-            navController = navController,
-            window = window,
-            isOpenWithDefaultView = false,
-            isSearchPage = true,
-            isFavouritesPage = false,
-            nextMediaItemId = nextMediaItemId
-        )
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = albumInfo,
+        navController = LocalNavController.current,
+        window = window,
+        isOpenWithDefaultView = false
+    )
 }
 
 
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
-    favViewModel: FavouritesViewModel,
+    viewModel: FavouritesViewModel,
     window: Window,
-    mediaItemId: Long,
-    albumInfo: AlbumInfo,
-    nextMediaItemId: Long?
+    index: Int
 ) {
-    val mediaStoreData = favViewModel.mediaFlow.mapSync {
-        it.filter { item ->
-            item.type != MediaType.Section
-        }
-    }.collectAsStateWithLifecycle()
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
-    val startIndex = remember(mediaStoreData.value.isEmpty()) {
-        mediaStoreData.value.indexOfFirst { item ->
-            item.id == mediaItemId
-        }
-    }
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = AlbumInfo.Empty,
+        navController = LocalNavController.current,
+        window = window,
+        isOpenWithDefaultView = false
+    )
+}
 
-    if (mediaStoreData.value.isNotEmpty()) {
-        SinglePhotoViewCommon(
-            mediaStoreData = mediaStoreData,
-            startIndex = startIndex,
-            albumInfo = albumInfo,
-            navController = navController,
-            window = window,
-            isOpenWithDefaultView = false,
-            isSearchPage = false,
-            isFavouritesPage = true,
-            nextMediaItemId = nextMediaItemId
-        )
-    }
+@Composable
+fun SinglePhotoView(
+    navController: NavHostController,
+    viewModel: ImmichAlbumViewModel,
+    window: Window,
+    index: Int,
+    albumInfo: AlbumInfo
+) {
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        albumInfo = albumInfo,
+        navController = navController,
+        window = window,
+        isOpenWithDefaultView = false
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun SinglePhotoViewCommon(
-    mediaStoreData: State<List<MediaStoreData>>,
+    items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
     albumInfo: AlbumInfo,
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean,
-    nextMediaItemId: Long?
+    removeFromCustom: (MediaStoreData) -> Unit = {}
 ) {
     val state = rememberPagerState(
-        initialPage = startIndex.coerceIn(0, mediaStoreData.value.size - 1)
+        initialPage = startIndex
     ) {
-        mediaStoreData.value.size
+        items.itemCount
     }
 
-    LaunchedEffect(Unit) {
-        var trials = 0
-
-        do {
-            val index = mediaStoreData.value.indexOfFirst { it.id == nextMediaItemId }
-            trials += 1
-
-            if (trials >= 20) break
-
-            if (index == -1) {
-                delay(1000)
-            } else {
-                state.animateScrollToPage(
-                    page = index,
-                    animationSpec = AnimationConstants.expressiveTween(
-                        durationMillis = AnimationConstants.DURATION_LONG
-                    )
-                )
-            }
-        } while (index == -1)
-    }
-
-    var currentIndex by rememberSaveable(startIndex) {
+    var currentIndex by rememberSaveable {
         mutableIntStateOf(
             startIndex
         )
     }
 
-    val mediaDao = LocalAppDatabase.current.mediaEntityDao()
+    LaunchedEffect(rememberUpdatedState(startIndex).value) {
+        state.scrollToPage(startIndex)
+    }
+
+    val context = LocalContext.current
     val appBarsVisible = remember { mutableStateOf(true) }
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
 
-    LaunchedEffect(currentIndex, mediaStoreData.value) {
+    LaunchedEffect(currentIndex, items, items.itemSnapshotList) {
         withContext(Dispatchers.IO) {
             mediaItem =
-                if (currentIndex in 0..mediaStoreData.value.size && mediaStoreData.value.isNotEmpty()) {
-                    mediaStoreData.value[currentIndex]
+                if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
+                    ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
                 } else {
                     MediaStoreData.dummyItem
                 }
 
-            if (mediaItem.type == MediaType.Image) {
+            if (mediaItem.type == MediaType.Image
+                && mediaItem != MediaStoreData.dummyItem
+                && mediaItem.immichUrl == null
+            ) {
                 val date = getDateTakenForMedia(
                     absolutePath = mediaItem.absolutePath,
                     dateModified = mediaItem.dateModified
                 )
 
                 if (date != mediaItem.dateTaken) {
-                    mediaDao.deleteEntityById(id = mediaItem.id)
-                    mediaDao.insertEntity(
-                        MediaEntity(
-                            id = mediaItem.id,
-                            dateTaken = date,
-                            mimeType = mediaItem.mimeType ?: "image/png",
-                            displayName = mediaItem.displayName
-                        )
+                    context.contentResolver.setDateForMedia(
+                        uri = mediaItem.uri.toUri(),
+                        type = mediaItem.type,
+                        dateTaken = date
                     )
                 }
             }
         }
     }
 
-    val context = LocalContext.current
+    LaunchedEffect(items.itemCount) {
+        snapshotFlow { items.itemCount }.collectLatest {
+            delay(PhotoGridConstants.LOADING_TIME_SHORT)
+            if (items.itemCount == 0) launch(Dispatchers.Main) {
+                navController.popBackStack()
+            }
+        }
+    }
+
     BackHandler(
         enabled = isOpenWithDefaultView
     ) {
         (context as Activity).finish()
     }
 
+    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
         topBar = {
             SingleViewTopBar(
-                mediaItem = mediaItem,
+                mediaItem = { mediaItem },
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
                 expandInfoDialog = {
-                    showInfoDialog = true
+                    coroutineScope.launch {
+                        showInfoDialog = true
+                        delay(50)
+                        sheetState.partialExpand()
+                    }
                 }
             )
         },
@@ -364,8 +309,9 @@ private fun SinglePhotoViewCommon(
 
             BottomBar(
                 visible = appBarsVisible.value,
-                currentItem = mediaItem,
+                currentItem = { mediaItem },
                 privacyMode = scrollState.privacyMode,
+                isCustom = albumInfo.isCustomAlbum,
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -379,73 +325,39 @@ private fun SinglePhotoViewCommon(
                             navController.navigate(
                                 Screens.ImageEditor(
                                     absolutePath = mediaItem.absolutePath,
-                                    uri = mediaItem.uri.toString(),
+                                    uri = mediaItem.uri,
                                     dateTaken = mediaItem.dateTaken,
-                                    albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                                    albumInfo = albumInfo
                                 )
                             )
                         } else {
                             navController.navigate(
                                 Screens.VideoEditor(
-                                    uri = mediaItem.uri.toString(),
+                                    uri = mediaItem.uri,
                                     absolutePath = mediaItem.absolutePath,
-                                    albumInfo = albumInfo,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                                    albumInfo = albumInfo
                                 )
                             )
                         }
                     }
                 },
-                checkZeroItemsLeft = {
-                    if (mediaStoreData.value.isEmpty()) coroutineScope.launch(Dispatchers.Main) {
-                        navController.popBackStack()
-                    }
-                },
-                onMoveMedia = {
-                    coroutineScope.launch {
-                        state.animateScrollToPage(
-                            page = (currentIndex + 1) % mediaStoreData.value.size,
-                            animationSpec = AnimationConstants.expressiveTween(
-                                durationMillis = AnimationConstants.DURATION
-                            )
-                        )
-                        delay(AnimationConstants.DURATION_SHORT.toLong())
-                    }
-                }
+                removeFromCustom = removeFromCustom
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = false
-        )
         if (showInfoDialog) {
-            val coroutineScope = rememberCoroutineScope()
-
             SinglePhotoInfoDialog(
                 currentMediaItem = mediaItem,
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
-                isTouchLocked = scrollState.privacyMode,
+                privacyMode = scrollState.privacyMode,
+                isCustomAlbum = albumInfo.isCustomAlbum,
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()
                         showInfoDialog = false
-                    }
-                },
-                onMoveMedia = {
-                    coroutineScope.launch {
-                        state.animateScrollToPage(
-                            page = (currentIndex + 1) % mediaStoreData.value.size,
-                            animationSpec = AnimationConstants.expressiveTween(
-                                durationMillis = AnimationConstants.DURATION
-                            )
-                        )
-                        delay(AnimationConstants.DURATION_SHORT.toLong())
                     }
                 },
                 togglePrivacyMode = scrollState::togglePrivacyMode
@@ -461,7 +373,7 @@ private fun SinglePhotoViewCommon(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            LaunchedEffect(state) {
+            LaunchedEffect(state.currentPage) {
                 snapshotFlow { state.currentPage }.collect {
                     sheetState.hide()
                     showInfoDialog = false
@@ -471,7 +383,7 @@ private fun SinglePhotoViewCommon(
             }
 
             HorizontalImageList(
-                groupedMedia = mediaStoreData.value,
+                items = items,
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
@@ -485,11 +397,11 @@ private fun SinglePhotoViewCommon(
 @Composable
 private fun BottomBar(
     visible: Boolean,
-    currentItem: MediaStoreData,
+    currentItem: () -> MediaStoreData,
     privacyMode: Boolean,
+    isCustom: Boolean,
     showEditingView: () -> Unit,
-    checkZeroItemsLeft: () -> Unit,
-    onMoveMedia: () -> Unit
+    removeFromCustom: (MediaStoreData) -> Unit
 ) {
     var showLoadingDialog by remember { mutableStateOf(false) }
 
@@ -519,56 +431,52 @@ private fun BottomBar(
                 .fillMaxWidth(1f),
             contentAlignment = Alignment.Center
         ) {
-            val getDirPerm = remember { mutableStateOf(false) }
-            val getMediaPerm = remember { mutableStateOf(false) }
             val coroutineScope = rememberCoroutineScope()
             val resources = LocalResources.current
-
-            GetDirectoryPermissionAndRun(
-                absoluteDirPaths = listOf(currentItem.absolutePath.getParentFromPath()),
-                shouldRun = getDirPerm,
-                onGranted = {
-                    getMediaPerm.value = true
-                },
-                onRejected = {
-                    coroutineScope.launch {
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
-                                message = resources.getString(R.string.permissions_needed),
-                                icon = R.drawable.shield_lock,
-                                duration = SnackbarDuration.Short
-                            )
-                        )
-                    }
-                }
-            )
-
-            GetPermissionAndRun(
-                uris = listOf(currentItem.uri),
-                shouldRun = getMediaPerm,
-                onGranted = {
-                    showEditingView()
-                },
-                onRejected = {
-                    coroutineScope.launch {
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
-                                message = resources.getString(R.string.permissions_needed),
-                                icon = R.drawable.shield_lock,
-                                duration = SnackbarDuration.Short
-                            )
-                        )
-                    }
-                }
-            )
 
             HorizontalFloatingToolbar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                 floatingActionButton = {
+                    val filePermissionManager = rememberFilePermissionManager(
+                        onGranted = {
+                            showEditingView()
+                        },
+                        onRejected = {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = resources.getString(R.string.permissions_needed),
+                                        icon = R.drawable.shield_lock,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    )
+
+                    val dirPermissionManager = rememberDirectoryPermissionManager(
+                        onGranted = {
+                            filePermissionManager.get(uris = listOf(currentItem().uri.toUri()))
+                        },
+                        onRejected = {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvents.MessageEvent(
+                                        message = resources.getString(R.string.permissions_needed),
+                                        icon = R.drawable.shield_lock,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    )
+
                     FilledIconButton(
                         onClick = {
-                            getDirPerm.value = true
+                            dirPermissionManager.start(
+                                directories = setOf(currentItem().absolutePath.parent())
+                            )
                         },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = vibrantFloatingToolbarColors().fabContentColor,
@@ -594,7 +502,7 @@ private fun BottomBar(
             ) {
                 IconButton(
                     onClick = {
-                        shareImage(currentItem.uri, context)
+                        shareImage(currentItem().uri.toUri(), context)
                     },
                     enabled = !privacyMode
                 ) {
@@ -604,45 +512,25 @@ private fun BottomBar(
                     )
                 }
 
-                // TODO: maybe restructure this
-                val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
-                val moveToSecureFolder = remember { mutableStateOf(false) }
-                val tryGetDirPermission = remember { mutableStateOf(false) }
                 val mainViewModel = LocalMainViewModel.current
                 val applicationDatabase = LocalAppDatabase.current
 
-                GetDirectoryPermissionAndRun(
-                    absoluteDirPaths = listOf(
-                        currentItem.absolutePath.getParentFromPath()
-                    ),
-                    shouldRun = tryGetDirPermission,
+                val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        showLoadingDialog = true
-                        moveToSecureFolder.value = true
-                    },
-                    onRejected = {}
-                )
-
-                ConfirmationDialog(
-                    showDialog = showMoveToSecureFolderDialog,
-                    dialogTitle = stringResource(id = R.string.media_secure_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_secure)
-                ) {
-                    tryGetDirPermission.value = true
-                }
-
-                GetPermissionAndRun(
-                    uris = listOf(currentItem.uri),
-                    shouldRun = moveToSecureFolder,
-                    onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
-                            moveImageToLockedFolder(
-                                list = listOf(currentItem),
+                        mainViewModel.launch {
+                            val item = currentItem()
+                            moveMediaToSecureFolder(
+                                list = listOf(
+                                    SelectionManager.SelectedItem(
+                                        id = item.id,
+                                        isImage = item.type == MediaType.Image,
+                                        parentPath = item.parentPath
+                                    )
+                                ),
                                 context = context,
                                 applicationDatabase = applicationDatabase
                             ) {
-                                onMoveMedia()
-                                checkZeroItemsLeft()
+                                removeFromCustom(item)
 
                                 showLoadingDialog = false
                             }
@@ -650,12 +538,32 @@ private fun BottomBar(
                     }
                 )
 
-                val motionPhoto = rememberMotionPhoto(uri = currentItem.uri)
+                val dirPermissionManager = rememberDirectoryPermissionManager(
+                    onGranted = {
+                        showLoadingDialog = true
+                        filePermissionManager.get(
+                            uris = listOf(currentItem().uri.toUri())
+                        )
+                    }
+                )
+
+                val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
+                ConfirmationDialog(
+                    showDialog = showMoveToSecureFolderDialog,
+                    dialogTitle = stringResource(id = R.string.media_secure_confirm),
+                    confirmButtonLabel = stringResource(id = R.string.media_secure)
+                ) {
+                    dirPermissionManager.start(
+                        directories = setOf(currentItem().absolutePath.parent())
+                    )
+                }
+
+                val motionPhoto = rememberMotionPhoto(uri = currentItem().uri.toUri())
                 IconButton(
                     onClick = {
                         showMoveToSecureFolderDialog.value = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode
+                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !isCustom
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),
@@ -663,7 +571,7 @@ private fun BottomBar(
                     )
                 }
 
-                val favState = rememberFavouritesState(media = currentItem)
+                val favState = rememberFavouritesState(media = currentItem())
 
                 val vibratorManager = rememberVibratorManager()
                 val isFavourited by favState.state.collectAsStateWithLifecycle()
@@ -673,7 +581,7 @@ private fun BottomBar(
                         vibratorManager.vibrateShort()
 
                         favState.setFavourite(
-                            uri = currentItem.uri,
+                            uri = currentItem().uri.toUri(),
                             favourite = !isFavourited
                         )
                     },
@@ -685,50 +593,71 @@ private fun BottomBar(
                     )
                 }
 
-                val showDeleteDialog = remember { mutableStateOf(false) }
-                val runTrashAction = remember { mutableStateOf(false) }
-
-                val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
-                if (showDeleteDialog.value) {
-                    ConfirmationDialog(
-                        showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_delete_confirm),
-                        confirmButtonLabel = stringResource(id = R.string.media_delete)
-                    ) {
-                        runTrashAction.value = true
-                    }
-                }
-
-                GetPermissionAndRun(
-                    uris = listOf(currentItem.uri),
-                    shouldRun = runTrashAction,
+                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+                // TODO: look into possibly sharing permission managers?
+                val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
                         mainViewModel.launch(Dispatchers.IO) {
-                            if (doNotTrash) {
-                                permanentlyDeletePhotoList(
-                                    context = context,
-                                    list = listOf(currentItem.uri)
-                                )
+                            if (!isCustom) {
+                                if (doNotTrash) {
+                                    permanentlyDeletePhotoList(
+                                        context = context,
+                                        list = listOf(currentItem().uri.toUri())
+                                    )
+                                } else {
+                                    setTrashedOnPhotoList(
+                                        context = context,
+                                        list = listOf(currentItem().uri.toUri()),
+                                        trashed = true
+                                    )
+                                }
                             } else {
-                                setTrashedOnPhotoList(
-                                    context = context,
-                                    list = listOf(currentItem),
-                                    trashed = true,
-                                    appDatabase = applicationDatabase
-                                )
+                                removeFromCustom(currentItem())
                             }
-
-                            onMoveMedia()
-                            checkZeroItemsLeft()
                         }
                     }
                 )
 
-                val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+                val showDeleteDialog = remember { mutableStateOf(false) }
+                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+
+                if (showDeleteDialog.value) {
+                    ConfirmationDialog(
+                        showDialog = showDeleteDialog,
+                        dialogTitle = stringResource(
+                            id =
+                                when {
+                                    isCustom -> R.string.custom_album_remove_media_desc
+
+                                    doNotTrash -> R.string.media_delete_permanently_confirm
+
+                                    else -> R.string.media_delete_confirm
+                                }
+                        ),
+                        confirmButtonLabel = stringResource(
+                            id =
+                                when {
+                                    isCustom -> R.string.custom_album_remove_media
+
+                                    else -> R.string.media_delete
+                                }
+                        )
+                    ) {
+                        trashFilePermissionManager.get(
+                            uris = listOf(currentItem().uri.toUri())
+                        )
+                    }
+                }
+
                 IconButton(
                     onClick = {
-                        if (confirmToDelete) showDeleteDialog.value = true
-                        else runTrashAction.value = true
+                        if (confirmToDelete) {
+                            showDeleteDialog.value = true
+                        } else {
+                            trashFilePermissionManager.get(
+                                uris = listOf(currentItem().uri.toUri())
+                            )
+                        }
                     },
                     enabled = !privacyMode
                 ) {

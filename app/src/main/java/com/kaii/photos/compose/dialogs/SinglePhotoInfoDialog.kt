@@ -7,7 +7,6 @@ import android.content.Intent
 import android.location.Geocoder
 import android.os.Build
 import android.util.Log
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -50,7 +48,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -70,17 +68,19 @@ import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.helpers.GetPermissionAndRun
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
 import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.rememberMediaRenamer
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.permissions.files.rememberMediaRenamer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -92,16 +92,11 @@ fun SinglePhotoInfoDialog(
     currentMediaItem: MediaStoreData,
     sheetState: SheetState,
     showMoveCopyOptions: Boolean,
-    isTouchLocked: Boolean,
+    privacyMode: Boolean,
+    isCustomAlbum: Boolean,
     dismiss: () -> Unit,
-    onMoveMedia: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        sheetState.partialExpand()
-    }
-
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
         LocalRippleConfiguration provides
@@ -131,15 +126,6 @@ fun SinglePhotoInfoDialog(
             CompositionLocalProvider(
                 LocalRippleConfiguration provides RippleConfiguration()
             ) {
-                BackHandler(
-                    enabled = !WindowInsets.isImeVisible
-                ) {
-                    coroutineScope.launch {
-                        sheetState.hide()
-                        dismiss()
-                    }
-                }
-
                 if (isLandscape) {
                     Row(
                         modifier = Modifier
@@ -154,9 +140,9 @@ fun SinglePhotoInfoDialog(
                         Content(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
-                            onMoveMedia = onMoveMedia,
+                            privacyMode = privacyMode,
+                            isCustomAlbum = isCustomAlbum,
                             dismiss = dismiss,
-                            privacyMode = isTouchLocked,
                             togglePrivacyMode = togglePrivacyMode
                         )
                     }
@@ -174,8 +160,8 @@ fun SinglePhotoInfoDialog(
                         Content(
                             currentMediaItem = currentMediaItem,
                             showMoveCopyOptions = showMoveCopyOptions,
-                            privacyMode = isTouchLocked,
-                            onMoveMedia = onMoveMedia,
+                            privacyMode = privacyMode,
+                            isCustomAlbum = isCustomAlbum,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -191,7 +177,7 @@ private fun Content(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
-    onMoveMedia: () -> Unit,
+    isCustomAlbum: Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -200,7 +186,7 @@ private fun Content(
         try {
             getExifDataForMedia(
                 context = context,
-                inputStream = context.contentResolver.openInputStream(currentMediaItem.uri) ?: File(currentMediaItem.absolutePath).inputStream(),
+                inputStream = context.contentResolver.openInputStream(currentMediaItem.uri.toUri()) ?: File(currentMediaItem.absolutePath).inputStream(),
                 absolutePath = currentMediaItem.absolutePath,
                 fallback = currentMediaItem.dateTaken
             )
@@ -211,8 +197,8 @@ private fun Content(
 
     var location by remember { mutableStateOf("") }
     LaunchedEffect(mediaData) {
-        with(Dispatchers.IO) {
-            val latLong = mediaData[MediaData.LatLong] as? DoubleArray ?: return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            val latLong = mediaData[MediaData.LatLong] as? DoubleArray ?: return@withContext
 
             Log.d(TAG, "this is running")
 
@@ -270,7 +256,7 @@ private fun Content(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
-                    onMoveMedia = onMoveMedia,
+                    isCustomAlbum = isCustomAlbum,
                     dismiss = dismiss
                 )
             }
@@ -291,7 +277,7 @@ private fun Content(
                     currentMediaItem = currentMediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
-                    onMoveMedia = onMoveMedia,
+                    isCustomAlbum = isCustomAlbum,
                     dismiss = dismiss
                 )
             }
@@ -317,8 +303,6 @@ private fun Content(
         )
 
         val showConfirmEraseDialog = remember { mutableStateOf(false) }
-        val runEraseExifData = remember { mutableStateOf(false) }
-
         var showDateTimePicker by remember { mutableStateOf(false) }
 
         if (showDateTimePicker) {
@@ -420,22 +404,10 @@ private fun Content(
             }
         }
 
-        ConfirmationDialogWithBody(
-            showDialog = showConfirmEraseDialog,
-            dialogTitle = stringResource(id = R.string.media_exif_erase),
-            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-            confirmButtonLabel = stringResource(id = R.string.media_erase)
-        ) {
-            runEraseExifData.value = true
-        }
-
         val resources = LocalResources.current
         val mainViewModel = LocalMainViewModel.current
         val coroutineScope = rememberCoroutineScope()
-
-        GetPermissionAndRun(
-            uris = listOf(currentMediaItem.uri),
-            shouldRun = runEraseExifData,
+        val permissionState = rememberFilePermissionManager(
             onGranted = {
                 mainViewModel.launch(Dispatchers.IO) {
                     try {
@@ -479,6 +451,15 @@ private fun Content(
             }
         )
 
+        ConfirmationDialogWithBody(
+            showDialog = showConfirmEraseDialog,
+            dialogTitle = stringResource(id = R.string.media_exif_erase),
+            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_erase)
+        ) {
+            permissionState.get(uris = listOf(currentMediaItem.uri.toUri()))
+        }
+
         if (!isLandscape) {
             TallDialogInfoRow(
                 title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
@@ -508,16 +489,16 @@ private fun RowScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
-    onMoveMedia: () -> Unit,
+    isCustomAlbum: Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
-        onMoveMedia = onMoveMedia,
-        dismiss = dismiss,
-        modifier = Modifier.weight(1f)
+        isCustomAlbum = isCustomAlbum,
+        modifier = Modifier.weight(1f),
+        dismiss = dismiss
     )
 }
 
@@ -526,16 +507,16 @@ private fun ColumnScope.IconContent(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
-    onMoveMedia: () -> Unit,
+    isCustomAlbum: Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         currentMediaItem = currentMediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
-        onMoveMedia = onMoveMedia,
-        dismiss = dismiss,
-        modifier = Modifier.weight(1f)
+        isCustomAlbum = isCustomAlbum,
+        modifier = Modifier.weight(1f),
+        dismiss = dismiss
     )
 }
 
@@ -544,9 +525,9 @@ private fun IconContentImpl(
     currentMediaItem: MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
-    onMoveMedia: () -> Unit,
-    dismiss: () -> Unit,
-    modifier: Modifier
+    isCustomAlbum: Boolean,
+    modifier: Modifier,
+    dismiss: () -> Unit
 ) {
     val file = remember(currentMediaItem) { File(currentMediaItem.absolutePath) }
     var originalFileName by remember(file) {
@@ -562,13 +543,12 @@ private fun IconContentImpl(
             }
         )
     }
-    val saveFileName = remember { mutableStateOf(false) }
-    var currentFileName by remember { mutableStateOf(originalFileName) }
 
+    var currentFileName by remember { mutableStateOf(originalFileName) }
     val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
 
-    val mediaRenamer = rememberMediaRenamer(uri = currentMediaItem.uri) {
+    val mediaRenamer = rememberMediaRenamer {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvents.MessageEvent(
@@ -579,19 +559,6 @@ private fun IconContentImpl(
             )
         }
     }
-
-    GetPermissionAndRun(
-        uris = listOf(currentMediaItem.uri),
-        shouldRun = saveFileName,
-        onGranted = {
-            mediaRenamer.rename(
-                newName = "${currentFileName}.${file.extension}",
-                uri = currentMediaItem.uri
-            )
-
-            originalFileName = currentFileName
-        }
-    )
 
     var showRenameDialog by remember { mutableStateOf(false) }
     if (showRenameDialog) {
@@ -604,7 +571,12 @@ private fun IconContentImpl(
 
                 if (valid) {
                     currentFileName = newName
-                    saveFileName.value = true
+                    mediaRenamer.rename(
+                        newName = "${currentFileName}.${file.extension}",
+                        uri = currentMediaItem.uri.toUri()
+                    )
+
+                    originalFileName = currentFileName
                     showRenameDialog = false
                 }
 
@@ -637,17 +609,19 @@ private fun IconContentImpl(
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
 
-        val stateList = SnapshotStateList<MediaStoreData>()
-        stateList.add(currentMediaItem)
-
         MoveCopyAlbumListView(
             show = show,
-            selectedItemsList = stateList,
+            selectedItemsList = listOf(
+                SelectionManager.SelectedItem(
+                    id = currentMediaItem.id,
+                    isImage = currentMediaItem.type == MediaType.Image,
+                    parentPath = currentMediaItem.parentPath
+                )
+            ),
             isMoving = isMoving,
-            groupedMedia = null,
             insetsPadding = WindowInsets.statusBars,
-            onMoveMedia = onMoveMedia,
-            dismissInfoDialog = dismiss
+            dismissInfoDialog = dismiss,
+            clear = {}
         )
 
         IconButton(
@@ -655,7 +629,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode,
+            enabled = !privacyMode && !isCustomAlbum,
             modifier = modifier
                 .height(48.dp)
         ) {
@@ -688,7 +662,7 @@ private fun IconContentImpl(
             onClick = {
                 val intent = Intent(context, WallpaperSetter::class.java).apply {
                     action = Intent.ACTION_SET_WALLPAPER
-                    data = currentMediaItem.uri
+                    data = currentMediaItem.uri.toUri()
                     addCategory(Intent.CATEGORY_DEFAULT)
                     putExtra("mimeType", currentMediaItem.mimeType)
                 }

@@ -1,12 +1,10 @@
 package com.kaii.photos.helpers
 
 import android.content.Context
-import android.os.CancellationSignal
 import android.util.Log
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.mediastore.FavouritesDataSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -71,7 +69,7 @@ class DataAndBackupHelper(
     fun getFavExportDir(context: Context) =
         File(
             File(context.appStorageDir, EXPORT_DIR),
-            FAV_DIR + "_taken_" + getCurrentDate() + ".zip"
+            FAV_DIR + "_taken_" + getCurrentDate()
         )
 
     fun getFavZipFile(context: Context) =
@@ -198,25 +196,20 @@ class DataAndBackupHelper(
         return zipFile.absolutePath
     }
 
-    suspend fun exportFavourites(context: Context) {
+    suspend fun exportFavourites(context: Context) = withContext(Dispatchers.IO) {
         val exportDir = getFavExportDir(context = context)
         if (!exportDir.exists()) exportDir.mkdirs()
 
-        val cancellationSignal = CancellationSignal()
-        val mediaStore = FavouritesDataSource(
-            context = context,
-            sortMode = MediaItemSortMode.LastModified,
-            displayDateFormat = DisplayDateFormat.Default,
-            cancellationSignal = cancellationSignal
-        )
+        val items = MediaDatabase.getInstance(context)
+            .mediaDao()
+            .getAllFavourites()
+            .fastMap {
+                File(it.absolutePath)
+            }
 
-        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
+        if (items.isEmpty()) return@withContext
 
-        if (items.isEmpty()) return
-
-        items.forEach { favItem ->
-            val favFile = File(favItem.absolutePath)
-
+        items.forEach { favFile ->
             val destination = File(exportDir, favFile.name)
             if (!destination.exists()) favFile.copyTo(destination)
         }
@@ -225,7 +218,7 @@ class DataAndBackupHelper(
     suspend fun exportFavouritesToZipFile(
         context: Context,
         progress: (percentage: Float) -> Unit
-    ) : String? {
+    ): String? {
         val zipFile = getFavZipFile(context = context)
         if (!zipFile.exists()) zipFile.parentFile?.mkdirs()
 
@@ -234,17 +227,12 @@ class DataAndBackupHelper(
 
         zipOutputStream.setLevel(Deflater.DEFAULT_COMPRESSION)
 
-        val cancellationSignal = CancellationSignal()
-        val mediaStore = FavouritesDataSource(
-            context = context,
-            sortMode = MediaItemSortMode.LastModified,
-            displayDateFormat = DisplayDateFormat.Default,
-            cancellationSignal = cancellationSignal
-        )
-
-        val items = mediaStore.loadMediaStoreData().first().map { File(it.absolutePath) }
-
-        cancellationSignal.cancel()
+        val items = MediaDatabase.getInstance(context)
+            .mediaDao()
+            .getAllFavourites()
+            .fastMap {
+                File(it.absolutePath)
+            }
 
         if (items.isEmpty()) {
             zipOutputStream.close()

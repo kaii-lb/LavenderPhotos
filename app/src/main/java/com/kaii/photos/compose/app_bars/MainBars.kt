@@ -11,6 +11,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,9 +29,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarScrollBehavior
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -40,15 +43,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,47 +62,87 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
+import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.profilePicture
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppTopBar(
     alternate: Boolean,
-    showDialog: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    media: State<List<MediaStoreData>>,
-    currentView: MutableState<BottomBarTab>,
+    selectionManager: SelectionManager,
+    pagerState: PagerState,
     isFromMediaPicker: Boolean = false
 ) {
-    val mediaCount = remember {
-        derivedStateOf {
-            media.value.filter {
-                it.type != MediaType.Section
-            }.size
-        }
+    val context = LocalContext.current
+    val mainViewModel = LocalMainViewModel.current
+
+    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
+    val alwaysShowPfp by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+
+    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
+    val userInfo by loginState.state.collectAsStateWithLifecycle()
+
+    val coroutineScope = rememberCoroutineScope()
+    val vibratorManager = rememberVibratorManager()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showMainDialog by remember { mutableStateOf(false) }
+
+    if (showMainDialog) {
+        MainDialog(
+            sheetState = sheetState,
+            loginState = loginState,
+            coroutineScope = coroutineScope,
+            toggleSelectMode = {
+                vibratorManager.vibrateShort()
+                selectionManager.enterSelectMode()
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showMainDialog = false
+                }
+            },
+            dismiss = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showMainDialog = false
+                }
+            }
+        )
     }
-    val sectionCount = remember {
-        derivedStateOf {
-            media.value.size - mediaCount.value
-        }
+
+    LaunchedEffect(immichInfo) {
+        loginState.refresh(
+            accessToken = immichInfo.accessToken,
+            pfpSavePath = context.profilePicture,
+            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+        )
     }
 
     DualFunctionTopAppBar(
@@ -127,7 +171,7 @@ fun MainAppTopBar(
         },
         actions = {
             AnimatedVisibility(
-                visible = currentView.value == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
                 enter = scaleIn(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -157,12 +201,15 @@ fun MainAppTopBar(
             }
 
             if (!isFromMediaPicker) {
-                val immichUserState by immichViewModel.immichUserLoginState.collectAsStateWithLifecycle()
-
                 AnimatedLoginIcon(
-                    immichUserLoginState = immichUserState
+                    state = userInfo,
+                    alwaysShowPfp = alwaysShowPfp
                 ) {
-                    showDialog.value = true
+                    coroutineScope.launch {
+                        showMainDialog = true
+                        delay(50)
+                        sheetState.expand()
+                    }
                 }
             } else {
                 val context = LocalContext.current
@@ -181,36 +228,32 @@ fun MainAppTopBar(
             }
         },
         alternateTitle = {
-            SelectViewTopBarLeftButtons(selectedItemsList = selectedItemsList)
-        },
-        alternateActions = {
-            SelectViewTopBarRightButtons(
-                selectedItemsList = selectedItemsList,
-                mediaCount = mediaCount,
-                sectionCount = sectionCount,
-                getAllMedia = { media.value }
-            )
-        },
+            SelectViewTopBarLeftButtons(selectionManager = selectionManager)
+        }
     )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainAppBottomBar(
-    currentView: MutableState<BottomBarTab>,
+    pagerState: PagerState,
     tabs: List<BottomBarTab>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    defaultTab: BottomBarTab,
+    selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val mainTab by mainViewModel.settings.DefaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = mainViewModel.settings.DefaultTabs.defaultTabItem)
-
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
-                if (mainTab == DefaultTabs.TabTypes.secure || mainTab !in tabs) tabs.first() else mainTab
+                if (defaultTab == DefaultTabs.TabTypes.secure || defaultTab !in tabs) tabs.first() else defaultTab
             )
     )
+
+    val currentTab by retain {
+        derivedStateOf {
+            tabs[pagerState.currentPage]
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -233,6 +276,9 @@ fun MainAppBottomBar(
             expandedShadowElevation = 0.dp,
             scrollBehavior = scrollBehaviour,
             modifier = Modifier
+                .semantics {
+                    testTagsAsResourceId = true
+                }
                 .offset(y = (-12).dp)
                 .align(Alignment.Center)
                 .windowInsetsPadding(WindowInsets.systemBars)
@@ -247,8 +293,10 @@ fun MainAppBottomBar(
                     windowInfo.containerSize.width.toDp() * 0.9f
                 }),
             content = {
+                val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
                 AnimatedContent(
-                    targetState = selectedItemsList.isNotEmpty(),
+                    targetState = isSelecting,
                     transitionSpec = {
                         (slideInHorizontally() + fadeIn()).togetherWith(
                             scaleOut(
@@ -266,45 +314,46 @@ fun MainAppBottomBar(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            when (currentView.value) {
+                            when (currentTab) {
                                 DefaultTabs.TabTypes.trash -> {
-                                    TrashPhotoGridBottomBarItems(
-                                        selectedItemsList = selectedItemsList
-                                    )
+                                    TrashPhotoGridBottomBarItems(selectionManager = selectionManager)
                                 }
 
                                 DefaultTabs.TabTypes.favourites -> {
-                                    FavouritesBottomAppBarItems(
-                                        selectedItemsList = selectedItemsList
-                                    )
+                                    FavouritesBottomAppBarItems(selectionManager = selectionManager)
                                 }
 
                                 else -> {
                                     SelectingBottomBarItems(
                                         albumInfo = AlbumInfo(
-                                            id = currentView.value.id,
-                                            name = currentView.value.name,
-                                            paths = currentView.value.albumPaths,
+                                            id = currentTab.id,
+                                            name = currentTab.name,
+                                            paths = currentTab.albumPaths,
                                             isCustomAlbum = false
                                         ),
-                                        selectedItemsList = selectedItemsList
+                                        selectionManager = selectionManager
                                     )
                                 }
                             }
                         }
                     } else {
+                        val windowWidth = LocalWindowInfo.current.containerSize.width.toFloat()
+                        val coroutineScope = rememberCoroutineScope()
+
                         LazyRow(
                             state = state
                         ) {
-                            itemsIndexed(
+                            items(
                                 items = tabs
-                            ) { index, tab ->
+                            ) { tab ->
                                 ToggleButton(
-                                    checked = currentView.value == tab,
+                                    checked = currentTab == tab,
                                     onCheckedChange = {
-                                        if (currentView.value != tab) {
-                                            selectedItemsList.clear()
-                                            currentView.value = tab
+                                        if (currentTab != tab) coroutineScope.launch {
+                                            pagerState.animateScrollBy(
+                                                value = windowWidth * -(pagerState.currentPage - tabs.indexOf(tab)) - pagerState.currentPageOffsetFraction * windowWidth,
+                                                animationSpec = AnimationConstants.defaultSpring()
+                                            )
                                         }
                                     },
                                     shapes = ToggleButtonDefaults.shapes(
@@ -315,9 +364,10 @@ fun MainAppBottomBar(
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
                                     modifier = Modifier
                                         .height(48.dp)
+                                        .testTag(tab.name)
                                 ) {
                                     AnimatedVisibility(
-                                        visible = currentView.value == tab
+                                        visible = currentTab == tab
                                     ) {
                                         Row(
                                             modifier = Modifier

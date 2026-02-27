@@ -40,8 +40,8 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.permissions.favourites.MigrationState
-import com.kaii.photos.helpers.permissions.favourites.rememberFavouritesMigrationState
+import com.kaii.photos.permissions.favourites.MigrationState
+import com.kaii.photos.permissions.favourites.rememberFavouritesMigrationState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable

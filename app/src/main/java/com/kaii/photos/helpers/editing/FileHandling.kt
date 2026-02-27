@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -60,14 +61,13 @@ import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.copyImageListToPath
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
@@ -78,6 +78,7 @@ import java.io.File
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 
 private const val TAG = "com.kaii.photos.helpers.editing.FileHandling"
 
@@ -269,18 +270,24 @@ suspend fun saveVideo(
     }
 
     val media = MediaStoreData(
+        id = 0L,
         displayName = file.name,
         absolutePath = file.absolutePath,
         dateTaken = System.currentTimeMillis() / 1000,
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Video,
         mimeType = "video/mp4",
-        uri = uri
+        uri = uri.toString(),
+        size = 0L,
+        immichUrl = null,
+        immichThumbnail = null,
+        hash = null,
+        parentPath = file.absolutePath.parent(),
+        favourited = false
     )
 
-    val tempPath = context.appStorageDir + "/cache/${media.displayName}"
+    val tempFile = File(context.cacheDir, "/${media.displayName}")
 
-    val tempFile = File(tempPath)
     if (tempFile.exists()) tempFile.delete()
     if (tempFile.parentFile?.exists() != true) tempFile.parentFile?.mkdirs()
     tempFile.createNewFile()
@@ -301,7 +308,7 @@ suspend fun saveVideo(
                 }
 
                 // not using newMedia.uri since we don't have access to that after deletion
-                context.contentResolver.getUriFromAbsolutePath(absolutePath = tempPath, type = MediaType.Video)?.let { newUri ->
+                context.contentResolver.getUriFromAbsolutePath(absolutePath = tempFile.absolutePath, type = MediaType.Video)?.let { newUri ->
                     context.contentResolver.update(
                         newUri,
                         ContentValues().apply {
@@ -344,7 +351,7 @@ suspend fun saveVideo(
     // TODO: SEVERELY inefficient please fix
     transformer.start(
         editedMediaItem,
-        tempPath
+        tempFile.absolutePath
     )
 
     while (completions == 0) {
@@ -395,24 +402,21 @@ suspend fun saveVideo(
         )
     }
 
-    val mediaUri = context.contentResolver.getUriFromAbsolutePath(tempFile.absolutePath, MediaType.Video)
-    if (mediaUri == null) {
+    if (!tempFile.exists() && tempFile.length() <= 0) {
         percentage.floatValue = 1f
         onFailure()
         return@withContext -1L
     }
 
     val finalMediaItem = MediaItem.Builder()
-        .setUri(mediaUri)
+        .setUri(tempFile.toUri())
         .build()
 
     val finalEditedMediaItem = EditedMediaItem.Builder(finalMediaItem)
         .setEffects(Effects(emptyList(), modList))
         .build()
 
-    val tempPathCrop = context.appStorageDir + "/cache/crop-${media.displayName}"
-
-    val tempFileCrop = File(tempPathCrop)
+    val tempFileCrop = File(context.cacheDir, "/crop-${media.displayName}")
     if (tempFileCrop.exists()) tempFileCrop.delete()
     if (tempFileCrop.parentFile?.exists() != true) tempFileCrop.parentFile?.mkdirs()
     tempFileCrop.createNewFile()
@@ -435,9 +439,7 @@ suspend fun saveVideo(
     }
     delay(1000)
 
-    val newUri = context.contentResolver.getUriFromAbsolutePath(tempFileCrop.absolutePath, MediaType.Video)
-
-    if (newUri == null) {
+    if (!tempFileCrop.exists() && tempFileCrop.length() <= 0) {
         percentage.floatValue = 1f
         onFailure()
         return@withContext -1L
@@ -447,35 +449,61 @@ suspend fun saveVideo(
         permanentlyDeletePhotoList(
             context = context,
             list = listOf(
-                media.uri
+                media.uri.toUri()
             )
         )
     }
 
-    return@withContext copyImageListToPath(
+    val newUri = context.contentResolver.insertMedia(
         context = context,
-        list = listOf(
-            media.copy(
-                uri = newUri,
-                absolutePath = tempFileCrop.absolutePath,
-                mimeType = "video/mp4"
-            )
+        media = MediaStoreData(
+            id = 0L,
+            uri = "",
+            absolutePath = tempFileCrop.absolutePath.replaceFirst("crop-", ""),
+            parentPath = tempFileCrop.absolutePath.parent(),
+            displayName = tempFileCrop.name.replaceFirst("crop-", ""),
+            dateTaken = Clock.System.now().epochSeconds,
+            dateModified = Clock.System.now().epochSeconds,
+            mimeType = "video/mp4",
+            type = MediaType.Video,
+            immichUrl = null,
+            immichThumbnail = null,
+            hash = null,
+            size = tempFileCrop.length(),
+            favourited = false
         ),
-        destination = absolutePath.getParentFromPath(),
-        basePath = absolutePath.toBasePath(),
-        overwriteDate = false,
-        showProgressSnackbar = false,
-        overrideDisplayName = {
-            it.replaceFirst("crop-", "")
-        },
-        onSingleItemDone = { data ->
-            permanentlyDeletePhotoList(context, listOf(data.uri))
-            if (tempFile.exists()) tempFile.delete()
-
-            body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
-            percentage.floatValue = 1f
+        basePath = tempFileCrop.absolutePath.toBasePath(),
+        destination = absolutePath.parent(),
+        currentVolumes = MediaStore.getExternalVolumeNames(context),
+        preserveDate = false,
+        overrideDisplayName = null,
+        onInsert = { _, new ->
+            context.contentResolver.copyUriToUri(
+                from = tempFileCrop.toUri(),
+                to = new
+            )
         }
-    ).first().lastPathSegment?.toLongOrNull() ?: -1L
+    )
+
+    if (newUri == null) {
+        percentage.floatValue = 1f
+        onFailure()
+        return@withContext -1L
+    }
+
+    if (tempFileCrop.exists()) tempFileCrop.delete()
+    if (tempFile.exists()) tempFile.delete()
+
+    body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
+    percentage.floatValue = 1f
+
+    val path = absolutePath.toBasePath() + newUri.path!!.substringAfterLast("/document/").substringAfterLast(":")
+    val contentUri = context.contentResolver.getUriFromAbsolutePath(
+        absolutePath = path,
+        type = MediaType.Video
+    )
+
+    return@withContext contentUri?.lastPathSegment?.toLongOrNull() ?: -1L
 }
 
 /** return the id of the newly created image, or -1 if an error occurs */
@@ -689,7 +717,14 @@ suspend fun saveImage(
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Image,
         mimeType = "image/png",
-        uri = uri
+        uri = uri.toString(),
+        size = 0L,
+        immichUrl = null,
+        immichThumbnail = null,
+        hash = null,
+        id = 0L,
+        parentPath = file.absolutePath.parent(),
+        favourited = false
     )
 
     val newUri =
@@ -697,7 +732,7 @@ suspend fun saveImage(
             context.contentResolver.insertMedia(
                 context = context,
                 media = media,
-                destination = absolutePath.getParentFromPath(),
+                destination = absolutePath.parent(),
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
                 overrideDisplayName = file.name.removeSuffix(file.extension) + "png",

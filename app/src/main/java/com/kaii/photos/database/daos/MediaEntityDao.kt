@@ -1,45 +1,115 @@
 package com.kaii.photos.database.daos
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.kaii.photos.database.entities.MediaEntity
+import androidx.room.Upsert
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface MediaEntityDao {
-    @Query("SELECT * FROM mediaentity WHERE id LIKE :id")
-    fun getFromId(id: Long) : MediaEntity?
+interface MediaDao {
+    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC")
+    fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query("SELECT date_taken FROM mediaentity WHERE id = :id")
-    fun getDateTaken(id: Long) : Long
+    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
+    fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query("SELECT mime_type FROM mediaentity WHERE id = :id")
-    fun getMimeType(id: Long) : String
+    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath IN (:paths)")
+    fun countMediaInPaths(paths: Set<String>): Int
 
-    @Query("SELECT * FROM mediaentity WHERE mime_type = :mimetype")
-    fun getFromMimeType(mimetype: String) : List<MediaEntity>
+    @Query(value = "SELECT SUM(size) FROM media WHERE parentPath IN (:paths)")
+    fun mediaSize(paths: Set<String>): Long
 
-    @Query("SELECT * FROM mediaentity WHERE date_taken = :dateTaken")
-    fun getFromDateTaken(dateTaken: Long) : List<MediaEntity>
+    @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
+    fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
 
-    @Query("SELECT * FROM mediaentity WHERE display_name = :displayName")
-    fun getFromDisplayName(displayName: String) : List<MediaEntity>
+    @Query(value = "SELECT * from media ORDER BY dateModified DESC")
+    fun getAllMediaDateModified(): Flow<List<MediaStoreData>>
 
-    @Query("SELECT * from mediaentity")
-    fun getAll(): List<MediaEntity>
+    /** gets only mediastore ids, not immich-only ones */
+    @Query(value = "SELECT id FROM media WHERE uri LIKE 'content://%'")
+    fun getAllMediaIds(): List<Long>
 
-	// maybe try ignore and see performance difference?
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
+    fun getPagedFavouritesDateTaken(): PagingSource<Int, MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateModified DESC")
+    fun getPagedFavouritesDateModified(): PagingSource<Int, MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
+    fun getAllFavourites(): List<MediaStoreData>
+
+    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC LIMIT 1")
+    fun getThumbnailForAlbumDateTaken(paths: Set<String>): MediaStoreData?
+
+    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
+    fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
+
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths) LIMIT 2000"
+    )
+    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1 LIMIT 2000"
+    )
+    fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
+    @Query(
+        value = "SELECT id," +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
+                "absolutePath as parentPath " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 LIMIT 2000"
+    )
+    fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+
+    @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
+    suspend fun linkToImmich(
+        hash: String,
+        immichUrl: String,
+        immichThumbnail: String
+    )
+
+    @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
+    fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)
+
+    @Query(value = "SELECT id FROM media WHERE favourited = 1")
+    fun getFavouritedIds(): List<Long>
+
+    @Query(value = "SELECT id, parentPath FROM media")
+    fun getMediaStoreParentPaths(): Map<
+            @MapColumn(columnName = "id") Long,
+            @MapColumn(columnName = "parentPath") String>
+
+    @Query(value = "SELECT DISTINCT parentPath FROM media")
+    fun getAllAlbums(): Flow<List<String>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertEntity(vararg entity: MediaEntity)
+    suspend fun insert(vararg items: MediaStoreData)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(entities: List<MediaEntity>)
+    suspend fun insertAll(items: Set<MediaStoreData>)
 
-    @Delete(entity = MediaEntity::class)
-    fun deleteEntity(entity: MediaEntity)
+    @Upsert
+    suspend fun upsertAll(items: List<MediaStoreData>)
 
-    @Query("DELETE FROM mediaentity WHERE id = :id")
-    fun deleteEntityById(id: Long)
+    @Query(value = "DELETE FROM media WHERE id IN (:ids)")
+    suspend fun deleteAll(ids: Set<Long>)
 }

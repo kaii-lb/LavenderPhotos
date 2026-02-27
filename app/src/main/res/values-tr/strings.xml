@@ -553,13 +553,11 @@
     <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medya ekleyin</string>
     <string name="albums_folder_desc">Bir klasörden medya yükle</string>
     <string name="albums_non_existent">Böyle bir albüm mevcut değil</string>
-    <string name="albums_already_contains_all">Albüm zaten tüm öğeleri içeriyor</string>
-    <string name="albums_remove">Albümü listeden kaldır</string>
+    <string name="albums_remove_desc">Albümü listeden kaldır</string>
     <string name="albums_pin">Bu albümü sabitle</string>
     <string name="albums_unpin">Bu albümün sabitlemesini kaldır</string>
     <string name="albums_info">Albüm Bilgisi</string>
     <string name="albums_path">Yol</string>
-    <string name="albums_id">Id</string>
     <string name="albums_item_count">Öğe Sayısı</string>
     <string name="albums_name">Albüm Adı</string>
     <string name="albums_type">Albüm Türü</string>
@@ -567,7 +565,6 @@
     <string name="albums_add_failed">Albümler eklenemedi :&lt;</string>
     <!-- Tabs -->
     <string name="tabs">Sekmeler</string>
-    <string name="tab_non_existent">Bu sekme mevcut değil!</string>
     <string name="tabs_default">Varsayılan Sekme</string>
     <string name="tabs_default_desc">Lavender Photos başlangıçta bu sekmeyi otomatik olarak açacaktır</string>
     <string name="tabs_customize">Sekmeleri Özelleştir</string>
@@ -584,26 +581,19 @@
     <string name="return_to_previous_page">Önceki sayfaya dön</string>
     <string name="navigation">Gezinme</string>
     <!-- App -->
-    <string name="app_icon">Uygulama Simgesi</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="dev_name">kaii-lb</string>
-    <string name="dev_title">Geliştirici</string>
     <string name="privacy_policy_title">Gizlilik Politikası</string>
     <string name="privacy_policy">Öyle bir şey yok! Verilerinizin hiçbiri bu cihazdan başka bir yere gitmez. Üzerinde hiçbir yapay zeka eğitilmez, bilgi toplamak için hiçbir algoritma kullanılmaz, hiçbir şey. Lavender Photos, gizlilik odaklı bir galeri uygulamasıdır ve her zaman öyle kalacaktır.</string>
-    <string name="i_swear_were_not_bad">verilerinizi gerçekten kullanmıyoruz</string>
     <string name="support">Destek &amp; Bağışlar</string>
-    <string name="support_desc">uygulamayı canlı tutmama yardım edin</string>
     <string name="version_info">Sürüm Bilgisi</string>
     <string name="translation">Çeviri</string>
-    <string name="translation_desc">Lavender Photos\'u dünyaya yayın!</string>
     <string name="licenses">Lisanslar</string>
-    <string name="licenses_desc">kullanılan açık kaynaklı yazılımlar</string>
     <string name="licenses_extra">Ek Ayrıntılar</string>
     <string name="licenses_extra_desc">Lisanslar hakkında daha ayrıntılı bilgi görüntüleyin</string>
     <string name="special_thanks_to">Özel teşekkürler:</string>
     <!-- Updates -->
     <string name="updates">Güncellemeler</string>
-    <string name="updates_desc">uygulamayı güncel tutun</string>
     <string name="updates_check">Güncellemeleri Kontrol Et</string>
     <string name="updates_check_desc">Uygulamayı açtığınızda yeni sürüm olduğunda bildirir. Güncellemeyi otomatik olarak yüklemez</string>
     <string name="updates_whats_new">Yenilikler</string>
@@ -815,17 +805,9 @@
     <string name="settings_behaviour_desc">Uygulamanın nasıl çalıştığını değiştirin</string>
     <string name="settings_navigation_exit_immediately">Hemen Çık</string>
     <string name="settings_navigation_exit_immediately_desc">Geri düğmesine basıldığında ana fotoğraf görünümüne geri dönmeyi atlar</string>
-    <string name="settings_views">Görünümler</string>
-    <string name="settings_rotate_in_views">Döndürmeye İzin Ver</string>
-    <string name="settings_rotate_in_views_desc">Medya görüntülerken hareketle döndürmeyi etkinleştirir</string>
     <!-- Trash -->
     <string name="trash_bin_short">Çöp</string>
     <string name="trash_bin">Çöp Kutusu</string>
-    <string name="trash_auto_delete">Çöp kutusundaki öğeleri %s gün sonra otomatik olarak siler</string>
-    <string name="trash_days">gün</string>
-    <string name="trash_no_auto_delete">Çöp kutusundaki öğeler otomatik olarak silinmeyecek</string>
-    <string name="trash_auto_delete_interval">Otomatik silme aralığı</string>
-    <string name="trash_auto_delete_notice">Bu tarihten eski olan çöp kutusundaki fotoğraflar kalıcı olarak silinecektir</string>
     <string name="trash_empty">Çöp kutusu boşaltılsın mı?</string>
     <string name="trash_empty_desc">Bu, çöp kutusundaki tüm öğeleri siler, bu işlem geri alınamaz</string>
     <string name="trash_empty_confirm">Boşalt</string>
@@ -838,8 +820,6 @@
     <string name="permissions_overwrite_date_on_move">Taşımada tarihi koru</string>
     <string name="permissions_overwrite_date_on_move_desc">Kopyalama veya taşıma sırasında medyanın tarihini korur</string>
     <string name="permissions_needed">İzin Gerekli</string>
-    <string name="permissions_needed_desc">Lavender Photos\'un bu albüme erişmek için izne ihtiyacı var. Lütfen bir sonraki ekranda "Bu Klasörü Kullan" seçeneğini seçerek izni verin. Bu tek seferlik bir izindir.</string>
-    <string name="permissions_grant">İzin Ver</string>
     <string name="permissions_do_not_trash">Çöp Kutusunu Kullanma</string>
     <string name="permissions_do_not_trash_desc">Öğeleri önce Çöp Kutusuna taşımadan hemen ve kalıcı olarak sil</string>
     <!-- Media -->
@@ -883,12 +863,8 @@
     <string name="media_information">Bilgi</string>
     <!-- Search -->
     <string name="search_photo_name">Bir fotoğraf ara</string>
-    <string name="search_photo_date">Bir fotoğrafın tarihini ara</string>
-    <string name="search_photo_day">Güne göre ara</string>
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos tarafından %1$s tarihinde düzenlenmiş dosya</string>
-    <string name="custom_album_media_not_custom_title">Özel Olmayan Medya</string>
-    <string name="custom_album_media_not_custom_explanation">Bu albümdeki bazı medyalar gerçek klasörlere aittir, Lavender Photos bu medyayı silmeden kaldıramaz, bu yüzden yok sayılacaktır.</string>
     <string name="custom_album_remove_media">Kaldır</string>
     <string name="custom_album_remove_media_desc">Bu öğeler albümden kaldırılsın mı?</string>
     <string name="action_cannot_be_undone">Bu işlem geri alınamaz!</string>
@@ -900,13 +876,9 @@
     <string name="wallpaper_Both">Her İki Ekran</string>
     <string name="wallpaper_scrollable">Kaydırılabilir</string>
     <string name="more_info">Daha Fazla Bilgi</string>
-    <string name="not_available">Mevcut Değil</string>
-    <string name="not_available_desc">Bu özellik, uygulama Beta aşamasında olduğu için henüz mevcut değil, lütfen gelecekteki bir sürümü bekleyin.</string>
     <string name="none">Yok</string>
     <string name="pixels">Piksel</string>
     <string name="paths_should_be_relative">Yol göreceli olmalıdır</string>
-    <string name="today">Bugün</string>
-    <string name="yesterday">Dün</string>
     <string name="help">Yardım</string>
     <string name="apply">Uygula</string>
     <!-- Bottom Sheets -->
@@ -925,13 +897,11 @@
     <string name="error_views_trash_empty">Çöpe atılan öğeler burada görünür</string>
     <string name="error_views_trash_prefix">Çöpe Atılma Tarihi</string>
     <string name="error_views_album_empty">Bu albüm boş</string>
-    <string name="error_views_search_empty">Birkaç fotoğraf arayın!</string>
     <string name="error_views_search_not_found">Herhangi bir eşleşme bulunamadı</string>
     <string name="error_views_secure_empty">Medyalarınızın hiçbiri korunmuyor!</string>
     <string name="error_views_secure_prefix">Güvenceye Alınma Tarihi</string>
     <string name="error_views_favourites_empty">En değerli anılarınızı ekleyin!</string>
     <string name="error_views_folder_non_existent">Klasör mevcut değil</string>
-    <string name="error_views_error_page">Bu bir hata sayfasıdır</string>
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Stil</string>
     <string name="look_and_feel_date_format">Tarih Formatı</string>
@@ -951,9 +921,7 @@
     <string name="look_and_feel_rounded_corners">Yuvarlak Küçük Resim Köşeleri</string>
     <string name="look_and_feel_rounded_corners_desc">Fotoğraf ızgaralarındaki küçük resimlerde dairesel köşeler</string>
     <!-- Immich -->
-    <string name="immich">Immich</string>
     <string name="immich_title">Immich Yedekleme</string>
-    <string name="immich_desc">Kendi barındırdığınız Immich sunucusuna yedekleme</string>
     <string name="immich_account">Immich Hesabı</string>
     <string name="immich_login_unavailable">Giriş Yapılmadı</string>
     <string name="immich_login_unavailable_desc">Şu anda bağlı bir immich hesabı yok</string>
@@ -970,28 +938,11 @@
     <string name="immich_clear_endpoint_desc">Bu sunucu adresini kaldırmak istediğinizden emin misiniz?</string>
     <string name="immich_logout">Çıkış Yapılsın mı?</string>
     <string name="immich_logout_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
-    <string name="immich_done">tamamlandı</string>
-    <string name="immich_sync_status">Senkronizasyon durumu:</string>
     <string name="immich_email">E-posta:</string>
-    <string name="immich_set_pfp_fail">Profil Resmi ayarlanamadı</string>
-    <string name="immich_set_pfp_success">Profil resmi güncellendi!</string>
-    <string name="immich_operation_complete">İşlem tamamlandı!</string>
     <string name="immich_state_unknown">Bilinmiyor</string>
-    <string name="immich_state_loading">Yükleniyor…</string>
-    <string name="immich_sync_album">Albümü ve Immich\'i Senkronize Et</string>
-    <string name="immich_sync_album_out_of_sync_desc">"Ekstra: Albüm: %1$s. Immich: %2$s"</string>
-    <string name="immich_album_delete">Bu albüm kaldırılsın mı?</string>
-    <string name="immich_album_delete_desc">Bu albümü Immich senkronizasyonundan kaldırır</string>
-    <string name="immich_album_delete_include_media">İçeriği Immich\'ten sil</string>
-    <string name="immich_album_delete_full">Albümü Kaldır</string>
     <string name="immich_auth_passowrd">Parola</string>
     <string name="immich_auth_email">E-posta</string>
-    <string name="immich_continuing_in_bg">Yedeklemeye arka planda devam ediliyor</string>
-    <string name="immich_main_dialog_sync_state">Senkronize ediliyor: %2$d üzerinden %1$d</string>
     <string name="immich_uuid">Immich UUID</string>
-    <string name="immich_failed_refreshing_albums">Albümler yenilenemedi</string>
-    <string name="immich_failed_uploading_albums">Albüm yüklenemedi</string>
-    <string name="immich_server_info">Sunucu Bilgisi</string>
     <string name="immich_server_info_desc">Sürüm: %1$s. Yapı: %2$s</string>
     <string name="immich_server_storage">Sunucu Depolaması</string>
     <string name="immich_server_storage_desc">%2$s alanın %1$s kadarı kullanılıyor</string>

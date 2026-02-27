@@ -68,31 +68,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.immichintegration.serialization.LoginCredentials
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.MainActivity.Companion.immichViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.WallpaperSetter
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
+import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.findMinParent
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -246,7 +249,7 @@ fun TextEntryDialog(
     placeholder: String? = null,
     startValue: String = "",
     errorMessage: String? = null,
-    onConfirm: (text: String) -> Boolean,
+    onConfirm: suspend (text: String) -> Boolean,
     onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
 ) {
@@ -345,14 +348,20 @@ fun TextEntryDialog(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        val coroutineScope = rememberCoroutineScope()
+        var isLoading by remember { mutableStateOf(false) }
         FullWidthDialogButton(
             text = stringResource(id = R.string.media_confirm),
             color = MaterialTheme.colorScheme.primary,
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single,
-            enabled = !showError
+            enabled = !showError && !isLoading
         ) {
-            showError = !onConfirm(text.trim())
+            coroutineScope.launch(Dispatchers.IO) {
+                isLoading = true
+                showError = !onConfirm(text.trim())
+                isLoading = false
+            }
         }
     }
 }
@@ -371,6 +380,7 @@ fun ExplanationDialog(
                 text = explanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Justify,
                 modifier = Modifier.wrapContentSize()
             )
         },
@@ -393,6 +403,7 @@ fun AnnotatedExplanationDialog(
                 text = annotatedExplanation,
                 fontSize = TextUnit(14f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Justify,
                 modifier = Modifier.wrapContentSize()
             )
         },
@@ -411,8 +422,10 @@ private fun ExplanationDialogBase(
     showPreviousDialog?.value = false
 
     LavenderDialogBase(
+        usePlatformDefaultWidth = false,
         modifier = Modifier
-            .animateContentSize(),
+            .animateContentSize()
+            .width(300.dp),
         onDismiss = onDismiss
     ) {
         Text(
@@ -445,7 +458,7 @@ private fun ExplanationDialogBase(
 @Composable
 fun AlbumPathsDialog(
     albumInfo: AlbumInfo,
-    onConfirm: (selectedPaths: List<String>) -> Unit,
+    onConfirm: (selectedPaths: Set<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
     val selectedPaths = remember { albumInfo.paths.toMutableStateList() }
@@ -587,7 +600,7 @@ fun AlbumPathsDialog(
                             .forEach { group ->
                                 val min = findMinParent(group.value)
                                 val grouped = min
-                                    .groupBy { it.getParentFromPath() }
+                                    .groupBy { it.parent() }
                                     .map { (key, value) ->
                                         if (value.size > 1) key
                                         else value.first()
@@ -606,14 +619,14 @@ fun AlbumPathsDialog(
 
                         fun buildHierarchy(path: String): PathItem {
                             val possibleChildren = children.filter {
-                                it.toRelativePath(true).getParentFromPath() == path.toRelativePath(
+                                it.toRelativePath(true).parent() == path.toRelativePath(
                                     true
                                 )
                             }.toMutableList()
 
                             val possibleSubChildren = children.filter {
                                 it.toRelativePath(true)
-                                    .getParentFromPath()
+                                    .parent()
                                     .startsWith(path.toRelativePath(true))
                             }
                             if (possibleSubChildren.isNotEmpty()) {
@@ -622,7 +635,7 @@ fun AlbumPathsDialog(
                                         child !in possibleChildren && !possibleChildren.any {
                                             it.endsWith(
                                                 child.toRelativePath(true)
-                                                    .getParentFromPath()
+                                                    .parent()
                                             )
                                         }
                                     }
@@ -710,7 +723,7 @@ fun AlbumPathsDialog(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            onConfirm(selectedPaths)
+            onConfirm(selectedPaths.toSet())
             onDismiss()
         }
     }
@@ -741,12 +754,12 @@ fun AlbumAddChoiceDialog(
         ) {
             val mainViewModel = LocalMainViewModel.current
             val activityLauncher = createDirectoryPicker { path, basePath ->
-                if (path != null && basePath != null) mainViewModel.settings.AlbumsList.add(
+                if (path != null && basePath != null) mainViewModel.settings.albums.add(
                     listOf(
                         AlbumInfo(
                             id = (basePath + path).hashCode(),
-                            name = path.split("/").last(),
-                            paths = listOf(basePath + path)
+                            name = path.filename(),
+                            paths = setOf(basePath + path)
                         )
                     )
                 )
@@ -806,12 +819,12 @@ fun AddCustomAlbumDialog(
             onConfirm = { text ->
                 val albumInfo = AlbumInfo(
                     id = text.hashCode(),
-                    paths = emptyList(),
+                    paths = emptySet(),
                     name = text,
                     isCustomAlbum = true
                 )
 
-                mainViewModel.settings.AlbumsList.add(listOf(albumInfo))
+                mainViewModel.settings.albums.add(listOf(albumInfo))
                 onDismissPrev()
 
                 text.isNotEmpty()
@@ -823,7 +836,8 @@ fun AddCustomAlbumDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun ImmichLoginDialog(
-    endpointBase: String,
+    loginState: LoginStateManager,
+    endpoint: String,
     onDismiss: () -> Unit,
 ) {
     LavenderDialogBase(
@@ -872,6 +886,7 @@ fun ImmichLoginDialog(
 
             val coroutineScope = rememberCoroutineScope()
             val resources = LocalResources.current
+            val mainViewModel = LocalMainViewModel.current
 
             suspend fun login() {
                 val eventTitle =
@@ -886,14 +901,28 @@ fun ImmichLoginDialog(
                     )
                 )
 
-                immichViewModel.loginUser(
-                    credentials = LoginCredentials(
-                        email = email.value.trim(),
-                        password = password.value.trim()
-                    ),
-                    endpointBase = endpointBase
-                ).let { success ->
-                    if (success) {
+                loginState.login(
+                    email = email.value.trim(),
+                    password = password.value.trim(),
+                    userAgent = System.getProperty("http.agent") ?: ""
+                ).let { state ->
+                    mainViewModel.settings.immich.setImmichBasicInfo(
+                        if (state is LoginState.LoggedIn) {
+                            ImmichBasicInfo(
+                                endpoint = endpoint,
+                                accessToken = state.accessToken,
+                                username = state.name
+                            )
+                        } else {
+                            ImmichBasicInfo(
+                                endpoint = endpoint,
+                                accessToken = "",
+                                username = ""
+                            )
+                        }
+                    )
+
+                    if (state is LoginState.LoggedIn) {
                         eventTitle.value = resources.getString(R.string.immich_login_successful)
                         isLoading.value = false
 
@@ -953,73 +982,6 @@ fun ImmichLoginDialog(
     }
 }
 
-@Composable
-fun ConfirmationDialogWithCustomBody(
-    showDialog: MutableState<Boolean>,
-    title: String,
-    confirmButtonLabel: String,
-    action: () -> Unit,
-    body: @Composable (() -> Unit)
-) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
-
-    val modifier = if (isLandscape)
-        Modifier.width(256.dp)
-    else
-        Modifier
-
-    if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                showDialog.value = false
-            },
-            modifier = modifier,
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                        action()
-                    }
-                ) {
-                    Text(
-                        text = confirmButtonLabel,
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = title,
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            text = body,
-            dismissButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.media_cancel),
-                        fontSize = TextUnit(14f, TextUnitType.Sp)
-                    )
-                }
-            },
-            shape = RoundedCornerShape(32.dp)
-        )
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SliderDialog(
@@ -1052,7 +1014,7 @@ fun SliderDialog(
             track = { state ->
                 SliderDefaults.Track(
                     sliderState = state,
-                    drawTick = { offset, color -> },
+                    drawTick = { _, _ -> },
                     modifier = Modifier
                         .height(32.dp)
                 )

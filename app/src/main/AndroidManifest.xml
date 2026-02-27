@@ -45,6 +45,7 @@
     </queries>
 
     <application
+        android:name=".PhotosApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -165,7 +166,7 @@
         </provider>
 
         <provider
-            android:name=".mediastore.content_provider.LavenderContentProvider"
+            android:name=".mediastore.LavenderContentProvider"
             android:authorities="com.kaii.photos.content_provider"
             android:enabled="true"
             android:exported="false" />

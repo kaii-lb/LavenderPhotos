@@ -5,9 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -30,29 +28,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -60,12 +52,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
@@ -74,16 +68,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.signature.ObjectKey
-import com.kaii.photos.MainActivity.Companion.immichViewModel
+import com.kaii.lavender.immichintegration.state_managers.LoginState
+import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.immich.ImmichUserLoginState
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import java.io.File
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.profilePicture
 
 @Composable
 fun SplitButton(
@@ -280,7 +270,7 @@ fun ShowSelectedState(
 
 @Composable
 fun SelectViewTopBarLeftButtons(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectionManager: SelectionManager
 ) {
     SplitButton(
         primaryContentPadding = PaddingValues(16.dp, 0.dp, 12.dp, 0.dp),
@@ -296,8 +286,9 @@ fun SelectViewTopBarLeftButtons(
             )
         },
         secondaryContent = {
+            val count by selectionManager.count.collectAsStateWithLifecycle(initialValue = 0)
             Text(
-                text = selectedItemsList.filter { it.type != MediaType.Section && it != MediaStoreData.dummyItem }.size.toString(),
+                text = count.toString(),
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 modifier = Modifier
@@ -306,76 +297,12 @@ fun SelectViewTopBarLeftButtons(
             )
         },
         primaryAction = {
-            selectedItemsList.clear()
+            selectionManager.clear()
         },
         secondaryAction = {
-            selectedItemsList.clear()
+            selectionManager.clear()
         }
     )
-}
-
-@Composable
-fun SelectViewTopBarRightButtons(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    mediaCount: State<Int>,
-    sectionCount: State<Int>,
-    getAllMedia: () -> List<MediaStoreData>
-) {
-    Row(
-        modifier = Modifier
-            .wrapContentWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        val isTicked by remember {
-            derivedStateOf {
-                selectedItemsList.size == mediaCount.value + sectionCount.value
-            }
-        }
-        val selectAllEnabled by remember {
-            derivedStateOf {
-                mediaCount.value < 2000
-            }
-        }
-
-        IconButton(
-            onClick = {
-                if (isTicked) {
-                    selectedItemsList.clear()
-                    selectedItemsList.add(MediaStoreData())
-                } else {
-                    selectedItemsList.clear()
-
-                    selectedItemsList.addAll(getAllMedia())
-                }
-            },
-            enabled = selectAllEnabled, // limit of 2000 since android can't handle more uris
-            modifier = Modifier
-                .clip(RoundedCornerShape(1000.dp))
-                .size(42.dp)
-                .background(if (isTicked) MaterialTheme.colorScheme.primary else Color.Transparent)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.checklist),
-                contentDescription = "select all items",
-                tint = when {
-                    selectAllEnabled && isTicked -> {
-                        MaterialTheme.colorScheme.onPrimary
-                    }
-
-                    selectAllEnabled -> {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    }
-
-                    else -> {
-                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                    }
-                },
-                modifier = Modifier
-                    .size(24.dp)
-            )
-        }
-    }
 }
 
 /** return true if the device is in landscape mode, false otherwise */
@@ -393,70 +320,39 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun InvalidatableGlideImage(
-    path: Any?,
-    signature: ObjectKey,
-    modifier: Modifier = Modifier
-) {
-    GlideImage(
-        model = path,
-        contentDescription = "User profile picture",
-        contentScale = ContentScale.Crop,
-        modifier = modifier
-    ) {
-        it
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
-            .skipMemoryCache(true)
-            .signature(signature)
-    }
-}
-
-@Composable
 fun AnimatedImmichBackupIcon(
-    immichUserState: ImmichUserLoginState,
+    state: LoginState,
     modifier: Modifier = Modifier
 ) {
-    val pfpPath by remember {
-        derivedStateOf {
-            if (immichUserState is ImmichUserLoginState.IsLoggedIn) {
-                val file = File(immichUserState.info.profileImagePath)
-                if (file.exists()) file.absolutePath
-                else R.drawable.cat_picture
-            } else R.drawable.cat_picture
-        }
-    }
-    val pfpSignature by remember {
-        derivedStateOf {
-            if (pfpPath is String) {
-                ObjectKey(File(pfpPath as String).lastModified())
-            } else ObjectKey(0)
-        }
-    }
-    val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-    val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
+    // TODO:
+    // val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
+    // val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
 
     Box(
         modifier = modifier
             .size(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        val size by animateDpAsState(
-            targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
-            animationSpec = tween(
-                durationMillis = 400
-            )
-        )
-        InvalidatableGlideImage(
-            path = pfpPath,
-            signature = pfpSignature,
+        // val size by animateDpAsState(
+        //     targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
+        //     animationSpec = tween(
+        //         durationMillis = 400
+        //     )
+        // )
+
+        val context = LocalContext.current
+        val alwaysShowInfo by LocalMainViewModel.current.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+        UpdatableProfileImage(
+            loggedIn = alwaysShowInfo || state !is LoginState.LoggedOut,
+            pfpUrl = if (alwaysShowInfo && state is LoginState.LoggedOut) context.profilePicture else (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
             modifier = Modifier
-                .size(size)
+                .size(28.dp) // TODO
                 .clip(CircleShape)
                 .zIndex(2f)
         )
 
         AnimatedVisibility(
-            visible = immichUploadTotal != 0,
+            visible = false, // immichUploadTotal != 0,
             enter = scaleIn(
                 animationSpec = tween(
                     durationMillis = 400
@@ -470,33 +366,34 @@ fun AnimatedImmichBackupIcon(
             modifier = Modifier
                 .zIndex(1f)
         ) {
-            val percentage by animateFloatAsState(
-                targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
-                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-            )
+            // val percentage by animateFloatAsState(
+            //     targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
+            //     animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+            // )
 
-            CircularProgressIndicator(
-                progress = {
-                    percentage
-                },
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeCap = StrokeCap.Round,
-                strokeWidth = 3.dp,
-                modifier = Modifier
-                    .size(32.dp)
-            )
+            // CircularProgressIndicator(
+            //     progress = {
+            //         percentage
+            //     },
+            //     color = MaterialTheme.colorScheme.primary,
+            //     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            //     strokeCap = StrokeCap.Round,
+            //     strokeWidth = 3.dp,
+            //     modifier = Modifier
+            //         .size(32.dp)
+            // )
         }
     }
 }
 
 @Composable
 fun AnimatedLoginIcon(
-    immichUserLoginState: ImmichUserLoginState,
+    state: LoginState,
+    alwaysShowPfp: Boolean,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = immichUserLoginState is ImmichUserLoginState.IsLoggedIn,
+        targetState = alwaysShowPfp || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -509,28 +406,29 @@ fun AnimatedLoginIcon(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(end = 4.dp)
-    ) { state ->
-        if (state) {
+    ) { visible ->
+        if (visible) {
             AnimatedImmichBackupIcon(
-                immichUserState = immichUserLoginState,
+                state = state,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)
-                    .clickable {
-                        onClick()
-                    }
+                    .clickable(onClick = onClick)
             )
         } else {
             IconButton(
-                onClick = {
-                    onClick()
-                }
+                onClick = onClick
             ) {
                 Icon(
                     painter = painterResource(R.drawable.settings),
                     contentDescription = stringResource(id = R.string.settings),
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .semantics {
+                            testTagsAsResourceId = true
+                        }
+                        .testTag("main_dialog_button")
                 )
             }
         }

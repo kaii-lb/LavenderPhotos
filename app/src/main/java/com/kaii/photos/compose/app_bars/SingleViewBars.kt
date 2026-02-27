@@ -112,7 +112,6 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.FullWidthDialogButton
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
 import com.kaii.photos.compose.editing_view.EditorApp
@@ -126,13 +125,15 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditorCropContent
 import com.kaii.photos.compose.editing_view.video_editor.TrimContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorAdjustContent
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingContent
+import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Editing
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -146,9 +147,7 @@ import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.saveVideo
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -358,9 +357,7 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean
+    customAlbumId: Int?
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -372,7 +369,6 @@ fun VideoEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                val context = LocalContext.current
                 val showDialog = remember { mutableStateOf(false) }
 
                 if (showDialog.value) {
@@ -390,24 +386,12 @@ fun VideoEditorTopBar(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else if (!isFromOpenWithView) coroutineScope.launch(Dispatchers.IO) {
-                            context.contentResolver.getMediaStoreDataFromUri(
-                                context = context,
-                                uri = uri
-                            )?.let { item ->
-                                coroutineScope.launch(Dispatchers.Main) {
-                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo!!,
-                                            mediaItemId = item.id,
-                                            nextMediaItemId = navMediaId,
-                                            isSearchPage = isSearchPage,
-                                            isFavouritesPage = isFavouritesPage
-                                        )
-                                    )
-                                }
-                            }
+                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("editIndex", 0)
+
+                            navController.popBackStack()
                         } else {
                             navController.popBackStack()
                         }
@@ -432,7 +416,7 @@ fun VideoEditorTopBar(
             var showDropDown by remember { mutableStateOf(false) }
 
             val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             var overwrite by remember { mutableStateOf(false) }
 
             LaunchedEffect(overwriteByDefault) {
@@ -478,19 +462,14 @@ fun VideoEditorTopBar(
                     val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
-                    val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+                    val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before video is saved
                             // not using Dispatchers.IO since transformer needs to be on main thread
-                            mainViewModel.launch(Dispatchers.IO) {
-                                val item = context.contentResolver.getMediaStoreDataFromUri(
-                                    context = context,
-                                    uri = uri
-                                ) ?: return@launch
-
+                            mainViewModel.launch {
                                 navMediaId = saveVideo(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
@@ -517,17 +496,26 @@ fun VideoEditorTopBar(
                                     }
                                 }
 
-                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch {
-                                    navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                    navController.navigate(
-                                        Screens.SinglePhotoView(
-                                            albumInfo = albumInfo!!,
-                                            mediaItemId = item.id,
-                                            nextMediaItemId = navMediaId,
-                                            isSearchPage = isSearchPage,
-                                            isFavouritesPage = isFavouritesPage,
+                                delay(PhotoGridConstants.UPDATE_TIME * 2)
+                                if (customAlbumId != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                                    MediaDatabase.getInstance(context)
+                                        .customDao()
+                                        .upsertAll(
+                                            listOf(
+                                                CustomItem(
+                                                    id = navMediaId,
+                                                    album = customAlbumId
+                                                )
+                                            )
                                         )
-                                    )
+                                }
+
+                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("editIndex", 0)
+
+                                    navController.popBackStack()
                                 }
                             }
                         }
@@ -895,6 +883,7 @@ fun ImageEditorBottomBar(
     }
 }
 
+// TODO: if album is custom, add edited media to album
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImageEditorTopBar(
@@ -954,7 +943,7 @@ fun ImageEditorTopBar(
             var showDropDown by remember { mutableStateOf(false) }
 
             val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
 
             LaunchedEffect(overwriteByDefault) {
                 setOverwrite(overwriteByDefault)
@@ -1049,7 +1038,7 @@ fun ImageEditorTopBar(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalTime::class)
 @Composable
 fun SingleViewTopBar(
-    mediaItem: MediaStoreData,
+    mediaItem: () -> MediaStoreData,
     visible: Boolean,
     showInfoDialog: Boolean,
     privacyMode: Boolean,
@@ -1135,7 +1124,7 @@ fun SingleViewTopBar(
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 
                 Text(
-                    text = topBarDetailsFormat.format(context, mediaItem.displayName, mediaItem.dateTaken),
+                    text = topBarDetailsFormat.format(context, mediaItem().displayName, mediaItem().dateTaken),
                     fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -1151,7 +1140,6 @@ fun SingleViewTopBar(
                         .padding(8.dp)
                 )
             }
-
         }
 
         AnimatedVisibility(

@@ -40,13 +40,11 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.AlbumsList
 import com.kaii.photos.helpers.DataAndBackupHelper
-import com.kaii.photos.helpers.MultiScreenViewType
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import com.kaii.photos.permissions.auth.rememberExportAuthManager
 import kotlinx.coroutines.Dispatchers
 import java.io.File
 
@@ -71,50 +69,23 @@ fun DataAndBackupPage() {
         ) {
             item {
                 PreferencesSeparatorText(
-                    text = stringResource(id = R.string.immich)
-                )
-            }
-
-            item {
-                val navController = LocalNavController.current
-
-                PreferencesRow(
-                    title = stringResource(id = R.string.immich_title),
-                    iconResID = R.drawable.cloud_upload,
-                    summary = stringResource(id = R.string.immich_desc),
-                    position = RowPosition.Middle,
-                    showBackground = false,
-                    goesToOtherPage = true
-                ) {
-                    navController.navigate(MultiScreenViewType.ImmichMainPage.name)
-                }
-            }
-
-            item {
-                PreferencesSeparatorText(
                     text = stringResource(id = R.string.secure_folder)
                 )
             }
 
             item {
                 val context = LocalContext.current
+                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
-                val exportingBackup = stringResource(id = R.string.exporting_backup)
 
-                PreferencesRow(
-                    title = stringResource(id = R.string.export_unenc_backup),
-                    iconResID = R.drawable.key_remove,
-                    summary = stringResource(id = R.string.export_unenc_backup_desc),
-                    position = RowPosition.Middle,
-                    showBackground = false
-                ) {
+                val authManager = rememberExportAuthManager {
                     mainViewModel.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = exportingBackup,
+                                message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -123,11 +94,57 @@ fun DataAndBackupPage() {
                         backupHelper.exportUnencryptedSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
+                        mainViewModel.settings.albums.add(
                             listOf(
                                 AlbumInfo(
                                     name = albumFile.name,
-                                    paths = listOf(albumFile.relativePath),
+                                    paths = setOf(albumFile.absolutePath),
+                                    id = albumFile.hashCode()
+                                )
+                            )
+                        )
+
+                        isLoading.value = false
+                    }
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_unenc_backup),
+                    iconResID = R.drawable.key_remove,
+                    summary = stringResource(id = R.string.export_unenc_backup_desc),
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    authManager.authenticate()
+                }
+
+            }
+
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+                val isLoading = remember { mutableStateOf(false) }
+                val authManager = rememberExportAuthManager {
+                    mainViewModel.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper(appDatabase)
+
+                        isLoading.value = true
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvents.LoadingEvent(
+                                message = resources.getString(R.string.exporting_backup),
+                                icon = R.drawable.folder_export,
+                                isLoading = isLoading
+                            )
+                        )
+
+                        backupHelper.exportRawSecureFolderItems(context = context)
+
+                        val albumFile = backupHelper.getUnencryptedExportDir(context = context)
+                        mainViewModel.settings.albums.add(
+                            listOf(
+                                AlbumInfo(
+                                    name = albumFile.name,
+                                    paths = setOf(albumFile.absolutePath),
                                     id = albumFile.hashCode()
                                 )
                             )
@@ -144,49 +161,22 @@ fun DataAndBackupPage() {
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper(appDatabase)
-
-                        isLoading.value = true
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
-                                message = exportingBackup,
-                                icon = R.drawable.folder_export,
-                                isLoading = isLoading
-                            )
-                        )
-
-                        backupHelper.exportRawSecureFolderItems(context = context)
-
-                        val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
-                            listOf(
-                                AlbumInfo(
-                                    name = albumFile.name,
-                                    paths = listOf(albumFile.relativePath),
-                                    id = albumFile.hashCode()
-                                )
-                            )
-                        )
-
-                        isLoading.value = false
-                    }
+                    authManager.authenticate()
                 }
+            }
 
-                PreferencesRow(
-                    title = stringResource(id = R.string.export_unenc_zip),
-                    iconResID = R.drawable.folder_zip,
-                    summary = stringResource(id = R.string.export_unenc_zip_desc),
-                    position = RowPosition.Middle,
-                    showBackground = false
-                ) {
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+                val isLoading = remember { mutableStateOf(false) }
+                val authManager = rememberExportAuthManager {
                     mainViewModel.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = exportingBackup,
+                                message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -213,6 +203,16 @@ fun DataAndBackupPage() {
                         isLoading.value = false
                     }
                 }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_unenc_zip),
+                    iconResID = R.drawable.folder_zip,
+                    summary = stringResource(id = R.string.export_unenc_zip_desc),
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    authManager.authenticate()
+                }
             }
 
             item {
@@ -223,23 +223,16 @@ fun DataAndBackupPage() {
 
             item {
                 val context = LocalContext.current
+                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
-                val exportingBackup = stringResource(id = R.string.exporting_backup)
-
-                PreferencesRow(
-                    title = stringResource(id = R.string.export_fav_to_folder),
-                    iconResID = R.drawable.folder_favourites,
-                    summary = stringResource(id = R.string.export_fav_to_folder_desc),
-                    position = RowPosition.Middle,
-                    showBackground = false
-                ) {
-                    mainViewModel.launch(Dispatchers.IO) {
+                val authManager = rememberExportAuthManager {
+                    mainViewModel.launch {
                         val helper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = exportingBackup,
+                                message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -248,11 +241,11 @@ fun DataAndBackupPage() {
                         helper.exportFavourites(context = context)
 
                         val favExportDir = helper.getFavExportDir(context = context)
-                        mainViewModel.settings.AlbumsList.add(
+                        mainViewModel.settings.albums.add(
                             listOf(
                                 AlbumInfo(
                                     name = favExportDir.name,
-                                    paths = listOf(favExportDir.relativePath),
+                                    paths = setOf(favExportDir.absolutePath),
                                     id = favExportDir.hashCode()
                                 )
                             )
@@ -263,19 +256,29 @@ fun DataAndBackupPage() {
                 }
 
                 PreferencesRow(
-                    title = stringResource(id = R.string.export_unenc_zip),
-                    iconResID = R.drawable.folder_zip,
-                    summary = stringResource(id = R.string.export_fav_to_zip_desc),
+                    title = stringResource(id = R.string.export_fav_to_folder),
+                    iconResID = R.drawable.folder_favourites,
+                    summary = stringResource(id = R.string.export_fav_to_folder_desc),
                     position = RowPosition.Middle,
                     showBackground = false
                 ) {
+                    authManager.authenticate()
+                }
+
+            }
+
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+                val isLoading = remember { mutableStateOf(false) }
+                val authManager = rememberExportAuthManager {
                     mainViewModel.launch(Dispatchers.IO) {
                         val helper = DataAndBackupHelper(appDatabase)
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.LoadingEvent(
-                                message = exportingBackup,
+                                message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
                             )
@@ -302,6 +305,16 @@ fun DataAndBackupPage() {
 
                         isLoading.value = false
                     }
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_unenc_zip),
+                    iconResID = R.drawable.folder_zip,
+                    summary = stringResource(id = R.string.export_fav_to_zip_desc),
+                    position = RowPosition.Middle,
+                    showBackground = false
+                ) {
+                    authManager.authenticate()
                 }
             }
 

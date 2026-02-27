@@ -1,151 +1,49 @@
 package com.kaii.photos.models.custom_album
 
 import android.content.Context
-import android.os.CancellationSignal
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.content_provider.CustomAlbumDataSource
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.repositories.CustomRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
-import kotlin.time.Duration.Companion.seconds
-
-// private const val TAG = "com.kaii.photos.models.CustomAlbumViewModel"
+import kotlinx.coroutines.launch
 
 class CustomAlbumViewModel(
+    private val albumInfo: AlbumInfo,
     context: Context,
-    var albumInfo: AlbumInfo,
-    var sortMode: MediaItemSortMode,
-    var displayDateFormat: DisplayDateFormat
+    info: ImmichBasicInfo,
+    sortMode: MediaItemSortMode,
+    format: DisplayDateFormat
 ) : ViewModel() {
-    private var cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource = mutableStateOf(
-        initDataSource(
-            context = context,
-            album = albumInfo,
-            sortMode = sortMode,
-            displayDateFormat = displayDateFormat
-        )
+    private val repo = CustomRepository(
+        context = context,
+        albumInfo = albumInfo,
+        scope = viewModelScope,
+        info = info,
+        sortMode = sortMode,
+        format = format
     )
 
-    val mediaFlow by derivedStateOf {
-        getMediaDataFlow().value.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = 300.seconds.inWholeMilliseconds
-            ),
-            initialValue = emptyList()
-        )
-    }
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
 
-    private fun getMediaDataFlow() = derivedStateOf {
-        mediaStoreDataSource.value.loadMediaStoreData().flowOn(Dispatchers.IO)
-    }
-
-    fun cancelMediaFlow() {
-        cancellationSignal.cancel()
-        cancellationSignal = CancellationSignal()
-    }
-
-    fun update(
-        context: Context,
-        album: AlbumInfo
-    ) {
-        if (album.id != this.albumInfo.id) {
-            reinitDataSource(
-                context = context,
-                album = album,
-                sortMode = sortMode,
-                displayDateFormat = displayDateFormat
-            )
+    fun remove(items: Set<MediaStoreData>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.remove(items, albumInfo.id)
         }
     }
+    suspend fun getMediaCount() = repo.getMediaCount()
+    suspend fun getMediaSize(): String {
+        val bytes = repo.getMediaSize()
 
-    fun reinitDataSource(
-        context: Context,
-        album: AlbumInfo,
-        sortMode: MediaItemSortMode = this.sortMode,
-        displayDateFormat: DisplayDateFormat = this.displayDateFormat
-    ) {
-        if (album == albumInfo && sortMode == this.sortMode && displayDateFormat == this.displayDateFormat) return
+        if (bytes >= 1_000_000_000) {
+            return ((bytes.toDouble() / 1_000_000_0).toLong() / 100.0).toString() + " GB"
+        }
 
-        this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
-
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = album,
-                sortMode = sortMode,
-                displayDateFormat = displayDateFormat
-            )
-    }
-
-    fun changeSortMode(
-        context: Context,
-        sortMode: MediaItemSortMode
-    ) {
-        if (this.sortMode == sortMode) return
-
-        this.sortMode = sortMode
-
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = this.albumInfo,
-                sortMode = sortMode,
-                displayDateFormat = this.displayDateFormat
-            )
-    }
-
-    fun changeDisplayDateFormat(
-        context: Context,
-        displayDateFormat: DisplayDateFormat
-    ) {
-        if (this.displayDateFormat == displayDateFormat) return
-
-        this.displayDateFormat = displayDateFormat
-
-        cancelMediaFlow()
-        mediaStoreDataSource.value =
-            initDataSource(
-                context = context,
-                album = this.albumInfo,
-                sortMode = this.sortMode,
-                displayDateFormat = displayDateFormat
-            )
-    }
-
-    private fun initDataSource(
-        context: Context,
-        album: AlbumInfo,
-        sortMode: MediaItemSortMode,
-        displayDateFormat: DisplayDateFormat
-    ) = run {
-        this.albumInfo = album
-        this.sortMode = sortMode
-        this.displayDateFormat = displayDateFormat
-
-        CustomAlbumDataSource(
-            context = context,
-            parentId = album.id,
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
-        )
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        cancelMediaFlow()
+        return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
     }
 }

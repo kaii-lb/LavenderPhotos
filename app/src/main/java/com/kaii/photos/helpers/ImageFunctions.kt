@@ -14,30 +14,33 @@ import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.getPathsFromUriList
+import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
-
-enum class ImageFunctions {
-    LoadNormalImage,
-    LoadTrashedImage,
-    LoadSecuredImage
-}
 
 fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     if (list.isNotEmpty()) {
@@ -83,15 +86,15 @@ fun setFavouriteOnMedia(
 /** @param list is a list of pairs of item uri and its absolute path */
 suspend fun setTrashedOnPhotoList(
     context: Context,
-    list: List<MediaStoreData>,
-    trashed: Boolean,
-    appDatabase: MediaDatabase
+    list: List<Uri>,
+    trashed: Boolean
 ) {
     val contentResolver = context.contentResolver
 
     val currentTimeMillis = System.currentTimeMillis()
     val trashedValues = ContentValues().apply {
         put(MediaColumns.IS_TRASHED, trashed)
+        put(MediaColumns.DATE_MODIFIED, currentTimeMillis)
     }
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -108,20 +111,27 @@ suspend fun setTrashedOnPhotoList(
         )
     )
 
-    setFavouriteOnMedia(
-        context = context,
-        favourite = false,
-        list = list.map { it.uri }
-    )
+    try {
+        setFavouriteOnMedia(
+            context = context,
+            favourite = false,
+            list = list
+        )
+    } catch (e: Throwable) {
+        Log.d(TAG, "Failed setting fav on trash list. ${e.message}")
+        e.printStackTrace()
+    }
 
     try {
-        list.forEachIndexed { index, media ->
+        val map =
+            if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
+            else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
+
+        list.forEachIndexed { index, uri ->
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-            File(media.absolutePath).setLastModified(currentTimeMillis)
-            contentResolver.update(media.uri, trashedValues, null)
-
-            appDatabase.favouritedItemEntityDao().deleteEntityById(media.id)
+            File(map[uri]!!).setLastModified(currentTimeMillis)
+            contentResolver.update(uri, trashedValues, null)
 
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
             percentage.floatValue = (index + 1f) / list.size
@@ -176,7 +186,12 @@ fun shareSecuredImage(absolutePath: String, context: Context) {
         putExtra(Intent.EXTRA_STREAM, uri)
     }
 
-    context.startActivity(Intent.createChooser(intent, "Share secured image"))
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            context.resources.getString(R.string.secure_share_media)
+        )
+    )
 }
 
 /** @param paths is a list of absolute paths and [MediaType]s of items */
@@ -188,29 +203,54 @@ fun shareMultipleSecuredImages(
         it.second == MediaType.Video
     }
 
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND_MULTIPLE
-        type = if (hasVideos) "video/*" else "image/*"
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-
     val fileUris = ArrayList(
         paths.map {
             FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
         }
     )
 
-    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+    val intent = Intent().apply {
+        action = Intent.ACTION_SEND_MULTIPLE
+        type = if (hasVideos) "video/*" else "image/*"
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        putExtra(Intent.EXTRA_STREAM, fileUris)
+    }
 
-    context.startActivity(Intent.createChooser(intent, null))
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            context.resources.getString(R.string.secure_share_media)
+        )
+    )
 }
 
-fun moveImageToLockedFolder(
+@JvmName("moveSelectedItemsToSecureFolder")
+suspend fun moveMediaToSecureFolder(
+    list: List<SelectionManager.SelectedItem>,
+    context: Context,
+    applicationDatabase: MediaDatabase,
+    onDone: () -> Unit
+) = withContext(Dispatchers.IO) {
+    val media = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
+
+    moveMediaToSecureFolder(
+        list = media.toList(),
+        context = context,
+        applicationDatabase = applicationDatabase,
+        onDone = onDone
+    )
+}
+
+@JvmName("moveMediaToSecureFolder")
+suspend fun moveMediaToSecureFolder(
     list: List<MediaStoreData>,
     context: Context,
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
-) {
+) = withContext(Dispatchers.IO) {
     val lastModified = System.currentTimeMillis()
     val metadataRetriever = MediaMetadataRetriever()
 
@@ -224,7 +264,7 @@ fun moveImageToLockedFolder(
             val destinationFile = File(copyToPath)
 
             context.contentResolver.setDateForMedia(
-                uri = mediaItem.uri,
+                uri = mediaItem.uri.toUri(),
                 type = mediaItem.type,
                 dateTaken = mediaItem.dateTaken,
                 overwriteLastModified = false
@@ -256,9 +296,8 @@ fun moveImageToLockedFolder(
             // cleanup
             permanentlyDeletePhotoList(
                 context = context,
-                list = listOf(mediaItem.uri)
+                list = listOf(mediaItem.uri.toUri())
             )
-            applicationDatabase.mediaEntityDao().deleteEntityById(mediaItem.id)
         } catch (e: Throwable) {
             Log.e(TAG, e.toString())
             e.printStackTrace()
@@ -277,7 +316,7 @@ fun moveImageToLockedFolder(
 }
 
 suspend fun moveImageOutOfLockedFolder(
-    list: List<MediaStoreData>,
+    list: List<PhotoLibraryUIModel.SecuredMedia>,
     context: Context,
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
@@ -286,7 +325,7 @@ suspend fun moveImageOutOfLockedFolder(
     val restoredFilesDir = context.appRestoredFilesDir
 
     list.forEach { media ->
-        val fileToBeRestored = File(media.absolutePath)
+        val fileToBeRestored = File(media.item.absolutePath)
         val originalPath = media.bytes?.getOriginalPath() ?: restoredFilesDir
 
         Log.d(TAG, "ORIGINAL PATH $originalPath")
@@ -313,14 +352,14 @@ suspend fun moveImageOutOfLockedFolder(
 
         contentResolver.insertMedia(
             context = context,
-            media = media.copy(
+            media = media.item.copy(
                 uri = FileProvider.getUriForFile(
                     context,
                     LAVENDER_FILE_PROVIDER_AUTHORITY,
                     tempFile
-                )
+                ).toString()
             ),
-            destination = originalPath.getParentFromPath(),
+            destination = originalPath.parent(),
             basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = true,
@@ -331,7 +370,7 @@ suspend fun moveImageOutOfLockedFolder(
             try {
                 fileToBeRestored.delete()
                 tempFile.delete()
-                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.absolutePath)
+                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.item.absolutePath)
 
                 val thumbnailFile =
                     getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
@@ -349,12 +388,15 @@ suspend fun moveImageOutOfLockedFolder(
 }
 
 /** @param list is a list of the absolute path of every image to be deleted */
-fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) {
+suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) = withContext(Dispatchers.IO) {
+    val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
+
     try {
         list.forEach { path ->
             File(path).let { file ->
                 file.delete()
                 getSecuredCacheImageForFile(file = file, context = context).delete()
+                dao.deleteEntityBySecuredPath(securedPath = path)
             }
         }
     } catch (e: Throwable) {
@@ -413,11 +455,10 @@ fun renameDirectory(
 /** @param destination where to move said files to, should be relative*/
 suspend fun moveImageListToPath(
     context: Context,
-    list: List<MediaStoreData>,
+    list: List<SelectionManager.SelectedItem>,
     destination: String,
-    basePath: String,
     preserveDate: Boolean
-) {
+) = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -432,12 +473,17 @@ suspend fun moveImageListToPath(
         )
     )
 
-    list.forEachIndexed { index, media ->
+    val items = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
+
+    items.forEachIndexed { index, media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
             destination = destination,
-            basePath = basePath,
+            basePath = media.absolutePath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = preserveDate,
             onInsert = { original, new ->
@@ -447,7 +493,7 @@ suspend fun moveImageListToPath(
             body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
             percentage.floatValue = (index + 1f) / list.size
 
-            contentResolver.delete(media.uri, null)
+            contentResolver.delete(media.uri.toUri(), null)
         }
     }
 
@@ -458,14 +504,13 @@ suspend fun moveImageListToPath(
 @param overrideDisplayName should not contain file extension */
 suspend fun copyImageListToPath(
     context: Context,
-    list: List<MediaStoreData>,
+    list: List<SelectionManager.SelectedItem>,
     destination: String,
-    basePath: String,
     overwriteDate: Boolean,
     showProgressSnackbar: Boolean = true,
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
-): MutableList<Uri> {
+): MutableList<Uri> = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
     val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
@@ -482,14 +527,18 @@ suspend fun copyImageListToPath(
         )
     }
 
-    val newUris = mutableListOf<Uri>()
+    val items = getMediaStoreDataForIds(
+        ids = list.fastMap { it.id }.toSet(),
+        context = context
+    )
 
-    list.forEachIndexed { index, media ->
+    val newUris = mutableListOf<Uri>()
+    items.forEachIndexed { index, media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
             destination = destination,
-            basePath = basePath,
+            basePath = media.absolutePath.toBasePath(),
             overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = overwriteDate,
@@ -507,5 +556,5 @@ suspend fun copyImageListToPath(
 
     percentage.floatValue = 1f
 
-    return newUris
+    return@withContext newUris
 }

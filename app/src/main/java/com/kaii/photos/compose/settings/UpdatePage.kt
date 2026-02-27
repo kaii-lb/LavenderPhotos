@@ -41,7 +41,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,10 +64,9 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
-import com.kaii.photos.datastore.Versions
-import com.kaii.photos.helpers.CheckUpdateState
 import com.kaii.photos.helpers.TextStylingConstants
-import kotlinx.coroutines.delay
+import com.kaii.photos.helpers.Updater
+import com.kaii.photos.helpers.rememberUpdater
 import kotlinx.coroutines.launch
 
 private const val TAG = "com.kaii.photos.compose.settings.UpdatePage"
@@ -76,8 +74,39 @@ private const val TAG = "com.kaii.photos.compose.settings.UpdatePage"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdatesPage() {
-    val showLoadingSpinner = remember { mutableStateOf(true) }
-    val runRefreshAction = remember { mutableStateOf(true) }
+    val updater = rememberUpdater()
+    val resources = LocalResources.current
+
+    var showLoadingSpinner by remember { mutableStateOf(true) }
+    val updateStatusText = remember { mutableStateOf(resources.getString(R.string.updates_not_found)) }
+
+    var changelog by remember { mutableStateOf(updater.getChangelog()) }
+
+    fun refresh() {
+        updater.refresh { state ->
+            when (state) {
+                Updater.State.Succeeded -> {
+                    showLoadingSpinner = false
+
+                    updateStatusText.value =
+                        if (updater.hasUpdates.value) resources.getString(R.string.updates_new_version_available)
+                        else resources.getString(R.string.updates_latest)
+
+                    changelog = updater.getChangelog()
+                }
+
+                Updater.State.Failed -> {
+                    showLoadingSpinner = false
+                    updateStatusText.value = resources.getString(R.string.updates_failed)
+                }
+
+                Updater.State.Checking -> {
+                    showLoadingSpinner = true
+                    updateStatusText.value = resources.getString(R.string.updates_checking)
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -85,21 +114,23 @@ fun UpdatesPage() {
         },
         bottomBar = {
             BottomBar(
-                showLoadingSpinner = showLoadingSpinner,
-                runRefreshAction = runRefreshAction
+                updater = updater,
+                updateStatusText = updateStatusText
             )
         },
         contentWindowInsets = WindowInsets.systemBars
     ) { innerPadding ->
         val coroutineScope = rememberCoroutineScope()
 
+        LaunchedEffect(Unit) {
+            coroutineScope.launch { refresh() }
+        }
+
         PullToRefreshBox(
-            isRefreshing = showLoadingSpinner.value,
+            isRefreshing = showLoadingSpinner,
             onRefresh = {
                 coroutineScope.launch {
-                    runRefreshAction.value = false
-                    delay(100)
-                    runRefreshAction.value = true
+                    refresh()
                 }
             },
             modifier = Modifier
@@ -125,9 +156,6 @@ fun UpdatesPage() {
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                val mainViewModel = LocalMainViewModel.current
-                val changelog = mainViewModel.updater.getChangelog()
 
                 LazyColumn(
                     modifier = Modifier
@@ -183,14 +211,14 @@ private fun TopBar() {
         actions = {
             val mainViewModel = LocalMainViewModel.current
             val resources = LocalResources.current
-            val showUpdateNotice by mainViewModel.settings.Versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
+            val showUpdateNotice by mainViewModel.settings.versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
             var showDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(showUpdateNotice) {
                 if (showUpdateNotice) {
                     showDialog = true
 
-                    mainViewModel.settings.Versions.setShowUpdateNotice(false)
+                    mainViewModel.settings.versions.setShowUpdateNotice(false)
                 }
             }
 
@@ -238,11 +266,13 @@ private fun TopBar() {
 
 @Composable
 private fun BottomBar(
-    showLoadingSpinner: MutableState<Boolean>,
-    runRefreshAction: MutableState<Boolean>
+    updater: Updater,
+    updateStatusText: MutableState<String>
 ) {
     val resources = LocalResources.current
-    val mainViewModel = LocalMainViewModel.current
+
+    var isDownloading by remember { mutableStateOf(false) }
+    var progress by remember { mutableFloatStateOf(0f) }
 
     Column(
         modifier = Modifier
@@ -252,39 +282,7 @@ private fun BottomBar(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val newVersionExists by remember {
-            mainViewModel.updater.hasUpdates
-        }
-        var isDownloading by rememberSaveable { mutableStateOf(false) }
-        var progress by rememberSaveable { mutableFloatStateOf(0f) }
-        var updateStatusText by remember { mutableStateOf(resources.getString(R.string.updates_not_found)) }
-
-        // refresh on start
-        LaunchedEffect(runRefreshAction.value) {
-            if (!runRefreshAction.value) return@LaunchedEffect
-
-            mainViewModel.updater.refresh { state ->
-                when (state) {
-                    CheckUpdateState.Succeeded -> {
-                        showLoadingSpinner.value = false
-
-                        updateStatusText =
-                            if (newVersionExists) resources.getString(R.string.updates_new_version_available)
-                            else resources.getString(R.string.updates_latest)
-                    }
-
-                    CheckUpdateState.Failed -> {
-                        showLoadingSpinner.value = false
-                        updateStatusText = resources.getString(R.string.updates_failed)
-                    }
-
-                    CheckUpdateState.Checking -> {
-                        showLoadingSpinner.value = true
-                        updateStatusText = resources.getString(R.string.updates_checking)
-                    }
-                }
-            }
-        }
+        val newVersionExists by updater.hasUpdates
 
         AnimatedContent(
             targetState = isDownloading,
@@ -321,7 +319,7 @@ private fun BottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = updateStatusText,
+                        text = updateStatusText.value,
                         fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
@@ -336,7 +334,7 @@ private fun BottomBar(
                         Button(
                             onClick = {
                                 if (!isDownloading) {
-                                    mainViewModel.updater.startUpdate(
+                                    updater.startUpdate(
                                         progress = { percent ->
                                             isDownloading = true
                                             progress = percent / 100f
@@ -347,10 +345,10 @@ private fun BottomBar(
 
                                             if (success) {
                                                 Log.d(TAG, "Download succeeded, installing...")
-                                                mainViewModel.updater.installUpdate()
+                                                updater.installUpdate()
                                             } else {
                                                 Log.d(TAG, "Download failed")
-                                                updateStatusText = resources.getString(R.string.updates_failed_download)
+                                                updateStatusText.value = resources.getString(R.string.updates_failed_download)
                                             }
                                         }
                                     )

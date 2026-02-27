@@ -20,17 +20,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
@@ -38,38 +34,19 @@ import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.OnBackPressedEffect
-import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.mediastore.MediaStoreData
+import com.kaii.photos.helpers.grid_management.rememberFavSelectionManager
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import kotlinx.coroutines.delay
-
-// private const val TAG = "com.kaii.photos.compose.grids.FavouritesGridView"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesGridView(
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewModel: FavouritesViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle()
-
-    var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(mediaStoreData.value) {
-        delay(PhotoGridConstants.LOADING_TIME)
-        hasFiles = mediaStoreData.value.isNotEmpty()
-    }
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberFavSelectionManager()
 
     val navController = LocalNavController.current
-
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
-        }
-    }
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f)
@@ -77,16 +54,15 @@ fun FavouritesGridView(
                 WindowInsets.navigationBars
             ),
         topBar = {
-            FavouritesViewTopAppBar(
-                selectedItemsList = selectedItemsList,
-                media = mediaStoreData
-            ) {
+            FavouritesViewTopAppBar(selectionManager = selectionManager) {
                 navController.popBackStack()
             }
         },
         bottomBar = {
+            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -95,7 +71,7 @@ fun FavouritesGridView(
                 )
             ) {
                 FavouritesViewBottomAppBar(
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     incomingIntent = incomingIntent
                 )
             }
@@ -127,11 +103,10 @@ fun FavouritesGridView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = mediaStoreData,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                selectedItemsList = selectedItemsList,
+                pagingItems = pagingItems,
+                albumInfo = AlbumInfo.Empty,
+                selectionManager = selectionManager,
                 viewProperties = ViewProperties.Favourites,
-                hasFiles = hasFiles,
                 isMediaPicker = incomingIntent != null
             )
         }

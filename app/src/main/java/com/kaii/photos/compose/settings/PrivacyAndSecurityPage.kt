@@ -36,12 +36,14 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.Permissions
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.permissions.StartupManager
 
 @Composable
-fun PrivacyAndSecurityPage() {
+fun PrivacyAndSecurityPage(
+    startupManager: StartupManager
+) {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
@@ -63,19 +65,19 @@ fun PrivacyAndSecurityPage() {
                 }
 
                 item {
-                    val isMediaManager by mainViewModel.settings.Permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
+                    val isMediaManager by mainViewModel.settings.permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
 
                     val manageMediaLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { _ ->
                         val granted = MediaStore.canManageMedia(context)
 
-                        mainViewModel.onPermissionResult(
+                        startupManager.onPermissionResult(
                             permission = Manifest.permission.MANAGE_MEDIA,
                             isGranted = granted
                         )
 
-                        mainViewModel.settings.Permissions.setIsMediaManager(granted)
+                        mainViewModel.settings.permissions.setIsMediaManager(granted)
                     }
 
                     PreferencesSwitchRow(
@@ -99,7 +101,7 @@ fun PrivacyAndSecurityPage() {
             }
 
             item {
-                val confirmToDelete by mainViewModel.settings.Permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_confirm_to_delete),
@@ -109,12 +111,12 @@ fun PrivacyAndSecurityPage() {
                     showBackground = false,
                     checked = confirmToDelete
                 ) {
-                    mainViewModel.settings.Permissions.setConfirmToDelete(it)
+                    mainViewModel.settings.permissions.setConfirmToDelete(it)
                 }
             }
 
             item {
-                val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+                val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_overwrite_date_on_move),
@@ -124,12 +126,12 @@ fun PrivacyAndSecurityPage() {
                     showBackground = false,
                     checked = preserveDate
                 ) {
-                    mainViewModel.settings.Permissions.setPreserveDateOnMove(it)
+                    mainViewModel.settings.permissions.setPreserveDateOnMove(it)
                 }
             }
 
             item {
-                val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_do_not_trash),
@@ -139,7 +141,7 @@ fun PrivacyAndSecurityPage() {
                     showBackground = false,
                     checked = doNotTrash
                 ) {
-                    mainViewModel.settings.Permissions.setDoNotTrash(it)
+                    mainViewModel.settings.permissions.setDoNotTrash(it)
                 }
             }
         }

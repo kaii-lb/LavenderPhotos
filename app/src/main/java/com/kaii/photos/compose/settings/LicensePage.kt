@@ -43,7 +43,7 @@ import androidx.core.net.toUri
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.helpers.MultiScreenViewType
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
@@ -173,7 +173,7 @@ fun LicensePage() {
                         .fillMaxWidth(1f)
                         .wrapContentHeight()
                         .clickable {
-                            navController.navigate(MultiScreenViewType.ExtendedLicensePage.name)
+                            navController.navigate(Screens.Settings.Misc.ExtendedLicensePage)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,

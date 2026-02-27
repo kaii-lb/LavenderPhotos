@@ -1,7 +1,6 @@
 package com.kaii.photos.compose
 
 import android.content.res.Resources
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -27,49 +24,98 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
-import com.kaii.photos.helpers.ImageFunctions
+import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.helpers.Screens
 
 enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
     val prefix: Int?,
-    val operation: ImageFunctions
+    val navigate: (AlbumInfo, Int) -> Screens
 ) {
     Trash(
         emptyText = R.string.error_views_trash_empty,
         emptyIconResId = R.drawable.delete,
         prefix = R.string.error_views_trash_prefix,
-        operation = ImageFunctions.LoadTrashedImage
+        navigate = { _, index ->
+            Screens.Trash.SinglePhoto(
+                index = index
+            )
+        }
     ),
     Album(
         emptyText = R.string.error_views_album_empty,
         emptyIconResId = R.drawable.error,
         prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        navigate = { albumInfo, index ->
+            Screens.Album.SinglePhoto(
+                albumInfo = albumInfo,
+                index = index
+            )
+        }
     ),
-    SearchLoading(
-        emptyText = R.string.error_views_search_empty,
-        emptyIconResId = R.drawable.search,
+    CustomAlbum(
+        emptyText = R.string.error_views_album_empty,
+        emptyIconResId = R.drawable.error,
         prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        navigate = { albumInfo, index ->
+            Screens.CustomAlbum.SinglePhoto(
+                albumInfo = albumInfo,
+                index = index
+            )
+        }
     ),
     SearchNotFound(
         emptyText = R.string.error_views_search_not_found,
         emptyIconResId = R.drawable.error,
         prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        navigate = { _, index ->
+            Screens.MainPages.Search.SinglePhoto(
+                index = index
+            )
+        }
     ),
     SecureFolder(
         emptyText = R.string.error_views_secure_empty,
         emptyIconResId = R.drawable.secure_folder,
         prefix = R.string.error_views_secure_prefix,
-        operation = ImageFunctions.LoadSecuredImage
+        navigate = { _, index ->
+            Screens.SecureFolder.SinglePhoto(
+                index = index
+            )
+        }
     ),
     Favourites(
         emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
         prefix = null,
-        operation = ImageFunctions.LoadNormalImage
+        navigate = { _, index ->
+            Screens.Favourites.SinglePhoto(
+                index = index
+            )
+        }
+    ),
+    Immich(
+        emptyText = R.string.immich_server_not_loading,
+        emptyIconResId = R.drawable.cloud_off,
+        prefix = null,
+        navigate = { albumInfo, index ->
+            Screens.Immich.SinglePhoto(
+                albumInfo = albumInfo,
+                index = index
+            )
+        }
+    ),
+    Main(
+        emptyText = R.string.error_views_main_empty,
+        emptyIconResId = R.drawable.photogrid,
+        prefix = null,
+        navigate = { albumInfo, index ->
+            Screens.MainPages.MainGrid.SinglePhoto(
+                albumInfo = albumInfo,
+                index = index
+            )
+        }
     );
 
     companion object {
@@ -104,38 +150,6 @@ fun FolderIsEmpty(
 
         Text(
             text = emptyText,
-            fontSize = TextUnit(16f, TextUnitType.Sp),
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier
-                .wrapContentSize()
-        )
-    }
-}
-
-@Composable
-fun ErrorPage(
-    message: String,
-    @DrawableRes iconResId: Int
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize(1f)
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            painter = painterResource(id = iconResId),
-            contentDescription = stringResource(id = R.string.error_views_error_page),
-            tint = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier
-                .size(56.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = message,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier

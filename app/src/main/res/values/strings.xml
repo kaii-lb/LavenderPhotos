@@ -645,7 +645,7 @@
 
     <!-- First Startup -->
     <string name="first_startup_dialog_title">Find all albums on device?</string>
-    <string name="first_startup_dialog_body">Searches for every albums on this device and adds it to Lavender Photos.\nNote: Old users WILL have their albums erased if this option is used.</string>
+    <string name="first_startup_dialog_body">Searches for every album/folder on this device and adds them to Lavender Photos\' albums tab.</string>
     <string name="first_startup_dialog_confirm_title">Search!</string>
 
     <!-- Albums -->
@@ -654,16 +654,16 @@
     <string name="albums_found">Found all albums!</string>
     <string name="add_album">Add an album</string>
     <string name="direct_path_album">Use a direct path to add an album</string>
-    <string name="albums_main_list">Show All in Main</string>
-    <string name="albums_main_list_desc_1">Selected albums will have their photos displayed in the main photos view</string>
-    <string name="albums_main_list_desc_2">Selected albums will be blacklisted from showing in the main photos view</string>
+    <string name="albums_main_list">Main View Albums</string>
+    <string name="albums_main_list_desc_1">Show media from the selected albums</string>
+    <string name="albums_main_list_desc_2">Show media not from the selected albums</string>
     <string name="albums_main_list_selected">Albums selected here will show up in the main photo view</string>
     <string name="albums_main_list_selected_inverse">Albums selected here will not show up in the main photo view</string>
     <string name="albums_selected">Selected Albums</string>
     <string name="albums_auto_detect">Auto detect albums</string>
     <string name="albums_auto_detect_desc">Detects all the folders with media on this device and add them to the albums view</string>
     <string name="albums_clear_list">Clear album list</string>
-    <string name="albums_clear_list_desc">Remove all albums except for Camera and Download</string>
+    <string name="albums_clear_list_desc">Remove all non-essential albums from the album list</string>
     <string name="albums_clear_list_done">Cleared albums list</string>
     <string name="albums_media_sorting">Media Sorting</string>
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>
@@ -672,22 +672,23 @@
     <string name="albums_custom_desc">Add any media from anywhere</string>
     <string name="albums_folder_desc">Load media from a folder</string>
     <string name="albums_non_existent">No such albums exist</string>
-    <string name="albums_already_contains_all">Album contains all items already</string>
-    <string name="albums_remove">Remove album from list</string>
+    <string name="albums_remove">Remove</string>
+    <string name="albums_remove_desc">Remove album from list?</string>
     <string name="albums_pin">Pin this album</string>
     <string name="albums_unpin">Unpin this album</string>
     <string name="albums_info">Album Info</string>
-    <string name="albums_path">Path</string>
-    <string name="albums_id">Id</string>
-    <string name="albums_item_count">Item Count</string>
+    <string name="albums_path">Path:</string>
+    <string name="albums_paths">Paths:</string>
+    <string name="albums_item_count">Item Count:</string>
     <string name="albums_name">Album Name</string>
     <string name="albums_type">Album Type</string>
     <string name="albums_folder">Folder Album</string>
     <string name="albums_add_failed">Failed to add albums :&lt;</string>
+    <string name="albums_immich_not_backed_up">Not backed up</string>
+    <string name="albums_rename_failure">Invalid album name</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
-    <string name="tab_non_existent">This tab doesn\'t exist!</string>
     <string name="tabs_default">Default Tab</string>
     <string name="tabs_default_desc">Lavender Photos will auto-open this tab at startup</string>
     <string name="tabs_customize">Customize Tabs</string>
@@ -712,27 +713,20 @@
     <string name="navigation_trash">Trash</string>
 
     <!-- App -->
-    <string name="app_icon">App Icon</string>
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_name">kaii-lb</string>
-    <string name="dev_title">Developer</string>
+    <string name="dev_name" translatable="false">kaii-lb</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy">There isn\'t one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.</string>
-    <string name="i_swear_were_not_bad">we really don\'t use your data</string>
     <string name="support">Support &amp; Donations</string>
-    <string name="support_desc">help me keep the app alive</string>
     <string name="version_info">Version Info</string>
     <string name="translation">Translation</string>
-    <string name="translation_desc">bring Lavender Photos worldwide!</string>
     <string name="licenses">Licenses</string>
-    <string name="licenses_desc">open source software used</string>
     <string name="licenses_extra">Extra Details</string>
     <string name="licenses_extra_desc">View more detailed information on licenses</string>
     <string name="special_thanks_to">Special thanks to:</string>
 
     <!-- Updates -->
     <string name="updates">Updates</string>
-    <string name="updates_desc">keep the app up to date</string>
     <string name="updates_check">Check for Updates</string>
     <string name="updates_check_desc">Notifies of new version when you open the app. Does not auto-install the update</string>
     <string name="updates_whats_new">What\'s new</string>
@@ -779,6 +773,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="secure_unlock_failed">Failed to authenticate :&lt;</string>
     <string name="secure_unlock_short">Unlock Folder</string>
     <string name="secure_move_out">Move media out of Secure Folder?</string>
+    <string name="secure_restore_failed">Failed restoring media</string>
+    <string name="secure_share_media">Share secured media</string>
 
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
@@ -804,7 +800,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="favourites_migration_desc">This is a way to keep track of your best moments; With Lavender Photos that means favourites that sync across all apps that support it, with flawless management, and a highly performant system!\n\nIf you\'re coming from a previous version of Lavender Photos, all of your previous favourited items will be migrated to the new system.\n\nPlease keep your phone on and this app open.</string>
     <string name="favourites_migration_started">Migration started!</string>
     <string name="favourites_migration_none">No items to migrate</string>
-    <string name="favourites_migration_in_progress">Migration in progress</string>
     <string name="favourites_migration_in_progress_short">In Progress</string>
     <string name="favourites_migration_done">Migration Done!</string>
     <string name="favourites_migration_declined">Permissions Declined!</string>
@@ -813,6 +808,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
     <string name="debugging_desc">Tools for debugging issues</string>
+    <string name="debugging_development">Development</string>
     <string name="logs">Logs</string>
     <string name="record_logs">Record Logs</string>
     <string name="record_logs_desc">Store logs for debugging. Tap to view.</string>
@@ -982,20 +978,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_behaviour">Behaviour</string>
     <string name="settings_behaviour_desc">Change how the app works</string>
     <string name="settings_navigation_exit_immediately">Exit Immediately</string>
-    <string name="settings_navigation_exit_immediately_desc">Skips going back to the main photos view when pressing the back button</string>
-    <string name="settings_views">Views</string>
-    <string name="settings_rotate_in_views">Allow Rotation</string>
-    <string name="settings_rotate_in_views_desc">Enables rotation by gesture when viewing media</string>
+    <string name="settings_navigation_exit_immediately_desc">Skips going back to the default tab when pressing the back button</string>
     <string name="settings_about_unknown_version">Couldn\'t get version number</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>
     <string name="trash_bin">Trash Bin</string>
-    <string name="trash_auto_delete">Auto deletes items in trash bin after %s days</string>
-    <string name="trash_days">days</string>
-    <string name="trash_no_auto_delete">Items in trash bin won\'t be auto deleted</string>
-    <string name="trash_auto_delete_interval">Auto delete interval</string>
-    <string name="trash_auto_delete_notice">Photos in the trash bin older than this date will be permanently deleted</string>
     <string name="trash_empty">Empty trash bin?</string>
     <string name="trash_empty_desc">This deletes all items in the trash bin, this action cannot be undone</string>
     <string name="trash_empty_confirm">Empty Out</string>
@@ -1010,8 +998,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="permissions_overwrite_date_on_move">Preserve date on move</string>
     <string name="permissions_overwrite_date_on_move_desc">Keeps the media\'s date when copying or moving</string>
     <string name="permissions_needed">Permission Needed</string>
-    <string name="permissions_needed_desc">Lavender Photos needs permission to access this album. Please grant it the permission by selecting "Use This Folder" on the next screen.This is a one-time permission.</string>
-    <string name="permissions_grant">Grant</string>
     <string name="permissions_grant_long">Grant Permission</string>
     <string name="permissions_do_not_trash">Don\'t use Trash Bin</string>
     <string name="permissions_do_not_trash_desc">Immediately and permanently delete items without moving to Trash Bin first</string>
@@ -1077,16 +1063,18 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_tools">Tools</string>
     <string name="media_information">Information</string>
     <string name="media_is_raw">This is a RAW image</string>
+    <string name="media_select_limit_reached">Selection limit reached!</string>
 
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
-    <string name="search_photo_date">Search for a photo\'s date</string>
-    <string name="search_photo_day">Search by day</string>
+    <string name="search_photo_tag">Search for a tag</string>
+    <string name="search_by_name">Name</string>
+    <string name="search_by_date">Date</string>
+    <string name="search_by_tag">Tag</string>
+    <string name="search_no_tags_found">No tags added yet…</string>
 
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
-    <string name="custom_album_media_not_custom_title">Non Custom Media</string>
-    <string name="custom_album_media_not_custom_explanation">Some media in this album belongs to actual folders, Lavender Photos cannot remove that media without deleting it so it will be ignored.</string>
     <string name="custom_album_remove_media">Remove</string>
     <string name="custom_album_remove_media_desc">Remove these items from the album?</string>
     <string name="action_cannot_be_undone">This action cannot be undone!</string>
@@ -1099,18 +1087,15 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="wallpaper_Both">Both Screens</string>
     <string name="wallpaper_scrollable">Scrollable</string>
     <string name="more_info">More Info</string>
-    <string name="not_available">Not Available</string>
-    <string name="not_available_desc">This feature is not available yet as the app is in Beta, please wait for a future release.</string>
     <string name="none">None</string>
     <string name="pixels">Pixels</string>
     <string name="paths_should_be_relative">Path needs to be relative</string>
-    <string name="today">Today</string>
-    <string name="yesterday">Yesterday</string>
     <string name="help">Help</string>
     <string name="apply">Apply</string>
     <string name="close">Close</string>
     <string name="changelog_name">Changelog</string>
     <string name="drag_and_drop_data">Lavender Photos Drag-And-Drop Data</string>
+    <string name="management">Management</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -1129,13 +1114,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="error_views_trash_empty">Trashed items show up here</string>
     <string name="error_views_trash_prefix">Trashed:</string>
     <string name="error_views_album_empty">This album is empty</string>
-    <string name="error_views_search_empty">Search for some photos!</string>
     <string name="error_views_search_not_found">Unable to find any matches</string>
     <string name="error_views_secure_empty">None of your media is protected!</string>
     <string name="error_views_secure_prefix">Secured:</string>
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
-    <string name="error_views_error_page">This is an error page</string>
+    <string name="error_views_main_empty">Seems empty...</string>
 
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Styling</string>
@@ -1160,14 +1144,17 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_extra_secure_nav_desc">Shows an option to navigate to Secure Folder from the app\'s main dialog</string>
     <string name="look_and_feel_rounded_corners">Rounded Thumbnail Corners</string>
     <string name="look_and_feel_rounded_corners_desc">Circular corners on thumbnails in photo grids</string>
+    <string name="look_and_feel_views">Views</string>
+    <string name="look_and_feel_views_blur">Background Blur</string>
+    <string name="look_and_feel_views_blur_desc">Fill the background with a blurred version of the current image</string>
 
     <!-- Immich -->
-    <string name="immich">Immich</string>
     <string name="immich_title">Immich Backup</string>
-    <string name="immich_desc">Backup to self-hosted Immich server</string>
     <string name="immich_account">Immich Account</string>
     <string name="immich_login_unavailable">Not Logged In</string>
-    <string name="immich_login_unavailable_desc">No immich account is currently connected</string>
+    <string name="immich_login_unavailable_desc">No immich account connected</string>
+    <string name="immich_login_unreachable">Endpoint Unreachable</string>
+    <string name="immich_login_unreachable_desc">Couldn\'t connect to server</string>
     <string name="immich_login_found">Logged in as: </string>
     <string name="immich_login">Login with Immich</string>
     <string name="immich_login_confirm">Login</string>
@@ -1181,28 +1168,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_clear_endpoint_desc">Are you sure you want to remove this server address?</string>
     <string name="immich_logout">Logout?</string>
     <string name="immich_logout_desc">Are you sure you want to logout from this account?</string>
-    <string name="immich_done">done</string>
-    <string name="immich_sync_status">Sync status:</string>
     <string name="immich_email">Email:</string>
-    <string name="immich_set_pfp_fail">Unable to set Profile Picture</string>
-    <string name="immich_set_pfp_success">Updated profile picture!</string>
-    <string name="immich_operation_complete">Operation complete!</string>
     <string name="immich_state_unknown">Unknown</string>
-    <string name="immich_state_loading">Loading…</string>
-    <string name="immich_sync_album">Sync Album and Immich</string>
-    <string name="immich_sync_album_out_of_sync_desc">"Extra in: Album: %1$s. Immich: %2$s"</string>
-    <string name="immich_album_delete">Remove this album?</string>
-    <string name="immich_album_delete_desc">Removes this album from Immich sync</string>
-    <string name="immich_album_delete_include_media">Delete contents from Immich</string>
-    <string name="immich_album_delete_full">Remove Album</string>
     <string name="immich_auth_passowrd">Password</string>
     <string name="immich_auth_email">Email</string>
-    <string name="immich_continuing_in_bg">Continuing backup in background</string>
-    <string name="immich_main_dialog_sync_state">Syncing: %1$d out of %2$d</string>
-    <string name="immich_uuid">Immich UUID</string>
-    <string name="immich_failed_refreshing_albums">Failed refreshing albums</string>
-    <string name="immich_failed_uploading_albums">Failed uploading album</string>
-    <string name="immich_server_info">Server Info</string>
+    <string name="immich_uuid">Immich UUID:</string>
+    <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
     <string name="immich_server_storage">Server Storage</string>
     <string name="immich_server_storage_desc">%1$s of %2$s used</string>
@@ -1229,6 +1200,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_misc">Miscellaneous</string>
     <string name="immich_always_show_user_info">Always Show User Info</string>
     <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
+    <string name="immich_server_online">Online</string>
+    <string name="immich_server_offline">Offline</string>
+    <string name="immich_server_unreachable">Cannot ping server!</string>
+    <string name="immich_server_not_loading">This album has no media or server is unreachable</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>
@@ -1251,4 +1226,28 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="privacy_scroll_mode_prompt">Manage access to scrolling and actions</string>
     <string name="privacy_scroll_mode_fail">Failed to change privacy mode</string>
     <string name="privacy_scroll_mode_exit_tried">Privacy mode enabled</string>
+
+    <!--  Startup Processing  -->
+    <string name="startup_processing_indexing">Discovering…</string>
+    <string name="startup_processing_info">This is a one-time operation.</string>
+    <string name="startup_processing_progress">Done: %s</string>
+    <string name="startup_processing_explanation">Why the wait?</string>
+    <string name="startup_processing_explanation_desc">Lavender Photos indexes media on your device to provide accurate dates, faster loading times, and better features. This is a <b>one-time</b> operation, and should take around <i>30s to 2mins</i> depending on how many items there are on your device. If you interrupt the processes, it will resume on the next launch.</string>
+    <string name="startup_processing_skip">Skip</string>
+
+    <!--  Main Dialog  -->
+    <string name="main_dialog_greeting">Hi, %s!</string>
+
+    <!--  Tags  -->
+    <string name="tags_add">Add a tag!</string>
+    <string name="tags_exists">Tag already exists!</string>
+    <string name="tags_applied">Applied:</string>
+    <string name="tags_none_applied">No Tags Applied</string>
+    <string name="tags_available">Available:</string>
+    <string name="tags_add_some">Add some tags!</string>
+    <string name="tags_name">Name: %s</string>
+    <string name="tags_type">Type: %s</string>
+    <string name="tags_path">Path: %s</string>
+    <string name="tags_favourited_true">Favourite: Yes</string>
+    <string name="tags_favourited_false">Favourite: No</string>
 </resources>

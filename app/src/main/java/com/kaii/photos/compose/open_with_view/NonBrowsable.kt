@@ -64,16 +64,16 @@ import com.kaii.photos.compose.single_photo.VideoPlayer
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.mediastore.MediaStoreData
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -134,8 +134,8 @@ fun OpenWithContent(
                 val shouldPlay = rememberSaveable { mutableStateOf(true) }
 
                 VideoPlayer(
-                    item = MediaStoreData(
-                        uri = uri
+                    item = MediaStoreData.dummyItem.copy(
+                        uri = uri.toString()
                     ),
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = false,
@@ -349,7 +349,7 @@ private fun BottomBar(
                                 )
 
                                 contentUri?.let {
-                                    context.contentResolver.getMediaStoreDataFromUri(context = context, uri = contentUri)?.absolutePath?.let { absolutePath ->
+                                    context.contentResolver.getMediaStoreDataFromUri(uri = contentUri)?.absolutePath?.let { absolutePath ->
                                         context.contentResolver.copyUriToUri(
                                             from = uri,
                                             to = contentUri
@@ -371,17 +371,13 @@ private fun BottomBar(
                                                         absolutePath = absolutePath,
                                                         uri = contentUri.toString(),
                                                         dateTaken = currentTime / 1000,
-                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                                        isSearchPage = false,
-                                                        isFavouritesPage = false
+                                                        albumInfo = AlbumInfo.Empty
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(
                                                         uri = contentUri.toString(),
                                                         absolutePath = absolutePath,
-                                                        albumInfo = AlbumInfo.createPathOnlyAlbum(emptyList()),
-                                                        isSearchPage = false,
-                                                        isFavouritesPage = false
+                                                        albumInfo = AlbumInfo.Empty
                                                     )
                                                 }
                                             )

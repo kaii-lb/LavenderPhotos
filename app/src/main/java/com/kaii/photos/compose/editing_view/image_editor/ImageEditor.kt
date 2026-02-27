@@ -89,10 +89,11 @@ import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Editing
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -101,8 +102,8 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.helpers.editing.saveImage
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -114,9 +115,7 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?,
-    isSearchPage: Boolean,
-    isFavouritesPage: Boolean
+    albumInfo: AlbumInfo?
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -229,14 +228,14 @@ fun ImageEditor(
             val textMeasurer = rememberTextMeasurer()
             val mainViewModel = LocalMainViewModel.current
 
-            val overwriteByDefault by mainViewModel.settings.Editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
+            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             var overwrite by remember { mutableStateOf(false) }
 
             LaunchedEffect(overwriteByDefault) {
                 overwrite = overwriteByDefault
             }
 
-            val exitOnSave by mainViewModel.settings.Editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
+            val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
             val navController = LocalNavController.current
 
             var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -271,45 +270,35 @@ fun ImageEditor(
                         isFromOpenWithView = isFromOpenWithView
                     )
 
-                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) mainViewModel.launch(Dispatchers.IO) { // need to be on main thread
-                        val item = context.contentResolver.getMediaStoreDataFromUri(
-                            context = context,
-                            uri = uri
-                        ) ?: return@launch
-
-                        coroutineScope.launch(Dispatchers.Main) {
-                            navController.popBackStack(Screens.SinglePhotoView::class, true)
-                            navController.navigate(
-                                Screens.SinglePhotoView(
-                                    albumInfo = albumInfo!!,
-                                    mediaItemId = item.id,
-                                    nextMediaItemId = navMediaId,
-                                    isSearchPage = isSearchPage,
-                                    isFavouritesPage = isFavouritesPage
+                    delay(PhotoGridConstants.UPDATE_TIME * 2)
+                    if (albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .upsertAll(
+                                listOf(
+                                    CustomItem(
+                                        id = navMediaId,
+                                        album = albumInfo!!.id
+                                    )
                                 )
                             )
-                        }
+                    }
+
+                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("editIndex", 0)
+
+                        navController.popBackStack()
                     }
                 },
                 navigateBack = {
-                    if (!isFromOpenWithView) mainViewModel.launch(Dispatchers.Main) {
-                        context.contentResolver.getMediaStoreDataFromUri(
-                            context = context,
-                            uri = uri
-                        )?.let { item ->
-                            coroutineScope.launch(Dispatchers.IO) {
-                                navController.popBackStack(Screens.SinglePhotoView::class, true)
-                                navController.navigate(
-                                    Screens.SinglePhotoView(
-                                        albumInfo = albumInfo!!,
-                                        mediaItemId = item.id,
-                                        nextMediaItemId = navMediaId,
-                                        isSearchPage = isSearchPage,
-                                        isFavouritesPage = isFavouritesPage
-                                    )
-                                )
-                            }
-                        }
+                    if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("editIndex", 0)
+
+                        navController.popBackStack()
                     } else {
                         navController.popBackStack()
                     }
@@ -638,12 +627,8 @@ fun ImageEditor(
 
                         imageEditingState.offset =
                             Offset(
-                                x = with(localDensity) {
-                                    scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2)
-                                },
-                                y = with(localDensity) {
-                                    scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
-                                }
+                                x = scale * (-latestCrop.left + (containerDimens.width - latestCrop.width) / 2),
+                                y = scale * (-latestCrop.top + (containerDimens.height - latestCrop.height) / 2)
                             )
                     }
                 )

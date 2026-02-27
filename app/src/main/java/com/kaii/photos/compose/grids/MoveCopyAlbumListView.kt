@@ -1,7 +1,5 @@
 package com.kaii.photos.compose.grids
 
-import android.content.ContentValues
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -32,138 +30,79 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
-import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.Permissions
-import com.kaii.photos.helpers.GetDirectoryPermissionAndRun
-import com.kaii.photos.helpers.GetPermissionAndRun
-import com.kaii.photos.helpers.MediaItemSortMode
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
-import com.kaii.photos.helpers.getParentFromPath
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveImageListToPath
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.setTrashedOnPhotoList
-import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.content_provider.LavenderContentProvider
-import com.kaii.photos.mediastore.content_provider.LavenderMediaColumns
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
-private const val TAG = "com.kaii.photos.compose.grids.MoveCopyAlbumListView"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
-    groupedMedia: MutableState<List<MediaStoreData>>? = null,
     insetsPadding: WindowInsets,
-    onMoveMedia: () -> Unit = {},
-    dismissInfoDialog: () -> Unit = {}
+    dismissInfoDialog: () -> Unit = {},
+    clear: () -> Unit
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
-    val originalAlbumsList by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-    val albumToThumbnailMapping = mainViewModel.albumsThumbnailsMap
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
+    val albumGridState = rememberAlbumGridState()
+    val originalAlbumsList by albumGridState.albums.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
     val searchedForText = remember { mutableStateOf("") }
 
     val state = rememberLazyListState()
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-
     LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
-        withContext(Dispatchers.IO) {
-            if (mainViewModel.albumInfo.toSet() != originalAlbumsList.toSet()) {
-                mainViewModel.refreshAlbums(
-                    context = context,
-                    albums = originalAlbumsList,
-                    sortMode = sortMode
-                )
-            }
-        }
-
-        val commonParent = run {
-            // find common ancestors, if there's only one hide it (below code)
-            // if not do nothing
-            val grouped = selectedItemsList
-                .filter {
-                    it.type != MediaType.Section
-                }
-                .groupBy {
-                    it.absolutePath.getParentFromPath()
-                }
-
-            Log.d(TAG, "Grouped $grouped")
-
-            if (grouped.keys.size == 1) grouped.keys.first()
-            else null
-        }
-
         albumsList = originalAlbumsList.filter {
-            it.name.contains(searchedForText.value, true)
-        }.sortedByDescending { album ->
-            val dateToSortBy =
-                if (sortMode == MediaItemSortMode.LastModified) albumToThumbnailMapping[album.id]?.dateModified ?: 0L
-                else albumToThumbnailMapping[album.id]?.dateTaken ?: 0L
-
-            (if (album.isCustomAlbum) 1L else 0L) or dateToSortBy
-        }.fastMapNotNull { album ->
-            // check if just moving/copying to a folder or custom album and hide the "same album" that the media came from if so
-            if ((album.paths.size == 1 && album.mainPath != commonParent) || album.isCustomAlbum) album
-            else null
+            it.info.name.contains(searchedForText.value, true)
         }
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
@@ -243,22 +182,17 @@ fun MoveCopyAlbumListView(
                     items(
                         count = albumsList.size,
                         key = {
-                            albumsList[it].id
+                            albumsList[it].info.id
                         }
                     ) { index ->
-                        val album = albumsList[index]
-                        val mediaItem = albumToThumbnailMapping[album.id] ?: MediaStoreData.dummyItem
-
                         AlbumsListItem(
-                            album = album,
-                            data = mediaItem,
+                            album = albumsList[index],
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,
                             show = show,
-                            groupedMedia = groupedMedia,
-                            onMoveMedia = onMoveMedia,
                             dismissInfoDialog = dismissInfoDialog,
+                            clear = clear,
                             modifier = Modifier
                                 .fillParentMaxWidth(1f)
                                 .padding(8.dp, 0.dp)
@@ -278,79 +212,42 @@ fun MoveCopyAlbumListView(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumsListItem(
-    album: AlbumInfo,
-    data: MediaStoreData,
+    album: AlbumGridState.Album,
     position: RowPosition,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
+    selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
     show: MutableState<Boolean>,
-    onMoveMedia: () -> Unit,
-    dismissInfoDialog: () -> Unit,
     modifier: Modifier,
-    groupedMedia: MutableState<List<MediaStoreData>>? = null
+    dismissInfoDialog: () -> Unit,
+    clear: () -> Unit
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
     val context = LocalContext.current
 
-    val selectedItemsWithoutSection by remember {
-        derivedStateOf {
-            selectedItemsList.filter {
-                it.type != MediaType.Section && it != MediaStoreData.dummyItem
-            }
-        }
-    }
-
-    val runOnUriGranted = remember { mutableStateOf(false) }
-    val runOnDirGranted = remember { mutableStateOf(false) }
-
-    GetDirectoryPermissionAndRun(
-        absoluteDirPaths = listOf(album.mainPath),
-        shouldRun = runOnDirGranted,
-        onGranted = {
-            runOnUriGranted.value = true
-        },
-        onRejected = {}
-    )
-
     val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
-    val coroutineScope = rememberCoroutineScope()
-    val preserveDate by mainViewModel.settings.Permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
-    val doNotTrash by mainViewModel.settings.Permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
 
-    GetPermissionAndRun(
-        uris = selectedItemsWithoutSection.map { it.uri },
-        shouldRun = runOnUriGranted,
+    val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
             show.value = false
 
             mainViewModel.launch(Dispatchers.IO) {
-                if (isMoving && album.paths.size == 1) {
-                    onMoveMedia()
-
+                if (isMoving && album.info.paths.size == 1) {
                     moveImageListToPath(
                         context = context,
-                        list = selectedItemsWithoutSection,
-                        destination = album.mainPath,
-                        preserveDate = preserveDate,
-                        basePath = album.mainPath.toBasePath()
+                        list = selectedItemsList,
+                        destination = album.info.mainPath,
+                        preserveDate = preserveDate
                     )
-
-                    if (groupedMedia != null) {
-                        val newList = groupedMedia.value.toMutableList()
-                        newList.removeAll(selectedItemsWithoutSection.toSet())
-                        groupedMedia.value = newList
-                    }
                 } else {
                     val list = mutableListOf<MediaStoreData>()
 
-                    album.paths.forEach { path ->
+                    album.info.paths.forEach { path ->
                         copyImageListToPath(
                             context = context,
-                            list = selectedItemsWithoutSection,
+                            list = selectedItemsList,
                             destination = path,
-                            overwriteDate = preserveDate,
-                            basePath = path.toBasePath()
+                            overwriteDate = preserveDate
                         ) { media ->
                             if (isMoving && !list.contains(media)) {
                                 list.add(media)
@@ -359,91 +256,56 @@ fun AlbumsListItem(
                     }
 
                     if (list.isNotEmpty()) {
-                        onMoveMedia()
-
-                        if (doNotTrash) {
-                            permanentlyDeletePhotoList(
-                                context = context,
-                                list = list.fastMap { it.uri }
-                            )
-                        } else {
-                            setTrashedOnPhotoList(
-                                context = context,
-                                list = list,
-                                trashed = true,
-                                appDatabase = applicationDatabase
-                            )
-                        }
+                        permanentlyDeletePhotoList(
+                            context = context,
+                            list = list.fastMap { it.uri.toUri() }
+                        )
                     }
                 }
 
-                selectedItemsList.clear()
+                clear()
                 dismissInfoDialog()
             }
         }
     )
 
-    val resources = LocalResources.current
+    val dirPermissionManager = rememberDirectoryPermissionManager(
+        onGranted = {
+            filePermissionManager.get(
+                uris = selectedItemsList.fastMap { it.toUri() }
+            )
+        }
+    )
+
     Row(
         modifier = modifier
             .height(88.dp)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                if (!album.isCustomAlbum) {
-                    runOnDirGranted.value = true
+                if (!album.info.isCustomAlbum) {
+                    dirPermissionManager.start(
+                        directories = album.info.paths
+                    )
                 } else {
-                    val items = selectedItemsWithoutSection
+                    show.value = false
 
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val data = mutableListOf<String>()
-                        context.contentResolver.query(
-                            LavenderContentProvider.CONTENT_URI,
-                            arrayOf(LavenderMediaColumns.URI, LavenderMediaColumns.PARENT_ID),
-                            "${LavenderMediaColumns.PARENT_ID} = ?",
-                            arrayOf("${album.id}"),
-                            null
-                        )?.use { cursor ->
-                            while (cursor.moveToNext()) {
-                                val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
-                                val uri = cursor.getString(uriCol)
-
-                                data.add(uri)
-                            }
-                        }
-
-                        val inserted = context.contentResolver.bulkInsert(
-                            LavenderContentProvider.CONTENT_URI,
-                            items
-                                .fastFilter { media ->
-                                    media.uri.toString() !in data
-                                }.fastMap { media ->
-                                    ContentValues().apply {
-                                        // no id since the content provider handles that on its own
-                                        put(LavenderMediaColumns.URI, media.uri.toString())
-                                        put(LavenderMediaColumns.PARENT_ID, album.id)
-                                        put(LavenderMediaColumns.MIME_TYPE, media.mimeType)
-                                        put(LavenderMediaColumns.DATE_TAKEN, media.dateTaken)
-                                    }
-                                }.toTypedArray()
-                        )
-
-                        Log.d(TAG, "Number of inserted items: $inserted")
-                        Log.d(TAG, "Got album id ${album.id}")
-
-                        if (inserted == 0) {
-                            LavenderSnackbarController.pushEvent(
-                                LavenderSnackbarEvents.MessageEvent(
-                                    message = resources.getString(R.string.albums_already_contains_all),
-                                    icon = R.drawable.error_2,
-                                    duration = SnackbarDuration.Short
-                                )
+                    // TODO: possibly make this less messy
+                    mainViewModel.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .upsertAll(
+                                items = selectedItemsList.fastMap {
+                                    CustomItem(
+                                        id = it.id,
+                                        album = album.info.id
+                                    )
+                                }
                             )
-                            show.value = false
-                        }
                     }
 
-                    selectedItemsList.clear()
+                    clear()
+                    dismissInfoDialog()
                 }
             },
         verticalAlignment = Alignment.CenterVertically
@@ -451,19 +313,22 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = data.uri,
-            contentDescription = album.mainPath,
+            model = album.thumbnail,
+            contentDescription = album.info.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
-        )
+        ) {
+            it.signature(album.signature)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+        }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = album.name,
+            text = album.info.name,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
             color = MaterialTheme.colorScheme.onSurface,
@@ -471,7 +336,7 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if (album.isCustomAlbum) {
+        if (album.info.isCustomAlbum) {
             Icon(
                 painter = painterResource(id = R.drawable.art_track),
                 contentDescription = stringResource(id = R.string.albums_is_custom),

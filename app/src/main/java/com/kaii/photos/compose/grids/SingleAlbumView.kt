@@ -17,56 +17,51 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalMainViewModel
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
-import com.kaii.photos.compose.dialogs.SingleAlbumDialog
+import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.MultiScreenViewType
-import com.kaii.photos.helpers.OnBackPressedEffect
-import com.kaii.photos.helpers.PhotoGridConstants
-import com.kaii.photos.helpers.checkHasFiles
-import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
+import com.kaii.photos.helpers.grid_management.rememberSelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlin.io.path.Path
+import kotlinx.coroutines.launch
 
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewModel: MultiAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val navController = LocalNavController.current
-    val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
+    val mainViewModel = LocalMainViewModel.current
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
@@ -76,43 +71,27 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
-            viewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum
-            )
-        }
+        viewModel.update(album = dynamicAlbum)
     }
 
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
-        }
-    }
-
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
+    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
     SingleAlbumViewCommon(
-        mediaStoreData = mediaStoreData,
-        albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
+        pagingItems = pagingItems,
+        albumInfo = { dynamicAlbum },
+        selectionManager = selectionManager,
         incomingIntent = incomingIntent,
-        onBackClick = {
-            viewModel.cancelMediaFlow()
-            navController.popBackStack()
-        }
+        viewProperties = ViewProperties.Album,
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
     )
 }
 
 @Composable
 fun SingleAlbumView(
     albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val navController = LocalNavController.current
-    val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
 
     val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
@@ -123,67 +102,88 @@ fun SingleAlbumView(
         }
     }
 
-    LaunchedEffect(dynamicAlbum) {
-        if (viewModel.albumInfo.paths.toSet() != dynamicAlbum.paths.toSet()) {
-            viewModel.reinitDataSource(
-                context = context,
-                album = dynamicAlbum
-            )
-        }
-    }
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
 
-    OnBackPressedEffect { destination ->
-        if (destination.route == MultiScreenViewType.MainScreen.name) {
-            viewModel.cancelMediaFlow()
-        }
-    }
-
-    val mediaStoreData = viewModel.mediaFlow.collectAsStateWithLifecycle(context = Dispatchers.IO)
     SingleAlbumViewCommon(
-        mediaStoreData = mediaStoreData,
-        albumInfo = dynamicAlbum,
-        selectedItemsList = selectedItemsList,
-        navController = navController,
+        pagingItems = pagingItems,
+        albumInfo = { dynamicAlbum },
+        selectionManager = selectionManager,
         incomingIntent = incomingIntent,
-        onBackClick = {
-            viewModel.cancelMediaFlow()
-            navController.popBackStack()
+        viewProperties = ViewProperties.CustomAlbum,
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
+    )
+}
+
+@Composable
+fun SingleAlbumView(
+    albumInfo: AlbumInfo,
+    viewModel: ImmichAlbumViewModel,
+    incomingIntent: Intent? = null
+) {
+    val mainViewModel = LocalMainViewModel.current
+
+    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            allAlbums.first { it.id == albumInfo.id }
         }
+    }
+
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
+
+    SingleAlbumViewCommon(
+        pagingItems = pagingItems,
+        albumInfo = { dynamicAlbum },
+        selectionManager = selectionManager,
+        incomingIntent = incomingIntent,
+        viewProperties = ViewProperties.Immich,
+        mediaCount = viewModel::getMediaCount,
+        albumSize = viewModel::getMediaSize
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SingleAlbumViewCommon(
-    mediaStoreData: State<List<MediaStoreData>>,
-    albumInfo: AlbumInfo,
-    selectedItemsList: SnapshotStateList<MediaStoreData>,
-    navController: NavHostController,
+    pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    albumInfo: () -> AlbumInfo,
+    selectionManager: SelectionManager,
     incomingIntent: Intent?,
+    viewProperties: ViewProperties,
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit
+    mediaCount: suspend () -> Int,
+    albumSize: suspend () -> String
 ) {
-    val showDialog = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showInfoDialog by remember { mutableStateOf(false) }
 
-    var hasFiles by remember { mutableStateOf(true) }
-    LaunchedEffect(mediaStoreData.value.lastOrNull()) {
-        withContext(Dispatchers.IO) {
-            hasFiles = if (!albumInfo.isCustomAlbum) {
-                var result: Boolean? = null
-
-                albumInfo.paths.any { path ->
-                    val basePath = path.toBasePath()
-
-                    result = Path(path).checkHasFiles(basePath = basePath)
-                    result == true
+    if (showInfoDialog) {
+        val vibratorManager = rememberVibratorManager()
+        AlbumInfoDialog(
+            albumInfo = albumInfo,
+            sheetState = sheetState,
+            itemCount = mediaCount,
+            albumSize = albumSize,
+            toggleSelectionMode = {
+                vibratorManager.vibrateShort()
+                selectionManager.enterSelectMode()
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showInfoDialog = false
                 }
-
-                result == true
-            } else {
-                delay(PhotoGridConstants.LOADING_TIME)
-                mediaStoreData.value.isNotEmpty()
+            },
+            dismiss = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showInfoDialog = false
+                }
             }
-        }
+        )
     }
 
     Scaffold(
@@ -192,16 +192,22 @@ private fun SingleAlbumViewCommon(
         topBar = {
             SingleAlbumViewTopBar(
                 albumInfo = albumInfo,
-                media = mediaStoreData,
-                selectedItemsList = selectedItemsList,
-                showDialog = showDialog,
+                selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null,
-                onBackClick = onBackClick
+                showDialog = {
+                    coroutineScope.launch {
+                        showInfoDialog = true
+                        delay(50)
+                        sheetState.expand()
+                    }
+                }
             )
         },
         bottomBar = {
+            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
             AnimatedVisibility(
-                visible = selectedItemsList.isNotEmpty(),
+                visible = isSelecting,
                 enter = fadeIn() + slideInHorizontally(
                     animationSpec = AnimationConstants.expressiveSpring()
                 ),
@@ -211,7 +217,7 @@ private fun SingleAlbumViewCommon(
             ) {
                 SingleAlbumViewBottomBar(
                     albumInfo = albumInfo,
-                    selectedItemsList = selectedItemsList,
+                    selectionManager = selectionManager,
                     incomingIntent = incomingIntent
                 )
             }
@@ -243,20 +249,11 @@ private fun SingleAlbumViewCommon(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PhotoGrid(
-                groupedMedia = mediaStoreData,
-                albumInfo = albumInfo,
-                selectedItemsList = selectedItemsList,
-                viewProperties = ViewProperties.Album,
-                isMediaPicker = incomingIntent != null,
-                hasFiles = hasFiles
-            )
-
-            SingleAlbumDialog(
-                showDialog = showDialog,
-                albumId = albumInfo.id,
-                navController = navController,
-                selectedItemsList = selectedItemsList,
-                itemCount = mediaStoreData.value.filter { it.type != MediaType.Section }.size
+                pagingItems = pagingItems,
+                albumInfo = albumInfo(),
+                selectionManager = selectionManager,
+                viewProperties = viewProperties,
+                isMediaPicker = incomingIntent != null
             )
         }
     }

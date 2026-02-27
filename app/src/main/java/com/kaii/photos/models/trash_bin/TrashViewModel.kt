@@ -1,49 +1,36 @@
 package com.kaii.photos.models.trash_bin
 
 import android.content.Context
-import android.os.CancellationSignal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.MediaItemSortMode
-import com.kaii.photos.mediastore.MediaStoreData
-import com.kaii.photos.mediastore.TrashDataSource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
-import kotlin.time.Duration.Companion.seconds
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.repositories.TrashRepository
 
 class TrashViewModel(
     context: Context,
+    info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
-    displayDateFormat: DisplayDateFormat
+    format: DisplayDateFormat
 ) : ViewModel() {
-    private val cancellationSignal = CancellationSignal()
-    private val mediaStoreDataSource =
-        TrashDataSource(
-            context = context,
-            sortMode = sortMode,
-            cancellationSignal = cancellationSignal,
-            displayDateFormat = displayDateFormat
-        )
+    private val repo = TrashRepository(
+        scope = viewModelScope,
+        info = info,
+        context = context,
+        sortMode = sortMode,
+        format = format
+    )
 
-    val mediaFlow by lazy {
-        getMediaDataFlow().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(
-                stopTimeoutMillis = 10.seconds.inWholeMilliseconds
-            ),
-            initialValue = emptyList()
-        )
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
+
+    override fun onCleared() {
+        super.onCleared()
+        repo.cancel()
     }
 
-    private fun getMediaDataFlow(): Flow<List<MediaStoreData>> {
-        return mediaStoreDataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
-    }
+    fun cancel() = repo.cancel()
 
-    fun cancelMediaFlow() {
-        cancellationSignal.cancel()
-    }
+    fun deleteAll() = repo.deleteAll()
 }
