@@ -215,4 +215,9 @@
     <string name="filter_inverted">Invertiert</string>
     <string name="filter_inverted_desc">Alles ist umgedreht</string>
     <string name="filter_vibrant">Vibrant</string>
+    <string name="current_run_logs">Protokolle des aktuellen Durchlaufs</string>
+    <string name="debugging_spawn_loading_snackbar">Snackbar-Menü wird geladen</string>
+    <string name="debugging_spawn_loading_snackbar_desc">Debuggen Sie Lavender Snackbars, wenn Compose beschließt, etwas Dummes zu tun</string>
+    <string name="debugging_loading">Fehlersuche…</string>
+    <string name="debugging_spawn_message_snackbar">Spawn-Nachricht Snackbar</string>
 </resources>
