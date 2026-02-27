@@ -61,8 +61,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntRect
@@ -164,6 +167,9 @@ fun AlbumsGridView(
             ),
             modifier = Modifier
                 .fillMaxSize(1f)
+                .semantics {
+                    testTagsAsResourceId = true
+                }
                 .pullToRefresh(
                     isRefreshing = lockHeader,
                     state = pullToRefreshState,
@@ -287,6 +293,7 @@ fun AlbumsGridView(
                     isSelected = selectedItem == album,
                     info = immichInfo,
                     modifier = Modifier
+                        .testTag("album_grid_item")
                         .zIndex(
                             if (selectedItem == album) 1f
                             else 0f

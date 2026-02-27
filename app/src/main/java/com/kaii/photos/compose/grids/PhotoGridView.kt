@@ -223,7 +223,10 @@ private fun DeviceMedia(
             ),
             userScrollEnabled = !isDragSelecting.value,
             modifier = Modifier
-                .testTag("mainlazycolumn")
+                .semantics {
+                    testTagsAsResourceId = true
+                }
+                .testTag("main_lazy_column")
                 .fillMaxSize(1f)
                 .align(Alignment.TopCenter)
                 .dragSelectionHandler(
@@ -436,6 +439,10 @@ private fun MediaItem(
 
     Box(
         modifier = Modifier
+            .semantics {
+                testTagsAsResourceId = true
+            }
+            .testTag("main_lazy_column_item")
             .aspectRatio(1f)
             .padding(2.dp)
             .clip(RoundedCornerShape(if (useRoundedCorners) 8.dp else 0.dp))
@@ -810,7 +817,7 @@ fun <T> LazyGridState.getGridItemAtOffset(
     var key: T? = null
 
     // scan the entire row for this item
-    // if theres only one or two items on a row and user drag selects to the empty space they get selected
+    // if there's only one or two items on a row and user drag selects to the empty space they get selected
     for (i in 1..numberOfHorizontalItems) {
         val possibleItem = layoutInfo.visibleItemsInfo.find { item ->
             val stretched = item.size.toIntRect().let {

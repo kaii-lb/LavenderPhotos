@@ -27,6 +27,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,6 +101,10 @@ fun HorizontalImageList(
         userScrollEnabled = !scrollState.privacyMode && !scrollState.videoLock,
         modifier = Modifier
             .fillMaxHeight(1f)
+            .semantics {
+                testTagsAsResourceId = true
+            }
+            .testTag("single_photo_horizontal_pager")
     ) { index ->
         val zoomableState = rememberGlideZoomableState()
 

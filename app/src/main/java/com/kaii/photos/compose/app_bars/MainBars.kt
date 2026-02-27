@@ -62,8 +62,11 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -273,6 +276,9 @@ fun MainAppBottomBar(
             expandedShadowElevation = 0.dp,
             scrollBehavior = scrollBehaviour,
             modifier = Modifier
+                .semantics {
+                    testTagsAsResourceId = true
+                }
                 .offset(y = (-12).dp)
                 .align(Alignment.Center)
                 .windowInsetsPadding(WindowInsets.systemBars)
@@ -358,6 +364,7 @@ fun MainAppBottomBar(
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
                                     modifier = Modifier
                                         .height(48.dp)
+                                        .testTag(tab.name)
                                 ) {
                                     AnimatedVisibility(
                                         visible = currentTab == tab
