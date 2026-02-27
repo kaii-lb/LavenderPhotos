@@ -29,12 +29,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
@@ -84,7 +82,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.startupUpdateCheck
+import com.kaii.photos.helpers.rememberUpdater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -827,20 +825,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val coroutineScope = rememberCoroutineScope()
         val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
-        // so it only checks once
-        val resources = LocalResources.current
-        LaunchedEffect(checkForUpdatesOnStartup) {
-            if (checkForUpdatesOnStartup) {
-                startupUpdateCheck(
-                    text = resources.getString(R.string.updates_new_version_available),
-                    coroutineScope = coroutineScope,
-                    navController = navController,
-                    mainViewModel = mainViewModel
-                )
+        if (checkForUpdatesOnStartup) {
+            val updater = rememberUpdater()
+            LaunchedEffect(Unit) {
+                updater.startupUpdateCheck(navController)
             }
         }
     }

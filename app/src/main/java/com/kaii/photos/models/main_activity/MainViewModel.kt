@@ -9,7 +9,6 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
-import com.kaii.photos.helpers.Updater
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -21,24 +20,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewModel() {
+class MainViewModel(
+    context: Context,
+    var albumInfo: List<AlbumInfo>
+) : ViewModel() {
     private var initialMainPhotosPaths = emptySet<String>()
 
     val apiClient = ApiClient()
-
     val settings = Settings(context.applicationContext, viewModelScope)
-
-    val updater = Updater(context = context.applicationContext, coroutineScope = viewModelScope)
 
     val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Lazily,
+        started = SharingStarted.Eagerly,
         initialValue = DisplayDateFormat.Default
     )
 
     val sortMode = settings.photoGrid.getSortMode().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Lazily,
+        started = SharingStarted.Eagerly,
         initialValue = MediaItemSortMode.DateTaken
     )
 
@@ -68,7 +67,7 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
 
     val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Lazily,
+        started = SharingStarted.Eagerly,
         initialValue = TopBarDetailsFormat.FileName
     )
 
@@ -116,12 +115,13 @@ class MainViewModel(context: Context, var albumInfo: List<AlbumInfo>) : ViewMode
             if (pair.first) {
                 albums.fastMap { albumInfo ->
                     albumInfo.paths.map { it.removeSuffix("/") }
-                }.flatMap { it }.toSet() - pair.second
+                }.flatten().toSet() - pair.second
             } else {
                 pair.second
             }
         }
 
+    // TODO: should probably move to a background service/worker/something
     /** launch tasks on the mainViewModel scope */
     fun launch(
         dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
