@@ -59,8 +59,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -99,6 +102,9 @@ fun PermissionHandler(
 
         Row(
             modifier = Modifier
+                .semantics {
+                    testTagsAsResourceId = true
+                }
                 .padding(
                     safeDrawingPadding.first,
                     innerPadding.calculateTopPadding() + 8.dp,
@@ -202,7 +208,9 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_read_images),
                                 description = stringResource(id = R.string.permissions_read_images_desc),
                                 position = RowPosition.Top,
-                                granted = startupManager.permissionGranted(permission = Manifest.permission.READ_MEDIA_IMAGES)
+                                granted = startupManager.permissionGranted(permission = Manifest.permission.READ_MEDIA_IMAGES),
+                                modifier = Modifier
+                                    .testTag("read_image_permission")
                             ) {
                                 readMediaImageLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
 
@@ -250,7 +258,9 @@ fun PermissionHandler(
                                 name = stringResource(id = R.string.permissions_read_videos),
                                 description = stringResource(id = R.string.permissions_read_videos_desc),
                                 position = RowPosition.Middle,
-                                granted = startupManager.permissionGranted(Manifest.permission.READ_MEDIA_VIDEO)
+                                granted = startupManager.permissionGranted(Manifest.permission.READ_MEDIA_VIDEO),
+                                modifier = Modifier
+                                    .testTag("read_video_permission")
                             ) {
                                 readMediaVideoLauncher.launch(Manifest.permission.READ_MEDIA_VIDEO)
 
@@ -393,6 +403,7 @@ fun PermissionHandler(
                             enabled = startupManager.checkPermissions(),
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
+                                .testTag("continue_button")
                         ) {
                             Text(text = stringResource(id = R.string.permissions_continue))
                         }
@@ -414,7 +425,9 @@ fun PermissionHandler(
                                 startupManager.checkState()
                             }
                         },
-                        enabled = startupManager.checkPermissions()
+                        enabled = startupManager.checkPermissions(),
+                        modifier = Modifier
+                            .testTag("continue_button")
                     ) {
                         Text(text = stringResource(id = R.string.permissions_continue))
                     }
@@ -439,6 +452,7 @@ fun PermissionButton(
     name: String,
     description: String,
     position: RowPosition,
+    modifier: Modifier = Modifier,
     granted: Boolean = false,
     onClick: () -> Unit
 ) {
@@ -452,7 +466,7 @@ fun PermissionButton(
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(1f)
             .height(104.dp)
             .clip(shape)

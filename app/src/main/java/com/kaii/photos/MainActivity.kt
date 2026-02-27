@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.ReportDrawn
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -842,6 +843,8 @@ class MainActivity : ComponentActivity() {
                 updater.startupUpdateCheck(navController)
             }
         }
+
+        ReportDrawn()
     }
 
     override fun onResume() {
