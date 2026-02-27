@@ -74,7 +74,7 @@ fun ProcessingPage(startupManager: StartupManager) {
     val animatedCount by animateIntAsState(
         targetValue = (itemCount * currentProgress).roundToInt(),
         animationSpec = AnimationConstants.expressiveTween(
-            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG
+            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2
         )
     )
 
@@ -232,7 +232,7 @@ fun ProcessingPage(startupManager: StartupManager) {
             )
 
             AnimatedContent(
-                targetState = animatedFill >= 1f,
+                targetState = currentProgress > 0.95f,
                 transitionSpec = {
                     val enter = scaleIn(animationSpec = AnimationConstants.expressiveSpring()) + fadeIn()
                     val exit = scaleOut(animationSpec = AnimationConstants.expressiveSpring()) + fadeOut()
@@ -264,7 +264,7 @@ fun ProcessingPage(startupManager: StartupManager) {
             )
 
             AnimatedContent(
-                targetState = animatedFill >= 1f,
+                targetState = currentProgress > 0.95f,
                 transitionSpec = {
                     val enter = scaleIn(animationSpec = AnimationConstants.expressiveSpring()) + fadeIn()
                     val exit = scaleOut(animationSpec = AnimationConstants.expressiveSpring()) + fadeOut()

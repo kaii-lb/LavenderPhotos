@@ -70,6 +70,7 @@ import com.kaii.photos.database.Migration3to4
 import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
@@ -174,6 +175,8 @@ class MediaPicker : ComponentActivity() {
             )
         )
 
+        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+
         val navController = LocalNavController.current
         NavHost(
             navController = navController,
@@ -235,6 +238,7 @@ class MediaPicker : ComponentActivity() {
                         mainPhotosPaths = mainPhotosPaths,
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
+                        deviceAlbums = deviceAlbums,
                         window = window,
                         incomingIntent = null,
                         blur = false

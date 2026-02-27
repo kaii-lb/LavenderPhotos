@@ -45,6 +45,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -100,17 +101,16 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    gridState: AlbumGridState,
+    deviceAlbums: State<List<AlbumGridState.Album>>,
     isMediaPicker: Boolean = false
 ) {
     val navController = LocalNavController.current
     val mainViewModel = LocalMainViewModel.current
 
-    val originalAlbums by gridState.albums.collectAsStateWithLifecycle()
-    var albums by remember { mutableStateOf(originalAlbums) }
+    var albums by remember { mutableStateOf(deviceAlbums.value) }
 
-    LaunchedEffect(originalAlbums) {
-        albums = originalAlbums
+    LaunchedEffect(deviceAlbums.value) {
+        albums = deviceAlbums.value
     }
 
     Column(

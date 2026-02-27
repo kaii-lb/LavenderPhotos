@@ -2,6 +2,7 @@ package com.kaii.photos.database.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.room.concurrent.AtomicInt
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -25,27 +26,30 @@ class FirstTimeSyncWorker(
         val startTime = Clock.System.now()
         val dao = MediaDatabase.getInstance(context).mediaDao()
 
-        var progress = 0f
-        setProgress(workDataOf(PROGRESS to progress))
-
         val mediaStoreIds = getAllMediaStoreIds(context)
         val inAppIds = dao.getAllMediaIds().toSet()
 
+        val progress = AtomicInt(0)
         val added = mediaStoreIds - inAppIds
-        setProgress(workDataOf(COUNT to added.size))
+
+        setProgress(
+            workDataOf(
+            PROGRESS to 0f,
+                COUNT to added.size
+            )
+        )
 
         if (added.isNotEmpty()) {
             chunkLoadMediaData(
                 ids = added,
                 context = context,
                 onProgress = { size ->
-                    progress += size.toFloat() / added.size
-                    progress = if (1f - progress < 0.01 || size < 500) 1f else progress
+                    progress.set(progress.get() + size)
                 },
                 onLoadChunk = { chunk ->
                     setProgressAsync(
                         workDataOf(
-                            PROGRESS to progress,
+                            PROGRESS to progress.get().toFloat() / added.size,
                             COUNT to added.size
                         )
                     )

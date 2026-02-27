@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +55,7 @@ import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.state.rememberAlbumGridState
+import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -70,6 +71,7 @@ fun MainPages(
     mainPhotosPaths: Set<String>,
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
+    deviceAlbums: State<List<AlbumGridState.Album>>,
     window: Window,
     incomingIntent: Intent?,
     blur: Boolean = false
@@ -105,7 +107,6 @@ fun MainPages(
 
     var paths by remember { mutableStateOf(mainPhotosPaths) }
     val selectionManager = rememberSelectionManager(paths = paths)
-    val albumGridState = rememberAlbumGridState()
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -248,7 +249,7 @@ fun MainPages(
 
                     tab == DefaultTabs.TabTypes.albums -> {
                         AlbumsGridView(
-                            gridState = albumGridState,
+                            deviceAlbums = deviceAlbums,
                             isMediaPicker = incomingIntent != null
                         )
                     }

@@ -11,6 +11,7 @@ import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
@@ -48,10 +49,13 @@ fun StartupLoadingPage(
     )
 
     Box {
+        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+
         MainPages(
             mainPhotosPaths = mainPhotosPaths,
             multiAlbumViewModel = multiAlbumViewModel,
             searchViewModel = searchViewModel,
+            deviceAlbums = deviceAlbums,
             window = window,
             incomingIntent = null,
             blur = true

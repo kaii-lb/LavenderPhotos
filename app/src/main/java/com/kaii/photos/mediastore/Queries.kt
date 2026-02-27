@@ -150,13 +150,12 @@ suspend fun chunkLoadMediaData(
     val syncManager = SyncManager(context)
 
     // parse 5 chunks of 500 items at once
-    ids.chunked(500).chunked(5).forEach { block ->
+    ids.chunked(500).chunked(10).forEach { block ->
         val jobs = mutableSetOf<Job>()
 
         block.forEach { chunk ->
-            onProgress(chunk.size)
-
             launch {
+                onProgress(chunk.size)
                 val items = mutableSetOf<MediaStoreData>()
                 val selection = "${MediaColumns._ID} IN (${chunk.joinToString { "?" }}) AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
                 val selectionArgs = chunk.map { it.toString() }.toTypedArray()
@@ -272,7 +271,7 @@ suspend fun loadMediaDataDelta(
 
     items.clear()
     val selectionArgs = arrayOf(syncManager.getGeneration().toString())
-    val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} > ? " +
+    val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
             "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
 
     val projection =

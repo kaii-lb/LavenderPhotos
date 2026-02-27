@@ -78,6 +78,7 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
@@ -247,6 +248,8 @@ class MainActivity : ComponentActivity() {
             )
         )
 
+        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+
         val snackbarHostState = remember {
             LavenderSnackbarHostState()
         }
@@ -296,6 +299,7 @@ class MainActivity : ComponentActivity() {
                             mainPhotosPaths = mainPhotosPaths,
                             multiAlbumViewModel = multiAlbumViewModel,
                             searchViewModel = searchViewModel,
+                            deviceAlbums = deviceAlbums,
                             window = window,
                             incomingIntent = null
                         )
