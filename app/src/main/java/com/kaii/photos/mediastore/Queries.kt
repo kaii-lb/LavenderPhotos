@@ -144,6 +144,7 @@ suspend fun getMediaStoreDataForIds(
 suspend fun chunkLoadMediaData(
     ids: Set<Long>,
     context: Context,
+    onProgress: (itemCount: Int) -> Unit,
     onLoadChunk: suspend (chunk: Set<MediaStoreData>) -> Unit
 ) = withContext(Dispatchers.IO) {
     val syncManager = SyncManager(context)
@@ -153,6 +154,8 @@ suspend fun chunkLoadMediaData(
         val jobs = mutableSetOf<Job>()
 
         block.forEach { chunk ->
+            onProgress(chunk.size)
+
             launch {
                 val items = mutableSetOf<MediaStoreData>()
                 val selection = "${MediaColumns._ID} IN (${chunk.joinToString { "?" }}) AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"

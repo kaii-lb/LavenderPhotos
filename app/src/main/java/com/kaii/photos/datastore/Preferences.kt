@@ -37,8 +37,6 @@ class Settings(val context: Context, val viewModelScope: CoroutineScope) {
 
     val versions = SettingsVersionImpl(context, viewModelScope)
 
-    val user = SettingsUserImpl(context, viewModelScope)
-
     val storage = SettingsStorageImpl(context, viewModelScope)
 
     val video = SettingsVideoImpl(context, viewModelScope)
@@ -311,22 +309,6 @@ class SettingsVersionImpl(
         }
     }
 }
-
-class SettingsUserImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
-    private val firstStartup = booleanPreferencesKey("user_first_startup")
-
-    fun getFirstStartup(): Flow<Boolean> =
-        context.datastore.data.map {
-            it[firstStartup] != false
-        }
-
-    fun setFirstStartup() = viewModelScope.launch {
-        context.datastore.edit {
-            it[firstStartup] = false
-        }
-    }
-}
-
 class SettingsDebuggingImpl(
     private val context: Context,
     private val viewModelScope: CoroutineScope

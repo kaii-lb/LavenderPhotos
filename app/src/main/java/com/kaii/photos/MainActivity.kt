@@ -28,7 +28,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -36,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
@@ -52,12 +50,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.grids.FavouritesGridView
@@ -108,7 +103,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -836,40 +830,6 @@ class MainActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
         val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
-
-        val firstStartup by mainViewModel.settings.user.getFirstStartup()
-            .collectAsStateWithLifecycle(initialValue = false)
-
-        if (firstStartup) {
-            val showFirstStartupDialog = remember { mutableStateOf(true) }
-            val isLoading = remember { mutableStateOf(true) }
-            val findingAlbumsOnDevice = stringResource(id = R.string.finding_albums_on_device)
-
-            ConfirmationDialogWithBody(
-                dialogTitle = stringResource(id = R.string.first_startup_dialog_title),
-                dialogBody = stringResource(id = R.string.first_startup_dialog_body),
-                showDialog = showFirstStartupDialog,
-                confirmButtonLabel = stringResource(id = R.string.first_startup_dialog_confirm_title),
-                action = {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
-                                message = findingAlbumsOnDevice,
-                                icon = R.drawable.art_track,
-                                isLoading = isLoading
-                            )
-                        )
-
-                        mainViewModel.settings.albums.setAutoDetect(true)
-                        isLoading.value = false
-                        mainViewModel.settings.user.setFirstStartup()
-                    }
-                },
-                onCancel = {
-                    mainViewModel.settings.user.setFirstStartup()
-                }
-            )
-        }
 
         // so it only checks once
         val resources = LocalResources.current

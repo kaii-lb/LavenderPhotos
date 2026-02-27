@@ -35,20 +35,24 @@ class FirstTimeSyncWorker(
         setProgress(workDataOf(COUNT to added.size))
 
         if (added.isNotEmpty()) {
-            chunkLoadMediaData(added, context) { chunk ->
-                progress += chunk.size.toFloat() / added.size
-
-                progress = if (1f - progress < 0.01 || chunk.size < 500) 1f else progress
-
-                setProgressAsync(
-                    workDataOf(
-                        PROGRESS to progress,
-                        COUNT to added.size
+            chunkLoadMediaData(
+                ids = added,
+                context = context,
+                onProgress = { size ->
+                    progress += size.toFloat() / added.size
+                    progress = if (1f - progress < 0.01 || size < 500) 1f else progress
+                },
+                onLoadChunk = { chunk ->
+                    setProgressAsync(
+                        workDataOf(
+                            PROGRESS to progress,
+                            COUNT to added.size
+                        )
                     )
-                )
 
-                dao.insertAll(chunk)
-            }
+                    dao.insertAll(chunk)
+                }
+            )
         }
 
         val removed = inAppIds - mediaStoreIds
