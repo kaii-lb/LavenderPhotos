@@ -69,12 +69,14 @@ abstract class MediaDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): MediaDatabase {
             return INSTANCE ?: synchronized(this) {
+                val appContext = context.applicationContext
+
                 val instance = Room.databaseBuilder(
-                    context,
+                    appContext,
                     MediaDatabase::class.java,
                     "media-database"
                 ).apply {
-                    addMigrations(Migration3to4(context), Migration4to5(context), Migration9To10(context))
+                    addMigrations(Migration3to4(appContext), Migration4to5(appContext), Migration9To10(appContext))
                     enableMultiInstanceInvalidation()
                     fallbackToDestructiveMigrationOnDowngrade(false)
                 }.build()

@@ -6,7 +6,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -19,19 +18,29 @@ import com.kaii.photos.mediastore.TrashDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TrashRepository(
-    private val scope: CoroutineScope,
-    private val info: ImmichBasicInfo,
+    scope: CoroutineScope,
     context: Context,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    sortMode: Flow<MediaItemSortMode>,
+    format: Flow<DisplayDateFormat>,
+    info: Flow<ImmichBasicInfo>
 ) {
+    private data class Params(
+        val items: List<MediaStoreData>,
+        override val sortMode: MediaItemSortMode,
+        override val format: DisplayDateFormat,
+        override val accessToken: String
+    ) : RoomQueryParams(sortMode, format, accessToken)
+
     private val appContext = context.applicationContext
 
     private val cancellationSignal = CancellationSignal()
@@ -45,6 +54,15 @@ class TrashRepository(
 
     private val items = MutableStateFlow(emptyList<MediaStoreData>())
 
+    private val params = combine(info, sortMode, format, items) { info, sortMode, format, items ->
+        Params(
+            items = items,
+            accessToken = info.accessToken,
+            sortMode = sortMode,
+            format = format
+        )
+    }
+
     init {
         scope.launch(Dispatchers.IO) {
             getMediaDataFlow().collectLatest { media ->
@@ -54,7 +72,7 @@ class TrashRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow = items.flatMapLatest { media ->
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -62,19 +80,22 @@ class TrashRepository(
                 enablePlaceholders = true,
                 initialLoadSize = 100
             ),
-            pagingSourceFactory = { ListPagingSource(media = media) }
-        ).flow.mapToMedia(accessToken = info.accessToken)
-    }.cachedIn(scope)
+            pagingSourceFactory = { ListPagingSource(media = params.items) }
+        ).flow.mapToMedia(accessToken = params.accessToken)
+    }
 
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = if (sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
-        format = format
-    ).cachedIn(scope)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val gridMediaFlow = params.flatMapLatest { params ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
+            format = params.format
+        )
+    }
 
     fun cancel() = cancellationSignal.cancel()
 
-    fun deleteAll() =
-        scope.launch(Dispatchers.IO) {
+    suspend fun deleteAll() =
+        withContext(Dispatchers.IO) {
             permanentlyDeletePhotoList(
                 context = appContext,
                 list = dataSource.query().fastMap { it.uri.toUri() }

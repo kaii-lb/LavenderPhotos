@@ -1,29 +1,34 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 
 class FavouritesRepository(
-    context: Context,
-    info: ImmichBasicInfo,
-    scope: CoroutineScope,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    dao: MediaDao,
+    info: Flow<ImmichBasicInfo>,
+    sortMode: Flow<MediaItemSortMode>,
+    format: Flow<DisplayDateFormat>
 ) {
-    val dao = MediaDatabase.getInstance(context.applicationContext).mediaDao()
+    private val params = combine(info, sortMode, format) { info, sortMode, format ->
+        RoomQueryParams(
+            accessToken = info.accessToken,
+            sortMode = sortMode,
+            format = format
+        )
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow =
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -32,16 +37,18 @@ class FavouritesRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) dao.getPagedFavouritesDateModified()
+                if (params.sortMode.isDateModified) dao.getPagedFavouritesDateModified()
                 else dao.getPagedFavouritesDateTaken()
             }
         ).flow
-            .mapToMedia(accessToken = info.accessToken)
-            .cachedIn(scope)
+            .mapToMedia(accessToken = params.accessToken)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
-        format = format
-    ).cachedIn(scope)
+    val gridMediaFlow = params.flatMapLatest { params ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = params.sortMode,
+            format = params.format
+        )
+    }
 }

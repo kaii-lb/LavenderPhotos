@@ -1,10 +1,8 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -12,24 +10,30 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 
 class CustomRepository(
+    private val dao: CustomEntityDao,
     private val albumInfo: AlbumInfo,
-    scope: CoroutineScope,
-    context: Context,
-    info: ImmichBasicInfo,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    sortMode: Flow<MediaItemSortMode>,
+    format: Flow<DisplayDateFormat>,
+    info: Flow<ImmichBasicInfo>
 ) {
-    private val appContext = context.applicationContext
-    private val dao = MediaDatabase.getInstance(appContext).customDao()
+    private val params = combine(info, sortMode, format) { info, sortMode, format ->
+        RoomQueryParams(
+            accessToken = info.accessToken,
+            sortMode = sortMode,
+            format = format
+        )
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow =
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -38,16 +42,19 @@ class CustomRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) dao.getPagedMediaDateModified(album = albumInfo.id)
+                if (params.sortMode.isDateModified) dao.getPagedMediaDateModified(album = albumInfo.id)
                 else dao.getPagedMediaDateTaken(album = albumInfo.id)
             }
-        ).flow.mapToMedia(accessToken = info.accessToken).cachedIn(scope)
+        ).flow.mapToMedia(accessToken = params.accessToken)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
-        format = format
-    ).cachedIn(scope)
+    val gridMediaFlow = params.flatMapLatest { params ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = params.sortMode,
+            format = params.format
+        )
+    }
 
     suspend fun remove(
         items: Set<MediaStoreData>,

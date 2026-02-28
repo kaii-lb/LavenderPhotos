@@ -123,12 +123,23 @@ fun TrashedPhotoGridView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+            val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+            val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+            val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+            val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = AlbumInfo.Empty,
                 viewProperties = ViewProperties.Trash,
                 selectionManager = selectionManager,
-                isMediaPicker = incomingIntent != null
+                isMediaPicker = incomingIntent != null,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
             )
         }
     }

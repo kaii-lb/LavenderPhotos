@@ -359,7 +359,7 @@ private fun InitSinglePhotoView(
     )
 
     LaunchedEffect(immichInfo) {
-        multiAlbumViewModel.update(
+        multiAlbumViewModel.changePaths(
             sortMode = sortMode,
             format = displayDateFormat,
             accessToken = immichInfo.accessToken

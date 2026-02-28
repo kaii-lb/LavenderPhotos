@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.MainDialog
@@ -98,15 +97,12 @@ fun MainAppTopBar(
     alternate: Boolean,
     selectionManager: SelectionManager,
     pagerState: PagerState,
+    immichInfo: ImmichBasicInfo,
+    tabList: List<BottomBarTab>,
+    alwaysShowPfp: Boolean,
     isFromMediaPicker: Boolean = false
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-
-    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
-    val alwaysShowPfp by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
-
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
@@ -240,7 +236,10 @@ fun MainAppBottomBar(
     tabs: List<BottomBarTab>,
     defaultTab: BottomBarTab,
     selectionManager: SelectionManager,
-    scrollBehaviour: FloatingToolbarScrollBehavior
+    scrollBehaviour: FloatingToolbarScrollBehavior,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -320,7 +319,12 @@ fun MainAppBottomBar(
                                 }
 
                                 DefaultTabs.TabTypes.favourites -> {
-                                    FavouritesBottomAppBarItems(selectionManager = selectionManager)
+                                    FavouritesBottomAppBarItems(
+                                        selectionManager = selectionManager,
+                                        confirmToDelete = confirmToDelete,
+                                        doNotTrash = doNotTrash,
+                                        preserveDate = preserveDate
+                                    )
                                 }
 
                                 else -> {

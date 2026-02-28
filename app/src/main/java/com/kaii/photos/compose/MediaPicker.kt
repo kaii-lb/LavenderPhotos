@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -52,11 +51,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
@@ -65,19 +61,16 @@ import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.Migration3to4
-import com.kaii.photos.database.Migration4to5
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.rememberAlbumGridState
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.models.main_activity.MainViewModelFactory
+import com.kaii.photos.models.main_grid.MainGridViewModel
+import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
@@ -86,6 +79,8 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
 
 // private const val TAG = "com.kaii.photos.compose.MediaPicker"
@@ -94,31 +89,17 @@ class MediaPicker : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val applicationDatabase = Room.databaseBuilder(
-            applicationContext,
-            MediaDatabase::class.java,
-            "media-database"
-        ).apply {
-            addMigrations(Migration3to4(applicationContext), Migration4to5(applicationContext))
-        }.build()
-
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val incomingIntent = intent
+        val settings = applicationContext.appModule.settings
 
         setContent {
-            val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext, emptyList())
-            )
-
-            val initial =
-                when (AppCompatDelegate.getDefaultNightMode()) {
-                    AppCompatDelegate.MODE_NIGHT_YES -> 1
-                    AppCompatDelegate.MODE_NIGHT_NO -> 2
-
-                    else -> 0
-                }
-            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
+            val initialFollowDarkTheme = runBlocking {
+                settings.lookAndFeel.getFollowDarkMode().first()
+            }
+            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
+                .collectAsStateWithLifecycle(initialValue = initialFollowDarkTheme)
 
             PhotosTheme(
                 theme = followDarkTheme,
@@ -132,15 +113,11 @@ class MediaPicker : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalMainViewModel provides mainViewModel,
-                    LocalAppDatabase provides applicationDatabase
+                    LocalNavController provides navControllerLocal
                 ) {
                     window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
-                    Content(
-                        mainViewModel = mainViewModel,
-                        incomingIntent = incomingIntent
-                    )
+
+                    Content(incomingIntent = incomingIntent)
                 }
             }
         }
@@ -148,36 +125,20 @@ class MediaPicker : ComponentActivity() {
 
     @Composable
     private fun Content(
-        mainViewModel: MainViewModel,
         incomingIntent: Intent
     ) {
         val context = LocalContext.current
-        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-        val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-        val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
+        val searchViewModel: SearchViewModel = viewModel(factory = SearchViewModelFactory(context = context))
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-                info = immichInfo,
-                sortMode = sortMode,
-                format = displayDateFormat
+                albumInfo = AlbumInfo.Empty
             )
         )
-        val searchViewModel: SearchViewModel = viewModel(
-            factory = SearchViewModelFactory(
-                context = context,
-                info = immichInfo,
-                sortMode = sortMode,
-                format = displayDateFormat
-            )
-        )
-
-        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
 
         val navController = LocalNavController.current
+        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+
         NavHost(
             navController = navController,
             startDestination = Screens.MainPages,
@@ -223,21 +184,18 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     setupNextScreen(window)
 
-                    multiAlbumViewModel.update(
-                        sortMode = sortMode,
-                        format = displayDateFormat,
-                        accessToken = immichInfo.accessToken
-                    )
-                    searchViewModel.update(
-                        sortMode = sortMode,
-                        format = displayDateFormat,
-                        accessToken = immichInfo.accessToken
+                    val storeOwner = remember(it) {
+                        navController.getBackStackEntry(Screens.MainPages)
+                    }
+                    val viewModel = viewModel<MainGridViewModel>(
+                        viewModelStoreOwner = storeOwner,
+                        factory = MainGridViewModelFactory(context = context)
                     )
 
                     MainPages(
-                        mainPhotosPaths = mainPhotosPaths,
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
+                        mainGridViewModel = viewModel,
                         deviceAlbums = deviceAlbums,
                         window = window,
                         incomingIntent = null,
@@ -264,10 +222,7 @@ class MediaPicker : ComponentActivity() {
                         viewModelStoreOwner = storeOwner,
                         factory = MultiAlbumViewModelFactory(
                             context = context,
-                            albumInfo = screen.albumInfo,
-                            info = immichInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat
+                            albumInfo = screen.albumInfo
                         )
                     )
 
@@ -294,10 +249,7 @@ class MediaPicker : ComponentActivity() {
                     val viewModel: CustomAlbumViewModel = viewModel(
                         factory = CustomAlbumViewModelFactory(
                             context = context,
-                            albumInfo = screen.albumInfo,
-                            info = immichInfo,
-                            sortBy = sortMode,
-                            displayDateFormat = displayDateFormat
+                            albumInfo = screen.albumInfo
                         )
                     )
 
@@ -317,10 +269,7 @@ class MediaPicker : ComponentActivity() {
 
                     val viewModel = viewModel<FavouritesViewModel>(
                         factory = FavouritesViewModelFactory(
-                            context = context,
-                            info = immichInfo,
-                            sortMode = sortMode,
-                            displayDateFormat = displayDateFormat
+                            context = context
                         )
                     )
 
@@ -343,10 +292,7 @@ class MediaPicker : ComponentActivity() {
 
                     val trashViewModel = viewModel<TrashViewModel>(
                         factory = TrashViewModelFactory(
-                            context = context,
-                            info = immichInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat
+                            context = context
                         )
                     )
 

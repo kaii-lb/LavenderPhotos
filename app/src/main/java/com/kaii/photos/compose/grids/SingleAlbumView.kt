@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
@@ -61,8 +60,7 @@ fun SingleAlbumView(
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
-    val mainViewModel = LocalMainViewModel.current
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
         derivedStateOf {
@@ -71,16 +69,34 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        viewModel.update(album = dynamicAlbum)
+        viewModel.changePaths(album = dynamicAlbum)
     }
 
     val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Album,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize
     )
@@ -92,9 +108,7 @@ fun SingleAlbumView(
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
         derivedStateOf {
@@ -105,12 +119,29 @@ fun SingleAlbumView(
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
 
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.CustomAlbum,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize
     )
@@ -122,9 +153,7 @@ fun SingleAlbumView(
     viewModel: ImmichAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
     val dynamicAlbum by remember {
         derivedStateOf {
@@ -135,12 +164,29 @@ fun SingleAlbumView(
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
 
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize
     )
@@ -154,6 +200,14 @@ private fun SingleAlbumViewCommon(
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
     viewProperties: ViewProperties,
+    columnSize: Int,
+    openVideosExternally: Boolean,
+    cacheThumbnails: Boolean,
+    thumbnailSize: Int,
+    useRoundedCorners: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean,
     modifier: Modifier = Modifier,
     mediaCount: suspend () -> Int,
     albumSize: suspend () -> String
@@ -218,7 +272,10 @@ private fun SingleAlbumViewCommon(
                 SingleAlbumViewBottomBar(
                     albumInfo = albumInfo,
                     selectionManager = selectionManager,
-                    incomingIntent = incomingIntent
+                    incomingIntent = incomingIntent,
+                    confirmToDelete = confirmToDelete,
+                    doNotTrash = doNotTrash,
+                    preserveDate = preserveDate
                 )
             }
         }
@@ -253,7 +310,12 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo(),
                 selectionManager = selectionManager,
                 viewProperties = viewProperties,
-                isMediaPicker = incomingIntent != null
+                isMediaPicker = incomingIntent != null,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
             )
         }
     }

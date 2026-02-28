@@ -9,6 +9,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
+import com.kaii.photos.di.AppModule
 import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,9 +17,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class PhotosApplication : Application() {
+    val appModule = AppModule(applicationContext)
+
     override fun onCreate() {
         super.onCreate()
 
+        registerContentObserver()
+    }
+
+    private fun registerContentObserver() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val syncManager = SyncManager(applicationContext)
 
@@ -34,7 +41,7 @@ class PhotosApplication : Application() {
                     scope.launch(Dispatchers.IO) {
                         runCatching {
                             // if its empty then the app hasn't finished startup processing, and we shouldn't mess with that
-                            // if it *is* empty and we have finished startup processing, then another SyncWorker will be
+                            // if it *is* empty, and we have finished startup processing, then another SyncWorker will be
                             // launching by the app, and the dao won't be empty anymore
                             if (syncManager.getGeneration() > 0L) {
                                 instanceCount += 1

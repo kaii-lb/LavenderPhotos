@@ -60,8 +60,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
@@ -69,6 +67,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
@@ -112,6 +111,9 @@ fun SinglePhotoView(
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     SinglePhotoViewCommon(
         items = items,
@@ -120,6 +122,9 @@ fun SinglePhotoView(
         startIndex = index,
         albumInfo = albumInfo,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
         removeFromCustom = { item ->
             viewModel.remove(items = setOf(item))
         }
@@ -136,6 +141,9 @@ fun SinglePhotoView(
     isOpenWithDefaultView: Boolean = false,
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     SinglePhotoViewCommon(
         items = items,
@@ -143,7 +151,10 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = isOpenWithDefaultView
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash
     )
 }
 
@@ -156,6 +167,9 @@ fun SinglePhotoView(
     albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     SinglePhotoViewCommon(
         items = items,
@@ -163,7 +177,10 @@ fun SinglePhotoView(
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash
     )
 }
 
@@ -175,6 +192,9 @@ fun SinglePhotoView(
     index: Int
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     SinglePhotoViewCommon(
         items = items,
@@ -182,27 +202,35 @@ fun SinglePhotoView(
         albumInfo = AlbumInfo.Empty,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash
     )
 }
 
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
     albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
         albumInfo = albumInfo,
-        navController = navController,
+        navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash
     )
 }
 
@@ -216,6 +244,9 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
+    useBlackBackground: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
     removeFromCustom: (MediaStoreData) -> Unit = {}
 ) {
     val state = rememberPagerState(
@@ -312,6 +343,8 @@ private fun SinglePhotoViewCommon(
                 currentItem = { mediaItem },
                 privacyMode = scrollState.privacyMode,
                 isCustom = albumInfo.isCustomAlbum,
+                confirmToDelete = confirmToDelete,
+                doNotTrash = doNotTrash,
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -364,7 +397,6 @@ private fun SinglePhotoViewCommon(
             )
         }
 
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -400,6 +432,8 @@ private fun BottomBar(
     currentItem: () -> MediaStoreData,
     privacyMode: Boolean,
     isCustom: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
     showEditingView: () -> Unit,
     removeFromCustom: (MediaStoreData) -> Unit
 ) {
@@ -512,9 +546,6 @@ private fun BottomBar(
                     )
                 }
 
-                val mainViewModel = LocalMainViewModel.current
-                val applicationDatabase = LocalAppDatabase.current
-
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
                         mainViewModel.launch {
@@ -528,7 +559,7 @@ private fun BottomBar(
                                     )
                                 ),
                                 context = context,
-                                applicationDatabase = applicationDatabase
+                                applicationDatabase = MediaDatabase.getInstance(context)
                             ) {
                                 removeFromCustom(item)
 
@@ -593,7 +624,6 @@ private fun BottomBar(
                     )
                 }
 
-                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
                 // TODO: look into possibly sharing permission managers?
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
@@ -619,8 +649,6 @@ private fun BottomBar(
                 )
 
                 val showDeleteDialog = remember { mutableStateOf(false) }
-                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
-
                 if (showDeleteDialog.value) {
                     ConfirmationDialog(
                         showDialog = showDeleteDialog,

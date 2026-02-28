@@ -170,4 +170,13 @@ interface Screens {
             object ExtendedLicensePage : Screens
         }
     }
+
+    @Serializable
+    object Startup {
+        @Serializable
+        object PermissionsPage : Screens
+
+        @Serializable
+        object ProcessingPage : Screens
+    }
 }

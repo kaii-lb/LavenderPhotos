@@ -59,7 +59,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
@@ -69,6 +68,7 @@ import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.datastore.state.rememberAlbumGridState
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -85,6 +85,7 @@ fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
+    preserveDate: Boolean,
     insetsPadding: WindowInsets,
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit
@@ -193,6 +194,7 @@ fun MoveCopyAlbumListView(
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,
+                            preserveDate = preserveDate,
                             modifier = Modifier
                                 .fillParentMaxWidth(1f)
                                 .padding(8.dp, 0.dp)
@@ -216,6 +218,7 @@ fun AlbumsListItem(
     position: RowPosition,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
+    preserveDate: Boolean,
     show: MutableState<Boolean>,
     modifier: Modifier,
     dismissInfoDialog: () -> Unit,
@@ -224,14 +227,11 @@ fun AlbumsListItem(
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
     val context = LocalContext.current
 
-    val mainViewModel = LocalMainViewModel.current
-    val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
-
     val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
             show.value = false
 
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 if (isMoving && album.info.paths.size == 1) {
                     moveImageListToPath(
                         context = context,
@@ -291,7 +291,7 @@ fun AlbumsListItem(
                     show.value = false
 
                     // TODO: possibly make this less messy
-                    mainViewModel.launch(Dispatchers.IO) {
+                    context.appModule.scope.launch(Dispatchers.IO) {
                         MediaDatabase.getInstance(context)
                             .customDao()
                             .upsertAll(

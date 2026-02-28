@@ -10,8 +10,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ReportDrawn
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,7 +17,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,7 +33,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -78,11 +74,11 @@ import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.rememberAlbumGridState
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
@@ -94,10 +90,12 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.models.main_activity.MainViewModelFactory
+import com.kaii.photos.models.main_grid.MainGridViewModel
+import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
+import com.kaii.photos.models.permissions.PermissionsViewModel
+import com.kaii.photos.models.permissions.PermissionsViewModelFactory
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
@@ -106,8 +104,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -118,45 +114,30 @@ val LocalNavController = compositionLocalOf<NavHostController> {
     throw IllegalStateException("CompositionLocal LocalNavController not present")
 }
 
-val LocalMainViewModel = compositionLocalOf<MainViewModel> {
-    throw IllegalStateException("CompositionLocal LocalMainViewModel not present")
-}
-
-val LocalAppDatabase = compositionLocalOf<MediaDatabase> {
-    throw IllegalStateException("CompositionLocal LocalAppDatabase not present")
-}
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
 
-        val applicationDatabase = MediaDatabase.getInstance(applicationContext)
-
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
-        val apiClient = ApiClient()
-        val mainViewModel = ViewModelProvider.create(
-            store = viewModelStore,
-            factory = MainViewModelFactory(applicationContext, emptyList())
-        )[MainViewModel::class]
-
+        val settings = applicationContext.appModule.settings
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            mainViewModel.settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+            settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
         }
 
         val startupManager = StartupManager(context = applicationContext)
-        mainViewModel.launch { startupManager.checkState() }
+        runBlocking { startupManager.checkState() }
 
         val initialFollowDarkTheme = runBlocking {
-            mainViewModel.settings.lookAndFeel.getFollowDarkMode().first()
+            settings.lookAndFeel.getFollowDarkMode().first()
         }
 
         setContent {
             val startupState by startupManager.state.collectAsStateWithLifecycle()
 
-            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
+            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(initialValue = initialFollowDarkTheme)
 
             PhotosTheme(
@@ -170,41 +151,29 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
-
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalMainViewModel provides mainViewModel,
-                    LocalAppDatabase provides applicationDatabase,
-                    LocalApiClient provides apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
-                    AnimatedContent(
-                        targetState = startupState,
-                        transitionSpec = {
-                            val enter = slideInHorizontally { width -> width } + fadeIn()
-                            val exit = slideOutHorizontally { width -> -width } + fadeOut()
+                    SetContentForActivity(
+                        startupManager = startupManager,
+                        settings = settings,
+                        startupPage =
+                            when (startupState) {
+                                StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
 
-                            enter.togetherWith(exit).using(SizeTransform(clip = false))
-                        }
-                    ) { state ->
-                        when (state) {
-                            StartupManager.State.MissingPermissions -> PermissionHandler(startupManager = startupManager)
+                                StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
 
-                            StartupManager.State.NeedsIndexing -> StartupLoadingPage(
-                                startupManager = startupManager,
-                                window = window
-                            )
-
-                            else -> SetContentForActivity(startupManager = startupManager)
-                        }
-                    }
+                                else -> Screens.MainPages.MainGrid.GridView
+                            }
+                    )
                 }
             }
 
-            val hasClearedCache by mainViewModel.settings.versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
+            val hasClearedCache by settings.versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
             LaunchedEffect(hasClearedCache) {
                 if (!hasClearedCache) {
-                    mainViewModel.settings.storage.clearThumbnailCache()
-                    mainViewModel.settings.versions.setHasClearedGlideCache(true)
+                    settings.storage.clearThumbnailCache()
+                    settings.versions.setHasClearedGlideCache(true)
                 }
             }
         }
@@ -212,16 +181,19 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
-    private fun SetContentForActivity(startupManager: StartupManager) {
+    private fun SetContentForActivity(
+        startupManager: StartupManager,
+        settings: Settings,
+        startupPage: Screens
+    ) {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-        val mainViewModel = LocalMainViewModel.current
-
+        // TODO: remove from here
         val context = LocalContext.current
         val logPath = "${context.appStorageDir}/log.txt"
         Log.d(TAG, "Log save path is $logPath")
 
-        val canRecordLogs by mainViewModel.settings.debugging.getRecordLogs()
+        val canRecordLogs by settings.debugging.getRecordLogs()
             .collectAsStateWithLifecycle(initialValue = false)
 
         LaunchedEffect(canRecordLogs) {
@@ -231,40 +203,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val navController = LocalNavController.current
-        val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-        val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-        val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-        val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
+        val searchViewModel: SearchViewModel = viewModel(factory = SearchViewModelFactory(context = context))
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosPaths),
-                info = immichInfo,
-                sortMode = sortMode,
-                format = displayDateFormat
-            )
-        )
-        val searchViewModel: SearchViewModel = viewModel(
-            factory = SearchViewModelFactory(
-                context = context,
-                info = immichInfo,
-                sortMode = sortMode,
-                format = displayDateFormat
+                albumInfo = AlbumInfo.Empty
             )
         )
 
         val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+        val snackbarHostState = remember { LavenderSnackbarHostState() }
 
-        val snackbarHostState = remember {
-            LavenderSnackbarHostState()
-        }
-
+        val navController = LocalNavController.current
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
                 navController = navController,
-                startDestination = Screens.MainPages,
+                startDestination = startupPage,
                 modifier = Modifier
                     .fillMaxSize(1f)
                     .background(MaterialTheme.colorScheme.background),
@@ -281,6 +235,22 @@ class MainActivity : ComponentActivity() {
                     slideInHorizontally { width -> -width } + fadeIn()
                 }
             ) {
+                composable<Screens.Startup.PermissionsPage> {
+                    val viewModel = viewModel<PermissionsViewModel>(factory = PermissionsViewModelFactory(context))
+
+                    PermissionHandler(
+                        startupManager = startupManager,
+                        viewModel = viewModel
+                    )
+                }
+
+                composable<Screens.Startup.PermissionsPage> {
+                    StartupLoadingPage(
+                        startupManager = startupManager,
+                        window = window
+                    )
+                }
+
                 navigation<Screens.MainPages>(
                     startDestination = Screens.MainPages.MainGrid.GridView
                 ) {
@@ -291,21 +261,18 @@ class MainActivity : ComponentActivity() {
                     ) {
                         setupNextScreen(window = window)
 
-                        multiAlbumViewModel.update(
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
-                        )
-                        searchViewModel.update(
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
+                        val storeOwner = remember(it) {
+                            navController.getBackStackEntry(Screens.MainPages)
+                        }
+                        val viewModel = viewModel<MainGridViewModel>(
+                            viewModelStoreOwner = storeOwner,
+                            factory = MainGridViewModelFactory(context = context)
                         )
 
                         MainPages(
-                            mainPhotosPaths = mainPhotosPaths,
                             multiAlbumViewModel = multiAlbumViewModel,
                             searchViewModel = searchViewModel,
+                            mainGridViewModel = viewModel,
                             deviceAlbums = deviceAlbums,
                             window = window,
                             incomingIntent = null
@@ -318,12 +285,7 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
-                        multiAlbumViewModel.update(
-                            album = screen.albumInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
-                        )
+                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
@@ -340,13 +302,8 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
-                        searchViewModel.update(
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
-                        )
-
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
+
                         SinglePhotoView(
                             window = window,
                             viewModel = searchViewModel,
@@ -367,12 +324,7 @@ class MainActivity : ComponentActivity() {
                         val screen = it.toRoute<Screens.Album.GridView>()
                         setupNextScreen(window = window)
 
-                        multiAlbumViewModel.update(
-                            album = screen.albumInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
-                        )
+                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
 
                         SingleAlbumView(
                             albumInfo = screen.albumInfo,
@@ -386,12 +338,7 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.Album.SinglePhoto>()
-                        multiAlbumViewModel.update(
-                            album = screen.albumInfo,
-                            sortMode = sortMode,
-                            format = displayDateFormat,
-                            accessToken = immichInfo.accessToken
-                        )
+                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
@@ -414,12 +361,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val viewModel = viewModel<FavouritesViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = FavouritesViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                displayDateFormat = displayDateFormat
-                            )
+                            factory = FavouritesViewModelFactory(context = context)
                         )
 
                         FavouritesGridView(viewModel = viewModel)
@@ -431,12 +373,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val viewModel = viewModel<FavouritesViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = FavouritesViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                displayDateFormat = displayDateFormat
-                            )
+                            factory = FavouritesViewModelFactory(context = context)
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
@@ -464,12 +401,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val viewModel = viewModel<TrashViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = TrashViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat
-                            )
+                            factory = TrashViewModelFactory(context = context)
                         )
 
                         TrashedPhotoGridView(viewModel = viewModel)
@@ -483,12 +415,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val viewModel = viewModel<TrashViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = TrashViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat
-                            )
+                            factory = TrashViewModelFactory(context = context)
                         )
 
                         SingleTrashedPhotoView(
@@ -511,12 +438,7 @@ class MainActivity : ComponentActivity() {
 
                         val viewModel = viewModel<SecureFolderViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = SecureFolderViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat
-                            )
+                            factory = SecureFolderViewModelFactory(context = context)
                         )
 
                         SecureFolderView(window = window, viewModel = viewModel)
@@ -528,12 +450,7 @@ class MainActivity : ComponentActivity() {
                         }
                         val viewModel = viewModel<SecureFolderViewModel>(
                             viewModelStoreOwner = storeOwner,
-                            factory = SecureFolderViewModelFactory(
-                                context = context,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat
-                            )
+                            factory = SecureFolderViewModelFactory(context = context)
                         )
 
                         val screen: Screens.SecureFolder.SinglePhoto = it.toRoute()
@@ -568,12 +485,8 @@ class MainActivity : ComponentActivity() {
                         val viewModel = viewModel<ImmichAlbumViewModel>(
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
-                                albumInfo = screen.albumInfo,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat,
-                                apiClient = LocalApiClient.current,
-                                context = context
+                                context = context,
+                                albumInfo = screen.albumInfo
                             )
                         )
 
@@ -596,18 +509,13 @@ class MainActivity : ComponentActivity() {
                         val viewModel = viewModel<ImmichAlbumViewModel>(
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
-                                albumInfo = screen.albumInfo,
-                                info = immichInfo,
-                                sortMode = sortMode,
-                                format = displayDateFormat,
-                                apiClient = LocalApiClient.current,
-                                context = context
+                                context = context,
+                                albumInfo = screen.albumInfo
                             )
                         )
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
-                            navController = navController,
                             viewModel = viewModel,
                             window = window,
                             index = editIndex ?: screen.index,
@@ -635,10 +543,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo,
-                                info = immichInfo,
-                                sortBy = sortMode,
-                                displayDateFormat = displayDateFormat
+                                albumInfo = screen.albumInfo
                             )
                         )
 
@@ -662,10 +567,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo,
-                                info = immichInfo,
-                                sortBy = sortMode,
-                                displayDateFormat = displayDateFormat
+                                albumInfo = screen.albumInfo
                             )
                         )
 
@@ -836,7 +738,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
+        // TODO: remove from here?
+        val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup()
             .collectAsStateWithLifecycle(initialValue = false)
 
         if (checkForUpdatesOnStartup) {

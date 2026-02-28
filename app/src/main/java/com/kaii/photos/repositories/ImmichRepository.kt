@@ -28,7 +28,12 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.AlbumsStateMa
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -38,25 +43,51 @@ import kotlin.uuid.Uuid
 
 class ImmichRepository(
     private val albumInfo: AlbumInfo,
-    private val info: ImmichBasicInfo,
     private val scope: CoroutineScope,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat,
+    sortMode: Flow<MediaItemSortMode>,
+    format: Flow<DisplayDateFormat>,
+    info: Flow<ImmichBasicInfo>,
     apiClient: ApiClient,
     context: Context
 ) {
+    private data class Params(
+        val endpoint: String,
+        override val sortMode: MediaItemSortMode,
+        override val format: DisplayDateFormat,
+        override val accessToken: String
+    ) : RoomQueryParams(sortMode, format, accessToken)
+
     private val appContext = context.applicationContext
     private val db = MediaDatabase.getInstance(appContext)
 
     private val albumState = mutableStateOf(
         AlbumsStateManager(
-            baseUrl = info.endpoint,
+            baseUrl = "",
             coroutineScope = scope,
             apiClient = apiClient
         )
     )
 
-    val mediaFlow =
+    private val params = combine(info, sortMode, format) { info, sortMode, format ->
+        Params(
+            endpoint = "",
+            accessToken = info.accessToken,
+            sortMode = sortMode,
+            format = format
+        )
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = Params(
+            endpoint = "",
+            accessToken = "",
+            sortMode = MediaItemSortMode.DateTaken,
+            format = DisplayDateFormat.Default
+        )
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 80,
@@ -65,16 +96,19 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = albumInfo.id)
+                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = albumInfo.id)
                 else db.customDao().getPagedMediaDateTaken(album = albumInfo.id)
             }
-        ).flow.mapToMedia(accessToken = info.accessToken)
+        ).flow.mapToMedia(accessToken = params.accessToken)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = mediaFlow.mapToSeparatedMedia(
-        sortMode = sortMode,
-        format = format
-    )
+    val gridMediaFlow = params.flatMapLatest { params ->
+        mediaFlow.mapToSeparatedMedia(
+            sortMode = params.sortMode,
+            format = params.format
+        )
+    }
 
     init {
         refresh()
@@ -84,9 +118,11 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun refetch() {
+        val snapshot = params.value
+
         val state = albumState.value.getInfo(
             id = Uuid.parse(albumInfo.immichId),
-            accessToken = info.accessToken
+            accessToken = snapshot.accessToken
         )
 
         if (state is AlbumGetState.Retrieved) {
@@ -94,7 +130,7 @@ class ImmichRepository(
                 state.album.assets.fastMap { asset ->
                     MediaStoreData(
                         id = Uuid.parse(asset.id).toLongs { a, _ -> a },
-                        uri = "${info.endpoint}/api/assets/${asset.id}/original",
+                        uri = "${snapshot.endpoint}/api/assets/${asset.id}/original",
                         dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
                         dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                         type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
@@ -102,8 +138,8 @@ class ImmichRepository(
                         parentPath = "",
                         displayName = asset.originalFileName,
                         mimeType = asset.originalMimeType,
-                        immichUrl = "${info.endpoint}/api/assets/${asset.id}/original",
-                        immichThumbnail = "${info.endpoint}/api/assets/${asset.id}/thumbnail",
+                        immichUrl = "${snapshot.endpoint}/api/assets/${asset.id}/original",
+                        immichThumbnail = "${snapshot.endpoint}/api/assets/${asset.id}/thumbnail",
                         hash = asset.checksum,
                         size = asset.exifInfo?.fileSizeInByte ?: 0L,
                         favourited = asset.isFavorite
@@ -135,7 +171,7 @@ class ImmichRepository(
 
         albumState.value.addAssets(
             id = Uuid.parse(albumInfo.immichId),
-            accessToken = info.accessToken,
+            accessToken = params.value.accessToken,
             assetIds = media.fastMap { item ->
                 UploadAssetRequest(
                     absolutePath = item.absolutePath,
@@ -199,7 +235,7 @@ class ImmichRepository(
 
         albumState.value.addAssets(
             id = Uuid.parse(albumInfo.immichId),
-            accessToken = info.accessToken,
+            accessToken = params.value.accessToken,
             assetIds = media.fastMap { item ->
                 UploadAssetRequest(
                     absolutePath = item.absolutePath,
@@ -225,7 +261,7 @@ class ImmichRepository(
         ids.forEach {
             albumState.value.delete(
                 id = Uuid.parse(it),
-                accessToken = info.accessToken,
+                accessToken = params.value.accessToken,
                 onResult = {}
             )
         }

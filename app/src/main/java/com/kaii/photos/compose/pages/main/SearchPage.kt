@@ -11,10 +11,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.PhotoGrid
@@ -47,6 +49,13 @@ fun SearchPage(
                 .padding(top = 64.dp)
         ) {
             val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+
+            val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+            val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+            val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+            val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+            val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
@@ -55,6 +64,11 @@ fun SearchPage(
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -76,7 +90,7 @@ fun SearchPage(
                 }
             },
             onSearchModeChange = { mode ->
-                viewModel.update(mode = mode)
+                viewModel.changeMode(mode = mode)
             }
         )
     }

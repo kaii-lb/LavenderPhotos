@@ -70,7 +70,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
@@ -79,11 +78,13 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.models.permissions.PermissionsViewModel
 import com.kaii.photos.permissions.StartupManager
 
 @Composable
 fun PermissionHandler(
-    startupManager: StartupManager
+    startupManager: StartupManager,
+    viewModel: PermissionsViewModel
 ) {
     Scaffold { innerPadding ->
         val isLandscape by rememberDeviceOrientation()
@@ -145,7 +146,6 @@ fun PermissionHandler(
                 }
             }
 
-            val mainViewModel = LocalMainViewModel.current
             Column(
                 modifier = Modifier
                     .weight(1f),
@@ -338,7 +338,7 @@ fun PermissionHandler(
                                     isGranted = granted
                                 )
 
-                                mainViewModel.settings.permissions.setIsMediaManager(granted)
+                                viewModel.setIsMediaManager(granted)
                             }
 
                             val resources = LocalResources.current
@@ -396,7 +396,7 @@ fun PermissionHandler(
 
                         Button(
                             onClick = {
-                                mainViewModel.launch {
+                                viewModel.launch {
                                     startupManager.checkState()
                                 }
                             },
@@ -421,7 +421,7 @@ fun PermissionHandler(
                 ) {
                     Button(
                         onClick = {
-                            mainViewModel.launch {
+                            viewModel.launch {
                                 startupManager.checkState()
                             }
                         },
