@@ -1,6 +1,5 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.ui.util.fastMap
@@ -8,8 +7,10 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.SearchDao
+import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -48,8 +49,9 @@ enum class SearchMode(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
+    private val searchDao: SearchDao,
+    private val taggedItemsDao: TaggedItemsDao,
     info: ImmichBasicInfo,
-    context: Context,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) {
@@ -58,10 +60,9 @@ class SearchRepository(
         val sortMode: MediaItemSortMode,
         val format: DisplayDateFormat,
         val accessToken: String,
-        val mode: SearchMode
+        val mode: SearchMode,
+        val tags: Set<Tag>
     )
-
-    private val dao = MediaDatabase.getInstance(context.applicationContext).searchDao()
 
     private val params = MutableStateFlow(
         value = RoomQueryParams(
@@ -69,7 +70,8 @@ class SearchRepository(
             sortMode = sortMode,
             format = format,
             accessToken = info.accessToken,
-            mode = SearchMode.Name
+            mode = SearchMode.Name,
+            tags = emptySet()
         )
     )
 
@@ -84,12 +86,17 @@ class SearchRepository(
             ),
             pagingSourceFactory = {
                 when {
+                    // show all tagged media
+                    details.mode == SearchMode.Tag -> {
+                        searchByTags(details.query, details.tags)
+                    }
+
                     details.query.isBlank() -> {
-                        dao.getAll(dateModified = details.sortMode.isDateModified)
+                        searchDao.getAll(dateModified = details.sortMode.isDateModified)
                     }
 
                     details.mode == SearchMode.Name -> {
-                        dao.searchByName(query = "%${details.query}%", dateModified = details.sortMode.isDateModified)
+                        searchDao.searchByName(query = "%${details.query}%", dateModified = details.sortMode.isDateModified)
                     }
 
                     details.mode == SearchMode.Date -> {
@@ -97,7 +104,7 @@ class SearchRepository(
                     }
 
                     else -> {
-                        dao.getAll(dateModified = details.sortMode.isDateModified)
+                        searchDao.getAll(dateModified = details.sortMode.isDateModified)
                     }
                 }
             }
@@ -113,9 +120,14 @@ class SearchRepository(
     }
 
     fun search(
-        query: String
+        query: String,
+        tags: Set<Tag>
     ) {
-        params.value = params.value.copy(query = query)
+        if (params.value.mode == SearchMode.Tag) {
+            params.value = params.value.copy(query = query, tags = tags)
+        } else {
+            params.value = params.value.copy(query = query, tags = emptySet())
+        }
     }
 
     fun update(
@@ -199,7 +211,7 @@ class SearchRepository(
 
         val start = LocalDate(parsed.year, parsed.month, parsed.day).atStartOfDayIn(TimeZone.currentSystemDefault())
 
-        return dao.searchBetweenDates(
+        return searchDao.searchBetweenDates(
             startDate = start.epochSeconds,
             endDate = start.plus(1.days).epochSeconds,
             dateModified = params.value.sortMode.isDateModified
@@ -210,7 +222,7 @@ class SearchRepository(
         return query.trim().toIntOrNull()?.let { yearDate ->
             val year = YearMonth(year = yearDate, month = 1)
 
-            dao.searchBetweenDates(
+            searchDao.searchBetweenDates(
                 startDate = year.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
                 endDate = year.plusYear().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
                 dateModified = params.value.sortMode.isDateModified
@@ -225,7 +237,7 @@ class SearchRepository(
 
         return if (search in Month.entries.fastMap { it.name }) {
             val month = Month.valueOf(search).number.toString().padStart(2, '0')
-            dao.searchByMonth(month = month, dateModified = dateModified)
+            searchDao.searchByMonth(month = month, dateModified = dateModified)
         } else {
             ListPagingSource(media = emptyList())
         }
@@ -238,7 +250,7 @@ class SearchRepository(
 
         return if (search in DayOfWeek.entries.fastMap { it.name }) {
             val day = DayOfWeek.valueOf(search).isoDayNumber.toString()
-            dao.searchByDay(day = day, dateModified = dateModified)
+            searchDao.searchByDay(day = day, dateModified = dateModified)
         } else {
             ListPagingSource(media = emptyList())
         }
@@ -260,7 +272,7 @@ class SearchRepository(
             month = Month.valueOf(month).number
         )
 
-        return dao.searchBetweenDates(
+        return searchDao.searchBetweenDates(
             startDate = yearMonth.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
             endDate = yearMonth.plusMonth().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
             dateModified = params.value.sortMode.isDateModified
@@ -288,7 +300,7 @@ class SearchRepository(
 
         val start = yearMonth.onDay(day).atStartOfDayIn(TimeZone.currentSystemDefault())
 
-        return dao.searchBetweenDates(
+        return searchDao.searchBetweenDates(
             startDate = start.epochSeconds,
             endDate = start.plus(1.days).epochSeconds,
             dateModified = params.value.sortMode.isDateModified
@@ -312,11 +324,39 @@ class SearchRepository(
             month = Month.valueOf(month).number
         )
 
-        return dao.searchForDaysInMonthYear(
+        return searchDao.searchForDaysInMonthYear(
             startDate = yearMonth.onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
             endDate = yearMonth.plusMonth().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
             day = DayOfWeek.valueOf(dayName).isoDayNumber.toString(),
             dateModified = params.value.sortMode.isDateModified
         )
+    }
+
+    private fun searchByTags(
+        query: String,
+        tags: Set<Tag>
+    ): PagingSource<Int, MediaStoreData> {
+        val dateModified = params.value.sortMode.isDateModified
+
+        val tagIds = tags.map { it.id }
+
+        return when {
+            query.isBlank() && tags.isNotEmpty() && dateModified -> taggedItemsDao.getAllInTagsDateModified(tags = tagIds, tagCount = tagIds.size)
+
+            query.isBlank() && tags.isNotEmpty() -> taggedItemsDao.getAllInTagsDateTaken(tags = tagIds, tagCount = tagIds.size)
+
+            query.isNotBlank() && tags.isNotEmpty() && dateModified -> taggedItemsDao.searchInTagsDateModified(query = "%$query%", tags = tagIds, tagCount = tagIds.size)
+
+            query.isNotBlank() && tags.isNotEmpty() -> taggedItemsDao.searchInTagsDateTaken(query = "%$query%", tags = tagIds, tagCount = tagIds.size)
+
+            query.isNotBlank() && tags.isEmpty() && !dateModified -> taggedItemsDao.searchDateModified("%$query%")
+
+            query.isNotBlank() && tags.isEmpty() -> taggedItemsDao.searchDateTaken("%$query%")
+
+            else -> {
+                if (dateModified) taggedItemsDao.getAllDateModified()
+                else taggedItemsDao.getAllDateTaken()
+            }
+        }
     }
 }

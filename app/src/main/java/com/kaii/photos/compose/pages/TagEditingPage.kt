@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,6 +18,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,69 +32,92 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.widgets.TagEditingPageTextField
 import com.kaii.photos.compose.widgets.TagItem
 import com.kaii.photos.compose.widgets.TagMediaInfo
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.TextStylingConstants
-import kotlin.random.Random
+import com.kaii.photos.helpers.editing.random
+import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.models.tag_page.TagViewModel
 
-@Preview
 @Composable
-private fun TagEditingPagePreview() {
-    TagEditingPage(
-        media =
-            MediaStoreData.dummyItem.copy(
-                displayName = "Kittyyyy.png",
-                mimeType = "image/png",
-                parentPath = "/storage/emulated/0/DCIM/Camera",
-                favourited = true
-            ),
-        navController = rememberNavController(),
-        appliedTags = (0..5).map {
-            Tag(
-                id = it,
-                name = CharArray(8) {
-                    CharRange('a', 'z').random()
-                }.concatToString(),
-                description = "",
-                color = Color(red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat())
-            )
+fun TagEditingPage(
+    viewModel: TagViewModel,
+    modifier: Modifier = Modifier
+) {
+    val allTags by viewModel.tags.collectAsStateWithLifecycle()
+    val appliedTags by viewModel.appliedTags.collectAsStateWithLifecycle()
+    val item by viewModel.item.collectAsStateWithLifecycle()
+
+    val showDialog = remember { mutableStateOf(false) }
+    var currentTag by remember { mutableStateOf<Tag?>(null) }
+    ConfirmationDialog(
+        showDialog = showDialog,
+        dialogTitle = stringResource(id = R.string.tags_delete),
+        confirmButtonLabel = stringResource(id = R.string.media_delete)
+    ) {
+        viewModel.deleteTag(currentTag!!)
+    }
+
+    TagEditingPageImpl(
+        mediaName = item.displayName,
+        mediaPath =
+            item.immichUrl ?: item.absolutePath.replaceFirst(item.absolutePath.toBasePath(), ""),
+        mediaType = item.mimeType,
+        mediaFavourited = item.favourited,
+        mediaUri = item.uri,
+        navController = LocalNavController.current,
+        appliedTags = appliedTags,
+        allTags = allTags,
+        modifier = modifier,
+        onTagClick = { tag ->
+            viewModel.toggleTag(tag)
         },
-        allTags = (0..20).map {
-            Tag(
-                id = it,
-                name = CharArray(8) {
-                    CharRange('a', 'z').random()
-                }.concatToString(),
-                description = "",
-                color = Color(red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat())
-            )
+        onTagRemove = { tag ->
+            currentTag = tag
+            showDialog.value = true
         },
-        applyAction = {}
+        addTag = { name ->
+            viewModel.insertTag(
+                Tag(
+                    name = name,
+                    description = "",
+                    color = Color.random()
+                )
+            )
+        }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TagEditingPage(
-    media: MediaStoreData,
+private fun TagEditingPageImpl(
+    mediaName: String,
+    mediaPath: String,
+    mediaType: String,
+    mediaFavourited: Boolean,
+    mediaUri: String,
     navController: NavController,
     appliedTags: List<Tag>,
     allTags: List<Tag>,
     modifier: Modifier = Modifier,
-    applyAction: () -> Unit
+    onTagClick: (tag: Tag) -> Unit,
+    onTagRemove: (tag: Tag) -> Unit,
+    addTag: (name: String) -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Tags",
+                        text = stringResource(id = R.string.tags),
                         fontSize = TextStylingConstants.LARGE_TEXT_SIZE.sp
                     )
                 },
@@ -104,15 +130,6 @@ fun TagEditingPage(
                         Icon(
                             painter = painterResource(id = R.drawable.back_arrow),
                             contentDescription = stringResource(id = R.string.close)
-                        )
-                    }
-                },
-                actions = {
-                    Button(
-                        onClick = applyAction
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.apply)
                         )
                     }
                 }
@@ -132,17 +149,23 @@ fun TagEditingPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TagMediaInfo(
-                media = media
+                mediaUri = mediaUri,
+                mediaName = mediaName,
+                mediaPath = mediaPath,
+                mediaType = mediaType,
+                mediaFavourited = mediaFavourited
             )
 
+            var tagName by remember { mutableStateOf("") }
             TagEditingPageTextField(
-                value = "",
+                value = tagName,
                 onValueChange = {
-
+                    tagName = it
                 },
                 exists = { name ->
                     allTags.any { it.name == name }
-                }
+                },
+                addTag = addTag
             )
 
             Text(
@@ -175,8 +198,13 @@ fun TagEditingPage(
                         TagItem(
                             tag = it,
                             selected = true,
-                            onClick = {},
-                            onRemove = {}
+                            showDeleteIcon = false,
+                            onClick = {
+                                onTagClick(it)
+                            },
+                            onRemove = {
+                                onTagRemove(it)
+                            }
                         )
                     }
                 }
@@ -217,12 +245,53 @@ fun TagEditingPage(
                         TagItem(
                             tag = it,
                             selected = false,
-                            onClick = {},
-                            onRemove = {}
+                            showDeleteIcon = true,
+                            onClick = {
+                                onTagClick(it)
+                            },
+                            onRemove = {
+                                onTagRemove(it)
+                            }
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Preview
+@Composable
+private fun TagEditingPagePreview() {
+    TagEditingPageImpl(
+        mediaName = "Kittyyyy.png",
+        mediaPath = "DCIM/Camera",
+        mediaType = "image/png",
+        mediaFavourited = true,
+        mediaUri = "",
+        navController = rememberNavController(),
+        appliedTags = (0..5).map {
+            Tag(
+                id = it,
+                name = CharArray(8) {
+                    CharRange('a', 'z').random()
+                }.concatToString(),
+                description = "",
+                color = Color.random()
+            )
+        },
+        allTags = (0..20).map {
+            Tag(
+                id = it,
+                name = CharArray(8) {
+                    CharRange('a', 'z').random()
+                }.concatToString(),
+                description = "",
+                color = Color.random()
+            )
+        },
+        onTagClick = {},
+        onTagRemove = {},
+        addTag = {}
+    )
 }

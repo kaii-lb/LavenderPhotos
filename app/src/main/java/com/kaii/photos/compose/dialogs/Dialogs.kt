@@ -738,6 +738,7 @@ fun TallDialogInfoRow(
     modifier: Modifier = Modifier,
     containerColor: Color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    navigatesAway: Boolean = false,
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
@@ -765,7 +766,7 @@ fun TallDialogInfoRow(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth(1f),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
@@ -793,8 +794,16 @@ fun TallDialogInfoRow(
                 color = contentColor,
                 maxLines = 1,
                 modifier = Modifier
+                    .weight(1f)
                     .horizontalScroll(rememberScrollState())
             )
+
+            if (navigatesAway) {
+                Icon(
+                    painter = painterResource(id = R.drawable.other_page_indicator),
+                    contentDescription = stringResource(id = R.string.navigation_away)
+                )
+            }
         }
 
         Spacer(

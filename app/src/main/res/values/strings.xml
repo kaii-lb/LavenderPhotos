@@ -711,6 +711,7 @@
     <string name="navigation_search">Search</string>
     <string name="navigation_favourites">Favourites</string>
     <string name="navigation_trash">Trash</string>
+    <string name="navigation_away">Navigates to another page</string>
 
     <!-- App -->
     <string name="app_name_full">Lavender Photos</string>
@@ -1250,4 +1251,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="tags_path">Path: %s</string>
     <string name="tags_favourited_true">Favourite: Yes</string>
     <string name="tags_favourited_false">Favourite: No</string>
+    <string name="tags">Tags</string>
+    <string name="tags_delete">Delete Tag</string>
 </resources>

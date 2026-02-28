@@ -184,7 +184,7 @@ fun MainPages(
                 selectionManager.clear()
 
                 if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
-                    searchViewModel.search(query = "")
+                    searchViewModel.search(query = "", tags = emptyList())
                 }
 
                 lastPage = it

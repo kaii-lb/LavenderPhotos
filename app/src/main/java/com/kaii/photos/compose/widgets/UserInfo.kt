@@ -25,7 +25,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -34,6 +33,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.profilePicture
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

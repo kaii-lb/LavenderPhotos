@@ -9,6 +9,9 @@ import com.kaii.photos.R
 import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.random.Random
+
+fun Color.Companion.random() = Color(red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat())
 
 fun darkenColor(color: Color, percentage: Float): Color {
     val r = (color.red * 255).toInt()

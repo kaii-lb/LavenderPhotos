@@ -41,8 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -56,6 +54,8 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

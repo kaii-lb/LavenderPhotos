@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -26,7 +25,6 @@ class MainViewModel(
 ) : ViewModel() {
     private var initialMainPhotosPaths = emptySet<String>()
 
-    val apiClient = ApiClient()
     val settings = Settings(context.applicationContext, viewModelScope)
 
     val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(

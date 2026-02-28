@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,12 +56,14 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
@@ -70,6 +71,7 @@ import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
@@ -297,9 +299,12 @@ private fun Content(
             fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
-                .offset(
-                    y = if (isLandscape) (-4).dp else 0.dp
-                )
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = if (isLandscape) (-4).dp.roundToPx() else 0.dp.roundToPx()
+                    )
+                }
         )
 
         val showConfirmEraseDialog = remember { mutableStateOf(false) }
@@ -375,26 +380,40 @@ private fun Content(
 
             if (isLandscape) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     TallDialogInfoRow(
                         title = stringResource(id = if (privacyMode) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
                         info = "",
                         icon = if (!privacyMode) R.drawable.swipe else R.drawable.do_not_touch,
-                        position = RowPosition.Single
+                        position = RowPosition.Top
                     ) {
                         togglePrivacyMode()
                     }
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    val navController = LocalNavController.current
 
+                    TallDialogInfoRow(
+                        title = stringResource(id = R.string.tags),
+                        info = "",
+                        icon = R.drawable.sell,
+                        position = RowPosition.Middle,
+                        navigatesAway = true
+                    ) {
+                        navController.navigate(
+                            Screens.TagEditor(
+                                mediaId = currentMediaItem.id
+                            )
+                        )
+                    }
+                }
+
+                item {
                     TallDialogInfoRow(
                         title = stringResource(id = R.string.media_exif_erase),
                         info = "",
                         icon = R.drawable.error,
-                        position = RowPosition.Single,
+                        position = RowPosition.Bottom,
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
                     ) {
@@ -468,6 +487,21 @@ private fun Content(
                 position = RowPosition.Single
             ) {
                 togglePrivacyMode()
+            }
+
+            val navController = LocalNavController.current
+            TallDialogInfoRow(
+                title = stringResource(id = R.string.tags),
+                info = "",
+                icon = R.drawable.sell,
+                position = RowPosition.Single,
+                navigatesAway = true
+            ) {
+                navController.navigate(
+                    Screens.TagEditor(
+                        mediaId = currentMediaItem.id
+                    )
+                )
             }
 
             TallDialogInfoRow(

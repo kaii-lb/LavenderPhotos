@@ -11,11 +11,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.lavender.immichintegration.clients.ApiClient
-import com.kaii.lavender.immichintegration.serialization.albums.AlbumsGetAllState
-import com.kaii.lavender.immichintegration.state_managers.AllAlbumsState
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -26,6 +21,12 @@ import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.mediastore.signature
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.AllAlbumsState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -210,6 +211,7 @@ class AlbumGridState(
 fun rememberAlbumGridState(): AlbumGridState {
     val context = LocalContext.current
     val mainViewModel = LocalMainViewModel.current
+    val apiClient = LocalApiClient.current
     val coroutineScope = rememberCoroutineScope()
 
     val info by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
@@ -225,7 +227,7 @@ fun rememberAlbumGridState(): AlbumGridState {
             albumSortModeFlow = mainViewModel.settings.albums.getAlbumSortMode(),
             allAlbumsFlow = mainViewModel.settings.albums.getAutoDetect(),
             info = mainViewModel.settings.immich.getImmichBasicInfo(),
-            apiClient = mainViewModel.apiClient,
+            apiClient = apiClient,
             checkLoggedIn = {
                 loginState.refresh(
                     accessToken = info.accessToken,

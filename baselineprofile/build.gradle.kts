@@ -27,6 +27,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildTypes {
+        create("release") {
+            signingConfig = signingConfigs["debug"]
+            matchingFallbacks.addAll(listOf("baselineprof", "release"))
+        }
+    }
+
     targetProjectPath = ":app"
 }
 
@@ -40,6 +47,7 @@ dependencies {
     implementation(libs.androidx.junit)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.benchmark.macro.junit4)
+    implementation(libs.androidx.uiautomator)
 }
 
 androidComponents {

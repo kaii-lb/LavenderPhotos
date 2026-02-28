@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.ReportDrawn
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -44,9 +45,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
@@ -61,6 +64,7 @@ import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
+import com.kaii.photos.compose.pages.TagEditingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
@@ -76,6 +80,7 @@ import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -98,10 +103,14 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -130,6 +139,7 @@ class MainActivity : ComponentActivity() {
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
+        val apiClient = ApiClient()
         val mainViewModel = ViewModelProvider.create(
             store = viewModelStore,
             factory = MainViewModelFactory(applicationContext, emptyList())
@@ -168,7 +178,7 @@ class MainActivity : ComponentActivity() {
                     LocalNavController provides navControllerLocal,
                     LocalMainViewModel provides mainViewModel,
                     LocalAppDatabase provides applicationDatabase,
-                    LocalApiClient provides mainViewModel.apiClient
+                    LocalApiClient provides apiClient
                 ) {
                     AnimatedContent(
                         targetState = startupState,
@@ -826,6 +836,18 @@ class MainActivity : ComponentActivity() {
                         isFromOpenWithView = false
                     )
                 }
+
+                composable<Screens.TagEditor> {
+                    val screen = it.toRoute<Screens.TagEditor>()
+                    val viewModel = viewModel<TagViewModel>(
+                        factory = TagViewModelFactory(
+                            context = context,
+                            mediaId = screen.mediaId
+                        )
+                    )
+
+                    TagEditingPage(viewModel = viewModel)
+                }
             }
         }
 
@@ -838,6 +860,20 @@ class MainActivity : ComponentActivity() {
                 updater.startupUpdateCheck(navController)
             }
         }
+
+        ReportDrawn()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        // run work manager immediately after user navigates back to app
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                SyncWorker::class.java.name,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequest.Builder(SyncWorker::class).build()
+            )
     }
 }
 
