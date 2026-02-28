@@ -59,10 +59,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.ServerInfoState
-import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
-import com.kaii.lavender.immichintegration.state_managers.rememberServerState
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -81,6 +77,10 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.profilePicture
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberServerState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)

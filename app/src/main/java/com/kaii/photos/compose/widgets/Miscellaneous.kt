@@ -68,12 +68,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.lavender.immichintegration.state_managers.LoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 
 @Composable
 fun SplitButton(

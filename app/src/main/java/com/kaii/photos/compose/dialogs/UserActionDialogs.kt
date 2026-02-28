@@ -73,8 +73,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.LoginStateManager
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
@@ -95,6 +93,8 @@ import com.kaii.photos.helpers.findMinParent
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime

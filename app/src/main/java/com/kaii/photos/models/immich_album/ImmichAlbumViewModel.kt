@@ -4,12 +4,12 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
-import com.kaii.lavender.immichintegration.clients.ApiClient
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.ImmichRepository
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi

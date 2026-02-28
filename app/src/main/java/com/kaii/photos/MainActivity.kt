@@ -50,7 +50,6 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.lavender.immichintegration.state_managers.LocalApiClient
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
@@ -107,6 +106,8 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -135,6 +136,7 @@ class MainActivity : ComponentActivity() {
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
+        val apiClient = ApiClient()
         val mainViewModel = ViewModelProvider.create(
             store = viewModelStore,
             factory = MainViewModelFactory(applicationContext, emptyList())
@@ -173,7 +175,7 @@ class MainActivity : ComponentActivity() {
                     LocalNavController provides navControllerLocal,
                     LocalMainViewModel provides mainViewModel,
                     LocalAppDatabase provides applicationDatabase,
-                    LocalApiClient provides mainViewModel.apiClient
+                    LocalApiClient provides apiClient
                 ) {
                     AnimatedContent(
                         targetState = startupState,

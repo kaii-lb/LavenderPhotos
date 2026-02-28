@@ -72,8 +72,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.immichintegration.state_managers.LoginState
-import com.kaii.lavender.immichintegration.state_managers.rememberLoginState
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
@@ -89,6 +87,8 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
