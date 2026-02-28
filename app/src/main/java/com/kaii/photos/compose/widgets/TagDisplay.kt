@@ -1,7 +1,7 @@
 package com.kaii.photos.compose.widgets
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -10,7 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -175,10 +174,7 @@ private fun TagFlowRow(
             space = 8.dp,
             alignment = Alignment.Top
         ),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 8.dp,
-            alignment = Alignment.CenterHorizontally
-        )
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         tags.filter { it.name.contains(searchQuery) || !searchingForTags }
             .sortedBy { it.name }
@@ -197,6 +193,7 @@ private fun TagFlowRow(
                             TagItem(
                                 tag = tag,
                                 selected = selectedTags.contains(tag),
+                                showDeleteIcon = false,
                                 onClick = { onTagClick(tag) },
                                 onRemove = { onTagRemove(tag) }
                             )
@@ -213,42 +210,36 @@ fun TagItem(
     tag: Tag,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    showDeleteIcon: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
-    val animatedBorder by animateDpAsState(
-        targetValue = if (selected) 2.dp else 0.dp,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else tag.color,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
     )
 
-    Box(
-        modifier = Modifier
-            .then(
-                if (animatedBorder > 0.dp) {
-                    Modifier.border(
-                        width = animatedBorder,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape
-                    )
-                } else Modifier
+    Row(
+        modifier = modifier
+            .wrapContentWidth()
+            .clip(CircleShape)
+            .background(tag.color)
+            .border(
+                width = 2.dp,
+                color = borderColor,
+                shape = CircleShape
             )
-            .padding(animatedBorder * 2)
+            .clickable(onClick = onClick)
+            .padding(start = 12.dp, end = if (showDeleteIcon) 4.dp else 12.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = modifier
-                .wrapContentWidth()
-                .clip(CircleShape)
-                .background(tag.color)
-                .clickable(onClick = onClick)
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = tag.name,
-                fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
-            )
+        Text(
+            text = tag.name,
+            fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
+        )
 
+        if (showDeleteIcon) {
             Spacer(modifier = Modifier.width(4.dp))
 
             Icon(
@@ -257,8 +248,8 @@ fun TagItem(
                 modifier = Modifier
                     .size(22.dp)
                     .clip(CircleShape)
-                    .padding(4.dp)
                     .clickable(onClick = onRemove)
+                    .padding(4.dp)
             )
         }
     }

@@ -10,29 +10,71 @@ import com.kaii.photos.database.entities.TaggedItem
 
 @Dao
 interface TaggedItemsDao {
-    @Query(value = "SELECT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
-            "WHERE tagged_items.tag IN (:tags) " +
-            "ORDER BY media.dateTaken DESC"
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media " +
+                "JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE tagged_items.tag IN (:tags) " +
+                "GROUP BY media.id " +
+                "HAVING COUNT(DISTINCT tagged_items.tag) = :tagCount " +
+                "ORDER BY media.dateTaken DESC"
     )
-    fun getAllInTagDateTaken(tags: List<Int>): PagingSource<Int, MediaStoreData>
+    fun getAllInTagsDateTaken(tags: List<Int>, tagCount: Int): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
-            "WHERE tagged_items.tag IN (:tags) " +
-            "ORDER BY media.dateModified DESC"
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media " +
+                "JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE tagged_items.tag IN (:tags) " +
+                "GROUP BY media.id " +
+                "HAVING COUNT(DISTINCT tagged_items.tag) = :tagCount " +
+                "ORDER BY media.dateModified DESC"
     )
-    fun getAllInTagDateModified(tags: List<Int>): PagingSource<Int, MediaStoreData>
+    fun getAllInTagsDateModified(tags: List<Int>, tagCount: Int): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
-            "WHERE tagged_items.tag IN (:tags) AND media.displayName LIKE :query " +
-            "ORDER BY media.dateTaken DESC"
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media " +
+                "JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE tagged_items.tag IN (:tags) " +
+                "GROUP BY media.id " +
+                "HAVING COUNT(DISTINCT tagged_items.tag) = :tagCount AND media.displayName LIKE :query " +
+                "ORDER BY media.dateTaken DESC"
     )
-    fun searchInTagDateTaken(query: String, tags: List<Int>): PagingSource<Int, MediaStoreData>
+    fun searchInTagsDateTaken(query: String, tags: List<Int>, tagCount: Int): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
-            "WHERE tagged_items.tag IN (:tags) AND media.displayName LIKE :query " +
-            "ORDER BY media.dateModified DESC"
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media " +
+                "JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE tagged_items.tag IN (:tags) " +
+                "GROUP BY media.id " +
+                "HAVING COUNT(DISTINCT tagged_items.tag) = :tagCount AND media.displayName LIKE :query " +
+                "ORDER BY media.dateModified DESC"
     )
-    fun searchInTagDateModified(query: String, tags: List<Int>): PagingSource<Int, MediaStoreData>
+    fun searchInTagsDateModified(query: String, tags: List<Int>, tagCount: Int): PagingSource<Int, MediaStoreData>
+
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE media.displayName LIKE :query " +
+                "ORDER BY media.dateTaken DESC"
+    )
+    fun searchDateTaken(query: String): PagingSource<Int, MediaStoreData>
+
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "WHERE media.displayName LIKE :query " +
+                "ORDER BY media.dateModified DESC"
+    )
+    fun searchDateModified(query: String): PagingSource<Int, MediaStoreData>
+
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "ORDER BY media.dateTaken DESC"
+    )
+    fun getAllDateTaken(): PagingSource<Int, MediaStoreData>
+
+    @Query(
+        value = "SELECT DISTINCT media.* FROM media JOIN tagged_items ON tagged_items.mediaId = media.id " +
+                "ORDER BY media.dateModified DESC"
+    )
+    fun getAllDateModified(): PagingSource<Int, MediaStoreData>
 
     @Query(value = "SELECT * FROM media WHERE id = :id")
     suspend fun getItem(id: Long): MediaStoreData?

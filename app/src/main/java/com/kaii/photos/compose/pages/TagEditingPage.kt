@@ -198,6 +198,7 @@ private fun TagEditingPageImpl(
                         TagItem(
                             tag = it,
                             selected = true,
+                            showDeleteIcon = false,
                             onClick = {
                                 onTagClick(it)
                             },
@@ -244,6 +245,7 @@ private fun TagEditingPageImpl(
                         TagItem(
                             tag = it,
                             selected = false,
+                            showDeleteIcon = true,
                             onClick = {
                                 onTagClick(it)
                             },
