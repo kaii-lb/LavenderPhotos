@@ -6,10 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -81,6 +87,49 @@ fun FavouritesMigrationPage() {
                 },
                 title = {}
             )
+        },
+        bottomBar = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 12.dp,
+                    alignment = Alignment.CenterHorizontally
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .animateContentSize(
+                        animationSpec = AnimationConstants.expressiveTween(
+                            durationMillis = AnimationConstants.DURATION
+                        )
+                    )
+            ) {
+                Button(
+                    onClick = {
+                        migrationState.step()
+                    },
+                    enabled = state == MigrationState.NeedsPermission || state == MigrationState.Done
+                ) {
+                    Text(
+                        text = stringResource(
+                            id =
+                                when (state) {
+                                    MigrationState.NeedsPermission -> R.string.permissions_grant_long
+                                    MigrationState.InProgress -> R.string.favourites_migration_in_progress_short
+                                    else -> R.string.permissions_continue
+                                }
+                        ),
+                        fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
+                    )
+                }
+
+                if (state == MigrationState.InProgress) {
+                    ContainedLoadingIndicator(
+                        modifier = Modifier
+                            .size(40.dp)
+                    )
+                }
+            }
         }
     ) { innerPadding ->
         Box(
@@ -91,7 +140,7 @@ fun FavouritesMigrationPage() {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .padding(32.dp),
+                    .padding(horizontal = 32.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(
                     space = 12.dp,
                     alignment = Alignment.CenterVertically
@@ -127,49 +176,10 @@ fun FavouritesMigrationPage() {
                         text = stringResource(id = R.string.favourites_migration_desc),
                         fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                         color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
                     )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(
-                        space = 12.dp,
-                        alignment = Alignment.CenterHorizontally
-                    ),
-                    modifier = Modifier
-                        .padding(top = 64.dp)
-                        .animateContentSize(
-                            animationSpec = AnimationConstants.expressiveTween(
-                                durationMillis = AnimationConstants.DURATION
-                            )
-                        )
-                ) {
-                    Button(
-                        onClick = {
-                            migrationState.step()
-                        },
-                        enabled = state == MigrationState.NeedsPermission || state == MigrationState.Done
-                    ) {
-                        Text(
-                            text = stringResource(
-                                id =
-                                    when (state) {
-                                        MigrationState.NeedsPermission -> R.string.permissions_grant_long
-                                        MigrationState.InProgress -> R.string.favourites_migration_in_progress_short
-                                        else -> R.string.permissions_continue
-                                    }
-                            ),
-                            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
-                        )
-                    }
-
-                    if (state == MigrationState.InProgress) {
-                        ContainedLoadingIndicator(
-                            modifier = Modifier
-                                .size(40.dp)
-                        )
-                    }
                 }
             }
         }
