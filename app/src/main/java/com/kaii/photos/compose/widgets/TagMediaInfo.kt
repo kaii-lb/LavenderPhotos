@@ -25,14 +25,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.toBasePath
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TagMediaInfo(
-    media: MediaStoreData,
+    mediaName: String,
+    mediaPath: String,
+    mediaType: String,
+    mediaFavourited: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -62,26 +63,26 @@ fun TagMediaInfo(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(id = R.string.tags_name, media.displayName),
+                text = stringResource(id = R.string.tags_name, mediaName),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
             )
 
             Text(
-                text = stringResource(id = R.string.tags_type, media.mimeType),
+                text = stringResource(id = R.string.tags_type, mediaType),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
             )
 
             Text(
-                text = stringResource(id = R.string.tags_path, media.parentPath.replace(media.parentPath.toBasePath(), "")),
+                text = stringResource(id = R.string.tags_path, mediaPath),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
             )
 
             Text(
-                text = stringResource(id = if (media.favourited) R.string.tags_favourited_true else R.string.tags_favourited_false),
+                text = stringResource(id = if (mediaFavourited) R.string.tags_favourited_true else R.string.tags_favourited_false),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
             )
         }

@@ -35,7 +35,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.TagEditingPageTextField
 import com.kaii.photos.compose.widgets.TagItem
 import com.kaii.photos.compose.widgets.TagMediaInfo
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlin.random.Random
@@ -44,13 +43,10 @@ import kotlin.random.Random
 @Composable
 private fun TagEditingPagePreview() {
     TagEditingPage(
-        media =
-            MediaStoreData.dummyItem.copy(
-                displayName = "Kittyyyy.png",
-                mimeType = "image/png",
-                parentPath = "/storage/emulated/0/DCIM/Camera",
-                favourited = true
-            ),
+        mediaName = "Kittyyyy.png",
+        mediaPath = "DCIM/Camera",
+        mediaType = "image/png",
+        mediaFavourited = true,
         navController = rememberNavController(),
         appliedTags = (0..5).map {
             Tag(
@@ -79,7 +75,10 @@ private fun TagEditingPagePreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagEditingPage(
-    media: MediaStoreData,
+    mediaName: String,
+    mediaPath: String,
+    mediaType: String,
+    mediaFavourited: Boolean,
     navController: NavController,
     appliedTags: List<Tag>,
     allTags: List<Tag>,
@@ -132,7 +131,10 @@ fun TagEditingPage(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TagMediaInfo(
-                media = media
+                mediaName = mediaName,
+                mediaPath = mediaPath,
+                mediaType = mediaType,
+                mediaFavourited = mediaFavourited
             )
 
             TagEditingPageTextField(
