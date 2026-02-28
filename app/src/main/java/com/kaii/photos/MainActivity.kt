@@ -64,6 +64,7 @@ import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
+import com.kaii.photos.compose.pages.TagEditingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
 import com.kaii.photos.compose.settings.DataAndBackupPage
@@ -102,6 +103,8 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
@@ -832,6 +835,18 @@ class MainActivity : ComponentActivity() {
                         window = window,
                         isFromOpenWithView = false
                     )
+                }
+
+                composable<Screens.TagEditor> {
+                    val screen = it.toRoute<Screens.TagEditor>()
+                    val viewModel = viewModel<TagViewModel>(
+                        factory = TagViewModelFactory(
+                            context = context,
+                            mediaId = screen.mediaId
+                        )
+                    )
+
+                    TagEditingPage(viewModel = viewModel)
                 }
             }
         }

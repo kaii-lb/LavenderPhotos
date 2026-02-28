@@ -257,8 +257,8 @@ fun TagItem(
                 modifier = Modifier
                     .size(22.dp)
                     .clip(CircleShape)
-                    .clickable(onClick = onRemove)
                     .padding(4.dp)
+                    .clickable(onClick = onRemove)
             )
         }
     }

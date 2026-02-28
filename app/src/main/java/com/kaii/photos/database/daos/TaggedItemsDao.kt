@@ -34,6 +34,9 @@ interface TaggedItemsDao {
     )
     fun searchInTagDateModified(query: String, tags: List<Int>): PagingSource<Int, MediaStoreData>
 
+    @Query(value = "SELECT * FROM media WHERE id = :id")
+    suspend fun getItem(id: Long): MediaStoreData?
+
     @Upsert
     suspend fun upsert(vararg items: TaggedItem)
 

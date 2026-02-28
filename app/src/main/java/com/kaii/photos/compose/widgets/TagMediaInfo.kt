@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.widgets
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,16 +19,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
 import com.kaii.photos.helpers.TextStylingConstants
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun TagMediaInfo(
+    mediaUri: String,
     mediaName: String,
     mediaPath: String,
     mediaType: String,
@@ -46,8 +47,8 @@ fun TagMediaInfo(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(space = 8.dp)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.cat_picture),
+        GlideImage(
+            model = mediaUri,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
