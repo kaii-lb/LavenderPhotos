@@ -5,17 +5,24 @@ import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -49,12 +56,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -69,7 +79,10 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.tags.MediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -93,6 +106,8 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -113,6 +128,15 @@ fun SinglePhotoView(
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         navController = LocalNavController.current,
@@ -120,9 +144,15 @@ fun SinglePhotoView(
         startIndex = index,
         albumInfo = albumInfo,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        tags = tags,
+        selectedTags = selectedTags,
         removeFromCustom = { item ->
             viewModel.remove(items = setOf(item))
-        }
+        },
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -137,13 +167,28 @@ fun SinglePhotoView(
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = isOpenWithDefaultView
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -157,13 +202,28 @@ fun SinglePhotoView(
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
         albumInfo = albumInfo,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -176,13 +236,28 @@ fun SinglePhotoView(
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
         albumInfo = AlbumInfo.Empty,
         navController = LocalNavController.current,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -196,13 +271,28 @@ fun SinglePhotoView(
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
         albumInfo = albumInfo,
         navController = navController,
         window = window,
-        isOpenWithDefaultView = false
+        isOpenWithDefaultView = false,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -216,7 +306,13 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
-    removeFromCustom: (MediaStoreData) -> Unit = {}
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
+    removeFromCustom: (MediaStoreData) -> Unit = {},
+    onTagAdd: (name: String) -> Unit,
+    onTagClick: (tag: Tag) -> Unit,
+    onTagDelete: (tag: Tag) -> Unit,
+    setTagMediaId: (id: Long) -> Unit
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -246,6 +342,8 @@ private fun SinglePhotoViewCommon(
                 } else {
                     MediaStoreData.dummyItem
                 }
+
+            setTagMediaId(mediaItem.id)
 
             if (mediaItem.type == MediaType.Image
                 && mediaItem != MediaStoreData.dummyItem
@@ -285,6 +383,7 @@ private fun SinglePhotoViewCommon(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showTagDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
@@ -295,11 +394,20 @@ private fun SinglePhotoViewCommon(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
+                showTagDialog = showTagDialog,
                 expandInfoDialog = {
                     coroutineScope.launch {
+                        showTagDialog = false
                         showInfoDialog = true
                         delay(50)
                         sheetState.partialExpand()
+                    }
+                },
+                expandTagDialog = {
+                    coroutineScope.launch {
+                        showInfoDialog = false
+                        delay(50)
+                        showTagDialog = !showTagDialog
                     }
                 }
             )
@@ -361,6 +469,51 @@ private fun SinglePhotoViewCommon(
                     }
                 },
                 togglePrivacyMode = scrollState::togglePrivacyMode
+            )
+        }
+
+        val layoutDirection = LocalLayoutDirection.current
+        var isLandscape by rememberDeviceOrientation()
+
+        AnimatedVisibility(
+            visible = showTagDialog,
+            enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { -it },
+            exit = fadeOut(
+                animationSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT)
+            ) + slideOutVertically(
+                animationSpec = tween(durationMillis = AnimationConstants.DURATION)
+            ) { -it },
+            modifier = Modifier
+                .padding(
+                    top =
+                        when {
+                            isLandscape && appBarsVisible.value -> 80.dp
+
+                            isLandscape -> 12.dp
+
+                            appBarsVisible.value -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding() + 56.dp
+
+                            else -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding()
+                        },
+                    start =
+                        if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateStartPadding(layoutDirection)
+                        else 0.dp,
+                    end =
+                        if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateStartPadding(layoutDirection)
+                        else 0.dp
+                )
+                .zIndex(10f)
+                .padding(horizontal = 8.dp)
+        ) {
+            MediaTagManager(
+                tags = tags,
+                selectedTags = selectedTags,
+                onTagAdd = onTagAdd,
+                onTagClick = onTagClick,
+                onTagDelete = onTagDelete,
+                onClose = {
+                    showTagDialog = false
+                }
             )
         }
 

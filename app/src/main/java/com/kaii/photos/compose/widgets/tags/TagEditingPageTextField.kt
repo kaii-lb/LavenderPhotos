@@ -1,11 +1,11 @@
 package com.kaii.photos.compose.widgets.tags
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
@@ -31,82 +33,85 @@ import com.kaii.photos.helpers.TextStylingConstants
 @Composable
 fun TagEditingPageTextField(
     value: String,
+    placeholder: String,
     modifier: Modifier = Modifier,
     onValueChange: (value: String) -> Unit,
     exists: (name: String) -> Boolean,
     addTag: (name: String) -> Unit
 ) {
-    Row(
-        modifier = modifier
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(space = 4.dp)
-    ) {
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = {
-                Text(
-                    text = stringResource(id = R.string.tags_add)
-                )
-            },
-            suffix = {
-                if (exists(value)) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                            positioning = TooltipAnchorPosition.Start,
-                            spacingBetweenTooltipAndAnchor = 16.dp
-                        ),
-                        tooltip = {
-                            PlainTooltip(
-                                shape = CircleShape,
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.tags_exists),
-                                    fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
-                                )
-                            }
-                        },
-                        state = rememberTooltipState()
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                text = placeholder
+            )
+        },
+        trailingIcon = {
+            if (!exists(value) && value.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = { addTag(value) }
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.error_2),
-                            contentDescription = stringResource(id = R.string.tags_exists)
+                            painter = painterResource(id = R.drawable.checkmark_thin),
+                            contentDescription = stringResource(id = R.string.media_confirm)
                         )
                     }
                 }
-            },
-            trailingIcon = {
-                if (!exists(value)) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        IconButton(
-                            onClick = { addTag(value) }
+            } else {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                        positioning = TooltipAnchorPosition.Start,
+                        spacingBetweenTooltipAndAnchor = 16.dp
+                    ),
+                    tooltip = {
+                        PlainTooltip(
+                            shape = CircleShape,
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier
+                                .padding(8.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.checkmark_thin),
-                                contentDescription = stringResource(id = R.string.media_confirm)
+                            Text(
+                                text = stringResource(id = R.string.tags_exists),
+                                fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
                             )
                         }
-                    }
+                    },
+                    state = rememberTooltipState()
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.error_2),
+                        contentDescription = stringResource(id = R.string.tags_exists)
+                    )
                 }
-            },
-            shape = CircleShape,
-            colors = TextFieldDefaults.colors(
-                errorIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            modifier = modifier
-                .weight(1f)
-        )
-    }
+            }
+        },
+        shape = CircleShape,
+        colors = TextFieldDefaults.colors(
+            errorIndicatorColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        maxLines = 1,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                if (!exists(value) && value.isNotBlank()) {
+                    addTag(value)
+                }
+            }
+        ),
+        modifier = modifier
+            .height(56.dp)
+    )
 }

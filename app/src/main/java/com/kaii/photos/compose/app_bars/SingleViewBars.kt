@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -1043,7 +1042,9 @@ fun SingleViewTopBar(
     showInfoDialog: Boolean,
     privacyMode: Boolean,
     isOpenWithDefaultView: Boolean = false,
-    expandInfoDialog: () -> Unit
+    showTagDialog: Boolean = false,
+    expandInfoDialog: () -> Unit,
+    expandTagDialog: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val resources = LocalResources.current
@@ -1089,7 +1090,10 @@ fun SingleViewTopBar(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 4.dp,
+                    alignment = Alignment.Start
+                )
             ) {
                 val navController = LocalNavController.current
                 val context = LocalContext.current
@@ -1117,8 +1121,6 @@ fun SingleViewTopBar(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
-
                 val isLandscape by rememberDeviceOrientation()
                 val mainViewModel = LocalMainViewModel.current
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
@@ -1131,7 +1133,7 @@ fun SingleViewTopBar(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .widthIn(max = if (isLandscape) 340.dp else 240.dp)
+                        .widthIn(max = if (isLandscape) 340.dp else 200.dp)
                         .clip(CircleShape)
                         .clickable {
                             expandInfoDialog()
@@ -1161,23 +1163,47 @@ fun SingleViewTopBar(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
         ) {
-            FilledIconToggleButton(
-                checked = showInfoDialog,
-                onCheckedChange = {
-                    expandInfoDialog()
-                },
-                shapes = IconButtonDefaults.toggleableShapes(
-                    shape = IconButtonDefaults.filledShape,
-                    pressedShape = IconButtonDefaults.extraSmallPressedShape,
-                    checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                ),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.more_options),
-                    contentDescription = stringResource(id = R.string.show_options),
-                    modifier = Modifier
-                        .size(24.dp)
-                )
+                FilledIconToggleButton(
+                    checked = showTagDialog,
+                    onCheckedChange = {
+                        expandTagDialog()
+                    },
+                    shapes = IconButtonDefaults.toggleableShapes(
+                        shape = IconButtonDefaults.filledShape,
+                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                    ),
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.sell),
+                        contentDescription = stringResource(id = R.string.tags),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+
+                FilledIconToggleButton(
+                    checked = showInfoDialog,
+                    onCheckedChange = {
+                        expandInfoDialog()
+                    },
+                    shapes = IconButtonDefaults.toggleableShapes(
+                        shape = IconButtonDefaults.filledShape,
+                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                    ),
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.more_options),
+                        contentDescription = stringResource(id = R.string.show_options),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
             }
         }
     }

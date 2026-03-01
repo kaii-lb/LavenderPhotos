@@ -90,9 +90,10 @@ private fun SearchTextFieldPreview() {
             selectedTags = remember { mutableStateListOf() },
             onQueryChange = {},
             onSearchModeChange = {},
-            toggleTag = {},
+            onToggleTag = {},
+            onTagRemove = {},
+            onClearTags = {},
             setSearchingForTags = {},
-            clearTags = {},
             modifier = Modifier
                 .fillMaxWidth()
         )
@@ -112,8 +113,9 @@ fun SearchTextField(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onQueryChange: (text: String) -> Unit,
     onSearchModeChange: (mode: SearchMode) -> Unit,
-    toggleTag: (tag: Tag) -> Unit,
-    clearTags: () -> Unit,
+    onToggleTag: (tag: Tag) -> Unit,
+    onTagRemove: (tag: Tag) -> Unit,
+    onClearTags: () -> Unit,
     setSearchingForTags: (value: Boolean) -> Unit
 ) {
     BackHandler(
@@ -194,7 +196,7 @@ fun SearchTextField(
                                 )
                             },
                             onClick = {
-                                if (mode != SearchMode.Tag) clearTags()
+                                if (mode != SearchMode.Tag) onClearTags()
 
                                 onSearchModeChange(mode)
                                 expanded = false
@@ -290,9 +292,9 @@ fun SearchTextField(
                     )
                 ),
             onTagClick = { tag ->
-                toggleTag(tag)
+                onToggleTag(tag)
             },
-            onTagRemove = { /* not possible to do here */ },
+            onTagRemove = onTagRemove,
             onToggleSearchingForTags = {
                 setSearchingForTags(it)
             }

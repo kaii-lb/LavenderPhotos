@@ -170,7 +170,4 @@ interface Screens {
             object ExtendedLicensePage : Screens
         }
     }
-
-    @Serializable
-    data class TagEditor(val mediaId: Long)
 }

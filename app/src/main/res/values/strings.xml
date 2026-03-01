@@ -1252,5 +1252,5 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="tags_favourited_true">Favourite: Yes</string>
     <string name="tags_favourited_false">Favourite: No</string>
     <string name="tags">Tags</string>
-    <string name="tags_delete">Delete Tag</string>
+    <string name="tags_delete">Delete tag \"%s\"?</string>
 </resources>

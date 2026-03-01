@@ -78,7 +78,7 @@ fun SearchPage(
         var currentTag by remember { mutableStateOf<Tag?>(null) }
         ConfirmationDialog(
             showDialog = showDialog,
-            dialogTitle = stringResource(id = R.string.tags_delete),
+            dialogTitle = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
             viewModel.deleteTag(currentTag!!)
@@ -113,11 +113,12 @@ fun SearchPage(
             onSearchModeChange = { mode ->
                 viewModel.setSearchMode(mode)
             },
-            toggleTag = { tag ->
+            onToggleTag = { tag ->
                 viewModel.toggleTagSelected(tag)
             },
+            onTagRemove = viewModel::deleteTag,
             setSearchingForTags = viewModel::setSearchingForTags,
-            clearTags = viewModel::clearSelectedTags
+            onClearTags = viewModel::clearSelectedTags
         )
     }
 }
