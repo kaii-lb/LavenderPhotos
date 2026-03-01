@@ -33,9 +33,8 @@ class PhotosApplication : Application() {
 
                     scope.launch(Dispatchers.IO) {
                         runCatching {
-                            // if its empty then the app hasn't finished startup processing, and we shouldn't mess with that
-                            // if it *is* empty and we have finished startup processing, then another SyncWorker will be
-                            // launching by the app, and the dao won't be empty anymore
+                            // if the generation is more than 0 then FirstTimeSyncWorker has already ran
+                            // and we can proceed to load media by deltas
                             if (syncManager.getGeneration() > 0L) {
                                 instanceCount += 1
                                 WorkManager.getInstance(applicationContext)

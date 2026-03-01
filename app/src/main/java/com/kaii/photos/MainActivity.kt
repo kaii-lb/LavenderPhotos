@@ -80,6 +80,7 @@ import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -867,13 +868,15 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        // run work manager immediately after user navigates back to app
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniqueWork(
-                SyncWorker::class.java.name,
-                ExistingWorkPolicy.REPLACE,
-                OneTimeWorkRequest.Builder(SyncWorker::class).build()
-            )
+        if (SyncManager(applicationContext).getGeneration() > 0L) {
+            // run work manager immediately after user navigates back to app
+            WorkManager.getInstance(applicationContext)
+                .enqueueUniqueWork(
+                    SyncWorker::class.java.name,
+                    ExistingWorkPolicy.REPLACE,
+                    OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                )
+        }
     }
 }
 
