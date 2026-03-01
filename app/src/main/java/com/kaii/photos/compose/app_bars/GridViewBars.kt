@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,10 +74,16 @@ import java.io.File
 fun SingleAlbumViewTopBar(
     albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
+    showTagDialog: Boolean,
     isMediaPicker: Boolean = false,
-    showDialog: () -> Unit
+    showDialog: () -> Unit,
+    setShowTagDialog: (show: Boolean) -> Unit
 ) {
     val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
+    LaunchedEffect(show) {
+        if (!show) setShowTagDialog(false)
+    }
 
     AnimatedContent(
         targetState = show,
@@ -273,7 +280,12 @@ fun SingleAlbumViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionManager = selectionManager)
+            IsSelectingTopBar(
+                selectionManager = selectionManager,
+                showTags = true,
+                showTagDialog = showTagDialog,
+                setShowTagDialog = setShowTagDialog
+            )
         }
     }
 }
@@ -374,7 +386,12 @@ fun TrashedPhotoGridViewTopBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionManager = selectionManager)
+            IsSelectingTopBar(
+                selectionManager = selectionManager,
+                showTags = false,
+                showTagDialog = false,
+                setShowTagDialog = {}
+            )
         }
     }
 }
@@ -543,7 +560,12 @@ fun SecureFolderViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionManager = selectionManager)
+            IsSelectingTopBar(
+                selectionManager = selectionManager,
+                showTags = false,
+                showTagDialog = false,
+                setShowTagDialog = {}
+            )
         }
     }
 }
@@ -709,9 +731,15 @@ fun SecureFolderViewBottomAppBar(
 @Composable
 fun FavouritesViewTopAppBar(
     selectionManager: SelectionManager,
-    onBackClick: () -> Unit
+    showTagDialog: Boolean,
+    onBackClick: () -> Unit,
+    setShowTagDialog: (show: Boolean) -> Unit
 ) {
     val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+
+    LaunchedEffect(show) {
+        if (!show) setShowTagDialog(false)
+    }
 
     AnimatedContent(
         targetState = show,
@@ -748,7 +776,12 @@ fun FavouritesViewTopAppBar(
                 }
             )
         } else {
-            IsSelectingTopBar(selectionManager = selectionManager)
+            IsSelectingTopBar(
+                selectionManager = selectionManager,
+                showTags = true,
+                showTagDialog = showTagDialog,
+                setShowTagDialog = setShowTagDialog
+            )
         }
     }
 }

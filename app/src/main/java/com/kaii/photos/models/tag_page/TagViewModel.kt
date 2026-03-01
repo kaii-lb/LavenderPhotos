@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class TagViewModel(
     context: Context
 ) : ViewModel() {
-    private val mediaId = MutableStateFlow(0L)
+    private val mediaIds = MutableStateFlow(emptyList<Long>())
 
     private val tagRepo = TagRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).tagDao()
@@ -34,7 +34,7 @@ class TagViewModel(
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val appliedTags = mediaId.flatMapLatest {
+    val appliedTags = mediaIds.flatMapLatest {
         tagRepo.getAppliedTags(it)
     }.stateIn(
         scope = viewModelScope,
@@ -43,7 +43,11 @@ class TagViewModel(
     )
 
     fun setMediaId(id: Long) {
-        mediaId.value = id
+        mediaIds.value = listOf(id)
+    }
+
+    fun setMediaIds(ids: List<Long>) {
+        mediaIds.value = ids
     }
 
     fun insertTag(name: String) {
@@ -51,10 +55,12 @@ class TagViewModel(
             val tagId = tagRepo.insertTag(name)
             if (tagId < 0) return@launch
 
-            itemsRepo.addTag(
-                tag = tagRepo.get(tagId),
-                mediaId = mediaId.value
-            )
+            mediaIds.value.forEach {
+                itemsRepo.addTag(
+                    tag = tagRepo.get(tagId),
+                    mediaId = it
+                )
+            }
         }
     }
 
@@ -67,9 +73,13 @@ class TagViewModel(
     fun toggleTag(tag: Tag) {
         viewModelScope.launch {
             if (tag in appliedTags.value) {
-                itemsRepo.removeTag(tag, mediaId.value)
+                mediaIds.value.forEach {
+                    itemsRepo.removeTag(tag, it)
+                }
             } else {
-                itemsRepo.addTag(tag, mediaId.value)
+                mediaIds.value.forEach {
+                    itemsRepo.addTag(tag, it)
+                }
             }
         }
     }

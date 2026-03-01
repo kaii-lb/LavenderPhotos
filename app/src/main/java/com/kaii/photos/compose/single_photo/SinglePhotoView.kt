@@ -5,24 +5,17 @@ import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -56,12 +49,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -79,8 +70,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.compose.widgets.tags.MediaTagManager
+import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
@@ -472,50 +462,18 @@ private fun SinglePhotoViewCommon(
             )
         }
 
-        val layoutDirection = LocalLayoutDirection.current
-        var isLandscape by rememberDeviceOrientation()
-
-        AnimatedVisibility(
-            visible = showTagDialog,
-            enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { -it },
-            exit = fadeOut(
-                animationSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT)
-            ) + slideOutVertically(
-                animationSpec = tween(durationMillis = AnimationConstants.DURATION)
-            ) { -it },
-            modifier = Modifier
-                .padding(
-                    top =
-                        when {
-                            isLandscape && appBarsVisible.value -> 80.dp
-
-                            isLandscape -> 12.dp
-
-                            appBarsVisible.value -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding() + 56.dp
-
-                            else -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding()
-                        },
-                    start =
-                        if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateStartPadding(layoutDirection)
-                        else 0.dp,
-                    end =
-                        if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateStartPadding(layoutDirection)
-                        else 0.dp
-                )
-                .zIndex(10f)
-                .padding(horizontal = 8.dp)
-        ) {
-            MediaTagManager(
-                tags = tags,
-                selectedTags = selectedTags,
-                onTagAdd = onTagAdd,
-                onTagClick = onTagClick,
-                onTagDelete = onTagDelete,
-                onClose = {
-                    showTagDialog = false
-                }
-            )
-        }
+        AnimatedMediaTagManager(
+            showTagDialog = showTagDialog,
+            appBarsVisible = appBarsVisible.value,
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = onTagAdd,
+            onTagClick = onTagClick,
+            onTagDelete = onTagDelete,
+            onClose = {
+                showTagDialog = false
+            }
+        )
 
         val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
         Column(

@@ -10,7 +10,8 @@ class TagRepository(
 ) {
     val allTags = dao.getAll()
 
-    fun getAppliedTags(mediaId: Long) = dao.getAppliedToMedia(id = mediaId)
+    fun getAppliedTags(mediaIds: List<Long>) =
+        dao.getAppliedToMedia(ids = mediaIds, idCount = mediaIds.size)
 
     suspend fun insertTag(name: String) =
         if (name.isNotBlank()) {

@@ -1,15 +1,29 @@
 package com.kaii.photos.compose.widgets.tags
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,19 +32,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.Tag
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.random
 
 @Preview
 @Composable
 private fun MediaTagManagerPreview() {
-    MediaTagManager(
+    MediaTagManagerImpl(
         tags = (0..20).map {
             Tag(
                 id = it,
@@ -59,7 +77,99 @@ private fun MediaTagManagerPreview() {
 }
 
 @Composable
-fun MediaTagManager(
+fun AnimatedMediaTagManager(
+    showTagDialog: Boolean,
+    appBarsVisible: Boolean,
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
+    modifier: Modifier = Modifier,
+    onTagAdd: (name: String) -> Unit,
+    onTagClick: (tag: Tag) -> Unit,
+    onTagDelete: (tag: Tag) -> Unit,
+    onClose: () -> Unit
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    val isLandscape by rememberDeviceOrientation()
+
+    AnimatedVisibility(
+        visible = showTagDialog,
+        enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { -it },
+        exit = fadeOut(
+            animationSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT)
+        ) + slideOutVertically(
+            animationSpec = tween(durationMillis = AnimationConstants.DURATION)
+        ) { -it },
+        modifier = modifier
+            .padding(
+                top =
+                    when {
+                        isLandscape && appBarsVisible -> 80.dp
+
+                        isLandscape -> 12.dp
+
+                        appBarsVisible -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding() + 56.dp
+
+                        else -> WindowInsets.safeContent.asPaddingValues().calculateTopPadding()
+                    },
+                start =
+                    if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateStartPadding(layoutDirection)
+                    else 0.dp,
+                end =
+                    if (isLandscape) WindowInsets.safeContent.asPaddingValues().calculateEndPadding(layoutDirection)
+                    else 0.dp
+            )
+            .zIndex(10f)
+            .padding(horizontal = 8.dp)
+    ) {
+        MediaTagManagerImpl(
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = onTagAdd,
+            onTagClick = onTagClick,
+            onTagDelete = onTagDelete,
+            onClose = onClose
+        )
+    }
+}
+
+@Composable
+fun AnimatedMediaTagManager(
+    showTagDialog: Boolean,
+    padding: PaddingValues,
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
+    modifier: Modifier = Modifier,
+    onTagAdd: (name: String) -> Unit,
+    onTagClick: (tag: Tag) -> Unit,
+    onTagDelete: (tag: Tag) -> Unit,
+    onClose: () -> Unit
+) {
+    AnimatedVisibility(
+        visible = showTagDialog,
+        enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { -it },
+        exit = fadeOut(
+            animationSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT)
+        ) + slideOutVertically(
+            animationSpec = tween(durationMillis = AnimationConstants.DURATION)
+        ) { -it },
+        modifier = modifier
+            .padding(padding)
+            .zIndex(10f)
+            .padding(horizontal = 8.dp)
+    ) {
+        MediaTagManagerImpl(
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = onTagAdd,
+            onTagClick = onTagClick,
+            onTagDelete = onTagDelete,
+            onClose = onClose
+        )
+    }
+}
+
+@Composable
+private fun MediaTagManagerImpl(
     tags: List<Tag>,
     selectedTags: List<Tag>,
     modifier: Modifier = Modifier,

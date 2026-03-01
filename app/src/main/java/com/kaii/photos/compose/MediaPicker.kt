@@ -240,7 +240,7 @@ class MediaPicker : ComponentActivity() {
                         searchViewModel = searchViewModel,
                         deviceAlbums = deviceAlbums,
                         window = window,
-                        incomingIntent = null,
+                        incomingIntent = incomingIntent,
                         blur = false
                     )
                 }
