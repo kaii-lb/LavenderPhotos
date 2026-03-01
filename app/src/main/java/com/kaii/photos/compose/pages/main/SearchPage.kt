@@ -12,11 +12,9 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +32,7 @@ import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.repositories.SearchMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -85,33 +84,40 @@ fun SearchPage(
             viewModel.deleteTag(currentTag!!)
         }
 
-        val selectedTags = retain { mutableStateListOf<Tag>() }
+        val selectedTags by viewModel.selectedTags.collectAsStateWithLifecycle()
+
+        val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+        val searchMode by viewModel.searchMode.collectAsStateWithLifecycle()
+        val searchingForTags by viewModel.searchingForTags.collectAsStateWithLifecycle()
 
         SearchTextField(
+            searchQuery = searchQuery,
+            searchMode = searchMode,
+            searchingForTags = searchingForTags,
             tags = tags,
             selectedTags = selectedTags,
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .height(56.dp)
                 .padding(horizontal = 8.dp),
-            onQueryChange = { text, tags ->
+            onQueryChange = { text ->
                 coroutineScope.launch {
-                    viewModel.search(query = text, tags)
+                    viewModel.search(query = text)
 
-                    delay(PhotoGridConstants.UPDATE_TIME)
-                    gridState.scrollToItem(0)
+                    if (searchMode != SearchMode.Tag) {
+                        delay(PhotoGridConstants.UPDATE_TIME)
+                        gridState.scrollToItem(0)
+                    }
                 }
             },
             onSearchModeChange = { mode ->
-                viewModel.update(mode = mode)
+                viewModel.setSearchMode(mode)
             },
-            onTagAdd = { query, tags ->
-                viewModel.search(query, tags)
+            toggleTag = { tag ->
+                viewModel.toggleTagSelected(tag)
             },
-            onTagRemove = { tag ->
-                currentTag = tag
-                showDialog.value = true
-            }
+            setSearchingForTags = viewModel::setSearchingForTags,
+            clearTags = viewModel::clearSelectedTags
         )
     }
 }

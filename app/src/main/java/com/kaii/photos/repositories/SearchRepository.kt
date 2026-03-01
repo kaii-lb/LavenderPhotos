@@ -6,6 +6,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
+import androidx.paging.cachedIn
 import com.kaii.photos.R
 import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.TaggedItemsDao
@@ -17,6 +18,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,6 +53,7 @@ enum class SearchMode(
 class SearchRepository(
     private val searchDao: SearchDao,
     private val taggedItemsDao: TaggedItemsDao,
+    scope: CoroutineScope,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
@@ -109,7 +112,7 @@ class SearchRepository(
                 }
             }
         ).flow.mapToMedia(accessToken = details.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { details ->
@@ -117,7 +120,7 @@ class SearchRepository(
             sortMode = details.sortMode,
             format = details.format
         )
-    }
+    }.cachedIn(scope)
 
     fun search(
         query: String,

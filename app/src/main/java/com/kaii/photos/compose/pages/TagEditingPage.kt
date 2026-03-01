@@ -38,9 +38,9 @@ import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.widgets.TagEditingPageTextField
-import com.kaii.photos.compose.widgets.TagItem
-import com.kaii.photos.compose.widgets.TagMediaInfo
+import com.kaii.photos.compose.widgets.tags.TagEditingPageTextField
+import com.kaii.photos.compose.widgets.tags.TagItem
+import com.kaii.photos.compose.widgets.tags.TagMediaInfo
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.editing.random

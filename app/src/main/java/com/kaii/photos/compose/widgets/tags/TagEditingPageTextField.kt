@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.widgets
+package com.kaii.photos.compose.widgets.tags
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
