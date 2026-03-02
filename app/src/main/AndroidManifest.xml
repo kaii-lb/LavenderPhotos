@@ -141,7 +141,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".compose.WallpaperSetter"
+        <activity android:name=".compose.pages.WallpaperSetter"
             android:label="Lavender Photos"
             android:exported="true"
             android:configChanges="orientation|screenSize|density|screenLayout"

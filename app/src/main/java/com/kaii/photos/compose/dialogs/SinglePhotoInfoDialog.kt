@@ -65,8 +65,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
-import com.kaii.photos.compose.WallpaperSetter
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.pages.WallpaperSetter
 import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
