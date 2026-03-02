@@ -66,14 +66,18 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -84,6 +88,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -102,6 +107,7 @@ fun SingleTrashedPhotoView(
 
     SingleTrashedPhotoViewImpl(
         items = items,
+        navController = LocalNavController.current,
         startIndex = index,
         window = window,
         useBlackBackground = useBlackBackground,
@@ -117,6 +123,7 @@ fun SingleTrashedPhotoView(
 @Composable
 private fun SingleTrashedPhotoViewImpl(
     items: LazyPagingItems<PhotoLibraryUIModel>,
+    navController: NavController,
     startIndex: Int,
     window: Window,
     useBlackBackground: Boolean,
@@ -219,6 +226,15 @@ private fun SingleTrashedPhotoViewImpl(
             LaunchedEffect(state) {
                 snapshotFlow { state.currentPage }.collect {
                     currentIndex = it
+                }
+            }
+
+            LaunchedEffect(items.itemCount) {
+                snapshotFlow { items.itemCount }.collectLatest {
+                    delay(PhotoGridConstants.LOADING_TIME_SHORT)
+                    if (items.itemCount == 0) launch(Dispatchers.Main) {
+                        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+                    }
                 }
             }
 

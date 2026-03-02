@@ -45,6 +45,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -53,6 +54,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,6 +85,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -99,6 +102,8 @@ import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -171,6 +176,15 @@ fun SecurePhotoView(
                     ),
                     bytes = ByteArray(0)
                 )
+            }
+        }
+    }
+
+    LaunchedEffect(items.itemCount) {
+        snapshotFlow { items.itemCount }.collectLatest {
+            delay(PhotoGridConstants.LOADING_TIME_SHORT)
+            if (items.itemCount == 0) launch(Dispatchers.Main) {
+                navController.popBackStack(Screens.SecureFolder::class, inclusive = false)
             }
         }
     }

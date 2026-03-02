@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
@@ -45,6 +46,7 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -67,20 +69,25 @@ fun SingleAlbumView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-
     val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
     }
 
-    LaunchedEffect(dynamicAlbum) {
-        viewModel.changePaths(album = dynamicAlbum)
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
-    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+    LaunchedEffect(dynamicAlbum) {
+        viewModel.changePaths(album = dynamicAlbum!!)
+    }
+
+    val selectionManager = rememberSelectionManager(paths = dynamicAlbum!!.paths)
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
             context = LocalContext.current
@@ -110,7 +117,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
@@ -144,10 +151,16 @@ fun SingleAlbumView(
 ) {
     val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
+    }
+
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
@@ -182,7 +195,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
@@ -216,10 +229,16 @@ fun SingleAlbumView(
 ) {
     val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
+    }
+
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
@@ -254,7 +273,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,

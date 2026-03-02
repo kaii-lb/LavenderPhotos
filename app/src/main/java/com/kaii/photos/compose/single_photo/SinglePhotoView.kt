@@ -436,7 +436,7 @@ private fun SinglePhotoViewCommon(
         snapshotFlow { items.itemCount }.collectLatest {
             delay(PhotoGridConstants.LOADING_TIME_SHORT)
             if (items.itemCount == 0) launch(Dispatchers.Main) {
-                navController.popBackStack()
+                navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
             }
         }
     }
