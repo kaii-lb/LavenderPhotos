@@ -16,18 +16,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.models.main_activity.MainViewModel
+import com.kaii.photos.di.appModule
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SinglePhotoScrollState(
-    private val mainViewModel: MainViewModel,
+    private val muteOnStartFlow: Flow<Boolean>,
+    private val autoPlayFlow: Flow<Boolean>,
     private val coroutineScope: CoroutineScope,
     private val isOpenWithView: Boolean,
     private val context: Context
@@ -74,11 +75,13 @@ class SinglePhotoScrollState(
 
     init {
         coroutineScope.launch {
-            mainViewModel.settings.video.getMuteOnStart().collect {
+            muteOnStartFlow.collect {
                 _videoWasMuted = it && !isOpenWithView
             }
+        }
 
-            mainViewModel.settings.video.getShouldAutoPlay().collect {
+        coroutineScope.launch {
+            autoPlayFlow.collect {
                 _videoAutoplay.value = it || isOpenWithView
             }
         }
@@ -89,7 +92,7 @@ class SinglePhotoScrollState(
     }
 
     fun resetMute() = coroutineScope.launch {
-        _videoWasMuted = mainViewModel.settings.video.getMuteOnStart().first() && !isOpenWithView
+        _videoWasMuted = muteOnStartFlow.first() && !isOpenWithView
     }
 
     fun setWasMuted(value: Boolean) {
@@ -109,13 +112,13 @@ class SinglePhotoScrollState(
 fun rememberSinglePhotoScrollState(
     isOpenWithView: Boolean
 ): SinglePhotoScrollState {
-    val mainViewModel = LocalMainViewModel.current
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     val state = remember(isOpenWithView) {
         SinglePhotoScrollState(
-            mainViewModel = mainViewModel,
+            muteOnStartFlow = context.appModule.settings.video.getMuteOnStart(),
+            autoPlayFlow = context.appModule.settings.video.getShouldAutoPlay(),
             coroutineScope = coroutineScope,
             isOpenWithView = isOpenWithView,
             context = context
