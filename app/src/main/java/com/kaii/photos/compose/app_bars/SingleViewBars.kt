@@ -383,7 +383,7 @@ fun VideoEditorTopBar(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                             navController.previousBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("editIndex", 0)
@@ -880,7 +880,6 @@ fun ImageEditorBottomBar(
     }
 }
 
-// TODO: if album is custom, add edited media to album
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImageEditorTopBar(

@@ -78,7 +78,7 @@ suspend fun ContentResolver.insertMedia(
             put(MediaColumns.MIME_TYPE, media.mimeType)
 
             if (preserveDate) {
-                put(MediaColumns.DATE_ADDED, media.dateTaken)
+                put(MediaColumns.DATE_TAKEN, media.dateTaken)
                 put(MediaColumns.DATE_MODIFIED, media.dateTaken)
                 put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
             }
