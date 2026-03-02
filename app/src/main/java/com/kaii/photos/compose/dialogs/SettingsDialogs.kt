@@ -759,6 +759,7 @@ fun DefaultTabSelectorDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun DateFormatDialog(
+    setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
@@ -772,7 +773,6 @@ fun DateFormatDialog(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        val mainViewModel = LocalMainViewModel.current
         val currentDate = remember {
             Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -798,7 +798,7 @@ fun DateFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.lookAndFeel.setDisplayDateFormat(item)
+                    setDisplayDateFormat(item)
                     onDismiss()
                 }
             }
@@ -809,6 +809,7 @@ fun DateFormatDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun TopBarDetailsFormatDialog(
+    setTopBarDetailsFormat: (value: TopBarDetailsFormat) -> Unit,
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
@@ -824,7 +825,6 @@ fun TopBarDetailsFormatDialog(
         Spacer(modifier = Modifier.height(12.dp))
 
         val context = LocalContext.current
-        val mainViewModel = LocalMainViewModel.current
         val currentDate = remember {
             Clock.System.now()
                 .epochSeconds
@@ -848,7 +848,7 @@ fun TopBarDetailsFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.lookAndFeel.setTopBarDetailsFormat(item)
+                    setTopBarDetailsFormat(item)
                     onDismiss()
                 }
             }
