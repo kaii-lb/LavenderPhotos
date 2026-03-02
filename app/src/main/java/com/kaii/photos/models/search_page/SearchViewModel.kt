@@ -115,29 +115,9 @@ class SearchViewModel(
         initialValue = true
     )
 
-    private var initialSortMode: MediaItemSortMode
-    private var initialFormat: DisplayDateFormat
-    private var initialInfo: ImmichBasicInfo
-
-    init {
-        runBlocking {
-            initialSortMode = sortMode.first()
-            initialFormat = displayDateFormat.first()
-            initialInfo = immichInfo.first()
-        }
-
-        viewModelScope.launch {
-            displayDateFormat.collect { update(format = it) }
-        }
-
-        viewModelScope.launch {
-            sortMode.collect { update(sortMode = it) }
-        }
-
-        viewModelScope.launch {
-            immichInfo.collect { update(accessToken = it.accessToken) }
-        }
-    }
+    private val initialSortMode = runBlocking { sortMode.first() }
+    private val initialFormat = runBlocking { displayDateFormat.first() }
+    private val initialInfo = runBlocking { immichInfo.first() }
 
     private val searchManager = SearchManager(
         searchRepo = SearchRepository(
@@ -152,6 +132,20 @@ class SearchViewModel(
             dao = MediaDatabase.getInstance(context.applicationContext).tagDao()
         )
     )
+
+    init {
+        viewModelScope.launch {
+            displayDateFormat.collect { update(format = it) }
+        }
+
+        viewModelScope.launch {
+            sortMode.collect { update(sortMode = it) }
+        }
+
+        viewModelScope.launch {
+            immichInfo.collect { update(accessToken = it.accessToken) }
+        }
+    }
 
     val mediaFlow = searchManager.mediaFlow
     val gridMediaFlow = searchManager.gridMediaFlow

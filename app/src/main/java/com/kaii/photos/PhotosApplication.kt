@@ -17,10 +17,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class PhotosApplication : Application() {
-    val appModule = AppModule(applicationContext)
+    lateinit var appModule: AppModule
 
     override fun onCreate() {
         super.onCreate()
+
+        appModule = AppModule(applicationContext)
 
         registerContentObserver()
     }

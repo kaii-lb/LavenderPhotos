@@ -59,6 +59,7 @@ import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
@@ -104,7 +105,8 @@ class OpenWithView : ComponentActivity() {
                 )
 
                 CompositionLocalProvider(
-                    LocalNavController provides navController
+                    LocalNavController provides navController,
+                    LocalApiClient provides appModule.apiClient
                 ) {
                     val snackbarHostState = remember {
                         LavenderSnackbarHostState()
