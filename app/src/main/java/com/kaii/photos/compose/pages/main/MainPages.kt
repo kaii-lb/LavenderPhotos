@@ -85,7 +85,8 @@ fun MainPages(
     val immichInfo by mainGridViewModel.immichInfo.collectAsStateWithLifecycle()
     val exitImmediately by mainGridViewModel.exitImmediately.collectAsStateWithLifecycle()
     val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-    val alwaysShowPfp by mainGridViewModel.alwaysShowPfp.collectAsStateWithLifecycle()
+    val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
+    val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
     val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
@@ -146,7 +147,8 @@ fun MainPages(
                 pagerState = pagerState,
                 immichInfo = immichInfo,
                 tabList = tabList,
-                alwaysShowPfp = alwaysShowPfp,
+                alwaysShowImmichInfo = alwaysShowImmichInfo,
+                extraSecureFolderEntry = extraSecureFolderEntry,
                 showTagDialog = showTagDialog,
                 isFromMediaPicker = incomingIntent != null,
                 setShowTagDialog = {

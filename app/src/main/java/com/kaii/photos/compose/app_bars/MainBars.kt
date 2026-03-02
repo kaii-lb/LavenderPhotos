@@ -100,7 +100,8 @@ fun MainAppTopBar(
     pagerState: PagerState,
     immichInfo: ImmichBasicInfo,
     tabList: List<BottomBarTab>,
-    alwaysShowPfp: Boolean,
+    alwaysShowImmichInfo: Boolean,
+    extraSecureFolderEntry: Boolean,
     showTagDialog: Boolean,
     isFromMediaPicker: Boolean,
     setShowTagDialog: (show: Boolean) -> Unit
@@ -119,6 +120,8 @@ fun MainAppTopBar(
             sheetState = sheetState,
             loginState = loginState,
             coroutineScope = coroutineScope,
+            extraSecureFolderEntry = extraSecureFolderEntry,
+            alwaysShowImmichInfo = alwaysShowImmichInfo,
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -202,7 +205,7 @@ fun MainAppTopBar(
             if (!isFromMediaPicker) {
                 AnimatedLoginIcon(
                     state = userInfo,
-                    alwaysShowPfp = alwaysShowPfp
+                    alwaysShowPfp = alwaysShowImmichInfo
                 ) {
                     coroutineScope.launch {
                         showMainDialog = true

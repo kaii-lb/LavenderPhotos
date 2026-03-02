@@ -76,7 +76,7 @@ class MainGridViewModel(
         initialValue = AlbumSortMode.LastModifiedDesc
     )
 
-    val alwaysShowPfp = settings.immich.getAlwaysShowUserInfo().stateIn(
+    val alwaysShowImmichInfo = settings.immich.getAlwaysShowUserInfo().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = false
@@ -98,6 +98,12 @@ class MainGridViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = true
+    )
+
+    val extraSecureFolderNavEntry = settings.lookAndFeel.getShowExtraSecureNav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
     )
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setAlbumSortMode(sortMode)

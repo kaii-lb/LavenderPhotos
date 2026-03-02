@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
@@ -147,6 +146,8 @@ fun MainDialog(
     sheetState: SheetState,
     loginState: LoginStateManager,
     coroutineScope: CoroutineScope,
+    extraSecureFolderEntry: Boolean,
+    alwaysShowImmichInfo: Boolean,
     modifier: Modifier = Modifier,
     toggleSelectMode: () -> Unit,
     dismiss: () -> Unit
@@ -159,11 +160,8 @@ fun MainDialog(
                     rippleAlpha = RippleAlpha(0f, 0f, 0f, 0f)
                 )
     ) {
-        val mainViewModel = LocalMainViewModel.current
         val navController = LocalNavController.current
         val isLandscape by rememberDeviceOrientation()
-
-        val extraSecureFolderEntry by mainViewModel.settings.lookAndFeel.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
 
         ModalBottomSheet(
             sheetState = sheetState,
@@ -193,9 +191,8 @@ fun MainDialog(
                 ) {
                     item {
                         val userInfo by loginState.state.collectAsStateWithLifecycle()
-                        val alwaysShowInfo by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
 
-                        if (userInfo is LoginState.LoggedIn || alwaysShowInfo) {
+                        if (userInfo is LoginState.LoggedIn || alwaysShowImmichInfo) {
                             MainDialogUserInfo(
                                 loginState = userInfo,
                                 coroutineScope = coroutineScope,
