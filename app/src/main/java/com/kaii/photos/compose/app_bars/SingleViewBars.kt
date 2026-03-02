@@ -103,11 +103,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -133,6 +131,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
@@ -933,13 +932,6 @@ fun ImageEditorTopBar(
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
 
-            val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-
-            LaunchedEffect(overwriteByDefault) {
-                setOverwrite(overwriteByDefault)
-            }
-
             DropdownMenu(
                 expanded = showDropDown,
                 onDismissRequest = {
@@ -972,6 +964,7 @@ fun ImageEditorTopBar(
                 }
             }
 
+            val context = LocalContext.current
             SplitButtonLayout(
                 leadingButton = {
                     SplitButtonDefaults.LeadingButton(
@@ -979,7 +972,7 @@ fun ImageEditorTopBar(
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before image is saved
-                            mainViewModel.launch(Dispatchers.IO) {
+                            context.appModule.scope.launch(Dispatchers.IO) {
                                 saveImage()
                             }
                         }
@@ -1033,6 +1026,7 @@ fun SingleViewTopBar(
     visible: Boolean,
     showInfoDialog: Boolean,
     privacyMode: Boolean,
+    topBarDetailsFormat: TopBarDetailsFormat,
     isOpenWithDefaultView: Boolean = false,
     showTagDialog: Boolean = false,
     expandInfoDialog: () -> Unit,
@@ -1117,9 +1111,6 @@ fun SingleViewTopBar(
                         contentDescription = stringResource(id = R.string.return_to_previous_page)
                     )
                 }
-
-                val mainViewModel = LocalMainViewModel.current
-                val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 
                 Text(
                     text = topBarDetailsFormat.format(context, mediaItem().displayName, mediaItem().dateTaken),

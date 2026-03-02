@@ -116,7 +116,6 @@ fun SecurePhotoView(
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
 
-
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
     DisposableEffect(lifecycleState) {
         val lifecycleObserver =
@@ -181,12 +180,15 @@ fun SecurePhotoView(
 
     Scaffold(
         topBar = {
+            val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+
             SingleViewTopBar(
                 mediaItem = { currentMediaItem.item },
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 isOpenWithDefaultView = false,
                 privacyMode = scrollState.privacyMode,
+                topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
@@ -206,7 +208,9 @@ fun SecurePhotoView(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
+        val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
         val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+        val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
         Column(
             modifier = Modifier
@@ -222,7 +226,10 @@ fun SecurePhotoView(
                 window = window,
                 appBarsVisible = appBarsVisible,
                 isSecuredMedia = true,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
 

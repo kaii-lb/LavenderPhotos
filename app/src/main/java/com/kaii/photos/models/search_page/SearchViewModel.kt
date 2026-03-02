@@ -8,6 +8,7 @@ import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.search.SearchManager
 import com.kaii.photos.repositories.SearchMode
@@ -68,26 +69,44 @@ class SearchViewModel(
 
     val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = 256
     )
 
     val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = TopBarDetailsFormat.FileName
     )
 
     private var initialSortMode: MediaItemSortMode

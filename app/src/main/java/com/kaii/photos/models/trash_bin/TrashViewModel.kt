@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.TrashRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -23,19 +24,19 @@ class TrashViewModel(
 
     val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = 256
     )
 
@@ -47,7 +48,25 @@ class TrashViewModel(
 
     val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = TopBarDetailsFormat.FileName
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 

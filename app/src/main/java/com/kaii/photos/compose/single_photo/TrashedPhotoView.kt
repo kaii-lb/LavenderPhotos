@@ -74,6 +74,7 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
@@ -93,13 +94,19 @@ fun SingleTrashedPhotoView(
     viewModel: TrashViewModel
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
-    val useBlackBackground by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
         startIndex = index,
         window = window,
-        useBlackBackground = useBlackBackground
+        useBlackBackground = useBlackBackground,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache
     )
 }
 
@@ -110,7 +117,10 @@ private fun SingleTrashedPhotoViewImpl(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
     window: Window,
-    useBlackBackground: Boolean
+    useBlackBackground: Boolean,
+    topBarDetailsFormat: TopBarDetailsFormat,
+    blurViews: Boolean,
+    useCache: Boolean
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -171,6 +181,7 @@ private fun SingleTrashedPhotoViewImpl(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = false,
+                topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
@@ -229,7 +240,10 @@ private fun SingleTrashedPhotoViewImpl(
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
     }

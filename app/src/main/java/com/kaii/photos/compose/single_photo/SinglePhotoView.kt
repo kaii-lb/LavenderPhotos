@@ -77,6 +77,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
@@ -120,6 +121,9 @@ fun SinglePhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -140,6 +144,9 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
         tags = tags,
         selectedTags = selectedTags,
         removeFromCustom = { item ->
@@ -165,6 +172,9 @@ fun SinglePhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -185,6 +195,9 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -206,6 +219,9 @@ fun SinglePhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -226,6 +242,9 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -246,6 +265,9 @@ fun SinglePhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -266,6 +288,9 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -286,6 +311,9 @@ fun SinglePhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -306,6 +334,9 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -328,6 +359,9 @@ private fun SinglePhotoViewCommon(
     useBlackBackground: Boolean,
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
+    topBarDetailsFormat: TopBarDetailsFormat,
+    blurViews: Boolean,
+    useCache: Boolean,
     tags: List<Tag>,
     selectedTags: List<Tag>,
     removeFromCustom: (MediaStoreData) -> Unit = {},
@@ -417,6 +451,7 @@ private fun SinglePhotoViewCommon(
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
                 showTagDialog = showTagDialog,
+                topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showTagDialog = false
@@ -531,7 +566,10 @@ private fun SinglePhotoViewCommon(
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
     }

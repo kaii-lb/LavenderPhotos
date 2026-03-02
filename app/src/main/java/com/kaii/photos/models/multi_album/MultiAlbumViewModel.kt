@@ -23,7 +23,7 @@ class MultiAlbumViewModel(
 
     val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
@@ -41,7 +41,7 @@ class MultiAlbumViewModel(
 
     val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = true
     )
 
@@ -63,15 +63,9 @@ class MultiAlbumViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false
-    )
-
     val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = TopBarDetailsFormat.FileName
     )
 
@@ -89,25 +83,37 @@ class MultiAlbumViewModel(
 
     val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = 256
     )
 
     val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 

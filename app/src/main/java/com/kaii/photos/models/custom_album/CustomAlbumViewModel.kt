@@ -8,6 +8,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.CustomRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,7 +52,7 @@ class CustomAlbumViewModel(
 
     val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = true
     )
 
@@ -63,25 +64,43 @@ class CustomAlbumViewModel(
 
     val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
     val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = 256
     )
 
     val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = TopBarDetailsFormat.FileName
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
