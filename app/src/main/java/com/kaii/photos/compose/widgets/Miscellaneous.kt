@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -303,6 +304,22 @@ fun SelectViewTopBarLeftButtons(
             selectionManager.clear()
         }
     )
+}
+
+@Composable
+fun SelectViewTopBarRightButtons(
+    showTagDialog: Boolean,
+    setShowTagDialog: (show: Boolean) -> Unit
+) {
+    FilledIconToggleButton(
+        checked = showTagDialog,
+        onCheckedChange = setShowTagDialog
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.sell),
+            contentDescription = stringResource(id = R.string.tags)
+        )
+    }
 }
 
 /** return true if the device is in landscape mode, false otherwise */

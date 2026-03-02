@@ -41,6 +41,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.di.appModule
@@ -59,7 +60,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IsSelectingTopBar(
-    selectionManager: SelectionManager
+    selectionManager: SelectionManager,
+    showTags: Boolean,
+    showTagDialog: Boolean,
+    setShowTagDialog: (show: Boolean) -> Unit
 ) {
     TopAppBar(
         title = {
@@ -67,7 +71,15 @@ fun IsSelectingTopBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background
-        )
+        ),
+        actions = {
+            if (showTags) {
+                SelectViewTopBarRightButtons(
+                    showTagDialog = showTagDialog,
+                    setShowTagDialog = setShowTagDialog
+                )
+            }
+        }
     )
 }
 

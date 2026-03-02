@@ -157,8 +157,13 @@ suspend fun saveVideo(
     val dbChange = minDb + (maxDb - minDb) * videoEditingState.volume
     val linearGain = 10f.pow(dbChange / 20f)
 
+    Log.d(TAG, "Item has ${basicVideoData.audioChannelCount} audio channels.")
+
     audioProcessor.putChannelMixingMatrix(
-        ChannelMixingMatrix.createForConstantGain(2, 2).scaleBy(linearGain)
+        ChannelMixingMatrix.createForConstantGain(
+            basicVideoData.audioChannelCount,
+            2
+        ).scaleBy(linearGain)
     )
 
     audioEffectList.add(audioProcessor)
@@ -290,7 +295,9 @@ suspend fun saveVideo(
 
     if (tempFile.exists()) tempFile.delete()
     if (tempFile.parentFile?.exists() != true) tempFile.parentFile?.mkdirs()
-    tempFile.createNewFile()
+    withContext(Dispatchers.IO) {
+        tempFile.createNewFile()
+    }
 
     var completions = 0
     val transformer = Transformer.Builder(context)
@@ -419,7 +426,9 @@ suspend fun saveVideo(
     val tempFileCrop = File(context.cacheDir, "/crop-${media.displayName}")
     if (tempFileCrop.exists()) tempFileCrop.delete()
     if (tempFileCrop.parentFile?.exists() != true) tempFileCrop.parentFile?.mkdirs()
-    tempFileCrop.createNewFile()
+    withContext(Dispatchers.IO) {
+        tempFileCrop.createNewFile()
+    }
 
     transformer.start(
         finalEditedMediaItem,

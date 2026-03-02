@@ -235,7 +235,8 @@ fun VideoEditor(
                 bitrate = exoPlayer.videoFormat?.bitrate ?: 0,
                 frameRate =
                     if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
-                    else exoPlayer.videoFormat!!.frameRate
+                    else exoPlayer.videoFormat!!.frameRate,
+                audioChannelCount = exoPlayer.audioFormat?.channelCount ?: 2
             )
         )
     }
@@ -245,6 +246,7 @@ fun VideoEditor(
     LaunchedEffect(duration.floatValue) {
         val videoFormat = exoPlayer.videoFormat
         var tries = 0
+        val audioChannelCount = exoPlayer.audioFormat?.channelCount ?: 2
 
         withContext(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
@@ -299,7 +301,8 @@ fun VideoEditor(
                         absolutePath = absolutePath,
                         bitrate = bitrate,
                         width = size.width,
-                        height = size.height
+                        height = size.height,
+                        audioChannelCount = audioChannelCount
                     )
                 tries += 1
 

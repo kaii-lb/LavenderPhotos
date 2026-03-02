@@ -42,25 +42,20 @@ import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
 import com.kaii.lavender.snackbars.LavenderSnackbarHostState
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -82,13 +77,7 @@ class OpenWithView : ComponentActivity() {
             return
         }
 
-        val applicationDatabase = MediaDatabase.getInstance(applicationContext)
-
         setContent {
-            val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext, emptyList())
-            )
-
             val initialDarkMode =
                 when (AppCompatDelegate.getDefaultNightMode()) {
                     AppCompatDelegate.MODE_NIGHT_YES -> 1
@@ -97,7 +86,7 @@ class OpenWithView : ComponentActivity() {
                     else -> 0
                 }
 
-            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode()
+            val followDarkTheme by applicationContext.appModule.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialDarkMode
                 )
@@ -115,9 +104,7 @@ class OpenWithView : ComponentActivity() {
                 )
 
                 CompositionLocalProvider(
-                    LocalNavController provides navController,
-                    LocalMainViewModel provides mainViewModel,
-                    LocalAppDatabase provides applicationDatabase
+                    LocalNavController provides navController
                 ) {
                     val snackbarHostState = remember {
                         LavenderSnackbarHostState()
@@ -337,13 +324,6 @@ private fun InitSinglePhotoView(
     window: Window
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-
-    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-
-    val displayDateFormat by mainViewModel.displayDateFormat.collectAsStateWithLifecycle()
-    val sortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
-
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
@@ -351,20 +331,9 @@ private fun InitSinglePhotoView(
                 paths = setOf(
                     incomingData.absolutePath.parent()
                 )
-            ),
-            info = immichInfo,
-            sortMode = sortMode,
-            format = displayDateFormat
+            )
         )
     )
-
-    LaunchedEffect(immichInfo) {
-        multiAlbumViewModel.changePaths(
-            sortMode = sortMode,
-            format = displayDateFormat,
-            accessToken = immichInfo.accessToken
-        )
-    }
 
     val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()
     val index = remember(items.itemCount, items.loadState) {

@@ -28,9 +28,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.ViewProperties
@@ -38,6 +41,8 @@ import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -49,7 +54,10 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -73,6 +81,22 @@ fun SingleAlbumView(
     }
 
     val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        selectionManager.selection.collectLatest { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
+        }
+    }
 
     val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
     val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
@@ -97,8 +121,13 @@ fun SingleAlbumView(
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
         preserveDate = preserveDate,
+        tags = tags,
+        selectedTags = selectedTags,
         mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize
+        albumSize = viewModel::getMediaSize,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag
     )
 }
 
@@ -128,6 +157,23 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        selectionManager.selection.collectLatest { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
+        }
+    }
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
@@ -142,8 +188,13 @@ fun SingleAlbumView(
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
         preserveDate = preserveDate,
+        tags = tags,
+        selectedTags = selectedTags,
         mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize
+        albumSize = viewModel::getMediaSize,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag
     )
 }
 
@@ -173,12 +224,31 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        selectionManager.selection.collectLatest { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
+        }
+    }
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
+        tags = tags,
+        selectedTags = selectedTags,
         columnSize = columnSize,
         openVideosExternally = openVideosExternally,
         cacheThumbnails = cacheThumbnails,
@@ -188,7 +258,10 @@ fun SingleAlbumView(
         doNotTrash = doNotTrash,
         preserveDate = preserveDate,
         mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize
+        albumSize = viewModel::getMediaSize,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag
     )
 }
 
@@ -209,8 +282,13 @@ private fun SingleAlbumViewCommon(
     doNotTrash: Boolean,
     preserveDate: Boolean,
     modifier: Modifier = Modifier,
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
     mediaCount: suspend () -> Int,
-    albumSize: suspend () -> String
+    albumSize: suspend () -> String,
+    onTagAdd: (name: String) -> Unit,
+    onTagClick: (tag: Tag) -> Unit,
+    onTagDelete: (tag: Tag) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -240,6 +318,7 @@ private fun SingleAlbumViewCommon(
         )
     }
 
+    var showTagDialog by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier
             .fillMaxSize(1f),
@@ -248,6 +327,8 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo,
                 selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null,
+                showTagDialog = showTagDialog,
+                setShowTagDialog = { showTagDialog = it },
                 showDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
@@ -280,6 +361,19 @@ private fun SingleAlbumViewCommon(
             }
         }
     ) { padding ->
+        AnimatedMediaTagManager(
+            showTagDialog = showTagDialog,
+            padding = padding,
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = onTagAdd,
+            onTagClick = onTagClick,
+            onTagDelete = onTagDelete,
+            onClose = {
+                showTagDialog = false
+            }
+        )
+
         val isLandscape by rememberDeviceOrientation()
         val safeDrawingPadding = if (isLandscape) {
             val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()

@@ -55,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -67,9 +68,12 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -92,6 +96,8 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -115,6 +121,15 @@ fun SinglePhotoView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         navController = LocalNavController.current,
@@ -125,9 +140,15 @@ fun SinglePhotoView(
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
         doNotTrash = doNotTrash,
+        tags = tags,
+        selectedTags = selectedTags,
         removeFromCustom = { item ->
             viewModel.remove(items = setOf(item))
-        }
+        },
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -145,6 +166,15 @@ fun SinglePhotoView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -154,7 +184,13 @@ fun SinglePhotoView(
         isOpenWithDefaultView = isOpenWithDefaultView,
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
-        doNotTrash = doNotTrash
+        doNotTrash = doNotTrash,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -171,6 +207,15 @@ fun SinglePhotoView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -180,7 +225,13 @@ fun SinglePhotoView(
         isOpenWithDefaultView = false,
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
-        doNotTrash = doNotTrash
+        doNotTrash = doNotTrash,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -196,6 +247,15 @@ fun SinglePhotoView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -205,7 +265,13 @@ fun SinglePhotoView(
         isOpenWithDefaultView = false,
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
-        doNotTrash = doNotTrash
+        doNotTrash = doNotTrash,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -221,6 +287,15 @@ fun SinglePhotoView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -230,7 +305,13 @@ fun SinglePhotoView(
         isOpenWithDefaultView = false,
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
-        doNotTrash = doNotTrash
+        doNotTrash = doNotTrash,
+        tags = tags,
+        selectedTags = selectedTags,
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId
     )
 }
 
@@ -247,7 +328,13 @@ private fun SinglePhotoViewCommon(
     useBlackBackground: Boolean,
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
-    removeFromCustom: (MediaStoreData) -> Unit = {}
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
+    removeFromCustom: (MediaStoreData) -> Unit = {},
+    onTagAdd: (name: String) -> Unit,
+    onTagClick: (tag: Tag) -> Unit,
+    onTagDelete: (tag: Tag) -> Unit,
+    setTagMediaId: (id: Long) -> Unit
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -277,6 +364,8 @@ private fun SinglePhotoViewCommon(
                 } else {
                     MediaStoreData.dummyItem
                 }
+
+            setTagMediaId(mediaItem.id)
 
             if (mediaItem.type == MediaType.Image
                 && mediaItem != MediaStoreData.dummyItem
@@ -316,6 +405,7 @@ private fun SinglePhotoViewCommon(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showTagDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
     Scaffold(
@@ -326,11 +416,20 @@ private fun SinglePhotoViewCommon(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
+                showTagDialog = showTagDialog,
                 expandInfoDialog = {
                     coroutineScope.launch {
+                        showTagDialog = false
                         showInfoDialog = true
                         delay(50)
                         sheetState.partialExpand()
+                    }
+                },
+                expandTagDialog = {
+                    coroutineScope.launch {
+                        showInfoDialog = false
+                        delay(50)
+                        showTagDialog = !showTagDialog
                     }
                 }
             )
@@ -396,6 +495,19 @@ private fun SinglePhotoViewCommon(
                 togglePrivacyMode = scrollState::togglePrivacyMode
             )
         }
+
+        AnimatedMediaTagManager(
+            showTagDialog = showTagDialog,
+            appBarsVisible = appBarsVisible.value,
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = onTagAdd,
+            onTagClick = onTagClick,
+            onTagDelete = onTagDelete,
+            onClose = {
+                showTagDialog = false
+            }
+        )
 
         Column(
             modifier = Modifier
@@ -548,7 +660,7 @@ private fun BottomBar(
 
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch {
+                        context.appModule.scope.launch {
                             val item = currentItem()
                             moveMediaToSecureFolder(
                                 list = listOf(
@@ -627,7 +739,7 @@ private fun BottomBar(
                 // TODO: look into possibly sharing permission managers?
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
+                        context.appModule.scope.launch(Dispatchers.IO) {
                             if (!isCustom) {
                                 if (doNotTrash) {
                                     permanentlyDeletePhotoList(

@@ -77,6 +77,7 @@ import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
+import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -100,7 +101,9 @@ fun MainAppTopBar(
     immichInfo: ImmichBasicInfo,
     tabList: List<BottomBarTab>,
     alwaysShowPfp: Boolean,
-    isFromMediaPicker: Boolean = false
+    showTagDialog: Boolean,
+    isFromMediaPicker: Boolean,
+    setShowTagDialog: (show: Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
@@ -225,6 +228,12 @@ fun MainAppTopBar(
         },
         alternateTitle = {
             SelectViewTopBarLeftButtons(selectionManager = selectionManager)
+        },
+        alternateActions = {
+            SelectViewTopBarRightButtons(
+                showTagDialog = showTagDialog,
+                setShowTagDialog = setShowTagDialog
+            )
         }
     )
 }
@@ -335,7 +344,10 @@ fun MainAppBottomBar(
                                             paths = currentTab.albumPaths,
                                             isCustomAlbum = false
                                         ),
-                                        selectionManager = selectionManager
+                                        selectionManager = selectionManager,
+                                        confirmToDelete = confirmToDelete,
+                                        doNotTrash = doNotTrash,
+                                        preserveDate = preserveDate
                                     )
                                 }
                             }

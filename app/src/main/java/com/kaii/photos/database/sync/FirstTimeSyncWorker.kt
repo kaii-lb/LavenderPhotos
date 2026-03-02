@@ -45,6 +45,12 @@ class FirstTimeSyncWorker(
                 context = context,
                 onProgress = { size ->
                     progress.set(progress.get() + size)
+                    setProgressAsync(
+                        workDataOf(
+                            PROGRESS to progress.get().toFloat() / added.size,
+                            COUNT to added.size
+                        )
+                    )
                 },
                 onLoadChunk = { chunk ->
                     setProgressAsync(

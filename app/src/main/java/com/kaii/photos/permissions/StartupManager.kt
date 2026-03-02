@@ -121,7 +121,7 @@ class StartupManager(
                 _state.value = State.Successful
             }
 
-            permsGranted && needsIndexing -> _state.value = State.NeedsIndexing
+            permsGranted -> _state.value = State.NeedsIndexing
 
             else -> _state.value = State.MissingPermissions
         }

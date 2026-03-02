@@ -12,19 +12,27 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.SearchTextField
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.repositories.SearchMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -76,7 +84,30 @@ fun SearchPage(
 
         // counter intuitively below the grid since it needs to display *above* it
         val coroutineScope = rememberCoroutineScope()
+        val tags by viewModel.tags.collectAsStateWithLifecycle()
+
+        val showDialog = remember { mutableStateOf(false) }
+        var currentTag by remember { mutableStateOf<Tag?>(null) }
+        ConfirmationDialog(
+            showDialog = showDialog,
+            dialogTitle = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
+            confirmButtonLabel = stringResource(id = R.string.media_delete)
+        ) {
+            viewModel.deleteTag(currentTag!!)
+        }
+
+        val selectedTags by viewModel.selectedTags.collectAsStateWithLifecycle()
+
+        val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+        val searchMode by viewModel.searchMode.collectAsStateWithLifecycle()
+        val searchingForTags by viewModel.searchingForTags.collectAsStateWithLifecycle()
+
         SearchTextField(
+            searchQuery = searchQuery,
+            searchMode = searchMode,
+            searchingForTags = searchingForTags,
+            tags = tags,
+            selectedTags = selectedTags,
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .height(56.dp)
@@ -85,13 +116,21 @@ fun SearchPage(
                 coroutineScope.launch {
                     viewModel.search(query = text)
 
-                    delay(PhotoGridConstants.UPDATE_TIME)
-                    gridState.scrollToItem(0)
+                    if (searchMode != SearchMode.Tag) {
+                        delay(PhotoGridConstants.UPDATE_TIME)
+                        gridState.scrollToItem(0)
+                    }
                 }
             },
             onSearchModeChange = { mode ->
-                viewModel.changeMode(mode = mode)
-            }
+                viewModel.setSearchMode(mode)
+            },
+            onToggleTag = { tag ->
+                viewModel.toggleTagSelected(tag)
+            },
+            onTagRemove = viewModel::deleteTag,
+            setSearchingForTags = viewModel::setSearchingForTags,
+            onClearTags = viewModel::clearSelectedTags
         )
     }
 }

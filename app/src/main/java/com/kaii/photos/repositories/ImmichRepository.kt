@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import androidx.room.withTransaction
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
@@ -99,7 +100,7 @@ class ImmichRepository(
                 if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = albumInfo.id)
                 else db.customDao().getPagedMediaDateTaken(album = albumInfo.id)
             }
-        ).flow.mapToMedia(accessToken = params.accessToken)
+        ).flow.mapToMedia(accessToken = params.accessToken).cachedIn(scope)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -108,7 +109,7 @@ class ImmichRepository(
             sortMode = params.sortMode,
             format = params.format
         )
-    }
+    }.cachedIn(scope)
 
     init {
         refresh()

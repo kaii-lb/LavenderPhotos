@@ -33,6 +33,12 @@ class FavouritesViewModel(
         initialValue = false
     )
 
+    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,

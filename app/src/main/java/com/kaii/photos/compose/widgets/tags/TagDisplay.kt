@@ -1,26 +1,23 @@
-package com.kaii.photos.compose.widgets
+package com.kaii.photos.compose.widgets.tags
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -99,6 +96,7 @@ fun TagDisplay(
 ) {
     Column(
         modifier = modifier
+            .verticalScroll(rememberScrollState())
             .heightIn(max = 280.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -175,10 +173,7 @@ private fun TagFlowRow(
             space = 8.dp,
             alignment = Alignment.Top
         ),
-        horizontalArrangement = Arrangement.spacedBy(
-            space = 8.dp,
-            alignment = Alignment.CenterHorizontally
-        )
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         tags.filter { it.name.contains(searchQuery) || !searchingForTags }
             .sortedBy { it.name }
@@ -216,50 +211,31 @@ fun TagItem(
     onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
-    val animatedBorder by animateDpAsState(
-        targetValue = if (selected) 2.dp else 0.dp,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else tag.color,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
     )
 
     Box(
-        modifier = Modifier
-            .then(
-                if (animatedBorder > 0.dp) {
-                    Modifier.border(
-                        width = animatedBorder,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape
-                    )
-                } else Modifier
+        modifier = modifier
+            .wrapContentWidth()
+            .clip(CircleShape)
+            .background(tag.color)
+            .border(
+                width = 2.dp,
+                color = borderColor,
+                shape = CircleShape
             )
-            .padding(animatedBorder * 2)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onRemove
+            )
+            .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = modifier
-                .wrapContentWidth()
-                .clip(CircleShape)
-                .background(tag.color)
-                .clickable(onClick = onClick)
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = tag.name,
-                fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Icon(
-                painter = painterResource(id = R.drawable.close),
-                contentDescription = stringResource(id = R.string.media_delete),
-                modifier = Modifier
-                    .size(22.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onRemove)
-                    .padding(4.dp)
-            )
-        }
+        Text(
+            text = tag.name,
+            fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
+        )
     }
 }

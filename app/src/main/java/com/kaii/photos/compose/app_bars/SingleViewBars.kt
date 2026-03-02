@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +41,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
@@ -128,7 +126,6 @@ import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingCo
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
@@ -386,7 +383,7 @@ fun VideoEditorTopBar(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                             navController.previousBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("editIndex", 0)
@@ -415,7 +412,6 @@ fun VideoEditorTopBar(
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
 
-            val mainViewModel = LocalMainViewModel.current
             val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
             var overwrite by remember { mutableStateOf(false) }
 
@@ -883,7 +879,6 @@ fun ImageEditorBottomBar(
     }
 }
 
-// TODO: if album is custom, add edited media to album
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImageEditorTopBar(
@@ -1043,7 +1038,9 @@ fun SingleViewTopBar(
     showInfoDialog: Boolean,
     privacyMode: Boolean,
     isOpenWithDefaultView: Boolean = false,
-    expandInfoDialog: () -> Unit
+    showTagDialog: Boolean = false,
+    expandInfoDialog: () -> Unit,
+    expandTagDialog: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val resources = LocalResources.current
@@ -1061,12 +1058,17 @@ fun SingleViewTopBar(
         }
     }
 
-    Box(
+    Row(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(4.dp, 0.dp)
             .wrapContentHeight()
-            .fillMaxWidth(1f)
+            .fillMaxWidth(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 4.dp,
+            alignment = Alignment.Start
+        )
     ) {
         AnimatedVisibility(
             visible = visible,
@@ -1085,11 +1087,14 @@ fun SingleViewTopBar(
                     )
                 ) + fadeOut(),
             modifier = Modifier
-                .align(Alignment.CenterStart)
+                .weight(1f)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 4.dp,
+                    alignment = Alignment.Start
+                )
             ) {
                 val navController = LocalNavController.current
                 val context = LocalContext.current
@@ -1117,9 +1122,6 @@ fun SingleViewTopBar(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
-
-                val isLandscape by rememberDeviceOrientation()
                 val mainViewModel = LocalMainViewModel.current
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 
@@ -1131,7 +1133,6 @@ fun SingleViewTopBar(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .widthIn(max = if (isLandscape) 340.dp else 240.dp)
                         .clip(CircleShape)
                         .clickable {
                             expandInfoDialog()
@@ -1157,27 +1158,47 @@ fun SingleViewTopBar(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
                         stiffness = Spring.StiffnessMedium
                     )
-                ) + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
+                ) + fadeOut()
         ) {
-            FilledIconToggleButton(
-                checked = showInfoDialog,
-                onCheckedChange = {
-                    expandInfoDialog()
-                },
-                shapes = IconButtonDefaults.toggleableShapes(
-                    shape = IconButtonDefaults.filledShape,
-                    pressedShape = IconButtonDefaults.extraSmallPressedShape,
-                    checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                ),
+            Row(
+                modifier = Modifier
+                    .weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.more_options),
-                    contentDescription = stringResource(id = R.string.show_options),
-                    modifier = Modifier
-                        .size(24.dp)
-                )
+                FilledIconToggleButton(
+                    checked = showTagDialog,
+                    onCheckedChange = {
+                        expandTagDialog()
+                    },
+                    shapes = IconButtonDefaults.toggleableShapes(
+                        shape = IconButtonDefaults.filledShape,
+                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.sell),
+                        contentDescription = stringResource(id = R.string.tags)
+                    )
+                }
+
+                FilledIconToggleButton(
+                    checked = showInfoDialog,
+                    onCheckedChange = {
+                        expandInfoDialog()
+                    },
+                    shapes = IconButtonDefaults.toggleableShapes(
+                        shape = IconButtonDefaults.filledShape,
+                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.more_options),
+                        contentDescription = stringResource(id = R.string.show_options)
+                    )
+                }
             }
         }
     }

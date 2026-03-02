@@ -10,7 +10,7 @@ import androidx.room.TypeConverter
 
 @Entity(tableName = "tags")
 data class Tag(
-    @PrimaryKey val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val description: String,
     val color: Color
@@ -45,5 +45,5 @@ class ColorTypeConverter {
 )
 data class TaggedItem(
     val tag: Int,
-    val mediaId: Int
+    val mediaId: Long
 )

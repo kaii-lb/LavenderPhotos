@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -53,6 +54,7 @@ import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
@@ -61,6 +63,8 @@ import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.tag_page.TagViewModel
+import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -112,6 +116,27 @@ fun MainPages(
     val selectionManager = rememberSelectionManager(paths = paths)
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+    var showTagDialog by remember { mutableStateOf(false) }
+
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        selectionManager.selection.collectLatest { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
+        }
+    }
+
+    LaunchedEffect(isSelecting) {
+        if (!isSelecting) showTagDialog = false
+    }
 
     Scaffold(
         topBar = {
@@ -121,7 +146,12 @@ fun MainPages(
                 pagerState = pagerState,
                 immichInfo = immichInfo,
                 tabList = tabList,
-                alwaysShowPfp = alwaysShowPfp
+                alwaysShowPfp = alwaysShowPfp,
+                showTagDialog = showTagDialog,
+                isFromMediaPicker = incomingIntent != null,
+                setShowTagDialog = {
+                    showTagDialog = true
+                }
             )
         },
         bottomBar = {
@@ -171,6 +201,19 @@ fun MainPages(
                 }
             )
     ) { padding ->
+        AnimatedMediaTagManager(
+            showTagDialog = showTagDialog,
+            padding = padding,
+            tags = tags,
+            selectedTags = selectedTags,
+            onTagAdd = tagViewModel::insertTag,
+            onTagClick = tagViewModel::toggleTag,
+            onTagDelete = tagViewModel::deleteTag,
+            onClose = {
+                showTagDialog = false
+            }
+        )
+
         val isLandscape by rememberDeviceOrientation()
 
         val safeDrawingPadding = if (isLandscape) {
@@ -193,7 +236,7 @@ fun MainPages(
                 selectionManager.clear()
 
                 if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
-                    searchViewModel.search(query = "")
+                    searchViewModel.clear()
                 }
 
                 lastPage = it

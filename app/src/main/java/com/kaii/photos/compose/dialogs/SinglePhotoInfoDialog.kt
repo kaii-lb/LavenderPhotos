@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -297,9 +298,12 @@ private fun Content(
             fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
-                .offset(
-                    y = if (isLandscape) (-4).dp else 0.dp
-                )
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = if (isLandscape) (-4).dp.roundToPx() else 0.dp.roundToPx()
+                    )
+                }
         )
 
         val showConfirmEraseDialog = remember { mutableStateOf(false) }

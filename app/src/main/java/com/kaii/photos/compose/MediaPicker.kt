@@ -198,7 +198,7 @@ class MediaPicker : ComponentActivity() {
                         mainGridViewModel = viewModel,
                         deviceAlbums = deviceAlbums,
                         window = window,
-                        incomingIntent = null,
+                        incomingIntent = incomingIntent,
                         blur = false
                     )
                 }

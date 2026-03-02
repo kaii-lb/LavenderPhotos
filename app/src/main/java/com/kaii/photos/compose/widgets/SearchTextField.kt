@@ -39,10 +39,10 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +64,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.tags.TagDisplay
+import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.toPascalCase
 import com.kaii.photos.repositories.SearchMode
@@ -81,8 +83,17 @@ private fun SearchTextFieldPreview() {
         contentAlignment = Alignment.TopCenter
     ) {
         SearchTextField(
+            searchQuery = "",
+            searchMode = SearchMode.Name,
+            searchingForTags = false,
+            tags = emptyList(),
+            selectedTags = remember { mutableStateListOf() },
             onQueryChange = {},
             onSearchModeChange = {},
+            onToggleTag = {},
+            onTagRemove = {},
+            onClearTags = {},
+            setSearchingForTags = {},
             modifier = Modifier
                 .fillMaxWidth()
         )
@@ -92,25 +103,31 @@ private fun SearchTextFieldPreview() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SearchTextField(
+    searchQuery: String,
+    searchMode: SearchMode,
+    searchingForTags: Boolean,
+    tags: List<Tag>,
+    selectedTags: List<Tag>,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     onQueryChange: (text: String) -> Unit,
-    onSearchModeChange: (mode: SearchMode) -> Unit
+    onSearchModeChange: (mode: SearchMode) -> Unit,
+    onToggleTag: (tag: Tag) -> Unit,
+    onTagRemove: (tag: Tag) -> Unit,
+    onClearTags: () -> Unit,
+    setSearchingForTags: (value: Boolean) -> Unit
 ) {
-    var searchQuery by retain { mutableStateOf("") }
-    var searchMode by retain { mutableStateOf(SearchMode.Name) }
-    var searchingForTags by remember { mutableStateOf(false) }
-
     BackHandler(
         enabled = searchQuery.isNotEmpty()
     ) {
-        searchQuery = ""
+        onQueryChange("")
+        onSearchModeChange(SearchMode.Name)
     }
 
     val resources = LocalResources.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val placeholdersList = remember(searchMode) {
+    val placeholdersList = remember(searchMode.nameId) {
         val month = Month.entries.random().name.toPascalCase()
         val day = DayOfWeek.entries.random().name.toPascalCase()
         val date = (1..31).random().toString()
@@ -133,7 +150,6 @@ fun SearchTextField(
     TextField(
         value = searchQuery,
         onValueChange = {
-            searchQuery = it
             onQueryChange(it)
         },
         maxLines = 1,
@@ -180,7 +196,8 @@ fun SearchTextField(
                                 )
                             },
                             onClick = {
-                                searchMode = mode
+                                if (mode != SearchMode.Tag) onClearTags()
+
                                 onSearchModeChange(mode)
                                 expanded = false
                             },
@@ -221,7 +238,6 @@ fun SearchTextField(
                     modifier = Modifier
                         .size(24.dp)
                         .clickable {
-                            searchQuery = ""
                             onQueryChange("")
                         }
                 )
@@ -261,8 +277,8 @@ fun SearchTextField(
             .offset(y = 64.dp)
     ) {
         TagDisplay(
-            tags = emptyList(), // TODO
-            selectedTags = emptyList(), // TODO
+            tags = tags,
+            selectedTags = selectedTags,
             searchingForTags = searchingForTags,
             searchQuery = searchQuery,
             modifier = Modifier
@@ -275,14 +291,12 @@ fun SearchTextField(
                         color = Color.Black.copy(alpha = 0.6f)
                     )
                 ),
-            onTagClick = {
-
+            onTagClick = { tag ->
+                onToggleTag(tag)
             },
-            onTagRemove = {
-
-            },
+            onTagRemove = onTagRemove,
             onToggleSearchingForTags = {
-                searchingForTags = it
+                setSearchingForTags(it)
             }
         )
     }
