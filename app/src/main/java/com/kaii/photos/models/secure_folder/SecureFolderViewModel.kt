@@ -44,6 +44,12 @@ class SecureFolderViewModel(
         initialValue = false
     )
 
+    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     private val repo = SecureRepository(
         context = context,
         scope = viewModelScope,

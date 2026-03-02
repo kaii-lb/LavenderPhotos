@@ -72,8 +72,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
@@ -81,7 +79,9 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -112,7 +112,6 @@ fun SecurePhotoView(
     window: Window
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
     val navController = LocalNavController.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
@@ -124,11 +123,11 @@ fun SecurePhotoView(
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        // if not navigating to grid view view
+                        // if not navigating to grid view
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.GridView::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) mainViewModel.launch(Dispatchers.IO) {
+                            if (event == Lifecycle.Event.ON_DESTROY) context.appModule.scope.launch(Dispatchers.IO) {
                                 File(context.appSecureVideoCacheDir).listFiles()?.forEach {
                                     it.delete()
                                 }
@@ -207,7 +206,8 @@ fun SecurePhotoView(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
+        val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -250,8 +250,6 @@ private fun BottomBar(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
 
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
@@ -271,11 +269,11 @@ private fun BottomBar(
 
     val permissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 moveImageOutOfLockedFolder(
                     list = listOf(securedMedia),
                     context = context,
-                    applicationDatabase = applicationDatabase
+                    applicationDatabase = MediaDatabase.getInstance(context)
                 ) {
                     isGettingPermissions.value = false
                     showLoadingDialog = false
@@ -310,7 +308,7 @@ private fun BottomBar(
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        mainViewModel.launch(Dispatchers.IO) {
+        context.appModule.scope.launch(Dispatchers.IO) {
             permanentlyDeleteSecureFolderImageList(
                 list = listOf(securedMedia.item.absolutePath),
                 context = context
@@ -352,7 +350,7 @@ private fun BottomBar(
                                 val item = securedMedia.item
                                 showLoadingDialog = true
 
-                                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                                val iv = MediaDatabase.getInstance(context).securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
                                 if (iv == null) {
                                     Log.e(TAG, "IV for ${item.displayName} was null, aborting")
                                     return@launch
