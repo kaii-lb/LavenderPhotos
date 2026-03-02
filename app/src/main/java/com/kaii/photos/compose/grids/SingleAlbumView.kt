@@ -106,10 +106,13 @@ fun SingleAlbumView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Album,
@@ -127,7 +130,9 @@ fun SingleAlbumView(
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -156,6 +161,7 @@ fun SingleAlbumView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -177,6 +183,8 @@ fun SingleAlbumView(
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.CustomAlbum,
@@ -194,7 +202,9 @@ fun SingleAlbumView(
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -223,6 +233,7 @@ fun SingleAlbumView(
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -244,6 +255,8 @@ fun SingleAlbumView(
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         albumInfo = { dynamicAlbum },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
@@ -261,7 +274,9 @@ fun SingleAlbumView(
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -270,6 +285,8 @@ fun SingleAlbumView(
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
     viewProperties: ViewProperties,
@@ -288,7 +305,9 @@ private fun SingleAlbumViewCommon(
     albumSize: suspend () -> String,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
-    onTagDelete: (tag: Tag) -> Unit
+    onTagDelete: (tag: Tag) -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -298,6 +317,8 @@ private fun SingleAlbumViewCommon(
         val vibratorManager = rememberVibratorManager()
         AlbumInfoDialog(
             albumInfo = albumInfo,
+            albums = albums,
+            autoDetectAlbums = autoDetectAlbums,
             sheetState = sheetState,
             itemCount = mediaCount,
             albumSize = albumSize,
@@ -306,6 +327,14 @@ private fun SingleAlbumViewCommon(
                 selectionManager.enterSelectMode()
                 coroutineScope.launch {
                     sheetState.hide()
+                    showInfoDialog = false
+                }
+            },
+            editAlbum = editAlbum,
+            removeAlbum = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    removeAlbum(it)
                     showInfoDialog = false
                 }
             },

@@ -92,6 +92,12 @@ class ImmichAlbumViewModel(
         initialValue = false
     )
 
+    val autoDetectAlbums = settings.albums.getAutoDetect().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     val albums = settings.albums.get().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -131,5 +137,13 @@ class ImmichAlbumViewModel(
         }
 
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+    }
+
+    fun editAlbum(id: Int, newInfo: AlbumInfo) {
+        settings.albums.edit(id, newInfo)
+    }
+
+    fun removeAlbum(id: Int) {
+        settings.albums.remove(id)
     }
 }

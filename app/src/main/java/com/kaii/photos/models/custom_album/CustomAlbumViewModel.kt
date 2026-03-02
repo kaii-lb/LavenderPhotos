@@ -110,6 +110,12 @@ class CustomAlbumViewModel(
         initialValue = emptyList()
     )
 
+    val autoDetectAlbums = settings.albums.getAutoDetect().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     fun remove(items: Set<MediaStoreData>) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.remove(items, albumInfo.id)
@@ -125,5 +131,13 @@ class CustomAlbumViewModel(
         }
 
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+    }
+
+    fun editAlbum(id: Int, newInfo: AlbumInfo) {
+        settings.albums.edit(id, newInfo)
+    }
+
+    fun removeAlbum(id: Int) {
+        settings.albums.remove(id)
     }
 }
