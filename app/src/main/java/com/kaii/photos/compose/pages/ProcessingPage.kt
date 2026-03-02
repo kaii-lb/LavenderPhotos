@@ -56,9 +56,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.StartupManager
 import kotlinx.coroutines.delay
@@ -93,10 +95,17 @@ fun ProcessingPage(startupManager: StartupManager) {
         }
     }
 
+    val navController = LocalNavController.current
     LaunchedEffect(currentProgress) {
         if (currentProgress >= 1f) {
             delay(2.seconds)
             startupManager.checkState()
+
+            navController.navigate(Screens.MainPages) {
+                popUpTo<Screens.Startup.ProcessingPage> {
+                    inclusive = true
+                }
+            }
         }
     }
 

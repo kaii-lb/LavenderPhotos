@@ -98,12 +98,7 @@ class StartupManager(
         permissionQueue.forEach { Log.d(TAG, "PERMISSION DENIED $it") }
     }
 
-    fun checkPermissions(): Boolean {
-        val manageMedia = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
-
-        return permissionQueue.isEmpty() || manageMedia
-    }
+    fun checkPermissions() = permissionQueue.isEmpty()
 
     suspend fun checkState() = withContext(Dispatchers.IO) {
         val permsGranted = checkPermissions()

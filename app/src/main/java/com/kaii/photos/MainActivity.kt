@@ -249,7 +249,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable<Screens.Startup.PermissionsPage> {
+                composable<Screens.Startup.ProcessingPage> {
                     StartupLoadingPage(
                         startupManager = startupManager,
                         window = window
