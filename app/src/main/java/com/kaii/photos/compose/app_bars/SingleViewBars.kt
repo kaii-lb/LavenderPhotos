@@ -129,6 +129,7 @@ import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -354,7 +355,9 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    customAlbumId: Int?
+    customAlbumId: Int?,
+    exitOnSave: Boolean,
+    overwriteByDefault: Boolean
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -411,13 +414,7 @@ fun VideoEditorTopBar(
         },
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
-
-            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-            var overwrite by remember { mutableStateOf(false) }
-
-            LaunchedEffect(overwriteByDefault) {
-                overwrite = overwriteByDefault
-            }
+            var overwrite by remember { mutableStateOf(overwriteByDefault) }
 
             DropdownMenu(
                 expanded = showDropDown,
@@ -458,14 +455,13 @@ fun VideoEditorTopBar(
                     val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
-                    val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before video is saved
                             // not using Dispatchers.IO since transformer needs to be on main thread
-                            mainViewModel.launch {
+                            context.appModule.scope.launch {
                                 navMediaId = saveVideo(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {

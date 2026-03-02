@@ -198,8 +198,10 @@ class OpenWithView : ComponentActivity() {
                                 ImageEditor(
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
+                                    isFromOpenWithView = true,
                                     albumInfo = null,
-                                    isFromOpenWithView = true
+                                    exitOnSave = false,
+                                    overwriteByDefault = false
                                 )
                             }
 

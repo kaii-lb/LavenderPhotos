@@ -87,6 +87,8 @@ import com.kaii.photos.helpers.appStorageDir
 import com.kaii.photos.helpers.rememberUpdater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.editor.EditorViewModel
+import com.kaii.photos.models.editor.EditorViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
@@ -674,12 +676,20 @@ class MainActivity : ComponentActivity() {
                     setupNextScreen(window = window)
 
                     val screen: Screens.ImageEditor = it.toRoute()
+                    val viewModel = viewModel<EditorViewModel>(
+                        factory = EditorViewModelFactory(context = context)
+                    )
+
+                    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
+                    val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
 
                     ImageEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
-                        albumInfo = screen.albumInfo
+                        albumInfo = screen.albumInfo,
+                        exitOnSave = exitOnSave,
+                        overwriteByDefault = overwriteByDefault
                     )
                 }
 

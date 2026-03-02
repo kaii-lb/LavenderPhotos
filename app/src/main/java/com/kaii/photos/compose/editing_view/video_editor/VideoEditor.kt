@@ -112,6 +112,8 @@ fun VideoEditor(
     val startMuted by viewModel.startMuted.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useBlackBackground by viewModel.startMuted.collectAsStateWithLifecycle()
+    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
+    val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
 
     VideoEditorImpl(
         uri = uri,
@@ -121,7 +123,9 @@ fun VideoEditor(
         isFromOpenWithView = isFromOpenWithView,
         startMuted = startMuted,
         blurViews = blurViews,
-        useBlackBackground = useBlackBackground
+        useBlackBackground = useBlackBackground,
+        exitOnSave = exitOnSave,
+        overwriteByDefault = overwriteByDefault
     )
 }
 
@@ -136,7 +140,9 @@ fun VideoEditorImpl(
     isFromOpenWithView: Boolean,
     startMuted: Boolean,
     blurViews: Boolean,
-    useBlackBackground: Boolean
+    useBlackBackground: Boolean,
+    exitOnSave: Boolean,
+    overwriteByDefault: Boolean
 ) {
     val isPlaying = remember { mutableStateOf(false) }
     val isMuted = remember(startMuted) { mutableStateOf(startMuted) }
@@ -408,7 +414,9 @@ fun VideoEditorImpl(
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
-                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum }
+                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum },
+                exitOnSave = exitOnSave,
+                overwriteByDefault = overwriteByDefault
             )
         },
         bottomBar = {
