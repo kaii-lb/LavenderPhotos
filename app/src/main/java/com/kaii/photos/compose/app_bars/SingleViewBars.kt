@@ -355,8 +355,8 @@ fun VideoEditorTopBar(
     canvasSize: Size,
     isFromOpenWithView: Boolean,
     customAlbumId: Int?,
-    exitOnSave: Boolean,
-    overwriteByDefault: Boolean
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -413,7 +413,7 @@ fun VideoEditorTopBar(
         },
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
-            var overwrite by remember { mutableStateOf(overwriteByDefault) }
+            var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
             DropdownMenu(
                 expanded = showDropDown,
@@ -501,7 +501,7 @@ fun VideoEditorTopBar(
                                         )
                                 }
 
-                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
+                                if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
                                     navController.previousBackStackEntry
                                         ?.savedStateHandle
                                         ?.set("editIndex", 0)
@@ -879,7 +879,7 @@ fun ImageEditorBottomBar(
 fun ImageEditorTopBar(
     modifications: List<ImageModification>,
     lastSavedModCount: MutableIntState,
-    overwrite: Boolean,
+    overwrite: () -> Boolean,
     isFromOpenWithView: Boolean,
     setOverwrite: (Boolean) -> Unit,
     saveImage: suspend () -> Unit,
@@ -948,7 +948,7 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_overwrite_desc),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = overwrite
+                    isSelected = overwrite()
                 ) {
                     setOverwrite(true)
                     showDropDown = false
@@ -957,7 +957,7 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_save),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = !overwrite
+                    isSelected = !overwrite()
                 ) {
                     setOverwrite(false)
                     showDropDown = false
@@ -979,7 +979,7 @@ fun ImageEditorTopBar(
                     ) {
                         Text(
                             text =
-                                if (overwrite) stringResource(id = R.string.editing_overwrite)
+                                if (overwrite()) stringResource(id = R.string.editing_overwrite)
                                 else stringResource(id = R.string.editing_save)
                         )
                     }

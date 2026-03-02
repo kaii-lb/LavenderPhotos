@@ -124,8 +124,8 @@ fun VideoEditor(
         startMuted = startMuted,
         blurViews = blurViews,
         useBlackBackground = useBlackBackground,
-        exitOnSave = exitOnSave,
-        overwriteByDefault = overwriteByDefault
+        exitOnSave = { exitOnSave },
+        overwriteByDefault = { overwriteByDefault }
     )
 }
 
@@ -141,8 +141,8 @@ fun VideoEditorImpl(
     startMuted: Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
-    exitOnSave: Boolean,
-    overwriteByDefault: Boolean
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
 ) {
     val isPlaying = remember { mutableStateOf(false) }
     val isMuted = remember(startMuted) { mutableStateOf(startMuted) }

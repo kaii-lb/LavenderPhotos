@@ -202,8 +202,8 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     isFromOpenWithView = true,
                                     albumInfo = null,
-                                    exitOnSave = false,
-                                    overwriteByDefault = false
+                                    exitOnSave = { false },
+                                    overwriteByDefault = { false }
                                 )
                             }
 

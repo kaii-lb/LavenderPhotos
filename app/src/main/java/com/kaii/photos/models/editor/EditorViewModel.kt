@@ -30,7 +30,7 @@ class EditorViewModel(
         initialValue = false
     )
 
-    val exitOnSave = settings.behaviour.getExitImmediately().stateIn(
+    val exitOnSave = settings.editing.getExitOnSave().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false

@@ -690,8 +690,8 @@ class MainActivity : ComponentActivity() {
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
                         albumInfo = screen.albumInfo,
-                        exitOnSave = exitOnSave,
-                        overwriteByDefault = overwriteByDefault
+                        exitOnSave = { exitOnSave },
+                        overwriteByDefault = { overwriteByDefault }
                     )
                 }
 

@@ -114,8 +114,8 @@ fun ImageEditor(
     absolutePath: String,
     isFromOpenWithView: Boolean,
     albumInfo: AlbumInfo?,
-    exitOnSave: Boolean,
-    overwriteByDefault: Boolean
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -226,7 +226,7 @@ fun ImageEditor(
     Scaffold(
         topBar = {
             val textMeasurer = rememberTextMeasurer()
-            var overwrite by remember { mutableStateOf(overwriteByDefault) }
+            var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
             val navController = LocalNavController.current
 
@@ -234,7 +234,7 @@ fun ImageEditor(
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
                 lastSavedModCount = lastSavedModCount,
-                overwrite = overwrite,
+                overwrite = { overwrite },
                 isFromOpenWithView = isFromOpenWithView,
                 setOverwrite = {
                     overwrite = it
@@ -276,7 +276,7 @@ fun ImageEditor(
                             )
                     }
 
-                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
+                    if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set("editIndex", 0)
