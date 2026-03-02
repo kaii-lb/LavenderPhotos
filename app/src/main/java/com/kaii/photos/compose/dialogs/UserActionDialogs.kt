@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.dialogs
 
 import android.content.Context
-import android.content.res.Configuration
 import android.os.storage.StorageManager
 import android.util.Log
 import androidx.compose.animation.animateContentSize
@@ -56,7 +55,6 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -75,7 +73,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.pages.WallpaperSetter
@@ -83,6 +80,7 @@ import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
@@ -108,12 +106,7 @@ fun ConfirmationDialog(
     confirmButtonLabel: String,
     action: () -> Unit
 ) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
+    val isLandscape by rememberDeviceOrientation()
 
     val modifier = if (isLandscape)
         Modifier.width(256.dp)
@@ -176,12 +169,7 @@ fun ConfirmationDialogWithBody(
     onCancel: () -> Unit = {},
     action: () -> Unit
 ) {
-    val localConfig = LocalConfiguration.current
-    var isLandscape by remember { mutableStateOf(localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) }
-
-    LaunchedEffect(localConfig) {
-        isLandscape = localConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-    }
+    val isLandscape by rememberDeviceOrientation()
 
     val modifier = if (isLandscape)
         Modifier.width(256.dp)
@@ -731,6 +719,7 @@ fun AlbumPathsDialog(
 
 @Composable
 fun AlbumAddChoiceDialog(
+    addAlbum: (album: AlbumInfo) -> Unit,
     onDismiss: () -> Unit = {}
 ) {
     LavenderDialogBase(
@@ -752,15 +741,12 @@ fun AlbumAddChoiceDialog(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val mainViewModel = LocalMainViewModel.current
             val activityLauncher = createDirectoryPicker { path, basePath ->
-                if (path != null && basePath != null) mainViewModel.settings.albums.add(
-                    listOf(
-                        AlbumInfo(
-                            id = (basePath + path).hashCode(),
-                            name = path.filename(),
-                            paths = setOf(basePath + path)
-                        )
+                if (path != null && basePath != null) addAlbum(
+                    AlbumInfo(
+                        id = (basePath + path).hashCode(),
+                        name = path.filename(),
+                        paths = setOf(basePath + path)
                     )
                 )
             }
@@ -777,6 +763,7 @@ fun AlbumAddChoiceDialog(
             var showCustomAlbumDialog by remember { mutableStateOf(false) }
             if (showCustomAlbumDialog) {
                 AddCustomAlbumDialog(
+                    addAlbum = addAlbum,
                     onDismissPrev = onDismiss,
                     onDismiss = {
                         showCustomAlbumDialog = false
@@ -800,11 +787,10 @@ fun AlbumAddChoiceDialog(
 
 @Composable
 fun AddCustomAlbumDialog(
+    addAlbum: (album: AlbumInfo) -> Unit,
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
     Box(
         modifier = Modifier
             .padding(8.dp, 0.dp)
@@ -824,7 +810,7 @@ fun AddCustomAlbumDialog(
                     isCustomAlbum = true
                 )
 
-                mainViewModel.settings.albums.add(listOf(albumInfo))
+                addAlbum(albumInfo)
                 onDismissPrev()
 
                 text.isNotEmpty()
@@ -838,6 +824,7 @@ fun AddCustomAlbumDialog(
 fun ImmichLoginDialog(
     loginState: LoginStateManager,
     endpoint: String,
+    setImmichBasicInfo: (info: ImmichBasicInfo) -> Unit,
     onDismiss: () -> Unit,
 ) {
     LavenderDialogBase(
@@ -886,7 +873,6 @@ fun ImmichLoginDialog(
 
             val coroutineScope = rememberCoroutineScope()
             val resources = LocalResources.current
-            val mainViewModel = LocalMainViewModel.current
 
             suspend fun login() {
                 val eventTitle =
@@ -906,7 +892,7 @@ fun ImmichLoginDialog(
                     password = password.value.trim(),
                     userAgent = System.getProperty("http.agent") ?: ""
                 ).let { state ->
-                    mainViewModel.settings.immich.setImmichBasicInfo(
+                    setImmichBasicInfo(
                         if (state is LoginState.LoggedIn) {
                             ImmichBasicInfo(
                                 endpoint = endpoint,

@@ -153,7 +153,8 @@ fun MainPages(
                 isFromMediaPicker = incomingIntent != null,
                 setShowTagDialog = {
                     showTagDialog = true
-                }
+                },
+                addAlbum = mainGridViewModel::addAlbum
             )
         },
         bottomBar = {

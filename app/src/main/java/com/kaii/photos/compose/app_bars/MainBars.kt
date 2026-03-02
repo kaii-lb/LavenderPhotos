@@ -104,7 +104,8 @@ fun MainAppTopBar(
     extraSecureFolderEntry: Boolean,
     showTagDialog: Boolean,
     isFromMediaPicker: Boolean,
-    setShowTagDialog: (show: Boolean) -> Unit
+    setShowTagDialog: (show: Boolean) -> Unit,
+    addAlbum: (album: AlbumInfo) -> Unit
 ) {
     val context = LocalContext.current
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
@@ -183,7 +184,9 @@ fun MainAppTopBar(
             ) {
                 var showAlbumTypeDialog by remember { mutableStateOf(false) }
                 if (showAlbumTypeDialog) {
-                    AlbumAddChoiceDialog {
+                    AlbumAddChoiceDialog(
+                        addAlbum = addAlbum
+                    ) {
                         showAlbumTypeDialog = false
                     }
                 }
