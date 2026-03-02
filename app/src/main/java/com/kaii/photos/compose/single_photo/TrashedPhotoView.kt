@@ -68,12 +68,12 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
@@ -93,11 +93,13 @@ fun SingleTrashedPhotoView(
     viewModel: TrashViewModel
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
         startIndex = index,
-        window = window
+        window = window,
+        useBlackBackground = useBlackBackground
     )
 }
 
@@ -107,7 +109,8 @@ fun SingleTrashedPhotoView(
 private fun SingleTrashedPhotoViewImpl(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
-    window: Window
+    window: Window,
+    useBlackBackground: Boolean
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -190,7 +193,6 @@ private fun SingleTrashedPhotoViewImpl(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -302,10 +304,9 @@ private fun BottomBar(
                 modifier = Modifier
                     .windowInsetsPadding(windowInsets)
             ) {
-                val mainViewModel = LocalMainViewModel.current
                 val permissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
+                        context.appModule.scope.launch(Dispatchers.IO) {
                             setTrashedOnPhotoList(
                                 context = context,
                                 list = listOf(item().uri.toUri()),

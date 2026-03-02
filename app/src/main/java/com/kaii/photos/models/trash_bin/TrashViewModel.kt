@@ -45,6 +45,12 @@ class TrashViewModel(
         initialValue = false
     )
 
+    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false
+    )
+
     private val repo = TrashRepository(
         scope = viewModelScope,
         context = context,
