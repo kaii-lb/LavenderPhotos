@@ -140,7 +140,8 @@ private fun MemoryAndStorageSettingsPageImpl(
                 if (showThumbnailSizeDialog.value) {
                     ThumbnailSizeDialog(
                         showDialog = showThumbnailSizeDialog,
-                        initialValue = thumbnailSize
+                        initialValue = thumbnailSize,
+                        setThumbnailSize = setThumbnailSize
                     )
                 }
             }
