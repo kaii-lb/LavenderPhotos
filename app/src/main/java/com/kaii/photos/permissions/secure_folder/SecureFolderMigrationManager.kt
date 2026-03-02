@@ -10,11 +10,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -200,13 +200,12 @@ class SecureFolderMigrationManager(
 @Composable
 fun rememberSecureFolderManager(): SecureFolderMigrationManager {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
 
-    return remember(mainViewModel, context) {
+    return remember(context) {
         SecureFolderMigrationManager(
             context = context,
             appDatabase = MediaDatabase.getInstance(context = context),
-            albums = mainViewModel.settings.albums
+            albums = context.appModule.settings.albums
         )
     }
 }
