@@ -90,6 +90,11 @@ fun MainPages(
     val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
+    val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = tabList.indexOf(defaultTab)
@@ -275,7 +280,12 @@ fun MainPages(
                             viewModel = multiAlbumViewModel,
                             albumInfo = tab.toAlbumInfo(),
                             selectionManager = selectionManager,
-                            isMediaPicker = incomingIntent != null
+                            isMediaPicker = incomingIntent != null,
+                            columnSize = columnSize,
+                            openVideosExternally = openVideosExternally,
+                            cacheThumbnails = cacheThumbnails,
+                            thumbnailSize = thumbnailSize,
+                            useRoundedCorners = useRoundedCorners
                         )
                     }
 
@@ -294,7 +304,12 @@ fun MainPages(
                             viewModel = multiAlbumViewModel,
                             selectionManager = selectionManager,
                             albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
-                            isMediaPicker = incomingIntent != null
+                            isMediaPicker = incomingIntent != null,
+                            columnSize = columnSize,
+                            openVideosExternally = openVideosExternally,
+                            cacheThumbnails = cacheThumbnails,
+                            thumbnailSize = thumbnailSize,
+                            useRoundedCorners = useRoundedCorners
                         )
                     }
 
