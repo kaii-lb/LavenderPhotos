@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
@@ -127,7 +126,6 @@ import com.kaii.photos.compose.editing_view.video_editor.VideoEditorProcessingCo
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.compose.widgets.SimpleTab
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
@@ -1062,12 +1060,17 @@ fun SingleViewTopBar(
         }
     }
 
-    Box(
+    Row(
         modifier = Modifier
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(4.dp, 0.dp)
             .wrapContentHeight()
-            .fillMaxWidth(1f)
+            .fillMaxWidth(1f),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(
+            space = 4.dp,
+            alignment = Alignment.Start
+        )
     ) {
         AnimatedVisibility(
             visible = visible,
@@ -1086,7 +1089,7 @@ fun SingleViewTopBar(
                     )
                 ) + fadeOut(),
             modifier = Modifier
-                .align(Alignment.CenterStart)
+                .weight(1f)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -1121,7 +1124,6 @@ fun SingleViewTopBar(
                     )
                 }
 
-                val isLandscape by rememberDeviceOrientation()
                 val mainViewModel = LocalMainViewModel.current
                 val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
 
@@ -1133,7 +1135,6 @@ fun SingleViewTopBar(
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .widthIn(max = if (isLandscape) 340.dp else 200.dp)
                         .clip(CircleShape)
                         .clickable {
                             expandInfoDialog()
@@ -1159,11 +1160,11 @@ fun SingleViewTopBar(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
                         stiffness = Spring.StiffnessMedium
                     )
-                ) + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
+                ) + fadeOut()
         ) {
             Row(
+                modifier = Modifier
+                    .weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
@@ -1176,13 +1177,11 @@ fun SingleViewTopBar(
                         shape = IconButtonDefaults.filledShape,
                         pressedShape = IconButtonDefaults.extraSmallPressedShape,
                         checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                    ),
+                    )
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.sell),
-                        contentDescription = stringResource(id = R.string.tags),
-                        modifier = Modifier
-                            .size(24.dp)
+                        contentDescription = stringResource(id = R.string.tags)
                     )
                 }
 
@@ -1195,13 +1194,11 @@ fun SingleViewTopBar(
                         shape = IconButtonDefaults.filledShape,
                         pressedShape = IconButtonDefaults.extraSmallPressedShape,
                         checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                    ),
+                    )
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.more_options),
-                        contentDescription = stringResource(id = R.string.show_options),
-                        modifier = Modifier
-                            .size(24.dp)
+                        contentDescription = stringResource(id = R.string.show_options)
                     )
                 }
             }
