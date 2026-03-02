@@ -69,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -339,6 +338,7 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 @Composable
 fun AnimatedImmichBackupIcon(
     state: LoginState,
+    alwaysShowInfo: Boolean,
     modifier: Modifier = Modifier
 ) {
     // TODO:
@@ -358,7 +358,6 @@ fun AnimatedImmichBackupIcon(
         // )
 
         val context = LocalContext.current
-        val alwaysShowInfo by LocalMainViewModel.current.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
         UpdatableProfileImage(
             loggedIn = alwaysShowInfo || state !is LoginState.LoggedOut,
             pfpUrl = if (alwaysShowInfo && state is LoginState.LoggedOut) context.profilePicture else (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
@@ -406,11 +405,11 @@ fun AnimatedImmichBackupIcon(
 @Composable
 fun AnimatedLoginIcon(
     state: LoginState,
-    alwaysShowPfp: Boolean,
+    alwaysShowInfo: Boolean,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = alwaysShowPfp || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
+        targetState = alwaysShowInfo || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -427,6 +426,7 @@ fun AnimatedLoginIcon(
         if (visible) {
             AnimatedImmichBackupIcon(
                 state = state,
+                alwaysShowInfo = alwaysShowInfo,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)

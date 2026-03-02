@@ -123,6 +123,7 @@ fun MainAppTopBar(
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
             alwaysShowImmichInfo = alwaysShowImmichInfo,
+            immichInfo = immichInfo,
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -208,7 +209,7 @@ fun MainAppTopBar(
             if (!isFromMediaPicker) {
                 AnimatedLoginIcon(
                     state = userInfo,
-                    alwaysShowPfp = alwaysShowImmichInfo
+                    alwaysShowInfo = alwaysShowImmichInfo
                 ) {
                     coroutineScope.launch {
                         showMainDialog = true

@@ -48,6 +48,7 @@ import com.kaii.photos.compose.widgets.ExpressiveDialogRowWithAction
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
@@ -148,6 +149,7 @@ fun MainDialog(
     coroutineScope: CoroutineScope,
     extraSecureFolderEntry: Boolean,
     alwaysShowImmichInfo: Boolean,
+    immichInfo: ImmichBasicInfo,
     modifier: Modifier = Modifier,
     toggleSelectMode: () -> Unit,
     dismiss: () -> Unit
@@ -196,6 +198,8 @@ fun MainDialog(
                             MainDialogUserInfo(
                                 loginState = userInfo,
                                 coroutineScope = coroutineScope,
+                                alwaysShowInfo = alwaysShowImmichInfo,
+                                immichInfo = immichInfo,
                                 dismiss = dismiss
                             )
                         } else {
