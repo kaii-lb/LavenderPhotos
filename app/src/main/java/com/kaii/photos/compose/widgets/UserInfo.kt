@@ -105,7 +105,7 @@ fun UpdatableProfileImage(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val pfpPath = remember(loggedIn) {
+    val pfpPath = remember(loggedIn, pfpUrl) {
         if (loggedIn) {
             val file = File(context.profilePicture)
 
