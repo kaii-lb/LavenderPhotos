@@ -27,38 +27,60 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.permissions.auth.rememberExportAuthManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 private const val TAG = "com.kaii.photos.compose.settings.DataAndBackupPage"
 
 @Composable
-fun DataAndBackupPage() {
-    val mainViewModel = LocalMainViewModel.current
-    val appDatabase = LocalAppDatabase.current
+fun DataAndBackupPage(modifier: Modifier = Modifier) {
+    val settings = LocalContext.current.appModule.settings
 
+    DataAndBackupPageImpl(
+        modifier = modifier,
+        addAlbum = { settings.albums.add(listOf(it)) }
+    )
+}
+
+@Preview
+@Composable
+private fun DataAndBackupPagePreview() {
+    DataAndBackupPageImpl(
+        modifier = Modifier,
+        addAlbum = {}
+    )
+}
+
+@Composable
+private fun DataAndBackupPageImpl(
+    modifier: Modifier,
+    addAlbum: (album: AlbumInfo) -> Unit
+) {
     Scaffold(
         topBar = {
             DataAndBackupTopBar()
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -79,8 +101,10 @@ fun DataAndBackupPage() {
                 val isLoading = remember { mutableStateOf(false) }
 
                 val authManager = rememberExportAuthManager {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper(appDatabase)
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper(
+                            applicationDatabase = MediaDatabase.getInstance(context)
+                        )
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -94,13 +118,11 @@ fun DataAndBackupPage() {
                         backupHelper.exportUnencryptedSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.albums.add(
-                            listOf(
-                                AlbumInfo(
-                                    name = albumFile.name,
-                                    paths = setOf(albumFile.absolutePath),
-                                    id = albumFile.hashCode()
-                                )
+                        addAlbum(
+                            AlbumInfo(
+                                name = albumFile.name,
+                                paths = setOf(albumFile.absolutePath),
+                                id = albumFile.hashCode()
                             )
                         )
 
@@ -125,8 +147,10 @@ fun DataAndBackupPage() {
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper(appDatabase)
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper(
+                            applicationDatabase = MediaDatabase.getInstance(context)
+                        )
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -140,13 +164,11 @@ fun DataAndBackupPage() {
                         backupHelper.exportRawSecureFolderItems(context = context)
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
-                        mainViewModel.settings.albums.add(
-                            listOf(
-                                AlbumInfo(
-                                    name = albumFile.name,
-                                    paths = setOf(albumFile.absolutePath),
-                                    id = albumFile.hashCode()
-                                )
+                        addAlbum(
+                            AlbumInfo(
+                                name = albumFile.name,
+                                paths = setOf(albumFile.absolutePath),
+                                id = albumFile.hashCode()
                             )
                         )
 
@@ -170,8 +192,10 @@ fun DataAndBackupPage() {
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        val backupHelper = DataAndBackupHelper(appDatabase)
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        val backupHelper = DataAndBackupHelper(
+                            applicationDatabase = MediaDatabase.getInstance(context)
+                        )
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -226,8 +250,10 @@ fun DataAndBackupPage() {
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    mainViewModel.launch {
-                        val helper = DataAndBackupHelper(appDatabase)
+                    context.appModule.scope.launch {
+                        val helper = DataAndBackupHelper(
+                            applicationDatabase = MediaDatabase.getInstance(context)
+                        )
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
@@ -241,13 +267,11 @@ fun DataAndBackupPage() {
                         helper.exportFavourites(context = context)
 
                         val favExportDir = helper.getFavExportDir(context = context)
-                        mainViewModel.settings.albums.add(
-                            listOf(
-                                AlbumInfo(
-                                    name = favExportDir.name,
-                                    paths = setOf(favExportDir.absolutePath),
-                                    id = favExportDir.hashCode()
-                                )
+                        addAlbum(
+                            AlbumInfo(
+                                name = favExportDir.name,
+                                paths = setOf(favExportDir.absolutePath),
+                                id = favExportDir.hashCode()
                             )
                         )
 
@@ -272,8 +296,10 @@ fun DataAndBackupPage() {
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    mainViewModel.launch(Dispatchers.IO) {
-                        val helper = DataAndBackupHelper(appDatabase)
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        val helper = DataAndBackupHelper(
+                            applicationDatabase = MediaDatabase.getInstance(context)
+                        )
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(

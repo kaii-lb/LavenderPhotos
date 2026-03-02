@@ -61,8 +61,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
@@ -71,12 +69,15 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
@@ -117,6 +118,13 @@ fun SinglePhotoView(
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -134,6 +142,13 @@ fun SinglePhotoView(
         startIndex = index,
         albumInfo = albumInfo,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         removeFromCustom = { item ->
@@ -156,6 +171,13 @@ fun SinglePhotoView(
     isOpenWithDefaultView: Boolean = false,
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -173,6 +195,13 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -191,6 +220,13 @@ fun SinglePhotoView(
     albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -208,6 +244,13 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -225,6 +268,13 @@ fun SinglePhotoView(
     index: Int
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -242,6 +292,13 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -253,13 +310,19 @@ fun SinglePhotoView(
 
 @Composable
 fun SinglePhotoView(
-    navController: NavHostController,
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
     albumInfo: AlbumInfo
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -274,9 +337,16 @@ fun SinglePhotoView(
         items = items,
         startIndex = index,
         albumInfo = albumInfo,
-        navController = navController,
+        navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         onTagAdd = tagViewModel::insertTag,
@@ -296,6 +366,13 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
+    useBlackBackground: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    topBarDetailsFormat: TopBarDetailsFormat,
+    blurViews: Boolean,
+    useCache: Boolean,
+    preserveDate: Boolean,
     tags: List<Tag>,
     selectedTags: List<Tag>,
     removeFromCustom: (MediaStoreData) -> Unit = {},
@@ -359,7 +436,7 @@ private fun SinglePhotoViewCommon(
         snapshotFlow { items.itemCount }.collectLatest {
             delay(PhotoGridConstants.LOADING_TIME_SHORT)
             if (items.itemCount == 0) launch(Dispatchers.Main) {
-                navController.popBackStack()
+                navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
             }
         }
     }
@@ -384,7 +461,9 @@ private fun SinglePhotoViewCommon(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
+                showTags = true,
                 showTagDialog = showTagDialog,
+                topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showTagDialog = false
@@ -410,6 +489,8 @@ private fun SinglePhotoViewCommon(
                 currentItem = { mediaItem },
                 privacyMode = scrollState.privacyMode,
                 isCustom = albumInfo.isCustomAlbum,
+                confirmToDelete = confirmToDelete,
+                doNotTrash = doNotTrash,
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -452,6 +533,7 @@ private fun SinglePhotoViewCommon(
                 sheetState = sheetState,
                 privacyMode = scrollState.privacyMode,
                 isCustomAlbum = albumInfo.isCustomAlbum,
+                preserveDate = preserveDate,
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()
@@ -475,7 +557,6 @@ private fun SinglePhotoViewCommon(
             }
         )
 
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -498,7 +579,10 @@ private fun SinglePhotoViewCommon(
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
     }
@@ -511,6 +595,8 @@ private fun BottomBar(
     currentItem: () -> MediaStoreData,
     privacyMode: Boolean,
     isCustom: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
     showEditingView: () -> Unit,
     removeFromCustom: (MediaStoreData) -> Unit
 ) {
@@ -623,12 +709,9 @@ private fun BottomBar(
                     )
                 }
 
-                val mainViewModel = LocalMainViewModel.current
-                val applicationDatabase = LocalAppDatabase.current
-
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch {
+                        context.appModule.scope.launch {
                             val item = currentItem()
                             moveMediaToSecureFolder(
                                 list = listOf(
@@ -639,7 +722,7 @@ private fun BottomBar(
                                     )
                                 ),
                                 context = context,
-                                applicationDatabase = applicationDatabase
+                                applicationDatabase = MediaDatabase.getInstance(context)
                             ) {
                                 removeFromCustom(item)
 
@@ -704,11 +787,10 @@ private fun BottomBar(
                     )
                 }
 
-                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
                 // TODO: look into possibly sharing permission managers?
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
+                        context.appModule.scope.launch(Dispatchers.IO) {
                             if (!isCustom) {
                                 if (doNotTrash) {
                                     permanentlyDeletePhotoList(
@@ -730,8 +812,6 @@ private fun BottomBar(
                 )
 
                 val showDeleteDialog = remember { mutableStateOf(false) }
-                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
-
                 if (showDeleteDialog.value) {
                     ConfirmationDialog(
                         showDialog = showDeleteDialog,

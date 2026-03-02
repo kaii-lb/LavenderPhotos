@@ -36,11 +36,11 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -51,8 +51,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SecureFolderEntryPage() {
-    val mainViewModel = LocalMainViewModel.current
-
     val context = LocalContext.current
 
     // moves media from old dir to new dir for secure folder
@@ -67,7 +65,7 @@ fun SecureFolderEntryPage() {
 
     val migrateEncryptedFilePM = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch {
+            context.appModule.scope.launch {
                 secureFolderManager.migrateFromUnencrypted {
                     migrating = false
                     canOpenSecureFolder = true
@@ -78,7 +76,7 @@ fun SecureFolderEntryPage() {
 
     val migrateUnencryptedDirectoryPM = rememberDirectoryPermissionManager(
         onGranted = {
-            mainViewModel.launch {
+            context.appModule.scope.launch {
                 migrating = true
                 canOpenSecureFolder = false
 
@@ -101,7 +99,7 @@ fun SecureFolderEntryPage() {
 
     val migrateOldDirectoryPM = rememberDirectoryPermissionManager(
         onGranted = {
-            mainViewModel.launch {
+            context.appModule.scope.launch {
                 migrating = true
                 canOpenSecureFolder = false
 
@@ -133,7 +131,7 @@ fun SecureFolderEntryPage() {
             title = stringResource(id = R.string.secure_migrating_notice),
             explanation = stringResource(id = R.string.secure_migrating_notice_desc)
         ) {
-            mainViewModel.launch {
+            context.appModule.scope.launch {
                 if (secureFolderManager.needsMigrationFromOld) {
                     migrateOldDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))
                 } else {
@@ -144,7 +142,6 @@ fun SecureFolderEntryPage() {
             showExplanationForMigration = false
         }
     }
-
 
 
     var showHelpDialog by remember { mutableStateOf(false) }

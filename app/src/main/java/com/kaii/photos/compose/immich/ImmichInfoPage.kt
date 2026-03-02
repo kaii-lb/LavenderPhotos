@@ -32,6 +32,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -43,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
@@ -58,10 +61,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
@@ -77,24 +80,28 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.profilePicture
+import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
+import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberServerState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImmichInfoPage() {
-    val navController = LocalNavController.current
+    val viewModel = viewModel<ImmichInfoViewModel>(
+        factory = ImmichInfoViewModelFactory(context = LocalContext.current)
+    )
 
-    val mainViewModel = LocalMainViewModel.current
-    val loginInfo by mainViewModel.settings.immich.getImmichBasicInfo()
-        .collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-
+    val loginInfo by viewModel.info.collectAsStateWithLifecycle()
     val loginState = rememberLoginState(baseUrl = loginInfo.endpoint)
     val serverState = rememberServerState(baseUrl = loginInfo.endpoint)
 
+    val navController = LocalNavController.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -122,11 +129,31 @@ fun ImmichInfoPage() {
             )
         }
     ) { innerPadding ->
-        val mainViewModel = LocalMainViewModel.current
+        val context = LocalContext.current
+        val userInfo by loginState.state.collectAsStateWithLifecycle()
+        var isLoadingInfo by remember { mutableStateOf(true) }
+        val pullToRefreshState = rememberPullToRefreshState()
+
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .pullToRefresh(
+                    isRefreshing = isLoadingInfo,
+                    state = pullToRefreshState,
+                    onRefresh = {
+                        isLoadingInfo = true
+                        loginState.refresh(
+                            accessToken = loginInfo.accessToken,
+                            pfpSavePath = context.profilePicture,
+                            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+                        ).invokeOnCompletion {
+                            serverState.fetch(accessToken = loginInfo.accessToken)
+
+                            isLoadingInfo = false
+                        }
+                    }
+                ),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
@@ -149,7 +176,7 @@ fun ImmichInfoPage() {
                         onConfirm = { value ->
                             when {
                                 loginState.validateServerAddress(address = value) && serverState.ping(address = value) -> {
-                                    mainViewModel.settings.immich.setImmichBasicInfo(
+                                    viewModel.setInfo(
                                         ImmichBasicInfo(
                                             endpoint = value.removeSuffix("/"),
                                             accessToken = loginInfo.accessToken,
@@ -200,7 +227,7 @@ fun ImmichInfoPage() {
                                 loginState.logout(accessToken = loginInfo.accessToken)
                             }
 
-                            mainViewModel.settings.immich.setImmichBasicInfo(ImmichBasicInfo.Empty)
+                            viewModel.setInfo(ImmichBasicInfo.Empty)
                         }
 
                         showClearEndpointDialog.value = false
@@ -222,31 +249,33 @@ fun ImmichInfoPage() {
             }
 
             item {
-                val context = LocalContext.current
-                val userInfo by loginState.state.collectAsStateWithLifecycle()
-
                 var showLoginDialog by remember { mutableStateOf(false) }
-                var isLoadingInfo by remember { mutableStateOf(true) }
 
                 if (showLoginDialog) {
                     ImmichLoginDialog(
                         loginState = loginState,
-                        endpoint = loginInfo.endpoint
-                    ) {
-                        showLoginDialog = false
-                    }
+                        endpoint = loginInfo.endpoint,
+                        setImmichBasicInfo = viewModel::setInfo,
+                        onDismiss = {
+                            showLoginDialog = false
+                        }
+                    )
                 }
 
                 LaunchedEffect(loginInfo) {
                     isLoadingInfo = true
-                    loginState.refresh(
-                        accessToken = loginInfo.accessToken,
-                        pfpSavePath = context.profilePicture,
-                        previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-                    ).invokeOnCompletion {
-                        serverState.fetch(accessToken = loginInfo.accessToken)
+                    while (true) {
+                        loginState.refresh(
+                            accessToken = loginInfo.accessToken,
+                            pfpSavePath = context.profilePicture,
+                            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+                        ).invokeOnCompletion {
+                            serverState.fetch(accessToken = loginInfo.accessToken)
 
-                        isLoadingInfo = false
+                            isLoadingInfo = false
+                        }
+
+                        delay(30.seconds)
                     }
                 }
 
@@ -263,7 +292,7 @@ fun ImmichInfoPage() {
                             if (loginInfo.accessToken == "") return@launch
 
                             loginState.logout(accessToken = loginInfo.accessToken).invokeOnCompletion {
-                                mainViewModel.settings.immich.setImmichBasicInfo(
+                                viewModel.setInfo(
                                     ImmichBasicInfo.Empty.copy(endpoint = loginInfo.endpoint)
                                 )
                             }
@@ -371,10 +400,16 @@ fun ImmichInfoPage() {
                         )
                     }
 
+                    val animatedScale by animateFloatAsState(
+                        targetValue = if (isLoadingInfo) 1f else pullToRefreshState.distanceFraction
+                    )
+
                     AnimatedVisibility(
-                        visible = isLoadingInfo,
+                        visible = isLoadingInfo || pullToRefreshState.distanceFraction > 0f,
                         enter = fadeIn() + scaleIn(animationSpec = AnimationConstants.expressiveTween()),
-                        exit = fadeOut() + scaleOut(animationSpec = AnimationConstants.expressiveTween())
+                        exit = fadeOut() + scaleOut(animationSpec = AnimationConstants.expressiveTween()),
+                        modifier = Modifier
+                            .scale(animatedScale)
                     ) {
                         ContainedLoadingIndicator(
                             modifier = Modifier
@@ -507,7 +542,7 @@ fun ImmichInfoPage() {
             }
 
             item {
-                val alwaysShowInfo by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
+                val alwaysShowInfo by viewModel.alwaysShow.collectAsStateWithLifecycle()
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.immich_always_show_user_info),
@@ -516,9 +551,7 @@ fun ImmichInfoPage() {
                     position = RowPosition.Single,
                     showBackground = false,
                     checked = alwaysShowInfo,
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.immich.setAlwaysShowUserInfo(checked)
-                    }
+                    onSwitchClick = viewModel::setAlwaysShow
                 )
             }
 

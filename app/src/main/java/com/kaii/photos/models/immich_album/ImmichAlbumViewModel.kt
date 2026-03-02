@@ -4,31 +4,113 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.datastore.AlbumInfo
-import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.ImmichRepository
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
-    albumInfo: AlbumInfo,
-    info: ImmichBasicInfo,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat,
-    apiClient: ApiClient,
-    context: Context
+    context: Context,
+    albumInfo: AlbumInfo
 ) : ViewModel() {
+    private val settings = context.applicationContext.appModule.settings
+
+    val useBlackBackground = context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val confirmToDelete = context.appModule.settings.permissions.getConfirmToDelete().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val doNotTrash = context.appModule.settings.permissions.getDoNotTrash().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
+    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 3
+    )
+
+    val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = 256
+    )
+
+    val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = TopBarDetailsFormat.FileName
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val autoDetectAlbums = settings.albums.getAutoDetect().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val albums = settings.albums.get().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList()
+    )
+
     private val repo = ImmichRepository(
         albumInfo = albumInfo,
-        info = info,
         scope = viewModelScope,
-        sortMode = sortMode,
-        format = format,
-        apiClient = apiClient,
+        sortMode = settings.photoGrid.getSortMode(),
+        format = settings.lookAndFeel.getDisplayDateFormat(),
+        info = settings.immich.getImmichBasicInfo(),
+        apiClient = context.appModule.apiClient,
         context = context
     )
 
@@ -55,5 +137,13 @@ class ImmichAlbumViewModel(
         }
 
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+    }
+
+    fun editAlbum(id: Int, newInfo: AlbumInfo) {
+        settings.albums.edit(id, newInfo)
+    }
+
+    fun removeAlbum(id: Int) {
+        settings.albums.remove(id)
     }
 }

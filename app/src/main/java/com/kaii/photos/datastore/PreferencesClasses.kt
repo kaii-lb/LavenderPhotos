@@ -91,8 +91,6 @@ object DefaultTabs {
         TabTypes.albums,
         TabTypes.search
     )
-
-    val extendedList = defaultList + listOf(TabTypes.favourites, TabTypes.trash)
 }
 
 @Serializable

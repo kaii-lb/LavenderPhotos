@@ -48,7 +48,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
@@ -61,6 +60,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
+import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
@@ -72,24 +72,33 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainPages(
-    mainPhotosPaths: Set<String>,
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
+    mainGridViewModel: MainGridViewModel,
     deviceAlbums: State<List<AlbumGridState.Album>>,
     window: Window,
     incomingIntent: Intent?,
     blur: Boolean = false
 ) {
-    val mainViewModel = LocalMainViewModel.current
-
-    val defaultTab by mainViewModel.defaultTab.collectAsStateWithLifecycle()
-    val tabList by mainViewModel.tabList.collectAsStateWithLifecycle()
+    val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
+    val tabList by mainGridViewModel.tabList.collectAsStateWithLifecycle()
+    val immichInfo by mainGridViewModel.immichInfo.collectAsStateWithLifecycle()
+    val exitImmediately by mainGridViewModel.exitImmediately.collectAsStateWithLifecycle()
+    val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+    val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
+    val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
+    val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
+    val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = tabList.indexOf(defaultTab)
     ) { tabList.size }
-
-    val exitImmediately by mainViewModel.settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
 
     val coroutineScope = rememberCoroutineScope()
     val windowWidth = LocalWindowInfo.current.containerSize.width.toFloat()
@@ -141,11 +150,16 @@ fun MainPages(
                 alternate = isSelecting,
                 selectionManager = selectionManager,
                 pagerState = pagerState,
+                immichInfo = immichInfo,
+                tabList = tabList,
+                alwaysShowImmichInfo = alwaysShowImmichInfo,
+                extraSecureFolderEntry = extraSecureFolderEntry,
                 showTagDialog = showTagDialog,
                 isFromMediaPicker = incomingIntent != null,
                 setShowTagDialog = {
                     showTagDialog = true
-                }
+                },
+                addAlbum = mainGridViewModel::addAlbum
             )
         },
         bottomBar = {
@@ -155,7 +169,10 @@ fun MainPages(
                     selectionManager = selectionManager,
                     tabs = tabList,
                     defaultTab = defaultTab,
-                    scrollBehaviour = scrollBehaviour
+                    scrollBehaviour = scrollBehaviour,
+                    confirmToDelete = confirmToDelete,
+                    doNotTrash = doNotTrash,
+                    preserveDate = preserveDate
                 )
             }
         },
@@ -254,7 +271,7 @@ fun MainPages(
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
-                            multiAlbumViewModel.update(
+                            multiAlbumViewModel.changePaths(
                                 album = tab.toAlbumInfo()
                             )
                         }
@@ -263,7 +280,12 @@ fun MainPages(
                             viewModel = multiAlbumViewModel,
                             albumInfo = tab.toAlbumInfo(),
                             selectionManager = selectionManager,
-                            isMediaPicker = incomingIntent != null
+                            isMediaPicker = incomingIntent != null,
+                            columnSize = columnSize,
+                            openVideosExternally = openVideosExternally,
+                            cacheThumbnails = cacheThumbnails,
+                            thumbnailSize = thumbnailSize,
+                            useRoundedCorners = useRoundedCorners
                         )
                     }
 
@@ -271,7 +293,7 @@ fun MainPages(
                         LaunchedEffect(Unit) {
                             paths = mainPhotosPaths
 
-                            multiAlbumViewModel.update(
+                            multiAlbumViewModel.changePaths(
                                 album = tab.copy(
                                     albumPaths = mainPhotosPaths
                                 ).toAlbumInfo()
@@ -282,7 +304,12 @@ fun MainPages(
                             viewModel = multiAlbumViewModel,
                             selectionManager = selectionManager,
                             albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
-                            isMediaPicker = incomingIntent != null
+                            isMediaPicker = incomingIntent != null,
+                            columnSize = columnSize,
+                            openVideosExternally = openVideosExternally,
+                            cacheThumbnails = cacheThumbnails,
+                            thumbnailSize = thumbnailSize,
+                            useRoundedCorners = useRoundedCorners
                         )
                     }
 
@@ -291,9 +318,18 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.albums -> {
+                        val columnSize by mainGridViewModel.albumColumnSize.collectAsStateWithLifecycle()
+                        val sortMode by mainGridViewModel.albumSortMode.collectAsStateWithLifecycle()
+
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
-                            isMediaPicker = incomingIntent != null
+                            sortMode = sortMode,
+                            tabList = tabList,
+                            columnSize = columnSize,
+                            immichInfo = immichInfo,
+                            isMediaPicker = incomingIntent != null,
+                            setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
+                            setAlbums = mainGridViewModel::setAlbums
                         )
                     }
 
@@ -332,7 +368,10 @@ fun MainPages(
                             tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
                             defaultTab = defaultTab,
                             scrollBehaviour = scrollBehaviour,
-                            selectionManager = selectionManager
+                            selectionManager = selectionManager,
+                            confirmToDelete = confirmToDelete,
+                            doNotTrash = doNotTrash,
+                            preserveDate = preserveDate
                         )
                     } else {
                         MediaPickerConfirmButton(

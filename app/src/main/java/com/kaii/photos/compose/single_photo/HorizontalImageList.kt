@@ -43,7 +43,6 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
@@ -82,14 +81,14 @@ fun HorizontalImageList(
     scrollState: SinglePhotoScrollState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
+    useCache: Boolean,
     isSecuredMedia: Boolean = false
 ) {
-    val mainViewModel = LocalMainViewModel.current
     val windowSize = LocalWindowInfo.current.containerSize / 4
 
     val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
-    val useCache by mainViewModel.settings.storage.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
-    val blurBackground by mainViewModel.blurViews.collectAsStateWithLifecycle()
 
     HorizontalPager(
         state = state,
@@ -132,7 +131,7 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                if (blurBackground) {
+                if (blurViews) {
                     var targetAlpha by remember { mutableFloatStateOf(0f) }
                     val animatedAlpha by animateFloatAsState(
                         targetValue = targetAlpha,
@@ -169,6 +168,8 @@ fun HorizontalImageList(
                     scrollState = scrollState,
                     window = window,
                     shouldPlay = shouldPlay,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .transformable()
@@ -232,7 +233,7 @@ fun HorizontalImageList(
                         else -> media.item.uri
                     }
 
-                if (blurBackground) {
+                if (blurViews) {
                     var targetAlpha by remember { mutableFloatStateOf(0f) }
                     val animatedAlpha by animateFloatAsState(
                         targetValue = targetAlpha,
@@ -266,6 +267,8 @@ fun HorizontalImageList(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
+                        blurViews = blurViews,
+                        useBlackBackground = useBlackBackground,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = glideModel,

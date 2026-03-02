@@ -45,6 +45,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -53,6 +54,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,8 +74,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
@@ -81,8 +81,11 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -99,6 +102,8 @@ import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -112,11 +117,9 @@ fun SecurePhotoView(
     window: Window
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
     val navController = LocalNavController.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
-
 
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
     DisposableEffect(lifecycleState) {
@@ -124,11 +127,11 @@ fun SecurePhotoView(
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> {
-                        // if not navigating to grid view view
+                        // if not navigating to grid view
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.GridView::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) mainViewModel.launch(Dispatchers.IO) {
+                            if (event == Lifecycle.Event.ON_DESTROY) context.appModule.scope.launch(Dispatchers.IO) {
                                 File(context.appSecureVideoCacheDir).listFiles()?.forEach {
                                     it.delete()
                                 }
@@ -177,17 +180,30 @@ fun SecurePhotoView(
         }
     }
 
+    LaunchedEffect(items.itemCount) {
+        snapshotFlow { items.itemCount }.collectLatest {
+            delay(PhotoGridConstants.LOADING_TIME_SHORT)
+            if (items.itemCount == 0) launch(Dispatchers.Main) {
+                navController.popBackStack(Screens.SecureFolder::class, inclusive = false)
+            }
+        }
+    }
+
     val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
+            val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+
             SingleViewTopBar(
                 mediaItem = { currentMediaItem.item },
                 visible = appBarsVisible.value,
                 showInfoDialog = showInfoDialog,
                 isOpenWithDefaultView = false,
                 privacyMode = scrollState.privacyMode,
+                topBarDetailsFormat = topBarDetailsFormat,
+                showTags = false,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
@@ -207,7 +223,10 @@ fun SecurePhotoView(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
+        val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+        val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+        val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -222,7 +241,10 @@ fun SecurePhotoView(
                 window = window,
                 appBarsVisible = appBarsVisible,
                 isSecuredMedia = true,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
 
@@ -250,8 +272,6 @@ private fun BottomBar(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-    val applicationDatabase = LocalAppDatabase.current
 
     val showRestoreDialog = remember { mutableStateOf(false) }
     val showDeleteDialog = remember { mutableStateOf(false) }
@@ -271,11 +291,11 @@ private fun BottomBar(
 
     val permissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 moveImageOutOfLockedFolder(
                     list = listOf(securedMedia),
                     context = context,
-                    applicationDatabase = applicationDatabase
+                    applicationDatabase = MediaDatabase.getInstance(context)
                 ) {
                     isGettingPermissions.value = false
                     showLoadingDialog = false
@@ -310,7 +330,7 @@ private fun BottomBar(
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        mainViewModel.launch(Dispatchers.IO) {
+        context.appModule.scope.launch(Dispatchers.IO) {
             permanentlyDeleteSecureFolderImageList(
                 list = listOf(securedMedia.item.absolutePath),
                 context = context
@@ -352,7 +372,7 @@ private fun BottomBar(
                                 val item = securedMedia.item
                                 showLoadingDialog = true
 
-                                val iv = applicationDatabase.securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
+                                val iv = MediaDatabase.getInstance(context).securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
                                 if (iv == null) {
                                     Log.e(TAG, "IV for ${item.displayName} was null, aborting")
                                     return@launch

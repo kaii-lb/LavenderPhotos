@@ -36,8 +36,6 @@ import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
@@ -46,6 +44,7 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
@@ -113,7 +112,10 @@ fun IsSelectingBottomAppBar(
 @Composable
 fun SelectingBottomBarItems(
     albumInfo: AlbumInfo,
-    selectionManager: SelectionManager
+    selectionManager: SelectionManager,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -145,6 +147,7 @@ fun SelectingBottomBarItems(
         selectedItemsList = selectedItemsList,
         isMoving = isMoving,
         clear = selectionManager::clear,
+        preserveDate = preserveDate,
         insetsPadding = WindowInsets.statusBars
     )
 
@@ -174,12 +177,9 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val mainViewModel = LocalMainViewModel.current
-    val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
-
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,
@@ -198,10 +198,6 @@ fun SelectingBottomBarItems(
         }
     )
 
-    val confirmToDelete by mainViewModel.settings.permissions
-        .getConfirmToDelete()
-        .collectAsStateWithLifecycle(initialValue = true)
-
     val showDeleteDialog = remember { mutableStateOf(false) }
     if (!albumInfo.isCustomAlbum) {
         ConfirmationDialog(
@@ -219,7 +215,7 @@ fun SelectingBottomBarItems(
             dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 MediaDatabase.getInstance(context)
                     .customDao()
                     .deleteAll(
@@ -241,7 +237,7 @@ fun SelectingBottomBarItems(
                     uris = selectedItemsList.fastMap { it.toUri() }
                 )
             } else {
-                mainViewModel.launch(Dispatchers.IO) {
+                context.appModule.scope.launch(Dispatchers.IO) {
                     MediaDatabase.getInstance(context)
                         .customDao()
                         .deleteAll(
@@ -269,14 +265,13 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val appDatabase = LocalAppDatabase.current
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 moveMediaToSecureFolder(
                     list = selectedItemsList,
                     context = context,
-                    applicationDatabase = appDatabase
+                    applicationDatabase = MediaDatabase.getInstance(context)
                 ) {
                     selectionManager.clear()
                     showLoadingDialog = false

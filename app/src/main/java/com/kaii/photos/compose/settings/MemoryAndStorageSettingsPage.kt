@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -27,7 +28,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
@@ -35,17 +35,41 @@ import com.kaii.photos.compose.dialogs.ThumbnailSizeDialog
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
-fun MemoryAndStorageSettingsPage() {
-    val mainViewModel = LocalMainViewModel.current
+fun MemoryAndStorageSettingsPage(modifier: Modifier = Modifier) {
+    val settings = LocalContext.current.appModule.settings.storage
 
+    val thumbnailSize by settings.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
+    val cacheThumbnails by settings.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
+
+    MemoryAndStorageSettingsPageImpl(
+        thumbnailSize = thumbnailSize,
+        cacheThumbnails = cacheThumbnails,
+        modifier = modifier,
+        setCacheThumbnails = settings::setCacheThumbnails,
+        setThumbnailSize = settings::setThumbnailSize,
+        clearThumbnailCache = settings::clearThumbnailCache
+    )
+}
+
+@Composable
+private fun MemoryAndStorageSettingsPageImpl(
+    thumbnailSize: Int,
+    cacheThumbnails: Boolean,
+    modifier: Modifier,
+    setCacheThumbnails: (value: Boolean) -> Unit,
+    setThumbnailSize: (value: Int) -> Unit,
+    clearThumbnailCache: () -> Unit
+) {
     Scaffold(
         topBar = {
             MemoryAndStorageSettingsTopBar()
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -61,10 +85,6 @@ fun MemoryAndStorageSettingsPage() {
             item {
                 val resources = LocalResources.current
                 val showThumbnailSizeDialog = remember { mutableStateOf(false) }
-                val thumbnailSize by mainViewModel.settings.storage.getThumbnailSize()
-                    .collectAsStateWithLifecycle(initialValue = 0)
-                val cacheThumbnails by mainViewModel.settings.storage.getCacheThumbnails()
-                    .collectAsStateWithLifecycle(initialValue = true)
 
                 val memoryOrStorage by remember {
                     derivedStateOf {
@@ -96,10 +116,9 @@ fun MemoryAndStorageSettingsPage() {
                     summary = stringResource(id = R.string.settings_storage_thumbnails_cache_desc),
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = cacheThumbnails
-                ) { isChecked ->
-                    mainViewModel.settings.storage.setCacheThumbnails(isChecked)
-                }
+                    checked = cacheThumbnails,
+                    onSwitchClick = setCacheThumbnails
+                )
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
@@ -109,7 +128,7 @@ fun MemoryAndStorageSettingsPage() {
                     showBackground = false,
                     checked = thumbnailSize != 0,
                     onSwitchClick = { isChecked ->
-                        mainViewModel.settings.storage.setThumbnailSize(
+                        setThumbnailSize(
                             if (isChecked) 256 else 0
                         )
                     },
@@ -121,7 +140,8 @@ fun MemoryAndStorageSettingsPage() {
                 if (showThumbnailSizeDialog.value) {
                     ThumbnailSizeDialog(
                         showDialog = showThumbnailSizeDialog,
-                        initialValue = thumbnailSize
+                        initialValue = thumbnailSize,
+                        setThumbnailSize = setThumbnailSize
                     )
                 }
             }
@@ -143,10 +163,9 @@ fun MemoryAndStorageSettingsPage() {
                     showDialog = showConfirmationDialog,
                     confirmButtonLabel = stringResource(id = R.string.settings_clear),
                     dialogTitle = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
-                    dialogBody = stringResource(id = R.string.settings_clear_cache_desc)
-                ) {
-                    mainViewModel.settings.storage.clearThumbnailCache()
-                }
+                    dialogBody = stringResource(id = R.string.settings_clear_cache_desc),
+                    action = clearThumbnailCache
+                )
             }
         }
     }

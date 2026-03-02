@@ -27,30 +27,86 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.StartupManager
 
 @Composable
 fun PrivacyAndSecurityPage(
-    startupManager: StartupManager
+    startupManager: StartupManager,
+    modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
+    val settings = LocalContext.current.appModule.settings.permissions
 
+    val isMediaManager by settings.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
+    val confirmToDelete by settings.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
+    val preserveDate by settings.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
+    val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+
+    PrivacyAndSecurityPageImpl(
+        isMediaManager = isMediaManager,
+        confirmToDelete = confirmToDelete,
+        preserveDate = preserveDate,
+        doNotTrash = doNotTrash,
+        modifier = modifier,
+        setIsMediaManager = settings::setIsMediaManager,
+        setConfirmToDelete = settings::setConfirmToDelete,
+        setPreserveDate = settings::setPreserveDateOnMove,
+        setDoNotTrash = settings::setDoNotTrash,
+        onPermissionResult = {
+            startupManager.onPermissionResult(
+                permission = Manifest.permission.MANAGE_MEDIA,
+                isGranted = it
+            )
+        }
+    )
+}
+
+@Preview
+@Composable
+fun PrivacyAndSecurityPagePreview() {
+    PrivacyAndSecurityPageImpl(
+        isMediaManager = false,
+        confirmToDelete = false,
+        preserveDate = false,
+        doNotTrash = false,
+        modifier = Modifier,
+        setIsMediaManager = {},
+        setConfirmToDelete = {},
+        setPreserveDate = {},
+        setDoNotTrash = {},
+        onPermissionResult = {}
+    )
+}
+
+@Composable
+private fun PrivacyAndSecurityPageImpl(
+    isMediaManager: Boolean,
+    confirmToDelete: Boolean,
+    preserveDate: Boolean,
+    doNotTrash: Boolean,
+    modifier: Modifier,
+    setIsMediaManager: (value: Boolean) -> Unit,
+    setConfirmToDelete: (value: Boolean) -> Unit,
+    setPreserveDate: (value: Boolean) -> Unit,
+    setDoNotTrash: (value: Boolean) -> Unit,
+    onPermissionResult: (granted: Boolean) -> Unit
+) {
     Scaffold(
         topBar = {
             PrivacyAndSecuritySettingsTopBar()
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -65,19 +121,16 @@ fun PrivacyAndSecurityPage(
                 }
 
                 item {
-                    val isMediaManager by mainViewModel.settings.permissions.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
+                    val context = LocalContext.current
 
                     val manageMediaLauncher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { _ ->
                         val granted = MediaStore.canManageMedia(context)
 
-                        startupManager.onPermissionResult(
-                            permission = Manifest.permission.MANAGE_MEDIA,
-                            isGranted = granted
-                        )
+                        onPermissionResult(granted)
 
-                        mainViewModel.settings.permissions.setIsMediaManager(granted)
+                        setIsMediaManager(granted)
                     }
 
                     PreferencesSwitchRow(
@@ -101,48 +154,39 @@ fun PrivacyAndSecurityPage(
             }
 
             item {
-                val confirmToDelete by mainViewModel.settings.permissions.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_confirm_to_delete),
                     summary = stringResource(id = R.string.permissions_confirm_too_delete_desc),
                     iconResID = R.drawable.confirm_action,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = confirmToDelete
-                ) {
-                    mainViewModel.settings.permissions.setConfirmToDelete(it)
-                }
+                    checked = confirmToDelete,
+                    onSwitchClick = setConfirmToDelete
+                )
             }
 
             item {
-                val preserveDate by mainViewModel.settings.permissions.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_overwrite_date_on_move),
                     summary = stringResource(id = R.string.permissions_overwrite_date_on_move_desc),
                     iconResID = R.drawable.clock,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = preserveDate
-                ) {
-                    mainViewModel.settings.permissions.setPreserveDateOnMove(it)
-                }
+                    checked = preserveDate,
+                    onSwitchClick = setPreserveDate
+                )
             }
 
             item {
-                val doNotTrash by mainViewModel.settings.permissions.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.permissions_do_not_trash),
                     summary = stringResource(id = R.string.permissions_do_not_trash_desc),
                     iconResID = R.drawable.delete_forever,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = doNotTrash
-                ) {
-                    mainViewModel.settings.permissions.setDoNotTrash(it)
-                }
+                    checked = doNotTrash,
+                    onSwitchClick = setDoNotTrash
+                )
             }
         }
     }

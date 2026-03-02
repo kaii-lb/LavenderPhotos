@@ -103,11 +103,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.graphics.createBitmap
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmationDialog
@@ -129,9 +127,11 @@ import com.kaii.photos.compose.widgets.SimpleTab
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
@@ -354,7 +354,9 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    customAlbumId: Int?
+    customAlbumId: Int?,
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
@@ -411,14 +413,7 @@ fun VideoEditorTopBar(
         },
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
-
-            val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-            var overwrite by remember { mutableStateOf(false) }
-
-            LaunchedEffect(overwriteByDefault) {
-                overwrite = overwriteByDefault
-            }
+            var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
             DropdownMenu(
                 expanded = showDropDown,
@@ -459,14 +454,13 @@ fun VideoEditorTopBar(
                     val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
-                    val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before video is saved
                             // not using Dispatchers.IO since transformer needs to be on main thread
-                            mainViewModel.launch {
+                            context.appModule.scope.launch {
                                 navMediaId = saveVideo(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
@@ -507,7 +501,7 @@ fun VideoEditorTopBar(
                                         )
                                 }
 
-                                if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
+                                if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
                                     navController.previousBackStackEntry
                                         ?.savedStateHandle
                                         ?.set("editIndex", 0)
@@ -885,7 +879,7 @@ fun ImageEditorBottomBar(
 fun ImageEditorTopBar(
     modifications: List<ImageModification>,
     lastSavedModCount: MutableIntState,
-    overwrite: Boolean,
+    overwrite: () -> Boolean,
     isFromOpenWithView: Boolean,
     setOverwrite: (Boolean) -> Unit,
     saveImage: suspend () -> Unit,
@@ -938,13 +932,6 @@ fun ImageEditorTopBar(
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
 
-            val mainViewModel = LocalMainViewModel.current
-            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-
-            LaunchedEffect(overwriteByDefault) {
-                setOverwrite(overwriteByDefault)
-            }
-
             DropdownMenu(
                 expanded = showDropDown,
                 onDismissRequest = {
@@ -961,7 +948,7 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_overwrite_desc),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = overwrite
+                    isSelected = overwrite()
                 ) {
                     setOverwrite(true)
                     showDropDown = false
@@ -970,13 +957,14 @@ fun ImageEditorTopBar(
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_save),
                     iconResId = R.drawable.checkmark_thin,
-                    isSelected = !overwrite
+                    isSelected = !overwrite()
                 ) {
                     setOverwrite(false)
                     showDropDown = false
                 }
             }
 
+            val context = LocalContext.current
             SplitButtonLayout(
                 leadingButton = {
                     SplitButtonDefaults.LeadingButton(
@@ -984,14 +972,14 @@ fun ImageEditorTopBar(
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before image is saved
-                            mainViewModel.launch(Dispatchers.IO) {
+                            context.appModule.scope.launch(Dispatchers.IO) {
                                 saveImage()
                             }
                         }
                     ) {
                         Text(
                             text =
-                                if (overwrite) stringResource(id = R.string.editing_overwrite)
+                                if (overwrite()) stringResource(id = R.string.editing_overwrite)
                                 else stringResource(id = R.string.editing_save)
                         )
                     }
@@ -1038,7 +1026,9 @@ fun SingleViewTopBar(
     visible: Boolean,
     showInfoDialog: Boolean,
     privacyMode: Boolean,
-    isOpenWithDefaultView: Boolean = false,
+    topBarDetailsFormat: TopBarDetailsFormat,
+    isOpenWithDefaultView: Boolean,
+    showTags: Boolean,
     showTagDialog: Boolean = false,
     expandInfoDialog: () -> Unit,
     expandTagDialog: () -> Unit = {}
@@ -1123,9 +1113,6 @@ fun SingleViewTopBar(
                     )
                 }
 
-                val mainViewModel = LocalMainViewModel.current
-                val topBarDetailsFormat by mainViewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
-
                 Text(
                     text = topBarDetailsFormat.format(context, mediaItem().displayName, mediaItem().dateTaken),
                     fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
@@ -1167,21 +1154,23 @@ fun SingleViewTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                FilledIconToggleButton(
-                    checked = showTagDialog,
-                    onCheckedChange = {
-                        expandTagDialog()
-                    },
-                    shapes = IconButtonDefaults.toggleableShapes(
-                        shape = IconButtonDefaults.filledShape,
-                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
-                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.sell),
-                        contentDescription = stringResource(id = R.string.tags)
-                    )
+                if (showTags) {
+                    FilledIconToggleButton(
+                        checked = showTagDialog,
+                        onCheckedChange = {
+                            expandTagDialog()
+                        },
+                        shapes = IconButtonDefaults.toggleableShapes(
+                            shape = IconButtonDefaults.filledShape,
+                            pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                            checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sell),
+                            contentDescription = stringResource(id = R.string.tags)
+                        )
+                    }
                 }
 
                 FilledIconToggleButton(

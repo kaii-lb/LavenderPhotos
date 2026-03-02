@@ -37,19 +37,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 // private const val TAG = "com.kaii.photos.compose.grids.LockedFolderView"
@@ -62,7 +63,6 @@ fun SecureFolderView(
 ) {
     val context = LocalContext.current
     val navController = LocalNavController.current
-    val mainViewModel = LocalMainViewModel.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
     val isGettingPermissions = rememberSaveable {
@@ -78,7 +78,7 @@ fun SecureFolderView(
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) mainViewModel.launch(Dispatchers.IO) {
+                            if (event == Lifecycle.Event.ON_DESTROY) context.appModule.scope.launch(Dispatchers.IO) {
                                 File(context.appSecureVideoCacheDir).listFiles()?.forEach {
                                     it.delete()
                                 }
@@ -161,11 +161,22 @@ fun SecureFolderView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+            val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+            val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+            val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+            val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
                 selectionManager = selectionManager,
-                viewProperties = ViewProperties.SecureFolder
+                viewProperties = ViewProperties.SecureFolder,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
             )
         }
     }

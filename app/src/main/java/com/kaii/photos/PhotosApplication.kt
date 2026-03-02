@@ -9,6 +9,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
+import com.kaii.photos.di.AppModule
 import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,9 +17,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class PhotosApplication : Application() {
+    lateinit var appModule: AppModule
+
     override fun onCreate() {
         super.onCreate()
 
+        appModule = AppModule(applicationContext)
+
+        registerContentObserver()
+    }
+
+    private fun registerContentObserver() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val syncManager = SyncManager(applicationContext)
 

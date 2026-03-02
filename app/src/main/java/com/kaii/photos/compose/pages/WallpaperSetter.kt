@@ -1,4 +1,4 @@
-package com.kaii.photos.compose
+package com.kaii.photos.compose.pages
 
 import android.app.WallpaperManager
 import android.content.Intent
@@ -37,7 +37,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.IntSize
@@ -45,15 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.compose.app_bars.WallpaperSetterBottomBar
 import com.kaii.photos.compose.app_bars.WallpaperSetterTopBar
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.models.main_activity.MainViewModel
-import com.kaii.photos.models.main_activity.MainViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlin.math.roundToInt
 
@@ -68,9 +65,6 @@ class WallpaperSetter : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val mainViewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(applicationContext, emptyList())
-            )
             val initial =
                 when (AppCompatDelegate.getDefaultNightMode()) {
                     AppCompatDelegate.MODE_NIGHT_YES -> 1
@@ -78,7 +72,8 @@ class WallpaperSetter : ComponentActivity() {
 
                     else -> 0
                 }
-            val followDarkTheme by mainViewModel.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
+
+            val followDarkTheme by applicationContext.appModule.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
 
             PhotosTheme(
                 theme = followDarkTheme,
@@ -140,7 +135,6 @@ class WallpaperSetter : ComponentActivity() {
                     )
             ) {
                 val windowInfo = LocalWindowInfo.current
-                val localDensity = LocalDensity.current
                 val aspectRatio = bitmap.width.toFloat() / bitmap.height
 
                 var imageSize by remember { mutableStateOf(IntSize.Zero) }
@@ -179,9 +173,7 @@ class WallpaperSetter : ComponentActivity() {
                             }
                         }
                         .onGloballyPositioned {
-                            with(localDensity) {
-                                imageSize = it.size
-                            }
+                            imageSize = it.size
                         }
                         .offset {
                             animatedOffset.round()
@@ -191,18 +183,16 @@ class WallpaperSetter : ComponentActivity() {
                             detectTransformGestures { _, pan, zoom, _ ->
                                 scale = (scale * zoom).coerceIn(1f, 5f)
 
-                                with(localDensity) {
-                                    val minX = (windowInfo.containerSize.width - imageSize.width * scale) / 2
-                                    val maxX = -minX
+                                val minX = (windowInfo.containerSize.width - imageSize.width * scale) / 2
+                                val maxX = -minX
 
-                                    val minY = (windowInfo.containerSize.height - imageSize.height * scale) / 2
-                                    val maxY = -minY
+                                val minY = (windowInfo.containerSize.height - imageSize.height * scale) / 2
+                                val maxY = -minY
 
-                                    offset = Offset(
-                                        x = (offset.x + pan.x * scale).coerceIn(minX, maxX),
-                                        y = (offset.y + pan.y * scale).coerceIn(minY, maxY)
-                                    )
-                                }
+                                offset = Offset(
+                                    x = (offset.x + pan.x * scale).coerceIn(minX, maxX),
+                                    y = (offset.y + pan.y * scale).coerceIn(minY, maxY)
+                                )
                             }
                         }
                         .pointerInput(Unit) {

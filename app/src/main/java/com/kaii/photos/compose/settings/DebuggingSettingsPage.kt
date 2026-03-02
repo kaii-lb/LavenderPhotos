@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -34,7 +35,6 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -44,6 +44,7 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -55,13 +56,41 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun DebuggingSettingsPage() {
-    val mainViewModel = LocalMainViewModel.current
+fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
+    val settings = LocalContext.current.appModule.settings
+    val shouldRecordLogs by settings.debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
+    DebuggingSettingsPageImpl(
+        shouldRecordLogs = shouldRecordLogs,
+        modifier = modifier,
+        setRecordLogs = settings.debugging::setRecordLogs,
+        addAlbum = { settings.albums.add(listOf(it)) }
+    )
+}
+
+@Preview
+@Composable
+private fun DebuggingSettingsPagePreview() {
+    DebuggingSettingsPageImpl(
+        shouldRecordLogs = false,
+        modifier = Modifier,
+        setRecordLogs = {},
+        addAlbum = {}
+    )
+}
+
+@Composable
+private fun DebuggingSettingsPageImpl(
+    shouldRecordLogs: Boolean,
+    modifier: Modifier,
+    setRecordLogs: (value: Boolean) -> Unit,
+    addAlbum: (album: AlbumInfo) -> Unit
+) {
     Scaffold(
         topBar = {
             DebuggingSettingsTopBar()
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -76,9 +105,6 @@ fun DebuggingSettingsPage() {
 
             item {
                 val context = LocalContext.current
-                val shouldRecordLogs by mainViewModel.settings.debugging.getRecordLogs()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
                 val coroutineScope = rememberCoroutineScope()
                 val showLogTypeDialog = remember { mutableStateOf(false) }
 
@@ -92,9 +118,7 @@ fun DebuggingSettingsPage() {
                     onRowClick = {
                         showLogTypeDialog.value = !showLogTypeDialog.value
                     },
-                    onSwitchClick = {
-                        mainViewModel.settings.debugging.setRecordLogs(it)
-                    }
+                    onSwitchClick = setRecordLogs
                 )
 
                 if (showLogTypeDialog.value) {
@@ -202,14 +226,12 @@ fun DebuggingSettingsPage() {
                             ) {
                                 false
                             } else {
-                                mainViewModel.settings.albums.add(
-                                    listOf(
+                                addAlbum(
                                         AlbumInfo(
                                             id = file.hashCode(),
                                             name = file.name,
                                             paths = setOf(file.relativePath)
                                         )
-                                    )
                                 )
 
                                 showAddAlbumsDialog = false

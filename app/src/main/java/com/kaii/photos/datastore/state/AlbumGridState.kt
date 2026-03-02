@@ -11,12 +11,12 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.profilePicture
@@ -210,23 +210,21 @@ class AlbumGridState(
 @Composable
 fun rememberAlbumGridState(): AlbumGridState {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
     val apiClient = LocalApiClient.current
     val coroutineScope = rememberCoroutineScope()
 
-    val info by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+    val info by context.appModule.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
     val loginState = rememberLoginState(baseUrl = info.endpoint)
 
-
-    return remember(loginState) {
+    return remember(loginState, info) {
         AlbumGridState(
             scope = coroutineScope,
             context = context,
-            albumsFlow = mainViewModel.settings.albums.get(),
-            sortModeFlow = mainViewModel.sortMode,
-            albumSortModeFlow = mainViewModel.settings.albums.getAlbumSortMode(),
-            allAlbumsFlow = mainViewModel.settings.albums.getAutoDetect(),
-            info = mainViewModel.settings.immich.getImmichBasicInfo(),
+            albumsFlow = context.appModule.settings.albums.get(),
+            sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
+            albumSortModeFlow = context.appModule.settings.albums.getAlbumSortMode(),
+            allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
+            info = context.appModule.settings.immich.getImmichBasicInfo(),
             apiClient = apiClient,
             checkLoggedIn = {
                 loginState.refresh(
@@ -238,8 +236,8 @@ fun rememberAlbumGridState(): AlbumGridState {
                 loginState.state.value is LoginState.LoggedIn
             },
             updateAlbums = { added, removed ->
-                mainViewModel.settings.albums.add(added)
-                mainViewModel.settings.albums.removeAll(removed)
+                context.appModule.settings.albums.add(added)
+                context.appModule.settings.albums.removeAll(removed)
             }
         )
     }

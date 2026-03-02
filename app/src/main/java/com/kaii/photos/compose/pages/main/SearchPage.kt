@@ -57,6 +57,13 @@ fun SearchPage(
                 .padding(top = 64.dp)
         ) {
             val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+
+            val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+            val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+            val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+            val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+            val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
             PhotoGrid(
                 pagingItems = items,
                 albumInfo = AlbumInfo.Empty,
@@ -65,6 +72,11 @@ fun SearchPage(
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
                 modifier = Modifier
                     .align(Alignment.Center)
             )
@@ -85,7 +97,6 @@ fun SearchPage(
         }
 
         val selectedTags by viewModel.selectedTags.collectAsStateWithLifecycle()
-
         val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
         val searchMode by viewModel.searchMode.collectAsStateWithLifecycle()
         val searchingForTags by viewModel.searchingForTags.collectAsStateWithLifecycle()
@@ -116,7 +127,10 @@ fun SearchPage(
             onToggleTag = { tag ->
                 viewModel.toggleTagSelected(tag)
             },
-            onTagRemove = viewModel::deleteTag,
+            onTagRemove = {
+                currentTag = it
+                showDialog.value = true
+            },
             setSearchingForTags = viewModel::setSearchingForTags,
             onClearTags = viewModel::clearSelectedTags
         )

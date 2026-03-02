@@ -101,7 +101,7 @@ interface Screens {
     }
 
     @Serializable
-    object MainPages {
+    object MainPages : Screens {
         @Serializable
         object MainGrid : Screens {
             @Serializable
@@ -169,5 +169,14 @@ interface Screens {
             @Serializable
             object ExtendedLicensePage : Screens
         }
+    }
+
+    @Serializable
+    object Startup {
+        @Serializable
+        object PermissionsPage : Screens
+
+        @Serializable
+        object ProcessingPage : Screens
     }
 }

@@ -36,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
@@ -46,6 +46,7 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -68,21 +69,25 @@ fun SingleAlbumView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
-    val mainViewModel = LocalMainViewModel.current
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
     }
 
-    LaunchedEffect(dynamicAlbum) {
-        viewModel.update(album = dynamicAlbum)
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
-    val selectionManager = rememberSelectionManager(paths = dynamicAlbum.paths)
+    LaunchedEffect(dynamicAlbum) {
+        viewModel.changePaths(album = dynamicAlbum!!)
+    }
+
+    val selectionManager = rememberSelectionManager(paths = dynamicAlbum!!.paths)
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
             context = LocalContext.current
@@ -100,19 +105,41 @@ fun SingleAlbumView(
         }
     }
 
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
+
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Album,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -122,18 +149,32 @@ fun SingleAlbumView(
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mainViewModel = LocalMainViewModel.current
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
+    }
+
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
+
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -154,17 +195,29 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.CustomAlbum,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         tags = tags,
         selectedTags = selectedTags,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -174,18 +227,32 @@ fun SingleAlbumView(
     viewModel: ImmichAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val mainViewModel = LocalMainViewModel.current
+    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
 
-    val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-
+    val navController = LocalNavController.current
     val dynamicAlbum by remember {
         derivedStateOf {
-            allAlbums.first { it.id == albumInfo.id }
+            allAlbums.find { it.id == albumInfo.id }
         }
+    }
+
+    if (dynamicAlbum == null) {
+        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        return
     }
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
+
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -206,17 +273,29 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
-        albumInfo = { dynamicAlbum },
+        albumInfo = { dynamicAlbum!! },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
         tags = tags,
         selectedTags = selectedTags,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        preserveDate = preserveDate,
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
-        onTagDelete = tagViewModel::deleteTag
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum
     )
 }
 
@@ -225,9 +304,19 @@ fun SingleAlbumView(
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
     viewProperties: ViewProperties,
+    columnSize: Int,
+    openVideosExternally: Boolean,
+    cacheThumbnails: Boolean,
+    thumbnailSize: Int,
+    useRoundedCorners: Boolean,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean,
     modifier: Modifier = Modifier,
     tags: List<Tag>,
     selectedTags: List<Tag>,
@@ -235,7 +324,9 @@ private fun SingleAlbumViewCommon(
     albumSize: suspend () -> String,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
-    onTagDelete: (tag: Tag) -> Unit
+    onTagDelete: (tag: Tag) -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -245,6 +336,8 @@ private fun SingleAlbumViewCommon(
         val vibratorManager = rememberVibratorManager()
         AlbumInfoDialog(
             albumInfo = albumInfo,
+            albums = albums,
+            autoDetectAlbums = autoDetectAlbums,
             sheetState = sheetState,
             itemCount = mediaCount,
             albumSize = albumSize,
@@ -253,6 +346,14 @@ private fun SingleAlbumViewCommon(
                 selectionManager.enterSelectMode()
                 coroutineScope.launch {
                     sheetState.hide()
+                    showInfoDialog = false
+                }
+            },
+            editAlbum = editAlbum,
+            removeAlbum = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    removeAlbum(it)
                     showInfoDialog = false
                 }
             },
@@ -300,7 +401,10 @@ private fun SingleAlbumViewCommon(
                 SingleAlbumViewBottomBar(
                     albumInfo = albumInfo,
                     selectionManager = selectionManager,
-                    incomingIntent = incomingIntent
+                    incomingIntent = incomingIntent,
+                    confirmToDelete = confirmToDelete,
+                    doNotTrash = doNotTrash,
+                    preserveDate = preserveDate
                 )
             }
         }
@@ -348,7 +452,12 @@ private fun SingleAlbumViewCommon(
                 albumInfo = albumInfo(),
                 selectionManager = selectionManager,
                 viewProperties = viewProperties,
-                isMediaPicker = incomingIntent != null
+                isMediaPicker = incomingIntent != null,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
             )
         }
     }

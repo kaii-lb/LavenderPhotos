@@ -28,37 +28,37 @@ private const val TAG = "com.kaii.photos.datastore.PreferencesClasses"
 
 val Context.datastore by preferencesDataStore(name = "settings")
 
-class Settings(val context: Context, val viewModelScope: CoroutineScope) {
-    val debugging = SettingsDebuggingImpl(context, viewModelScope)
+class Settings(val context: Context, val scope: CoroutineScope) {
+    val debugging = SettingsDebuggingImpl(context, scope)
 
-    val permissions = SettingsPermissionsImpl(context, viewModelScope)
+    val permissions = SettingsPermissionsImpl(context, scope)
 
-    val albums = SettingsAlbumsListImpl(context, viewModelScope)
+    val albums = SettingsAlbumsListImpl(context, scope)
 
-    val versions = SettingsVersionImpl(context, viewModelScope)
+    val versions = SettingsVersionImpl(context, scope)
 
-    val storage = SettingsStorageImpl(context, viewModelScope)
+    val storage = SettingsStorageImpl(context, scope)
 
-    val video = SettingsVideoImpl(context, viewModelScope)
+    val video = SettingsVideoImpl(context, scope)
 
-    val lookAndFeel = SettingsLookAndFeelImpl(context, viewModelScope)
+    val lookAndFeel = SettingsLookAndFeelImpl(context, scope)
 
-    val editing = SettingsEditingImpl(context, viewModelScope)
+    val editing = SettingsEditingImpl(context, scope)
 
-    val mainPhotosView = SettingMainPhotosViewImpl(context, viewModelScope)
+    val mainPhotosView = SettingMainPhotosViewImpl(context, scope)
 
-    val defaultTabs = SettingsDefaultTabsImpl(context, viewModelScope)
+    val defaultTabs = SettingsDefaultTabsImpl(context, scope)
 
-    val photoGrid = SettingsPhotoGridImpl(context, viewModelScope)
+    val photoGrid = SettingsPhotoGridImpl(context, scope)
 
-    val immich = SettingsImmichImpl(context, viewModelScope)
+    val immich = SettingsImmichImpl(context, scope)
 
-    val behaviour = SettingsBehaviourImpl(context, viewModelScope)
+    val behaviour = SettingsBehaviourImpl(context, scope)
 }
 
 class SettingsAlbumsListImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val oldAlbumsKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
@@ -67,7 +67,7 @@ class SettingsAlbumsListImpl(
 
     val json = Json { ignoreUnknownKeys = true }
 
-    fun add(list: List<AlbumInfo>) = viewModelScope.launch {
+    fun add(list: List<AlbumInfo>) = scope.launch {
         context.datastore.edit { data ->
             var stringList = data[albumsKey]
 
@@ -153,13 +153,13 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun set(list: List<AlbumInfo>) = viewModelScope.launch {
+    fun set(list: List<AlbumInfo>) = scope.launch {
         context.datastore.edit {
             it[albumsKey] = json.encodeToString(list)
         }
     }
 
-    fun remove(albumId: Int) = viewModelScope.launch {
+    fun remove(albumId: Int) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
             val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
@@ -172,7 +172,7 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun removeAll(albums: List<Int>) = viewModelScope.launch {
+    fun removeAll(albums: List<Int>) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
             val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
@@ -188,7 +188,7 @@ class SettingsAlbumsListImpl(
     fun edit(
         id: Int,
         newInfo: AlbumInfo
-    ) = viewModelScope.launch {
+    ) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
 
@@ -201,19 +201,19 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun reset() = viewModelScope.launch {
+    fun reset() = scope.launch {
         context.datastore.edit {
             it[albumsKey] = jsonDefaultAlbumsList
         }
     }
 
-    private fun resetOld() = viewModelScope.launch {
+    private fun resetOld() = scope.launch {
         context.datastore.edit {
             it[oldAlbumsKey] = "RESET" + it[oldAlbumsKey]
         }
     }
 
-    fun setAlbumSortMode(sortMode: AlbumSortMode) = viewModelScope.launch {
+    fun setAlbumSortMode(sortMode: AlbumSortMode) = scope.launch {
         context.datastore.edit {
             it[sortModeKey] = sortMode.ordinal
         }
@@ -227,7 +227,7 @@ class SettingsAlbumsListImpl(
         it[autoDetectAlbumsKey] != false
     }
 
-    fun setAutoDetect(value: Boolean) = viewModelScope.launch {
+    fun setAutoDetect(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[autoDetectAlbumsKey] = value
         }
@@ -258,7 +258,7 @@ class SettingsAlbumsListImpl(
 
 class SettingsVersionImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val showUpdateNotice = booleanPreferencesKey("show_update_notice")
     private val checkForUpdatesOnStartup = booleanPreferencesKey("check_for_updates_on_startup")
@@ -270,7 +270,7 @@ class SettingsVersionImpl(
             it[showUpdateNotice] != false
         }
 
-    fun setShowUpdateNotice(value: Boolean) = viewModelScope.launch {
+    fun setShowUpdateNotice(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[showUpdateNotice] = value
         }
@@ -281,7 +281,7 @@ class SettingsVersionImpl(
             it[checkForUpdatesOnStartup] == true
         }
 
-    fun setCheckUpdatesOnStartup(value: Boolean) = viewModelScope.launch {
+    fun setCheckUpdatesOnStartup(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[checkForUpdatesOnStartup] = value
         }
@@ -292,7 +292,7 @@ class SettingsVersionImpl(
             it[clearGlideCache] == true
         }
 
-    fun setHasClearedGlideCache(value: Boolean) = viewModelScope.launch {
+    fun setHasClearedGlideCache(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[clearGlideCache] = value
         }
@@ -303,7 +303,7 @@ class SettingsVersionImpl(
             data[migrateFav] != false
         }
 
-    fun setUpdateFav(value: Boolean) = viewModelScope.launch {
+    fun setUpdateFav(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[migrateFav] = value
         }
@@ -311,7 +311,7 @@ class SettingsVersionImpl(
 }
 class SettingsDebuggingImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val recordLogsKey = booleanPreferencesKey("debugging_record_logs")
 
@@ -320,7 +320,7 @@ class SettingsDebuggingImpl(
             it[recordLogsKey] != false
         }
 
-    fun setRecordLogs(value: Boolean) = viewModelScope.launch {
+    fun setRecordLogs(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[recordLogsKey] = value
         }
@@ -329,7 +329,7 @@ class SettingsDebuggingImpl(
 
 class SettingsPermissionsImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
@@ -341,7 +341,7 @@ class SettingsPermissionsImpl(
             it[isMediaManagerKey] == true
         }
 
-    fun setIsMediaManager(value: Boolean) = viewModelScope.launch {
+    fun setIsMediaManager(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[isMediaManagerKey] = value
         }
@@ -352,7 +352,7 @@ class SettingsPermissionsImpl(
             it[confirmToDelete] != false
         }
 
-    fun setConfirmToDelete(value: Boolean) = viewModelScope.launch {
+    fun setConfirmToDelete(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[confirmToDelete] = value
         }
@@ -363,7 +363,7 @@ class SettingsPermissionsImpl(
             it[preserveDateOnMoveKey] != false
         }
 
-    fun setPreserveDateOnMove(value: Boolean) = viewModelScope.launch {
+    fun setPreserveDateOnMove(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[preserveDateOnMoveKey] = value
         }
@@ -374,7 +374,7 @@ class SettingsPermissionsImpl(
             it[doNotTrashKey] == true
         }
 
-    fun setDoNotTrash(value: Boolean) = viewModelScope.launch {
+    fun setDoNotTrash(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[doNotTrashKey] = value
         }
@@ -383,7 +383,7 @@ class SettingsPermissionsImpl(
 
 class SettingsStorageImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val thumbnailSizeKey = intPreferencesKey("thumbnail_size_key")
     private val cacheThumbnailsKey = booleanPreferencesKey("cache_thumbnails_key")
@@ -393,7 +393,7 @@ class SettingsStorageImpl(
             it[thumbnailSizeKey] ?: 256
         }
 
-    fun setThumbnailSize(value: Int) = viewModelScope.launch {
+    fun setThumbnailSize(value: Int) = scope.launch {
         context.datastore.edit {
             it[thumbnailSizeKey] = value
         }
@@ -404,20 +404,20 @@ class SettingsStorageImpl(
             it[cacheThumbnailsKey] != false
         }
 
-    fun setCacheThumbnails(value: Boolean) = viewModelScope.launch {
+    fun setCacheThumbnails(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[cacheThumbnailsKey] = value
         }
     }
 
-    fun clearThumbnailCache() = viewModelScope.launch {
+    fun clearThumbnailCache() = scope.launch {
         withContext(Dispatchers.IO) {
             Glide.get(context.applicationContext).clearDiskCache()
         }
     }
 }
 
-class SettingsVideoImpl(private val context: Context, private val viewModelScope: CoroutineScope) {
+class SettingsVideoImpl(private val context: Context, private val scope: CoroutineScope) {
     private val shouldAutoPlayKey = booleanPreferencesKey("video_should_autoplay")
     private val muteOnStartKey = booleanPreferencesKey("video_mute_on_start")
 
@@ -426,7 +426,7 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
             it[shouldAutoPlayKey] != false
         }
 
-    fun setShouldAutoPlay(value: Boolean) = viewModelScope.launch {
+    fun setShouldAutoPlay(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[shouldAutoPlayKey] = value
         }
@@ -437,7 +437,7 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
             it[muteOnStartKey] == true
         }
 
-    fun setMuteOnStart(value: Boolean) = viewModelScope.launch {
+    fun setMuteOnStart(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[muteOnStartKey] = value
         }
@@ -446,7 +446,7 @@ class SettingsVideoImpl(private val context: Context, private val viewModelScope
 
 class SettingsLookAndFeelImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
     private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
@@ -471,7 +471,7 @@ class SettingsLookAndFeelImpl(
      * 1 is dark
      * 2 is light
      * 3 is amoled black */
-    fun setFollowDarkMode(value: Int) = viewModelScope.launch {
+    fun setFollowDarkMode(value: Int) = scope.launch {
         context.datastore.edit {
             it[followDarkModeKey] = value
         }
@@ -482,7 +482,7 @@ class SettingsLookAndFeelImpl(
             DisplayDateFormat.entries[it[displayDateFormat] ?: 0]
         }
 
-    fun setDisplayDateFormat(format: DisplayDateFormat) = viewModelScope.launch {
+    fun setDisplayDateFormat(format: DisplayDateFormat) = scope.launch {
         context.datastore.edit {
             it[displayDateFormat] = DisplayDateFormat.entries.indexOf(format)
         }
@@ -493,7 +493,7 @@ class SettingsLookAndFeelImpl(
             it[columnSize] ?: 3
         }
 
-    fun setColumnSize(size: Int) = viewModelScope.launch {
+    fun setColumnSize(size: Int) = scope.launch {
         context.datastore.edit {
             it[columnSize] = size
         }
@@ -504,7 +504,7 @@ class SettingsLookAndFeelImpl(
             it[albumColumnSize] ?: 2
         }
 
-    fun setAlbumColumnSize(size: Int) = viewModelScope.launch {
+    fun setAlbumColumnSize(size: Int) = scope.launch {
         context.datastore.edit {
             it[albumColumnSize] = size
         }
@@ -515,7 +515,7 @@ class SettingsLookAndFeelImpl(
             it[blackBackgroundForViews] == true
         }
 
-    fun setUseBlackBackgroundForViews(value: Boolean) = viewModelScope.launch {
+    fun setUseBlackBackgroundForViews(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[blackBackgroundForViews] = value
         }
@@ -527,7 +527,7 @@ class SettingsLookAndFeelImpl(
             it[showExtraSecureNav] == true
         }
 
-    fun setShowExtraSecureNav(value: Boolean) = viewModelScope.launch {
+    fun setShowExtraSecureNav(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[showExtraSecureNav] = value
         }
@@ -539,7 +539,7 @@ class SettingsLookAndFeelImpl(
             it[useRoundedCorners] == true
         }
 
-    fun setUseRoundedCorners(value: Boolean) = viewModelScope.launch {
+    fun setUseRoundedCorners(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[useRoundedCorners] = value
         }
@@ -550,7 +550,7 @@ class SettingsLookAndFeelImpl(
             TopBarDetailsFormat.entries[it[topBarDetailsFormat] ?: 0]
         }
 
-    fun setTopBarDetailsFormat(format: TopBarDetailsFormat) = viewModelScope.launch {
+    fun setTopBarDetailsFormat(format: TopBarDetailsFormat) = scope.launch {
         context.datastore.edit {
             it[topBarDetailsFormat] = TopBarDetailsFormat.entries.indexOf(format)
         }
@@ -561,7 +561,7 @@ class SettingsLookAndFeelImpl(
             it[blurForViews] ?: false
         }
 
-    fun setBlurViews(value: Boolean) = viewModelScope.launch {
+    fun setBlurViews(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[blurForViews] = value
         }
@@ -570,7 +570,7 @@ class SettingsLookAndFeelImpl(
 
 class SettingsEditingImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val overwriteByDefaultKey = booleanPreferencesKey("editing_overwrite_by_default")
     private val exitOnSaveKey = booleanPreferencesKey("exit_on_save")
@@ -580,7 +580,7 @@ class SettingsEditingImpl(
             it[overwriteByDefaultKey] == true
         }
 
-    fun setOverwriteByDefault(value: Boolean) = viewModelScope.launch {
+    fun setOverwriteByDefault(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[overwriteByDefaultKey] = value
         }
@@ -591,7 +591,7 @@ class SettingsEditingImpl(
             it[exitOnSaveKey] == true
         }
 
-    fun setExitOnSave(value: Boolean) = viewModelScope.launch {
+    fun setExitOnSave(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[exitOnSaveKey] = value
         }
@@ -600,7 +600,7 @@ class SettingsEditingImpl(
 
 class SettingMainPhotosViewImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
     private val shouldShowEverything = booleanPreferencesKey("main_photos_show_everything")
@@ -620,7 +620,7 @@ class SettingMainPhotosViewImpl(
             }.toSet()
         }
 
-    fun addAlbum(relativePath: String) = viewModelScope.launch {
+    fun addAlbum(relativePath: String) = scope.launch {
         context.datastore.edit {
             var list = it[mainPhotosAlbumsList] ?: defaultAlbumsList
 
@@ -632,7 +632,7 @@ class SettingMainPhotosViewImpl(
         }
     }
 
-    fun clear() = viewModelScope.launch {
+    fun clear() = scope.launch {
         context.datastore.edit {
             it[mainPhotosAlbumsList] = ""
         }
@@ -643,7 +643,7 @@ class SettingMainPhotosViewImpl(
             it[shouldShowEverything] == true
         }
 
-    fun setShowEverything(value: Boolean) = viewModelScope.launch {
+    fun setShowEverything(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[shouldShowEverything] = value
         }
@@ -657,7 +657,7 @@ class SettingMainPhotosViewImpl(
 
 class SettingsDefaultTabsImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val defaultTab = stringPreferencesKey("default_tabs_first")
     private val tabList = stringPreferencesKey("default_tabs_list")
@@ -706,7 +706,7 @@ class SettingsDefaultTabsImpl(
         }
     }
 
-    fun setTabList(list: List<BottomBarTab>) = viewModelScope.launch {
+    fun setTabList(list: List<BottomBarTab>) = scope.launch {
         context.datastore.edit {
             if (list.isEmpty()) {
                 it[tabList] = defaultTabListJson
@@ -748,7 +748,7 @@ class SettingsDefaultTabsImpl(
         }
     }
 
-    fun setDefaultTab(tab: BottomBarTab) = viewModelScope.launch {
+    fun setDefaultTab(tab: BottomBarTab) = scope.launch {
         context.datastore.edit {
             it[defaultTab] = Json.encodeToString(tab)
         }
@@ -779,7 +779,7 @@ class SettingsDefaultTabsImpl(
 
 class SettingsPhotoGridImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val mediaSortModeKey = stringPreferencesKey("media_sort_mode")
 
@@ -792,7 +792,7 @@ class SettingsPhotoGridImpl(
             ?: throw IllegalArgumentException("Sort mode $name does not exist! This should never happen!")
     }
 
-    fun setSortMode(mode: MediaItemSortMode) = viewModelScope.launch {
+    fun setSortMode(mode: MediaItemSortMode) = scope.launch {
         context.datastore.edit {
             it[mediaSortModeKey] = mode.name
         }
@@ -801,7 +801,7 @@ class SettingsPhotoGridImpl(
 
 class SettingsImmichImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
@@ -828,7 +828,7 @@ class SettingsImmichImpl(
         )
     }
 
-    fun setImmichBasicInfo(info: ImmichBasicInfo) = viewModelScope.launch {
+    fun setImmichBasicInfo(info: ImmichBasicInfo) = scope.launch {
         context.datastore.edit { data ->
             val (enc, iv) = EncryptionManager.encryptBytes(info.accessToken.toByteArray())
 
@@ -844,7 +844,7 @@ class SettingsImmichImpl(
             it[alwaysShowUserInfo] == true
         }
 
-    fun setAlwaysShowUserInfo(value: Boolean) = viewModelScope.launch {
+    fun setAlwaysShowUserInfo(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[alwaysShowUserInfo] = value
         }
@@ -853,7 +853,7 @@ class SettingsImmichImpl(
 
 class SettingsBehaviourImpl(
     private val context: Context,
-    private val viewModelScope: CoroutineScope
+    private val scope: CoroutineScope
 ) {
     private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
     private val openVideosExternally = booleanPreferencesKey("behaviour_open_videos_externally")
@@ -862,7 +862,7 @@ class SettingsBehaviourImpl(
         it[exitImmediately] == true
     }
 
-    fun setExitImmediately(value: Boolean) = viewModelScope.launch {
+    fun setExitImmediately(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[exitImmediately] = value
         }
@@ -872,7 +872,7 @@ class SettingsBehaviourImpl(
         it[openVideosExternally] == true
     }
 
-    fun setOpenVideosExternally(value: Boolean) = viewModelScope.launch {
+    fun setOpenVideosExternally(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[openVideosExternally] = value
         }

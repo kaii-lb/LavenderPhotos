@@ -66,14 +66,19 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.photos.LocalMainViewModel
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
@@ -83,6 +88,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -93,11 +99,22 @@ fun SingleTrashedPhotoView(
     viewModel: TrashViewModel
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
+        navController = LocalNavController.current,
         startIndex = index,
-        window = window
+        window = window,
+        useBlackBackground = useBlackBackground,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        preserveDate = preserveDate
     )
 }
 
@@ -106,8 +123,14 @@ fun SingleTrashedPhotoView(
 @Composable
 private fun SingleTrashedPhotoViewImpl(
     items: LazyPagingItems<PhotoLibraryUIModel>,
+    navController: NavController,
     startIndex: Int,
-    window: Window
+    window: Window,
+    useBlackBackground: Boolean,
+    topBarDetailsFormat: TopBarDetailsFormat,
+    blurViews: Boolean,
+    useCache: Boolean,
+    preserveDate: Boolean
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -168,6 +191,8 @@ private fun SingleTrashedPhotoViewImpl(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = false,
+                topBarDetailsFormat = topBarDetailsFormat,
+                showTags = false,
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
@@ -190,7 +215,6 @@ private fun SingleTrashedPhotoViewImpl(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        val useBlackBackground by LocalMainViewModel.current.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
         Column(
             modifier = Modifier
                 .padding(0.dp)
@@ -205,6 +229,15 @@ private fun SingleTrashedPhotoViewImpl(
                 }
             }
 
+            LaunchedEffect(items.itemCount) {
+                snapshotFlow { items.itemCount }.collectLatest {
+                    delay(PhotoGridConstants.LOADING_TIME_SHORT)
+                    if (items.itemCount == 0) launch(Dispatchers.Main) {
+                        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+                    }
+                }
+            }
+
             if (showInfoDialog) {
                 SinglePhotoInfoDialog(
                     currentMediaItem = mediaItem,
@@ -212,6 +245,7 @@ private fun SingleTrashedPhotoViewImpl(
                     showMoveCopyOptions = false,
                     privacyMode = scrollState.privacyMode,
                     isCustomAlbum = false,
+                    preserveDate = preserveDate,
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()
@@ -227,7 +261,10 @@ private fun SingleTrashedPhotoViewImpl(
                 state = state,
                 window = window,
                 appBarsVisible = appBarsVisible,
-                scrollState = scrollState
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache
             )
         }
     }
@@ -302,10 +339,9 @@ private fun BottomBar(
                 modifier = Modifier
                     .windowInsetsPadding(windowInsets)
             ) {
-                val mainViewModel = LocalMainViewModel.current
                 val permissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        mainViewModel.launch(Dispatchers.IO) {
+                        context.appModule.scope.launch(Dispatchers.IO) {
                             setTrashedOnPhotoList(
                                 context = context,
                                 list = listOf(item().uri.toUri()),

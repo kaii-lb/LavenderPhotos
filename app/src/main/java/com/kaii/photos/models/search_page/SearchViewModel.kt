@@ -6,35 +6,146 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.search.SearchManager
 import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.repositories.SearchRepository
 import com.kaii.photos.repositories.TagRepository
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class SearchViewModel(
-    context: Context,
-    info: ImmichBasicInfo,
-    sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    context: Context
 ) : ViewModel() {
+    private val settings = context.applicationContext.appModule.settings
+
+    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val confirmToDelete = settings.permissions.getConfirmToDelete().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val doNotTrash = settings.permissions.getDoNotTrash().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = DisplayDateFormat.Default
+    )
+
+    val sortMode = settings.photoGrid.getSortMode().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = MediaItemSortMode.DateTaken
+    )
+
+    val immichInfo = settings.immich.getImmichBasicInfo().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = ImmichBasicInfo.Empty
+    )
+
+    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 3
+    )
+
+    val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = 256
+    )
+
+    val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = TopBarDetailsFormat.FileName
+    )
+
+    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
+    private val initialSortMode = runBlocking { sortMode.first() }
+    private val initialFormat = runBlocking { displayDateFormat.first() }
+    private val initialInfo = runBlocking { immichInfo.first() }
+
     private val searchManager = SearchManager(
         searchRepo = SearchRepository(
             searchDao = MediaDatabase.getInstance(context.applicationContext).searchDao(),
             taggedItemsDao = MediaDatabase.getInstance(context.applicationContext).taggedItemsDao(),
             scope = viewModelScope,
-            info = info,
-            sortMode = sortMode,
-            format = format
+            info = initialInfo,
+            sortMode = initialSortMode,
+            format = initialFormat
         ),
         tagRepo = TagRepository(
             dao = MediaDatabase.getInstance(context.applicationContext).tagDao()
         )
     )
+
+    init {
+        viewModelScope.launch {
+            displayDateFormat.collect { update(format = it) }
+        }
+
+        viewModelScope.launch {
+            sortMode.collect { update(sortMode = it) }
+        }
+
+        viewModelScope.launch {
+            immichInfo.collect { update(accessToken = it.accessToken) }
+        }
+    }
 
     val mediaFlow = searchManager.mediaFlow
     val gridMediaFlow = searchManager.gridMediaFlow
@@ -73,7 +184,7 @@ class SearchViewModel(
         query: String
     ) = searchManager.search(query)
 
-    fun update(
+    private fun update(
         sortMode: MediaItemSortMode? = null,
         format: DisplayDateFormat? = null,
         accessToken: String? = null

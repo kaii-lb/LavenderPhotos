@@ -37,8 +37,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -47,7 +45,9 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -93,7 +93,6 @@ fun SingleAlbumViewTopBar(
         label = "SingleAlbumViewTopBarAnimatedContent"
     ) { target ->
         if (!target) {
-            val mainViewModel = LocalMainViewModel.current
             val navController = LocalNavController.current
 
             TopAppBar(
@@ -131,6 +130,7 @@ fun SingleAlbumViewTopBar(
                 actions = {
                     if (!isMediaPicker && !albumInfo().isCustomAlbum) {
                         var showPathsDialog by remember { mutableStateOf(false) }
+                        val context = LocalContext.current
 
                         if (showPathsDialog) {
                             AlbumPathsDialog(
@@ -143,7 +143,7 @@ fun SingleAlbumViewTopBar(
                                             paths = selectedPaths
                                         )
 
-                                    mainViewModel.settings.albums.edit(
+                                    context.appModule.settings.albums.edit(
                                         id = album.id,
                                         newInfo = newInfo
                                     )
@@ -294,13 +294,19 @@ fun SingleAlbumViewTopBar(
 fun SingleAlbumViewBottomBar(
     albumInfo: () -> AlbumInfo,
     selectionManager: SelectionManager,
-    incomingIntent: Intent? = null
+    incomingIntent: Intent? = null,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
             SelectingBottomBarItems(
                 albumInfo = albumInfo(),
-                selectionManager = selectionManager
+                selectionManager = selectionManager,
+                confirmToDelete = confirmToDelete,
+                doNotTrash = doNotTrash,
+                preserveDate = preserveDate
             )
         }
     } else {
@@ -444,11 +450,10 @@ fun TrashPhotoGridBottomBarItems(
         )
     }
 
-    val mainViewModel = LocalMainViewModel.current
     val showRestoreDialog = remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 setTrashedOnPhotoList(
                     context = context,
                     list = selectedItemsList.fastMap { it.toUri() },
@@ -489,7 +494,7 @@ fun TrashPhotoGridBottomBarItems(
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        mainViewModel.launch(Dispatchers.IO) {
+        context.appModule.scope.launch(Dispatchers.IO) {
             permanentlyDeletePhotoList(
                 context = context,
                 list = selectedItemsList.fastMap { it.toUri() }
@@ -632,17 +637,14 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
-        val mainViewModel = LocalMainViewModel.current
-        val appDatabase = LocalAppDatabase.current
         val showRestoreDialog = remember { mutableStateOf(false) }
-
         val restorePermissionState = rememberDirectoryPermissionManager(
             onGranted = {
-                mainViewModel.launch(Dispatchers.IO) {
+                context.appModule.scope.launch(Dispatchers.IO) {
                     moveImageOutOfLockedFolder(
                         list = selectedItemsList.toSecureMedia(context = context),
                         context = context,
-                        applicationDatabase = appDatabase
+                        applicationDatabase = MediaDatabase.getInstance(context)
                     ) {
                         selectionManager.clear()
                         showLoadingDialog = false
@@ -701,7 +703,7 @@ fun SecureFolderViewBottomAppBar(
             dialogBody = stringResource(id = R.string.action_cannot_be_undone),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 permanentlyDeleteSecureFolderImageList(
                     list = selectedItemsList.toSecureMedia(context = context).fastMap {
                         it.item.absolutePath
@@ -789,11 +791,19 @@ fun FavouritesViewTopAppBar(
 @Composable
 fun FavouritesViewBottomAppBar(
     selectionManager: SelectionManager,
-    incomingIntent: Intent?
+    incomingIntent: Intent?,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
-            FavouritesBottomAppBarItems(selectionManager = selectionManager)
+            FavouritesBottomAppBarItems(
+                selectionManager = selectionManager,
+                confirmToDelete = confirmToDelete,
+                doNotTrash = doNotTrash,
+                preserveDate = preserveDate
+            )
         }
     } else {
         val context = LocalContext.current
@@ -809,7 +819,10 @@ fun FavouritesViewBottomAppBar(
 
 @Composable
 fun FavouritesBottomAppBarItems(
-    selectionManager: SelectionManager
+    selectionManager: SelectionManager,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -840,6 +853,7 @@ fun FavouritesBottomAppBarItems(
         show = show,
         selectedItemsList = selectedItemsList,
         isMoving = false,
+        preserveDate = preserveDate,
         insetsPadding = WindowInsets.statusBars,
         clear = selectionManager::clear
     )
@@ -886,21 +900,10 @@ fun FavouritesBottomAppBarItems(
         )
     }
 
-    val mainViewModel = LocalMainViewModel.current
     val showDeleteDialog = remember { mutableStateOf(false) }
-
-    val doNotTrash by mainViewModel.settings.permissions
-        .getDoNotTrash()
-        .collectAsStateWithLifecycle(initialValue = true)
-
-    val confirmToDelete by mainViewModel.settings.permissions
-        .getConfirmToDelete()
-        .collectAsStateWithLifecycle(initialValue = true)
-
-
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 if (doNotTrash) {
                     permanentlyDeletePhotoList(
                         context = context,

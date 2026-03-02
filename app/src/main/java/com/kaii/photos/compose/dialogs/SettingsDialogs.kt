@@ -67,10 +67,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.PreferencesRow
@@ -97,6 +95,7 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun AddTabDialog(
     tabList: List<BottomBarTab>,
+    setTabList: (list: List<BottomBarTab>) -> Unit,
     dismissDialog: () -> Unit
 ) {
     LavenderDialogBase(
@@ -408,7 +407,6 @@ fun AddTabDialog(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val mainViewModel = LocalMainViewModel.current
         val resources = LocalResources.current
         FullWidthDialogButton(
             text = stringResource(id = R.string.tabs_confirm),
@@ -418,7 +416,7 @@ fun AddTabDialog(
         ) {
             if (tabList.size < 8) {
                 if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
-                    mainViewModel.settings.defaultTabs.setTabList(
+                    setTabList(
                         tabList.toMutableList().apply {
                             add(
                                 BottomBarTab(
@@ -462,6 +460,7 @@ fun AddTabDialog(
 @Composable
 fun SortModeSelectorDialog(
     currentSortMode: MediaItemSortMode,
+    setSortMode: (mode: MediaItemSortMode) -> Unit,
     dismiss: () -> Unit
 ) {
     LavenderDialogBase(onDismiss = dismiss) {
@@ -494,10 +493,9 @@ fun SortModeSelectorDialog(
             }
         }
 
-        val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
-                mainViewModel.settings.photoGrid.setSortMode(chosenSortMode)
+                setSortMode(chosenSortMode)
                 dismiss()
             }
         )
@@ -507,10 +505,10 @@ fun SortModeSelectorDialog(
 @Composable
 fun ThumbnailSizeDialog(
     showDialog: MutableState<Boolean>,
-    initialValue: Int
+    initialValue: Int,
+    setThumbnailSize: (size: Int) -> Unit
 ) {
     var thumbnailSize by remember { mutableIntStateOf(initialValue) }
-    val mainViewModel = LocalMainViewModel.current
 
     SelectableButtonListDialog(
         title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
@@ -553,18 +551,17 @@ fun ThumbnailSizeDialog(
             }
         },
         onConfirm = {
-            mainViewModel.settings.storage.setThumbnailSize(thumbnailSize)
+            setThumbnailSize(thumbnailSize)
         }
     )
 }
 
 @Composable
 fun TabCustomizationDialog(
+    tabList: List<BottomBarTab>,
+    setTabList: (list: List<BottomBarTab>) -> Unit,
     closeDialog: () -> Unit
 ) {
-    val mainViewModel = LocalMainViewModel.current
-    val tabList by mainViewModel.settings.defaultTabs.getTabList()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
 
     LavenderDialogBase(
@@ -582,13 +579,13 @@ fun TabCustomizationDialog(
         ) {
             val resources = LocalResources.current
 
-            DefaultTabs.extendedList.forEach { tab ->
+            DefaultTabs.defaultList.forEach { tab ->
                 InfoRow(
                     text = tab.name,
                     iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
                     opacity = if (tab in tabList) 1f else 0.5f
                 ) {
-                    mainViewModel.settings.defaultTabs.setTabList(
+                    setTabList(
                         tabList.toMutableList().apply {
                             if (tab in tabList && tabList.size > 1) {
                                 remove(tab)
@@ -623,13 +620,13 @@ fun TabCustomizationDialog(
             }
 
             tabList.forEach { tab ->
-                if (tab !in DefaultTabs.extendedList) {
+                if (tab !in DefaultTabs.defaultList) {
                     InfoRow(
                         text = tab.name,
                         iconResId = R.drawable.delete
                     ) {
                         if (tabList.size > 1) {
-                            mainViewModel.settings.defaultTabs.setTabList(
+                            setTabList(
                                 tabList.toMutableList().apply {
                                     remove(tab)
                                 }
@@ -658,6 +655,7 @@ fun TabCustomizationDialog(
         if (showDialog) {
             AddTabDialog(
                 tabList = tabList,
+                setTabList = setTabList,
                 dismissDialog = {
                     showDialog = false
                 }
@@ -692,6 +690,8 @@ fun TabCustomizationDialog(
 fun DefaultTabSelectorDialog(
     tabList: List<BottomBarTab>,
     defaultTab: BottomBarTab,
+    setTabList: (list: List<BottomBarTab>) -> Unit,
+    setDefaultTab: (tab: BottomBarTab) -> Unit,
     dismissDialog: () -> Unit
 ) {
     var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
@@ -744,11 +744,10 @@ fun DefaultTabSelectorDialog(
             }
         }
 
-        val mainViewModel = LocalMainViewModel.current
         ConfirmCancelRow(
             onConfirm = {
-                mainViewModel.settings.defaultTabs.setTabList(tabListDynamic)
-                mainViewModel.settings.defaultTabs.setDefaultTab(selectedTab)
+                setTabList(tabListDynamic)
+                setDefaultTab(selectedTab)
 
                 dismissDialog()
             }
@@ -759,6 +758,7 @@ fun DefaultTabSelectorDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun DateFormatDialog(
+    setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
@@ -772,7 +772,6 @@ fun DateFormatDialog(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        val mainViewModel = LocalMainViewModel.current
         val currentDate = remember {
             Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -798,7 +797,7 @@ fun DateFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.lookAndFeel.setDisplayDateFormat(item)
+                    setDisplayDateFormat(item)
                     onDismiss()
                 }
             }
@@ -809,6 +808,7 @@ fun DateFormatDialog(
 @OptIn(ExperimentalTime::class)
 @Composable
 fun TopBarDetailsFormatDialog(
+    setTopBarDetailsFormat: (value: TopBarDetailsFormat) -> Unit,
     onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
@@ -824,7 +824,6 @@ fun TopBarDetailsFormatDialog(
         Spacer(modifier = Modifier.height(12.dp))
 
         val context = LocalContext.current
-        val mainViewModel = LocalMainViewModel.current
         val currentDate = remember {
             Clock.System.now()
                 .epochSeconds
@@ -848,7 +847,7 @@ fun TopBarDetailsFormatDialog(
                         },
                     iconResID = item.icon
                 ) {
-                    mainViewModel.settings.lookAndFeel.setTopBarDetailsFormat(item)
+                    setTopBarDetailsFormat(item)
                     onDismiss()
                 }
             }

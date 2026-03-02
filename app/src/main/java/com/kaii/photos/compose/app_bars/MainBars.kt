@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.MainDialog
@@ -99,17 +98,16 @@ fun MainAppTopBar(
     alternate: Boolean,
     selectionManager: SelectionManager,
     pagerState: PagerState,
+    immichInfo: ImmichBasicInfo,
+    tabList: List<BottomBarTab>,
+    alwaysShowImmichInfo: Boolean,
+    extraSecureFolderEntry: Boolean,
     showTagDialog: Boolean,
     isFromMediaPicker: Boolean,
-    setShowTagDialog: (show: Boolean) -> Unit
+    setShowTagDialog: (show: Boolean) -> Unit,
+    addAlbum: (album: AlbumInfo) -> Unit
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-
-    val immichInfo by mainViewModel.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-    val tabList by mainViewModel.settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = DefaultTabs.defaultList)
-    val alwaysShowPfp by mainViewModel.settings.immich.getAlwaysShowUserInfo().collectAsStateWithLifecycle(initialValue = false)
-
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
@@ -123,6 +121,9 @@ fun MainAppTopBar(
             sheetState = sheetState,
             loginState = loginState,
             coroutineScope = coroutineScope,
+            extraSecureFolderEntry = extraSecureFolderEntry,
+            alwaysShowImmichInfo = alwaysShowImmichInfo,
+            immichInfo = immichInfo,
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -173,60 +174,67 @@ fun MainAppTopBar(
             }
         },
         actions = {
-            AnimatedVisibility(
-                visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
-                enter = scaleIn(
-                    animationSpec = AnimationConstants.expressiveSpring()
-                ),
-                exit = scaleOut(
-                    animationSpec = AnimationConstants.expressiveSpring()
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                var showAlbumTypeDialog by remember { mutableStateOf(false) }
-                if (showAlbumTypeDialog) {
-                    AlbumAddChoiceDialog {
-                        showAlbumTypeDialog = false
+                AnimatedVisibility(
+                    visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                    enter = scaleIn(
+                        animationSpec = AnimationConstants.expressiveSpring()
+                    ),
+                    exit = scaleOut(
+                        animationSpec = AnimationConstants.expressiveSpring()
+                    )
+                ) {
+                    var showAlbumTypeDialog by remember { mutableStateOf(false) }
+                    if (showAlbumTypeDialog) {
+                        AlbumAddChoiceDialog(
+                            addAlbum = addAlbum
+                        ) {
+                            showAlbumTypeDialog = false
+                        }
+                    }
+
+                    IconButton(
+                        onClick = {
+                            showAlbumTypeDialog = true
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.add),
+                            contentDescription = stringResource(id = R.string.album_add),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 
-                IconButton(
-                    onClick = {
-                        showAlbumTypeDialog = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.add),
-                        contentDescription = stringResource(id = R.string.album_add),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            if (!isFromMediaPicker) {
-                AnimatedLoginIcon(
-                    state = userInfo,
-                    alwaysShowPfp = alwaysShowPfp
-                ) {
-                    coroutineScope.launch {
-                        showMainDialog = true
-                        delay(50)
-                        sheetState.expand()
+                if (!isFromMediaPicker) {
+                    AnimatedLoginIcon(
+                        state = userInfo,
+                        alwaysShowInfo = alwaysShowImmichInfo
+                    ) {
+                        coroutineScope.launch {
+                            showMainDialog = true
+                            delay(50)
+                            sheetState.expand()
+                        }
                     }
-                }
-            } else {
-                val context = LocalContext.current
-                IconButton(
-                    onClick = {
-                        (context as Activity).finish()
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.close),
-                        contentDescription = "Close media picker",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
+                } else {
+                    val context = LocalContext.current
+                    IconButton(
+                        onClick = {
+                            (context as Activity).finish()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.close),
+                            contentDescription = "Close media picker",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         },
@@ -249,7 +257,10 @@ fun MainAppBottomBar(
     tabs: List<BottomBarTab>,
     defaultTab: BottomBarTab,
     selectionManager: SelectionManager,
-    scrollBehaviour: FloatingToolbarScrollBehavior
+    scrollBehaviour: FloatingToolbarScrollBehavior,
+    confirmToDelete: Boolean,
+    doNotTrash: Boolean,
+    preserveDate: Boolean
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -329,7 +340,12 @@ fun MainAppBottomBar(
                                 }
 
                                 DefaultTabs.TabTypes.favourites -> {
-                                    FavouritesBottomAppBarItems(selectionManager = selectionManager)
+                                    FavouritesBottomAppBarItems(
+                                        selectionManager = selectionManager,
+                                        confirmToDelete = confirmToDelete,
+                                        doNotTrash = doNotTrash,
+                                        preserveDate = preserveDate
+                                    )
                                 }
 
                                 else -> {
@@ -340,7 +356,10 @@ fun MainAppBottomBar(
                                             paths = currentTab.albumPaths,
                                             isCustomAlbum = false
                                         ),
-                                        selectionManager = selectionManager
+                                        selectionManager = selectionManager,
+                                        confirmToDelete = confirmToDelete,
+                                        doNotTrash = doNotTrash,
+                                        preserveDate = preserveDate
                                     )
                                 }
                             }

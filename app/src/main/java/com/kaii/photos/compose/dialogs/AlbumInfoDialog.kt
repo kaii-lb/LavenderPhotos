@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,13 +51,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -67,6 +65,7 @@ import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private const val TAG = "com.kaii.photos.compose.dialogs.AlbumInfoDialog"
 
@@ -74,11 +73,15 @@ private const val TAG = "com.kaii.photos.compose.dialogs.AlbumInfoDialog"
 @Composable
 fun AlbumInfoDialog(
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     sheetState: SheetState,
     modifier: Modifier = Modifier,
     itemCount: suspend () -> Int,
     albumSize: suspend () -> String,
     toggleSelectionMode: () -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit,
     dismiss: () -> Unit,
 ) {
     // remove (weird) drag handle ripple
@@ -134,7 +137,11 @@ fun AlbumInfoDialog(
 
                             IconContentVertical(
                                 albumInfo = albumInfo,
+                                albums = albums,
+                                autoDetectAlbums = autoDetectAlbums,
                                 toggleSelectionMode = toggleSelectionMode,
+                                editAlbum = editAlbum,
+                                removeAlbum = removeAlbum,
                                 dismiss = dismiss
                             )
                         }
@@ -180,7 +187,11 @@ fun AlbumInfoDialog(
 
                         IconContentHorizontal(
                             albumInfo = albumInfo,
+                            albums = albums,
+                            autoDetectAlbums = autoDetectAlbums,
                             toggleSelectionMode = toggleSelectionMode,
+                            editAlbum = editAlbum,
+                            removeAlbum = removeAlbum,
                             dismiss = dismiss
                         )
 
@@ -207,8 +218,12 @@ fun AlbumInfoDialog(
 @Composable
 private fun IconContentHorizontal(
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit,
     dismiss: () -> Unit
 ) {
     Row(
@@ -225,8 +240,12 @@ private fun IconContentHorizontal(
     ) {
         IconContentImpl(
             albumInfo = albumInfo,
+            albums = albums,
+            autoDetectAlbums = autoDetectAlbums,
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
+            editAlbum = editAlbum,
+            removeAlbum = removeAlbum,
             dismiss = dismiss
         )
     }
@@ -235,8 +254,12 @@ private fun IconContentHorizontal(
 @Composable
 private fun IconContentVertical(
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit,
     dismiss: () -> Unit
 ) {
     Column(
@@ -252,8 +275,12 @@ private fun IconContentVertical(
     ) {
         IconContentImpl(
             albumInfo = albumInfo,
+            albums = albums,
+            autoDetectAlbums = autoDetectAlbums,
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
+            editAlbum = editAlbum,
+            removeAlbum = removeAlbum,
             dismiss = dismiss
         )
     }
@@ -262,13 +289,15 @@ private fun IconContentVertical(
 @Composable
 private fun IconContentImpl(
     albumInfo: () -> AlbumInfo,
+    albums: () -> List<AlbumInfo>,
+    autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
+    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
+    removeAlbum: (id: Int) -> Unit,
     dismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val mainViewModel = LocalMainViewModel.current
-    val albums by mainViewModel.settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
     var fileName by remember { mutableStateOf(albumInfo().name) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -299,12 +328,12 @@ private fun IconContentImpl(
                         paths = setOf(album.mainPath.replace(album.name, fileName))
                     )
 
-                    albums.filter { child ->
+                    albums().filter { child ->
                         child.paths.any { it.startsWith(album.mainPath) }
                     }.forEach { child ->
-                        mainViewModel.settings.albums.edit(
-                            id = child.id,
-                            newInfo = child.copy(
+                        editAlbum(
+                            child.id,
+                            child.copy(
                                 paths = child.paths.map {
                                     if (it.startsWith(album.mainPath)) it.replace(album.mainPath, newInfo.mainPath)
                                     else it
@@ -313,10 +342,7 @@ private fun IconContentImpl(
                         )
                     }
 
-                    mainViewModel.settings.albums.edit(
-                        id = album.id,
-                        newInfo = newInfo
-                    )
+                    editAlbum(album.id, newInfo)
 
                     try {
                         context.contentResolver.releasePersistableUriPermission(
@@ -331,9 +357,9 @@ private fun IconContentImpl(
                         e.printStackTrace()
                     }
                 } else {
-                    mainViewModel.settings.albums.edit(
-                        id = album.id,
-                        newInfo = album.copy(name = fileName)
+                    editAlbum(
+                        album.id,
+                        album.copy(name = fileName)
                     )
                 }
             }
@@ -374,19 +400,16 @@ private fun IconContentImpl(
         )
     }
 
-    val isPinned by remember {
-        derivedStateOf {
-            albums.find {
-                it.equalsIgnoringPinned(albumInfo())
-            }?.isPinned ?: false
-        }
-    }
+    // TODO: check if working
+    val isPinned = albums().find {
+        it.equalsIgnoringPinned(albumInfo())
+    }?.isPinned ?: false
 
     IconButton(
         onClick = {
-            mainViewModel.settings.albums.edit(
-                id = albumInfo().id,
-                newInfo = albumInfo().copy(isPinned = !isPinned)
+            editAlbum(
+                albumInfo().id,
+                albumInfo().copy(isPinned = !isPinned)
             )
         },
         modifier = modifier
@@ -417,7 +440,6 @@ private fun IconContentImpl(
 
     val navController = LocalNavController.current
     val showDeleteDialog = remember { mutableStateOf(false) }
-    val autoDetect by mainViewModel.settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = false)
 
     ConfirmationDialog(
         showDialog = showDeleteDialog,
@@ -425,11 +447,11 @@ private fun IconContentImpl(
         confirmButtonLabel = stringResource(id = R.string.albums_remove)
     ) {
         val album = albumInfo()
-        mainViewModel.settings.albums.remove(album.id)
+        removeAlbum(album.id)
 
         try {
             // TODO: possible make less messy
-            mainViewModel.launch(Dispatchers.IO) {
+            context.appModule.scope.launch(Dispatchers.IO) {
                 MediaDatabase.getInstance(context)
                     .customDao()
                     .deleteAlbum(album = album.id)
@@ -450,7 +472,7 @@ private fun IconContentImpl(
         navController.popBackStack()
     }
 
-    if (!autoDetect || (albumInfo().isCustomAlbum && albumInfo().immichId.isBlank())) {
+    if (!autoDetectAlbums() || (albumInfo().isCustomAlbum && albumInfo().immichId.isBlank())) {
         IconButton(
             onClick = {
                 showDeleteDialog.value = true

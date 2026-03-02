@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
@@ -66,6 +65,7 @@ import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
@@ -78,13 +78,16 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun OpenWithContent(
     uri: Uri,
-    window: Window
+    window: Window,
+    blurViews: Boolean,
+    useBlackBackground: Boolean
 ) {
     val appBarsVisible = remember { mutableStateOf(true) }
     val context = LocalContext.current
@@ -143,6 +146,8 @@ fun OpenWithContent(
                     window = window,
                     shouldPlay = shouldPlay,
                     isOpenWithView = true,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .transformable()
@@ -162,6 +167,8 @@ fun OpenWithContent(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
+                        blurViews = blurViews,
+                        useBlackBackground = useBlackBackground,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = uri,
@@ -303,13 +310,12 @@ private fun BottomBar(
                     )
 
                     val resources = LocalResources.current
-                    val mainViewModel = LocalMainViewModel.current
                     BottomAppBarItem(
                         text = stringResource(id = R.string.edit),
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
                         action = {
-                            mainViewModel.launch(Dispatchers.IO) {
+                            context.appModule.scope.launch(Dispatchers.IO) {
                                 val isLoading = mutableStateOf(true)
 
                                 LavenderSnackbarController.pushEvent(
@@ -364,7 +370,7 @@ private fun BottomBar(
 
                                         isLoading.value = false
 
-                                        mainViewModel.launch {
+                                        context.appModule.scope.launch(Dispatchers.Main) {
                                             navController.navigate(
                                                 if (mediaType == MediaType.Image) {
                                                     Screens.ImageEditor(

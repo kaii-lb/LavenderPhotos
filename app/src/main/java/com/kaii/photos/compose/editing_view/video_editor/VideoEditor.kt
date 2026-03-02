@@ -58,11 +58,11 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
 import androidx.media3.exoplayer.ExoPlayer
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
@@ -86,6 +86,8 @@ import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.applyEffects
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
+import com.kaii.photos.models.editor.EditorViewModel
+import com.kaii.photos.models.editor.EditorViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -95,8 +97,6 @@ import kotlin.math.min
 
 private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoEditor(
     uri: Uri,
@@ -105,10 +105,46 @@ fun VideoEditor(
     window: Window,
     isFromOpenWithView: Boolean
 ) {
-    val isPlaying = remember { mutableStateOf(false) }
+    val viewModel = viewModel<EditorViewModel>(
+        factory = EditorViewModelFactory(context = LocalContext.current)
+    )
 
-    val mainViewModel = LocalMainViewModel.current
-    val startMuted by mainViewModel.settings.video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = true)
+    val startMuted by viewModel.startMuted.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useBlackBackground by viewModel.startMuted.collectAsStateWithLifecycle()
+    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
+    val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
+
+    VideoEditorImpl(
+        uri = uri,
+        absolutePath = absolutePath,
+        albumInfo = albumInfo,
+        window = window,
+        isFromOpenWithView = isFromOpenWithView,
+        startMuted = startMuted,
+        blurViews = blurViews,
+        useBlackBackground = useBlackBackground,
+        exitOnSave = { exitOnSave },
+        overwriteByDefault = { overwriteByDefault }
+    )
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VideoEditorImpl(
+    uri: Uri,
+    absolutePath: String,
+    albumInfo: AlbumInfo?,
+    window: Window,
+    isFromOpenWithView: Boolean,
+    startMuted: Boolean,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
+) {
+    val isPlaying = remember { mutableStateOf(false) }
     val isMuted = remember(startMuted) { mutableStateOf(startMuted) }
 
     /** In Seconds */
@@ -378,7 +414,9 @@ fun VideoEditor(
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
-                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum }
+                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum },
+                exitOnSave = exitOnSave,
+                overwriteByDefault = overwriteByDefault
             )
         },
         bottomBar = {
@@ -436,7 +474,9 @@ fun VideoEditor(
                 exoPlayer = exoPlayer,
                 activity = context as Activity,
                 absolutePath = absolutePath,
-                useTextureView = true
+                useTextureView = true,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground
             )
 
             val width = this@BoxWithConstraints.maxWidth - 48.dp

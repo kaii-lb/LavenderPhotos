@@ -25,8 +25,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -34,7 +36,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.DefaultTabSelectorDialog
@@ -45,7 +46,10 @@ import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -53,13 +57,91 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun GeneralSettingsPage() {
-    val mainViewModel = LocalMainViewModel.current
+fun GeneralSettingsPage(modifier: Modifier = Modifier) {
+    val settings = LocalContext.current.appModule.settings
 
+    val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
+    val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val shouldShowEverything by settings.mainPhotosView.getShowEverything().collectAsStateWithLifecycle(initialValue = false)
+    val autoDetectAlbums by settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+    val currentSortMode by settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val tabList by settings.defaultTabs.getTabList().collectAsStateWithLifecycle(initialValue = emptyList())
+    val defaultTab by settings.defaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
+    val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
+
+    GeneralSettingsPageImpl(
+        allAlbums = allAlbums,
+        mainPhotosPaths = mainPhotosPaths,
+        shouldShowEverything = shouldShowEverything,
+        autoDetectAlbums = autoDetectAlbums,
+        currentSortMode = currentSortMode,
+        tabList = tabList,
+        defaultTab = defaultTab,
+        checkForUpdatesOnStartup = checkForUpdatesOnStartup,
+        modifier = modifier,
+        setShowEverything = settings.mainPhotosView::setShowEverything,
+        addMainPhotosAlbum = settings.mainPhotosView::addAlbum,
+        clearMainPhotosAlbums = settings.mainPhotosView::clear,
+        setAutoDetect = settings.albums::setAutoDetect,
+        resetAlbums = settings.albums::reset,
+        setSortMode = settings.photoGrid::setSortMode,
+        setCheckUpdatesOnStartup = settings.versions::setCheckUpdatesOnStartup,
+        setTabList = settings.defaultTabs::setTabList,
+        setDefaultTab = settings.defaultTabs::setDefaultTab
+    )
+}
+
+@Preview
+@Composable
+private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
+    GeneralSettingsPageImpl(
+        allAlbums = emptyList(),
+        mainPhotosPaths = emptyList(),
+        shouldShowEverything = false,
+        autoDetectAlbums = false,
+        currentSortMode = MediaItemSortMode.DateTaken,
+        tabList = DefaultTabs.defaultList,
+        defaultTab = DefaultTabs.TabTypes.photos,
+        checkForUpdatesOnStartup = false,
+        modifier = modifier,
+        setShowEverything = {},
+        addMainPhotosAlbum = {},
+        clearMainPhotosAlbums = {},
+        setAutoDetect = {},
+        resetAlbums = {},
+        setSortMode = {},
+        setCheckUpdatesOnStartup = {},
+        setTabList = {},
+        setDefaultTab = {}
+    )
+}
+
+@Composable
+private fun GeneralSettingsPageImpl(
+    allAlbums: List<AlbumInfo>,
+    mainPhotosPaths: Collection<String>,
+    shouldShowEverything: Boolean,
+    autoDetectAlbums: Boolean,
+    currentSortMode: MediaItemSortMode,
+    tabList: List<BottomBarTab>,
+    defaultTab: BottomBarTab,
+    checkForUpdatesOnStartup: Boolean,
+    modifier: Modifier,
+    setShowEverything: (value: Boolean) -> Unit,
+    addMainPhotosAlbum: (relativePath: String) -> Unit,
+    clearMainPhotosAlbums: () -> Unit,
+    setAutoDetect: (value: Boolean) -> Unit,
+    resetAlbums: () -> Unit,
+    setSortMode: (mode: MediaItemSortMode) -> Unit,
+    setCheckUpdatesOnStartup: (value: Boolean) -> Unit,
+    setTabList: (list: List<BottomBarTab>) -> Unit,
+    setDefaultTab: (tab: BottomBarTab) -> Unit
+) {
     Scaffold(
         topBar = {
             GeneralSettingsTopBar()
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -73,11 +155,6 @@ fun GeneralSettingsPage() {
             }
 
             item {
-                val allAlbums by mainViewModel.allAvailableAlbums.collectAsStateWithLifecycle()
-                val mainPhotosPaths by mainViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-                val shouldShowEverything by mainViewModel.settings.mainPhotosView.getShowEverything()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
                 val selectedAlbums = remember { mutableStateListOf<String>() }
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
 
@@ -104,9 +181,7 @@ fun GeneralSettingsPage() {
 
                         showAlbumsSelectionDialog.value = true
                     },
-                    onSwitchClick = { checked ->
-                        mainViewModel.settings.mainPhotosView.setShowEverything(checked)
-                    }
+                    onSwitchClick = setShowEverything
                 )
 
                 if (showAlbumsSelectionDialog.value) {
@@ -117,10 +192,10 @@ fun GeneralSettingsPage() {
                             else stringResource(id = R.string.albums_main_list_selected_inverse),
                         showDialog = showAlbumsSelectionDialog,
                         onConfirm = {
-                            mainViewModel.settings.mainPhotosView.clear()
+                            clearMainPhotosAlbums()
 
                             selectedAlbums.forEach { album ->
-                                mainViewModel.settings.mainPhotosView.addAlbum(album)
+                                addMainPhotosAlbum(album)
                             }
                         },
                         buttons = {
@@ -152,7 +227,7 @@ fun GeneralSettingsPage() {
             }
 
             item {
-                val autoDetectAlbums by mainViewModel.settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
+                val context = LocalContext.current
 
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
@@ -168,7 +243,7 @@ fun GeneralSettingsPage() {
                     checked = autoDetectAlbums
                 ) { checked ->
                     // as to keep the MutableState alive even if the user leaves the screen
-                    mainViewModel.launch(Dispatchers.IO) {
+                    context.appModule.scope.launch(Dispatchers.IO) {
                         if (!isAlreadyLoading.value) {
                             isAlreadyLoading.value = true
 
@@ -184,7 +259,7 @@ fun GeneralSettingsPage() {
                                 isAlreadyLoading.value = false
                             }
 
-                            mainViewModel.settings.albums.setAutoDetect(checked)
+                            setAutoDetect(checked)
 
                             isAlreadyLoading.value = false
                         }
@@ -200,8 +275,8 @@ fun GeneralSettingsPage() {
                     showBackground = false
                 ) {
                     coroutineScope.launch {
-                        mainViewModel.settings.albums.reset()
-                        mainViewModel.settings.albums.setAutoDetect(false)
+                        resetAlbums()
+                        setAutoDetect(false)
 
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvents.MessageEvent(
@@ -215,12 +290,12 @@ fun GeneralSettingsPage() {
             }
 
             item {
-                val currentSortMode by mainViewModel.sortMode.collectAsStateWithLifecycle()
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
                 if (showSortModeSelectorDialog) {
                     SortModeSelectorDialog(
                         currentSortMode = currentSortMode,
+                        setSortMode = setSortMode,
                         dismiss = {
                             showSortModeSelectorDialog = false
                         }
@@ -239,9 +314,9 @@ fun GeneralSettingsPage() {
                     },
                     onSwitchClick = { checked ->
                         if (checked) {
-                            mainViewModel.settings.photoGrid.setSortMode(MediaItemSortMode.DateTaken)
+                            setSortMode(MediaItemSortMode.DateTaken)
                         } else {
-                            mainViewModel.settings.photoGrid.setSortMode(
+                            setSortMode(
                                 if (currentSortMode == MediaItemSortMode.DateModified) MediaItemSortMode.DisabledLastModified
                                 else MediaItemSortMode.Disabled
                             )
@@ -258,18 +333,17 @@ fun GeneralSettingsPage() {
 
             item {
                 var showDefaultTabAlbumDialog by remember { mutableStateOf(false) }
-                val tabList by mainViewModel.settings.defaultTabs.getTabList()
-                    .collectAsStateWithLifecycle(initialValue = emptyList())
-                val defaultTab by mainViewModel.settings.defaultTabs.getDefaultTab()
-                    .collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
 
                 if (showDefaultTabAlbumDialog) {
                     DefaultTabSelectorDialog(
                         tabList = tabList,
-                        defaultTab = defaultTab
-                    ) {
-                        showDefaultTabAlbumDialog = false
-                    }
+                        defaultTab = defaultTab,
+                        setTabList = setTabList,
+                        setDefaultTab = setDefaultTab,
+                        dismissDialog = {
+                            showDefaultTabAlbumDialog = false
+                        }
+                    )
                 }
 
                 PreferencesRow(
@@ -287,9 +361,13 @@ fun GeneralSettingsPage() {
                 var showDialog by remember { mutableStateOf(false) }
 
                 if (showDialog) {
-                    TabCustomizationDialog {
-                        showDialog = false
-                    }
+                    TabCustomizationDialog(
+                        tabList = tabList,
+                        setTabList = setTabList,
+                        closeDialog = {
+                            showDialog = false
+                        }
+                    )
                 }
 
                 PreferencesRow(
@@ -310,19 +388,15 @@ fun GeneralSettingsPage() {
             }
 
             item {
-                val checkForUpdatesOnStartup by mainViewModel.settings.versions.getCheckUpdatesOnStartup()
-                    .collectAsStateWithLifecycle(initialValue = false)
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.updates_check),
                     iconResID = R.drawable.update,
                     summary = stringResource(id = R.string.updates_check_desc),
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = checkForUpdatesOnStartup
-                ) {
-                    mainViewModel.settings.versions.setCheckUpdatesOnStartup(it)
-                }
+                    checked = checkForUpdatesOnStartup,
+                    onSwitchClick = setCheckUpdatesOnStartup
+                )
             }
         }
     }

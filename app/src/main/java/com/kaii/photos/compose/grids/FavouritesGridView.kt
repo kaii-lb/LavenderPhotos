@@ -92,6 +92,9 @@ fun FavouritesGridView(
         },
         bottomBar = {
             val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+            val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+            val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+            val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
             AnimatedVisibility(
                 visible = isSelecting,
@@ -104,7 +107,10 @@ fun FavouritesGridView(
             ) {
                 FavouritesViewBottomAppBar(
                     selectionManager = selectionManager,
-                    incomingIntent = incomingIntent
+                    incomingIntent = incomingIntent,
+                    confirmToDelete = confirmToDelete,
+                    doNotTrash = doNotTrash,
+                    preserveDate = preserveDate
                 )
             }
         }
@@ -150,12 +156,23 @@ fun FavouritesGridView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+            val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+            val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+            val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+            val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
             PhotoGrid(
                 pagingItems = pagingItems,
                 albumInfo = AlbumInfo.Empty,
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.Favourites,
-                isMediaPicker = incomingIntent != null
+                isMediaPicker = incomingIntent != null,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
             )
         }
     }

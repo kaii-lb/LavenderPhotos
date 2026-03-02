@@ -73,12 +73,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.ImageEditorBottomBar
@@ -115,7 +113,9 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?
+    albumInfo: AlbumInfo?,
+    exitOnSave: () -> Boolean,
+    overwriteByDefault: () -> Boolean
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -226,23 +226,15 @@ fun ImageEditor(
     Scaffold(
         topBar = {
             val textMeasurer = rememberTextMeasurer()
-            val mainViewModel = LocalMainViewModel.current
+            var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
-            val overwriteByDefault by mainViewModel.settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-            var overwrite by remember { mutableStateOf(false) }
-
-            LaunchedEffect(overwriteByDefault) {
-                overwrite = overwriteByDefault
-            }
-
-            val exitOnSave by mainViewModel.settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
             val navController = LocalNavController.current
 
             var navMediaId by remember { mutableLongStateOf(-1L) }
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
                 lastSavedModCount = lastSavedModCount,
-                overwrite = overwrite,
+                overwrite = { overwrite },
                 isFromOpenWithView = isFromOpenWithView,
                 setOverwrite = {
                     overwrite = it
@@ -284,7 +276,7 @@ fun ImageEditor(
                             )
                     }
 
-                    if (exitOnSave && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
+                    if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set("editIndex", 0)

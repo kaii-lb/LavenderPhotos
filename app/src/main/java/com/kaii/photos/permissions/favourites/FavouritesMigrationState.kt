@@ -13,11 +13,10 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.permissions.MediaPermissionsState
 import com.kaii.photos.permissions.rememberMediaPermissionsState
@@ -128,14 +127,12 @@ class FavouritesMigrationState(
 fun rememberFavouritesMigrationState(): FavouritesMigrationState {
     val context = LocalContext.current
     val navController = LocalNavController.current
-    val appDatabase = LocalAppDatabase.current
     val coroutineScope = rememberCoroutineScope()
-    val mainViewModel = LocalMainViewModel.current
 
     val state = remember {
         FavouritesMigrationState(
             context = context,
-            appDatabase = appDatabase,
+            appDatabase = MediaDatabase.getInstance(context),
             coroutineScope = coroutineScope,
             navigate = {
                 coroutineScope.launch(Dispatchers.Main) {
@@ -144,7 +141,7 @@ fun rememberFavouritesMigrationState(): FavouritesMigrationState {
                 }
             },
             onDone = {
-                mainViewModel.settings.versions.setUpdateFav(false)
+                context.appModule.settings.versions.setUpdateFav(false)
             }
         )
     }

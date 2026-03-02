@@ -13,7 +13,12 @@ fun MainGridView(
     viewModel: MultiAlbumViewModel,
     albumInfo: AlbumInfo,
     selectionManager: SelectionManager,
-    isMediaPicker: Boolean
+    isMediaPicker: Boolean,
+    columnSize: Int,
+    openVideosExternally: Boolean,
+    cacheThumbnails: Boolean,
+    thumbnailSize: Int,
+    useRoundedCorners: Boolean,
 ) {
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
@@ -23,6 +28,11 @@ fun MainGridView(
         selectionManager = selectionManager,
         viewProperties = ViewProperties.Main,
         isMainPage = true,
-        isMediaPicker = isMediaPicker
+        isMediaPicker = isMediaPicker,
+        columnSize = columnSize,
+        openVideosExternally = openVideosExternally,
+        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = thumbnailSize,
+        useRoundedCorners = useRoundedCorners
     )
 }

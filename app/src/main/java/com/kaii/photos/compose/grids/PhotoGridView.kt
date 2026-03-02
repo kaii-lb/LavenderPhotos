@@ -87,7 +87,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
@@ -129,6 +128,11 @@ fun PhotoGrid(
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,
+    columnSize: Int,
+    openVideosExternally: Boolean,
+    cacheThumbnails: Boolean,
+    thumbnailSize: Int,
+    useRoundedCorners: Boolean,
     isMediaPicker: Boolean = false,
     isMainPage: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
@@ -149,7 +153,12 @@ fun PhotoGrid(
                 gridState = state,
                 albumInfo = albumInfo,
                 isMediaPicker = isMediaPicker,
-                isMainPage = isMainPage
+                isMainPage = isMainPage,
+                columnSize = columnSize,
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners
             )
         }
     } else {
@@ -170,7 +179,12 @@ private fun DeviceMedia(
     gridState: LazyGridState,
     albumInfo: AlbumInfo,
     isMediaPicker: Boolean,
-    isMainPage: Boolean
+    isMainPage: Boolean,
+    columnSize: Int,
+    openVideosExternally: Boolean,
+    cacheThumbnails: Boolean,
+    thumbnailSize: Int,
+    useRoundedCorners: Boolean
 ) {
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -180,7 +194,6 @@ private fun DeviceMedia(
         selectionManager.clear()
     }
 
-    val mainViewModel = LocalMainViewModel.current
     val isLandscape by rememberDeviceOrientation()
 
     Box(
@@ -188,16 +201,7 @@ private fun DeviceMedia(
             .fillMaxSize(1f)
             .background(MaterialTheme.colorScheme.background)
     ) {
-        val cacheThumbnails by mainViewModel.settings.storage.getCacheThumbnails()
-            .collectAsStateWithLifecycle(initialValue = false)
-        val thumbnailSize by mainViewModel.settings.storage.getThumbnailSize()
-            .collectAsStateWithLifecycle(initialValue = 0)
-
         val context = LocalContext.current
-        val columnSize by mainViewModel.columnSize.collectAsStateWithLifecycle()
-        val useRoundedCorners by mainViewModel.settings.lookAndFeel.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
-        val openVideosExternally by mainViewModel.settings.behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
-
         val resources = LocalResources.current
         val navController = LocalNavController.current
         val vibratorManager = rememberVibratorManager()
