@@ -3,7 +3,6 @@ package com.kaii.photos.models.secure_folder
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.cachedIn
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.SecureRepository
@@ -77,8 +76,8 @@ class SecureFolderViewModel(
         info = settings.immich.getImmichBasicInfo()
     )
 
-    val mediaFlow = repo.mediaFlow.cachedIn(viewModelScope)
-    val gridMediaFlow = repo.gridMediaFlow.cachedIn(viewModelScope)
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
 
     init {
         repo.attachFileObserver()

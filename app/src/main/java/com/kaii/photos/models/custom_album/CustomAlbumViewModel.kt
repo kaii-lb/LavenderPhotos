@@ -3,7 +3,6 @@ package com.kaii.photos.models.custom_album
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
@@ -24,13 +23,14 @@ class CustomAlbumViewModel(
     private val repo = CustomRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).customDao(),
         albumInfo = albumInfo,
+        scope = viewModelScope,
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat(),
         info = settings.immich.getImmichBasicInfo()
     )
 
-    val mediaFlow = repo.mediaFlow.cachedIn(viewModelScope)
-    val gridMediaFlow = repo.gridMediaFlow.cachedIn(viewModelScope)
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
 
     val useBlackBackground = context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,

@@ -2,6 +2,7 @@ package com.kaii.photos.repositories
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumInfo
@@ -10,6 +11,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ import kotlinx.coroutines.withContext
 class CustomRepository(
     private val dao: CustomEntityDao,
     private val albumInfo: AlbumInfo,
+    scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
@@ -46,7 +49,7 @@ class CustomRepository(
                 else dao.getPagedMediaDateTaken(album = albumInfo.id)
             }
         ).flow.mapToMedia(accessToken = params.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
@@ -54,7 +57,7 @@ class CustomRepository(
             sortMode = params.sortMode,
             format = params.format
         )
-    }
+    }.cachedIn(scope)
 
     suspend fun remove(
         items: Set<MediaStoreData>,

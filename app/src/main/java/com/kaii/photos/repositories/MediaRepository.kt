@@ -2,6 +2,7 @@ package com.kaii.photos.repositories
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -9,6 +10,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,7 @@ open class RoomQueryParams(
 
 class MediaRepository(
     private val dao: MediaDao,
+    scope: CoroutineScope,
     initialAlbumInfo: AlbumInfo,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
@@ -61,7 +64,7 @@ class MediaRepository(
                 else dao.getPagedMediaDateTaken(paths = details.paths)
             }
         ).flow.mapToMedia(accessToken = details.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { details ->
@@ -69,7 +72,7 @@ class MediaRepository(
             sortMode = details.sortMode,
             format = details.format
         )
-    }
+    }.cachedIn(scope)
 
     fun changePaths(new: Set<String>) {
         paths.value = new

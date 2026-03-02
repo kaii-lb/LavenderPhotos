@@ -3,7 +3,6 @@ package com.kaii.photos.models.favourites_grid
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
@@ -90,11 +89,12 @@ class FavouritesViewModel(
 
     private val repo = FavouritesRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).mediaDao(),
+        scope = viewModelScope,
         info = settings.immich.getImmichBasicInfo(),
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat()
     )
 
-    val mediaFlow = repo.mediaFlow.cachedIn(viewModelScope)
-    val gridMediaFlow = repo.gridMediaFlow.cachedIn(viewModelScope)
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
 }

@@ -5,6 +5,7 @@ import android.os.FileObserver
 import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -105,7 +106,7 @@ class SecureRepository(
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
         ).flow.mapToSecuredMedia(accessToken = params.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
@@ -113,7 +114,7 @@ class SecureRepository(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
         )
-    }
+    }.cachedIn(scope)
 
     fun attachFileObserver() {
         fileObserver.startWatching()

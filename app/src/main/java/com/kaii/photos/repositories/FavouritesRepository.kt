@@ -2,12 +2,14 @@ package com.kaii.photos.repositories
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 
 class FavouritesRepository(
     dao: MediaDao,
+    scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
@@ -42,7 +45,7 @@ class FavouritesRepository(
             }
         ).flow
             .mapToMedia(accessToken = params.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
@@ -50,5 +53,5 @@ class FavouritesRepository(
             sortMode = params.sortMode,
             format = params.format
         )
-    }
+    }.cachedIn(scope)
 }

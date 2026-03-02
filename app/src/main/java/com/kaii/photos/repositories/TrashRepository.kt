@@ -6,6 +6,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -82,7 +83,7 @@ class TrashRepository(
             ),
             pagingSourceFactory = { ListPagingSource(media = params.items) }
         ).flow.mapToMedia(accessToken = params.accessToken)
-    }
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
@@ -90,7 +91,7 @@ class TrashRepository(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
         )
-    }
+    }.cachedIn(scope)
 
     fun cancel() = cancellationSignal.cancel()
 
