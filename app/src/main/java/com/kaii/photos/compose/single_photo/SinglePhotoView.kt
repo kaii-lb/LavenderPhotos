@@ -461,6 +461,7 @@ private fun SinglePhotoViewCommon(
                 showInfoDialog = showInfoDialog,
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = isOpenWithDefaultView,
+                showTags = true,
                 showTagDialog = showTagDialog,
                 topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {

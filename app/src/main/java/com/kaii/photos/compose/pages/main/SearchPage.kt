@@ -97,7 +97,6 @@ fun SearchPage(
         }
 
         val selectedTags by viewModel.selectedTags.collectAsStateWithLifecycle()
-
         val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
         val searchMode by viewModel.searchMode.collectAsStateWithLifecycle()
         val searchingForTags by viewModel.searchingForTags.collectAsStateWithLifecycle()
@@ -128,7 +127,10 @@ fun SearchPage(
             onToggleTag = { tag ->
                 viewModel.toggleTagSelected(tag)
             },
-            onTagRemove = viewModel::deleteTag,
+            onTagRemove = {
+                currentTag = it
+                showDialog.value = true
+            },
             setSearchingForTags = viewModel::setSearchingForTags,
             onClearTags = viewModel::clearSelectedTags
         )

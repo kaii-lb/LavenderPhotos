@@ -1027,7 +1027,8 @@ fun SingleViewTopBar(
     showInfoDialog: Boolean,
     privacyMode: Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
-    isOpenWithDefaultView: Boolean = false,
+    isOpenWithDefaultView: Boolean,
+    showTags: Boolean,
     showTagDialog: Boolean = false,
     expandInfoDialog: () -> Unit,
     expandTagDialog: () -> Unit = {}
@@ -1153,21 +1154,23 @@ fun SingleViewTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                FilledIconToggleButton(
-                    checked = showTagDialog,
-                    onCheckedChange = {
-                        expandTagDialog()
-                    },
-                    shapes = IconButtonDefaults.toggleableShapes(
-                        shape = IconButtonDefaults.filledShape,
-                        pressedShape = IconButtonDefaults.extraSmallPressedShape,
-                        checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.sell),
-                        contentDescription = stringResource(id = R.string.tags)
-                    )
+                if (showTags) {
+                    FilledIconToggleButton(
+                        checked = showTagDialog,
+                        onCheckedChange = {
+                            expandTagDialog()
+                        },
+                        shapes = IconButtonDefaults.toggleableShapes(
+                            shape = IconButtonDefaults.filledShape,
+                            pressedShape = IconButtonDefaults.extraSmallPressedShape,
+                            checkedShape = IconButtonDefaults.mediumSelectedRoundShape
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sell),
+                            contentDescription = stringResource(id = R.string.tags)
+                        )
+                    }
                 }
 
                 FilledIconToggleButton(

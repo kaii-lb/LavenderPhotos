@@ -185,6 +185,7 @@ private fun SingleTrashedPhotoViewImpl(
                 privacyMode = scrollState.privacyMode,
                 isOpenWithDefaultView = false,
                 topBarDetailsFormat = topBarDetailsFormat,
+                showTags = false,
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true

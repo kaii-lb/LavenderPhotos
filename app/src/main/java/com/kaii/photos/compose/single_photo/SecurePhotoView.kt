@@ -189,6 +189,7 @@ fun SecurePhotoView(
                 isOpenWithDefaultView = false,
                 privacyMode = scrollState.privacyMode,
                 topBarDetailsFormat = topBarDetailsFormat,
+                showTags = false,
                 expandInfoDialog = {
                     showInfoDialog = true
                 }
