@@ -63,13 +63,13 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.pages.WallpaperSetter
 import com.kaii.photos.compose.widgets.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
@@ -95,6 +95,7 @@ fun SinglePhotoInfoDialog(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
+    preserveDate: Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -143,6 +144,7 @@ fun SinglePhotoInfoDialog(
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             isCustomAlbum = isCustomAlbum,
+                            preserveDate = preserveDate,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -163,6 +165,7 @@ fun SinglePhotoInfoDialog(
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             isCustomAlbum = isCustomAlbum,
+                            preserveDate = preserveDate,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -179,6 +182,7 @@ private fun Content(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
+    preserveDate: Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -258,6 +262,7 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     isCustomAlbum = isCustomAlbum,
+                    preserveDate = preserveDate,
                     dismiss = dismiss
                 )
             }
@@ -279,6 +284,7 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     isCustomAlbum = isCustomAlbum,
+                    preserveDate = preserveDate,
                     dismiss = dismiss
                 )
             }
@@ -409,11 +415,10 @@ private fun Content(
         }
 
         val resources = LocalResources.current
-        val mainViewModel = LocalMainViewModel.current
         val coroutineScope = rememberCoroutineScope()
         val permissionState = rememberFilePermissionManager(
             onGranted = {
-                mainViewModel.launch(Dispatchers.IO) {
+                context.appModule.scope.launch(Dispatchers.IO) {
                     try {
                         eraseExifMedia(currentMediaItem.absolutePath)
 
@@ -494,6 +499,7 @@ private fun RowScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
+    preserveDate: Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -501,6 +507,7 @@ private fun RowScope.IconContent(
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
         isCustomAlbum = isCustomAlbum,
+        preserveDate = preserveDate,
         modifier = Modifier.weight(1f),
         dismiss = dismiss
     )
@@ -512,6 +519,7 @@ private fun ColumnScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
+    preserveDate: Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -519,6 +527,7 @@ private fun ColumnScope.IconContent(
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
         isCustomAlbum = isCustomAlbum,
+        preserveDate = preserveDate,
         modifier = Modifier.weight(1f),
         dismiss = dismiss
     )
@@ -530,6 +539,7 @@ private fun IconContentImpl(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
+    preserveDate: Boolean,
     modifier: Modifier,
     dismiss: () -> Unit
 ) {
@@ -625,6 +635,7 @@ private fun IconContentImpl(
             isMoving = isMoving,
             insetsPadding = WindowInsets.statusBars,
             dismissInfoDialog = dismiss,
+            preserveDate = preserveDate,
             clear = {}
         )
 

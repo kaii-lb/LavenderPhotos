@@ -98,6 +98,7 @@ fun SingleTrashedPhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
@@ -106,7 +107,8 @@ fun SingleTrashedPhotoView(
         useBlackBackground = useBlackBackground,
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
-        useCache = useCache
+        useCache = useCache,
+        preserveDate = preserveDate
     )
 }
 
@@ -120,7 +122,8 @@ private fun SingleTrashedPhotoViewImpl(
     useBlackBackground: Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: Boolean,
-    useCache: Boolean
+    useCache: Boolean,
+    preserveDate: Boolean
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -225,6 +228,7 @@ private fun SingleTrashedPhotoViewImpl(
                     showMoveCopyOptions = false,
                     privacyMode = scrollState.privacyMode,
                     isCustomAlbum = false,
+                    preserveDate = preserveDate,
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()

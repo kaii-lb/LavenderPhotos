@@ -70,6 +70,12 @@ class TrashViewModel(
         initialValue = false
     )
 
+    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     private val repo = TrashRepository(
         scope = viewModelScope,
         context = context,
