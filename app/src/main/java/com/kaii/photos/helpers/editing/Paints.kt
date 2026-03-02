@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.NativePaint
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.PathEffect
@@ -49,25 +48,7 @@ data class DrawingPaint(
     override var strokeWidth: Float = 20f,
     @Serializable(with = PaintingStyleSerializer::class) override var style: PaintingStyle = PaintingStyle.Stroke,
     var type: PaintType = PaintType.Pencil,
-) : Paint {
-    override fun asFrameworkPaint(): NativePaint {
-        return Paint().also { paint ->
-            paint.color = color
-            paint.strokeCap = strokeCap
-            paint.strokeWidth = strokeWidth
-            paint.strokeJoin = strokeJoin
-            paint.style = style
-            paint.blendMode = blendMode
-            paint.alpha = alpha
-            paint.pathEffect = pathEffect
-            paint.filterQuality = filterQuality
-            paint.isAntiAlias = isAntiAlias
-            paint.strokeMiterLimit = strokeMiterLimit
-            paint.shader = shader
-            paint.colorFilter = colorFilter
-        }.asFrameworkPaint()
-    }
-}
+) : Paint
 
 @Immutable
 enum class PaintType {
