@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
 
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
 
-                                else -> Screens.MainPages.MainGrid.GridView
+                                else -> Screens.MainPages
                             }
                     )
                 }

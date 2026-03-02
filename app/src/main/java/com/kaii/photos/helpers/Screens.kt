@@ -101,7 +101,7 @@ interface Screens {
     }
 
     @Serializable
-    object MainPages {
+    object MainPages : Screens {
         @Serializable
         object MainGrid : Screens {
             @Serializable
