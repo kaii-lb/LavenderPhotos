@@ -174,62 +174,67 @@ fun MainAppTopBar(
             }
         },
         actions = {
-            AnimatedVisibility(
-                visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
-                enter = scaleIn(
-                    animationSpec = AnimationConstants.expressiveSpring()
-                ),
-                exit = scaleOut(
-                    animationSpec = AnimationConstants.expressiveSpring()
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                var showAlbumTypeDialog by remember { mutableStateOf(false) }
-                if (showAlbumTypeDialog) {
-                    AlbumAddChoiceDialog(
-                        addAlbum = addAlbum
+                AnimatedVisibility(
+                    visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                    enter = scaleIn(
+                        animationSpec = AnimationConstants.expressiveSpring()
+                    ),
+                    exit = scaleOut(
+                        animationSpec = AnimationConstants.expressiveSpring()
+                    )
+                ) {
+                    var showAlbumTypeDialog by remember { mutableStateOf(false) }
+                    if (showAlbumTypeDialog) {
+                        AlbumAddChoiceDialog(
+                            addAlbum = addAlbum
+                        ) {
+                            showAlbumTypeDialog = false
+                        }
+                    }
+
+                    IconButton(
+                        onClick = {
+                            showAlbumTypeDialog = true
+                        },
                     ) {
-                        showAlbumTypeDialog = false
+                        Icon(
+                            painter = painterResource(R.drawable.add),
+                            contentDescription = stringResource(id = R.string.album_add),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 
-                IconButton(
-                    onClick = {
-                        showAlbumTypeDialog = true
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.add),
-                        contentDescription = stringResource(id = R.string.album_add),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            if (!isFromMediaPicker) {
-                AnimatedLoginIcon(
-                    state = userInfo,
-                    alwaysShowInfo = alwaysShowImmichInfo
-                ) {
-                    coroutineScope.launch {
-                        showMainDialog = true
-                        delay(50)
-                        sheetState.expand()
+                if (!isFromMediaPicker) {
+                    AnimatedLoginIcon(
+                        state = userInfo,
+                        alwaysShowInfo = alwaysShowImmichInfo
+                    ) {
+                        coroutineScope.launch {
+                            showMainDialog = true
+                            delay(50)
+                            sheetState.expand()
+                        }
                     }
-                }
-            } else {
-                val context = LocalContext.current
-                IconButton(
-                    onClick = {
-                        (context as Activity).finish()
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.close),
-                        contentDescription = "Close media picker",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
+                } else {
+                    val context = LocalContext.current
+                    IconButton(
+                        onClick = {
+                            (context as Activity).finish()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.close),
+                            contentDescription = "Close media picker",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         },
