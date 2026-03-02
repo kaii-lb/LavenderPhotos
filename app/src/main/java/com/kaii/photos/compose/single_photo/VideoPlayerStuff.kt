@@ -95,7 +95,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -108,12 +107,11 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import com.kaii.photos.LocalAppDatabase
-import com.kaii.photos.LocalMainViewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
@@ -131,7 +129,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-// special thanks to @bedirhansaricayir on github, helped with a LOT of performance stuff
+// special thanks to @bedirhansaricayir on GitHub, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
 private const val TAG = "com.kaii.photos.compose.single_photo.VideoPlayerStuff"
@@ -409,6 +407,8 @@ fun VideoPlayer(
     scrollState: SinglePhotoScrollState,
     window: Window,
     shouldPlay: State<Boolean>,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
     modifier: Modifier = Modifier,
     isOpenWithView: Boolean = false
 ) {
@@ -421,10 +421,9 @@ fun VideoPlayer(
         var securedMediaProgress by remember { mutableFloatStateOf(0f) }
         var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
 
-        val applicationDatabase = LocalAppDatabase.current
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
-                val iv = applicationDatabase.securedItemEntityDao()
+                val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
                     .getIvFromSecuredPath(item.absolutePath)
 
                 if (iv == null) {
@@ -501,7 +500,13 @@ fun VideoPlayer(
         currentVideoPosition = currentVideoPosition,
         onPlaybackStateChanged = {}
     )
-    val playerView = rememberPlayerView(exoPlayer, context as Activity, item.absolutePath)
+    val playerView = rememberPlayerView(
+        exoPlayer = exoPlayer,
+        activity = context as Activity,
+        absolutePath = item.absolutePath,
+        blurViews = blurViews,
+        useBlackBackground = useBlackBackground
+    )
 
     val isMuted = remember(scrollState.videoWasMuted) { mutableStateOf(scrollState.videoWasMuted) }
     val controlsVisible = remember { mutableStateOf(true) }
@@ -1147,13 +1152,12 @@ fun rememberPlayerView(
     exoPlayer: ExoPlayer,
     activity: Activity,
     absolutePath: String?,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
     useTextureView: Boolean = false
 ): PlayerView {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val mainViewModel = LocalMainViewModel.current
-    val useBlackBackground by mainViewModel.useBlackViewBackgroundColor.collectAsStateWithLifecycle()
-    val blurViews by mainViewModel.blurViews.collectAsStateWithLifecycle()
 
     val backgroundColor = when {
         blurViews -> Color.Transparent.toArgb()

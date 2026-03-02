@@ -36,6 +36,8 @@ fun MotionPhotoView(
     zoomableState: ZoomableState,
     appBarsVisible: MutableState<Boolean>,
     window: Window,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
     glideImageView: @Composable (modifier: Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,7 +90,9 @@ fun MotionPhotoView(
         val playerView = rememberPlayerView(
             exoPlayer = state.exoPlayer,
             activity = context as Activity,
-            absolutePath = null
+            absolutePath = null,
+            blurViews = blurViews,
+            useBlackBackground = useBlackBackground
         )
 
         val alpha by animateFloatAsState(

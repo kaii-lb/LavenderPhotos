@@ -18,7 +18,7 @@ class CustomAlbumViewModel(
     context: Context,
     private val albumInfo: AlbumInfo
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
 
     private val repo = CustomRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).customDao(),

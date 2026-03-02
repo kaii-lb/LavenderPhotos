@@ -19,7 +19,7 @@ class MultiAlbumViewModel(
     context: Context,
     albumInfo: AlbumInfo
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
 
     val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,

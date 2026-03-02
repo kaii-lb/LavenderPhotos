@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 class SearchViewModel(
     context: Context
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
 
     val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,

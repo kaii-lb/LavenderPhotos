@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 class PermissionsViewModel(
     context: Context
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
 
     fun setIsMediaManager(value: Boolean) {
         viewModelScope.launch {

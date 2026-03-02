@@ -309,9 +309,14 @@ private fun Content(uri: Uri, window: Window) {
             }
 
             else -> {
+                val blurViews by context.appModule.settings.lookAndFeel.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
+                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().collectAsStateWithLifecycle(initialValue = false)
+
                 OpenWithContent(
                     uri = uri,
-                    window = window
+                    window = window,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground
                 )
             }
         }

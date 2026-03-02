@@ -85,7 +85,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun OpenWithContent(
     uri: Uri,
-    window: Window
+    window: Window,
+    blurViews: Boolean,
+    useBlackBackground: Boolean
 ) {
     val appBarsVisible = remember { mutableStateOf(true) }
     val context = LocalContext.current
@@ -144,6 +146,8 @@ fun OpenWithContent(
                     window = window,
                     shouldPlay = shouldPlay,
                     isOpenWithView = true,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .transformable()
@@ -163,6 +167,8 @@ fun OpenWithContent(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
+                        blurViews = blurViews,
+                        useBlackBackground = useBlackBackground,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = uri,

@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 class MainGridViewModel(
     context: Context
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
     private var initialMainPhotosPaths = emptySet<String>()
 
 

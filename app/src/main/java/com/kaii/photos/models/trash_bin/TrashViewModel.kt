@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 class TrashViewModel(
     context: Context
 ) : ViewModel() {
-    private val settings = context.appModule.settings
+    private val settings = context.applicationContext.appModule.settings
 
     val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
