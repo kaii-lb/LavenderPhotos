@@ -57,7 +57,9 @@ class AlbumGridState(
     ) {
         data class Thumbnail(
             val uri: String,
-            val signature: ObjectKey
+            val signature: ObjectKey,
+            val id: Int,
+            val date: Long
         )
     }
 
@@ -179,27 +181,36 @@ class AlbumGridState(
 
             val thumbnails = albums.fastMap { album ->
                 if (!album.custom) {
-                    if (internalSortMode.isDateModified) {
+                    val media = if (internalSortMode.isDateModified) {
                         mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
                     } else {
                         mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
                     } ?: MediaStoreData.dummyItem
+
+                    Pair(media, album.id)
                 } else {
-                    if (internalSortMode.isDateModified) {
+                    val media = if (internalSortMode.isDateModified) {
                         customDao.getThumbnailForAlbumDateModified(album = album.id)
                     } else {
                         customDao.getThumbnailForAlbumDateTaken(album = album.id)
                     } ?: MediaStoreData.dummyItem
+
+                    Pair(media, album.id)
                 }
             }
 
             Album(
                 info = albumType,
-                thumbnails = thumbnails.fastMap {
-                    Album.Thumbnail(uri = it.uri, signature = it.signature())
+                thumbnails = thumbnails.fastMap { (media, id) ->
+                    Album.Thumbnail(
+                        uri = media.uri,
+                        signature = media.signature(),
+                        id = id,
+                        date = if (internalSortMode.isDateModified) media.dateModified else media.dateTaken
+                    )
                 },
-                date = thumbnails.fastMap {
-                    if (internalSortMode.isDateModified) it.dateModified else it.dateTaken
+                date = thumbnails.fastMap { (media, _) ->
+                    if (internalSortMode.isDateModified) media.dateModified else media.dateTaken
                 }.minOrNull() ?: 0L
             )
         }.let { list ->
@@ -229,6 +240,22 @@ class AlbumGridState(
                 val pinned = list.filter { it.info.pinned }
                 list.removeAll(pinned)
                 list.addAll(0, pinned)
+
+                list.add(
+                    index = 0,
+                    element = Album(
+                        info = AlbumType.AlbumGroup(
+                            id = 12391241,
+                            name = "Testing Group",
+                            pinned = false,
+                            albums = list.take(3).fastMap { it.info as AlbumType.Album },
+                            icon = null
+                        ),
+                        thumbnails = list.take(3).fastMap { it.thumbnails }.flatten(),
+                        date = 1772576233
+                    )
+                )
+
                 list
             }
         }

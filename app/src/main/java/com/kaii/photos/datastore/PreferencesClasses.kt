@@ -30,7 +30,7 @@ enum class AlbumSortMode {
         }
 
     fun byDirection(descending: Boolean): AlbumSortMode =
-        if (!descending || isDescending) this
+        if (descending == isDescending) this
         else this.flip()
 }
 
