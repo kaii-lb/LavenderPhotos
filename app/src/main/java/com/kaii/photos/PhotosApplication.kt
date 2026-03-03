@@ -24,6 +24,9 @@ class PhotosApplication : Application() {
 
         appModule = AppModule(applicationContext)
 
+        // try to migrate from an older album system on app startup
+        appModule.settings.albums.migrate()
+
         registerContentObserver()
     }
 
