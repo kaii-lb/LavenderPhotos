@@ -66,6 +66,7 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
@@ -232,11 +233,13 @@ fun AlbumsListItem(
             show.value = false
 
             context.appModule.scope.launch(Dispatchers.IO) {
+                album.info as AlbumType.Album // literally cannot be called on an AlbumGroup
+
                 if (isMoving && album.info.paths.size == 1) {
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsList,
-                        destination = album.info.mainPath,
+                        destination = album.info.paths.first(),
                         preserveDate = preserveDate
                     )
                 } else {
@@ -283,7 +286,7 @@ fun AlbumsListItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                if (!album.info.isCustomAlbum) {
+                if (!(album.info as AlbumType.Album).custom) {
                     dirPermissionManager.start(
                         directories = album.info.paths
                     )
@@ -313,7 +316,7 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = album.thumbnail,
+            model = album.thumbnails.first().uri,
             contentDescription = album.info.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
@@ -321,7 +324,7 @@ fun AlbumsListItem(
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            it.signature(album.signature)
+            it.signature(album.thumbnails.first().signature)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
         }
 
@@ -336,7 +339,7 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if (album.info.isCustomAlbum) {
+        if ((album.info as AlbumType.Album).custom) {
             Icon(
                 painter = painterResource(id = R.drawable.art_track),
                 contentDescription = stringResource(id = R.string.albums_is_custom),

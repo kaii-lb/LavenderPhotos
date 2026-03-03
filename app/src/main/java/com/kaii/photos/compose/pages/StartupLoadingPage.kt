@@ -46,7 +46,8 @@ fun StartupLoadingPage(
     }
 
     Box {
-        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+        val albumGridState = rememberAlbumGridState()
+        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
 
         MainPages(
             multiAlbumViewModel = multiAlbumViewModel,
@@ -55,7 +56,8 @@ fun StartupLoadingPage(
             deviceAlbums = deviceAlbums,
             window = window,
             incomingIntent = null,
-            blur = true
+            blur = true,
+            refreshAlbums = albumGridState::refresh
         )
 
         ProcessingPage(startupManager = startupManager)

@@ -86,8 +86,8 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
-import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -108,7 +108,7 @@ fun AlbumsGridView(
     immichInfo: ImmichBasicInfo,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
-    setAlbums: (albums: List<AlbumInfo>) -> Unit
+    setAlbums: (albums: List<AlbumType>) -> Unit
 ) {
     val navController = LocalNavController.current
     var albums by remember { mutableStateOf(deviceAlbums.value) }
@@ -319,16 +319,20 @@ fun AlbumsGridView(
                     navController.navigate(
                         route =
                             when {
-                                album.info.isCustomAlbum && album.info.immichId.isNotBlank() -> {
-                                    Screens.Immich.GridView(albumInfo = album.info)
+                                album.info is AlbumType.AlbumGroup -> {
+                                    Screens.AlbumGroup(group = album.info)
                                 }
 
-                                album.info.isCustomAlbum -> {
-                                    Screens.CustomAlbum.GridView(albumInfo = album.info)
+                                (album.info as AlbumType.Album).custom && album.info.immichId.isNotBlank() -> {
+                                    Screens.Immich.GridView(album = album.info)
+                                }
+
+                                album.info.custom -> {
+                                    Screens.CustomAlbum.GridView(album = album.info)
                                 }
 
                                 else -> {
-                                    Screens.Album.GridView(albumInfo = album.info)
+                                    Screens.Album.GridView(album = album.info)
                                 }
                             }
                     )
@@ -400,7 +404,7 @@ private fun AlbumGridItem(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AnimatedContent(
-                targetState = album.thumbnail.isNotBlank(),
+                targetState = album.thumbnails.isNotEmpty(),
                 transitionSpec = {
                     fadeIn(
                         animationSpec = tween(
@@ -421,13 +425,13 @@ private fun AlbumGridItem(
                 if (state) {
                     GlideImage(
                         model =
-                            if (album.info.immichId.isNotBlank()) ImmichInfo(
-                                thumbnail = album.thumbnail,
-                                original = album.thumbnail,
+                            if ((album.info as AlbumType.Album).immichId.isNotBlank()) ImmichInfo(
+                                thumbnail = album.thumbnails.first().uri,
+                                original = album.thumbnails.first().uri,
                                 hash = "",
                                 accessToken = info.accessToken,
                                 useThumbnail = true
-                            ) else album.thumbnail,
+                            ) else album.thumbnails.first().uri,
                         contentDescription = album.info.name,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.broken_image),
@@ -436,7 +440,7 @@ private fun AlbumGridItem(
                             .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                     ) {
-                        it.signature(album.signature)
+                        it.signature(album.thumbnails.first().signature)
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
                     }
                 } else {
@@ -468,7 +472,7 @@ private fun AlbumGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (album.info.isCustomAlbum) {
+                if ((album.info as? AlbumType.Album)?.custom == true) {
                     Icon(
                         painter = painterResource(id = R.drawable.art_track),
                         contentDescription = stringResource(id = R.string.albums_is_custom),

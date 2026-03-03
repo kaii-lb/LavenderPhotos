@@ -66,6 +66,7 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,8 @@ fun MainPages(
     deviceAlbums: State<List<AlbumGridState.Album>>,
     window: Window,
     incomingIntent: Intent?,
-    blur: Boolean = false
+    blur: Boolean = false,
+    refreshAlbums: () -> Unit
 ) {
     val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
     val tabList by mainGridViewModel.tabList.collectAsStateWithLifecycle()
@@ -247,7 +249,18 @@ fun MainPages(
                     searchViewModel.clear()
                 }
 
+                if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
+                    refreshAlbums()
+                }
+
                 lastPage = it
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            while (true) {
+                refreshAlbums()
+                delay(5000)
             }
         }
 

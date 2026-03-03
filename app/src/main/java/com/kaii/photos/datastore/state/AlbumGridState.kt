@@ -1,7 +1,6 @@
 package com.kaii.photos.datastore.state
 
 import android.content.Context
-import android.os.CancellationSignal
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -13,8 +12,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
@@ -41,7 +40,7 @@ import kotlin.random.Random
 
 class AlbumGridState(
     private val scope: CoroutineScope,
-    private val albumsFlow: Flow<List<AlbumInfo>>,
+    private val albumsFlow: Flow<List<AlbumType>>,
     private val apiClient: ApiClient,
     private val info: Flow<ImmichBasicInfo>,
     context: Context,
@@ -49,20 +48,28 @@ class AlbumGridState(
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
     private val checkLoggedIn: suspend () -> Boolean,
-    private val updateAlbums: (added: List<AlbumInfo>, removed: List<Int>) -> Unit
+    private val updateAlbums: (added: List<AlbumType.Album>, removed: List<Int>) -> Unit
 ) {
     data class Album(
-        val info: AlbumInfo,
-        val thumbnail: String,
-        val date: Long,
-        val signature: ObjectKey
-    )
+        val info: AlbumType,
+        val thumbnails: List<Thumbnail>,
+        val date: Long
+    ) {
+        data class Thumbnail(
+            val uri: String,
+            val signature: ObjectKey
+        )
+    }
 
     private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
     private val customDao = MediaDatabase.getInstance(context).customDao()
 
     private val _albums = MutableStateFlow(emptyList<Album>())
     val albums = _albums.asStateFlow()
+
+    private var internalAlbums = emptyList<AlbumType>()
+    private var internalSortMode = MediaItemSortMode.DateTaken
+    private var internalAlbumSortMode = AlbumSortMode.LastModifiedDesc
 
     init {
         scope.launch(Dispatchers.IO) {
@@ -71,12 +78,11 @@ class AlbumGridState(
             }.combine(albumSortModeFlow) { pair, sortMode ->
                 Triple(pair.first, pair.second, sortMode)
             }.distinctUntilChanged().collectLatest { (albums, mediaSortMode, albumSortMode) ->
-                refresh(
-                    albums = albums,
-                    mediaSortMode = mediaSortMode,
-                    albumSortMode = albumSortMode
-                )
-                refreshImmichAlbums()
+                internalAlbums = albums
+                internalSortMode = mediaSortMode
+                internalAlbumSortMode = albumSortMode
+
+                refresh()
             }
         }
 
@@ -91,15 +97,20 @@ class AlbumGridState(
                         .collectLatest { list ->
                             updateAlbums(
                                 list.fastMap { album ->
-                                    AlbumInfo(
+                                    AlbumType.Album(
                                         id = album.hashCode(),
                                         name = album.filename(),
-                                        paths = setOf(album)
+                                        paths = setOf(album),
+                                        pinned = false,
+                                        custom = false,
+                                        immichId = ""
                                     )
                                 },
                                 albumsFlow.first().fastMapNotNull { album ->
                                     album.id.takeIf {
-                                        !album.isCustomAlbum && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+                                        album is AlbumType.Album &&
+                                                !album.custom
+                                                && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
                                     }
                                 }
                             )
@@ -109,7 +120,14 @@ class AlbumGridState(
         }
     }
 
-    private suspend fun refreshImmichAlbums() {
+    fun refresh() {
+        scope.launch {
+            update()
+            updateImmich()
+        }
+    }
+
+    private suspend fun updateImmich() {
         if (!checkLoggedIn()) return
 
         val immichInfo = info.first()
@@ -125,16 +143,23 @@ class AlbumGridState(
             if (state is AlbumsGetAllState.Retrieved) {
                 val albumIds = state.albums.fastMap { it.id }
                 val removedOrImmichIdChanged = _albums.value.fastMapNotNull { album ->
-                    album.info.id.takeIf { album.info.immichId !in albumIds && album.info.isCustomAlbum && album.info.immichId.isNotBlank() }
+                    (album.info as? AlbumType.Album)?.id.takeIf {
+                        album.info as AlbumType.Album
+
+                        album.info.immichId !in albumIds
+                                && album.info.custom
+                                && album.info.immichId.isNotBlank()
+                    }
                 }
 
                 updateAlbums(
-                    state.albums.fastMap { album ->
-                        AlbumInfo(
+                    state.albums.fastMapNotNull { album ->
+                        AlbumType.Album(
                             id = Random.nextInt(),
                             name = album.albumName,
                             paths = emptySet(),
-                            isCustomAlbum = true,
+                            custom = true,
+                            pinned = false,
                             immichId = album.id
                         )
                     },
@@ -144,38 +169,41 @@ class AlbumGridState(
         }
     }
 
-    private fun refresh(
-        albums: List<AlbumInfo>,
-        mediaSortMode: MediaItemSortMode,
-        albumSortMode: AlbumSortMode
-    ) = scope.launch(Dispatchers.IO) {
-        _albums.value = albums.fastMap { album ->
-            val cancellationSignal = CancellationSignal()
-
-            val media = if (!album.isCustomAlbum) {
-                if (mediaSortMode.isDateModified) {
-                    mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
-                } else {
-                    mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                } ?: MediaStoreData.dummyItem
+    private fun update() = scope.launch(Dispatchers.IO) {
+        _albums.value = internalAlbums.fastMap { albumType ->
+            val albums = if (albumType is AlbumType.AlbumGroup) {
+                albumType.albums
             } else {
-                if (mediaSortMode.isDateModified) {
-                    customDao.getThumbnailForAlbumDateModified(album = album.id)
-                } else {
-                    customDao.getThumbnailForAlbumDateTaken(album = album.id)
-                } ?: MediaStoreData.dummyItem
+                listOf(albumType as AlbumType.Album)
             }
 
-            cancellationSignal.cancel()
+            val thumbnails = albums.fastMap { album ->
+                if (!album.custom) {
+                    if (internalSortMode.isDateModified) {
+                        mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
+                    } else {
+                        mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
+                    } ?: MediaStoreData.dummyItem
+                } else {
+                    if (internalSortMode.isDateModified) {
+                        customDao.getThumbnailForAlbumDateModified(album = album.id)
+                    } else {
+                        customDao.getThumbnailForAlbumDateTaken(album = album.id)
+                    } ?: MediaStoreData.dummyItem
+                }
+            }
 
             Album(
-                info = album,
-                thumbnail = media.immichThumbnail?.takeIf { album.immichId.isNotBlank() && it.isNotBlank() } ?: media.uri,
-                date = if (mediaSortMode.isDateModified) media.dateModified else media.dateTaken,
-                signature = media.signature()
+                info = albumType,
+                thumbnails = thumbnails.fastMap {
+                    Album.Thumbnail(uri = it.uri, signature = it.signature())
+                },
+                date = thumbnails.fastMap {
+                    if (internalSortMode.isDateModified) it.dateModified else it.dateTaken
+                }.minOrNull() ?: 0L
             )
         }.let { list ->
-            val sorted = when (albumSortMode) {
+            val sorted = when (internalAlbumSortMode) {
                 AlbumSortMode.LastModified -> {
                     list.sortedBy { it.date }
                 }
@@ -198,7 +226,7 @@ class AlbumGridState(
             }
 
             sorted.toMutableList().let { list ->
-                val pinned = list.filter { it.info.isPinned }
+                val pinned = list.filter { it.info.pinned }
                 list.removeAll(pinned)
                 list.addAll(0, pinned)
                 list
@@ -222,7 +250,7 @@ fun rememberAlbumGridState(): AlbumGridState {
             context = context,
             albumsFlow = context.appModule.settings.albums.get(),
             sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
-            albumSortModeFlow = context.appModule.settings.albums.getAlbumSortMode(),
+            albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
             allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
             info = context.appModule.settings.immich.getImmichBasicInfo(),
             apiClient = apiClient,

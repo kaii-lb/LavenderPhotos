@@ -216,7 +216,8 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+        val albumGridState = rememberAlbumGridState()
+        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
         val snackbarHostState = remember { LavenderSnackbarHostState() }
 
         val navController = LocalNavController.current
@@ -280,7 +281,8 @@ class MainActivity : ComponentActivity() {
                             mainGridViewModel = viewModel,
                             deviceAlbums = deviceAlbums,
                             window = window,
-                            incomingIntent = null
+                            incomingIntent = null,
+                            refreshAlbums = albumGridState::refresh
                         )
                     }
 

@@ -139,7 +139,8 @@ class MediaPicker : ComponentActivity() {
         )
 
         val navController = LocalNavController.current
-        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+        val albumGridState = rememberAlbumGridState()
+        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
 
         NavHost(
             navController = navController,
@@ -201,7 +202,7 @@ class MediaPicker : ComponentActivity() {
                         deviceAlbums = deviceAlbums,
                         window = window,
                         incomingIntent = incomingIntent,
-                        blur = false
+                        refreshAlbums = albumGridState::refresh
                     )
                 }
             }
