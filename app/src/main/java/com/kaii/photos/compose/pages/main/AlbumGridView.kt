@@ -106,6 +106,7 @@ fun AlbumsGridView(
     tabList: List<BottomBarTab>,
     columnSize: Int,
     immichInfo: ImmichBasicInfo,
+    migrateFav: () -> Boolean,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
     setAlbums: (albums: List<AlbumType>) -> Unit
@@ -269,8 +270,10 @@ fun AlbumsGridView(
                 ) {
                     CategoryList(
                         navigateToFavourites = {
-                            // TODO: change the startup screen to handle migration
-                            navController.navigate(Screens.Favourites)
+                            navController.navigate(
+                                if (migrateFav()) Screens.Favourites.MigrationPage
+                                else Screens.Favourites.GridView
+                            )
                         },
                         navigateToTrash = {
                             navController.navigate(Screens.Trash.GridView)

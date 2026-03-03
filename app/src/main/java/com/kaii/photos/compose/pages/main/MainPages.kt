@@ -333,6 +333,7 @@ fun MainPages(
                     tab == DefaultTabs.TabTypes.albums -> {
                         val columnSize by mainGridViewModel.albumColumnSize.collectAsStateWithLifecycle()
                         val sortMode by mainGridViewModel.albumSortMode.collectAsStateWithLifecycle()
+                        val migrateFav by mainGridViewModel.migrateFav.collectAsStateWithLifecycle()
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
@@ -340,6 +341,7 @@ fun MainPages(
                             tabList = tabList,
                             columnSize = columnSize,
                             immichInfo = immichInfo,
+                            migrateFav = { migrateFav },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
                             setAlbums = mainGridViewModel::setAlbums

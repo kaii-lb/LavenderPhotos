@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,7 +70,7 @@ class MainGridViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val albumSortMode = settings.albums.getAlbumSortMode().stateIn(
+    val albumSortMode = settings.albums.getSortMode().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = AlbumSortMode.LastModifiedDesc
@@ -106,10 +106,16 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setAlbumSortMode(sortMode)
-    fun setAlbums(list: List<AlbumInfo>) = settings.albums.set(list)
+    val migrateFav = settings.versions.getMigrateFav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
 
-    fun addAlbum(album: AlbumInfo) = settings.albums.add(listOf(album))
+    fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
+    fun setAlbums(list: List<AlbumType>) = settings.albums.set(list)
+
+    fun addAlbum(album: AlbumType.Album) = settings.albums.add(listOf(album))
 
     private fun getMainPhotosAlbums() =
         combine(

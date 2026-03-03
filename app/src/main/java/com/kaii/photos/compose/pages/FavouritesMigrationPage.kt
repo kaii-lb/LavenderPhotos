@@ -103,6 +103,7 @@ fun FavouritesMigrationPage() {
                             durationMillis = AnimationConstants.DURATION
                         )
                     )
+                    .padding(bottom = 24.dp)
             ) {
                 Button(
                     onClick = {

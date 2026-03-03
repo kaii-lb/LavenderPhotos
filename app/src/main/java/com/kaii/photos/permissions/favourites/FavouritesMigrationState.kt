@@ -141,7 +141,7 @@ fun rememberFavouritesMigrationState(): FavouritesMigrationState {
                 }
             },
             onDone = {
-                context.appModule.settings.versions.setUpdateFav(false)
+                context.appModule.settings.versions.setMigrateFav(false)
             }
         )
     }

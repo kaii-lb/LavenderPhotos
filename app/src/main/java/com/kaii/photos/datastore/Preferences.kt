@@ -323,12 +323,12 @@ class SettingsVersionImpl(
         }
     }
 
-    fun getUpdateFav(): Flow<Boolean> =
+    fun getMigrateFav(): Flow<Boolean> =
         context.datastore.data.map { data ->
             data[migrateFav] != false
         }
 
-    fun setUpdateFav(value: Boolean) = scope.launch {
+    fun setMigrateFav(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[migrateFav] = value
         }
