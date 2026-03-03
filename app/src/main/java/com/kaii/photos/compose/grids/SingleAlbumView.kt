@@ -78,10 +78,12 @@ fun SingleAlbumView(
         }
     }
 
-    if (dynamicAlbum == null) {
-        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
-        return
+    LaunchedEffect(dynamicAlbum) {
+        delay(1000)
+        if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
+
+    if (dynamicAlbum == null) return
 
     LaunchedEffect(dynamicAlbum) {
         viewModel.changePaths(album = dynamicAlbum!!)
@@ -158,10 +160,12 @@ fun SingleAlbumView(
         }
     }
 
-    if (dynamicAlbum == null) {
-        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
-        return
+    LaunchedEffect(dynamicAlbum) {
+        delay(1000)
+        if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
+
+    if (dynamicAlbum == null) return
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
@@ -236,10 +240,12 @@ fun SingleAlbumView(
         }
     }
 
-    if (dynamicAlbum == null) {
-        navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
-        return
+    LaunchedEffect(dynamicAlbum) {
+        delay(1000)
+        if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
+
+    if (dynamicAlbum == null) return
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
     val selectionManager = rememberCustomSelectionManager(albumId = albumInfo.id)
