@@ -336,7 +336,7 @@ private fun InitSinglePhotoView(
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(
+            album = AlbumInfo.createPathOnlyAlbum(
                 paths = setOf(
                     incomingData.absolutePath.parent()
                 )

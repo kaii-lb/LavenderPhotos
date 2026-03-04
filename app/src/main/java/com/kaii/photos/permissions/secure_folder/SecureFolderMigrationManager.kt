@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.kaii.photos.permissions.secure_folder
 
 import android.content.Context
@@ -12,7 +14,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.SettingsAlbumsListImpl
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AppDirectories
@@ -23,8 +25,6 @@ import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
-import com.kaii.photos.helpers.relativePath
-import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
@@ -33,6 +33,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private const val TAG = "com.kaii.photos.permissions.secure_folder.SecureFolderManager"
 
@@ -81,10 +83,13 @@ class SecureFolderMigrationManager(
             val exportDir = helper.getRawExportDir(context = context)
             albums.add(
                 listOf(
-                    AlbumInfo(
-                        id = exportDir.relativePath.hashCode(),
-                        name = exportDir.relativePath.filename(),
-                        paths = setOf(exportDir.relativePath)
+                    AlbumType.Folder(
+                        id = Uuid.random().toString(),
+                        name = exportDir.absolutePath.filename(),
+                        paths = setOf(exportDir.absolutePath),
+                        pinned = true,
+                        groupId = null,
+                        immichId = null
                     )
                 )
             )
@@ -173,13 +178,16 @@ class SecureFolderMigrationManager(
             onSingleItemDone = { _ -> }
         )
 
-        val path = context.appRestoredFilesDir.toRelativePath()
+        val path = context.appRestoredFilesDir
         albums.add(
             listOf(
-                AlbumInfo(
-                    id = path.hashCode(),
+                AlbumType.Folder(
+                    id = Uuid.random().toString(),
                     name = path.filename(),
-                    paths = setOf(path)
+                    paths = setOf(path),
+                    pinned = true,
+                    groupId = null,
+                    immichId = null
                 )
             )
         )

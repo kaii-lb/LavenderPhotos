@@ -4,7 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -28,7 +28,7 @@ open class RoomQueryParams(
 class MediaRepository(
     private val dao: MediaDao,
     scope: CoroutineScope,
-    initialAlbumInfo: AlbumInfo,
+    initialAlbum: AlbumType.Folder,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
@@ -40,7 +40,7 @@ class MediaRepository(
         override val accessToken: String
     ) : RoomQueryParams(sortMode, format, accessToken)
 
-    private val paths = MutableStateFlow(initialAlbumInfo.paths)
+    private val paths = MutableStateFlow(initialAlbum.paths)
     private val params = combine(info, sortMode, format, paths) { info, sortMode, format, paths ->
         Params(
             paths = paths,

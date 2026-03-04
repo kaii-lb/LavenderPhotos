@@ -3,7 +3,7 @@ package com.kaii.photos.models.immich_album
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.ImmichRepository
@@ -16,7 +16,7 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
     context: Context,
-    albumInfo: AlbumInfo
+    album: AlbumType
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -105,7 +105,7 @@ class ImmichAlbumViewModel(
     )
 
     private val repo = ImmichRepository(
-        albumInfo = albumInfo,
+        album = album,
         scope = viewModelScope,
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat(),
@@ -139,11 +139,11 @@ class ImmichAlbumViewModel(
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
     }
 
-    fun editAlbum(id: Int, newInfo: AlbumInfo) {
+    fun editAlbum(id: String, newInfo: AlbumType) {
         settings.albums.edit(id, newInfo)
     }
 
-    fun removeAlbum(id: Int) {
+    fun removeAlbum(id: String) {
         settings.albums.remove(id)
     }
 }

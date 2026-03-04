@@ -212,7 +212,7 @@ class MainActivity : ComponentActivity() {
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.Empty
+                album = AlbumInfo.Empty
             )
         )
 
@@ -493,7 +493,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo
+                                album = screen.albumInfo
                             )
                         )
 
@@ -517,7 +517,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo
+                                album = screen.albumInfo
                             )
                         )
 
@@ -550,7 +550,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo
+                                album = screen.albumInfo
                             )
                         )
 
@@ -574,7 +574,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                albumInfo = screen.albumInfo
+                                album = screen.albumInfo
                             )
                         )
 

@@ -34,7 +34,7 @@ fun StartupLoadingPage(
     val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(mainPhotosAlbums)
+            album = AlbumInfo.createPathOnlyAlbum(mainPhotosAlbums)
         )
     )
     val searchViewModel: SearchViewModel = viewModel(

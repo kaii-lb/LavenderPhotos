@@ -115,7 +115,7 @@ class MainGridViewModel(
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
     fun setAlbums(list: List<AlbumType>) = settings.albums.set(list)
 
-    fun addAlbum(album: AlbumType.Album) = settings.albums.add(listOf(album))
+    fun addAlbum(album: AlbumType) = settings.albums.add(listOf(album))
 
     private fun getMainPhotosAlbums() =
         combine(
@@ -124,7 +124,7 @@ class MainGridViewModel(
             settings.mainPhotosView.getAlbums()
         ) { albums, showEverything, mainAlbums ->
             if (showEverything) {
-                albums.fastMap { albumInfo ->
+                albums.filterIsInstance<AlbumType.Folder>().fastMap { albumInfo ->
                     albumInfo.paths.map { it.removeSuffix("/") }
                 }.flatten().toSet() - mainAlbums
             } else {

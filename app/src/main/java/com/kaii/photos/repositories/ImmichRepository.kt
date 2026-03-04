@@ -14,7 +14,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -43,7 +43,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class ImmichRepository(
-    private val albumInfo: AlbumInfo,
+    private val album: AlbumType,
     private val scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
@@ -97,8 +97,8 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = albumInfo.id)
-                else db.customDao().getPagedMediaDateTaken(album = albumInfo.id)
+                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = album.id)
+                else db.customDao().getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(accessToken = params.accessToken).cachedIn(scope)
     }
@@ -122,7 +122,7 @@ class ImmichRepository(
         val snapshot = params.value
 
         val state = albumState.value.getInfo(
-            id = Uuid.parse(albumInfo.immichId),
+            id = Uuid.parse(album.immichId!!),
             accessToken = snapshot.accessToken
         )
 
@@ -147,7 +147,7 @@ class ImmichRepository(
                     )
                 }
 
-            val mediaIds = db.customDao().getAllIdsIn(album = albumInfo.id).toSet()
+            val mediaIds = db.customDao().getAllIdsIn(album = album.id).toSet()
             val orphans = db.customDao().getOrphanImmichItems().toSet()
             val added = items.fastMap { it.id }.toSet() - mediaIds
             val deleted = mediaIds - items.fastMap { it.id }.toSet()
@@ -155,8 +155,8 @@ class ImmichRepository(
             db.withTransaction {
                 db.mediaDao().upsertAll(items = items.filter { it.id !in mediaIds })
 
-                db.customDao().deleteAll(ids = deleted, album = albumInfo.id)
-                db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = albumInfo.id) })
+                db.customDao().deleteAll(ids = deleted, album = album.id)
+                db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
 
                 db.mediaDao().deleteAll(orphans.map { it.id }.toSet())
             }
@@ -171,7 +171,7 @@ class ImmichRepository(
             .filter { it.id in ids }
 
         albumState.value.addAssets(
-            id = Uuid.parse(albumInfo.immichId),
+            id = Uuid.parse(album.immichId!!),
             accessToken = params.value.accessToken,
             assetIds = media.fastMap { item ->
                 UploadAssetRequest(
@@ -219,11 +219,11 @@ class ImmichRepository(
     }
 
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().countMediaInAlbum(album = albumInfo.id)
+        return@withContext db.customDao().countMediaInAlbum(album = album.id)
     }
 
     suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().mediaSize(album = albumInfo.id)
+        return@withContext db.customDao().mediaSize(album = album.id)
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -235,7 +235,7 @@ class ImmichRepository(
             .filter { it.id in ids }
 
         albumState.value.addAssets(
-            id = Uuid.parse(albumInfo.immichId),
+            id = Uuid.parse(album.immichId!!),
             accessToken = params.value.accessToken,
             assetIds = media.fastMap { item ->
                 UploadAssetRequest(

@@ -5,7 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 
 class CustomRepository(
     private val dao: CustomEntityDao,
-    private val albumInfo: AlbumInfo,
+    private val album: AlbumType,
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
@@ -45,8 +45,8 @@ class CustomRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) dao.getPagedMediaDateModified(album = albumInfo.id)
-                else dao.getPagedMediaDateTaken(album = albumInfo.id)
+                if (params.sortMode.isDateModified) dao.getPagedMediaDateModified(album = album.id)
+                else dao.getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(accessToken = params.accessToken)
     }.cachedIn(scope)
@@ -61,16 +61,16 @@ class CustomRepository(
 
     suspend fun remove(
         items: Set<MediaStoreData>,
-        albumId: Int
+        albumId: String
     ) {
         dao.deleteAll(ids = items.map { it.id }.toSet(), album = albumId)
     }
 
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
-        return@withContext dao.countMediaInAlbum(album = albumInfo.id)
+        return@withContext dao.countMediaInAlbum(album = album.id)
     }
 
     suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
-        return@withContext dao.mediaSize(album = albumInfo.id)
+        return@withContext dao.mediaSize(album = album.id)
     }
 }
