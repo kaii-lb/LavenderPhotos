@@ -43,7 +43,7 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
@@ -111,7 +111,7 @@ fun IsSelectingBottomAppBar(
 
 @Composable
 fun SelectingBottomBarItems(
-    albumInfo: AlbumInfo,
+    albumInfo: AlbumType,
     selectionManager: SelectionManager,
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
@@ -156,7 +156,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !albumInfo.isCustomAlbum && !selectedItemsList.isEmpty()
+        enabled = albumInfo is AlbumType.Folder && !selectedItemsList.isEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),
@@ -199,7 +199,7 @@ fun SelectingBottomBarItems(
     )
 
     val showDeleteDialog = remember { mutableStateOf(false) }
-    if (!albumInfo.isCustomAlbum) {
+    if (albumInfo is AlbumType.Folder) {
         ConfirmationDialog(
             showDialog = showDeleteDialog,
             dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
@@ -232,7 +232,7 @@ fun SelectingBottomBarItems(
         onClick = {
             if (confirmToDelete) {
                 showDeleteDialog.value = true
-            } else if (!albumInfo.isCustomAlbum) {
+            } else if (albumInfo is AlbumType.Folder) {
                 permissionState.get(
                     uris = selectedItemsList.fastMap { it.toUri() }
                 )
@@ -301,7 +301,7 @@ fun SelectingBottomBarItems(
                 )
             }
         },
-        enabled = selectedItemsList.isNotEmpty() && !albumInfo.isCustomAlbum
+        enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.Cloud
     ) {
         Icon(
             painter = painterResource(id = R.drawable.secure_folder),

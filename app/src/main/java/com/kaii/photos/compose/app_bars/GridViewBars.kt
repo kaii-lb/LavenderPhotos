@@ -46,7 +46,7 @@ import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.Screens
@@ -72,7 +72,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleAlbumViewTopBar(
-    albumInfo: () -> AlbumInfo,
+    albumInfo: () -> AlbumType,
     selectionManager: SelectionManager,
     showTagDialog: Boolean,
     isMediaPicker: Boolean = false,
@@ -128,38 +128,32 @@ fun SingleAlbumViewTopBar(
                     )
                 },
                 actions = {
-                    if (!isMediaPicker && !albumInfo().isCustomAlbum) {
+                    val info = albumInfo()
+                    if (!isMediaPicker && info is AlbumType.Folder) {
                         var showPathsDialog by remember { mutableStateOf(false) }
                         val context = LocalContext.current
 
                         if (showPathsDialog) {
                             AlbumPathsDialog(
-                                albumInfo = albumInfo(),
+                                albumInfo = info,
                                 onConfirm = { selectedPaths ->
-                                    val album = albumInfo()
                                     val newInfo =
-                                        album.copy(
-                                            id = album.id,
+                                        info.copy(
+                                            id = info.id,
                                             paths = selectedPaths
                                         )
 
                                     context.appModule.settings.albums.edit(
-                                        id = album.id,
+                                        id = info.id,
                                         newInfo = newInfo
                                     )
 
                                     navController.popBackStack()
                                     navController.navigate(
                                         route =
-                                            if (album.isCustomAlbum) {
-                                                Screens.CustomAlbum.GridView(
-                                                    albumInfo = newInfo
-                                                )
-                                            } else {
-                                                Screens.Album.GridView(
-                                                    albumInfo = newInfo
-                                                )
-                                            }
+                                            Screens.Album.GridView(
+                                                albumInfo = newInfo
+                                            )
                                     )
                                 },
                                 onDismiss = {
@@ -292,7 +286,7 @@ fun SingleAlbumViewTopBar(
 
 @Composable
 fun SingleAlbumViewBottomBar(
-    albumInfo: () -> AlbumInfo,
+    albumInfo: () -> AlbumType,
     selectionManager: SelectionManager,
     incomingIntent: Intent? = null,
     confirmToDelete: Boolean,

@@ -354,7 +354,7 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    customAlbumId: Int?,
+    customAlbumId: String?,
     exitOnSave: () -> Boolean,
     overwriteByDefault: () -> Boolean
 ) {
