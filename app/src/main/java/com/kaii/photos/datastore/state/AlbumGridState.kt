@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.kaii.photos.datastore.state
 
 import android.content.Context
@@ -36,7 +38,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class AlbumGridState(
     private val scope: CoroutineScope,
@@ -48,17 +51,17 @@ class AlbumGridState(
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
     private val checkLoggedIn: suspend () -> Boolean,
-    private val updateAlbums: (added: List<AlbumType.Album>, removed: List<Int>) -> Unit
+    private val updateAlbums: (added: List<AlbumType>, removed: List<String>) -> Unit
 ) {
     data class Album(
         val info: AlbumType,
-        val thumbnails: List<Thumbnail>,
+        val thumbnail: Thumbnail,
         val date: Long
     ) {
         data class Thumbnail(
             val uri: String,
             val signature: ObjectKey,
-            val id: Int,
+            val id: String,
             val date: Long
         )
     }
@@ -99,19 +102,18 @@ class AlbumGridState(
                         .collectLatest { list ->
                             updateAlbums(
                                 list.fastMap { album ->
-                                    AlbumType.Album(
-                                        id = album.hashCode(),
+                                    AlbumType.Folder(
+                                        id = Uuid.random().toString(),
                                         name = album.filename(),
                                         paths = setOf(album),
                                         pinned = false,
-                                        custom = false,
+                                        groupId = null,
                                         immichId = ""
                                     )
                                 },
                                 albumsFlow.first().fastMapNotNull { album ->
                                     album.id.takeIf {
-                                        album is AlbumType.Album &&
-                                                !album.custom
+                                        album is AlbumType.Folder
                                                 && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
                                     }
                                 }
@@ -145,24 +147,20 @@ class AlbumGridState(
             if (state is AlbumsGetAllState.Retrieved) {
                 val albumIds = state.albums.fastMap { it.id }
                 val removedOrImmichIdChanged = _albums.value.fastMapNotNull { album ->
-                    (album.info as? AlbumType.Album)?.id.takeIf {
-                        album.info as AlbumType.Album
+                    (album.info as? AlbumType.Cloud)?.id.takeIf {
+                        album.info as AlbumType.Cloud
 
                         album.info.immichId !in albumIds
-                                && album.info.custom
-                                && album.info.immichId.isNotBlank()
                     }
                 }
 
                 updateAlbums(
                     state.albums.fastMapNotNull { album ->
-                        AlbumType.Album(
-                            id = Random.nextInt(),
+                        AlbumType.Cloud(
+                            id = album.id,
                             name = album.albumName,
-                            paths = emptySet(),
-                            custom = true,
                             pinned = false,
-                            immichId = album.id
+                            groupId = null
                         )
                     },
                     removedOrImmichIdChanged
@@ -172,15 +170,9 @@ class AlbumGridState(
     }
 
     private fun update() = scope.launch(Dispatchers.IO) {
-        _albums.value = internalAlbums.fastMap { albumType ->
-            val albums = if (albumType is AlbumType.AlbumGroup) {
-                albumType.albums
-            } else {
-                listOf(albumType as AlbumType.Album)
-            }
-
-            val thumbnails = albums.fastMap { album ->
-                if (!album.custom) {
+        _albums.value = internalAlbums.fastMap { album ->
+            val thumbnail =
+                if (album is AlbumType.Folder) {
                     val media = if (internalSortMode.isDateModified) {
                         mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
                     } else {
@@ -197,21 +189,17 @@ class AlbumGridState(
 
                     Pair(media, album.id)
                 }
-            }
 
             Album(
-                info = albumType,
-                thumbnails = thumbnails.fastMap { (media, id) ->
+                info = album,
+                thumbnail =
                     Album.Thumbnail(
-                        uri = media.uri,
-                        signature = media.signature(),
-                        id = id,
-                        date = if (internalSortMode.isDateModified) media.dateModified else media.dateTaken
-                    )
-                },
-                date = thumbnails.fastMap { (media, _) ->
-                    if (internalSortMode.isDateModified) media.dateModified else media.dateTaken
-                }.minOrNull() ?: 0L
+                        uri = thumbnail.first.uri,
+                        signature = thumbnail.first.signature(),
+                        id = thumbnail.second,
+                        date = if (internalSortMode.isDateModified) thumbnail.first.dateModified else thumbnail.first.dateTaken
+                    ),
+                date = if (internalSortMode.isDateModified) thumbnail.first.dateModified else thumbnail.first.dateTaken
             )
         }.let { list ->
             val sorted = when (internalAlbumSortMode) {
@@ -240,22 +228,6 @@ class AlbumGridState(
                 val pinned = list.filter { it.info.pinned }
                 list.removeAll(pinned)
                 list.addAll(0, pinned)
-
-                list.add(
-                    index = 0,
-                    element = Album(
-                        info = AlbumType.AlbumGroup(
-                            id = 12391241,
-                            name = "Testing Group",
-                            pinned = false,
-                            albums = list.take(3).fastMap { it.info as AlbumType.Album },
-                            icon = null
-                        ),
-                        thumbnails = list.take(3).fastMap { it.thumbnails }.flatten(),
-                        date = 1772576233
-                    )
-                )
-
                 list
             }
         }

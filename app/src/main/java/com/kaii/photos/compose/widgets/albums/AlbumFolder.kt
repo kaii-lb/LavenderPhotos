@@ -37,17 +37,17 @@ private fun AlbumFolderPreview() {
         albums = listOf(
             AlbumGridState.Album(
                 info = AlbumType.Album.Empty,
-                thumbnails = emptyList(),
+                thumbnail = emptyList(),
                 date = 0L
             ),
             AlbumGridState.Album(
                 info = AlbumType.Album.Empty,
-                thumbnails = emptyList(),
+                thumbnail = emptyList(),
                 date = 0L
             ),
             AlbumGridState.Album(
                 info = AlbumType.Album.Empty,
-                thumbnails = emptyList(),
+                thumbnail = emptyList(),
                 date = 0L
             )
         ),
@@ -133,7 +133,7 @@ fun AlbumFolder(
                     albums.takeLast(albums.size - 3) + (0..4 - albums.size).map {
                         AlbumGridState.Album(
                             info = AlbumType.Album.Empty,
-                            thumbnails = emptyList(),
+                            thumbnail = emptyList(),
                             date = 0L
                         )
                     }

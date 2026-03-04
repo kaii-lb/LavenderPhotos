@@ -1,13 +1,9 @@
 package com.kaii.photos.datastore
 
-import android.net.Uri
-import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.navigation.NavType
 import com.kaii.photos.R
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 // order is important
 enum class AlbumSortMode {
@@ -203,12 +199,14 @@ data class BottomBarTab(
         return result
     }
 
-    fun toAlbumInfo() =
-        AlbumInfo(
-            id = id,
+    fun toAlbum() =
+        AlbumType.Folder(
+            id = id.toString(),
             name = name,
             paths = albumPaths,
-            isCustomAlbum = false
+            pinned = false,
+            groupId = null,
+            immichId = null
         )
 }
 
@@ -220,71 +218,7 @@ data class AlbumInfo(
     val isCustomAlbum: Boolean = false,
     val isPinned: Boolean = false,
     val immichId: String = ""
-) {
-    companion object {
-        fun createPathOnlyAlbum(paths: Set<String>) = AlbumInfo(id = 0, name = "", paths = paths)
-
-        val Empty = createPathOnlyAlbum(emptySet())
-    }
-
-    object AlbumNavType : NavType<AlbumInfo>(isNullableAllowed = false) {
-        override fun get(bundle: Bundle, key: String): AlbumInfo? {
-            return bundle.getString(key)?.let { Json.decodeFromString<AlbumInfo>(it) }
-        }
-
-        override fun parseValue(value: String): AlbumInfo {
-            return Json.decodeFromString(Uri.decode(value))
-        }
-
-        override fun put(bundle: Bundle, key: String, value: AlbumInfo) {
-            bundle.putString(key, Json.encodeToString(value))
-        }
-
-        override fun serializeAsValue(value: AlbumInfo): String {
-            return Uri.encode(Json.encodeToString(value))
-        }
-    }
-
-    val mainPath
-        get() = paths.firstOrNull() ?: ""
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as AlbumInfo
-
-        if (isCustomAlbum != other.isCustomAlbum) return false
-        if (name != other.name) return false
-        if (paths != other.paths) return false
-        if (isPinned != other.isPinned) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id
-        result = 31 * result + isCustomAlbum.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + paths.hashCode()
-        result = 31 * result + mainPath.hashCode()
-        result = 31 * result + isPinned.hashCode()
-        return result
-    }
-
-    fun equalsIgnoringPinned(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as AlbumInfo
-
-        if (isCustomAlbum != other.isCustomAlbum) return false
-        if (name != other.name) return false
-        if (paths != other.paths) return false
-
-        return true
-    }
-}
+)
 
 @Serializable
 data class ImmichBasicInfo(
@@ -301,3 +235,39 @@ data class ImmichBasicInfo(
     }
 }
 
+@Serializable
+sealed interface AlbumType {
+    val id: String
+    val name: String
+    val pinned: Boolean
+    val groupId: Int?
+    val immichId: String?
+
+    @Serializable
+    data class Folder(
+        override val id: String,
+        override val name: String,
+        override val pinned: Boolean,
+        override val groupId: Int?,
+        override val immichId: String?,
+        val paths: Set<String>
+    ) : AlbumType
+
+    @Serializable
+    data class Custom(
+        override val id: String,
+        override val name: String,
+        override val pinned: Boolean,
+        override val groupId: Int?,
+        override val immichId: String?,
+    ) : AlbumType
+
+    @Serializable
+    data class Cloud(
+        override val id: String,
+        override val name: String,
+        override val pinned: Boolean,
+        override val groupId: Int?,
+        override val immichId: String = id
+    ) : AlbumType
+}

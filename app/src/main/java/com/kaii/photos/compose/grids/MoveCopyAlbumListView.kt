@@ -316,7 +316,7 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = album.thumbnails.first().uri,
+            model = album.thumbnail.first().uri,
             contentDescription = album.info.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
@@ -324,7 +324,7 @@ fun AlbumsListItem(
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            it.signature(album.thumbnails.first().signature)
+            it.signature(album.thumbnail.first().signature)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
         }
 

@@ -255,7 +255,7 @@ fun AlbumsGridView(
                         albums = album.info.albums.fastMap { info ->
                             AlbumGridState.Album(
                                 info = info,
-                                thumbnails = album.thumbnails.filter { it.id == info.id },
+                                thumbnail = album.thumbnail.filter { it.id == info.id },
                                 date = album.date
                             )
                         },

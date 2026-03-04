@@ -40,7 +40,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
             Tag::class,
             TaggedItem::class
         ],
-    version = 12,
+    version = 13,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -48,7 +48,8 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         AutoMigration(from = 7, to = 8, spec = DeleteOldMediaTable::class),
         AutoMigration(from = 8, to = 9, spec = DropCustomIdColumnSpec::class),
         AutoMigration(from = 10, to = 11, spec = DropOldCustomTable::class),
-        AutoMigration(from = 11, to = 12)
+        AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class)
     ]
 )
 @TypeConverters(ColorTypeConverter::class)
@@ -102,3 +103,6 @@ class DropCustomIdColumnSpec : AutoMigrationSpec
 
 @DeleteTable(tableName = "custom_media")
 class DropOldCustomTable : AutoMigrationSpec
+
+@DeleteColumn(tableName = "custom_items", columnName = "album")
+class DropIntAlbumCustomTable : AutoMigrationSpec

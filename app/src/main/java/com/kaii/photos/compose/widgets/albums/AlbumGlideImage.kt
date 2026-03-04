@@ -40,7 +40,7 @@ fun AlbumGlideImage(
     info: ImmichBasicInfo
 ) {
     AnimatedContent(
-        targetState = album.thumbnails.isNotEmpty(),
+        targetState = album.thumbnail.isNotEmpty(),
         transitionSpec = {
             fadeIn(
                 animationSpec = tween(
@@ -62,12 +62,12 @@ fun AlbumGlideImage(
             GlideImage(
                 model =
                     if ((album.info as AlbumType.Album).immichId.isNotBlank()) ImmichInfo(
-                        thumbnail = album.thumbnails.first().uri,
-                        original = album.thumbnails.first().uri,
+                        thumbnail = album.thumbnail.first().uri,
+                        original = album.thumbnail.first().uri,
                         hash = "",
                         accessToken = info.accessToken,
                         useThumbnail = true
-                    ) else album.thumbnails.first().uri,
+                    ) else album.thumbnail.first().uri,
                 contentDescription = album.info.name,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),
@@ -76,7 +76,7 @@ fun AlbumGlideImage(
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
-                it.signature(album.thumbnails.first().signature)
+                it.signature(album.thumbnail.first().signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
             }
         } else {
