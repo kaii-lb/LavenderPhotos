@@ -81,7 +81,7 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -96,6 +96,8 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateMan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private const val TAG = "com.kaii.photos.compose.dialogs.UserActionDialogs"
 
@@ -445,7 +447,7 @@ private fun ExplanationDialogBase(
 
 @Composable
 fun AlbumPathsDialog(
-    albumInfo: AlbumInfo,
+    albumInfo: AlbumType.Folder,
     onConfirm: (selectedPaths: Set<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -717,9 +719,10 @@ fun AlbumPathsDialog(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun AlbumAddChoiceDialog(
-    addAlbum: (album: AlbumInfo) -> Unit,
+    addAlbum: (album: AlbumType) -> Unit,
     onDismiss: () -> Unit = {}
 ) {
     LavenderDialogBase(
@@ -743,10 +746,13 @@ fun AlbumAddChoiceDialog(
         ) {
             val activityLauncher = createDirectoryPicker { path, basePath ->
                 if (path != null && basePath != null) addAlbum(
-                    AlbumInfo(
-                        id = (basePath + path).hashCode(),
+                    AlbumType.Folder(
+                        id = Uuid.random().toString(),
                         name = path.filename(),
-                        paths = setOf(basePath + path)
+                        paths = setOf(basePath + path),
+                        pinned = false,
+                        groupId = null,
+                        immichId = null
                     )
                 )
             }
@@ -785,9 +791,10 @@ fun AlbumAddChoiceDialog(
     }
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun AddCustomAlbumDialog(
-    addAlbum: (album: AlbumInfo) -> Unit,
+    addAlbum: (album: AlbumType) -> Unit,
     onDismiss: () -> Unit,
     onDismissPrev: () -> Unit
 ) {
@@ -803,11 +810,12 @@ fun AddCustomAlbumDialog(
                 text.isNotEmpty()
             },
             onConfirm = { text ->
-                val albumInfo = AlbumInfo(
-                    id = text.hashCode(),
-                    paths = emptySet(),
+                val albumInfo = AlbumType.Custom(
+                    id = Uuid.random().toString(),
                     name = text,
-                    isCustomAlbum = true
+                    pinned = false,
+                    groupId = null,
+                    immichId = null
                 )
 
                 addAlbum(albumInfo)
