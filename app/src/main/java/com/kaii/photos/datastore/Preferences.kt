@@ -225,6 +225,7 @@ class SettingsAlbumsListImpl(
                     is AlbumType.Folder -> newInfo.copy(id = id)
                     is AlbumType.Custom -> newInfo.copy(id = id)
                     is AlbumType.Cloud -> newInfo.copy(id = id)
+                    else -> AlbumType.PlaceHolder
                 }
 
             data[albumsKey] = json.encodeToString(present)

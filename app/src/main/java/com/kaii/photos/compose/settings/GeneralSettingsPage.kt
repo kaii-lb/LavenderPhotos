@@ -46,7 +46,7 @@ import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.di.appModule
@@ -81,7 +81,7 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
         modifier = modifier,
         setShowEverything = settings.mainPhotosView::setShowEverything,
         addMainPhotosAlbum = settings.mainPhotosView::addAlbum,
-        clearMainPhotosAlbums = settings.mainPhotosView::clear,
+        clearMainPhotosAlbums = settings.mainPhotosView::clearAlbums,
         setAutoDetect = settings.albums::setAutoDetect,
         resetAlbums = settings.albums::reset,
         setSortMode = settings.photoGrid::setSortMode,
@@ -118,7 +118,7 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
 
 @Composable
 private fun GeneralSettingsPageImpl(
-    allAlbums: List<AlbumInfo>,
+    allAlbums: List<AlbumType>,
     mainPhotosPaths: Collection<String>,
     shouldShowEverything: Boolean,
     autoDetectAlbums: Boolean,
@@ -128,7 +128,7 @@ private fun GeneralSettingsPageImpl(
     checkForUpdatesOnStartup: Boolean,
     modifier: Modifier,
     setShowEverything: (value: Boolean) -> Unit,
-    addMainPhotosAlbum: (relativePath: String) -> Unit,
+    addMainPhotosAlbum: (path: String) -> Unit,
     clearMainPhotosAlbums: () -> Unit,
     setAutoDetect: (value: Boolean) -> Unit,
     resetAlbums: () -> Unit,
@@ -171,7 +171,8 @@ private fun GeneralSettingsPageImpl(
                         selectedAlbums.clear()
                         selectedAlbums.addAll(
                             if (shouldShowEverything) {
-                                val flat = allAlbums.flatMap { it.paths }.fastMap { it.removeSuffix("/") }
+                                // TODO: rework to allow all albums not just folder
+                                val flat = allAlbums.filterIsInstance<AlbumType.Folder>().flatMap { it.paths }.fastMap { it.removeSuffix("/") }
 
                                 flat - mainPhotosPaths.map { it.removeSuffix("/") }.toSet()
                             } else {
@@ -205,18 +206,18 @@ private fun GeneralSettingsPageImpl(
                                     .height(384.dp)
                             ) {
                                 items(
-                                    count = allAlbums.size
+                                    count = allAlbums.filterIsInstance<AlbumType.Folder>().size
                                 ) { index ->
-                                    val associatedAlbum = allAlbums[index]
+                                    val associatedAlbum = allAlbums.filterIsInstance<AlbumType.Folder>()[index]
 
                                     CheckBoxButtonRow(
                                         text = associatedAlbum.name,
-                                        checked = selectedAlbums.contains(associatedAlbum.mainPath)
+                                        checked = selectedAlbums.contains(associatedAlbum.paths.first())
                                     ) {
-                                        if (selectedAlbums.contains(associatedAlbum.mainPath) && (selectedAlbums.size > 1 || shouldShowEverything)) {
-                                            selectedAlbums.remove(associatedAlbum.mainPath.removeSuffix("/"))
+                                        if (selectedAlbums.contains(associatedAlbum.id) && (selectedAlbums.size > 1 || shouldShowEverything)) {
+                                            selectedAlbums.remove(associatedAlbum.id)
                                         } else {
-                                            selectedAlbums.add(associatedAlbum.mainPath.removeSuffix("/"))
+                                            selectedAlbums.add(associatedAlbum.id)
                                         }
                                     }
                                 }

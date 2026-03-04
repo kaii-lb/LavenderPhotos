@@ -363,6 +363,7 @@ private fun IconContentImpl(
                             is AlbumType.Folder -> album.copy(name = fileName)
                             is AlbumType.Custom -> album.copy(name = fileName)
                             is AlbumType.Cloud -> album.copy(name = fileName)
+                            else -> AlbumType.PlaceHolder
                         }
                     )
                 }
@@ -419,6 +420,7 @@ private fun IconContentImpl(
                     is AlbumType.Folder -> info.copy(pinned = !isPinned)
                     is AlbumType.Custom -> info.copy(pinned = !isPinned)
                     is AlbumType.Cloud -> info.copy(pinned = !isPinned)
+                    else -> AlbumType.PlaceHolder
                 }
             )
         },

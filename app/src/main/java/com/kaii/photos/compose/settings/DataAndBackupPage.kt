@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.kaii.photos.compose.settings
 
 import android.content.ClipData
@@ -39,7 +41,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
@@ -49,6 +51,8 @@ import com.kaii.photos.permissions.auth.rememberExportAuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 private const val TAG = "com.kaii.photos.compose.settings.DataAndBackupPage"
 
@@ -74,7 +78,7 @@ private fun DataAndBackupPagePreview() {
 @Composable
 private fun DataAndBackupPageImpl(
     modifier: Modifier,
-    addAlbum: (album: AlbumInfo) -> Unit
+    addAlbum: (album: AlbumType) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -119,10 +123,13 @@ private fun DataAndBackupPageImpl(
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
                         addAlbum(
-                            AlbumInfo(
+                            AlbumType.Folder(
+                                id = Uuid.random().toString(),
                                 name = albumFile.name,
                                 paths = setOf(albumFile.absolutePath),
-                                id = albumFile.hashCode()
+                                pinned = true,
+                                groupId = null,
+                                immichId = null
                             )
                         )
 
@@ -165,10 +172,13 @@ private fun DataAndBackupPageImpl(
 
                         val albumFile = backupHelper.getUnencryptedExportDir(context = context)
                         addAlbum(
-                            AlbumInfo(
+                            AlbumType.Folder(
+                                id = Uuid.random().toString(),
                                 name = albumFile.name,
                                 paths = setOf(albumFile.absolutePath),
-                                id = albumFile.hashCode()
+                                pinned = true,
+                                groupId = null,
+                                immichId = null
                             )
                         )
 
@@ -268,10 +278,13 @@ private fun DataAndBackupPageImpl(
 
                         val favExportDir = helper.getFavExportDir(context = context)
                         addAlbum(
-                            AlbumInfo(
-                                name = favExportDir.name,
+                            AlbumType.Folder(
+                                id = Uuid.random().toString(),
+                                name = favExportDir.absolutePath,
                                 paths = setOf(favExportDir.absolutePath),
-                                id = favExportDir.hashCode()
+                                pinned = true,
+                                groupId = null,
+                                immichId = null
                             )
                         )
 
