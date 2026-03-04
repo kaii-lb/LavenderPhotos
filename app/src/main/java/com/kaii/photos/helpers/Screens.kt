@@ -1,6 +1,6 @@
 package com.kaii.photos.helpers
 
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import kotlinx.serialization.Serializable
 
 interface Screens {
@@ -8,12 +8,12 @@ interface Screens {
     object Album {
         @Serializable
         data class GridView(
-            val albumInfo: AlbumInfo
+            val album: AlbumType.Folder
         ) : Screens
 
         @Serializable
         data class SinglePhoto(
-            val albumInfo: AlbumInfo,
+            val album: AlbumType.Folder,
             val index: Int
         ) : Screens
     }
@@ -59,14 +59,14 @@ interface Screens {
         val absolutePath: String,
         val uri: String,
         val dateTaken: Long,
-        val albumInfo: AlbumInfo
+        val album: AlbumType
     ) : Screens
 
     @Serializable
     data class VideoEditor(
         val uri: String,
         val absolutePath: String,
-        val albumInfo: AlbumInfo
+        val album: AlbumType
     ) : Screens
 
     @Serializable
@@ -76,12 +76,12 @@ interface Screens {
 
         @Serializable
         data class GridView(
-            val albumInfo: AlbumInfo
+            val album: AlbumType.Cloud
         ) : Screens
 
         @Serializable
         data class SinglePhoto(
-            val albumInfo: AlbumInfo,
+            val album: AlbumType.Cloud,
             val index: Int
         ) : Screens
     }
@@ -90,13 +90,13 @@ interface Screens {
     object CustomAlbum {
         @Serializable
         data class GridView(
-            val albumInfo: AlbumInfo
+            val album: AlbumType.Custom
         ) : Screens
 
         @Serializable
         data class SinglePhoto(
             val index: Int,
-            val albumInfo: AlbumInfo
+            val album: AlbumType.Custom
         ) : Screens
     }
 
@@ -109,7 +109,7 @@ interface Screens {
 
             @Serializable
             data class SinglePhoto(
-                val albumInfo: AlbumInfo,
+                val album: AlbumType.Folder,
                 val index: Int
             ) : Screens
         }

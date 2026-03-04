@@ -49,7 +49,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.Album.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Folder,
                 index = index
             )
         }
@@ -60,7 +60,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.CustomAlbum.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Custom,
                 index = index
             )
         }
@@ -101,7 +101,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.Immich.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Cloud,
                 index = index
             )
         }
@@ -112,7 +112,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.MainPages.MainGrid.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Folder,
                 index = index
             )
         }

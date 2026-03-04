@@ -152,7 +152,7 @@ fun SingleAlbumViewTopBar(
                                     navController.navigate(
                                         route =
                                             Screens.Album.GridView(
-                                                albumInfo = newInfo
+                                                album = newInfo
                                             )
                                     )
                                 },

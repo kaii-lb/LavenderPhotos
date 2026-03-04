@@ -228,12 +228,12 @@ class MediaPicker : ComponentActivity() {
                         viewModelStoreOwner = storeOwner,
                         factory = MultiAlbumViewModelFactory(
                             context = context,
-                            album = screen.albumInfo
+                            album = screen.album
                         )
                     )
 
                     SingleAlbumView(
-                        album = screen.albumInfo,
+                        album = screen.album,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
@@ -253,12 +253,12 @@ class MediaPicker : ComponentActivity() {
                     val viewModel: CustomAlbumViewModel = viewModel(
                         factory = CustomAlbumViewModelFactory(
                             context = context,
-                            album = screen.albumInfo
+                            album = screen.album
                         )
                     )
 
                     SingleAlbumView(
-                        album = screen.albumInfo,
+                        album = screen.album,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )

@@ -72,7 +72,7 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -111,7 +111,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun SinglePhotoView(
-    albumInfo: AlbumInfo,
+    album: AlbumType.Custom,
     window: Window,
     viewModel: CustomAlbumViewModel,
     index: Int,
@@ -140,7 +140,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         startIndex = index,
-        albumInfo = albumInfo,
+        album = album,
         isOpenWithDefaultView = isOpenWithDefaultView,
         useBlackBackground = useBlackBackground,
         confirmToDelete = confirmToDelete,
@@ -167,7 +167,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MultiAlbumViewModel,
     index: Int,
-    albumInfo: AlbumInfo,
+    album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -191,7 +191,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
-        albumInfo = albumInfo,
+        album = album,
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
@@ -216,8 +216,7 @@ fun SinglePhotoView(
 fun SinglePhotoView(
     viewModel: SearchViewModel,
     window: Window,
-    index: Int,
-    albumInfo: AlbumInfo
+    index: Int
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -240,7 +239,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
-        albumInfo = albumInfo,
+        album = AlbumType.PlaceHolder,
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
@@ -288,7 +287,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
-        albumInfo = AlbumInfo.Empty,
+        album = AlbumType.PlaceHolder,
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
@@ -313,7 +312,7 @@ fun SinglePhotoView(
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
-    albumInfo: AlbumInfo
+    album: AlbumType.Cloud
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -336,7 +335,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
-        albumInfo = albumInfo,
+        album = album,
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
@@ -362,7 +361,7 @@ fun SinglePhotoView(
 private fun SinglePhotoViewCommon(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
-    albumInfo: AlbumInfo,
+    album: AlbumType,
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
@@ -488,7 +487,7 @@ private fun SinglePhotoViewCommon(
                 visible = appBarsVisible.value,
                 currentItem = { mediaItem },
                 privacyMode = scrollState.privacyMode,
-                isCustom = albumInfo.isCustomAlbum,
+                isCustom = album !is AlbumType.Folder,
                 confirmToDelete = confirmToDelete,
                 doNotTrash = doNotTrash,
                 showEditingView = {
@@ -506,7 +505,7 @@ private fun SinglePhotoViewCommon(
                                     absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri,
                                     dateTaken = mediaItem.dateTaken,
-                                    albumInfo = albumInfo
+                                    album = album
                                 )
                             )
                         } else {
@@ -514,7 +513,7 @@ private fun SinglePhotoViewCommon(
                                 Screens.VideoEditor(
                                     uri = mediaItem.uri,
                                     absolutePath = mediaItem.absolutePath,
-                                    albumInfo = albumInfo
+                                    album = album
                                 )
                             )
                         }
@@ -532,7 +531,7 @@ private fun SinglePhotoViewCommon(
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
                 privacyMode = scrollState.privacyMode,
-                isCustomAlbum = albumInfo.isCustomAlbum,
+                isCustomAlbum = album !is AlbumType.Folder,
                 preserveDate = preserveDate,
                 dismiss = {
                     coroutineScope.launch {

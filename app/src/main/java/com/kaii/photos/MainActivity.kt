@@ -295,14 +295,14 @@ class MainActivity : ComponentActivity() {
                         typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
-                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
+                        multiAlbumViewModel.changePaths(album = screen.album)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
                             viewModel = multiAlbumViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = screen.albumInfo
+                            album = screen.album
                         )
                     }
 
@@ -313,8 +313,7 @@ class MainActivity : ComponentActivity() {
                         SinglePhotoView(
                             window = window,
                             viewModel = searchViewModel,
-                            index = editIndex ?: screen.index,
-                            albumInfo = AlbumType.PlaceHolder
+                            index = editIndex ?: screen.index
                         )
                     }
                 }
@@ -328,10 +327,10 @@ class MainActivity : ComponentActivity() {
                         val screen = it.toRoute<Screens.Album.GridView>()
                         setupNextScreen(window = window)
 
-                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
+                        multiAlbumViewModel.changePaths(album = screen.album)
 
                         SingleAlbumView(
-                            album = screen.albumInfo,
+                            album = screen.album,
                             viewModel = multiAlbumViewModel
                         )
                     }
@@ -340,14 +339,14 @@ class MainActivity : ComponentActivity() {
                         typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         val screen = it.toRoute<Screens.Album.SinglePhoto>()
-                        multiAlbumViewModel.changePaths(album = screen.albumInfo)
+                        multiAlbumViewModel.changePaths(album = screen.album)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
                             viewModel = multiAlbumViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = screen.albumInfo
+                            album = screen.album
                         )
                     }
                 }
@@ -486,12 +485,12 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
-                                album = screen.albumInfo
+                                album = screen.album
                             )
                         )
 
                         SingleAlbumView(
-                            album = screen.albumInfo,
+                            album = screen.album,
                             viewModel = viewModel
                         )
                     }
@@ -508,7 +507,7 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
-                                album = screen.albumInfo
+                                album = screen.album
                             )
                         )
 
@@ -517,7 +516,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             window = window,
                             index = editIndex ?: screen.index,
-                            albumInfo = screen.albumInfo
+                            album = screen.album
                         )
                     }
                 }
@@ -539,12 +538,12 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                album = screen.albumInfo
+                                album = screen.album
                             )
                         )
 
                         SingleAlbumView(
-                            album = screen.albumInfo,
+                            album = screen.album,
                             viewModel = viewModel
                         )
                     }
@@ -561,13 +560,13 @@ class MainActivity : ComponentActivity() {
                             viewModelStoreOwner = storeOwner,
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
-                                album = screen.albumInfo
+                                album = screen.album
                             )
                         )
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
-                            albumInfo = screen.albumInfo,
+                            album = screen.album,
                             viewModel = viewModel,
                             index = editIndex ?: screen.index,
                             window = window
@@ -676,7 +675,7 @@ class MainActivity : ComponentActivity() {
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
-                        albumInfo = screen.albumInfo,
+                        albumInfo = screen.album,
                         exitOnSave = { exitOnSave },
                         overwriteByDefault = { overwriteByDefault }
                     )
@@ -728,7 +727,7 @@ class MainActivity : ComponentActivity() {
                     VideoEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
-                        albumInfo = screen.albumInfo,
+                        albumInfo = screen.album,
                         window = window,
                         isFromOpenWithView = false
                     )
