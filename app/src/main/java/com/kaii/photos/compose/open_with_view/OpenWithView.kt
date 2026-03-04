@@ -199,7 +199,7 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     isFromOpenWithView = true,
-                                    albumInfo = null,
+                                    album = null,
                                     exitOnSave = { false },
                                     overwriteByDefault = { false }
                                 )
@@ -251,7 +251,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    albumInfo = null
+                                    album = null
                                 )
                             }
                         }

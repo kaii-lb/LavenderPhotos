@@ -9,7 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.compose.pages.main.MainPages
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
@@ -34,7 +34,14 @@ fun StartupLoadingPage(
     val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            album = AlbumInfo.createPathOnlyAlbum(mainPhotosAlbums)
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
+                paths = mainPhotosAlbums,
+                pinned = false,
+                groupId = null,
+                immichId = null
+            )
         )
     )
     val searchViewModel: SearchViewModel = viewModel(
@@ -42,7 +49,16 @@ fun StartupLoadingPage(
     )
 
     LaunchedEffect(mainPhotosAlbums) {
-        multiAlbumViewModel.changePaths(AlbumInfo.createPathOnlyAlbum(mainPhotosAlbums))
+        multiAlbumViewModel.changePaths(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
+                paths = mainPhotosAlbums,
+                pinned = false,
+                groupId = null,
+                immichId = null
+            )
+        )
     }
 
     Box {

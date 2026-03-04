@@ -89,7 +89,7 @@ import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.editing.DrawableText
@@ -113,7 +113,7 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?,
+    album: AlbumType?,
     exitOnSave: () -> Boolean,
     overwriteByDefault: () -> Boolean
 ) {
@@ -263,14 +263,14 @@ fun ImageEditor(
                     )
 
                     delay(PhotoGridConstants.UPDATE_TIME * 2)
-                    if (albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                    if (album?.id.takeIf { album!! !is AlbumType.Folder } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
                         MediaDatabase.getInstance(context)
                             .customDao()
                             .upsertAll(
                                 listOf(
                                     CustomItem(
                                         id = navMediaId,
-                                        album = albumInfo!!.id
+                                        album = album!!.id
                                     )
                                 )
                             )

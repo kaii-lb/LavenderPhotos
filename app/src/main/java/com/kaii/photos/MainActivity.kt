@@ -675,7 +675,7 @@ class MainActivity : ComponentActivity() {
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
-                        albumInfo = screen.album,
+                        album = screen.album,
                         exitOnSave = { exitOnSave },
                         overwriteByDefault = { overwriteByDefault }
                     )
@@ -727,7 +727,7 @@ class MainActivity : ComponentActivity() {
                     VideoEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
-                        albumInfo = screen.album,
+                        album = screen.album,
                         window = window,
                         isFromOpenWithView = false
                     )
