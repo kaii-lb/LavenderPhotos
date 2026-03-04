@@ -1,9 +1,19 @@
 package com.kaii.photos.datastore
 
+import android.os.Build
+import android.os.Bundle
+import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.navigation.NavType
 import com.kaii.photos.R
+import kotlinx.parcelize.IgnoredOnParcel
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 // order is important
 enum class AlbumSortMode {
@@ -235,8 +245,9 @@ data class ImmichBasicInfo(
     }
 }
 
+@Parcelize
 @Serializable
-sealed interface AlbumType {
+sealed interface AlbumType : Parcelable {
     val id: String
     val name: String
     val pinned: Boolean
@@ -272,10 +283,40 @@ sealed interface AlbumType {
     ) : AlbumType
 
     object PlaceHolder : AlbumType {
-        override val id = ""
-        override val name = ""
-        override val pinned = false
-        override val groupId = null
-        override val immichId = null
+        @IgnoredOnParcel override val id = ""
+        @IgnoredOnParcel override val name = ""
+        @IgnoredOnParcel override val pinned = false
+        @IgnoredOnParcel override val groupId = null
+        @IgnoredOnParcel override val immichId = null
+    }
+}
+
+// from https://medium.com/@FrederickKlyk/type-safe-navigation-with-jetpack-compose-navigation-in-multi-modular-projects-73ed4b5ca592
+class CustomNavType<T : Parcelable>(
+    private val clazz: Class<T>,
+    private val serializer: KSerializer<T>,
+) : NavType<T>(isNullableAllowed = false) {
+    override fun get(bundle: Bundle, key: String): T? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getParcelable(key, clazz) as T
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getParcelable(key)
+        }
+
+    override fun put(bundle: Bundle, key: String, value: T) =
+        bundle.putParcelable(key, value)
+
+    override fun parseValue(value: String): T = Json.decodeFromString(serializer, value)
+
+    override fun serializeAsValue(value: T): String = Json.encodeToString(serializer, value)
+
+    override val name: String = clazz.name
+
+    companion object {
+        inline fun <reified T : Parcelable> getCustomNavTypeMap(serializer: KSerializer<T>): Map<KType, CustomNavType<T>> =
+            mapOf(
+                typeOf<T>() to CustomNavType(T::class.java, serializer),
+            )
     }
 }

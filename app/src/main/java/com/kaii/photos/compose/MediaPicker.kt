@@ -61,7 +61,8 @@ import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.CustomNavType
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
@@ -82,7 +83,6 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlin.reflect.typeOf
 
 // private const val TAG = "com.kaii.photos.compose.MediaPicker"
 
@@ -134,7 +134,14 @@ class MediaPicker : ComponentActivity() {
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                album = AlbumInfo.Empty
+                album = AlbumType.Folder(
+                    id = "",
+                    name = "",
+                    paths = emptySet(),
+                    pinned = false,
+                    groupId = null,
+                    immichId = null
+                )
             )
         )
 
@@ -181,9 +188,7 @@ class MediaPicker : ComponentActivity() {
                 startDestination = Screens.MainPages.MainGrid.GridView
             ) {
                 composable<Screens.MainPages.MainGrid.GridView>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    )
+                    typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                 ) {
                     setupNextScreen(window)
 
@@ -211,9 +216,7 @@ class MediaPicker : ComponentActivity() {
                 startDestination = Screens.Favourites.GridView::class
             ) {
                 composable<Screens.Album.GridView>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    )
+                    typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                 ) {
                     setupNextScreen(window)
 
@@ -241,9 +244,7 @@ class MediaPicker : ComponentActivity() {
                 startDestination = Screens.CustomAlbum.GridView::class
             ) {
                 composable<Screens.CustomAlbum.GridView>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    )
+                    typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Custom.serializer())
                 ) {
                     setupNextScreen(window)
 

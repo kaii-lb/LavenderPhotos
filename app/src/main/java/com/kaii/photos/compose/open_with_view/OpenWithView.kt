@@ -49,7 +49,8 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.CustomNavType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -62,7 +63,6 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.open_with_view.OpenWithView"
 
@@ -155,9 +155,7 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.ImageEditor>(
-                                typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                                ),
+                                typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
                                 enterTransition = {
                                     slideInVertically(
                                         AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -208,9 +206,7 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.VideoEditor>(
-                                typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                                ),
+                                typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
                                 enterTransition = {
                                     slideInVertically(
                                         animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -314,7 +310,8 @@ private fun Content(uri: Uri, window: Window) {
 
             else -> {
                 val blurViews by context.appModule.settings.lookAndFeel.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
-                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().collectAsStateWithLifecycle(initialValue = false)
+                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 OpenWithContent(
                     uri = uri,
@@ -336,10 +333,15 @@ private fun InitSinglePhotoView(
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            album = AlbumInfo.createPathOnlyAlbum(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
                 paths = setOf(
                     incomingData.absolutePath.parent()
-                )
+                ),
+                pinned = false,
+                groupId = null,
+                immichId = null
             )
         )
     )
@@ -357,10 +359,15 @@ private fun InitSinglePhotoView(
             window = window,
             viewModel = multiAlbumViewModel,
             index = index,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
                 paths = setOf(
                     incomingData.absolutePath.parent()
-                )
+                ),
+                pinned = false,
+                groupId = null,
+                immichId = null
             ),
             isOpenWithDefaultView = true
         )

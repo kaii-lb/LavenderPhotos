@@ -76,7 +76,8 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.CustomNavType
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
@@ -110,7 +111,6 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.MainActivity"
 
@@ -212,7 +212,14 @@ class MainActivity : ComponentActivity() {
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                album = AlbumInfo.Empty
+                album = AlbumType.Folder(
+                    id = "",
+                    name = "",
+                    paths = emptySet(),
+                    pinned = false,
+                    groupId = null,
+                    immichId = null
+                )
             )
         )
 
@@ -261,9 +268,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.MainPages.MainGrid.GridView
                 ) {
                     composable<Screens.MainPages.MainGrid.GridView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         setupNextScreen(window = window)
 
@@ -287,9 +292,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.MainPages.MainGrid.SinglePhoto>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
                         multiAlbumViewModel.changePaths(album = screen.albumInfo)
@@ -303,11 +306,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable<Screens.MainPages.Search.SinglePhoto>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
-                    ) {
+                    composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
 
@@ -315,7 +314,7 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             viewModel = searchViewModel,
                             index = editIndex ?: screen.index,
-                            albumInfo = AlbumInfo.Empty
+                            albumInfo = AlbumType.PlaceHolder
                         )
                     }
                 }
@@ -324,9 +323,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.Album.GridView::class
                 ) {
                     composable<Screens.Album.GridView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         val screen = it.toRoute<Screens.Album.GridView>()
                         setupNextScreen(window = window)
@@ -340,9 +337,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Album.SinglePhoto>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Folder.serializer())
                     ) {
                         val screen = it.toRoute<Screens.Album.SinglePhoto>()
                         multiAlbumViewModel.changePaths(album = screen.albumInfo)
@@ -478,9 +473,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Immich.GridView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Cloud.serializer())
                     ) {
                         setupNextScreen(window = window)
 
@@ -504,9 +497,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Immich.SinglePhoto>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Cloud.serializer())
                     ) {
                         val screen = it.toRoute<Screens.Immich.SinglePhoto>()
 
@@ -535,9 +526,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.CustomAlbum.GridView::class
                 ) {
                     composable<Screens.CustomAlbum.GridView>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Custom.serializer())
                     ) {
                         setupNextScreen(window = window)
 
@@ -561,9 +550,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.CustomAlbum.SinglePhoto>(
-                        typeMap = mapOf(
-                            typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                        )
+                        typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.Custom.serializer())
                     ) {
                         val screen = it.toRoute<Screens.CustomAlbum.SinglePhoto>()
 
@@ -637,9 +624,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable<Screens.ImageEditor>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    ),
+                    typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
                     enterTransition = {
                         slideInVertically(
                             AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -698,9 +683,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable<Screens.VideoEditor>(
-                    typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
-                    ),
+                    typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
                     enterTransition = {
                         slideInVertically(
                             animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
