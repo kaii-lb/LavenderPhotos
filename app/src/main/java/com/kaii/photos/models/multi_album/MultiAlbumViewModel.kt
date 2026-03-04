@@ -150,7 +150,7 @@ class MultiAlbumViewModel(
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
     }
 
-    fun editAlbum(id: String, newInfo: AlbumType.Folder) {
+    fun editAlbum(id: String, newInfo: AlbumType) {
         settings.albums.edit(id, newInfo)
     }
 

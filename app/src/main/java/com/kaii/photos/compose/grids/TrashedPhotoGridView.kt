@@ -34,7 +34,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
@@ -131,7 +131,7 @@ fun TrashedPhotoGridView(
 
             PhotoGrid(
                 pagingItems = pagingItems,
-                albumInfo = AlbumInfo.Empty,
+                album = AlbumType.PlaceHolder,
                 viewProperties = ViewProperties.Trash,
                 selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null,

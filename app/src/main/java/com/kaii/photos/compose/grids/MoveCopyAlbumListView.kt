@@ -233,16 +233,14 @@ fun AlbumsListItem(
             show.value = false
 
             context.appModule.scope.launch(Dispatchers.IO) {
-                album.info as AlbumType.Album // literally cannot be called on an AlbumGroup
-
-                if (isMoving && album.info.paths.size == 1) {
+                if (isMoving && album.info is AlbumType.Folder && album.info.paths.size == 1) {
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsList,
                         destination = album.info.paths.first(),
                         preserveDate = preserveDate
                     )
-                } else {
+                } else if (album.info is AlbumType.Folder) {
                     val list = mutableListOf<MediaStoreData>()
 
                     album.info.paths.forEach { path ->
@@ -286,7 +284,7 @@ fun AlbumsListItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                if (!(album.info as AlbumType.Album).custom) {
+                if (album.info is AlbumType.Folder) {
                     dirPermissionManager.start(
                         directories = album.info.paths
                     )
@@ -316,7 +314,7 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = album.thumbnail.first().uri,
+            model = album.thumbnail.uri,
             contentDescription = album.info.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
@@ -324,7 +322,7 @@ fun AlbumsListItem(
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            it.signature(album.thumbnail.first().signature)
+            it.signature(album.thumbnail.signature)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
         }
 
@@ -339,7 +337,7 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if ((album.info as AlbumType.Album).custom) {
+        if (album.info !is AlbumType.Folder) { // TODO: introduce icon for immich
             Icon(
                 painter = painterResource(id = R.drawable.art_track),
                 contentDescription = stringResource(id = R.string.albums_is_custom),

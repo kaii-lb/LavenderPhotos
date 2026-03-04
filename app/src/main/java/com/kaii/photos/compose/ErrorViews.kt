@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.Screens
 
 enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
     val prefix: Int?,
-    val navigate: (AlbumInfo, Int) -> Screens
+    val navigate: (AlbumType, Int) -> Screens
 ) {
     Trash(
         emptyText = R.string.error_views_trash_empty,

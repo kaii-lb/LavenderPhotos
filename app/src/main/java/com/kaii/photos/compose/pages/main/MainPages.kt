@@ -285,13 +285,13 @@ fun MainPages(
                             paths = tab.albumPaths
 
                             multiAlbumViewModel.changePaths(
-                                album = tab.toAlbumInfo()
+                                album = tab.toAlbum()
                             )
                         }
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
-                            albumInfo = tab.toAlbumInfo(),
+                            album = tab.toAlbum(),
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
@@ -309,14 +309,14 @@ fun MainPages(
                             multiAlbumViewModel.changePaths(
                                 album = tab.copy(
                                     albumPaths = mainPhotosPaths
-                                ).toAlbumInfo()
+                                ).toAlbum()
                             )
                         }
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
                             selectionManager = selectionManager,
-                            albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
+                            album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
                             openVideosExternally = openVideosExternally,

@@ -270,4 +270,12 @@ sealed interface AlbumType {
         override val groupId: Int?,
         override val immichId: String = id
     ) : AlbumType
+
+    object PlaceHolder : AlbumType {
+        override val id = ""
+        override val name = ""
+        override val pinned = false
+        override val groupId = null
+        override val immichId = null
+    }
 }

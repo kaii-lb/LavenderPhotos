@@ -42,7 +42,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -169,7 +169,7 @@ fun SecureFolderView(
 
             PhotoGrid(
                 pagingItems = items,
-                albumInfo = AlbumInfo.Empty,
+                album = AlbumType.PlaceHolder,
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.SecureFolder,
                 columnSize = columnSize,

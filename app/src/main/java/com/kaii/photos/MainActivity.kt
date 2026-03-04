@@ -334,7 +334,7 @@ class MainActivity : ComponentActivity() {
                         multiAlbumViewModel.changePaths(album = screen.albumInfo)
 
                         SingleAlbumView(
-                            albumInfo = screen.albumInfo,
+                            album = screen.albumInfo,
                             viewModel = multiAlbumViewModel
                         )
                     }
@@ -498,7 +498,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         SingleAlbumView(
-                            albumInfo = screen.albumInfo,
+                            album = screen.albumInfo,
                             viewModel = viewModel
                         )
                     }
@@ -555,7 +555,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         SingleAlbumView(
-                            albumInfo = screen.albumInfo,
+                            album = screen.albumInfo,
                             viewModel = viewModel
                         )
                     }
