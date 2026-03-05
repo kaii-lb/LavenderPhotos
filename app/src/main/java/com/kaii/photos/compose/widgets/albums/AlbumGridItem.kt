@@ -37,7 +37,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumGridItem(
-    album: AlbumGridState.Album,
+    album: AlbumGridState.Album.Single,
     isSelected: Boolean,
     info: ImmichBasicInfo,
     modifier: Modifier = Modifier,
@@ -76,7 +76,7 @@ fun AlbumGridItem(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AlbumGlideImage(
-                album = album,
+                albumInfo = album.info,
                 info = info
             )
 
@@ -88,7 +88,7 @@ fun AlbumGridItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = " ${album.info.name}",
+                    text = " ${album.name}",
                     fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp,
                     textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -96,7 +96,7 @@ fun AlbumGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if ((album.info as? AlbumType.Album)?.custom == true) {
+                if (album.info.album !is AlbumType.Folder) { // TODO: introduce icon for immich
                     Icon(
                         painter = painterResource(id = R.drawable.art_track),
                         contentDescription = stringResource(id = R.string.albums_is_custom),

@@ -45,10 +45,10 @@ interface MediaDao {
     fun getAllFavourites(): List<MediaStoreData>
 
     @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC LIMIT 1")
-    fun getThumbnailForAlbumDateTaken(paths: Set<String>): MediaStoreData?
+    suspend fun getThumbnailForAlbumDateTaken(paths: Set<String>): MediaStoreData?
 
     @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
-    fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
+    suspend fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
 
     @Query(
         value = "SELECT id," +

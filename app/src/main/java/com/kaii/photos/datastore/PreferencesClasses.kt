@@ -1,19 +1,15 @@
 package com.kaii.photos.datastore
 
-import android.os.Build
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.navigation.NavType
 import com.kaii.photos.R
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 // order is important
 enum class AlbumSortMode {
@@ -215,7 +211,6 @@ data class BottomBarTab(
             name = name,
             paths = albumPaths,
             pinned = false,
-            groupId = null,
             immichId = null
         )
 }
@@ -251,7 +246,6 @@ sealed interface AlbumType : Parcelable {
     val id: String
     val name: String
     val pinned: Boolean
-    val groupId: Int?
     val immichId: String?
 
     @Serializable
@@ -259,64 +253,129 @@ sealed interface AlbumType : Parcelable {
         override val id: String,
         override val name: String,
         override val pinned: Boolean,
-        override val groupId: Int?,
         override val immichId: String?,
         val paths: Set<String>
-    ) : AlbumType
+    ) : AlbumType {
+        class NavType : androidx.navigation.NavType<Folder>(isNullableAllowed = false) {
+            override fun get(bundle: Bundle, key: String): Folder? {
+                return bundle.getString(key)?.let { Json.decodeFromString<Folder>(it) }
+            }
+
+            override fun parseValue(value: String): Folder {
+                return Json.decodeFromString(Uri.decode(value))
+            }
+
+            override fun put(bundle: Bundle, key: String, value: Folder) {
+                bundle.putString(key, Json.encodeToString(value))
+            }
+
+            override fun serializeAsValue(value: Folder): String {
+                return Uri.encode(Json.encodeToString(value))
+            }
+        }
+    }
 
     @Serializable
     data class Custom(
         override val id: String,
         override val name: String,
         override val pinned: Boolean,
-        override val groupId: Int?,
         override val immichId: String?,
-    ) : AlbumType
+    ) : AlbumType {
+        class NavType : androidx.navigation.NavType<Custom>(isNullableAllowed = false) {
+            override fun get(bundle: Bundle, key: String): Custom? {
+                return bundle.getString(key)?.let { Json.decodeFromString<Custom>(it) }
+            }
+
+            override fun parseValue(value: String): Custom {
+                return Json.decodeFromString(Uri.decode(value))
+            }
+
+            override fun put(bundle: Bundle, key: String, value: Custom) {
+                bundle.putString(key, Json.encodeToString(value))
+            }
+
+            override fun serializeAsValue(value: Custom): String {
+                return Uri.encode(Json.encodeToString(value))
+            }
+        }
+    }
 
     @Serializable
     data class Cloud(
         override val id: String,
         override val name: String,
         override val pinned: Boolean,
-        override val groupId: Int?,
         override val immichId: String = id
-    ) : AlbumType
+    ) : AlbumType {
+        class NavType : androidx.navigation.NavType<Cloud>(isNullableAllowed = false) {
+            override fun get(bundle: Bundle, key: String): Cloud? {
+                return bundle.getString(key)?.let { Json.decodeFromString<Cloud>(it) }
+            }
 
+            override fun parseValue(value: String): Cloud {
+                return Json.decodeFromString(Uri.decode(value))
+            }
+
+            override fun put(bundle: Bundle, key: String, value: Cloud) {
+                bundle.putString(key, Json.encodeToString(value))
+            }
+
+            override fun serializeAsValue(value: Cloud): String {
+                return Uri.encode(Json.encodeToString(value))
+            }
+        }
+    }
+
+    @Serializable
     object PlaceHolder : AlbumType {
         @IgnoredOnParcel override val id = ""
         @IgnoredOnParcel override val name = ""
         @IgnoredOnParcel override val pinned = false
-        @IgnoredOnParcel override val groupId = null
         @IgnoredOnParcel override val immichId = null
-    }
-}
 
-// from https://medium.com/@FrederickKlyk/type-safe-navigation-with-jetpack-compose-navigation-in-multi-modular-projects-73ed4b5ca592
-class CustomNavType<T : Parcelable>(
-    private val clazz: Class<T>,
-    private val serializer: KSerializer<T>,
-) : NavType<T>(isNullableAllowed = false) {
-    override fun get(bundle: Bundle, key: String): T? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bundle.getParcelable(key, clazz) as T
-        } else {
-            @Suppress("DEPRECATION")
-            bundle.getParcelable(key)
+        class NavType : androidx.navigation.NavType<PlaceHolder>(isNullableAllowed = false) {
+            override fun get(bundle: Bundle, key: String): PlaceHolder? {
+                return bundle.getString(key)?.let { Json.decodeFromString<PlaceHolder>(it) }
+            }
+
+            override fun parseValue(value: String): PlaceHolder {
+                return Json.decodeFromString(Uri.decode(value))
+            }
+
+            override fun put(bundle: Bundle, key: String, value: PlaceHolder) {
+                bundle.putString(key, Json.encodeToString(value))
+            }
+
+            override fun serializeAsValue(value: PlaceHolder): String {
+                return Uri.encode(Json.encodeToString(value))
+            }
+        }
+    }
+
+    class NavType : androidx.navigation.NavType<AlbumType>(isNullableAllowed = false) {
+        override fun get(bundle: Bundle, key: String): AlbumType? {
+            return bundle.getString(key)?.let { Json.decodeFromString<AlbumType>(it) }
         }
 
-    override fun put(bundle: Bundle, key: String, value: T) =
-        bundle.putParcelable(key, value)
+        override fun parseValue(value: String): AlbumType {
+            return Json.decodeFromString(Uri.decode(value))
+        }
 
-    override fun parseValue(value: String): T = Json.decodeFromString(serializer, value)
+        override fun put(bundle: Bundle, key: String, value: AlbumType) {
+            bundle.putString(key, Json.encodeToString(value))
+        }
 
-    override fun serializeAsValue(value: T): String = Json.encodeToString(serializer, value)
-
-    override val name: String = clazz.name
-
-    companion object {
-        inline fun <reified T : Parcelable> getCustomNavTypeMap(serializer: KSerializer<T>): Map<KType, CustomNavType<T>> =
-            mapOf(
-                typeOf<T>() to CustomNavType(T::class.java, serializer),
-            )
+        override fun serializeAsValue(value: AlbumType): String {
+            return Uri.encode(Json.encodeToString(value))
+        }
     }
 }
+
+@Serializable
+data class AlbumGroup(
+    val id: String,
+    val name: String,
+    val pinned: Boolean,
+    val albumIds: List<String>
+)

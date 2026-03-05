@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.compose.ui.unit.toOffset
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.zIndex
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.widgets.albums.AlbumFolder
@@ -171,14 +170,14 @@ fun AlbumsGridView(
 
                             val currentLazyItem =
                                 lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                    it.key == selectedItem?.info?.id
+                                    it.key == selectedItem?.id
                                 }
 
-                            if (targetItem != null && currentLazyItem != null && targetItem.key in albums.map { it.info.id }) {
+                            if (targetItem != null && currentLazyItem != null && targetItem.key in albums.map { it.id }) {
                                 val targetItemIndex =
-                                    albums.indexOfFirst { it.info.id == targetItem.key }
+                                    albums.indexOfFirst { it.id == targetItem.key }
                                 val newList = albums.toMutableList()
-                                newList.removeAll { it.info.id == selectedItem?.info?.id }
+                                newList.removeAll { it.id == selectedItem?.id }
                                 newList.add(targetItemIndex, selectedItem!!)
 
                                 itemOffset =
@@ -217,7 +216,7 @@ fun AlbumsGridView(
                             itemOffset = Offset.Zero
 
                             setAlbumSortMode(AlbumSortMode.Custom)
-                            setAlbums(albums.fastMap { it.info })
+                            // setAlbums(albums.fastMap { it.info }) // TODO:
                         }
                     )
                 },
@@ -244,29 +243,23 @@ fun AlbumsGridView(
             items(
                 count = albums.size,
                 key = { key ->
-                    albums[key].info.id
+                    albums[key].id
                 },
             ) { index ->
                 val album = albums[index]
 
-                if (album.info is AlbumType.AlbumGroup) {
+                if (album is AlbumGridState.Album.Group) {
                     AlbumFolder(
-                        name = album.info.name,
-                        albums = album.info.albums.fastMap { info ->
-                            AlbumGridState.Album(
-                                info = info,
-                                thumbnail = album.thumbnail.filter { it.id == info.id },
-                                date = album.date
-                            )
-                        },
+                        name = album.name,
+                        info = album.info,
                         isSelected = selectedItem == album,
-                        info = immichInfo
+                        immichInfo = immichInfo
                     ) {
 
                     }
                 } else {
                     AlbumGridItem(
-                        album = album,
+                        album = album as AlbumGridState.Album.Single,
                         isSelected = selectedItem == album,
                         info = immichInfo,
                         modifier = Modifier
@@ -294,21 +287,19 @@ fun AlbumsGridView(
                                     else tween(durationMillis = 250)
                             )
                     ) {
-                        album.info as AlbumType.Album
-
                         navController.navigate(
                             route =
                                 when {
-                                    album.info.custom && album.info.immichId.isNotBlank() -> {
-                                        Screens.Immich.GridView(album = album.info)
+                                    album.info.album is AlbumType.Cloud -> {
+                                        Screens.Immich.GridView(album = album.info.album)
                                     }
 
-                                    album.info.custom -> {
-                                        Screens.CustomAlbum.GridView(album = album.info)
+                                    album.info.album is AlbumType.Custom -> {
+                                        Screens.CustomAlbum.GridView(album = album.info.album)
                                     }
 
                                     else -> {
-                                        Screens.Album.GridView(album = album.info)
+                                        Screens.Album.GridView(album = album.info.album as AlbumType.Folder)
                                     }
                                 }
                         )

@@ -5,6 +5,7 @@ package com.kaii.photos.datastore
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -70,7 +71,7 @@ class SettingsAlbumsListImpl(
     private val v140ListKey = stringPreferencesKey("album_items_key")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
-    private val albumsKey = stringPreferencesKey("album_key")
+    private val albumsKey = stringPreferencesKey("album_albums_key")
 
     val json = Json { ignoreUnknownKeys = true }
 
@@ -79,8 +80,18 @@ class SettingsAlbumsListImpl(
             val jsonString = data[albumsKey]
             val present = jsonString?.let { json.decodeFromString<List<AlbumType>>(jsonString) } ?: defaultAlbumsList
 
+            val presentPaths = present.fastMapNotNull { (it as? AlbumType.Folder)?.paths }
+            val presentIds = present.fastMap { it.id }
+
             present.toMutableList().apply {
-                addAll(present - list.toSet())
+                addAll(
+                    list.filter {
+                        when (it) {
+                            is AlbumType.Folder -> it.paths !in presentPaths
+                            else -> it.id !in presentIds
+                        }
+                    }
+                )
             }.let { new ->
                 data[albumsKey] = json.encodeToString(new)
             }
@@ -100,7 +111,6 @@ class SettingsAlbumsListImpl(
                 name = path.filename(),
                 paths = setOf(path),
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         }
@@ -119,7 +129,6 @@ class SettingsAlbumsListImpl(
                 name = path.filename(),
                 paths = setOf(baseInternalStorageDirectory + path),
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         }
@@ -133,7 +142,6 @@ class SettingsAlbumsListImpl(
                 id = Uuid.random().toString(),
                 name = it.name,
                 pinned = it.isPinned,
-                groupId = null,
                 immichId = null,
                 paths = it.paths.map { path ->
                     if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
@@ -265,7 +273,6 @@ class SettingsAlbumsListImpl(
                 name = "Camera",
                 paths = setOf("${baseInternalStorageDirectory}DCIM/Camera"),
                 pinned = false,
-                groupId = null,
                 immichId = null
             ),
             AlbumType.Folder(
@@ -273,7 +280,6 @@ class SettingsAlbumsListImpl(
                 name = "Pictures",
                 paths = setOf("${baseInternalStorageDirectory}Pictures"),
                 pinned = false,
-                groupId = null,
                 immichId = null
             ),
             AlbumType.Folder(
@@ -281,7 +287,6 @@ class SettingsAlbumsListImpl(
                 name = "Downloads",
                 paths = setOf("${baseInternalStorageDirectory}Download"),
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         )

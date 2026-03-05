@@ -50,7 +50,6 @@ import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.CustomNavType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -63,6 +62,7 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.open_with_view.OpenWithView"
 
@@ -155,7 +155,9 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.ImageEditor>(
-                                typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
+                                typeMap = mapOf(
+                                    typeOf<AlbumType>() to AlbumType.NavType()
+                                ),
                                 enterTransition = {
                                     slideInVertically(
                                         AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -206,7 +208,9 @@ class OpenWithView : ComponentActivity() {
                             }
 
                             composable<Screens.VideoEditor>(
-                                typeMap = CustomNavType.getCustomNavTypeMap(AlbumType.serializer()),
+                                typeMap = mapOf(
+                                    typeOf<AlbumType>() to AlbumType.NavType()
+                                ),
                                 enterTransition = {
                                     slideInVertically(
                                         animationSpec = AnimationConstants.expressiveTween(AnimationConstants.DURATION)
@@ -340,7 +344,6 @@ private fun InitSinglePhotoView(
                     incomingData.absolutePath.parent()
                 ),
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         )
@@ -366,7 +369,6 @@ private fun InitSinglePhotoView(
                     incomingData.absolutePath.parent()
                 ),
                 pinned = false,
-                groupId = null,
                 immichId = null
             ),
             isOpenWithDefaultView = true

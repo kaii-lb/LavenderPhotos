@@ -36,11 +36,11 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumGlideImage(
-    album: AlbumGridState.Album,
+    albumInfo: AlbumGridState.Info,
     info: ImmichBasicInfo
 ) {
     AnimatedContent(
-        targetState = album.thumbnail.isNotEmpty(),
+        targetState = albumInfo.thumbnail.uri.isNotBlank(),
         transitionSpec = {
             fadeIn(
                 animationSpec = tween(
@@ -61,22 +61,22 @@ fun AlbumGlideImage(
         if (state) {
             GlideImage(
                 model =
-                    if ((album.info as AlbumType.Album).immichId.isNotBlank()) ImmichInfo(
-                        thumbnail = album.thumbnail.first().uri,
-                        original = album.thumbnail.first().uri,
+                    if ((albumInfo.album is AlbumType.Cloud)) ImmichInfo(
+                        thumbnail = albumInfo.thumbnail.uri,
+                        original = albumInfo.thumbnail.uri,
                         hash = "",
                         accessToken = info.accessToken,
                         useThumbnail = true
-                    ) else album.thumbnail.first().uri,
-                contentDescription = album.info.name,
+                    ) else albumInfo.thumbnail.uri,
+                contentDescription = albumInfo.album.name,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.broken_image),
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest),
             ) {
-                it.signature(album.thumbnail.first().signature)
+                it.signature(albumInfo.thumbnail.signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
             }
         } else {

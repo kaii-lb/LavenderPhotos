@@ -23,10 +23,10 @@ interface CustomEntityDao {
     fun mediaSize(album: String): Long
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateTaken DESC LIMIT 1")
-    fun getThumbnailForAlbumDateTaken(album: String): MediaStoreData?
+    suspend fun getThumbnailForAlbumDateTaken(album: String): MediaStoreData?
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateModified DESC LIMIT 1")
-    fun getThumbnailForAlbumDateModified(album: String): MediaStoreData?
+    suspend fun getThumbnailForAlbumDateModified(album: String): MediaStoreData?
 
     @Query(
         value = "SELECT media.id," +

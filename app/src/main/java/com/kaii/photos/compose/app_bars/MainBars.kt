@@ -355,7 +355,6 @@ fun MainAppBottomBar(
                                             name = currentTab.name,
                                             paths = currentTab.albumPaths,
                                             pinned = false,
-                                            groupId = null,
                                             immichId = null
                                         ),
                                         selectionManager = selectionManager,

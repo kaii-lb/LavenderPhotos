@@ -88,7 +88,6 @@ class SecureFolderMigrationManager(
                         name = exportDir.absolutePath.filename(),
                         paths = setOf(exportDir.absolutePath),
                         pinned = true,
-                        groupId = null,
                         immichId = null
                     )
                 )
@@ -186,7 +185,6 @@ class SecureFolderMigrationManager(
                     name = path.filename(),
                     paths = setOf(path),
                     pinned = true,
-                    groupId = null,
                     immichId = null
                 )
             )

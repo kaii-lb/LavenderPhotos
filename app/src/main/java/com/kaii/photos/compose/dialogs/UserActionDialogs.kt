@@ -751,7 +751,6 @@ fun AlbumAddChoiceDialog(
                         name = path.filename(),
                         paths = setOf(basePath + path),
                         pinned = false,
-                        groupId = null,
                         immichId = null
                     )
                 )
@@ -814,7 +813,6 @@ fun AddCustomAlbumDialog(
                     id = Uuid.random().toString(),
                     name = text,
                     pinned = false,
-                    groupId = null,
                     immichId = null
                 )
 

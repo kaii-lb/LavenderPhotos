@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
@@ -34,25 +35,37 @@ import com.kaii.photos.helpers.TextStylingConstants
 private fun AlbumFolderPreview() {
     AlbumFolder(
         name = "Pets",
-        albums = listOf(
-            AlbumGridState.Album(
-                info = AlbumType.Album.Empty,
-                thumbnail = emptyList(),
-                date = 0L
+        info = listOf(
+            AlbumGridState.Info(
+                album = AlbumType.PlaceHolder,
+                thumbnail = AlbumGridState.Info.Thumbnail(
+                    uri = "",
+                    signature = ObjectKey(0),
+                    albumId = "",
+                    date = 0L
+                )
             ),
-            AlbumGridState.Album(
-                info = AlbumType.Album.Empty,
-                thumbnail = emptyList(),
-                date = 0L
-            ),
-            AlbumGridState.Album(
-                info = AlbumType.Album.Empty,
-                thumbnail = emptyList(),
-                date = 0L
-            )
+            // AlbumGridState.Info(
+            //     album = AlbumType.PlaceHolder,
+            //     thumbnail = AlbumGridState.Info.Thumbnail(
+            //         uri = "",
+            //         signature = ObjectKey(0),
+            //         albumId = "",
+            //         date = 0L
+            //     )
+            // ),
+            // AlbumGridState.Info(
+            //     album = AlbumType.PlaceHolder,
+            //     thumbnail = AlbumGridState.Info.Thumbnail(
+            //         uri = "",
+            //         signature = ObjectKey(0),
+            //         albumId = "",
+            //         date = 0L
+            //     )
+            // )
         ),
         isSelected = false,
-        info = ImmichBasicInfo.Empty,
+        immichInfo = ImmichBasicInfo.Empty,
         onClick = {}
     )
 }
@@ -61,9 +74,9 @@ private fun AlbumFolderPreview() {
 @Composable
 fun AlbumFolder(
     name: String,
-    albums: List<AlbumGridState.Album>,
+    info: List<AlbumGridState.Info>,
     isSelected: Boolean,
-    info: ImmichBasicInfo,
+    immichInfo: ImmichBasicInfo,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -111,10 +124,24 @@ fun AlbumFolder(
                     alignment = Alignment.CenterHorizontally
                 )
             ) {
-                albums.take(2).forEach { album ->
+                val overflow = if (info.size < 2) {
+                    info.take(2 - info.size) + (0..<info.size).map {
+                        AlbumGridState.Info(
+                            album = AlbumType.PlaceHolder,
+                            thumbnail = AlbumGridState.Info.Thumbnail(
+                                uri = "",
+                                signature = ObjectKey(0),
+                                albumId = "",
+                                date = 0L
+                            )
+                        )
+                    }
+                } else info.take(2)
+
+                overflow.forEach { album ->
                     AlbumGlideImage(
-                        album = album,
-                        info = info
+                        albumInfo = album,
+                        info = immichInfo
                     )
                 }
             }
@@ -129,20 +156,34 @@ fun AlbumFolder(
                     alignment = Alignment.CenterHorizontally
                 )
             ) {
-                val overflow = if (albums.size > 2) {
-                    albums.takeLast(albums.size - 3) + (0..4 - albums.size).map {
-                        AlbumGridState.Album(
-                            info = AlbumType.Album.Empty,
-                            thumbnail = emptyList(),
-                            date = 0L
+                val bottomItems = if (info.size > 2) {
+                    info.takeLast(info.size - 3) + (0..4 - info.size).map {
+                        AlbumGridState.Info(
+                            album = AlbumType.PlaceHolder,
+                            thumbnail = AlbumGridState.Info.Thumbnail(
+                                uri = "",
+                                signature = ObjectKey(0),
+                                albumId = "",
+                                date = 0L
+                            )
                         )
                     }
-                } else emptyList()
+                } else (0..1).map {
+                    AlbumGridState.Info(
+                        album = AlbumType.PlaceHolder,
+                        thumbnail = AlbumGridState.Info.Thumbnail(
+                            uri = "",
+                            signature = ObjectKey(0),
+                            albumId = "",
+                            date = 0L
+                        )
+                    )
+                }
 
-                overflow.forEach { album ->
+                bottomItems.forEach { album ->
                     AlbumGlideImage(
-                        album = album,
-                        info = info
+                        albumInfo = album,
+                        info = immichInfo
                     )
                 }
             }

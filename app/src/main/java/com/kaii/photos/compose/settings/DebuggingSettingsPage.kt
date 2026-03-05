@@ -234,7 +234,6 @@ private fun DebuggingSettingsPageImpl(
                                         name = file.name,
                                         paths = setOf(file.absolutePath),
                                         pinned = false,
-                                        groupId = null,
                                         immichId = null
                                     )
                                 )

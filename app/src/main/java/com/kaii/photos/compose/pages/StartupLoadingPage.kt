@@ -39,7 +39,6 @@ fun StartupLoadingPage(
                 name = "",
                 paths = mainPhotosAlbums,
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         )
@@ -55,7 +54,6 @@ fun StartupLoadingPage(
                 name = "",
                 paths = mainPhotosAlbums,
                 pinned = false,
-                groupId = null,
                 immichId = null
             )
         )

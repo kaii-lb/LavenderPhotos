@@ -128,7 +128,6 @@ private fun DataAndBackupPageImpl(
                                 name = albumFile.name,
                                 paths = setOf(albumFile.absolutePath),
                                 pinned = true,
-                                groupId = null,
                                 immichId = null
                             )
                         )
@@ -177,7 +176,6 @@ private fun DataAndBackupPageImpl(
                                 name = albumFile.name,
                                 paths = setOf(albumFile.absolutePath),
                                 pinned = true,
-                                groupId = null,
                                 immichId = null
                             )
                         )
@@ -283,7 +281,6 @@ private fun DataAndBackupPageImpl(
                                 name = favExportDir.absolutePath,
                                 paths = setOf(favExportDir.absolutePath),
                                 pinned = true,
-                                groupId = null,
                                 immichId = null
                             )
                         )
