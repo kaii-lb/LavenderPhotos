@@ -124,8 +124,8 @@ fun AlbumFolder(
                     alignment = Alignment.CenterHorizontally
                 )
             ) {
-                val overflow = if (info.size < 2) {
-                    info.take(2 - info.size) + (0..<info.size).map {
+                val topItems = if (info.size < 2) {
+                    info.take(2 - info.size) + (0..1-info.size).map {
                         AlbumGridState.Info(
                             album = AlbumType.PlaceHolder,
                             thumbnail = AlbumGridState.Info.Thumbnail(
@@ -138,7 +138,7 @@ fun AlbumFolder(
                     }
                 } else info.take(2)
 
-                overflow.forEach { album ->
+                topItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
                         info = immichInfo

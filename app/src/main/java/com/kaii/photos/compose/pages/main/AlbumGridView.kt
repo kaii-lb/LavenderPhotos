@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.pages.main
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -70,7 +71,8 @@ fun AlbumsGridView(
     migrateFav: () -> Boolean,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
-    setAlbumOrder: (order: List<String>) -> Unit
+    setAlbumOrder: (order: List<String>) -> Unit,
+    addAlbumToGroup: (albumId: String, groupId: String) -> Unit
 ) {
     val navController = LocalNavController.current
     var albums by remember { mutableStateOf(deviceAlbums.value) }
@@ -93,6 +95,11 @@ fun AlbumsGridView(
         val lazyGridState = rememberLazyGridState()
         var itemOffset by remember { mutableStateOf(Offset.Zero) }
         var selectedItem by remember { mutableStateOf<AlbumGridState.Album?>(null) }
+        var selectedIsGrouping by remember { mutableStateOf(false) }
+        val addingToGroupScale by animateFloatAsState(
+            targetValue = if (selectedIsGrouping) 0.8f else 1f,
+            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+        )
 
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
@@ -152,6 +159,7 @@ fun AlbumsGridView(
                     }
                 )
                 .pointerInput(Unit) {
+                    var targetItemIndex: Int? = null
                     val scrollThreshold = with(density) {
                         60.dp.toPx()
                     }
@@ -196,16 +204,21 @@ fun AlbumsGridView(
                             }
 
                             if (targetItem != null && currentLazyItem != null && targetItem.key in albums.map { it.id }) {
-                                val targetItemIndex = albums.indexOfFirst { it.id == targetItem.key }
+                                targetItemIndex = albums.indexOfFirst { it.id == targetItem.key }
                                 val newList = albums.toMutableList()
 
-                                newList.removeAll { it.id == selectedItem?.id }
-                                newList.add(targetItemIndex, selectedItem!!)
+                                if (albums[targetItemIndex] is AlbumGridState.Album.Group && selectedItem is AlbumGridState.Album.Single) {
+                                    selectedIsGrouping = true
+                                } else {
+                                    selectedIsGrouping = false
+                                    newList.removeAll { it.id == selectedItem?.id }
+                                    newList.add(targetItemIndex, selectedItem!!)
 
-                                itemOffset =
-                                    change.position - (targetItem.offset + targetItem.size.center).toOffset()
+                                    itemOffset =
+                                        change.position - (targetItem.offset + targetItem.size.center).toOffset()
 
-                                albums = newList
+                                    albums = newList
+                                }
                             }
                         },
 
@@ -220,8 +233,22 @@ fun AlbumsGridView(
                             itemOffset = Offset.Zero
                             scrollSpeed.floatValue = 0f
 
-                            setAlbumSortMode(AlbumSortMode.Custom)
-                            setAlbumOrder(albums.map { it.id })
+                            if (targetItemIndex != null
+                                && albums[targetItemIndex] is AlbumGridState.Album.Group
+                                && selectedItem is AlbumGridState.Album.Single
+                            ) {
+                                val targetItem = albums[targetItemIndex]
+
+                                addAlbumToGroup(
+                                    selectedItem!!.id,
+                                    targetItem.id
+                                )
+
+                                albums = albums.toMutableList().filter { it.id != selectedItem?.id }
+                            } else {
+                                setAlbumSortMode(AlbumSortMode.Custom)
+                                setAlbumOrder(albums.map { it.id })
+                            }
                         }
                     )
                 },
@@ -301,6 +328,9 @@ fun AlbumsGridView(
                                 if (selectedItem == album) {
                                     translationX = itemOffset.x
                                     translationY = itemOffset.y
+
+                                    scaleX = addingToGroupScale
+                                    scaleY = addingToGroupScale
                                 }
                             }
                             .wrapContentSize()

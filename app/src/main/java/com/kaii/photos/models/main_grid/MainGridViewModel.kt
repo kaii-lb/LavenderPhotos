@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class MainGridViewModel(
@@ -116,6 +117,18 @@ class MainGridViewModel(
     fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
 
     fun addAlbum(album: AlbumType) = settings.albums.add(listOf(album))
+
+    fun addAlbumToGroup(albumId: String, groupId: String) = viewModelScope.launch {
+        val groups = settings.albums.getGroups().first()
+        settings.albums.editGroup(
+            id = groupId,
+            albumIds = groups.first {
+                it.id == groupId
+            }.albumIds.toMutableList().apply {
+                add(albumId)
+            }
+        )
+    }
 
     private fun getMainPhotosAlbums() =
         combine(

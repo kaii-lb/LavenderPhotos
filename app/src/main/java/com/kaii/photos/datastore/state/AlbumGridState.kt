@@ -332,7 +332,7 @@ class AlbumGridState(
             else -> {
                 val lut = result.associateBy { it.id }
 
-                params.order.mapNotNull { lut[it] }
+                params.order.mapNotNull { lut[it] } + result.filter { it.id !in lut.keys }
             }
         }
 
