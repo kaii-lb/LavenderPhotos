@@ -92,7 +92,7 @@ fun MoveCopyAlbumListView(
     clear: () -> Unit
 ) {
     val albumGridState = rememberAlbumGridState()
-    val originalAlbumsList by albumGridState.albums.collectAsStateWithLifecycle()
+    val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
@@ -173,7 +173,6 @@ fun MoveCopyAlbumListView(
                     backgroundColor = Color.Transparent
                 )
             } else {
-                // TODO: handle album groups
                 LazyColumn(
                     state = state,
                     modifier = Modifier
@@ -183,13 +182,13 @@ fun MoveCopyAlbumListView(
                     horizontalAlignment = Alignment.Start
                 ) {
                     items(
-                        count = albumsList.filterIsInstance<AlbumGridState.Album.Single>().size,
+                        count = albumsList.size,
                         key = {
-                            albumsList.filterIsInstance<AlbumGridState.Album.Single>()[it].id
+                            albumsList[it].id
                         }
                     ) { index ->
                         AlbumsListItem(
-                            album = albumsList.filterIsInstance<AlbumGridState.Album.Single>()[index],
+                            album = albumsList[index],
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
                             isMoving = isMoving,

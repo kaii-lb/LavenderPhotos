@@ -107,6 +107,9 @@ class AlbumGridState(
     private val _albums = MutableStateFlow(emptyList<Album>())
     val albums = _albums.asStateFlow()
 
+    private val _singleAlbums = MutableStateFlow(emptyList<Album.Single>())
+    val singleAlbums = _singleAlbums.asStateFlow()
+
     private var job: Job? = null
     private var params = Params(
         sortMode = MediaItemSortMode.DateTaken,
@@ -217,6 +220,7 @@ class AlbumGridState(
     private suspend fun update() = withContext(Dispatchers.IO) {
         val result = mutableListOf<Album>()
         val albums = params.albums.toMutableList()
+        val singleAlbums = mutableListOf<Album.Single>()
 
         params.groups.forEach { group ->
             val info = albums.filter { it.id in group.albumIds }.map { album ->
@@ -251,10 +255,22 @@ class AlbumGridState(
                         )
                     }
 
-                Info(
+                val info = Info(
                     album = album,
                     thumbnail = thumbnail
                 )
+
+                singleAlbums.add(
+                    Album.Single(
+                        info = info,
+                        id = album.id,
+                        name = album.name,
+                        date = thumbnail.date,
+                        pinned = album.pinned
+                    )
+                )
+
+                info
             }
 
             result.add(
@@ -298,18 +314,19 @@ class AlbumGridState(
                     )
                 }
 
-            result.add(
-                Album.Single(
-                    id = album.id,
-                    name = album.name,
-                    date = thumbnail.date,
-                    pinned = album.pinned,
-                    info = Info(
-                        album = album,
-                        thumbnail = thumbnail
-                    )
+            val info = Album.Single(
+                id = album.id,
+                name = album.name,
+                date = thumbnail.date,
+                pinned = album.pinned,
+                info = Info(
+                    album = album,
+                    thumbnail = thumbnail
                 )
             )
+
+            result.add(info)
+            singleAlbums.add(info)
         }
 
         val sorted = when (params.albumSortMode) {
@@ -345,6 +362,8 @@ class AlbumGridState(
 
             list
         }
+
+        _singleAlbums.value = singleAlbums
     }
 }
 
