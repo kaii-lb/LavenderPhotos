@@ -147,7 +147,7 @@ fun AlbumsGridView(
                 }
             ),
             modifier = Modifier
-                .fillMaxSize(1f)
+                .fillMaxSize()
                 .semantics {
                     testTagsAsResourceId = true
                 }
@@ -314,7 +314,12 @@ fun AlbumsGridView(
                                     else tween(durationMillis = 250)
                             )
                     ) {
-
+                        navController.navigate(
+                            route = Screens.AlbumGroup(
+                                id = album.id,
+                                name = album.name
+                            )
+                        )
                     }
                 } else {
                     AlbumGridItem(

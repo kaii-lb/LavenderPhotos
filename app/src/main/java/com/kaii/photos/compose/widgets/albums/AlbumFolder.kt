@@ -39,30 +39,30 @@ private fun AlbumFolderPreview() {
             AlbumGridState.Info(
                 album = AlbumType.PlaceHolder,
                 thumbnail = AlbumGridState.Info.Thumbnail(
-                    uri = "",
+                    uri = "1",
                     signature = ObjectKey(0),
                     albumId = "",
                     date = 0L
                 )
             ),
-            // AlbumGridState.Info(
-            //     album = AlbumType.PlaceHolder,
-            //     thumbnail = AlbumGridState.Info.Thumbnail(
-            //         uri = "",
-            //         signature = ObjectKey(0),
-            //         albumId = "",
-            //         date = 0L
-            //     )
-            // ),
-            // AlbumGridState.Info(
-            //     album = AlbumType.PlaceHolder,
-            //     thumbnail = AlbumGridState.Info.Thumbnail(
-            //         uri = "",
-            //         signature = ObjectKey(0),
-            //         albumId = "",
-            //         date = 0L
-            //     )
-            // )
+            AlbumGridState.Info(
+                album = AlbumType.PlaceHolder,
+                thumbnail = AlbumGridState.Info.Thumbnail(
+                    uri = "1",
+                    signature = ObjectKey(0),
+                    albumId = "",
+                    date = 0L
+                )
+            ),
+            AlbumGridState.Info(
+                album = AlbumType.PlaceHolder,
+                thumbnail = AlbumGridState.Info.Thumbnail(
+                    uri = "1",
+                    signature = ObjectKey(0),
+                    albumId = "",
+                    date = 0L
+                )
+            )
         ),
         isSelected = false,
         immichInfo = ImmichBasicInfo.Empty,
@@ -157,7 +157,7 @@ fun AlbumFolder(
                 )
             ) {
                 val bottomItems = if (info.size > 2) {
-                    info.takeLast(info.size - 3) + (0..4 - info.size).map {
+                    info.takeLast(info.size - 2) + (0..3 - info.size).map {
                         AlbumGridState.Info(
                             album = AlbumType.PlaceHolder,
                             thumbnail = AlbumGridState.Info.Thumbnail(

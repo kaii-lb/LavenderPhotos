@@ -179,4 +179,10 @@ interface Screens {
         @Serializable
         object ProcessingPage : Screens
     }
+
+    @Serializable
+    data class AlbumGroup(
+        val id: String,
+        val name: String
+    )
 }

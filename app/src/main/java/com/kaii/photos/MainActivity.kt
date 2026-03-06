@@ -52,6 +52,7 @@ import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
+import com.kaii.photos.compose.grids.AlbumGroup
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SecureFolderView
 import com.kaii.photos.compose.grids.SingleAlbumView
@@ -635,6 +636,15 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Settings.Misc.ExtendedLicensePage> {
                         ExtendedLicensePage()
                     }
+                }
+
+                composable<Screens.AlbumGroup> {
+                    val screen = it.toRoute<Screens.AlbumGroup>()
+
+                    AlbumGroup(
+                        id = screen.id,
+                        name = screen.name
+                    )
                 }
 
                 composable<Screens.ImageEditor>(

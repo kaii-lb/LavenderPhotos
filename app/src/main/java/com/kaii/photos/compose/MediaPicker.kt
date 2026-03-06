@@ -56,6 +56,7 @@ import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
+import com.kaii.photos.compose.grids.AlbumGroup
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
@@ -311,6 +312,15 @@ class MediaPicker : ComponentActivity() {
                         incomingIntent = incomingIntent
                     )
                 }
+            }
+
+            composable<Screens.AlbumGroup> {
+                val screen = it.toRoute<Screens.AlbumGroup>()
+
+                AlbumGroup(
+                    id = screen.id,
+                    name = screen.name
+                )
             }
         }
     }
