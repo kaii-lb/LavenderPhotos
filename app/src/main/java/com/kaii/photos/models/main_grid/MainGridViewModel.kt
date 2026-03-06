@@ -113,7 +113,7 @@ class MainGridViewModel(
     )
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
-    fun setAlbums(list: List<AlbumType>) = settings.albums.set(list)
+    fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
 
     fun addAlbum(album: AlbumType) = settings.albums.add(listOf(album))
 

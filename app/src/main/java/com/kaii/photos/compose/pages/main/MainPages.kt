@@ -344,7 +344,7 @@ fun MainPages(
                             migrateFav = { migrateFav },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
-                            setAlbums = mainGridViewModel::setAlbums
+                            setAlbumOrder = mainGridViewModel::setAlbumOrder
                         )
                     }
 

@@ -72,6 +72,8 @@ class SettingsAlbumsListImpl(
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
     private val albumsKey = stringPreferencesKey("album_albums_key")
+    private val albumsOrderKey = stringPreferencesKey("album_albums_order_key")
+    private val albumGroupsKey = stringPreferencesKey("album_groups_key")
 
     val json = Json { ignoreUnknownKeys = true }
 
@@ -174,11 +176,10 @@ class SettingsAlbumsListImpl(
             set(list)
         }
 
-        // TODO: confirm working and uncomment this
-        // context.datastore.edit {
-        //     it.remove(v095ListKey)
-        //     it.remove(v140ListKey)
-        // }
+        context.datastore.edit {
+            it.remove(v095ListKey)
+            it.remove(v140ListKey)
+        }
     }
 
     fun get() = context.datastore.data.map { data ->
@@ -263,6 +264,79 @@ class SettingsAlbumsListImpl(
     fun setAutoDetect(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[autoDetectAlbumsKey] = value
+        }
+    }
+
+    fun getGroups() = context.datastore.data.map { data ->
+        val string = data[albumGroupsKey] ?: "[]"
+
+        json.decodeFromString<List<AlbumGroup>>(string)
+    }
+
+    fun addGroup(group: AlbumGroup) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: "[]"
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                if (group.id !in present.fastMap { it.id }) {
+                    present.add(group)
+                }
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun editGroup(
+        id: String,
+        name: String? = null,
+        pinned: Boolean? = null,
+        albumIds: List<String>? = null
+    ) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: "[]"
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                val index = present.indexOfFirst { it.id == id }
+
+                if (index == -1) return@edit
+
+                val group = present[index]
+                present[index] = group.copy(
+                    name = name ?: group.name,
+                    pinned = pinned ?: group.pinned,
+                    albumIds = albumIds ?: group.albumIds
+                )
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun removeGroup(id: String) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: ""
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                present.removeIf { it.id == id }
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun getOrder() = context.datastore.data.map { data ->
+        json.decodeFromString<List<String>>(data[albumsOrderKey] ?: "[]")
+    }
+
+    fun setOrder(order: List<String>) {
+        scope.launch {
+            context.datastore.edit { data ->
+                data[albumsOrderKey] = json.encodeToString(order)
+            }
         }
     }
 

@@ -31,6 +31,7 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +39,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
@@ -48,6 +48,7 @@ class AlbumGridState(
     private val scope: CoroutineScope,
     private val albumsFlow: Flow<List<AlbumType>>,
     private val albumGroupsFlow: Flow<List<AlbumGroup>>,
+    private val albumsOrderFlow: Flow<List<String>>,
     private val apiClient: ApiClient,
     private val info: Flow<ImmichBasicInfo>,
     context: Context,
@@ -96,7 +97,8 @@ class AlbumGridState(
         val sortMode: MediaItemSortMode,
         val albumSortMode: AlbumSortMode,
         val albums: List<AlbumType>,
-        val groups: List<AlbumGroup>
+        val groups: List<AlbumGroup>,
+        val order: List<String>
     )
 
     private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
@@ -105,11 +107,13 @@ class AlbumGridState(
     private val _albums = MutableStateFlow(emptyList<Album>())
     val albums = _albums.asStateFlow()
 
+    private var job: Job? = null
     private var params = Params(
         sortMode = MediaItemSortMode.DateTaken,
         albumSortMode = AlbumSortMode.LastModifiedDesc,
         albums = emptyList(),
-        groups = emptyList()
+        groups = emptyList(),
+        order = emptyList()
     )
 
     init {
@@ -118,9 +122,10 @@ class AlbumGridState(
                 flow = sortModeFlow,
                 flow2 = albumSortModeFlow,
                 flow3 = albumsFlow,
-                flow4 = albumGroupsFlow
-            ) { sortMode, albumSortMode, albums, groups ->
-                Params(sortMode, albumSortMode, albums, groups)
+                flow4 = albumGroupsFlow,
+                flow5 = albumsOrderFlow
+            ) { sortMode, albumSortMode, albums, groups, order ->
+                Params(sortMode, albumSortMode, albums, groups, order)
             }.collectLatest {
                 params = it
                 refresh()
@@ -160,14 +165,15 @@ class AlbumGridState(
     }
 
     fun refresh() {
-        scope.launch(Dispatchers.IO) {
+        job?.cancel()
+        job = scope.launch {
             update()
             updateImmich()
         }
     }
 
-    private suspend fun updateImmich() {
-        if (!checkLoggedIn()) return
+    private suspend fun updateImmich() = withContext(Dispatchers.IO) {
+        if (!checkLoggedIn()) return@withContext
 
         val immichInfo = info.first()
         val albumState = AllAlbumsState(
@@ -212,9 +218,7 @@ class AlbumGridState(
         val result = mutableListOf<Album>()
         val albums = params.albums.toMutableList()
 
-        params.groups.let {
-            it + listOf(AlbumGroup(id = "adsjasd", name = "Testing", pinned = true, albumIds = listOf(albums.firstOrNull()?.id ?: "")))
-        }.forEach { group ->
+        params.groups.forEach { group ->
             val info = albums.filter { it.id in group.albumIds }.map { album ->
                 albums.remove(album)
 
@@ -259,7 +263,7 @@ class AlbumGridState(
                     name = group.name,
                     date = info.minByOrNull { it.thumbnail.date }?.thumbnail?.date ?: 0L,
                     pinned = group.pinned,
-                    info = info
+                    info = info.sortedByDescending { it.thumbnail.date }
                 )
             )
         }
@@ -326,15 +330,20 @@ class AlbumGridState(
             }
 
             else -> {
-                result
+                val lut = result.associateBy { it.id }
+
+                params.order.mapNotNull { lut[it] }
             }
         }
 
         _albums.value = sorted.toMutableList().let { list ->
-            val pinned = list.filter { it.pinned }
-            list.removeAll(pinned)
-            list.addAll(0, pinned)
-            list.distinct()
+            if (params.albumSortMode != AlbumSortMode.Custom) {
+                val pinned = list.filter { it.pinned }
+                list.removeAll(pinned)
+                list.addAll(0, pinned)
+            }
+
+            list
         }
     }
 }
@@ -356,9 +365,8 @@ fun rememberAlbumGridState(): AlbumGridState {
             sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
             albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
             allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
-            albumGroupsFlow = flowOf( // TODO
-                value = emptyList()
-            ),
+            albumGroupsFlow = context.appModule.settings.albums.getGroups(),
+            albumsOrderFlow = context.appModule.settings.albums.getOrder(),
             info = context.appModule.settings.immich.getImmichBasicInfo(),
             apiClient = apiClient,
             checkLoggedIn = {

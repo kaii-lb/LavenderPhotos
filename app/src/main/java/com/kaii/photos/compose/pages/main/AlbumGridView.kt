@@ -25,9 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +56,8 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.Screens
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +70,7 @@ fun AlbumsGridView(
     migrateFav: () -> Boolean,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
-    setAlbums: (albums: List<AlbumType>) -> Unit
+    setAlbumOrder: (order: List<String>) -> Unit
 ) {
     val navController = LocalNavController.current
     var albums by remember { mutableStateOf(deviceAlbums.value) }
@@ -86,7 +87,7 @@ fun AlbumsGridView(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val localDensity = LocalDensity.current
+        val density = LocalDensity.current
         val isLandscape by rememberDeviceOrientation()
 
         val lazyGridState = rememberLazyGridState()
@@ -97,7 +98,7 @@ fun AlbumsGridView(
         var lockHeader by remember { mutableStateOf(false) }
         val headerHeight by remember {
             derivedStateOf {
-                with(localDensity) {
+                with(density) {
                     pullToRefreshState.distanceFraction * 56.dp.toPx()
                 }
             }
@@ -109,15 +110,23 @@ fun AlbumsGridView(
             progress = pullToRefreshState.distanceFraction.coerceAtMost(1f),
             setAlbumSortMode = setAlbumSortMode,
             modifier = Modifier
-                .height(with(localDensity) { headerHeight.toDp() })
+                .height(with(density) { headerHeight.toDp() })
                 .zIndex(1f)
         )
-
-        val coroutineScope = rememberCoroutineScope()
 
         LaunchedEffect(lazyGridState.isScrollInProgress) {
             if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) {
                 lockHeader = false
+            }
+        }
+
+        val scrollSpeed = remember { mutableFloatStateOf(0f) }
+        LaunchedEffect(scrollSpeed.floatValue) {
+            if (scrollSpeed.floatValue != 0f) {
+                while (isActive) {
+                    lazyGridState.scrollBy(scrollSpeed.floatValue)
+                    delay(10)
+                }
             }
         }
 
@@ -143,6 +152,10 @@ fun AlbumsGridView(
                     }
                 )
                 .pointerInput(Unit) {
+                    val scrollThreshold = with(density) {
+                        60.dp.toPx()
+                    }
+
                     detectDragGesturesAfterLongPress(
                         onDragStart = { offset ->
                             lazyGridState.layoutInfo.visibleItemsInfo
@@ -173,10 +186,19 @@ fun AlbumsGridView(
                                     it.key == selectedItem?.id
                                 }
 
+                            val distanceFromBottom = lazyGridState.layoutInfo.viewportSize.height - change.position.y
+                            val distanceFromTop = change.position.y // for clarity
+
+                            scrollSpeed.floatValue = when {
+                                distanceFromBottom < scrollThreshold -> scrollThreshold - distanceFromBottom
+                                distanceFromTop < scrollThreshold -> -scrollThreshold + distanceFromTop
+                                else -> 0f
+                            }
+
                             if (targetItem != null && currentLazyItem != null && targetItem.key in albums.map { it.id }) {
-                                val targetItemIndex =
-                                    albums.indexOfFirst { it.id == targetItem.key }
+                                val targetItemIndex = albums.indexOfFirst { it.id == targetItem.key }
                                 val newList = albums.toMutableList()
+
                                 newList.removeAll { it.id == selectedItem?.id }
                                 newList.add(targetItemIndex, selectedItem!!)
 
@@ -184,39 +206,22 @@ fun AlbumsGridView(
                                     change.position - (targetItem.offset + targetItem.size.center).toOffset()
 
                                 albums = newList
-                            } else if (currentLazyItem != null) {
-                                val startOffset = currentLazyItem.offset.y + itemOffset.y
-                                val endOffset =
-                                    currentLazyItem.offset.y + currentLazyItem.size.height + itemOffset.y
-
-                                val offsetToTop =
-                                    startOffset - lazyGridState.layoutInfo.viewportStartOffset
-                                val offsetToBottom =
-                                    endOffset - lazyGridState.layoutInfo.viewportEndOffset
-
-                                val scroll = when {
-                                    offsetToTop < 0 -> offsetToTop.coerceAtMost(0f)
-                                    offsetToBottom > 0 -> offsetToBottom.coerceAtLeast(0f)
-                                    else -> 0f
-                                }
-
-                                if (scroll != 0f && (lazyGridState.canScrollBackward || lazyGridState.canScrollForward)) coroutineScope.launch {
-                                    lazyGridState.scrollBy(scroll)
-                                }
                             }
                         },
 
                         onDragCancel = {
                             selectedItem = null
                             itemOffset = Offset.Zero
+                            scrollSpeed.floatValue = 0f
                         },
 
                         onDragEnd = {
                             selectedItem = null
                             itemOffset = Offset.Zero
+                            scrollSpeed.floatValue = 0f
 
                             setAlbumSortMode(AlbumSortMode.Custom)
-                            // setAlbums(albums.fastMap { it.info }) // TODO:
+                            setAlbumOrder(albums.map { it.id })
                         }
                     )
                 },
@@ -253,7 +258,31 @@ fun AlbumsGridView(
                         name = album.name,
                         info = album.info,
                         isSelected = selectedItem == album,
-                        immichInfo = immichInfo
+                        immichInfo = immichInfo,
+                        modifier = Modifier
+                            .testTag("album_grid_group_item")
+                            .zIndex(
+                                if (selectedItem == album) 1f
+                                else 0f
+                            )
+                            .graphicsLayer {
+                                if (selectedItem == album) {
+                                    translationX = itemOffset.x
+                                    translationY = itemOffset.y
+                                }
+                            }
+                            .wrapContentSize()
+                            .animateItem(
+                                fadeInSpec = tween(
+                                    durationMillis = 250
+                                ),
+                                fadeOutSpec = tween(
+                                    durationMillis = 250
+                                ),
+                                placementSpec =
+                                    if (selectedItem == album) null // if is selected don't animate so no weird snapping back and forth happens
+                                    else tween(durationMillis = 250)
+                            )
                     ) {
 
                     }
