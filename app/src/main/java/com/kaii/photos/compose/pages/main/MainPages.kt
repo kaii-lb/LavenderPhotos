@@ -148,6 +148,8 @@ fun MainPages(
 
     Scaffold(
         topBar = {
+            val groups by mainGridViewModel.groups.collectAsStateWithLifecycle()
+
             MainAppTopBar(
                 alternate = isSelecting,
                 selectionManager = selectionManager,
@@ -158,10 +160,12 @@ fun MainPages(
                 extraSecureFolderEntry = extraSecureFolderEntry,
                 showTagDialog = showTagDialog,
                 isFromMediaPicker = incomingIntent != null,
+                groups = groups,
                 setShowTagDialog = {
                     showTagDialog = true
                 },
-                addAlbum = mainGridViewModel::addAlbum
+                addAlbum = mainGridViewModel::addAlbum,
+                addGroup = mainGridViewModel::addGroup
             )
         },
         bottomBar = {

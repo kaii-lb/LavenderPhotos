@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class MainGridViewModel(
     context: Context
@@ -113,10 +116,26 @@ class MainGridViewModel(
         initialValue = false
     )
 
+    val groups = settings.albums.getGroups().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = emptyList()
+    )
+
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
     fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
 
     fun addAlbum(album: AlbumType) = settings.albums.add(listOf(album))
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun addGroup(name: String) = settings.albums.addGroup(
+        AlbumGroup(
+            id = Uuid.random().toString(),
+            name = name,
+            pinned = false,
+            albumIds = emptyList()
+        )
+    )
 
     fun addAlbumToGroup(albumId: String, groupId: String) = viewModelScope.launch {
         val groups = settings.albums.getGroups().first()

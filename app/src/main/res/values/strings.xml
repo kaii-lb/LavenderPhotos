@@ -1253,4 +1253,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="tags_favourited_false">Favourite: No</string>
     <string name="tags">Tags</string>
     <string name="tags_delete">Delete tag \"%s\"?</string>
+
+    <!--  Album Groups  -->
+    <string name="album_group">Album Group</string>
+    <string name="album_group_desc">Organize your albums</string>
+    <string name="album_group_name">Group name</string>
+    <string name="album_group_name_error">Name cannot be empty</string>
 </resources>

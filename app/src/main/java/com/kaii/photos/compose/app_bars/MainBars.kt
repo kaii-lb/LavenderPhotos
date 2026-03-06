@@ -73,11 +73,12 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.AlbumAddChoiceDialog
 import com.kaii.photos.compose.dialogs.MainDialog
+import com.kaii.photos.compose.dialogs.user_action.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
+import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -104,8 +105,10 @@ fun MainAppTopBar(
     extraSecureFolderEntry: Boolean,
     showTagDialog: Boolean,
     isFromMediaPicker: Boolean,
+    groups: List<AlbumGroup>,
     setShowTagDialog: (show: Boolean) -> Unit,
-    addAlbum: (album: AlbumType) -> Unit
+    addAlbum: (album: AlbumType) -> Unit,
+    addGroup: (name: String) -> Unit
 ) {
     val context = LocalContext.current
     val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
@@ -190,7 +193,9 @@ fun MainAppTopBar(
                     var showAlbumTypeDialog by remember { mutableStateOf(false) }
                     if (showAlbumTypeDialog) {
                         AlbumAddChoiceDialog(
-                            addAlbum = addAlbum
+                            groups = groups,
+                            addAlbum = addAlbum,
+                            addGroup = addGroup
                         ) {
                             showAlbumTypeDialog = false
                         }

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -86,7 +85,6 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.createDirectoryPicker
-import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.findMinParent
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
@@ -96,8 +94,6 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateMan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private const val TAG = "com.kaii.photos.compose.dialogs.UserActionDialogs"
 
@@ -716,112 +712,6 @@ fun AlbumPathsDialog(
             onConfirm(selectedPaths.toSet())
             onDismiss()
         }
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Composable
-fun AlbumAddChoiceDialog(
-    addAlbum: (album: AlbumType) -> Unit,
-    onDismiss: () -> Unit = {}
-) {
-    LavenderDialogBase(
-        onDismiss = onDismiss
-    ) {
-        TitleCloseRow(
-            title = stringResource(id = R.string.albums_type),
-            onClose = onDismiss,
-            closeOffset = 8.dp
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .wrapContentHeight()
-                .padding(8.dp, 0.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val activityLauncher = createDirectoryPicker { path, basePath ->
-                if (path != null && basePath != null) addAlbum(
-                    AlbumType.Folder(
-                        id = Uuid.random().toString(),
-                        name = path.filename(),
-                        paths = setOf(basePath + path),
-                        pinned = false,
-                        immichId = null
-                    )
-                )
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.albums_folder),
-                summary = stringResource(id = R.string.albums_folder_desc),
-                position = RowPosition.Top,
-                iconResID = R.drawable.albums
-            ) {
-                activityLauncher.launch(null)
-            }
-
-            var showCustomAlbumDialog by remember { mutableStateOf(false) }
-            if (showCustomAlbumDialog) {
-                AddCustomAlbumDialog(
-                    addAlbum = addAlbum,
-                    onDismissPrev = onDismiss,
-                    onDismiss = {
-                        showCustomAlbumDialog = false
-                    }
-                )
-            }
-
-            PreferencesRow(
-                title = stringResource(id = R.string.albums_custom),
-                summary = stringResource(id = R.string.albums_custom_desc),
-                position = RowPosition.Bottom,
-                iconResID = R.drawable.art_track
-            ) {
-                showCustomAlbumDialog = true
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@OptIn(ExperimentalUuidApi::class)
-@Composable
-fun AddCustomAlbumDialog(
-    addAlbum: (album: AlbumType) -> Unit,
-    onDismiss: () -> Unit,
-    onDismissPrev: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .padding(8.dp, 0.dp)
-    ) {
-        TextEntryDialog(
-            title = stringResource(id = R.string.albums_custom),
-            placeholder = stringResource(id = R.string.albums_name),
-            onDismiss = onDismiss,
-            onValueChange = { text ->
-                text.isNotEmpty()
-            },
-            onConfirm = { text ->
-                val albumInfo = AlbumType.Custom(
-                    id = Uuid.random().toString(),
-                    name = text,
-                    pinned = false,
-                    immichId = null
-                )
-
-                addAlbum(albumInfo)
-                onDismissPrev()
-
-                text.isNotEmpty()
-            }
-        )
     }
 }
 

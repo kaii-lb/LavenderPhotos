@@ -160,12 +160,14 @@ fun AlbumsGridView(
                 )
                 .pointerInput(Unit) {
                     var targetItemIndex: Int? = null
+                    var lastSortMode = sortMode
                     val scrollThreshold = with(density) {
                         60.dp.toPx()
                     }
 
                     detectDragGesturesAfterLongPress(
                         onDragStart = { offset ->
+                            lastSortMode = sortMode
                             lazyGridState.layoutInfo.visibleItemsInfo
                                 .find { item ->
                                     IntRect(
@@ -229,12 +231,8 @@ fun AlbumsGridView(
                         },
 
                         onDragEnd = {
-                            selectedItem = null
-                            itemOffset = Offset.Zero
-                            scrollSpeed.floatValue = 0f
-
-                            if (targetItemIndex != null
-                                && albums[targetItemIndex] is AlbumGridState.Album.Group
+                            if (targetItemIndex != null &&
+                                albums[targetItemIndex] is AlbumGridState.Album.Group
                                 && selectedItem is AlbumGridState.Album.Single
                             ) {
                                 val targetItem = albums[targetItemIndex]
@@ -245,10 +243,15 @@ fun AlbumsGridView(
                                 )
 
                                 albums = albums.toMutableList().filter { it.id != selectedItem?.id }
+                                setAlbumSortMode(lastSortMode)
                             } else {
                                 setAlbumSortMode(AlbumSortMode.Custom)
                                 setAlbumOrder(albums.map { it.id })
                             }
+
+                            selectedItem = null
+                            itemOffset = Offset.Zero
+                            scrollSpeed.floatValue = 0f
                         }
                     )
                 },
