@@ -130,7 +130,7 @@ class MainGridViewModel(
         AlbumGroup(
             id = Uuid.random().toString(),
             name = name,
-            pinned = false,
+            pinned = true,
             albumIds = emptyList()
         )
     )
