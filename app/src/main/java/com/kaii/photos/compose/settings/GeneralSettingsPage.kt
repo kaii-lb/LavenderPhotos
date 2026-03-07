@@ -38,10 +38,10 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
-import com.kaii.photos.compose.dialogs.SortModeSelectorDialog
-import com.kaii.photos.compose.dialogs.TabCustomizationDialog
+import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
+import com.kaii.photos.compose.dialogs.settings.SortModeSelectorDialog
+import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText

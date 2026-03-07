@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.dialogs
+package com.kaii.photos.compose.dialogs.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,10 +35,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +49,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -70,27 +65,15 @@ import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.HorizontalSeparator
+import com.kaii.photos.compose.dialogs.InfoRow
+import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.pages.FullWidthDialogButton
-import com.kaii.photos.compose.widgets.PreferencesRow
-import com.kaii.photos.compose.widgets.RadioButtonRow
 import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.StoredDrawable
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.createDirectoryPicker
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode.Companion.presentableName
-import com.kaii.photos.reorderable_lists.ReorderableItem
-import com.kaii.photos.reorderable_lists.ReorderableLazyList
-import com.kaii.photos.reorderable_lists.rememberReorderableListState
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaLocalDate
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 @Composable
 fun AddTabDialog(
@@ -200,7 +183,7 @@ fun AddTabDialog(
                             .border(
                                 width = 2.dp,
                                 color = if (selectedItem == iconList[index]) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                             )
                     ) {
                         Icon(
@@ -313,7 +296,7 @@ fun AddTabDialog(
                         }
                 )
             },
-            shape = RoundedCornerShape(32.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
             modifier = Modifier
                 .focusRequester(focus)
         )
@@ -451,404 +434,6 @@ fun AddTabDialog(
                             duration = SnackbarDuration.Short
                         )
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SortModeSelectorDialog(
-    currentSortMode: MediaItemSortMode,
-    setSortMode: (mode: MediaItemSortMode) -> Unit,
-    dismiss: () -> Unit
-) {
-    LavenderDialogBase(onDismiss = dismiss) {
-        TitleCloseRow(title = stringResource(id = R.string.sort_mode)) {
-            dismiss()
-        }
-
-        var chosenSortMode by remember { mutableStateOf(currentSortMode) }
-        val sortModes = remember {
-            // ignore "Disabled" and "DisabledLastModified", handled by toggle switch
-            MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled && it != MediaItemSortMode.DisabledLastModified }
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .wrapContentHeight()
-        ) {
-            items(
-                count = sortModes.size
-            ) { index ->
-                val sortMode = sortModes[index]
-
-                RadioButtonRow(
-                    text = sortMode.presentableName,
-                    checked = chosenSortMode == sortMode
-                ) {
-                    chosenSortMode = sortMode
-                }
-            }
-        }
-
-        ConfirmCancelRow(
-            onConfirm = {
-                setSortMode(chosenSortMode)
-                dismiss()
-            }
-        )
-    }
-}
-
-@Composable
-fun ThumbnailSizeDialog(
-    showDialog: MutableState<Boolean>,
-    initialValue: Int,
-    setThumbnailSize: (size: Int) -> Unit
-) {
-    var thumbnailSize by remember { mutableIntStateOf(initialValue) }
-
-    SelectableButtonListDialog(
-        title = stringResource(id = R.string.settings_storage_thumbnails_resolution),
-        body = stringResource(id = R.string.settings_storage_thumbnails_notice),
-        showDialog = showDialog,
-        buttons = {
-            RadioButtonRow(
-                text = "32x32" + stringResource(id = R.string.pixels),
-                checked = thumbnailSize == 32
-            ) {
-                thumbnailSize = 32
-            }
-
-            RadioButtonRow(
-                text = "64x64" + stringResource(id = R.string.pixels),
-                checked = thumbnailSize == 64
-            ) {
-                thumbnailSize = 64
-            }
-
-            RadioButtonRow(
-                text = "128x128" + stringResource(id = R.string.pixels),
-                checked = thumbnailSize == 128
-            ) {
-                thumbnailSize = 128
-            }
-
-            RadioButtonRow(
-                text = "256x256" + stringResource(id = R.string.pixels),
-                checked = thumbnailSize == 256
-            ) {
-                thumbnailSize = 256
-            }
-
-            RadioButtonRow(
-                text = "512x512" + stringResource(id = R.string.pixels),
-                checked = thumbnailSize == 512
-            ) {
-                thumbnailSize = 512
-            }
-        },
-        onConfirm = {
-            setThumbnailSize(thumbnailSize)
-        }
-    )
-}
-
-@Composable
-fun TabCustomizationDialog(
-    tabList: List<BottomBarTab>,
-    setTabList: (list: List<BottomBarTab>) -> Unit,
-    closeDialog: () -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-
-    LavenderDialogBase(
-        onDismiss = closeDialog
-    ) {
-        TitleCloseRow(title = stringResource(id = R.string.tabs_customize)) {
-            closeDialog()
-        }
-
-        Column(
-            modifier = Modifier
-                .wrapContentSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            val resources = LocalResources.current
-
-            DefaultTabs.defaultList.forEach { tab ->
-                InfoRow(
-                    text = tab.name,
-                    iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
-                    opacity = if (tab in tabList) 1f else 0.5f
-                ) {
-                    setTabList(
-                        tabList.toMutableList().apply {
-                            if (tab in tabList && tabList.size > 1) {
-                                remove(tab)
-                            } else if (tab in tabList) {
-                                coroutineScope.launch {
-                                    LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
-                                            message = resources.getString(R.string.tabs_min_reached),
-                                            icon = R.drawable.error_2,
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    )
-                                }
-                            }
-
-                            if (tab !in tabList && tabList.size < 16) {
-                                add(tab)
-                            } else if (tab !in tabList) {
-                                coroutineScope.launch {
-                                    LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
-                                            message = resources.getString(R.string.tabs_max_reached),
-                                            icon = R.drawable.error_2,
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-
-            tabList.forEach { tab ->
-                if (tab !in DefaultTabs.defaultList) {
-                    InfoRow(
-                        text = tab.name,
-                        iconResId = R.drawable.delete
-                    ) {
-                        if (tabList.size > 1) {
-                            setTabList(
-                                tabList.toMutableList().apply {
-                                    remove(tab)
-                                }
-                            )
-                        } else {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
-                                        message = resources.getString(R.string.tabs_min_reached),
-                                        icon = R.drawable.error_2,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-        HorizontalSeparator()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        var showDialog by remember { mutableStateOf(false) }
-        if (showDialog) {
-            AddTabDialog(
-                tabList = tabList,
-                setTabList = setTabList,
-                dismissDialog = {
-                    showDialog = false
-                }
-            )
-        }
-
-        val resources = LocalResources.current
-        FullWidthDialogButton(
-            text = stringResource(id = R.string.tabs_add),
-            color = MaterialTheme.colorScheme.primary,
-            position = RowPosition.Single,
-            textColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            if (tabList.size < 8) {
-                showDialog = true
-            } else {
-                coroutineScope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
-                            message = resources.getString(R.string.tabs_max_reached),
-                            icon = R.drawable.error_2,
-                            duration = SnackbarDuration.Short
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DefaultTabSelectorDialog(
-    tabList: List<BottomBarTab>,
-    defaultTab: BottomBarTab,
-    setTabList: (list: List<BottomBarTab>) -> Unit,
-    setDefaultTab: (tab: BottomBarTab) -> Unit,
-    dismissDialog: () -> Unit
-) {
-    var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
-    val tabListDynamic = remember { mutableStateListOf<BottomBarTab>().apply { addAll(tabList) } }
-
-    LavenderDialogBase(
-        onDismiss = dismissDialog
-    ) {
-        TitleCloseRow(title = stringResource(id = R.string.tabs_default)) {
-            dismissDialog()
-        }
-
-        // val state = rememberLazyListState()
-        // val itemOffset = remember { mutableFloatStateOf(0f) }
-        // var selectedItem: BottomBarTab? by remember { mutableStateOf(null) }
-
-        val listState = rememberLazyListState()
-
-        val reorderableState = rememberReorderableListState(listState) { fromIndex, toIndex ->
-            val newList = tabListDynamic.toMutableList()
-            newList.add(toIndex, newList.removeAt(fromIndex))
-
-            tabListDynamic.clear()
-            tabListDynamic.addAll(newList.distinctBy { it.name })
-        }
-
-        ReorderableLazyList(
-            listState = listState,
-            reorderableState = reorderableState
-        ) {
-            items(
-                count = tabListDynamic.size,
-                key = { index ->
-                    tabListDynamic[index].name
-                }
-            ) { index ->
-                ReorderableItem(
-                    index = index,
-                    reorderableState = reorderableState
-                ) {
-                    val tab = tabListDynamic[index]
-
-                    ReorderableRadioButtonRow(
-                        text = tab.name,
-                        checked = selectedTab == tab
-                    ) {
-                        selectedTab = tab
-                    }
-                }
-            }
-        }
-
-        ConfirmCancelRow(
-            onConfirm = {
-                setTabList(tabListDynamic)
-                setDefaultTab(selectedTab)
-
-                dismissDialog()
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalTime::class)
-@Composable
-fun DateFormatDialog(
-    setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
-    onDismiss: () -> Unit
-) {
-    LavenderDialogBase(
-        onDismiss = onDismiss
-    ) {
-        TitleCloseRow(
-            title = stringResource(id = R.string.look_and_feel_date_format),
-            closeOffset = 12.dp
-        ) {
-            onDismiss()
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        val currentDate = remember {
-            Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-                .date
-                .toJavaLocalDate()
-        }
-
-        LazyColumn(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            itemsIndexed(
-                items = DisplayDateFormat.entries
-            ) { index, item ->
-                PreferencesRow(
-                    title = stringResource(id = item.description),
-                    summary = currentDate.format(item.format),
-                    position =
-                        when (index) {
-                            0 -> RowPosition.Top
-                            DisplayDateFormat.entries.size - 1 -> RowPosition.Bottom
-                            else -> RowPosition.Middle
-                        },
-                    iconResID = item.icon
-                ) {
-                    setDisplayDateFormat(item)
-                    onDismiss()
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalTime::class)
-@Composable
-fun TopBarDetailsFormatDialog(
-    setTopBarDetailsFormat: (value: TopBarDetailsFormat) -> Unit,
-    onDismiss: () -> Unit
-) {
-    LavenderDialogBase(
-        onDismiss = onDismiss
-    ) {
-        TitleCloseRow(
-            title = stringResource(id = R.string.look_and_feel_image_details_format),
-            closeOffset = 12.dp
-        ) {
-            onDismiss()
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        val context = LocalContext.current
-        val currentDate = remember {
-            Clock.System.now()
-                .epochSeconds
-        }
-
-        LazyColumn(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            itemsIndexed(
-                items = TopBarDetailsFormat.entries
-            ) { index, item ->
-                PreferencesRow(
-                    title = stringResource(id = item.description),
-                    summary = item.format(context, "Screenshot.png", currentDate),
-                    position =
-                        when (index) {
-                            0 -> RowPosition.Top
-                            TopBarDetailsFormat.entries.size - 1 -> RowPosition.Bottom
-                            else -> RowPosition.Middle
-                        },
-                    iconResID = item.icon
-                ) {
-                    setTopBarDetailsFormat(item)
-                    onDismiss()
                 }
             }
         }

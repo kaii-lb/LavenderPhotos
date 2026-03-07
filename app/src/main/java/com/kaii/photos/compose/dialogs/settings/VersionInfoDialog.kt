@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.dialogs
+package com.kaii.photos.compose.dialogs.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
