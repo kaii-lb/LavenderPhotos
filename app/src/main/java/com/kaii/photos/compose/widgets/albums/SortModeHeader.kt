@@ -33,6 +33,7 @@ fun SortModeHeader(
     sortMode: AlbumSortMode,
     tabList: List<BottomBarTab>,
     @FloatRange(0.0, 1.0) progress: Float,
+    isAlbumGroup: Boolean,
     modifier: Modifier = Modifier,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit
 ) {
@@ -105,24 +106,26 @@ fun SortModeHeader(
             }
         }
 
-        item {
-            OutlinedButton(
-                onClick = {
-                    setAlbumSortMode(AlbumSortMode.Custom)
-                },
-                colors =
-                    if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
-                    else ButtonDefaults.outlinedButtonColors()
-            ) {
-                Text(
-                    text = stringResource(id = R.string.sort_custom),
-                    modifier = Modifier
-                        .scale(progress)
-                )
+        if (!isAlbumGroup) {
+            item {
+                OutlinedButton(
+                    onClick = {
+                        setAlbumSortMode(AlbumSortMode.Custom)
+                    },
+                    colors =
+                        if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                        else ButtonDefaults.outlinedButtonColors()
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.sort_custom),
+                        modifier = Modifier
+                            .scale(progress)
+                    )
+                }
             }
         }
 
-        if (!tabList.contains(DefaultTabs.TabTypes.secure)) {
+        if (!tabList.contains(DefaultTabs.TabTypes.secure) && !isAlbumGroup) {
             item {
                 val authManager = rememberSecureFolderAuthManager()
                 OutlinedButton(

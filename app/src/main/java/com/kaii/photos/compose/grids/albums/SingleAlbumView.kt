@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.grids
+package com.kaii.photos.compose.grids.albums
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
@@ -41,6 +41,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
+import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag

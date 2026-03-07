@@ -1,13 +1,8 @@
-package com.kaii.photos.compose.grids
+package com.kaii.photos.compose.grids.albums
 
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,14 +32,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.AlbumGroupInfoDialog
-import com.kaii.photos.compose.widgets.albums.AlbumGridItem
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.datastore.state.rememberAlbumGridState
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.models.album_group.AlbumGroupViewModel
 import com.kaii.photos.models.album_group.AlbumGroupViewModelFactory
@@ -58,6 +48,7 @@ import kotlinx.coroutines.withContext
 fun AlbumGroup(
     id: String,
     name: String,
+    albumGridState: AlbumGridState,
     modifier: Modifier = Modifier,
     viewModel: AlbumGroupViewModel = viewModel(
         factory = AlbumGroupViewModelFactory(context = LocalContext.current)
@@ -150,19 +141,16 @@ fun AlbumGroup(
             )
         }
     ) { paddingValues ->
-        val isLandscape by rememberDeviceOrientation()
-
-        val albumGridState = rememberAlbumGridState()
         val singleAlbums by albumGridState.singleAlbums.collectAsStateWithLifecycle()
         val columnSize by viewModel.albumColumnSize.collectAsStateWithLifecycle()
         val immichInfo by viewModel.immichInfo.collectAsStateWithLifecycle()
         val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
 
-        var albums by remember { mutableStateOf(emptyList<AlbumGridState.Album.Single>()) }
+        val albums = remember { mutableStateOf(emptyList<AlbumGridState.Album.Single>()) }
 
-        LaunchedEffect(singleAlbums, group) {
+        LaunchedEffect(singleAlbums, group, sortMode) {
             withContext(Dispatchers.IO) {
-                albums = singleAlbums.filter {
+                albums.value = singleAlbums.filter {
                     it.id in (group?.albumIds ?: emptyList())
                 }.let { inGroup ->
                     when (sortMode) {
@@ -176,63 +164,18 @@ fun AlbumGroup(
             }
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(
-                if (!isLandscape) {
-                    columnSize
-                } else {
-                    columnSize * 2
-                }
-            ),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Top
-        ) {
-            items(
-                count = albums.size,
-                key = { key ->
-                    albums[key].id
-                },
-            ) { index ->
-                val album = albums[index]
-
-                AlbumGridItem(
-                    album = album,
-                    isSelected = false,
-                    info = immichInfo,
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .animateItem(
-                            fadeInSpec = tween(
-                                durationMillis = 250
-                            ),
-                            fadeOutSpec = tween(
-                                durationMillis = 250
-                            ),
-                            placementSpec = tween(durationMillis = 250)
-                        )
-                ) {
-                    navController.navigate(
-                        route =
-                            when (album.info.album) {
-                                is AlbumType.Cloud -> {
-                                    Screens.Immich.GridView(album = album.info.album)
-                                }
-
-                                is AlbumType.Custom -> {
-                                    Screens.CustomAlbum.GridView(album = album.info.album)
-                                }
-
-                                else -> {
-                                    Screens.Album.GridView(album = album.info.album as AlbumType.Folder)
-                                }
-                            }
-                    )
-                }
-            }
-        }
+        SortableGrid(
+            albumList = albums,
+            tabList = emptyList(),
+            sortMode = sortMode,
+            columnSize = columnSize,
+            immichInfo = immichInfo,
+            navController = navController,
+            modifier = Modifier.padding(paddingValues),
+            isAlbumGroup = true,
+            setAlbumSortMode = viewModel::setAlbumSortMode,
+            setAlbumOrder = viewModel::setAlbumOrder,
+            addAlbumToGroup = { _, _ ->}
+        )
     }
 }

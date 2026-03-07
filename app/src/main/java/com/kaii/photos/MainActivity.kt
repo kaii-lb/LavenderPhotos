@@ -52,11 +52,11 @@ import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
-import com.kaii.photos.compose.grids.AlbumGroup
 import com.kaii.photos.compose.grids.FavouritesGridView
 import com.kaii.photos.compose.grids.SecureFolderView
-import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.grids.albums.AlbumGroup
+import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichInfoPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
@@ -643,7 +643,8 @@ class MainActivity : ComponentActivity() {
 
                     AlbumGroup(
                         id = screen.id,
-                        name = screen.name
+                        name = screen.name,
+                        albumGridState = albumGridState
                     )
                 }
 

@@ -56,10 +56,10 @@ import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
-import com.kaii.photos.compose.grids.AlbumGroup
 import com.kaii.photos.compose.grids.FavouritesGridView
-import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.grids.albums.AlbumGroup
+import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumType
@@ -319,7 +319,8 @@ class MediaPicker : ComponentActivity() {
 
                 AlbumGroup(
                     id = screen.id,
-                    name = screen.name
+                    name = screen.name,
+                    albumGridState = albumGridState
                 )
             }
         }
