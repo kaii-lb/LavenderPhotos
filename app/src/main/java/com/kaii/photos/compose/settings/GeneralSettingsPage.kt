@@ -32,7 +32,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
@@ -162,6 +161,14 @@ private fun GeneralSettingsPageImpl(
                 val selectedAlbums = remember { mutableStateListOf<String>() }
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
 
+                val singles = remember(allAlbums) {
+                    allAlbums
+                        .filterIsInstance<AlbumType.Folder>()
+                        .filter {
+                            it.paths.size == 1
+                        }
+                }
+
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
                     iconResID = R.drawable.photogrid,
@@ -175,18 +182,35 @@ private fun GeneralSettingsPageImpl(
                         selectedAlbums.clear()
                         selectedAlbums.addAll(
                             if (shouldShowEverything) {
-                                // TODO: rework to allow all albums not just folder
-                                val flat = allAlbums.filterIsInstance<AlbumType.Folder>().flatMap { it.paths }.fastMap { it.removeSuffix("/") }
+                                val flat = singles.flatMap { it.paths }
 
-                                flat - mainPhotosPaths.map { it.removeSuffix("/") }.toSet()
+                                flat - mainPhotosPaths.toSet()
                             } else {
-                                mainPhotosPaths.map { it.removeSuffix("/") }
+                                mainPhotosPaths
                             }
                         )
 
                         showAlbumsSelectionDialog.value = true
                     },
-                    onSwitchClick = setShowEverything
+                    onSwitchClick = { checked ->
+                        setShowEverything(checked)
+
+                        selectedAlbums.clear()
+                        selectedAlbums.addAll(
+                            if (!checked) {
+                                val flat = singles.flatMap { it.paths }
+
+                                flat - mainPhotosPaths.toSet()
+                            } else {
+                                mainPhotosPaths
+                            }
+                        )
+
+                        clearMainPhotosAlbums()
+                        selectedAlbums.distinct().forEach { album ->
+                            addMainPhotosAlbum(album)
+                        }
+                    }
                 )
 
                 if (showAlbumsSelectionDialog.value) {
@@ -199,7 +223,7 @@ private fun GeneralSettingsPageImpl(
                         onConfirm = {
                             clearMainPhotosAlbums()
 
-                            selectedAlbums.forEach { album ->
+                            selectedAlbums.distinct().forEach { album ->
                                 addMainPhotosAlbum(album)
                             }
                         },
@@ -210,18 +234,18 @@ private fun GeneralSettingsPageImpl(
                                     .height(384.dp)
                             ) {
                                 items(
-                                    count = allAlbums.filterIsInstance<AlbumType.Folder>().size
+                                    count = singles.size
                                 ) { index ->
-                                    val associatedAlbum = allAlbums.filterIsInstance<AlbumType.Folder>()[index]
+                                    val associatedAlbum = singles[index]
 
                                     CheckBoxButtonRow(
                                         text = associatedAlbum.name,
-                                        checked = selectedAlbums.contains(associatedAlbum.paths.first())
+                                        checked = associatedAlbum.paths.first() in selectedAlbums
                                     ) {
-                                        if (selectedAlbums.contains(associatedAlbum.id) && (selectedAlbums.size > 1 || shouldShowEverything)) {
-                                            selectedAlbums.remove(associatedAlbum.id)
+                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything)) {
+                                            selectedAlbums.remove(associatedAlbum.paths.first())
                                         } else {
-                                            selectedAlbums.add(associatedAlbum.id)
+                                            selectedAlbums.add(associatedAlbum.paths.first())
                                         }
                                     }
                                 }
