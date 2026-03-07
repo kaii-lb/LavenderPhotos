@@ -35,35 +35,18 @@ import com.kaii.photos.helpers.TextStylingConstants
 private fun AlbumFolderPreview() {
     AlbumFolder(
         name = "Pets",
-        info = listOf(
-            AlbumGridState.Info(
-                album = AlbumType.PlaceHolder,
-                thumbnail = AlbumGridState.Info.Thumbnail(
-                    uri = "1",
-                    signature = ObjectKey(0),
-                    albumId = "",
-                    date = 0L
+        info =
+            (0..10).map {
+                AlbumGridState.Info(
+                    album = AlbumType.PlaceHolder,
+                    thumbnail = AlbumGridState.Info.Thumbnail(
+                        uri = "1",
+                        signature = ObjectKey(0),
+                        albumId = "",
+                        date = 0L
+                    )
                 )
-            ),
-            AlbumGridState.Info(
-                album = AlbumType.PlaceHolder,
-                thumbnail = AlbumGridState.Info.Thumbnail(
-                    uri = "1",
-                    signature = ObjectKey(0),
-                    albumId = "",
-                    date = 0L
-                )
-            ),
-            AlbumGridState.Info(
-                album = AlbumType.PlaceHolder,
-                thumbnail = AlbumGridState.Info.Thumbnail(
-                    uri = "1",
-                    signature = ObjectKey(0),
-                    albumId = "",
-                    date = 0L
-                )
-            )
-        ),
+            },
         isSelected = false,
         immichInfo = ImmichBasicInfo.Empty,
         onClick = {}
@@ -157,7 +140,8 @@ fun AlbumFolder(
                 )
             ) {
                 val bottomItems = if (info.size > 2) {
-                    info.takeLast(info.size - 2) + (0..3 - info.size).map {
+                    val size = info.size.coerceIn(0, 4)
+                    info.take(4).takeLast(size - 2) + (0..3 - size).map {
                         AlbumGridState.Info(
                             album = AlbumType.PlaceHolder,
                             thumbnail = AlbumGridState.Info.Thumbnail(
