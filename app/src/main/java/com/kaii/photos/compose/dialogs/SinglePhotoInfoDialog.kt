@@ -64,6 +64,8 @@ import androidx.core.net.toUri
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.pages.WallpaperSetter
 import com.kaii.photos.compose.widgets.DateTimePicker

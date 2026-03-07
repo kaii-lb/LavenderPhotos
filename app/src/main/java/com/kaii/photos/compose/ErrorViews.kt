@@ -24,14 +24,14 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.kaii.photos.R
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.Screens
 
 enum class ViewProperties(
     val emptyText: Int,
     val emptyIconResId: Int,
     val prefix: Int?,
-    val navigate: (AlbumInfo, Int) -> Screens
+    val navigate: (AlbumType, Int) -> Screens
 ) {
     Trash(
         emptyText = R.string.error_views_trash_empty,
@@ -49,7 +49,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.Album.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Folder,
                 index = index
             )
         }
@@ -60,7 +60,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.CustomAlbum.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Custom,
                 index = index
             )
         }
@@ -101,7 +101,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.Immich.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Cloud,
                 index = index
             )
         }
@@ -112,7 +112,7 @@ enum class ViewProperties(
         prefix = null,
         navigate = { albumInfo, index ->
             Screens.MainPages.MainGrid.SinglePhoto(
-                albumInfo = albumInfo,
+                album = albumInfo as AlbumType.Folder,
                 index = index
             )
         }

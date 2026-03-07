@@ -346,7 +346,7 @@ fun rememberFavSelectionManager(): SelectionManager {
 }
 
 @Composable
-fun rememberCustomSelectionManager(albumId: Int): SelectionManager {
+fun rememberCustomSelectionManager(albumId: String): SelectionManager {
     val context = LocalContext.current
     val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val coroutineScope = rememberCoroutineScope()

@@ -66,6 +66,7 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,8 @@ fun MainPages(
     deviceAlbums: State<List<AlbumGridState.Album>>,
     window: Window,
     incomingIntent: Intent?,
-    blur: Boolean = false
+    blur: Boolean = false,
+    refreshAlbums: () -> Unit
 ) {
     val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
     val tabList by mainGridViewModel.tabList.collectAsStateWithLifecycle()
@@ -97,7 +99,7 @@ fun MainPages(
     val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
-        initialPage = tabList.indexOf(defaultTab)
+        initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
     ) { tabList.size }
 
     val coroutineScope = rememberCoroutineScope()
@@ -146,6 +148,8 @@ fun MainPages(
 
     Scaffold(
         topBar = {
+            val groups by mainGridViewModel.groups.collectAsStateWithLifecycle()
+
             MainAppTopBar(
                 alternate = isSelecting,
                 selectionManager = selectionManager,
@@ -156,10 +160,12 @@ fun MainPages(
                 extraSecureFolderEntry = extraSecureFolderEntry,
                 showTagDialog = showTagDialog,
                 isFromMediaPicker = incomingIntent != null,
+                groups = groups,
                 setShowTagDialog = {
                     showTagDialog = true
                 },
-                addAlbum = mainGridViewModel::addAlbum
+                addAlbum = mainGridViewModel::addAlbum,
+                addGroup = mainGridViewModel::addGroup
             )
         },
         bottomBar = {
@@ -247,7 +253,18 @@ fun MainPages(
                     searchViewModel.clear()
                 }
 
+                if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
+                    refreshAlbums()
+                }
+
                 lastPage = it
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            while (true) {
+                refreshAlbums()
+                delay(5000)
             }
         }
 
@@ -272,13 +289,13 @@ fun MainPages(
                             paths = tab.albumPaths
 
                             multiAlbumViewModel.changePaths(
-                                album = tab.toAlbumInfo()
+                                album = tab.toAlbum()
                             )
                         }
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
-                            albumInfo = tab.toAlbumInfo(),
+                            album = tab.toAlbum(),
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
@@ -296,14 +313,14 @@ fun MainPages(
                             multiAlbumViewModel.changePaths(
                                 album = tab.copy(
                                     albumPaths = mainPhotosPaths
-                                ).toAlbumInfo()
+                                ).toAlbum()
                             )
                         }
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
                             selectionManager = selectionManager,
-                            albumInfo = tab.copy(albumPaths = mainPhotosPaths).toAlbumInfo(),
+                            album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
                             openVideosExternally = openVideosExternally,
@@ -320,6 +337,7 @@ fun MainPages(
                     tab == DefaultTabs.TabTypes.albums -> {
                         val columnSize by mainGridViewModel.albumColumnSize.collectAsStateWithLifecycle()
                         val sortMode by mainGridViewModel.albumSortMode.collectAsStateWithLifecycle()
+                        val migrateFav by mainGridViewModel.migrateFav.collectAsStateWithLifecycle()
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
@@ -327,9 +345,11 @@ fun MainPages(
                             tabList = tabList,
                             columnSize = columnSize,
                             immichInfo = immichInfo,
+                            migrateFav = { migrateFav },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
-                            setAlbums = mainGridViewModel::setAlbums
+                            setAlbumOrder = mainGridViewModel::setAlbumOrder,
+                            addAlbumToGroup = mainGridViewModel::addAlbumToGroup
                         )
                     }
 

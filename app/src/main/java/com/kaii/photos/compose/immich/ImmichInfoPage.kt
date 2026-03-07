@@ -67,10 +67,10 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
-import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.ImmichLoginDialog
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.compose.dialogs.user_action.ImmichLoginDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText

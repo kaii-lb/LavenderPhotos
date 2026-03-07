@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SliderDialog
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.dialogs.user_action.SliderDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.editing_view.EditingViewBottomAppBarItem
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.VideoPlayerConstants

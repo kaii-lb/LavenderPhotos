@@ -32,21 +32,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
-import com.kaii.photos.compose.dialogs.SortModeSelectorDialog
-import com.kaii.photos.compose.dialogs.TabCustomizationDialog
+import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
+import com.kaii.photos.compose.dialogs.settings.SortModeSelectorDialog
+import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.di.appModule
@@ -59,6 +58,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val settings = LocalContext.current.appModule.settings
+    val navController = LocalNavController.current
 
     val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
     val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
@@ -81,13 +81,14 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
         modifier = modifier,
         setShowEverything = settings.mainPhotosView::setShowEverything,
         addMainPhotosAlbum = settings.mainPhotosView::addAlbum,
-        clearMainPhotosAlbums = settings.mainPhotosView::clear,
+        clearMainPhotosAlbums = settings.mainPhotosView::clearAlbums,
         setAutoDetect = settings.albums::setAutoDetect,
         resetAlbums = settings.albums::reset,
         setSortMode = settings.photoGrid::setSortMode,
         setCheckUpdatesOnStartup = settings.versions::setCheckUpdatesOnStartup,
         setTabList = settings.defaultTabs::setTabList,
-        setDefaultTab = settings.defaultTabs::setDefaultTab
+        setDefaultTab = settings.defaultTabs::setDefaultTab,
+        popBack = { navController.popBackStack() }
     )
 }
 
@@ -112,13 +113,14 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
         setSortMode = {},
         setCheckUpdatesOnStartup = {},
         setTabList = {},
-        setDefaultTab = {}
+        setDefaultTab = {},
+        popBack = {}
     )
 }
 
 @Composable
 private fun GeneralSettingsPageImpl(
-    allAlbums: List<AlbumInfo>,
+    allAlbums: List<AlbumType>,
     mainPhotosPaths: Collection<String>,
     shouldShowEverything: Boolean,
     autoDetectAlbums: Boolean,
@@ -128,18 +130,19 @@ private fun GeneralSettingsPageImpl(
     checkForUpdatesOnStartup: Boolean,
     modifier: Modifier,
     setShowEverything: (value: Boolean) -> Unit,
-    addMainPhotosAlbum: (relativePath: String) -> Unit,
+    addMainPhotosAlbum: (path: String) -> Unit,
     clearMainPhotosAlbums: () -> Unit,
     setAutoDetect: (value: Boolean) -> Unit,
     resetAlbums: () -> Unit,
     setSortMode: (mode: MediaItemSortMode) -> Unit,
     setCheckUpdatesOnStartup: (value: Boolean) -> Unit,
     setTabList: (list: List<BottomBarTab>) -> Unit,
-    setDefaultTab: (tab: BottomBarTab) -> Unit
+    setDefaultTab: (tab: BottomBarTab) -> Unit,
+    popBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
-            GeneralSettingsTopBar()
+            GeneralSettingsTopBar(popBack = popBack)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -158,6 +161,14 @@ private fun GeneralSettingsPageImpl(
                 val selectedAlbums = remember { mutableStateListOf<String>() }
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
 
+                val singles = remember(allAlbums) {
+                    allAlbums
+                        .filterIsInstance<AlbumType.Folder>()
+                        .filter {
+                            it.paths.size == 1
+                        }
+                }
+
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
                     iconResID = R.drawable.photogrid,
@@ -171,17 +182,35 @@ private fun GeneralSettingsPageImpl(
                         selectedAlbums.clear()
                         selectedAlbums.addAll(
                             if (shouldShowEverything) {
-                                val flat = allAlbums.flatMap { it.paths }.fastMap { it.removeSuffix("/") }
+                                val flat = singles.flatMap { it.paths }
 
-                                flat - mainPhotosPaths.map { it.removeSuffix("/") }.toSet()
+                                flat - mainPhotosPaths.toSet()
                             } else {
-                                mainPhotosPaths.map { it.removeSuffix("/") }
+                                mainPhotosPaths
                             }
                         )
 
                         showAlbumsSelectionDialog.value = true
                     },
-                    onSwitchClick = setShowEverything
+                    onSwitchClick = { checked ->
+                        setShowEverything(checked)
+
+                        selectedAlbums.clear()
+                        selectedAlbums.addAll(
+                            if (!checked) {
+                                val flat = singles.flatMap { it.paths }
+
+                                flat - mainPhotosPaths.toSet()
+                            } else {
+                                mainPhotosPaths
+                            }
+                        )
+
+                        clearMainPhotosAlbums()
+                        selectedAlbums.distinct().forEach { album ->
+                            addMainPhotosAlbum(album)
+                        }
+                    }
                 )
 
                 if (showAlbumsSelectionDialog.value) {
@@ -194,7 +223,7 @@ private fun GeneralSettingsPageImpl(
                         onConfirm = {
                             clearMainPhotosAlbums()
 
-                            selectedAlbums.forEach { album ->
+                            selectedAlbums.distinct().forEach { album ->
                                 addMainPhotosAlbum(album)
                             }
                         },
@@ -205,18 +234,18 @@ private fun GeneralSettingsPageImpl(
                                     .height(384.dp)
                             ) {
                                 items(
-                                    count = allAlbums.size
+                                    count = singles.size
                                 ) { index ->
-                                    val associatedAlbum = allAlbums[index]
+                                    val associatedAlbum = singles[index]
 
                                     CheckBoxButtonRow(
                                         text = associatedAlbum.name,
-                                        checked = selectedAlbums.contains(associatedAlbum.mainPath)
+                                        checked = associatedAlbum.paths.first() in selectedAlbums
                                     ) {
-                                        if (selectedAlbums.contains(associatedAlbum.mainPath) && (selectedAlbums.size > 1 || shouldShowEverything)) {
-                                            selectedAlbums.remove(associatedAlbum.mainPath.removeSuffix("/"))
+                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything)) {
+                                            selectedAlbums.remove(associatedAlbum.paths.first())
                                         } else {
-                                            selectedAlbums.add(associatedAlbum.mainPath.removeSuffix("/"))
+                                            selectedAlbums.add(associatedAlbum.paths.first())
                                         }
                                     }
                                 }
@@ -363,7 +392,12 @@ private fun GeneralSettingsPageImpl(
                 if (showDialog) {
                     TabCustomizationDialog(
                         tabList = tabList,
-                        setTabList = setTabList,
+                        setTabList = { newList ->
+                            setTabList(newList)
+                            if (defaultTab !in newList) {
+                                setDefaultTab(newList.first())
+                            }
+                        },
                         closeDialog = {
                             showDialog = false
                         }
@@ -404,9 +438,9 @@ private fun GeneralSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GeneralSettingsTopBar() {
-    val navController = LocalNavController.current
-
+private fun GeneralSettingsTopBar(
+    popBack: () -> Unit
+) {
     TopAppBar(
         title = {
             Text(
@@ -416,9 +450,7 @@ private fun GeneralSettingsTopBar() {
         },
         navigationIcon = {
             IconButton(
-                onClick = {
-                    navController.popBackStack()
-                },
+                onClick = popBack,
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),

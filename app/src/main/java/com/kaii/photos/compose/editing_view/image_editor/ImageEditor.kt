@@ -79,9 +79,9 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.ImageEditorBottomBar
-import com.kaii.photos.compose.app_bars.ImageEditorTopBar
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.app_bars.image_editor.ImageEditorBottomBar
+import com.kaii.photos.compose.app_bars.image_editor.ImageEditorTopBar
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
@@ -89,7 +89,7 @@ import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.editing.DrawableText
@@ -113,7 +113,7 @@ fun ImageEditor(
     uri: Uri,
     absolutePath: String,
     isFromOpenWithView: Boolean,
-    albumInfo: AlbumInfo?,
+    album: AlbumType?,
     exitOnSave: () -> Boolean,
     overwriteByDefault: () -> Boolean
 ) {
@@ -263,14 +263,14 @@ fun ImageEditor(
                     )
 
                     delay(PhotoGridConstants.UPDATE_TIME * 2)
-                    if (albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                    if (album?.id.takeIf { album!! !is AlbumType.Folder } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
                         MediaDatabase.getInstance(context)
                             .customDao()
                             .upsertAll(
                                 listOf(
                                     CustomItem(
                                         id = navMediaId,
-                                        album = albumInfo!!.id
+                                        album = album!!.id
                                     )
                                 )
                             )

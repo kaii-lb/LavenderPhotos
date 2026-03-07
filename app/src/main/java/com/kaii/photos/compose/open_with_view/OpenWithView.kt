@@ -49,7 +49,7 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -156,7 +156,7 @@ class OpenWithView : ComponentActivity() {
 
                             composable<Screens.ImageEditor>(
                                 typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                                    typeOf<AlbumType>() to AlbumType.NavType()
                                 ),
                                 enterTransition = {
                                     slideInVertically(
@@ -201,7 +201,7 @@ class OpenWithView : ComponentActivity() {
                                     uri = screen.uri.toUri(),
                                     absolutePath = screen.absolutePath,
                                     isFromOpenWithView = true,
-                                    albumInfo = null,
+                                    album = null,
                                     exitOnSave = { false },
                                     overwriteByDefault = { false }
                                 )
@@ -209,7 +209,7 @@ class OpenWithView : ComponentActivity() {
 
                             composable<Screens.VideoEditor>(
                                 typeMap = mapOf(
-                                    typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                                    typeOf<AlbumType>() to AlbumType.NavType()
                                 ),
                                 enterTransition = {
                                     slideInVertically(
@@ -255,7 +255,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    albumInfo = null
+                                    album = null
                                 )
                             }
                         }
@@ -314,7 +314,8 @@ private fun Content(uri: Uri, window: Window) {
 
             else -> {
                 val blurViews by context.appModule.settings.lookAndFeel.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
-                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().collectAsStateWithLifecycle(initialValue = false)
+                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews()
+                    .collectAsStateWithLifecycle(initialValue = false)
 
                 OpenWithContent(
                     uri = uri,
@@ -336,10 +337,14 @@ private fun InitSinglePhotoView(
     val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
         factory = MultiAlbumViewModelFactory(
             context = context,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
                 paths = setOf(
                     incomingData.absolutePath.parent()
-                )
+                ),
+                pinned = false,
+                immichId = null
             )
         )
     )
@@ -357,10 +362,14 @@ private fun InitSinglePhotoView(
             window = window,
             viewModel = multiAlbumViewModel,
             index = index,
-            albumInfo = AlbumInfo.createPathOnlyAlbum(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
                 paths = setOf(
                     incomingData.absolutePath.parent()
-                )
+                ),
+                pinned = false,
+                immichId = null
             ),
             isOpenWithDefaultView = true
         )

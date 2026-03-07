@@ -19,5 +19,5 @@ import androidx.room.Index
 )
 data class CustomItem(
     val id: Long,
-    val album: Int
+    val album: String
 )

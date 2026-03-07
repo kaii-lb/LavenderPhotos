@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PhotosApplication : Application() {
     lateinit var appModule: AppModule
@@ -24,10 +25,15 @@ class PhotosApplication : Application() {
 
         appModule = AppModule(applicationContext)
 
-        registerContentObserver()
+        // try to migrate from an older album system on app startup
+        appModule.settings.albums.migrate()
+
+        appModule.scope.launch(Dispatchers.IO) {
+            registerContentObserver()
+        }
     }
 
-    private fun registerContentObserver() {
+    private suspend fun registerContentObserver() = withContext(Dispatchers.IO) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val syncManager = SyncManager(applicationContext)
 
@@ -42,7 +48,7 @@ class PhotosApplication : Application() {
 
                     scope.launch(Dispatchers.IO) {
                         runCatching {
-                            // if the generation is more than 0 then FirstTimeSyncWorker has already ran
+                            // if the generation is more than 0 then FirstTimeSyncWorker has already run,
                             // and we can proceed to load media by deltas
                             if (syncManager.getGeneration() > 0L) {
                                 instanceCount += 1

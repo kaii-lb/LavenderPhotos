@@ -24,11 +24,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.SearchTextField
 import com.kaii.photos.database.entities.Tag
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.search_page.SearchViewModel
@@ -66,7 +66,7 @@ fun SearchPage(
 
             PhotoGrid(
                 pagingItems = items,
-                albumInfo = AlbumInfo.Empty,
+                album = AlbumType.PlaceHolder,
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.SearchNotFound,
                 state = gridState,

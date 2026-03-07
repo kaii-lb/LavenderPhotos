@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class MultiAlbumViewModel(
     context: Context,
-    albumInfo: AlbumInfo
+    album: AlbumType.Folder
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -126,7 +126,7 @@ class MultiAlbumViewModel(
         MediaRepository(
             dao = MediaDatabase.getInstance(context.applicationContext).mediaDao(),
             scope = viewModelScope,
-            initialAlbumInfo = albumInfo,
+            initialAlbum = album,
             info = immichInfo,
             sortMode = sortMode,
             format = displayDateFormat
@@ -136,7 +136,7 @@ class MultiAlbumViewModel(
     val gridMediaFlow = repo.gridMediaFlow
 
     fun changePaths(
-        album: AlbumInfo
+        album: AlbumType.Folder
     ) = repo.changePaths(new = album.paths)
 
     suspend fun getMediaCount() = repo.getMediaCount()
@@ -150,11 +150,11 @@ class MultiAlbumViewModel(
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
     }
 
-    fun editAlbum(id: Int, newInfo: AlbumInfo) {
+    fun editAlbum(id: String, newInfo: AlbumType) {
         settings.albums.edit(id, newInfo)
     }
 
-    fun removeAlbum(id: Int) {
+    fun removeAlbum(id: String) {
         settings.albums.remove(id)
     }
 }

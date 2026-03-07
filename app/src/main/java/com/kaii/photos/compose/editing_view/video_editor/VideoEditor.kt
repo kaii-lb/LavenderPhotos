@@ -64,9 +64,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
 import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
-import com.kaii.photos.compose.app_bars.VideoEditorTopBar
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.app_bars.video_editor.VideoEditorBottomBar
+import com.kaii.photos.compose.app_bars.video_editor.VideoEditorTopBar
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage
@@ -74,7 +74,7 @@ import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.single_photo.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
@@ -101,7 +101,7 @@ private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 fun VideoEditor(
     uri: Uri,
     absolutePath: String,
-    albumInfo: AlbumInfo?,
+    album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean
 ) {
@@ -118,7 +118,7 @@ fun VideoEditor(
     VideoEditorImpl(
         uri = uri,
         absolutePath = absolutePath,
-        albumInfo = albumInfo,
+        album = album,
         window = window,
         isFromOpenWithView = isFromOpenWithView,
         startMuted = startMuted,
@@ -135,7 +135,7 @@ fun VideoEditor(
 fun VideoEditorImpl(
     uri: Uri,
     absolutePath: String,
-    albumInfo: AlbumInfo?,
+    album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean,
     startMuted: Boolean,
@@ -414,7 +414,7 @@ fun VideoEditorImpl(
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
-                customAlbumId = albumInfo?.id.takeIf { albumInfo!!.isCustomAlbum },
+                customAlbumId = album?.id.takeIf { album!! !is AlbumType.Folder },
                 exitOnSave = exitOnSave,
                 overwriteByDefault = overwriteByDefault
             )

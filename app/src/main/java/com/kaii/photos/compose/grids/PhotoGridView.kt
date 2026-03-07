@@ -96,7 +96,7 @@ import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -124,7 +124,7 @@ private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 @Composable
 fun PhotoGrid(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-    albumInfo: AlbumInfo,
+    album: AlbumType,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,
@@ -151,7 +151,7 @@ fun PhotoGrid(
                 viewProperties = viewProperties,
                 selectionManager = selectionManager,
                 gridState = state,
-                albumInfo = albumInfo,
+                album = album,
                 isMediaPicker = isMediaPicker,
                 isMainPage = isMainPage,
                 columnSize = columnSize,
@@ -177,7 +177,7 @@ private fun DeviceMedia(
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,
     gridState: LazyGridState,
-    albumInfo: AlbumInfo,
+    album: AlbumType,
     isMediaPicker: Boolean,
     isMainPage: Boolean,
     columnSize: Int,
@@ -314,7 +314,7 @@ private fun DeviceMedia(
 
                                             context.startActivity(intent)
                                         } else {
-                                            navController.navigate(viewProperties.navigate(albumInfo, index))
+                                            navController.navigate(viewProperties.navigate(album, index))
                                         }
                                     }
                                 }

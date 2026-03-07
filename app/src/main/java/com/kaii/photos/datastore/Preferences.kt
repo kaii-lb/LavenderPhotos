@@ -1,12 +1,17 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.kaii.photos.datastore
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.bumptech.glide.Glide
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -18,12 +23,14 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-const val separator = "|-SEPARATOR-|"
 private const val TAG = "com.kaii.photos.datastore.PreferencesClasses"
 
 val Context.datastore by preferencesDataStore(name = "settings")
@@ -60,109 +67,136 @@ class SettingsAlbumsListImpl(
     private val context: Context,
     private val scope: CoroutineScope
 ) {
-    private val oldAlbumsKey = stringPreferencesKey("album_folder_path_list")
+    private val v095ListKey = stringPreferencesKey("album_folder_path_list")
+    private val v140ListKey = stringPreferencesKey("album_items_key")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
-    private val albumsKey = stringPreferencesKey("album_items_key")
+    private val albumsKey = stringPreferencesKey("album_albums_key")
+    private val albumsOrderKey = stringPreferencesKey("album_albums_order_key")
+    private val albumGroupsKey = stringPreferencesKey("album_groups_key")
 
     val json = Json { ignoreUnknownKeys = true }
 
-    fun add(list: List<AlbumInfo>) = scope.launch {
+    fun add(list: List<AlbumType>) = scope.launch {
         context.datastore.edit { data ->
-            var stringList = data[albumsKey]
+            val jsonString = data[albumsKey]
+            val present = jsonString?.let { json.decodeFromString<List<AlbumType>>(jsonString) } ?: defaultAlbumsList
 
-            if (stringList == null) {
-                set(defaultAlbumsList)
-                stringList = jsonDefaultAlbumsList
+            val presentPaths = present.fastMapNotNull { (it as? AlbumType.Folder)?.paths }
+            val presentIds = present.fastMap { it.id }
+
+            present.toMutableList().apply {
+                addAll(
+                    list.filter {
+                        when (it) {
+                            is AlbumType.Folder -> it.paths !in presentPaths
+                            else -> it.id !in presentIds
+                        }
+                    }
+                )
+            }.let { new ->
+                data[albumsKey] = json.encodeToString(new)
+            }
+        }
+    }
+
+    private fun parsePreV083List(data: String): List<AlbumType> {
+        if (!data.startsWith(",")) return emptyList()
+
+        val list = data.split(",").distinct().toMutableList()
+        list.remove("")
+        list.remove(baseInternalStorageDirectory.removeSuffix("/"))
+
+        return list.map { path ->
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
+                name = path.filename(),
+                paths = setOf(path),
+                pinned = false,
+                immichId = null
+            )
+        }
+    }
+
+    private fun parsePreV095List(data: String): List<AlbumType> {
+        val separator = "|-SEPARATOR-|"
+
+        if (!data.startsWith(separator)) return emptyList()
+        val list = data.split(separator).distinct().toMutableList()
+        list.remove("")
+
+        return list.map { path ->
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
+                name = path.filename(),
+                paths = setOf(baseInternalStorageDirectory + path),
+                pinned = false,
+                immichId = null
+            )
+        }
+    }
+
+    private fun parsePreV140List(data: String): List<AlbumType> {
+        val list = json.decodeFromString<List<AlbumInfo>>(data)
+
+        return list.fastMap {
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
+                name = it.name,
+                pinned = it.isPinned,
+                immichId = null,
+                paths = it.paths.map { path ->
+                    if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
+                    else path
+                }.toSet()
+            )
+        }
+    }
+
+    fun migrate() = scope.launch {
+        context.datastore.data.first().let {
+            if (it[v095ListKey] == null && it[v140ListKey] == null) return@launch
+
+            var data = it[v095ListKey]
+            var list = emptyList<AlbumType>()
+
+            if (data != null) {
+                list = parsePreV083List(data)
             }
 
-            val present = json.decodeFromString<List<AlbumInfo>>(stringList).toMutableList()
-
-            val missing = list.filter { album ->
-                album.name.isNotBlank() && !present.any { album.equalsIgnoringPinned(it) }
+            if (list.isEmpty() && data != null) {
+                list = parsePreV095List(data)
             }
 
-            present.addAll(missing)
+            if (list.isEmpty()) {
+                data = it[v140ListKey] ?: return@launch
+                list = parsePreV140List(data)
+            }
 
-            data[albumsKey] = json.encodeToString(present)
+            set(list)
+        }
+
+        context.datastore.edit {
+            it.remove(v095ListKey)
+            it.remove(v140ListKey)
         }
     }
 
     fun get() = context.datastore.data.map { data ->
-        var list = data[oldAlbumsKey] ?: jsonDefaultAlbumsList
-
-        val isPreV083 = list.startsWith(",") // if list starts with a "," then its using an old version of list storing system, move to new version
-        val isPreV095 = list.startsWith(separator)
-
-        when {
-            isPreV083 -> {
-                val split = list.split(",").distinct().toMutableList()
-                split.remove("")
-                split.remove(baseInternalStorageDirectory.removeSuffix("/"))
-
-                val oldList = split.map { path ->
-                    AlbumInfo(
-                        id = path.hashCode(),
-                        name = path.filename(),
-                        paths = setOf(path)
-                    )
-                }
-                set(oldList)
-                resetOld()
-                oldList
-            }
-
-            isPreV095 -> {
-                val split = list.split(separator).distinct().toMutableList()
-                split.remove("")
-
-                val oldList = split.map { path ->
-                    AlbumInfo(
-                        id = path.hashCode(),
-                        name = path.filename(),
-                        paths = setOf(baseInternalStorageDirectory + path)
-                    )
-                }
-
-                set(oldList)
-                resetOld()
-                oldList
-            }
-
-            list.isNotBlank() && !list.startsWith("RESET") -> {
-                val split = json.decodeFromString<List<AlbumInfo>>(list)
-                set(split)
-                resetOld()
-
-                split
-            }
-
-            else -> {
-                list = data[albumsKey] ?: jsonDefaultAlbumsList
-                val split = json.decodeFromString<List<AlbumInfo>>(list)
-
-                split.map {
-                    it.copy(
-                        paths = it.paths.map { path ->
-                            if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
-                            else path
-                        }.toSet()
-                    )
-                }
-            }
-        }
+        val jsonString = data[albumsKey] ?: jsonDefaultAlbumsList
+        return@map json.decodeFromString<List<AlbumType>>(jsonString)
     }
 
-    fun set(list: List<AlbumInfo>) = scope.launch {
+    fun set(list: List<AlbumType>) = scope.launch {
         context.datastore.edit {
             it[albumsKey] = json.encodeToString(list)
         }
     }
 
-    fun remove(albumId: Int) = scope.launch {
+    fun remove(albumId: String) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
-            val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
+            val present = json.decodeFromString<List<AlbumType>>(list).toMutableList()
 
             present.removeIf {
                 it.id == albumId
@@ -172,13 +206,13 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    fun removeAll(albums: List<Int>) = scope.launch {
+    fun removeAll(albumIds: List<String>) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
-            val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
+            val present = json.decodeFromString<List<AlbumType>>(list).toMutableList()
 
             present.removeIf {
-                it.id in albums
+                it.id in albumIds
             }
 
             data[albumsKey] = json.encodeToString(present)
@@ -186,16 +220,22 @@ class SettingsAlbumsListImpl(
     }
 
     fun edit(
-        id: Int,
-        newInfo: AlbumInfo
+        id: String,
+        newInfo: AlbumType
     ) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
 
-            val present = json.decodeFromString<List<AlbumInfo>>(list).toMutableList()
+            val present = json.decodeFromString<List<AlbumType>>(list).toMutableList()
             val index = present.indexOfFirst { it.id == id }
 
-            present[index] = newInfo.copy(id = id)
+            present[index] =
+                when (newInfo) {
+                    is AlbumType.Folder -> newInfo.copy(id = id)
+                    is AlbumType.Custom -> newInfo.copy(id = id)
+                    is AlbumType.Cloud -> newInfo.copy(id = id)
+                    else -> AlbumType.PlaceHolder
+                }
 
             data[albumsKey] = json.encodeToString(present)
         }
@@ -207,19 +247,13 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    private fun resetOld() = scope.launch {
-        context.datastore.edit {
-            it[oldAlbumsKey] = "RESET" + it[oldAlbumsKey]
-        }
-    }
-
-    fun setAlbumSortMode(sortMode: AlbumSortMode) = scope.launch {
+    fun setSortMode(sortMode: AlbumSortMode) = scope.launch {
         context.datastore.edit {
             it[sortModeKey] = sortMode.ordinal
         }
     }
 
-    fun getAlbumSortMode(): Flow<AlbumSortMode> = context.datastore.data.map {
+    fun getSortMode(): Flow<AlbumSortMode> = context.datastore.data.map {
         AlbumSortMode.entries[it[sortModeKey] ?: AlbumSortMode.LastModifiedDesc.ordinal]
     }
 
@@ -233,27 +267,105 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    val defaultAlbumsList =
-        listOf(
-            AlbumInfo(
-                id = 0,
+    fun getGroups() = context.datastore.data.map { data ->
+        val string = data[albumGroupsKey] ?: "[]"
+
+        json.decodeFromString<List<AlbumGroup>>(string)
+    }
+
+    fun addGroup(group: AlbumGroup) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: "[]"
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                if (group.id !in present.fastMap { it.id }) {
+                    present.add(group)
+                }
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun editGroup(
+        id: String,
+        name: String? = null,
+        pinned: Boolean? = null,
+        albumIds: List<String>? = null
+    ) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: "[]"
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                val index = present.indexOfFirst { it.id == id }
+
+                if (index == -1) return@edit
+
+                val group = present[index]
+                present[index] = group.copy(
+                    name = name ?: group.name,
+                    pinned = pinned ?: group.pinned,
+                    albumIds = albumIds ?: group.albumIds
+                )
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun removeGroup(id: String) {
+        scope.launch {
+            context.datastore.edit { data ->
+                val string = data[albumGroupsKey] ?: ""
+                val present = json.decodeFromString<List<AlbumGroup>>(string).toMutableList()
+
+                present.removeIf { it.id == id }
+
+                data[albumGroupsKey] = json.encodeToString(present)
+            }
+        }
+    }
+
+    fun getOrder() = context.datastore.data.map { data ->
+        json.decodeFromString<List<String>>(data[albumsOrderKey] ?: "[]")
+    }
+
+    fun setOrder(order: List<String>) {
+        scope.launch {
+            context.datastore.edit { data ->
+                data[albumsOrderKey] = json.encodeToString(order)
+            }
+        }
+    }
+
+    private val defaultAlbumsList =
+        listOf<AlbumType>(
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
                 name = "Camera",
                 paths = setOf("${baseInternalStorageDirectory}DCIM/Camera"),
-                isPinned = false
+                pinned = false,
+                immichId = null
             ),
-            AlbumInfo(
-                id = 3,
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
                 name = "Pictures",
-                paths = setOf("${baseInternalStorageDirectory}Pictures")
+                paths = setOf("${baseInternalStorageDirectory}Pictures"),
+                pinned = false,
+                immichId = null
             ),
-            AlbumInfo(
-                id = 4,
+            AlbumType.Folder(
+                id = Uuid.random().toString(),
                 name = "Downloads",
-                paths = setOf("${baseInternalStorageDirectory}Download")
+                paths = setOf("${baseInternalStorageDirectory}Download"),
+                pinned = false,
+                immichId = null
             )
         )
 
-    val jsonDefaultAlbumsList = json.encodeToString(defaultAlbumsList)
+    private val jsonDefaultAlbumsList = json.encodeToString(defaultAlbumsList)
 }
 
 class SettingsVersionImpl(
@@ -298,17 +410,18 @@ class SettingsVersionImpl(
         }
     }
 
-    fun getUpdateFav(): Flow<Boolean> =
+    fun getMigrateFav(): Flow<Boolean> =
         context.datastore.data.map { data ->
             data[migrateFav] != false
         }
 
-    fun setUpdateFav(value: Boolean) = scope.launch {
+    fun setMigrateFav(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[migrateFav] = value
         }
     }
 }
+
 class SettingsDebuggingImpl(
     private val context: Context,
     private val scope: CoroutineScope
@@ -602,39 +715,27 @@ class SettingMainPhotosViewImpl(
     private val context: Context,
     private val scope: CoroutineScope
 ) {
-    private val mainPhotosAlbumsList = stringPreferencesKey("main_photos_albums_list")
+    private val albumsList = stringSetPreferencesKey("main_photos_path_list")
     private val shouldShowEverything = booleanPreferencesKey("main_photos_show_everything")
 
     fun getAlbums(): Flow<Set<String>> =
         context.datastore.data.map { data ->
-            val string = data[mainPhotosAlbumsList] ?: defaultAlbumsList
-
-            val list = mutableListOf<String>()
-            string.split(separator).forEach { album ->
-                if (!list.contains(album) && album != "") list.add(album.removeSuffix("/"))
-            }
-
-            list.map {
-                if (!it.startsWith("/storage/")) baseInternalStorageDirectory + it
-                else it
-            }.toSet()
+            return@map data[albumsList] ?: defaultAlbumsList
         }
 
-    fun addAlbum(relativePath: String) = scope.launch {
+    fun addAlbum(path: String) = scope.launch {
         context.datastore.edit {
-            var list = it[mainPhotosAlbumsList] ?: defaultAlbumsList
+            val list = (it[albumsList] ?: defaultAlbumsList).toMutableList()
 
-            val addedPath = relativePath.removeSuffix("/") + separator
+            list.add(path)
 
-            if (!list.contains(addedPath)) list += addedPath
-
-            it[mainPhotosAlbumsList] = list
+            it[albumsList] = list.toSet()
         }
     }
 
-    fun clear() = scope.launch {
+    fun clearAlbums() = scope.launch {
         context.datastore.edit {
-            it[mainPhotosAlbumsList] = ""
+            it[albumsList] = emptySet()
         }
     }
 
@@ -649,10 +750,11 @@ class SettingMainPhotosViewImpl(
         }
     }
 
-    private val defaultAlbumsList =
-        "${baseInternalStorageDirectory}DCIM/Camera" + separator +
-                "${baseInternalStorageDirectory}Pictures" + separator +
-                "${baseInternalStorageDirectory}Pictures/Screenshot" + separator
+    private val defaultAlbumsList = setOf(
+        "${baseInternalStorageDirectory}DCIM/Camera",
+        "${baseInternalStorageDirectory}Pictures",
+        "${baseInternalStorageDirectory}Pictures/Screenshot"
+    )
 }
 
 class SettingsDefaultTabsImpl(

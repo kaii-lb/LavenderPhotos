@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SliderDialog
+import com.kaii.photos.compose.dialogs.user_action.SliderDialog
 import com.kaii.photos.compose.editing_view.EditingViewBottomAppBarItem
 import com.kaii.photos.compose.editing_view.SharedEditorCropContent
 import com.kaii.photos.helpers.editing.CroppingAspectRatio

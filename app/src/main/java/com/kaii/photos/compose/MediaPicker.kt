@@ -57,11 +57,12 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.grids.FavouritesGridView
-import com.kaii.photos.compose.grids.SingleAlbumView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
+import com.kaii.photos.compose.grids.albums.AlbumGroup
+import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
@@ -80,6 +81,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -96,7 +98,7 @@ class MediaPicker : ComponentActivity() {
         val settings = applicationContext.appModule.settings
 
         setContent {
-            val initialFollowDarkTheme = runBlocking {
+            val initialFollowDarkTheme = runBlocking(Dispatchers.IO) {
                 settings.lookAndFeel.getFollowDarkMode().first()
             }
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
@@ -134,12 +136,19 @@ class MediaPicker : ComponentActivity() {
         val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
             factory = MultiAlbumViewModelFactory(
                 context = context,
-                albumInfo = AlbumInfo.Empty
+                album = AlbumType.Folder(
+                    id = "",
+                    name = "",
+                    paths = emptySet(),
+                    pinned = false,
+                    immichId = null
+                )
             )
         )
 
         val navController = LocalNavController.current
-        val deviceAlbums = rememberAlbumGridState().albums.collectAsStateWithLifecycle()
+        val albumGridState = rememberAlbumGridState()
+        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
 
         NavHost(
             navController = navController,
@@ -181,7 +190,7 @@ class MediaPicker : ComponentActivity() {
             ) {
                 composable<Screens.MainPages.MainGrid.GridView>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        typeOf<AlbumType.Folder>() to AlbumType.Folder.NavType()
                     )
                 ) {
                     setupNextScreen(window)
@@ -201,7 +210,7 @@ class MediaPicker : ComponentActivity() {
                         deviceAlbums = deviceAlbums,
                         window = window,
                         incomingIntent = incomingIntent,
-                        blur = false
+                        refreshAlbums = albumGridState::refresh
                     )
                 }
             }
@@ -211,7 +220,7 @@ class MediaPicker : ComponentActivity() {
             ) {
                 composable<Screens.Album.GridView>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        typeOf<AlbumType.Folder>() to AlbumType.Folder.NavType()
                     )
                 ) {
                     setupNextScreen(window)
@@ -224,24 +233,25 @@ class MediaPicker : ComponentActivity() {
                         viewModelStoreOwner = storeOwner,
                         factory = MultiAlbumViewModelFactory(
                             context = context,
-                            albumInfo = screen.albumInfo
+                            album = screen.album
                         )
                     )
 
                     SingleAlbumView(
-                        albumInfo = screen.albumInfo,
+                        album = screen.album,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
                 }
             }
 
+            // TODO: immich albums
             navigation<Screens.CustomAlbum>(
                 startDestination = Screens.CustomAlbum.GridView::class
             ) {
                 composable<Screens.CustomAlbum.GridView>(
                     typeMap = mapOf(
-                        typeOf<AlbumInfo>() to AlbumInfo.AlbumNavType
+                        typeOf<AlbumType.Custom>() to AlbumType.Custom.NavType()
                     )
                 ) {
                     setupNextScreen(window)
@@ -251,12 +261,12 @@ class MediaPicker : ComponentActivity() {
                     val viewModel: CustomAlbumViewModel = viewModel(
                         factory = CustomAlbumViewModelFactory(
                             context = context,
-                            albumInfo = screen.albumInfo
+                            album = screen.album
                         )
                     )
 
                     SingleAlbumView(
-                        albumInfo = screen.albumInfo,
+                        album = screen.album,
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
                     )
@@ -303,6 +313,16 @@ class MediaPicker : ComponentActivity() {
                         incomingIntent = incomingIntent
                     )
                 }
+            }
+
+            composable<Screens.AlbumGroup> {
+                val screen = it.toRoute<Screens.AlbumGroup>()
+
+                AlbumGroup(
+                    id = screen.id,
+                    name = screen.name,
+                    albumGridState = albumGridState
+                )
             }
         }
     }

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.repositories.CustomRepository
@@ -16,13 +16,13 @@ import kotlinx.coroutines.launch
 
 class CustomAlbumViewModel(
     context: Context,
-    private val albumInfo: AlbumInfo
+    private val album: AlbumType
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
     private val repo = CustomRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).customDao(),
-        albumInfo = albumInfo,
+        album = album,
         scope = viewModelScope,
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat(),
@@ -118,7 +118,7 @@ class CustomAlbumViewModel(
 
     fun remove(items: Set<MediaStoreData>) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.remove(items, albumInfo.id)
+            repo.remove(items, album.id)
         }
     }
 
@@ -133,11 +133,11 @@ class CustomAlbumViewModel(
         return ((bytes.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
     }
 
-    fun editAlbum(id: Int, newInfo: AlbumInfo) {
-        settings.albums.edit(id, newInfo)
+    fun editAlbum(id: String, new: AlbumType) {
+        settings.albums.edit(id, new)
     }
 
-    fun removeAlbum(id: Int) {
+    fun removeAlbum(id: String) {
         settings.albums.remove(id)
     }
 }

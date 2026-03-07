@@ -26,7 +26,7 @@ class SecureFolderMigration {
         appDatabase = MediaDatabase.getInstance(context),
         albums = SettingsAlbumsListImpl(
             context = context,
-            viewModelScope = CoroutineScope(EmptyCoroutineContext)
+            scope = CoroutineScope(EmptyCoroutineContext)
         )
     )
 
@@ -42,13 +42,11 @@ class SecureFolderMigration {
         val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cat_picture)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outFile.outputStream())
 
-        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld, true)
-
         runBlocking {
+            Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld(), true)
             secureFolderMigrationManager.migrateFromOldDirectory()
+            Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld(), false)
         }
-
-        Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromOld, false)
     }
 
     @Test

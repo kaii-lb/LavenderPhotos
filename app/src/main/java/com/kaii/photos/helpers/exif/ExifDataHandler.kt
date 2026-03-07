@@ -232,12 +232,16 @@ fun getExifDataForMedia(
             round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
         }
 
+        inputStream.close()
+
         return list
             .mapNotNull { (key, value) ->
                 if (value != null) key to value else null
             }
             .toMap()
     } catch (e: Throwable) {
+        inputStream.close()
+
         Log.e(TAG, e.toString())
         e.printStackTrace()
 

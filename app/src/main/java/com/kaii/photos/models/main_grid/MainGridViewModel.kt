@@ -4,46 +4,49 @@ import android.content.Context
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class MainGridViewModel(
     context: Context
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
-    private var initialMainPhotosPaths = emptySet<String>()
-
-
-    init {
-        runBlocking {
-            initialMainPhotosPaths = getMainPhotosAlbums().first()
-        }
-    }
 
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = initialMainPhotosPaths
+            initialValue = runBlocking(Dispatchers.IO) {
+                getMainPhotosAlbums().first()
+            }
         )
 
     val defaultTab = settings.defaultTabs.getDefaultTab().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = settings.defaultTabs.defaultTabItem
+        initialValue = runBlocking(Dispatchers.IO) {
+            settings.defaultTabs.getDefaultTab().first()
+        }
     )
 
     val tabList = settings.defaultTabs.getTabList().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = settings.defaultTabs.defaultTabList
+        initialValue = runBlocking(Dispatchers.IO) {
+            settings.defaultTabs.getTabList().first()
+        }
     )
 
     val exitImmediately = settings.behaviour.getExitImmediately().stateIn(
@@ -70,7 +73,7 @@ class MainGridViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val albumSortMode = settings.albums.getAlbumSortMode().stateIn(
+    val albumSortMode = settings.albums.getSortMode().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = AlbumSortMode.LastModifiedDesc
@@ -106,10 +109,44 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setAlbumSortMode(sortMode)
-    fun setAlbums(list: List<AlbumInfo>) = settings.albums.set(list)
+    val migrateFav = settings.versions.getMigrateFav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
 
-    fun addAlbum(album: AlbumInfo) = settings.albums.add(listOf(album))
+    val groups = settings.albums.getGroups().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = emptyList()
+    )
+
+    fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
+    fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
+
+    fun addAlbum(album: AlbumType) = settings.albums.add(listOf(album))
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun addGroup(name: String) = settings.albums.addGroup(
+        AlbumGroup(
+            id = Uuid.random().toString(),
+            name = name,
+            pinned = true,
+            albumIds = emptyList()
+        )
+    )
+
+    fun addAlbumToGroup(albumId: String, groupId: String) = viewModelScope.launch {
+        val groups = settings.albums.getGroups().first()
+        settings.albums.editGroup(
+            id = groupId,
+            albumIds = groups.first {
+                it.id == groupId
+            }.albumIds.toMutableList().apply {
+                add(albumId)
+            }
+        )
+    }
 
     private fun getMainPhotosAlbums() =
         combine(
@@ -118,7 +155,7 @@ class MainGridViewModel(
             settings.mainPhotosView.getAlbums()
         ) { albums, showEverything, mainAlbums ->
             if (showEverything) {
-                albums.fastMap { albumInfo ->
+                albums.filterIsInstance<AlbumType.Folder>().fastMap { albumInfo ->
                     albumInfo.paths.map { it.removeSuffix("/") }
                 }.flatten().toSet() - mainAlbums
             } else {

@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
+import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.Updater

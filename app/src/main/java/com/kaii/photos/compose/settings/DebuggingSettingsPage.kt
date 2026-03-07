@@ -38,22 +38,23 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.relativePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Composable
 fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
@@ -79,12 +80,13 @@ private fun DebuggingSettingsPagePreview() {
     )
 }
 
+@OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun DebuggingSettingsPageImpl(
     shouldRecordLogs: Boolean,
     modifier: Modifier,
     setRecordLogs: (value: Boolean) -> Unit,
-    addAlbum: (album: AlbumInfo) -> Unit
+    addAlbum: (album: AlbumType) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -227,11 +229,13 @@ private fun DebuggingSettingsPageImpl(
                                 false
                             } else {
                                 addAlbum(
-                                        AlbumInfo(
-                                            id = file.hashCode(),
-                                            name = file.name,
-                                            paths = setOf(file.relativePath)
-                                        )
+                                    AlbumType.Folder(
+                                        id = Uuid.random().toString(),
+                                        name = file.name,
+                                        paths = setOf(file.absolutePath),
+                                        pinned = false,
+                                        immichId = null
+                                    )
                                 )
 
                                 showAddAlbumsDialog = false

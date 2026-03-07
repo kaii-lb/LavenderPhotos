@@ -64,7 +64,7 @@ import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.Screens
@@ -377,13 +377,13 @@ private fun BottomBar(
                                                         absolutePath = absolutePath,
                                                         uri = contentUri.toString(),
                                                         dateTaken = currentTime / 1000,
-                                                        albumInfo = AlbumInfo.Empty
+                                                        album = AlbumType.PlaceHolder
                                                     )
                                                 } else {
                                                     Screens.VideoEditor(
                                                         uri = contentUri.toString(),
                                                         absolutePath = absolutePath,
-                                                        albumInfo = AlbumInfo.Empty
+                                                        album = AlbumType.PlaceHolder
                                                     )
                                                 }
                                             )

@@ -53,9 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.AlbumInfo
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -72,16 +74,16 @@ private const val TAG = "com.kaii.photos.compose.dialogs.AlbumInfoDialog"
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AlbumInfoDialog(
-    albumInfo: () -> AlbumInfo,
-    albums: () -> List<AlbumInfo>,
+    albumInfo: () -> AlbumType,
+    albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
     sheetState: SheetState,
     modifier: Modifier = Modifier,
     itemCount: suspend () -> Int,
     albumSize: suspend () -> String,
     toggleSelectionMode: () -> Unit,
-    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
-    removeAlbum: (id: Int) -> Unit,
+    editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit,
 ) {
     // remove (weird) drag handle ripple
@@ -217,13 +219,13 @@ fun AlbumInfoDialog(
 
 @Composable
 private fun IconContentHorizontal(
-    albumInfo: () -> AlbumInfo,
-    albums: () -> List<AlbumInfo>,
+    albumInfo: () -> AlbumType,
+    albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
-    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
-    removeAlbum: (id: Int) -> Unit,
+    editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
     Row(
@@ -253,13 +255,13 @@ private fun IconContentHorizontal(
 
 @Composable
 private fun IconContentVertical(
-    albumInfo: () -> AlbumInfo,
-    albums: () -> List<AlbumInfo>,
+    albumInfo: () -> AlbumType,
+    albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
-    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
-    removeAlbum: (id: Int) -> Unit,
+    editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
     Column(
@@ -288,13 +290,13 @@ private fun IconContentVertical(
 
 @Composable
 private fun IconContentImpl(
-    albumInfo: () -> AlbumInfo,
-    albums: () -> List<AlbumInfo>,
+    albumInfo: () -> AlbumType,
+    albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
-    editAlbum: (id: Int, newInfo: AlbumInfo) -> Unit,
-    removeAlbum: (id: Int) -> Unit,
+    editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -305,8 +307,8 @@ private fun IconContentImpl(
         onGranted = {
             val album = albumInfo()
             if (fileName != album.name) {
-                if (album.paths.size == 1) {
-                    val basePath = album.mainPath.toBasePath()
+                if (album is AlbumType.Folder && album.paths.size == 1) {
+                    val basePath = album.paths.first().toBasePath()
                     val currentVolumes = MediaStore.getExternalVolumeNames(context)
                     val volumeName =
                         if (basePath == baseInternalStorageDirectory) "primary"
@@ -318,24 +320,24 @@ private fun IconContentImpl(
 
                     renameDirectory(
                         context = context,
-                        absolutePath = album.mainPath,
+                        absolutePath = album.paths.first(),
                         newName = fileName,
                         base = volumeName!!
                     )
 
                     val newInfo = album.copy(
                         name = fileName,
-                        paths = setOf(album.mainPath.replace(album.name, fileName))
+                        paths = setOf(album.paths.first().replace(album.name, fileName))
                     )
 
-                    albums().filter { child ->
-                        child.paths.any { it.startsWith(album.mainPath) }
+                    albums().filterIsInstance<AlbumType.Folder>().filter { child ->
+                        child.paths.any { it.startsWith(album.paths.first()) }
                     }.forEach { child ->
                         editAlbum(
                             child.id,
                             child.copy(
                                 paths = child.paths.map {
-                                    if (it.startsWith(album.mainPath)) it.replace(album.mainPath, newInfo.mainPath)
+                                    if (it.startsWith(album.paths.first())) it.replace(album.paths.first(), newInfo.paths.first())
                                     else it
                                 }.toSet()
                             )
@@ -347,19 +349,24 @@ private fun IconContentImpl(
                     try {
                         context.contentResolver.releasePersistableUriPermission(
                             context.getExternalStorageContentUriFromAbsolutePath(
-                                absolutePath = newInfo.mainPath,
+                                absolutePath = newInfo.paths.first(),
                                 trimDoc = true
                             ),
                             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                         )
                     } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for ${newInfo.mainPath}")
+                        Log.d(TAG, "Couldn't release permission for ${newInfo.paths.first()}")
                         e.printStackTrace()
                     }
                 } else {
                     editAlbum(
                         album.id,
-                        album.copy(name = fileName)
+                        when (album) {
+                            is AlbumType.Folder -> album.copy(name = fileName)
+                            is AlbumType.Custom -> album.copy(name = fileName)
+                            is AlbumType.Cloud -> album.copy(name = fileName)
+                            else -> AlbumType.PlaceHolder
+                        }
                     )
                 }
             }
@@ -374,8 +381,9 @@ private fun IconContentImpl(
             startValue = albumInfo().name.substringBeforeLast("."),
             errorMessage = stringResource(id = R.string.albums_rename_failure),
             onConfirm = { _ ->
+                // TODO: check if this works for custom albums
                 permissionManager.start(
-                    directories = albumInfo().paths
+                    directories = (albumInfo() as? AlbumType.Folder)?.paths ?: emptySet()
                 )
                 true
             },
@@ -400,16 +408,21 @@ private fun IconContentImpl(
         )
     }
 
-    // TODO: check if working
     val isPinned = albums().find {
-        it.equalsIgnoringPinned(albumInfo())
-    }?.isPinned ?: false
+        it.id == albumInfo().id
+    }?.pinned ?: false
 
     IconButton(
         onClick = {
+            val info = albumInfo()
             editAlbum(
-                albumInfo().id,
-                albumInfo().copy(isPinned = !isPinned)
+                info.id,
+                when (info) {
+                    is AlbumType.Folder -> info.copy(pinned = !isPinned)
+                    is AlbumType.Custom -> info.copy(pinned = !isPinned)
+                    is AlbumType.Cloud -> info.copy(pinned = !isPinned)
+                    else -> AlbumType.PlaceHolder
+                }
             )
         },
         modifier = modifier
@@ -449,30 +462,32 @@ private fun IconContentImpl(
         val album = albumInfo()
         removeAlbum(album.id)
 
-        try {
+        if (album is AlbumType.Folder) {
+            try {
+                context.contentResolver.releasePersistableUriPermission(
+                    context.getExternalStorageContentUriFromAbsolutePath(
+                        album.paths.first(),
+                        true
+                    ),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            } catch (e: Throwable) {
+                Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
+                e.printStackTrace()
+            }
+        } else if (album is AlbumType.Custom) {
             // TODO: possible make less messy
             context.appModule.scope.launch(Dispatchers.IO) {
                 MediaDatabase.getInstance(context)
                     .customDao()
                     .deleteAlbum(album = album.id)
             }
-
-            context.contentResolver.releasePersistableUriPermission(
-                context.getExternalStorageContentUriFromAbsolutePath(
-                    album.mainPath,
-                    true
-                ),
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            )
-        } catch (e: Throwable) {
-            Log.d(TAG, "Couldn't release permission for ${album.mainPath}")
-            e.printStackTrace()
         }
 
         navController.popBackStack()
     }
 
-    if (!autoDetectAlbums() || (albumInfo().isCustomAlbum && albumInfo().immichId.isBlank())) {
+    if (!autoDetectAlbums() || (albumInfo() is AlbumType.Custom && albumInfo().immichId == null)) {
         IconButton(
             onClick = {
                 showDeleteDialog.value = true
@@ -490,7 +505,7 @@ private fun IconContentImpl(
 
 @Composable
 private fun InfoContent(
-    albumInfo: () -> AlbumInfo,
+    albumInfo: () -> AlbumType,
     modifier: Modifier = Modifier,
     itemCount: suspend () -> Int,
     albumSize: suspend () -> String
@@ -499,16 +514,18 @@ private fun InfoContent(
         modifier = modifier
             .clip(RoundedCornerShape(32.dp))
     ) {
-        if (!albumInfo().isCustomAlbum) {
+        if (albumInfo() is AlbumType.Folder) {
             item {
                 val context = LocalContext.current
                 val resources = LocalResources.current
 
+                val info = albumInfo() as AlbumType.Folder
+
                 TallDialogInfoRow(
                     title =
-                        if (albumInfo().paths.size > 1) stringResource(id = R.string.albums_paths)
+                        if (info.paths.size > 1) stringResource(id = R.string.albums_paths)
                         else stringResource(id = R.string.albums_path),
-                    info = albumInfo().paths.joinToString(separator = ",") { it },
+                    info = info.paths.joinToString(separator = ",") { it },
                     icon = R.drawable.folder,
                     position = RowPosition.Top,
                     onClick = {
@@ -516,7 +533,7 @@ private fun InfoContent(
                             context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clipData = ClipData.newPlainText(
                             resources.getString(R.string.albums_path),
-                            albumInfo().paths.joinToString(separator = ",") { it }
+                            info.paths.joinToString(separator = ",") { it }
                         )
                         clipboardManager.setPrimaryClip(clipData)
                     }
@@ -556,7 +573,7 @@ private fun InfoContent(
 
             TallDialogInfoRow(
                 title = stringResource(id = R.string.immich_uuid),
-                info = albumInfo().immichId.takeIf { albumInfo().immichId.isNotBlank() } ?: stringResource(id = R.string.albums_immich_not_backed_up),
+                info = albumInfo().immichId ?: stringResource(id = R.string.albums_immich_not_backed_up),
                 icon = R.drawable.cloud_upload,
                 position = RowPosition.Middle,
                 onClick = {

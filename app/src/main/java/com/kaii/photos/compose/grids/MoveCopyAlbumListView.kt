@@ -66,6 +66,7 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
@@ -91,7 +92,7 @@ fun MoveCopyAlbumListView(
     clear: () -> Unit
 ) {
     val albumGridState = rememberAlbumGridState()
-    val originalAlbumsList by albumGridState.albums.collectAsStateWithLifecycle()
+    val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
@@ -103,7 +104,7 @@ fun MoveCopyAlbumListView(
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
         albumsList = originalAlbumsList.filter {
-            it.info.name.contains(searchedForText.value, true)
+            it.name.contains(searchedForText.value, true)
         }
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
@@ -183,7 +184,7 @@ fun MoveCopyAlbumListView(
                     items(
                         count = albumsList.size,
                         key = {
-                            albumsList[it].info.id
+                            albumsList[it].id
                         }
                     ) { index ->
                         AlbumsListItem(
@@ -214,7 +215,7 @@ fun MoveCopyAlbumListView(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumsListItem(
-    album: AlbumGridState.Album,
+    album: AlbumGridState.Album.Single,
     position: RowPosition,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
@@ -232,17 +233,20 @@ fun AlbumsListItem(
             show.value = false
 
             context.appModule.scope.launch(Dispatchers.IO) {
-                if (isMoving && album.info.paths.size == 1) {
+                if (isMoving
+                    && album.info.album is AlbumType.Folder
+                    && album.info.album.paths.size == 1
+                ) {
                     moveImageListToPath(
                         context = context,
                         list = selectedItemsList,
-                        destination = album.info.mainPath,
+                        destination = album.info.album.paths.first(),
                         preserveDate = preserveDate
                     )
-                } else {
+                } else if (album.info.album is AlbumType.Folder) {
                     val list = mutableListOf<MediaStoreData>()
 
-                    album.info.paths.forEach { path ->
+                    album.info.album.paths.forEach { path ->
                         copyImageListToPath(
                             context = context,
                             list = selectedItemsList,
@@ -283,9 +287,9 @@ fun AlbumsListItem(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
-                if (!album.info.isCustomAlbum) {
+                if (album.info.album is AlbumType.Folder) {
                     dirPermissionManager.start(
-                        directories = album.info.paths
+                        directories = album.info.album.paths
                     )
                 } else {
                     show.value = false
@@ -298,7 +302,7 @@ fun AlbumsListItem(
                                 items = selectedItemsList.fastMap {
                                     CustomItem(
                                         id = it.id,
-                                        album = album.info.id
+                                        album = album.id
                                     )
                                 }
                             )
@@ -313,22 +317,22 @@ fun AlbumsListItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         GlideImage(
-            model = album.thumbnail,
-            contentDescription = album.info.name,
+            model = album.info.thumbnail.uri,
+            contentDescription = album.name,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
                 .size(64.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            it.signature(album.signature)
+            it.signature(album.info.thumbnail.signature)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Text(
-            text = album.info.name,
+            text = album.name,
             fontSize = TextUnit(16f, TextUnitType.Sp),
             textAlign = TextAlign.Start,
             color = MaterialTheme.colorScheme.onSurface,
@@ -336,7 +340,7 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if (album.info.isCustomAlbum) {
+        if (album.info.album !is AlbumType.Folder) { // TODO: introduce icon for immich
             Icon(
                 painter = painterResource(id = R.drawable.art_track),
                 contentDescription = stringResource(id = R.string.albums_is_custom),
