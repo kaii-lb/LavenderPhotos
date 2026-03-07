@@ -408,7 +408,6 @@ private fun IconContentImpl(
         )
     }
 
-    // TODO: check if working
     val isPinned = albums().find {
         it.id == albumInfo().id
     }?.pinned ?: false

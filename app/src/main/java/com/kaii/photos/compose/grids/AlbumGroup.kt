@@ -16,15 +16,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.AlbumGroupInfoDialog
 import com.kaii.photos.compose.widgets.albums.AlbumGridItem
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumGroup
@@ -45,6 +49,8 @@ import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.models.album_group.AlbumGroupViewModel
 import com.kaii.photos.models.album_group.AlbumGroupViewModelFactory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +69,33 @@ fun AlbumGroup(
 
     LaunchedEffect(groups) {
         group = groups.find { it.id == id }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
+    var showInfoDialog by remember { mutableStateOf(false) }
+
+    if (showInfoDialog) {
+        AlbumGroupInfoDialog(
+            sheetState = sheetState,
+            group = { group!! },
+            groups = { groups },
+            editGroup = viewModel::editGroup,
+            deleteGroup = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    viewModel.deleteGroup(it)
+                    navController.popBackStack()
+                    showInfoDialog = false
+                }
+            },
+            onDismiss = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    showInfoDialog = false
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -96,6 +129,23 @@ fun AlbumGroup(
                         modifier = Modifier
                             .width(160.dp)
                     )
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                showInfoDialog = true
+                                delay(50)
+                                sheetState.expand()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.settings),
+                            contentDescription = stringResource(id = R.string.album_group_info),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             )
         }

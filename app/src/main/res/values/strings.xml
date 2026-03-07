@@ -1258,5 +1258,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="album_group">Album Group</string>
     <string name="album_group_desc">Organize your albums</string>
     <string name="album_group_name">Group name</string>
-    <string name="album_group_name_error">Name cannot be empty</string>
+    <string name="album_group_name_error">Name is invalid!</string>
+    <string name="album_group_dialog_name">Name:</string>
+    <string name="album_group_delete">Delete this group?</string>
+    <string name="album_group_item_count">Sub-albums:</string>
+    <string name="album_group_info">Album group info</string>
 </resources>

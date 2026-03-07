@@ -74,10 +74,7 @@ fun AlbumGlideImage(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        if (albumInfo.thumbnail.uri.isEmpty()) MaterialTheme.colorScheme.surfaceContainerLowest
-                        else MaterialTheme.colorScheme.primary
-                    ),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             ) {
                 it.signature(albumInfo.thumbnail.signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
