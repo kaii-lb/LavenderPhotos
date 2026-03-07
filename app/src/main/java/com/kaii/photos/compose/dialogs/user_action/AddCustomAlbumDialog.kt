@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.AlbumType
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

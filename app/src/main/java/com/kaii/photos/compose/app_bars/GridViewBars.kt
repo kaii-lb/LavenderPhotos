@@ -40,10 +40,10 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
-import com.kaii.photos.compose.dialogs.AlbumPathsDialog
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.dialogs.user_action.AlbumPathsDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType

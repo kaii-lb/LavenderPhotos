@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
 import com.kaii.photos.compose.widgets.ExpressiveDialogRowWithAction
 import com.kaii.photos.compose.widgets.MainDialogUserInfo

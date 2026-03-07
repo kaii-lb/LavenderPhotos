@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.AnnotatedExplanationDialog
+import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants

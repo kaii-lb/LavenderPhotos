@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.TextEntryDialog
 import com.kaii.photos.datastore.AlbumGroup
 
 @Composable

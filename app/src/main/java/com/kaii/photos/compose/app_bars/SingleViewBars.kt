@@ -108,8 +108,8 @@ import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.WallpaperTypeDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.WallpaperTypeDialog
 import com.kaii.photos.compose.editing_view.EditorApp
 import com.kaii.photos.compose.editing_view.SharedEditorCropContent
 import com.kaii.photos.compose.editing_view.SharedEditorDrawContent

@@ -66,7 +66,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.VideoEditorTopBar
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage

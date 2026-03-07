@@ -39,7 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.AnimationConstants

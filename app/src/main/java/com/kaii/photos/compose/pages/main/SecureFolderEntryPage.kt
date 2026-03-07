@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.kaii.lavender.snackbars.LavenderSnackbarController
 import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.ExplanationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
+import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.appRestoredFilesDir

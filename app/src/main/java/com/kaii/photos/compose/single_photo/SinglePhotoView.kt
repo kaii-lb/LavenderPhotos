@@ -65,9 +65,9 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData

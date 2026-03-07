@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType

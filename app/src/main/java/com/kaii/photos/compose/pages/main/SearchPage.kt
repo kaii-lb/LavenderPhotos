@@ -24,7 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.PhotoGrid
 import com.kaii.photos.compose.widgets.SearchTextField
 import com.kaii.photos.database.entities.Tag

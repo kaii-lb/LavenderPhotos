@@ -38,7 +38,7 @@ import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
-import com.kaii.photos.compose.dialogs.TextEntryDialog
+import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText

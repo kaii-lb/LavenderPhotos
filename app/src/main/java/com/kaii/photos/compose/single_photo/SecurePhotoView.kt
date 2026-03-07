@@ -77,10 +77,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.ConfirmationDialog
-import com.kaii.photos.compose.dialogs.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
