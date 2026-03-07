@@ -39,8 +39,8 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.SecureFolderViewBottomAppBar
-import com.kaii.photos.compose.app_bars.SecureFolderViewTopAppBar
+import com.kaii.photos.compose.app_bars.se.SecureFolderViewBottomAppBar
+import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule

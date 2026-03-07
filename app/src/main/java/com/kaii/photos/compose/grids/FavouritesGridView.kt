@@ -36,8 +36,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.FavouritesViewBottomAppBar
-import com.kaii.photos.compose.app_bars.FavouritesViewTopAppBar
+import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewBottomAppBar
+import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewTopAppBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.AlbumType

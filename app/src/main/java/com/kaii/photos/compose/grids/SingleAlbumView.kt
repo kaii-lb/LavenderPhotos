@@ -38,8 +38,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.app_bars.SingleAlbumViewBottomBar
-import com.kaii.photos.compose.app_bars.SingleAlbumViewTopBar
+import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewBottomBar
+import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager

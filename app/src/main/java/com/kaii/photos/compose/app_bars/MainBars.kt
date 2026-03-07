@@ -73,6 +73,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
+import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesBottomAppBarItems
+import com.kaii.photos.compose.app_bars.trash_grid.TrashPhotoGridBottomBarItems
 import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.dialogs.user_action.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
