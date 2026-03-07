@@ -59,6 +59,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val settings = LocalContext.current.appModule.settings
+    val navController = LocalNavController.current
 
     val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
     val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
@@ -87,7 +88,8 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
         setSortMode = settings.photoGrid::setSortMode,
         setCheckUpdatesOnStartup = settings.versions::setCheckUpdatesOnStartup,
         setTabList = settings.defaultTabs::setTabList,
-        setDefaultTab = settings.defaultTabs::setDefaultTab
+        setDefaultTab = settings.defaultTabs::setDefaultTab,
+        popBack = { navController.popBackStack() }
     )
 }
 
@@ -112,7 +114,8 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
         setSortMode = {},
         setCheckUpdatesOnStartup = {},
         setTabList = {},
-        setDefaultTab = {}
+        setDefaultTab = {},
+        popBack = {}
     )
 }
 
@@ -135,11 +138,12 @@ private fun GeneralSettingsPageImpl(
     setSortMode: (mode: MediaItemSortMode) -> Unit,
     setCheckUpdatesOnStartup: (value: Boolean) -> Unit,
     setTabList: (list: List<BottomBarTab>) -> Unit,
-    setDefaultTab: (tab: BottomBarTab) -> Unit
+    setDefaultTab: (tab: BottomBarTab) -> Unit,
+    popBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
-            GeneralSettingsTopBar()
+            GeneralSettingsTopBar(popBack = popBack)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -364,7 +368,12 @@ private fun GeneralSettingsPageImpl(
                 if (showDialog) {
                     TabCustomizationDialog(
                         tabList = tabList,
-                        setTabList = setTabList,
+                        setTabList = { newList ->
+                            setTabList(newList)
+                            if (defaultTab !in newList) {
+                                setDefaultTab(newList.first())
+                            }
+                        },
                         closeDialog = {
                             showDialog = false
                         }
@@ -405,9 +414,9 @@ private fun GeneralSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GeneralSettingsTopBar() {
-    val navController = LocalNavController.current
-
+private fun GeneralSettingsTopBar(
+    popBack: () -> Unit
+) {
     TopAppBar(
         title = {
             Text(
@@ -417,9 +426,7 @@ private fun GeneralSettingsTopBar() {
         },
         navigationIcon = {
             IconButton(
-                onClick = {
-                    navController.popBackStack()
-                },
+                onClick = popBack,
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.back_arrow),

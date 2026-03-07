@@ -99,7 +99,7 @@ fun MainPages(
     val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
-        initialPage = tabList.indexOf(defaultTab)
+        initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
     ) { tabList.size }
 
     val coroutineScope = rememberCoroutineScope()

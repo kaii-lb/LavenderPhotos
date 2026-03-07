@@ -22,32 +22,30 @@ class MainGridViewModel(
     context: Context
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
-    private var initialMainPhotosPaths = emptySet<String>()
-
-
-    init {
-        runBlocking {
-            initialMainPhotosPaths = getMainPhotosAlbums().first()
-        }
-    }
 
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = initialMainPhotosPaths
+            initialValue = runBlocking {
+                getMainPhotosAlbums().first()
+            }
         )
 
     val defaultTab = settings.defaultTabs.getDefaultTab().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = settings.defaultTabs.defaultTabItem
+        initialValue = runBlocking {
+            settings.defaultTabs.getDefaultTab().first()
+        }
     )
 
     val tabList = settings.defaultTabs.getTabList().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = settings.defaultTabs.defaultTabList
+        initialValue = runBlocking {
+            settings.defaultTabs.getTabList().first()
+        }
     )
 
     val exitImmediately = settings.behaviour.getExitImmediately().stateIn(

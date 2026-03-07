@@ -135,15 +135,15 @@ class MainActivity : ComponentActivity() {
         val startupManager = StartupManager(context = applicationContext)
         runBlocking { startupManager.checkState() }
 
-        val initialFollowDarkTheme = runBlocking {
-            settings.lookAndFeel.getFollowDarkMode().first()
-        }
-
         setContent {
             val startupState by startupManager.state.collectAsStateWithLifecycle()
 
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(initialValue = initialFollowDarkTheme)
+                .collectAsStateWithLifecycle(
+                    initialValue = runBlocking {
+                        settings.lookAndFeel.getFollowDarkMode().first()
+                    }
+                )
 
             PhotosTheme(
                 theme = followDarkTheme,
