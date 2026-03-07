@@ -112,7 +112,7 @@ fun SecureFolderEntryPage() {
     )
 
     LaunchedEffect(Unit) {
-        if (secureFolderManager.needsMigrationFromOld || secureFolderManager.needsMigrationFromUnencrypted()) {
+        if (secureFolderManager.needsMigrationFromOld() || secureFolderManager.needsMigrationFromUnencrypted()) {
             showExplanationForMigration = true
         }
     }
@@ -132,7 +132,7 @@ fun SecureFolderEntryPage() {
             explanation = stringResource(id = R.string.secure_migrating_notice_desc)
         ) {
             context.appModule.scope.launch {
-                if (secureFolderManager.needsMigrationFromOld) {
+                if (secureFolderManager.needsMigrationFromOld()) {
                     migrateOldDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))
                 } else {
                     migrateUnencryptedDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))

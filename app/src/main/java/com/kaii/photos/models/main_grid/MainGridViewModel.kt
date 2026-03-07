@@ -9,6 +9,7 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -27,7 +28,7 @@ class MainGridViewModel(
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = runBlocking {
+            initialValue = runBlocking(Dispatchers.IO) {
                 getMainPhotosAlbums().first()
             }
         )
@@ -35,7 +36,7 @@ class MainGridViewModel(
     val defaultTab = settings.defaultTabs.getDefaultTab().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = runBlocking {
+        initialValue = runBlocking(Dispatchers.IO) {
             settings.defaultTabs.getDefaultTab().first()
         }
     )
@@ -43,7 +44,7 @@ class MainGridViewModel(
     val tabList = settings.defaultTabs.getTabList().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = runBlocking {
+        initialValue = runBlocking(Dispatchers.IO) {
             settings.defaultTabs.getTabList().first()
         }
     )

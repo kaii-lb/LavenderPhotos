@@ -15,10 +15,8 @@ import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.repositories.SearchRepository
 import com.kaii.photos.repositories.TagRepository
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class SearchViewModel(
     context: Context
@@ -115,18 +113,14 @@ class SearchViewModel(
         initialValue = true
     )
 
-    private val initialSortMode = runBlocking { sortMode.first() }
-    private val initialFormat = runBlocking { displayDateFormat.first() }
-    private val initialInfo = runBlocking { immichInfo.first() }
-
     private val searchManager = SearchManager(
         searchRepo = SearchRepository(
             searchDao = MediaDatabase.getInstance(context.applicationContext).searchDao(),
             taggedItemsDao = MediaDatabase.getInstance(context.applicationContext).taggedItemsDao(),
             scope = viewModelScope,
-            info = initialInfo,
-            sortMode = initialSortMode,
-            format = initialFormat
+            info = ImmichBasicInfo.Empty,
+            sortMode = MediaItemSortMode.DateTaken,
+            format = DisplayDateFormat.Default
         ),
         tagRepo = TagRepository(
             dao = MediaDatabase.getInstance(context.applicationContext).tagDao()

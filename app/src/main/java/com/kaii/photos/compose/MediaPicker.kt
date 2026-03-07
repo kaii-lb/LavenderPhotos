@@ -81,6 +81,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
@@ -97,7 +98,7 @@ class MediaPicker : ComponentActivity() {
         val settings = applicationContext.appModule.settings
 
         setContent {
-            val initialFollowDarkTheme = runBlocking {
+            val initialFollowDarkTheme = runBlocking(Dispatchers.IO) {
                 settings.lookAndFeel.getFollowDarkMode().first()
             }
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()

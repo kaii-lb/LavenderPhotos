@@ -46,8 +46,12 @@ class SecureFolderMigrationManager(
     var uris = emptyList<Uri>()
         private set
 
-    val needsMigrationFromOld: Boolean
-        get() = context.getDir(AppDirectories.OldSecureFolder.path, Context.MODE_PRIVATE).listFiles()?.isNotEmpty() == true
+    suspend fun needsMigrationFromOld() = withContext(Dispatchers.IO) {
+        return@withContext context.getDir(
+            AppDirectories.OldSecureFolder.path,
+            Context.MODE_PRIVATE
+        ).listFiles()?.isNotEmpty() == true
+    }
 
     suspend fun needsMigrationFromUnencrypted() = withContext(Dispatchers.IO) {
         File(context.appSecureFolderDir)

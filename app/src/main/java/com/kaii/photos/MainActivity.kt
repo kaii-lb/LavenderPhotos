@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -27,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -41,9 +41,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
@@ -75,8 +72,6 @@ import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
-import com.kaii.photos.database.sync.SyncManager
-import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -84,8 +79,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.appStorageDir
-import com.kaii.photos.helpers.rememberUpdater
+import com.kaii.photos.helpers.Updater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
@@ -109,11 +103,11 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
-
-private const val TAG = "com.kaii.photos.MainActivity"
 
 val LocalNavController = compositionLocalOf<NavHostController> {
     throw IllegalStateException("CompositionLocal LocalNavController not present")
@@ -140,7 +134,7 @@ class MainActivity : ComponentActivity() {
 
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
-                    initialValue = runBlocking {
+                    initialValue = runBlocking(Dispatchers.IO) {
                         settings.lookAndFeel.getFollowDarkMode().first()
                     }
                 )
@@ -175,11 +169,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val hasClearedCache by settings.versions.getHasClearedGlideCache().collectAsStateWithLifecycle(initialValue = true)
-            LaunchedEffect(hasClearedCache) {
-                if (!hasClearedCache) {
-                    settings.storage.clearThumbnailCache()
-                    settings.versions.setHasClearedGlideCache(true)
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
+                    val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
+                    if (!hasClearedCache) {
+                        settings.storage.clearThumbnailCache()
+                        settings.versions.setHasClearedGlideCache(true)
+                    }
                 }
             }
         }
@@ -194,18 +190,26 @@ class MainActivity : ComponentActivity() {
     ) {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-        // TODO: remove from here
         val context = LocalContext.current
-        val logPath = "${context.appStorageDir}/log.txt"
-        Log.d(TAG, "Log save path is $logPath")
+        val navController = LocalNavController.current
+        val coroutineScope = rememberCoroutineScope()
 
-        val canRecordLogs by settings.debugging.getRecordLogs()
-            .collectAsStateWithLifecycle(initialValue = false)
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                val canRecordLogs = settings.debugging.getRecordLogs().first()
+                if (canRecordLogs) {
+                    val logManager = LogManager(context = context)
+                    logManager.startRecording()
+                }
 
-        LaunchedEffect(canRecordLogs) {
-            if (canRecordLogs) {
-                val logManager = LogManager(context = context)
-                logManager.startRecording()
+                val checkForUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().first()
+                if (checkForUpdatesOnStartup) {
+                    val updater = Updater(
+                        context = context,
+                        coroutineScope = coroutineScope
+                    )
+                    updater.startupUpdateCheck(navController)
+                }
             }
         }
 
@@ -227,7 +231,6 @@ class MainActivity : ComponentActivity() {
         val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
         val snackbarHostState = remember { LavenderSnackbarHostState() }
 
-        val navController = LocalNavController.current
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
                 navController = navController,
@@ -765,33 +768,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // TODO: remove from here?
-        val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup()
-            .collectAsStateWithLifecycle(initialValue = false)
-
-        if (checkForUpdatesOnStartup) {
-            val updater = rememberUpdater()
-            LaunchedEffect(Unit) {
-                updater.startupUpdateCheck(navController)
-            }
-        }
-
         ReportDrawn()
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        if (SyncManager(applicationContext).getGeneration() > 0L) {
-            // run work manager immediately after user navigates back to app
-            WorkManager.getInstance(applicationContext)
-                .enqueueUniqueWork(
-                    SyncWorker::class.java.name,
-                    ExistingWorkPolicy.REPLACE,
-                    OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                )
-        }
-    }
+    // override fun onResume() {
+    //     super.onResume()
+    //
+    //     appModule.scope.launch(Dispatchers.IO) {
+    //         if (SyncManager(applicationContext).getGeneration() > 0L) {
+    //             // run work manager immediately after user navigates back to app
+    //             WorkManager.getInstance(applicationContext)
+    //                 .enqueueUniqueWork(
+    //                     SyncWorker::class.java.name,
+    //                     ExistingWorkPolicy.REPLACE,
+    //                     OneTimeWorkRequest.Builder(SyncWorker::class).build()
+    //                 )
+    //         }
+    //     }
+    // }
 }
 
 fun setupNextScreen(window: Window) {

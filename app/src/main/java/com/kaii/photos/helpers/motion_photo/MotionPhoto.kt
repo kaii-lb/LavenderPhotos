@@ -70,6 +70,8 @@ class MotionPhoto(
 
                 return xml.decodeFromString(serializer, xmpData)
             }
+
+            inputStream.close()
         } catch (_: XmlParsingException) {}
         catch (e: FileNotFoundException) {
             Log.d(TAG, e.message.toString())

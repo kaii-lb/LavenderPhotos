@@ -92,8 +92,10 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,11 +149,13 @@ fun MainAppTopBar(
     }
 
     LaunchedEffect(immichInfo) {
-        loginState.refresh(
-            accessToken = immichInfo.accessToken,
-            pfpSavePath = context.profilePicture,
-            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-        )
+        withContext(Dispatchers.IO) {
+            loginState.refresh(
+                accessToken = immichInfo.accessToken,
+                pfpSavePath = context.profilePicture,
+                previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
+            )
+        }
     }
 
     DualFunctionTopAppBar(
