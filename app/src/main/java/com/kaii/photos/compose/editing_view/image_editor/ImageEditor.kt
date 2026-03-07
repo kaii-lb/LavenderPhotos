@@ -79,8 +79,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.ImageEditorBottomBar
-import com.kaii.photos.compose.app_bars.ImageEditorTopBar
+import com.kaii.photos.compose.app_bars.image_editor.ImageEditorBottomBar
+import com.kaii.photos.compose.app_bars.image_editor.ImageEditorTopBar
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.ImageFilterPage

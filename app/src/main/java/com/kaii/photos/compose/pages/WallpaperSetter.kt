@@ -46,9 +46,9 @@ import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.kaii.photos.compose.app_bars.WallpaperSetterBottomBar
-import com.kaii.photos.compose.app_bars.WallpaperSetterTopBar
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
+import com.kaii.photos.compose.app_bars.wallpaper_setter.WallpaperSetterBottomBar
+import com.kaii.photos.compose.app_bars.wallpaper_setter.WallpaperSetterTopBar
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.ui.theme.PhotosTheme

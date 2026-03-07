@@ -76,7 +76,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.SingleViewTopBar
+import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
