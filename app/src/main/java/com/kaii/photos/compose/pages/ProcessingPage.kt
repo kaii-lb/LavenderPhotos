@@ -102,7 +102,7 @@ fun ProcessingPage(startupManager: StartupManager) {
             startupManager.checkState()
 
             navController.navigate(Screens.MainPages) {
-                popUpTo<Screens.Startup.ProcessingPage> {
+                popUpTo(route = Screens.Startup.ProcessingPage::class) {
                     inclusive = true
                 }
             }
@@ -187,9 +187,11 @@ fun ProcessingPage(startupManager: StartupManager) {
                         onClick = {
                             startupManager.skipIndexing()
                             if (startupManager.state == StartupManager.State.Successful) {
-                                navController.navigate(
-                                    route = Screens.Startup.ProcessingPage
-                                )
+                                navController.navigate(Screens.MainPages) {
+                                    popUpTo(route = Screens.Startup.ProcessingPage::class) {
+                                        inclusive = true
+                                    }
+                                }
                             }
                         },
                         weight = 0.65f,

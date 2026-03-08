@@ -45,12 +45,6 @@ class FirstTimeSyncWorker(
                 context = context,
                 onProgress = { size ->
                     progress.set(progress.get() + size)
-                    setProgressAsync(
-                        workDataOf(
-                            PROGRESS to progress.get().toFloat() / added.size,
-                            COUNT to added.size
-                        )
-                    )
                 },
                 onLoadChunk = { chunk ->
                     setProgressAsync(
@@ -75,12 +69,14 @@ class FirstTimeSyncWorker(
             "First Time Sync Worker has finished running. Out of ${mediaStoreIds.size} items there was ${added.size} inserted and ${removed.size} removed. Total time was ${endTime - startTime}"
         )
 
-        setProgress(
-            workDataOf(
-                PROGRESS to 1f,
-                COUNT to added.size
+        repeat(5) {
+            setProgress(
+                workDataOf(
+                    PROGRESS to 1f,
+                    COUNT to added.size
+                )
             )
-        )
+        }
 
         return Result.success(
             workDataOf(

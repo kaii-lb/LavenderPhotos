@@ -402,9 +402,11 @@ fun PermissionHandler(
                                 viewModel.launch {
                                     startupManager.checkState()
                                     if (startupManager.state != StartupManager.State.MissingPermissions) {
-                                        navController.navigate(
-                                            route = Screens.Startup.ProcessingPage
-                                        )
+                                        navController.navigate(Screens.Startup.ProcessingPage) {
+                                            popUpTo(route = Screens.Startup.PermissionsPage::class) {
+                                                inclusive = true
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -434,9 +436,11 @@ fun PermissionHandler(
                                 startupManager.checkState()
 
                                 if (startupManager.state != StartupManager.State.MissingPermissions) {
-                                    navController.navigate(
-                                        route = Screens.Startup.ProcessingPage
-                                    )
+                                    navController.navigate(Screens.Startup.ProcessingPage) {
+                                        popUpTo(route = Screens.Startup.PermissionsPage::class) {
+                                            inclusive = true
+                                        }
+                                    }
                                 }
                             }
                         },
