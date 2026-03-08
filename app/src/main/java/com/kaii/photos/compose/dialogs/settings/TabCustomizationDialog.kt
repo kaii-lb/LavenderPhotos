@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TabCustomizationDialog(
-    tabList: List<BottomBarTab>,
+    tabList: () -> List<BottomBarTab>,
     setTabList: (list: List<BottomBarTab>) -> Unit,
     closeDialog: () -> Unit
 ) {
@@ -57,14 +57,14 @@ fun TabCustomizationDialog(
             DefaultTabs.defaultList.forEach { tab ->
                 InfoRow(
                     text = tab.name,
-                    iconResId = if (tab in tabList) R.drawable.delete else R.drawable.add,
-                    opacity = if (tab in tabList) 1f else 0.5f
+                    iconResId = if (tab in tabList()) R.drawable.delete else R.drawable.add,
+                    opacity = if (tab in tabList()) 1f else 0.5f
                 ) {
                     setTabList(
-                        tabList.toMutableList().apply {
-                            if (tab in tabList && tabList.size > 1) {
+                        tabList().toMutableList().apply {
+                            if (tab in tabList() && tabList().size > 1) {
                                 remove(tab)
-                            } else if (tab in tabList) {
+                            } else if (tab in tabList()) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
@@ -76,9 +76,9 @@ fun TabCustomizationDialog(
                                 }
                             }
 
-                            if (tab !in tabList && tabList.size < 16) {
+                            if (tab !in tabList() && tabList().size < 16) {
                                 add(tab)
-                            } else if (tab !in tabList) {
+                            } else if (tab !in tabList()) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
                                         LavenderSnackbarEvents.MessageEvent(
@@ -94,15 +94,15 @@ fun TabCustomizationDialog(
                 }
             }
 
-            tabList.forEach { tab ->
+            tabList().forEach { tab ->
                 if (tab !in DefaultTabs.defaultList) {
                     InfoRow(
                         text = tab.name,
                         iconResId = R.drawable.delete
                     ) {
-                        if (tabList.size > 1) {
+                        if (tabList().size > 1) {
                             setTabList(
-                                tabList.toMutableList().apply {
+                                tabList().toMutableList().apply {
                                     remove(tab)
                                 }
                             )
@@ -144,7 +144,7 @@ fun TabCustomizationDialog(
             position = RowPosition.Single,
             textColor = MaterialTheme.colorScheme.onPrimary
         ) {
-            if (tabList.size < 8) {
+            if (tabList().size < 8) {
                 showDialog = true
             } else {
                 coroutineScope.launch {

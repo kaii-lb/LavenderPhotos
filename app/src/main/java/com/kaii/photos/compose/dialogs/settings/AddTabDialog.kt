@@ -77,7 +77,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AddTabDialog(
-    tabList: List<BottomBarTab>,
+    tabList: () -> List<BottomBarTab>,
     setTabList: (list: List<BottomBarTab>) -> Unit,
     dismissDialog: () -> Unit
 ) {
@@ -397,16 +397,16 @@ fun AddTabDialog(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            if (tabList.size < 8) {
+            if (tabList().size < 8) {
                 if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
                     setTabList(
-                        tabList.toMutableList().apply {
+                        tabList().toMutableList().apply {
                             add(
                                 BottomBarTab(
                                     name = tabName,
                                     albumPaths = selectedAlbums.toSet(),
                                     icon = selectedItem!!,
-                                    id = tabList.size,
+                                    id = tabList().size,
                                     isCustom = true
                                 )
                             )

@@ -20,7 +20,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode.Companion.prese
 
 @Composable
 fun SortModeSelectorDialog(
-    currentSortMode: MediaItemSortMode,
+    currentSortMode: () -> MediaItemSortMode,
     setSortMode: (mode: MediaItemSortMode) -> Unit,
     dismiss: () -> Unit
 ) {
@@ -29,7 +29,7 @@ fun SortModeSelectorDialog(
             dismiss()
         }
 
-        var chosenSortMode by remember { mutableStateOf(currentSortMode) }
+        var chosenSortMode by remember { mutableStateOf(currentSortMode()) }
         val sortModes = remember {
             // ignore "Disabled" and "DisabledLastModified", handled by toggle switch
             MediaItemSortMode.entries.filter { it != MediaItemSortMode.Disabled && it != MediaItemSortMode.DisabledLastModified }
