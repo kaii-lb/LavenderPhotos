@@ -76,7 +76,7 @@ fun ProcessingPage(startupManager: StartupManager) {
     val animatedCount by animateIntAsState(
         targetValue = (itemCount * currentProgress).roundToInt(),
         animationSpec = AnimationConstants.expressiveTween(
-            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2
+            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG*1
         )
     )
 
@@ -96,8 +96,8 @@ fun ProcessingPage(startupManager: StartupManager) {
     }
 
     val navController = LocalNavController.current
-    LaunchedEffect(currentProgress) {
-        if (currentProgress >= 1f) {
+    LaunchedEffect(animatedFill >= 1f) {
+        if (animatedFill >= 1f) {
             delay(2.seconds)
             startupManager.checkState()
 

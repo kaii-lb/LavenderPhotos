@@ -58,18 +58,21 @@ fun StartupLoadingPage(
     }
 
     Box {
-        MainGridView(
-            viewModel = multiAlbumViewModel,
-            album = album,
-            selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
-            isMediaPicker = false,
-            columnSize = 3,
-            openVideosExternally = false,
-            cacheThumbnails = true,
-            thumbnailSize = 256,
-            useRoundedCorners = false,
+        Box(
             modifier = Modifier.blur(64.dp)
-        )
+        ) {
+            MainGridView(
+                viewModel = multiAlbumViewModel,
+                album = album,
+                selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
+                isMediaPicker = false,
+                columnSize = 3,
+                openVideosExternally = false,
+                cacheThumbnails = true,
+                thumbnailSize = 256,
+                useRoundedCorners = false,
+            )
+        }
 
         ProcessingPage(startupManager = startupManager)
     }
