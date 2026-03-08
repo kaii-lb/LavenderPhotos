@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -48,7 +49,7 @@ class StartupManager(
             )
         }
 
-    private val permissionQueue = mutableListOf<String>()
+    private val permissionQueue = mutableStateListOf<String>()
 
     var state = State.MissingPermissions
         private set

@@ -186,6 +186,11 @@ fun ProcessingPage(startupManager: StartupManager) {
                     clickableItem(
                         onClick = {
                             startupManager.skipIndexing()
+                            if (startupManager.state == StartupManager.State.Successful) {
+                                navController.navigate(
+                                    route = Screens.Startup.ProcessingPage
+                                )
+                            }
                         },
                         weight = 0.65f,
                         label = skipLabel
