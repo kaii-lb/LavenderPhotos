@@ -47,8 +47,8 @@ fun MemoryAndStorageSettingsPage(modifier: Modifier = Modifier) {
     val cacheThumbnails by settings.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
 
     MemoryAndStorageSettingsPageImpl(
-        thumbnailSize = thumbnailSize,
-        cacheThumbnails = cacheThumbnails,
+        thumbnailSize = { thumbnailSize },
+        cacheThumbnails = { cacheThumbnails },
         modifier = modifier,
         setCacheThumbnails = settings::setCacheThumbnails,
         setThumbnailSize = settings::setThumbnailSize,
@@ -58,8 +58,8 @@ fun MemoryAndStorageSettingsPage(modifier: Modifier = Modifier) {
 
 @Composable
 private fun MemoryAndStorageSettingsPageImpl(
-    thumbnailSize: Int,
-    cacheThumbnails: Boolean,
+    thumbnailSize: () -> Int,
+    cacheThumbnails: () -> Boolean,
     modifier: Modifier,
     setCacheThumbnails: (value: Boolean) -> Unit,
     setThumbnailSize: (value: Int) -> Unit,
@@ -88,17 +88,17 @@ private fun MemoryAndStorageSettingsPageImpl(
 
                 val memoryOrStorage by remember {
                     derivedStateOf {
-                        if (cacheThumbnails) resources.getString(R.string.settings_storage)
+                        if (cacheThumbnails()) resources.getString(R.string.settings_storage)
                             .lowercase() else resources.getString(R.string.settings_memory)
                             .lowercase()
                     }
                 }
                 val summary by remember {
                     derivedStateOf {
-                        if (thumbnailSize != 0) {
+                        if (thumbnailSize() != 0) {
                             resources.getString(
                                 R.string.settings_storage_thumbnails_size,
-                                "${thumbnailSize}x${thumbnailSize}",
+                                "${thumbnailSize()}x${thumbnailSize()}",
                                 memoryOrStorage
                             )
                         } else {
@@ -116,7 +116,7 @@ private fun MemoryAndStorageSettingsPageImpl(
                     summary = stringResource(id = R.string.settings_storage_thumbnails_cache_desc),
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = cacheThumbnails,
+                    checked = cacheThumbnails(),
                     onSwitchClick = setCacheThumbnails
                 )
 
@@ -126,7 +126,7 @@ private fun MemoryAndStorageSettingsPageImpl(
                     summary = summary,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = thumbnailSize != 0,
+                    checked = thumbnailSize() != 0,
                     onSwitchClick = { isChecked ->
                         setThumbnailSize(
                             if (isChecked) 256 else 0
@@ -140,7 +140,7 @@ private fun MemoryAndStorageSettingsPageImpl(
                 if (showThumbnailSizeDialog.value) {
                     ThumbnailSizeDialog(
                         showDialog = showThumbnailSizeDialog,
-                        initialValue = thumbnailSize,
+                        initialValue = thumbnailSize(),
                         setThumbnailSize = setThumbnailSize
                     )
                 }
