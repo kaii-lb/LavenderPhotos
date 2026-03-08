@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
@@ -298,12 +297,11 @@ class SelectionManager(
 
 @Composable
 fun rememberSelectionManager(
-    paths: Set<String>
+    paths: () -> Set<String>
 ): SelectionManager {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val set by rememberUpdatedState(paths)
     val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
     return remember(sortMode, context) {
@@ -316,9 +314,9 @@ fun rememberSelectionManager(
 
                 when {
                     // search
-                    set.isEmpty() -> dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+                    paths().isEmpty() -> dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
 
-                    else -> dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+                    else -> dao.mediaInDateRange(timestamp = timestamp, paths = paths(), dateModified = sortMode.isDateModified)
                 }
             }
         )

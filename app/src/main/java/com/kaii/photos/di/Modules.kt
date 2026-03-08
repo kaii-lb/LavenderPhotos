@@ -3,6 +3,7 @@ package com.kaii.photos.di
 import android.content.Context
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.datastore.state.createAlbumGridState
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import kotlinx.coroutines.MainScope
 
@@ -20,4 +21,12 @@ class AppModule(
 
     // TODO: check if this is the best way or if its even okay to do
     val scope = MainScope()
+
+    val albumGridState by lazy {
+        createAlbumGridState(
+            context = context,
+            coroutineScope = scope,
+            apiClient = apiClient
+        )
+    }
 }

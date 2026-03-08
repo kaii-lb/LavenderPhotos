@@ -149,9 +149,9 @@ fun MainDialog(
     sheetState: SheetState,
     loginState: LoginStateManager,
     coroutineScope: CoroutineScope,
-    extraSecureFolderEntry: Boolean,
-    alwaysShowImmichInfo: Boolean,
-    immichInfo: ImmichBasicInfo,
+    extraSecureFolderEntry: () -> Boolean,
+    alwaysShowImmichInfo: () -> Boolean,
+    immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
     toggleSelectMode: () -> Unit,
     dismiss: () -> Unit
@@ -196,7 +196,7 @@ fun MainDialog(
                     item {
                         val userInfo by loginState.state.collectAsStateWithLifecycle()
 
-                        if (userInfo is LoginState.LoggedIn || alwaysShowImmichInfo) {
+                        if (userInfo is LoginState.LoggedIn || alwaysShowImmichInfo()) {
                             MainDialogUserInfo(
                                 loginState = userInfo,
                                 coroutineScope = coroutineScope,
@@ -225,12 +225,12 @@ fun MainDialog(
                         ExpressiveDialogRow(
                             title = stringResource(id = R.string.media_select),
                             icon = painterResource(id = R.drawable.checklist),
-                            position = if (extraSecureFolderEntry) RowPosition.Top else RowPosition.Single,
+                            position = if (extraSecureFolderEntry()) RowPosition.Top else RowPosition.Single,
                             onClick = toggleSelectMode
                         )
                     }
 
-                    if (extraSecureFolderEntry) {
+                    if (extraSecureFolderEntry()) {
                         item {
                             val authManager = rememberSecureFolderAuthManager(
                                 coroutineScope = coroutineScope,

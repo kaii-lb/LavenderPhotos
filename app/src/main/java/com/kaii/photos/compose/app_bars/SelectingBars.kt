@@ -113,9 +113,9 @@ fun IsSelectingBottomAppBar(
 fun SelectingBottomBarItems(
     albumInfo: AlbumType,
     selectionManager: SelectionManager,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -180,7 +180,7 @@ fun SelectingBottomBarItems(
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             context.appModule.scope.launch(Dispatchers.IO) {
-                if (doNotTrash) {
+                if (doNotTrash()) {
                     permanentlyDeletePhotoList(
                         context = context,
                         list = selectedItemsList.fastMap { it.toUri() }
@@ -202,7 +202,7 @@ fun SelectingBottomBarItems(
     if (albumInfo is AlbumType.Folder) {
         ConfirmationDialog(
             showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+            dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
             permissionState.get(
@@ -230,7 +230,7 @@ fun SelectingBottomBarItems(
 
     IconButton(
         onClick = {
-            if (confirmToDelete) {
+            if (confirmToDelete()) {
                 showDeleteDialog.value = true
             } else if (albumInfo is AlbumType.Folder) {
                 permissionState.get(

@@ -245,7 +245,7 @@ private fun SingleTrashedPhotoViewImpl(
                     showMoveCopyOptions = false,
                     privacyMode = scrollState.privacyMode,
                     isCustomAlbum = false,
-                    preserveDate = preserveDate,
+                    preserveDate = { preserveDate },
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()

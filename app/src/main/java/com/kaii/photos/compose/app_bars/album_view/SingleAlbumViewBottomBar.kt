@@ -17,9 +17,9 @@ fun SingleAlbumViewBottomBar(
     albumInfo: () -> AlbumType,
     selectionManager: SelectionManager,
     incomingIntent: Intent? = null,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {

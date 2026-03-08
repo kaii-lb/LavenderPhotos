@@ -108,9 +108,9 @@ fun FavouritesGridView(
                 FavouritesViewBottomAppBar(
                     selectionManager = selectionManager,
                     incomingIntent = incomingIntent,
-                    confirmToDelete = confirmToDelete,
-                    doNotTrash = doNotTrash,
-                    preserveDate = preserveDate
+                    confirmToDelete = { confirmToDelete },
+                    doNotTrash = { doNotTrash },
+                    preserveDate = { preserveDate }
                 )
             }
         }

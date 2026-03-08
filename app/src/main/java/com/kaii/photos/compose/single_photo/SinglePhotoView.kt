@@ -532,7 +532,7 @@ private fun SinglePhotoViewCommon(
                 sheetState = sheetState,
                 privacyMode = scrollState.privacyMode,
                 isCustomAlbum = album !is AlbumType.Folder,
-                preserveDate = preserveDate,
+                preserveDate = { preserveDate },
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()

@@ -4,6 +4,11 @@ import android.content.Intent
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -33,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -66,7 +70,6 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -80,7 +83,6 @@ fun MainPages(
     deviceAlbums: State<List<AlbumGridState.Album>>,
     window: Window,
     incomingIntent: Intent?,
-    blur: Boolean = false,
     refreshAlbums: () -> Unit
 ) {
     val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
@@ -115,7 +117,7 @@ fun MainPages(
     )
 
     var paths by remember { mutableStateOf(mainPhotosPaths) }
-    val selectionManager = rememberSelectionManager(paths = paths)
+    val selectionManager = rememberSelectionManager(paths = { paths })
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     var showTagDialog by remember { mutableStateOf(false) }
@@ -129,12 +131,10 @@ fun MainPages(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.Default) {
-            selectionManager.selection.collectLatest { selectedItems ->
-                tagViewModel.setMediaIds(
-                    ids = selectedItems.fastMap { it.id }
-                )
-            }
+        selectionManager.selection.collectLatest { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
         }
     }
 
@@ -151,11 +151,12 @@ fun MainPages(
             MainAppTopBar(
                 alternate = isSelecting,
                 selectionManager = selectionManager,
-                pagerState = pagerState,
                 immichInfo = immichInfo,
-                tabList = tabList,
-                alwaysShowImmichInfo = alwaysShowImmichInfo,
-                extraSecureFolderEntry = extraSecureFolderEntry,
+                showAddAlbumButton = {
+                    tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
+                },
+                alwaysShowImmichInfo = { alwaysShowImmichInfo },
+                extraSecureFolderEntry = { extraSecureFolderEntry },
                 showTagDialog = showTagDialog,
                 isFromMediaPicker = incomingIntent != null,
                 groups = groups,
@@ -167,26 +168,32 @@ fun MainPages(
             )
         },
         bottomBar = {
-            if (incomingIntent == null) {
+            var delayOver by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                delay(AnimationConstants.DURATION.toLong())
+                delayOver = true
+            }
+
+            AnimatedVisibility(
+                visible = tabList.isNotEmpty() && incomingIntent == null && delayOver,
+                enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it },
+                exit = fadeOut() + slideOutVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it }
+            ) {
                 MainAppBottomBar(
                     pagerState = pagerState,
                     selectionManager = selectionManager,
                     tabs = tabList,
-                    defaultTab = defaultTab,
+                    defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
-                    confirmToDelete = confirmToDelete,
-                    doNotTrash = doNotTrash,
-                    preserveDate = preserveDate
+                    confirmToDelete = { confirmToDelete },
+                    doNotTrash = { doNotTrash },
+                    preserveDate = { preserveDate }
                 )
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier
             .fillMaxSize()
-            .then(
-                if (blur) Modifier.blur(64.dp)
-                else Modifier
-            )
             .nestedScroll(
                 object : NestedScrollConnection {
                     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
@@ -229,17 +236,16 @@ fun MainPages(
         val isLandscape by rememberDeviceOrientation()
 
 
-        val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
-        val layoutDirection = LocalLayoutDirection.current
-        val safeDrawingPadding = remember(safeDrawing, layoutDirection, isLandscape) {
-            if (isLandscape) {
-                val left = safeDrawing.calculateStartPadding(layoutDirection)
-                val right = safeDrawing.calculateEndPadding(layoutDirection)
+        val safeDrawingPadding = if (isLandscape) {
+            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+            val layoutDirection = LocalLayoutDirection.current
 
-                Pair(left, right)
-            } else {
-                Pair(0.dp, 0.dp)
-            }
+            val left = safeDrawing.calculateStartPadding(layoutDirection)
+            val right = safeDrawing.calculateEndPadding(layoutDirection)
+
+            Pair(left, right)
+        } else {
+            Pair(0.dp, 0.dp)
         }
 
         var lastPage by rememberSaveable { mutableIntStateOf(0) }
@@ -314,7 +320,7 @@ fun MainPages(
                             openVideosExternally = openVideosExternally,
                             cacheThumbnails = cacheThumbnails,
                             thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners
+                            useRoundedCorners = useRoundedCorners,
                         )
                     }
 
@@ -325,7 +331,7 @@ fun MainPages(
                         val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
                         val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
-                        LaunchedEffect(Unit) {
+                        LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
 
                             multiAlbumViewModel.changePaths(
@@ -337,14 +343,14 @@ fun MainPages(
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
-                            selectionManager = selectionManager,
                             album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
+                            selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
                             openVideosExternally = openVideosExternally,
                             cacheThumbnails = cacheThumbnails,
                             thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners
+                            useRoundedCorners = useRoundedCorners,
                         )
                     }
 
@@ -404,12 +410,12 @@ fun MainPages(
                         MainAppBottomBar(
                             pagerState = pagerState,
                             tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            defaultTab = defaultTab,
+                            defaultTab = { defaultTab },
                             scrollBehaviour = scrollBehaviour,
                             selectionManager = selectionManager,
-                            confirmToDelete = confirmToDelete,
-                            doNotTrash = doNotTrash,
-                            preserveDate = preserveDate
+                            confirmToDelete = { confirmToDelete },
+                            doNotTrash = { doNotTrash },
+                            preserveDate = { preserveDate }
                         )
                     } else {
                         MediaPickerConfirmButton(

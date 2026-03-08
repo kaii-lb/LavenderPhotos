@@ -35,9 +35,9 @@ import kotlinx.coroutines.launch
 fun FavouritesViewBottomAppBar(
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
@@ -63,9 +63,9 @@ fun FavouritesViewBottomAppBar(
 @Composable
 fun FavouritesBottomAppBarItems(
     selectionManager: SelectionManager,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -147,7 +147,7 @@ fun FavouritesBottomAppBarItems(
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             context.appModule.scope.launch(Dispatchers.IO) {
-                if (doNotTrash) {
+                if (doNotTrash()) {
                     permanentlyDeletePhotoList(
                         context = context,
                         list = selectedItemsList.fastMap { it.toUri() }
@@ -167,7 +167,7 @@ fun FavouritesBottomAppBarItems(
 
     ConfirmationDialog(
         showDialog = showDeleteDialog,
-        dialogTitle = stringResource(id = if (doNotTrash) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+        dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
         coroutineScope.launch {
@@ -179,7 +179,7 @@ fun FavouritesBottomAppBarItems(
 
     IconButton(
         onClick = {
-            if (confirmToDelete) {
+            if (confirmToDelete()) {
                 showDeleteDialog.value = true
             } else {
                 coroutineScope.launch {

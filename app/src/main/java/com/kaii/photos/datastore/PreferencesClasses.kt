@@ -227,6 +227,7 @@ data class AlbumInfo(
     val immichId: String = ""
 )
 
+@Immutable
 @Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
@@ -242,6 +243,7 @@ data class ImmichBasicInfo(
     }
 }
 
+@Immutable
 @Parcelize
 @Serializable
 sealed interface AlbumType : Parcelable {
@@ -250,6 +252,7 @@ sealed interface AlbumType : Parcelable {
     val pinned: Boolean
     val immichId: String?
 
+    @Immutable
     @Serializable
     data class Folder(
         override val id: String,
@@ -277,6 +280,7 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     data class Custom(
         override val id: String,
@@ -303,6 +307,7 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     data class Cloud(
         override val id: String,
@@ -329,6 +334,7 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     object PlaceHolder : AlbumType {
         @IgnoredOnParcel override val id = ""

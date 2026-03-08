@@ -102,11 +102,10 @@ import kotlinx.coroutines.withContext
 fun MainAppTopBar(
     alternate: Boolean,
     selectionManager: SelectionManager,
-    pagerState: PagerState,
     immichInfo: ImmichBasicInfo,
-    tabList: List<BottomBarTab>,
-    alwaysShowImmichInfo: Boolean,
-    extraSecureFolderEntry: Boolean,
+    showAddAlbumButton: () -> Boolean,
+    alwaysShowImmichInfo: () -> Boolean,
+    extraSecureFolderEntry: () -> Boolean,
     showTagDialog: Boolean,
     isFromMediaPicker: Boolean,
     groups: List<AlbumGroup>,
@@ -130,7 +129,7 @@ fun MainAppTopBar(
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
             alwaysShowImmichInfo = alwaysShowImmichInfo,
-            immichInfo = immichInfo,
+            immichInfo = { immichInfo },
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -190,7 +189,7 @@ fun MainAppTopBar(
                 horizontalArrangement = Arrangement.End
             ) {
                 AnimatedVisibility(
-                    visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                    visible = showAddAlbumButton() && !isFromMediaPicker,
                     enter = scaleIn(
                         animationSpec = AnimationConstants.expressiveSpring()
                     ),
@@ -239,7 +238,7 @@ fun MainAppTopBar(
                     IconButton(
                         onClick = {
                             (context as Activity).finish()
-                        },
+                        }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.close),
@@ -268,17 +267,17 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     pagerState: PagerState,
     tabs: List<BottomBarTab>,
-    defaultTab: BottomBarTab,
+    defaultTab: () -> BottomBarTab,
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
-                if (defaultTab == DefaultTabs.TabTypes.secure || defaultTab !in tabs) tabs.first() else defaultTab
+                if (defaultTab() == DefaultTabs.TabTypes.secure || defaultTab() !in tabs) tabs.first() else defaultTab()
             )
     )
 

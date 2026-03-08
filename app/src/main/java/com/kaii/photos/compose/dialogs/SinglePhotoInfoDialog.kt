@@ -97,7 +97,7 @@ fun SinglePhotoInfoDialog(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -184,7 +184,7 @@ private fun Content(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -501,7 +501,7 @@ private fun RowScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -521,7 +521,7 @@ private fun ColumnScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
@@ -541,7 +541,7 @@ private fun IconContentImpl(
     showMoveCopyOptions: Boolean,
     privacyMode: Boolean,
     isCustomAlbum: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     modifier: Modifier,
     dismiss: () -> Unit
 ) {

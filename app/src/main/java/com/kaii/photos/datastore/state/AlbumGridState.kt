@@ -3,15 +3,9 @@
 package com.kaii.photos.datastore.state
 
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -27,9 +21,8 @@ import com.kaii.photos.mediastore.signature
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.AllAlbumsState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
@@ -54,11 +47,10 @@ class AlbumGridState(
     private val albumsOrderFlow: Flow<List<String>>,
     private val apiClient: ApiClient,
     private val info: Flow<ImmichBasicInfo>,
-    context: Context,
+    private val context: Context,
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
-    private val checkLoggedIn: suspend () -> Boolean,
     private val updateAlbums: (added: List<AlbumType>, removed: List<String>) -> Unit
 ) {
     @Immutable
@@ -184,9 +176,20 @@ class AlbumGridState(
     }
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
-        if (!checkLoggedIn()) return@withContext
-
         val immichInfo = info.first()
+        val loginManager = LoginStateManager(
+            baseUrl = immichInfo.endpoint,
+            coroutineScope = scope,
+            apiClient = apiClient
+        )
+        loginManager.refresh(
+            accessToken = immichInfo.accessToken,
+            pfpSavePath = context.profilePicture,
+            previousPfpUrl = context.profilePicture
+        ).join()
+
+        if (loginManager.state.value !is LoginState.LoggedIn) return@withContext
+
         val albumState = AllAlbumsState(
             baseUrl = immichInfo.endpoint,
             apiClient = apiClient,
@@ -375,40 +378,23 @@ class AlbumGridState(
     }
 }
 
-@Composable
-fun rememberAlbumGridState(): AlbumGridState {
-    val context = LocalContext.current
-    val apiClient = LocalApiClient.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val info by context.appModule.settings.immich.getImmichBasicInfo().collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
-    val loginState = rememberLoginState(baseUrl = info.endpoint)
-
-    return remember(loginState, info) {
-        AlbumGridState(
-            scope = coroutineScope,
-            context = context,
-            albumsFlow = context.appModule.settings.albums.get(),
-            sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
-            albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
-            allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
-            albumGroupsFlow = context.appModule.settings.albums.getGroups(),
-            albumsOrderFlow = context.appModule.settings.albums.getOrder(),
-            info = context.appModule.settings.immich.getImmichBasicInfo(),
-            apiClient = apiClient,
-            checkLoggedIn = {
-                loginState.refresh(
-                    accessToken = info.accessToken,
-                    pfpSavePath = context.profilePicture,
-                    previousPfpUrl = context.profilePicture
-                ).join()
-
-                loginState.state.value is LoginState.LoggedIn
-            },
-            updateAlbums = { added, removed ->
-                context.appModule.settings.albums.add(added)
-                context.appModule.settings.albums.removeAll(removed)
-            }
-        )
+fun createAlbumGridState(
+    context: Context,
+    coroutineScope: CoroutineScope,
+    apiClient: ApiClient
+) = AlbumGridState(
+    scope = coroutineScope,
+    context = context,
+    albumsFlow = context.appModule.settings.albums.get(),
+    sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
+    albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
+    allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
+    albumGroupsFlow = context.appModule.settings.albums.getGroups(),
+    albumsOrderFlow = context.appModule.settings.albums.getOrder(),
+    info = context.appModule.settings.immich.getImmichBasicInfo(),
+    apiClient = apiClient,
+    updateAlbums = { added, removed ->
+        context.appModule.settings.albums.add(added)
+        context.appModule.settings.albums.removeAll(removed)
     }
-}
+)

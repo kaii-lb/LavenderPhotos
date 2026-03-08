@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.pages.main
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.PhotoGrid
@@ -19,6 +20,7 @@ fun MainGridView(
     cacheThumbnails: Boolean,
     thumbnailSize: Int,
     useRoundedCorners: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
@@ -33,6 +35,7 @@ fun MainGridView(
         openVideosExternally = openVideosExternally,
         cacheThumbnails = cacheThumbnails,
         thumbnailSize = thumbnailSize,
-        useRoundedCorners = useRoundedCorners
+        useRoundedCorners = useRoundedCorners,
+        modifier = modifier
     )
 }
