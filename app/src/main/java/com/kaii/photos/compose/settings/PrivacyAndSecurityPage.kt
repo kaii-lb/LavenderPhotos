@@ -54,10 +54,10 @@ fun PrivacyAndSecurityPage(
     val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
 
     PrivacyAndSecurityPageImpl(
-        isMediaManager = isMediaManager,
-        confirmToDelete = confirmToDelete,
-        preserveDate = preserveDate,
-        doNotTrash = doNotTrash,
+        isMediaManager = { isMediaManager },
+        confirmToDelete = { confirmToDelete },
+        preserveDate = { preserveDate },
+        doNotTrash = { doNotTrash },
         modifier = modifier,
         setIsMediaManager = settings::setIsMediaManager,
         setConfirmToDelete = settings::setConfirmToDelete,
@@ -76,10 +76,10 @@ fun PrivacyAndSecurityPage(
 @Composable
 fun PrivacyAndSecurityPagePreview() {
     PrivacyAndSecurityPageImpl(
-        isMediaManager = false,
-        confirmToDelete = false,
-        preserveDate = false,
-        doNotTrash = false,
+        isMediaManager = { false },
+        confirmToDelete = { false },
+        preserveDate = { false },
+        doNotTrash = { false },
         modifier = Modifier,
         setIsMediaManager = {},
         setConfirmToDelete = {},
@@ -91,10 +91,10 @@ fun PrivacyAndSecurityPagePreview() {
 
 @Composable
 private fun PrivacyAndSecurityPageImpl(
-    isMediaManager: Boolean,
-    confirmToDelete: Boolean,
-    preserveDate: Boolean,
-    doNotTrash: Boolean,
+    isMediaManager: () -> Boolean,
+    confirmToDelete: () -> Boolean,
+    preserveDate: () -> Boolean,
+    doNotTrash: () -> Boolean,
     modifier: Modifier,
     setIsMediaManager: (value: Boolean) -> Unit,
     setConfirmToDelete: (value: Boolean) -> Unit,
@@ -137,7 +137,7 @@ private fun PrivacyAndSecurityPageImpl(
                         title = stringResource(id = R.string.permissions_media_manager),
                         summary = stringResource(id = R.string.permissions_media_manager_desc),
                         iconResID = R.drawable.movie_edit,
-                        checked = isMediaManager,
+                        checked = isMediaManager(),
                         position = RowPosition.Single,
                         showBackground = false
                     ) {
@@ -160,7 +160,7 @@ private fun PrivacyAndSecurityPageImpl(
                     iconResID = R.drawable.confirm_action,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = confirmToDelete,
+                    checked = confirmToDelete(),
                     onSwitchClick = setConfirmToDelete
                 )
             }
@@ -172,7 +172,7 @@ private fun PrivacyAndSecurityPageImpl(
                     iconResID = R.drawable.clock,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = preserveDate,
+                    checked = preserveDate(),
                     onSwitchClick = setPreserveDate
                 )
             }
@@ -184,7 +184,7 @@ private fun PrivacyAndSecurityPageImpl(
                     iconResID = R.drawable.delete_forever,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = doNotTrash,
+                    checked = doNotTrash(),
                     onSwitchClick = setDoNotTrash
                 )
             }

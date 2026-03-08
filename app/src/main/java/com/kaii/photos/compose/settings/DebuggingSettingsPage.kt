@@ -62,7 +62,7 @@ fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
     val shouldRecordLogs by settings.debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
     DebuggingSettingsPageImpl(
-        shouldRecordLogs = shouldRecordLogs,
+        shouldRecordLogs = { shouldRecordLogs },
         modifier = modifier,
         setRecordLogs = settings.debugging::setRecordLogs,
         addAlbum = { settings.albums.add(listOf(it)) }
@@ -73,7 +73,7 @@ fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun DebuggingSettingsPagePreview() {
     DebuggingSettingsPageImpl(
-        shouldRecordLogs = false,
+        shouldRecordLogs = { false },
         modifier = Modifier,
         setRecordLogs = {},
         addAlbum = {}
@@ -83,7 +83,7 @@ private fun DebuggingSettingsPagePreview() {
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 private fun DebuggingSettingsPageImpl(
-    shouldRecordLogs: Boolean,
+    shouldRecordLogs: () -> Boolean,
     modifier: Modifier,
     setRecordLogs: (value: Boolean) -> Unit,
     addAlbum: (album: AlbumType) -> Unit
@@ -114,7 +114,7 @@ private fun DebuggingSettingsPageImpl(
                     title = stringResource(id = R.string.record_logs),
                     summary = stringResource(id = R.string.record_logs_desc),
                     iconResID = R.drawable.logs,
-                    checked = shouldRecordLogs,
+                    checked = shouldRecordLogs(),
                     position = RowPosition.Single,
                     showBackground = false,
                     onRowClick = {
