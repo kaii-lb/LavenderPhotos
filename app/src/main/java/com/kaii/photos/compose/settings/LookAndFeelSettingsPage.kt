@@ -75,15 +75,15 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
     val blurViews by settings.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
 
     LookAndFeelSettingsPageImpl(
-        followDarkMode = followDarkMode,
-        displayDateFormat = displayDateFormat,
-        useRoundedCorners = useRoundedCorners,
-        showExtraSecureEntry = showExtraSecureEntry,
-        columnSize = columnSize,
-        albumColumnSize = albumColumnSize,
-        topBarDetailsFormat = topBarDetailsFormat,
-        useBlackBackground = useBlackBackground,
-        blurViews = blurViews,
+        followDarkMode = { followDarkMode },
+        displayDateFormat = { displayDateFormat },
+        useRoundedCorners = { useRoundedCorners },
+        showExtraSecureEntry = { showExtraSecureEntry },
+        columnSize = { columnSize },
+        albumColumnSize = { albumColumnSize },
+        topBarDetailsFormat = { topBarDetailsFormat },
+        useBlackBackground = { useBlackBackground },
+        blurViews = { blurViews },
         modifier = modifier,
         setFollowDarkMode = settings::setFollowDarkMode,
         setDisplayDateFormat = settings::setDisplayDateFormat,
@@ -101,15 +101,15 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun LookAndFeelSettingsPagePreview() {
     LookAndFeelSettingsPageImpl(
-        followDarkMode = 0,
-        displayDateFormat = DisplayDateFormat.Default,
-        useRoundedCorners = false,
-        showExtraSecureEntry = false,
-        columnSize = 3,
-        albumColumnSize = 2,
-        topBarDetailsFormat = TopBarDetailsFormat.FileName,
-        useBlackBackground = false,
-        blurViews = false,
+        followDarkMode = { 0 },
+        displayDateFormat = { DisplayDateFormat.Default },
+        useRoundedCorners = { false },
+        showExtraSecureEntry = { false },
+        columnSize = { 3 },
+        albumColumnSize = { 2 },
+        topBarDetailsFormat = { TopBarDetailsFormat.FileName },
+        useBlackBackground = { false },
+        blurViews = { false },
         modifier = Modifier,
         setFollowDarkMode = { },
         setDisplayDateFormat = {},
@@ -126,15 +126,15 @@ private fun LookAndFeelSettingsPagePreview() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 private fun LookAndFeelSettingsPageImpl(
-    followDarkMode: Int,
-    displayDateFormat: DisplayDateFormat,
-    useRoundedCorners: Boolean,
-    showExtraSecureEntry: Boolean,
-    columnSize: Int,
-    albumColumnSize: Int,
-    topBarDetailsFormat: TopBarDetailsFormat,
-    useBlackBackground: Boolean,
-    blurViews: Boolean,
+    followDarkMode: () -> Int,
+    displayDateFormat: () -> DisplayDateFormat,
+    useRoundedCorners: () -> Boolean,
+    showExtraSecureEntry: () -> Boolean,
+    columnSize: () -> Int,
+    albumColumnSize: () -> Int,
+    topBarDetailsFormat: () -> TopBarDetailsFormat,
+    useBlackBackground: () -> Boolean,
+    blurViews: () -> Boolean,
     modifier: Modifier,
     setFollowDarkMode: (value: Int) -> Unit,
     setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
@@ -166,14 +166,14 @@ private fun LookAndFeelSettingsPageImpl(
             item {
                 PreferencesThreeStateSwitchRow(
                     title =
-                        when (followDarkMode) {
+                        when (followDarkMode()) {
                             0 -> stringResource(id = R.string.settings_Auto_theme)
                             1, 3 -> stringResource(id = R.string.settings_dark_theme)
                             else -> stringResource(id = R.string.settings_light_theme)
                         },
-                    summary = stringResource(id = DarkThemeSetting.entries[if (followDarkMode == 3) 1 else followDarkMode].descriptionId),
+                    summary = stringResource(id = DarkThemeSetting.entries[if (followDarkMode() == 3) 1 else followDarkMode()].descriptionId),
                     iconResID = R.drawable.palette,
-                    currentPosition = if (followDarkMode == 3) 1 else followDarkMode,
+                    currentPosition = if (followDarkMode() == 3) 1 else followDarkMode(),
                     trackIcons = listOf(
                         R.drawable.theme_auto,
                         R.drawable.theme_dark,
@@ -190,8 +190,8 @@ private fun LookAndFeelSettingsPageImpl(
                     position = RowPosition.Single,
                     iconResID = R.drawable.light_off,
                     showBackground = false,
-                    checked = followDarkMode == 3,
-                    enabled = followDarkMode == 3 || followDarkMode == 1 || (followDarkMode == 0 && isSystemInDarkTheme())
+                    checked = followDarkMode() == 3,
+                    enabled = followDarkMode() == 3 || followDarkMode() == 1 || (followDarkMode() == 0 && isSystemInDarkTheme())
                 ) { checked ->
                     setFollowDarkMode(if (checked) 3 else 1)
                 }
@@ -210,16 +210,16 @@ private fun LookAndFeelSettingsPageImpl(
                             .toLocalDateTime(TimeZone.currentSystemDefault())
                             .date
                             .toJavaLocalDate()
-                            .format(displayDateFormat.format)
+                            .format(displayDateFormat().format)
                     )
                 }
 
-                LaunchedEffect(displayDateFormat) {
+                LaunchedEffect(displayDateFormat()) {
                     currentDate = Clock.System.now()
                         .toLocalDateTime(TimeZone.currentSystemDefault())
                         .date
                         .toJavaLocalDate()
-                        .format(displayDateFormat.format)
+                        .format(displayDateFormat().format)
                 }
 
                 if (showDateFormatDialog) {
@@ -245,7 +245,7 @@ private fun LookAndFeelSettingsPageImpl(
                 val context = LocalContext.current
                 var showDialog by remember { mutableStateOf(false) }
 
-                val format by rememberUpdatedState(topBarDetailsFormat)
+                val format by rememberUpdatedState(topBarDetailsFormat())
                 var currentDate by remember {
                     mutableStateOf(
                         format.format(context, "Screenshot.png", Clock.System.now().epochSeconds)
@@ -282,7 +282,7 @@ private fun LookAndFeelSettingsPageImpl(
                     position = RowPosition.Single,
                     iconResID = R.drawable.rounded_corner,
                     showBackground = false,
-                    checked = useRoundedCorners,
+                    checked = useRoundedCorners(),
                     onSwitchClick = setUseRoundedCorners
                 )
             }
@@ -300,7 +300,7 @@ private fun LookAndFeelSettingsPageImpl(
                     position = RowPosition.Single,
                     iconResID = R.drawable.door_open,
                     showBackground = false,
-                    checked = showExtraSecureEntry,
+                    checked = showExtraSecureEntry(),
                     onSwitchClick = setShowExtraSecureNav
                 )
             }
@@ -312,7 +312,7 @@ private fun LookAndFeelSettingsPageImpl(
             }
 
             item {
-                var currentState by remember { mutableIntStateOf(columnSize) }
+                var currentState by remember { mutableIntStateOf(columnSize()) }
 
                 PreferenceRowWithCustomBody(
                     icon = R.drawable.grid_view,
@@ -342,7 +342,7 @@ private fun LookAndFeelSettingsPageImpl(
             }
 
             item {
-                var currentState by remember { mutableIntStateOf(albumColumnSize) }
+                var currentState by remember { mutableIntStateOf(albumColumnSize()) }
 
                 PreferenceRowWithCustomBody(
                     icon = R.drawable.gallery_thumbnail,
@@ -384,7 +384,7 @@ private fun LookAndFeelSettingsPageImpl(
                     position = RowPosition.Single,
                     iconResID = R.drawable.texture,
                     showBackground = false,
-                    checked = useBlackBackground,
+                    checked = useBlackBackground(),
                     onSwitchClick = setUseBlackBackground
                 )
             }
@@ -396,7 +396,7 @@ private fun LookAndFeelSettingsPageImpl(
                     position = RowPosition.Single,
                     iconResID = R.drawable.lens_blur,
                     showBackground = false,
-                    checked = blurViews,
+                    checked = blurViews(),
                     onSwitchClick = setBlurViews
                 )
             }
