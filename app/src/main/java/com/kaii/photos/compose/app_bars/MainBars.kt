@@ -163,20 +163,22 @@ fun MainAppTopBar(
         title = {
             val split = stringResource(id = R.string.app_name_full).split(" ")
 
-            val firstName = split.first()
-
-            val secondName =
-                if (split.size >= 2) split[1]
-                else ""
-
-            Row {
+            Row(
+                modifier = Modifier
+                    .wrapContentHeight(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
                 Text(
-                    text = "$firstName ",
+                    text = "${split.first()} ",
                     fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
+
                 Text(
-                    text = secondName,
+                    text =
+                        if (split.size >= 2) split[1]
+                        else "",
                     fontWeight = FontWeight.Normal,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )

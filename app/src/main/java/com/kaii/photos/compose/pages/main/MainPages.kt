@@ -66,6 +66,7 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -87,16 +88,9 @@ fun MainPages(
     val immichInfo by mainGridViewModel.immichInfo.collectAsStateWithLifecycle()
     val exitImmediately by mainGridViewModel.exitImmediately.collectAsStateWithLifecycle()
     val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-    val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
-    val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
     val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
-    val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-    val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
-    val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-    val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
-    val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
@@ -135,10 +129,12 @@ fun MainPages(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
-            tagViewModel.setMediaIds(
-                ids = selectedItems.fastMap { it.id }
-            )
+        coroutineScope.launch(Dispatchers.Default) {
+            selectionManager.selection.collectLatest { selectedItems ->
+                tagViewModel.setMediaIds(
+                    ids = selectedItems.fastMap { it.id }
+                )
+            }
         }
     }
 
@@ -149,6 +145,8 @@ fun MainPages(
     Scaffold(
         topBar = {
             val groups by mainGridViewModel.groups.collectAsStateWithLifecycle()
+            val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
+            val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
 
             MainAppTopBar(
                 alternate = isSelecting,
@@ -230,45 +228,53 @@ fun MainPages(
 
         val isLandscape by rememberDeviceOrientation()
 
-        val safeDrawingPadding = if (isLandscape) {
-            val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
-            val layoutDirection = LocalLayoutDirection.current
-            val left = safeDrawing.calculateStartPadding(layoutDirection)
-            val right = safeDrawing.calculateEndPadding(layoutDirection)
+        val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
+        val layoutDirection = LocalLayoutDirection.current
+        val safeDrawingPadding = remember(safeDrawing, layoutDirection, isLandscape) {
+            if (isLandscape) {
+                val left = safeDrawing.calculateStartPadding(layoutDirection)
+                val right = safeDrawing.calculateEndPadding(layoutDirection)
 
-            Pair(left, right)
-        } else {
-            Pair(0.dp, 0.dp)
+                Pair(left, right)
+            } else {
+                Pair(0.dp, 0.dp)
+            }
         }
 
-        // reset search query on
         var lastPage by rememberSaveable { mutableIntStateOf(0) }
         LaunchedEffect(pagerState) {
-            snapshotFlow { pagerState.currentPage }.collectLatest {
-                setupNextScreen(window = window)
-                selectionManager.clear()
+            coroutineScope.launch {
+                snapshotFlow { pagerState.currentPage }.collectLatest {
+                    setupNextScreen(window = window)
+                    selectionManager.clear()
 
-                if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
-                    searchViewModel.clear()
+                    if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
+                        searchViewModel.clear()
+                    }
+
+                    if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
+                        refreshAlbums()
+                    }
+
+                    lastPage = it
                 }
-
-                if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
-                    refreshAlbums()
-                }
-
-                lastPage = it
             }
         }
 
         LaunchedEffect(Unit) {
-            while (true) {
-                refreshAlbums()
-                delay(5000)
+            coroutineScope.launch {
+                while (true) {
+                    refreshAlbums()
+                    delay(5000)
+                }
             }
         }
 
-        Box {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = !isSelecting,
@@ -285,6 +291,12 @@ fun MainPages(
 
                 when {
                     tab.isCustom -> {
+                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
@@ -307,6 +319,12 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.photos -> {
+                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
                         LaunchedEffect(Unit) {
                             paths = mainPhotosPaths
 

@@ -41,6 +41,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.lavender.snackbars.LavenderSnackbarBox
@@ -72,6 +75,8 @@ import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
+import com.kaii.photos.database.sync.SyncManager
+import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.rememberAlbumGridState
@@ -105,8 +110,8 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
 
 val LocalNavController = compositionLocalOf<NavHostController> {
@@ -121,17 +126,18 @@ class MainActivity : ComponentActivity() {
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
-        val settings = applicationContext.appModule.settings
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+            appModule.settings.permissions.setIsMediaManager(
+                MediaStore.canManageMedia(applicationContext)
+            )
         }
 
+        val settings = applicationContext.appModule.settings
         val startupManager = StartupManager(context = applicationContext)
+
         runBlocking { startupManager.checkState() }
 
         setContent {
-            val startupState by startupManager.state.collectAsStateWithLifecycle()
-
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = runBlocking(Dispatchers.IO) {
@@ -158,7 +164,7 @@ class MainActivity : ComponentActivity() {
                         startupManager = startupManager,
                         settings = settings,
                         startupPage =
-                            when (startupState) {
+                            when (startupManager.state) {
                                 StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
 
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
@@ -166,16 +172,6 @@ class MainActivity : ComponentActivity() {
                                 else -> Screens.MainPages
                             }
                     )
-                }
-            }
-
-            LaunchedEffect(Unit) {
-                withContext(Dispatchers.IO) {
-                    val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
-                    if (!hasClearedCache) {
-                        settings.storage.clearThumbnailCache()
-                        settings.versions.setHasClearedGlideCache(true)
-                    }
                 }
             }
         }
@@ -195,7 +191,7 @@ class MainActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
+            coroutineScope.launch(Dispatchers.IO) {
                 val canRecordLogs = settings.debugging.getRecordLogs().first()
                 if (canRecordLogs) {
                     val logManager = LogManager(context = context)
@@ -209,6 +205,12 @@ class MainActivity : ComponentActivity() {
                         coroutineScope = coroutineScope
                     )
                     updater.startupUpdateCheck(navController)
+                }
+
+                val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
+                if (!hasClearedCache) {
+                    settings.storage.clearThumbnailCache()
+                    settings.versions.setHasClearedGlideCache(true)
                 }
             }
         }
@@ -771,21 +773,21 @@ class MainActivity : ComponentActivity() {
         ReportDrawn()
     }
 
-    // override fun onResume() {
-    //     super.onResume()
-    //
-    //     appModule.scope.launch(Dispatchers.IO) {
-    //         if (SyncManager(applicationContext).getGeneration() > 0L) {
-    //             // run work manager immediately after user navigates back to app
-    //             WorkManager.getInstance(applicationContext)
-    //                 .enqueueUniqueWork(
-    //                     SyncWorker::class.java.name,
-    //                     ExistingWorkPolicy.REPLACE,
-    //                     OneTimeWorkRequest.Builder(SyncWorker::class).build()
-    //                 )
-    //         }
-    //     }
-    // }
+    override fun onResume() {
+        super.onResume()
+
+        appModule.scope.launch(Dispatchers.IO) {
+            if (SyncManager(applicationContext).getGeneration() > 0L) {
+                // run work manager immediately after user navigates back to app
+                WorkManager.getInstance(applicationContext)
+                    .enqueueUniqueWork(
+                        SyncWorker::class.java.name,
+                        ExistingWorkPolicy.REPLACE,
+                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                    )
+            }
+        }
+    }
 }
 
 fun setupNextScreen(window: Window) {

@@ -4,6 +4,7 @@ package com.kaii.photos.datastore.state
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,6 +30,8 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.AllAlbumsStat
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,12 +61,14 @@ class AlbumGridState(
     private val checkLoggedIn: suspend () -> Boolean,
     private val updateAlbums: (added: List<AlbumType>, removed: List<String>) -> Unit
 ) {
+    @Immutable
     sealed interface Album {
         val id: String
         val name: String
         val date: Long
         val pinned: Boolean
 
+        @Immutable
         data class Single(
             val info: Info,
             override val id: String,
@@ -72,19 +77,22 @@ class AlbumGridState(
             override val pinned: Boolean
         ) : Album
 
+        @Immutable
         data class Group(
             override val id: String,
             override val name: String,
             override val date: Long,
             override val pinned: Boolean,
-            val info: List<Info>
+            val info: ImmutableList<Info>
         ) : Album
     }
 
+    @Immutable
     data class Info(
         val album: AlbumType,
         val thumbnail: Thumbnail
     ) {
+        @Immutable
         data class Thumbnail(
             val uri: String,
             val signature: ObjectKey,
@@ -279,7 +287,7 @@ class AlbumGridState(
                     name = group.name,
                     date = info.minByOrNull { it.thumbnail.date }?.thumbnail?.date ?: 0L,
                     pinned = group.pinned,
-                    info = info.sortedByDescending { it.thumbnail.date }
+                    info = info.sortedByDescending { it.thumbnail.date }.toImmutableList()
                 )
             )
         }

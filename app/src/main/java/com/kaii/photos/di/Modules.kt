@@ -14,7 +14,9 @@ class AppModule(
 ) {
     val settings = Settings(context.applicationContext, MainScope())
 
-    val apiClient = ApiClient()
+    val apiClient by lazy {
+        ApiClient()
+    }
 
     // TODO: check if this is the best way or if its even okay to do
     val scope = MainScope()

@@ -1,7 +1,6 @@
 package com.kaii.photos.database.entities
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -9,7 +8,6 @@ import com.kaii.photos.mediastore.MediaType
 import java.util.Calendar
 import java.util.Locale
 
-@Stable
 @Immutable
 @Entity(
     tableName = "media",
