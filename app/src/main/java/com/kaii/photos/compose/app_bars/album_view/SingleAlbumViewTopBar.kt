@@ -40,7 +40,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 fun SingleAlbumViewTopBar(
     albumInfo: () -> AlbumType,
     selectionManager: SelectionManager,
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     isMediaPicker: Boolean = false,
     showDialog: () -> Unit,
     setShowTagDialog: (show: Boolean) -> Unit

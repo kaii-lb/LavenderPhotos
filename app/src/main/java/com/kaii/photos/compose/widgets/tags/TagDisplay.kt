@@ -71,10 +71,10 @@ private fun TagDisplayPreview() {
     }
 
     TagDisplay(
-        tags = tags.toList(),
-        selectedTags = tags.subList(0, 4),
-        searchingForTags = false,
-        searchQuery = "",
+        tags = { tags.toList() },
+        selectedTags = { tags.subList(0, 4) },
+        searchingForTags = { false },
+        searchQuery = { "" },
         onTagClick = {},
         onTagRemove = {
             tags.remove(it)
@@ -85,10 +85,10 @@ private fun TagDisplayPreview() {
 
 @Composable
 fun TagDisplay(
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
-    searchingForTags: Boolean,
-    searchQuery: String,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
+    searchingForTags: () -> Boolean,
+    searchQuery: () -> String,
     modifier: Modifier = Modifier,
     onTagClick: (tag: Tag) -> Unit,
     onTagRemove: (tag: Tag) -> Unit,
@@ -123,9 +123,9 @@ fun TagDisplay(
             )
 
             FilledIconToggleButton(
-                checked = searchingForTags,
+                checked = searchingForTags(),
                 onCheckedChange = onToggleSearchingForTags,
-                enabled = tags.isNotEmpty()
+                enabled = tags().isNotEmpty()
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.search),
@@ -134,7 +134,7 @@ fun TagDisplay(
             }
         }
 
-        if (tags.isEmpty()) {
+        if (tags().isEmpty()) {
             Text(
                 text = stringResource(id = R.string.search_no_tags_found),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
@@ -158,10 +158,10 @@ fun TagDisplay(
 
 @Composable
 private fun TagFlowRow(
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
-    searchingForTags: Boolean,
-    searchQuery: String,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
+    searchingForTags: () -> Boolean,
+    searchQuery: () -> String,
     modifier: Modifier = Modifier,
     onTagClick: (tag: Tag) -> Unit,
     onTagRemove: (tag: Tag) -> Unit
@@ -175,9 +175,9 @@ private fun TagFlowRow(
         ),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        tags.filter { it.name.contains(searchQuery) || !searchingForTags }
+        tags().filter { it.name.contains(searchQuery()) || !searchingForTags() }
             .sortedBy { it.name }
-            .sortedBy { !selectedTags.contains(it) }
+            .sortedBy { !selectedTags().contains(it) }
             .apply {
                 forEach { tag ->
                     key(tag.id) {
@@ -191,7 +191,7 @@ private fun TagFlowRow(
                         ) {
                             TagItem(
                                 tag = tag,
-                                selected = selectedTags.contains(tag),
+                                selected = selectedTags().contains(tag),
                                 onClick = { onTagClick(tag) },
                                 onRemove = { onTagRemove(tag) }
                             )

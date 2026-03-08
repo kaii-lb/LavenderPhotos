@@ -57,19 +57,19 @@ import kotlin.time.ExperimentalTime
 fun SingleViewTopBar(
     mediaItem: () -> MediaStoreData,
     visible: Boolean,
-    showInfoDialog: Boolean,
-    privacyMode: Boolean,
+    showInfoDialog: () -> Boolean,
+    privacyMode: () -> Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     isOpenWithDefaultView: Boolean,
     showTags: Boolean,
-    showTagDialog: Boolean = false,
+    showTagDialog: () -> Boolean = { false },
     expandInfoDialog: () -> Unit,
     expandTagDialog: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val resources = LocalResources.current
     BackHandler(
-        enabled = privacyMode
+        enabled = privacyMode()
     ) {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
@@ -138,7 +138,7 @@ fun SingleViewTopBar(
                         shape = IconButtonDefaults.filledShape,
                         pressedShape = IconButtonDefaults.mediumPressedShape
                     ),
-                    enabled = !privacyMode
+                    enabled = !privacyMode()
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
@@ -189,7 +189,7 @@ fun SingleViewTopBar(
             ) {
                 if (showTags) {
                     FilledIconToggleButton(
-                        checked = showTagDialog,
+                        checked = showTagDialog(),
                         onCheckedChange = {
                             expandTagDialog()
                         },
@@ -207,7 +207,7 @@ fun SingleViewTopBar(
                 }
 
                 FilledIconToggleButton(
-                    checked = showInfoDialog,
+                    checked = showInfoDialog(),
                     onCheckedChange = {
                         expandInfoDialog()
                     },

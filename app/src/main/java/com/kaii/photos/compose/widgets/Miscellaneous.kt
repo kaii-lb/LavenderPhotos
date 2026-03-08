@@ -307,11 +307,11 @@ fun SelectViewTopBarLeftButtons(
 
 @Composable
 fun SelectViewTopBarRightButtons(
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     setShowTagDialog: (show: Boolean) -> Unit
 ) {
     FilledIconToggleButton(
-        checked = showTagDialog,
+        checked = showTagDialog(),
         onCheckedChange = setShowTagDialog
     ) {
         Icon(

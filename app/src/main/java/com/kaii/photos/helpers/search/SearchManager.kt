@@ -54,6 +54,7 @@ class SearchManager(
 
     fun setSearchMode(mode: SearchMode) {
         _searchMode.value = mode
+        _searchingForTags.value = false
         update(mode = mode)
     }
 

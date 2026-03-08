@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 fun IsSelectingTopBar(
     selectionManager: SelectionManager,
     showTags: Boolean,
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     setShowTagDialog: (show: Boolean) -> Unit
 ) {
     TopAppBar(

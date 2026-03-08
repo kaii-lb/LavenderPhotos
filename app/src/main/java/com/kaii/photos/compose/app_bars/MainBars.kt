@@ -100,21 +100,21 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppTopBar(
-    alternate: Boolean,
+    alternate: () -> Boolean,
     selectionManager: SelectionManager,
-    immichInfo: ImmichBasicInfo,
+    immichInfo: () -> ImmichBasicInfo,
     showAddAlbumButton: () -> Boolean,
     alwaysShowImmichInfo: () -> Boolean,
     extraSecureFolderEntry: () -> Boolean,
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     isFromMediaPicker: Boolean,
-    groups: List<AlbumGroup>,
+    groups: () -> List<AlbumGroup>,
     setShowTagDialog: (show: Boolean) -> Unit,
     addAlbum: (album: AlbumType) -> Unit,
     addGroup: (name: String) -> Unit
 ) {
     val context = LocalContext.current
-    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
+    val loginState = rememberLoginState(baseUrl = immichInfo().endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
@@ -129,7 +129,7 @@ fun MainAppTopBar(
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
             alwaysShowImmichInfo = alwaysShowImmichInfo,
-            immichInfo = { immichInfo },
+            immichInfo = immichInfo,
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -147,10 +147,10 @@ fun MainAppTopBar(
         )
     }
 
-    LaunchedEffect(immichInfo) {
+    LaunchedEffect(immichInfo()) {
         withContext(Dispatchers.IO) {
             loginState.refresh(
-                accessToken = immichInfo.accessToken,
+                accessToken = immichInfo().accessToken,
                 pfpSavePath = context.profilePicture,
                 previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
             )
@@ -158,7 +158,7 @@ fun MainAppTopBar(
     }
 
     DualFunctionTopAppBar(
-        alternated = alternate,
+        alternated = alternate(),
         title = {
             val split = stringResource(id = R.string.app_name_full).split(" ")
 
@@ -200,7 +200,7 @@ fun MainAppTopBar(
                     var showAlbumTypeDialog by remember { mutableStateOf(false) }
                     if (showAlbumTypeDialog) {
                         AlbumAddChoiceDialog(
-                            groups = groups,
+                            groups = groups(),
                             addAlbum = addAlbum,
                             addGroup = addGroup
                         ) {

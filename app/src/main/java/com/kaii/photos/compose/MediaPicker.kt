@@ -191,7 +191,7 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     setupNextScreen(window)
 
-                    val deviceAlbums = appModule.albumGridState.albums.collectAsStateWithLifecycle()
+                    val deviceAlbums by appModule.albumGridState.albums.collectAsStateWithLifecycle()
                     val storeOwner = remember(it) {
                         navController.getBackStackEntry(Screens.MainPages)
                     }
@@ -204,7 +204,7 @@ class MediaPicker : ComponentActivity() {
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
                         mainGridViewModel = viewModel,
-                        deviceAlbums = deviceAlbums,
+                        deviceAlbums = { deviceAlbums },
                         window = window,
                         incomingIntent = incomingIntent,
                         refreshAlbums = appModule.albumGridState::refresh

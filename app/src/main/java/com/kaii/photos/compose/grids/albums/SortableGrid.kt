@@ -20,7 +20,6 @@ import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -50,6 +49,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
+import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.Screens
@@ -58,11 +58,11 @@ import kotlinx.coroutines.isActive
 
 @Composable
 fun SortableGrid(
-    albumList: State<List<AlbumGridState.Album>>,
-    sortMode: AlbumSortMode,
-    tabList: List<BottomBarTab>,
+    albumList: () -> List<AlbumGridState.Album>,
+    sortMode: () -> AlbumSortMode,
+    tabList: () -> List<BottomBarTab>,
     columnSize: Int,
-    immichInfo: ImmichBasicInfo,
+    immichInfo: () -> ImmichBasicInfo,
     navController: NavController,
     modifier: Modifier = Modifier,
     isAlbumGroup: Boolean = false,
@@ -72,9 +72,9 @@ fun SortableGrid(
     setAlbumOrder: (order: List<String>) -> Unit,
     addAlbumToGroup: (albumId: String, groupId: String) -> Unit
 ) {
-    var albums by remember { mutableStateOf(albumList.value) }
-    LaunchedEffect(albumList.value) {
-        albums = albumList.value
+    var albums by remember { mutableStateOf(albumList()) }
+    LaunchedEffect(albumList()) {
+        albums = albumList()
     }
 
     Column(
@@ -109,13 +109,17 @@ fun SortableGrid(
 
         SortModeHeader(
             sortMode = sortMode,
-            tabList = tabList,
-            progress = pullToRefreshState.distanceFraction.coerceAtMost(1f),
-            setAlbumSortMode = setAlbumSortMode,
+            showHiddenSecureEntry = {
+                !tabList().contains(DefaultTabs.TabTypes.secure)
+            },
+            progress = {
+                pullToRefreshState.distanceFraction.coerceAtMost(1f)
+            },
             isAlbumGroup = isAlbumGroup,
             modifier = Modifier
                 .height(with(density) { headerHeight.toDp() })
-                .zIndex(1f)
+                .zIndex(1f),
+            setAlbumSortMode = setAlbumSortMode,
         )
 
         LaunchedEffect(lazyGridState.isScrollInProgress) {
@@ -157,14 +161,14 @@ fun SortableGrid(
                 )
                 .pointerInput(Unit) {
                     var targetItemIndex: Int? = null
-                    var lastSortMode = sortMode
+                    var lastSortMode = sortMode()
                     val scrollThreshold = with(density) {
                         60.dp.toPx()
                     }
 
                     detectDragGesturesAfterLongPress(
                         onDragStart = { offset ->
-                            lastSortMode = sortMode
+                            lastSortMode = sortMode()
                             lazyGridState.layoutInfo.visibleItemsInfo
                                 .find { item ->
                                     IntRect(
@@ -273,6 +277,9 @@ fun SortableGrid(
                 key = { key ->
                     albums[key].id
                 },
+                contentType = { key ->
+                    albums[key]::class
+                }
             ) { index ->
                 val album = albums[index]
 
@@ -280,7 +287,7 @@ fun SortableGrid(
                     AlbumFolder(
                         name = album.name,
                         info = album.info,
-                        isSelected = selectedItem == album,
+                        isSelected = { selectedItem == album },
                         immichInfo = immichInfo,
                         modifier = Modifier
                             .testTag("album_grid_group_item")
@@ -317,7 +324,7 @@ fun SortableGrid(
                 } else {
                     AlbumGridItem(
                         album = album as AlbumGridState.Album.Single,
-                        isSelected = selectedItem == album,
+                        isSelected = { selectedItem == album },
                         info = immichInfo,
                         modifier = Modifier
                             .testTag("album_grid_item")

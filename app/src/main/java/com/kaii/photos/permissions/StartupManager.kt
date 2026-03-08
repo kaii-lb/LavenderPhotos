@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
@@ -62,7 +61,7 @@ class StartupManager(
         permList.forEach { perm ->
             val granted = when (perm) {
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
-                    Environment.isExternalStorageManager()
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && MediaStore.canManageMedia(context.applicationContext)
                 }
 
                 Manifest.permission.MANAGE_MEDIA -> {
@@ -98,10 +97,10 @@ class StartupManager(
 
     fun checkPermissions(): Boolean {
         val manageMedia =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                     permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
 
-        return permissionQueue.isEmpty() && manageMedia
+        return permissionQueue.isEmpty() || manageMedia
     }
 
     suspend fun checkState() = withContext(Dispatchers.IO) {

@@ -188,8 +188,8 @@ private fun SingleTrashedPhotoViewImpl(
             SingleViewTopBar(
                 mediaItem = { mediaItem },
                 visible = appBarsVisible.value,
-                showInfoDialog = showInfoDialog,
-                privacyMode = scrollState.privacyMode,
+                showInfoDialog = { showInfoDialog },
+                privacyMode = { scrollState.privacyMode },
                 isOpenWithDefaultView = false,
                 topBarDetailsFormat = topBarDetailsFormat,
                 showTags = false,

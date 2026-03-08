@@ -111,6 +111,7 @@ import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -257,7 +258,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         setupNextScreen(window = window)
 
-                        val deviceAlbums = appModule.albumGridState.albums.collectAsStateWithLifecycle()
+                        val deviceAlbums by appModule.albumGridState.albums.collectAsStateWithLifecycle()
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.MainPages)
                         }
@@ -287,7 +288,7 @@ class MainActivity : ComponentActivity() {
                             multiAlbumViewModel = multiAlbumViewModel,
                             searchViewModel = searchViewModel,
                             mainGridViewModel = viewModel,
-                            deviceAlbums = deviceAlbums,
+                            deviceAlbums = { deviceAlbums },
                             window = window,
                             incomingIntent = null,
                             refreshAlbums = appModule.albumGridState::refresh
@@ -751,6 +752,8 @@ class MainActivity : ComponentActivity() {
 
         appModule.scope.launch(Dispatchers.IO) {
             if (SyncManager(applicationContext).getGeneration() > 0L) {
+                delay(2000) // so it isn't immediate on startup
+
                 // run work manager immediately after user navigates back to app
                 WorkManager.getInstance(applicationContext)
                     .enqueueUniqueWork(

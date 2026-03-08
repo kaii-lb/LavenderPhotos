@@ -27,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -80,7 +79,7 @@ fun MainPages(
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
     mainGridViewModel: MainGridViewModel,
-    deviceAlbums: State<List<AlbumGridState.Album>>,
+    deviceAlbums: () -> List<AlbumGridState.Album>,
     window: Window,
     incomingIntent: Intent?,
     refreshAlbums: () -> Unit
@@ -149,17 +148,17 @@ fun MainPages(
             val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
 
             MainAppTopBar(
-                alternate = isSelecting,
+                alternate = { isSelecting },
                 selectionManager = selectionManager,
-                immichInfo = immichInfo,
+                immichInfo = { immichInfo },
                 showAddAlbumButton = {
                     tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
                 },
                 alwaysShowImmichInfo = { alwaysShowImmichInfo },
                 extraSecureFolderEntry = { extraSecureFolderEntry },
-                showTagDialog = showTagDialog,
+                showTagDialog = { showTagDialog },
                 isFromMediaPicker = incomingIntent != null,
-                groups = groups,
+                groups = { groups },
                 setShowTagDialog = {
                     showTagDialog = true
                 },
@@ -223,8 +222,8 @@ fun MainPages(
         AnimatedMediaTagManager(
             showTagDialog = showTagDialog,
             padding = padding,
-            tags = tags,
-            selectedTags = selectedTags,
+            tags = { tags },
+            selectedTags = { selectedTags },
             onTagAdd = tagViewModel::insertTag,
             onTagClick = tagViewModel::toggleTag,
             onTagDelete = tagViewModel::deleteTag,
@@ -365,10 +364,10 @@ fun MainPages(
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
-                            sortMode = sortMode,
-                            tabList = tabList,
+                            sortMode = { sortMode },
+                            tabList = { tabList },
                             columnSize = columnSize,
-                            immichInfo = immichInfo,
+                            immichInfo = { immichInfo },
                             migrateFav = { migrateFav },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,

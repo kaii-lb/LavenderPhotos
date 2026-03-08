@@ -49,25 +49,29 @@ import com.kaii.photos.helpers.editing.random
 @Composable
 private fun MediaTagManagerPreview() {
     MediaTagManagerImpl(
-        tags = (0..20).map {
-            Tag(
-                id = it,
-                name = CharArray(8) {
-                    CharRange('a', 'z').random()
-                }.concatToString(),
-                description = "",
-                color = Color.random()
-            )
+        tags = {
+            (0..20).map {
+                Tag(
+                    id = it,
+                    name = CharArray(8) {
+                        CharRange('a', 'z').random()
+                    }.concatToString(),
+                    description = "",
+                    color = Color.random()
+                )
+            }
         },
-        selectedTags = (0..4).map {
-            Tag(
-                id = it,
-                name = CharArray(8) {
-                    CharRange('a', 'z').random()
-                }.concatToString(),
-                description = "",
-                color = Color.random()
-            )
+        selectedTags = {
+            (0..4).map {
+                Tag(
+                    id = it,
+                    name = CharArray(8) {
+                        CharRange('a', 'z').random()
+                    }.concatToString(),
+                    description = "",
+                    color = Color.random()
+                )
+            }
         },
         onTagAdd = {},
         onTagClick = {},
@@ -80,8 +84,8 @@ private fun MediaTagManagerPreview() {
 fun AnimatedMediaTagManager(
     showTagDialog: Boolean,
     appBarsVisible: Boolean,
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
     modifier: Modifier = Modifier,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
@@ -136,8 +140,8 @@ fun AnimatedMediaTagManager(
 fun AnimatedMediaTagManager(
     showTagDialog: Boolean,
     padding: PaddingValues,
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
     modifier: Modifier = Modifier,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
@@ -170,8 +174,8 @@ fun AnimatedMediaTagManager(
 
 @Composable
 private fun MediaTagManagerImpl(
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
     modifier: Modifier = Modifier,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
@@ -202,7 +206,7 @@ private fun MediaTagManagerImpl(
             horizontalArrangement = Arrangement.spacedBy(space = 8.dp)
         ) {
             TagEditingPageTextField(
-                value = query,
+                value = { query },
                 placeholder =
                     if (searchingForTags) stringResource(id = R.string.search_photo_tag)
                     else stringResource(id = R.string.tags_add),
@@ -210,7 +214,7 @@ private fun MediaTagManagerImpl(
                     query = it
                 },
                 exists = { name ->
-                    !searchingForTags && tags.any { it.name == name }
+                    !searchingForTags && tags().any { it.name == name }
                 },
                 addTag = onTagAdd,
                 modifier = Modifier
@@ -245,8 +249,8 @@ private fun MediaTagManagerImpl(
         TagDisplay(
             tags = tags,
             selectedTags = selectedTags,
-            searchingForTags = false,
-            searchQuery = query,
+            searchingForTags = { searchingForTags },
+            searchQuery = { query },
             onTagClick = onTagClick,
             onTagRemove = {
                 currentTag = it

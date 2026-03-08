@@ -30,7 +30,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 @Composable
 fun FavouritesViewTopAppBar(
     selectionManager: SelectionManager,
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     onBackClick: () -> Unit,
     setShowTagDialog: (show: Boolean) -> Unit
 ) {

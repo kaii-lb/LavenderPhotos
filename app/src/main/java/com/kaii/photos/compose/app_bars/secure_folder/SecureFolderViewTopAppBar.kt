@@ -75,7 +75,7 @@ fun SecureFolderViewTopAppBar(
             IsSelectingTopBar(
                 selectionManager = selectionManager,
                 showTags = false,
-                showTagDialog = false,
+                showTagDialog = { false },
                 setShowTagDialog = {}
             )
         }
