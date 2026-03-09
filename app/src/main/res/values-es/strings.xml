@@ -43,8 +43,6 @@
     <string name="updates_whats_new">Qué hay de nuevo</string>
     <string name="updates_notice">Aviso de Descarga</string>
     <string name="app_name">Fotos</string>
-    <string name="first_startup_dialog_body">Busca todos los álbumes en este dispositivo y los agrega a Lavender Photos\nNota: Los usuarios antiguos borrarán sus álbumes si se usa esta opción.</string>
-    <string name="first_startup_dialog_confirm_title">¡Busca!</string>
     <string name="albums">Albumes</string>
     <string name="finding_albums_on_device">Buscando álbumes…</string>
     <string name="albums_found">¡Todos los álbumes encontrados!</string>
@@ -88,7 +86,6 @@
     <string name="favourites">Favoritos</string>
     <string name="favourites_add_this">Marcar como favorito este archivo</string>
     <string name="debugging">Depuración</string>
-    <string name="debugging_desc">Herramientas para depurar problemas</string>
     <string name="logs">Registros</string>
     <string name="record_logs">Registro de Registros</string>
     <string name="record_logs_desc">Almacene registros para depuración. Toque para ver.</string>
@@ -148,18 +145,14 @@
     <string name="editing_failed">Error al guardar la imagen editada</string>
     <string name="settings">Ajustes</string>
     <string name="settings_general">General</string>
-    <string name="settings_general_desc">Preferencias y personalizaciones de la aplicación</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_dark_theme">Tema Oscuro</string>
     <string name="settings_look_and_feel">Aspecto y sensación</string>
-    <string name="settings_look_and_feel_desc">Cambiar el aspecto de la aplicación</string>
     <string name="settings_theme_follow">La aplicación sigue el tema del sistema</string>
     <string name="settings_theme_dark">La aplicación siempre está en tema oscuro</string>
     <string name="settings_theme_light">La aplicación siempre está en tema claro</string>
     <string name="settings_privacy">Privacidad y Seguridad</string>
-    <string name="settings_privacy_desc">Control detallado sobre sus datos</string>
     <string name="settings_memory_storage">Memoria y Almacenamiento</string>
-    <string name="settings_storage_desc">Opciones de rendimiento y espacio</string>
     <string name="settings_storage">Almacenamiento</string>
     <string name="settings_memory">Memoria</string>
     <string name="settings_storage_thumbnails_size">Las miniaturas son actualmente %1$s píxeles. Los valores más altos usan más %2$s</string>
@@ -762,7 +755,6 @@
         <br>
     </p>
     ]]></string>
-    <string name="first_startup_dialog_title">¿Buscar todos los álbumes en el dispositivo?</string>
     <string name="debugging_spawn_loading_snackbar">Generar carga de barra de información</string>
     <string name="debugging_spawn_loading_snackbar_desc">Depure la barra de información de Lavender cada vez que compose decida hacer algo estúpido</string>
     <string name="debugging_spawn_message_snackbar">Generar un mensaje de información</string>
@@ -847,7 +839,6 @@
     <string name="settings_light_theme">Tema Claro</string>
     <string name="settings_Auto_theme">Tema Auto</string>
     <string name="settings_behaviour">Comportamiento</string>
-    <string name="settings_behaviour_desc">Cambia como funciona la app</string>
     <string name="settings_navigation_exit_immediately">Salir Inmediatamente</string>
     <string name="settings_navigation_exit_immediately_desc">Omite volver a la vista principal de fotos al presionar el botón Atrás</string>
     <string name="trash_bin_short">Basura</string>

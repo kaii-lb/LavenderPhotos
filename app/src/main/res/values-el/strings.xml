@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Φωτογραφίες</string>
-    <string name="first_startup_dialog_confirm_title">Αναζήτηση</string>
     <string name="albums">Συλλογές</string>
     <string name="finding_albums_on_device">Εύρεση συλλογών…</string>
     <string name="albums_found">Βρέθηκαν όλες οι συλλογές!</string>
@@ -14,13 +13,11 @@
     <string name="albums_custom">Προσαρμοσμένη Συλλογή</string>
     <string name="albums_custom_desc">Προσθήκη οποιωνδήποτε πολυμέσων από οπουδήποτε</string>
     <string name="albums_folder_desc">Φόρτωση πολυμέσων από έναν φάκελο</string>
-    <string name="first_startup_dialog_title">Εύρεση όλων των συλλογών της συσκευής;</string>
     <string name="albums_main_list">Προβολή όλων στην Κεντρική σελίδα</string>
     <string name="albums_main_list_desc_1">Οι φωτογραφίες των επιλεγμένων συλλογών θα φαίνονται στην κεντρική σελίδα</string>
     <string name="albums_main_list_desc_2">Οι επιλεγμένες συλλογές δεν θα φαίνονται στην κεντρική σελίδα</string>
     <string name="albums_main_list_selected">Οι επιλεγμένες συλλογές θα φαίνονται στην κεντρική σελίδα</string>
     <string name="albums_main_list_selected_inverse">Οι επιλεγμένες συλλογές δεν θα φαίνονται στην κεντρική σελίδα</string>
-    <string name="first_startup_dialog_body">Εντοπίζει όλες τις συλλογές της συσκευής και τις προσθέτει στο Lavender Photos.\nΣημείωση: Οι συλλογές ήδη υπαρχόντων χρηστών θα ΔΙΑΓΡΑΦΟΥΝ αν αυτή η επιλογή χρησιμοποιηθεί.</string>
     <string name="direct_path_album">Χρήση απευθείας διαδρομής για την προσθήκη συλλογής</string>
     <string name="albums_selected">Επιλεγμένες Συλλογές</string>
     <string name="albums_auto_detect">Αυτόματη αναγνώριση συλλογών</string>

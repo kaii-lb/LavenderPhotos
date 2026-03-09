@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_startup_dialog_title">Procurar todos os álbuns no dispositivo?</string>
-    <string name="first_startup_dialog_body">Procura por cada álbum neste dispositivo e o adiciona ao Lavender Photos.\nNota: Usuários antigos terão seus álbuns apagados se essa opção for utilizada.</string>
-    <string name="first_startup_dialog_confirm_title">Procurar!</string>
     <string name="albums">Álbuns</string>
     <string name="finding_albums_on_device">Procurando álbuns…</string>
     <string name="albums_found">Todos os álbuns encontrados!</string>
@@ -104,7 +101,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="favourites">Favoritos</string>
     <string name="favourites_add_this">Favoritar esta mídia</string>
     <string name="debugging">Depuração</string>
-    <string name="debugging_desc">Ferramentas para depuração de erros</string>
     <string name="logs">Registros</string>
     <string name="record_logs">Guardar Registros</string>
     <string name="record_logs_desc">Armazena registros para depuração. Toque para ver.</string>
@@ -232,20 +228,16 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="editing_fps">QPS</string>
     <string name="settings">Configurações</string>
     <string name="settings_general">Geral</string>
-    <string name="settings_general_desc">Preferências e customizações do App</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_dark_theme">Tema Escuro</string>
     <string name="settings_light_theme">Tema Claro</string>
     <string name="settings_Auto_theme">Tema Automático</string>
     <string name="settings_look_and_feel">Estilo &amp; Sensação</string>
-    <string name="settings_look_and_feel_desc">Muda a aparência do App</string>
     <string name="settings_theme_follow">App segue o tema do sistema</string>
     <string name="settings_theme_dark">App permanece no tema escuro</string>
     <string name="settings_theme_light">App permanece no tema claro</string>
     <string name="settings_privacy">Privacidade &amp; Segurança</string>
-    <string name="settings_privacy_desc">Controle fino sobre seus dados</string>
     <string name="settings_memory_storage">Memória &amp; Armazenamento</string>
-    <string name="settings_storage_desc">Opções de espaço e performance</string>
     <string name="settings_storage">Armazenamento</string>
     <string name="settings_memory">Memória</string>
     <string name="settings_storage_thumbnails_size">Miniaturas estão atualmente em %1$s pixels. Valores maiories utilizam mais %2$s</string>
@@ -260,7 +252,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="settings_clear_cache_desc">Isso limpará todos os caches de miniatura neste dispositivo, liberando armazenamento. O carregamento de minuaturas demorará mais na próxima inicialização.</string>
     <string name="settings_about_and_updates">Sobre &amp; Atualizações</string>
     <string name="settings_behaviour">Comportamento</string>
-    <string name="settings_behaviour_desc">Muda como o app funciona</string>
     <string name="settings_navigation_exit_immediately">Sair Imediatamente</string>
     <string name="settings_navigation_exit_immediately_desc">Pula o retorno ao painel principal de fotos ao pressionar o botão voltar</string>
     <string name="trash_bin_short">Lixo</string>

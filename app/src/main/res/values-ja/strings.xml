@@ -18,8 +18,6 @@
     <string name="media_okay">Okay</string>
     <string name="tabs">タブ</string>
     <string name="app_name">写真</string>
-    <string name="first_startup_dialog_title">デバイス上のすべてのアルバムを検索しますか？</string>
-    <string name="first_startup_dialog_confirm_title">検索！</string>
     <string name="albums">アルバム</string>
     <string name="finding_albums_on_device">アルバムを探しています…</string>
     <string name="add_album">アルバムに追加</string>
@@ -88,7 +86,6 @@
     <string name="export_fav_to_zip_desc">お気に入りに登録したすべての項目を zip ファイルにエクスポートします</string>
     <string name="favourites_add_this">メディアをお気に入りに追加</string>
     <string name="debugging">デバッグ</string>
-    <string name="debugging_desc">問題をデバッグするためのツール</string>
     <string name="record_logs_desc">デバッグ用のログを保存します。タップして表示します。</string>
     <string name="choose_logs">ログを選択</string>
     <string name="previous_run_logs">前回の実行ログ</string>

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">图库</string>
-    <string name="first_startup_dialog_title">查找该设备上的所有相册？</string>
-    <string name="first_startup_dialog_body">查找本设备上的所有相册并将其添加到薰衣草图库。\n注意：若执行此操作，旧用户的相册数据将会被覆盖。</string>
-    <string name="first_startup_dialog_confirm_title">搜索！</string>
     <string name="albums">相册</string>
     <string name="finding_albums_on_device">正在查找相册…</string>
     <string name="albums_found">已找到全部相册！</string>
@@ -89,7 +86,6 @@
     <string name="favourites">收藏</string>
     <string name="favourites_add_this">收藏此媒体</string>
     <string name="debugging">调试</string>
-    <string name="debugging_desc">用于调试问题的工具</string>
     <string name="logs">日志</string>
     <string name="record_logs">记录日志</string>
     <string name="record_logs_desc">存储日志用于调试，点击查看。</string>
@@ -152,18 +148,14 @@
     <string name="editing_failed">编辑图片保存失败</string>
     <string name="settings">设置</string>
     <string name="settings_general">通用</string>
-    <string name="settings_general_desc">应用偏好设置与自定义选项</string>
     <string name="settings_theme">主题</string>
     <string name="settings_dark_theme">深色主题</string>
     <string name="settings_look_and_feel">界面观感</string>
-    <string name="settings_look_and_feel_desc">调整应用外观显示效果</string>
     <string name="settings_theme_follow">应用跟随系统主题</string>
     <string name="settings_theme_dark">应用始终使用深色主题</string>
     <string name="settings_theme_light">应用始终使用浅色主题</string>
     <string name="settings_privacy">隐私与安全</string>
-    <string name="settings_privacy_desc">精细控制您的数据</string>
     <string name="settings_memory_storage">内存与存储</string>
-    <string name="settings_storage_desc">性能与空间选项</string>
     <string name="settings_storage">存储</string>
     <string name="settings_memory">内存</string>
     <string name="settings_storage_thumbnails_size">当前缩略图尺寸为 %1$s 像素。数值越高，占用的 %2$s 越多</string>
@@ -324,7 +316,6 @@
     <string name="settings_light_theme">浅色主题</string>
     <string name="settings_Auto_theme">自动主题</string>
     <string name="settings_behaviour">行为</string>
-    <string name="settings_behaviour_desc">自定义应用行为方式</string>
     <string name="settings_navigation_exit_immediately">直接退出</string>
     <string name="settings_navigation_exit_immediately_desc">按下返回键时跳过主照片界面直接退出</string>
     <string name="trash_bin_short">回收站</string>

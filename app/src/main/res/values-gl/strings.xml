@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fotos</string>
-    <string name="first_startup_dialog_title">Buscar todos os álbums no dispositivo?</string>
-    <string name="first_startup_dialog_body">Busca todos os álbums neste dispositivo e engádeos a Lavender Photos.\nNota: Se esta opción se usa, as usuarias antigas van ver que se ELIMINAN os seus albums .</string>
-    <string name="first_startup_dialog_confirm_title">Busca!</string>
     <string name="albums">Álbums</string>
     <string name="finding_albums_on_device">Buscando álbums…</string>
     <string name="albums_found">Atopados todos os álbums!</string>
@@ -136,7 +133,6 @@
     <string name="favourites_migration_declined">Permisos non concedidos!</string>
     <string name="favourites_migration_declined_desc">Lavender Photos non pode transferir os elementos favoritos desde a versión antiga se non lle concedes permiso para facelo! Deste xeito vas perder todos os teus elementos favoritos anteriores.</string>
     <string name="debugging">Depuración</string>
-    <string name="debugging_desc">Ferramentas para analizar incidencias</string>
     <string name="logs">Rexistros</string>
     <string name="record_logs">Gravar rexistros</string>
     <string name="record_logs_desc">Gardar rexistros para depurar. Toca para ver.</string>
@@ -262,20 +258,16 @@
     <string name="editing_fps">FPS</string>
     <string name="settings">Axustes</string>
     <string name="settings_general">Xeral</string>
-    <string name="settings_general_desc">Preferencias e personalización da app</string>
     <string name="settings_theme">Decorado</string>
     <string name="settings_dark_theme">Escuro</string>
     <string name="settings_light_theme">Claro</string>
     <string name="settings_Auto_theme">Auto</string>
     <string name="settings_look_and_feel">Aparencia e Comportamento</string>
-    <string name="settings_look_and_feel_desc">Cambia a aparencia da app</string>
     <string name="settings_theme_follow">A app segue o decorado do sistema</string>
     <string name="settings_theme_dark">A app sempre con decorado escuro</string>
     <string name="settings_theme_light">A app sempre con decorado claro</string>
     <string name="settings_privacy">Privacidade e Seguridade</string>
-    <string name="settings_privacy_desc">Control detallado sobre os teus datos</string>
     <string name="settings_memory_storage">Memoria e Almacenaxe</string>
-    <string name="settings_storage_desc">Rendemento e opcións de espazo</string>
     <string name="settings_storage">Almacenaxe</string>
     <string name="settings_memory">Memoria</string>
     <string name="settings_storage_thumbnails_size">As miniaturas actualmente son de %1$s pixeles. Un tamaño maior usa máis %2$s</string>
@@ -290,7 +282,6 @@
     <string name="settings_clear_cache_desc">Isto vai eliminar da memoria tobo todas as miniaturas neste dispositivo, liberando almacenaxe. A carga de miniaturas vaise demorar máis no próximo inicio.</string>
     <string name="settings_about_and_updates">Sobre e Actualizacións</string>
     <string name="settings_behaviour">Comportamento</string>
-    <string name="settings_behaviour_desc">Cambia o funcionamento da app</string>
     <string name="settings_navigation_exit_immediately">Saír inmediatamente</string>
     <string name="settings_about_unknown_version">Non se puido obter o número da versión</string>
     <string name="trash_bin_short">Lixo</string>

@@ -526,9 +526,6 @@
     </p>
     ]]></string>
     <!-- First Startup -->
-    <string name="first_startup_dialog_title">Cihazdaki tüm albümler bulunsun mu?</string>
-    <string name="first_startup_dialog_body">Bu cihazdaki tüm albümleri arar ve Lavender Photos\'a ekler.\nNot: Bu seçenek kullanılırsa eski kullanıcıların albümleri SİLİNECEKTİR.</string>
-    <string name="first_startup_dialog_confirm_title">Ara!</string>
     <!-- Albums -->
     <string name="albums">Albümler</string>
     <string name="finding_albums_on_device">Albümler bulunuyor…</string>
@@ -641,7 +638,6 @@
     <string name="favourites_add_this">Bu medyayı favorilere ekle</string>
     <!-- Debugging -->
     <string name="debugging">Hata Ayıklama</string>
-    <string name="debugging_desc">Sorunları ayıklamak için araçlar</string>
     <string name="logs">Günlükler</string>
     <string name="record_logs">Günlükleri Kaydet</string>
     <string name="record_logs_desc">Hata ayıklama için günlükleri saklayın. Görüntülemek için dokunun.</string>
@@ -774,20 +770,16 @@
     <!-- Settings -->
     <string name="settings">Ayarlar</string>
     <string name="settings_general">Genel</string>
-    <string name="settings_general_desc">Uygulama tercihleri ve özelleştirmeler</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_dark_theme">Koyu Tema</string>
     <string name="settings_light_theme">Açık Tema</string>
     <string name="settings_Auto_theme">Otomatik Tema</string>
     <string name="settings_look_and_feel">Görünüm &amp; His</string>
-    <string name="settings_look_and_feel_desc">Uygulamanın nasıl göründüğünü değiştirin</string>
     <string name="settings_theme_follow">Uygulama sistem temasını takip eder</string>
     <string name="settings_theme_dark">Uygulama her zaman koyu temadadır</string>
     <string name="settings_theme_light">Uygulama her zaman açık temadadır</string>
     <string name="settings_privacy">Gizlilik &amp; Güvenlik</string>
-    <string name="settings_privacy_desc">Verileriniz üzerinde ayrıntılı kontrol</string>
     <string name="settings_memory_storage">Bellek &amp; Depolama</string>
-    <string name="settings_storage_desc">Performans ve alan seçenekleri</string>
     <string name="settings_storage">Depolama</string>
     <string name="settings_memory">Bellek</string>
     <string name="settings_storage_thumbnails_size">Küçük resimler şu anda %1$s pikseldir. Daha yüksek değerler daha fazla %2$s kullanır</string>
@@ -802,7 +794,6 @@
     <string name="settings_clear_cache_desc">Bu, bu cihazdaki tüm küçük resim önbelleklerini silerek depolama alanını boşaltacaktır. Bir sonraki başlatmada küçük resim yüklemesi daha uzun sürecektir.</string>
     <string name="settings_about_and_updates">Hakkında &amp; Güncellemeler</string>
     <string name="settings_behaviour">Davranış</string>
-    <string name="settings_behaviour_desc">Uygulamanın nasıl çalıştığını değiştirin</string>
     <string name="settings_navigation_exit_immediately">Hemen Çık</string>
     <string name="settings_navigation_exit_immediately_desc">Geri düğmesine basıldığında ana fotoğraf görünümüne geri dönmeyi atlar</string>
     <!-- Trash -->

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Photos</string>
-    <string name="first_startup_dialog_title">Find alle album på enheden?</string>
-    <string name="first_startup_dialog_body">Søger efter alle album på enheden og tilføjer dem til Lavender Photos.\nNote: Gamle brugere VIL få deres album slettet hvis denne indstilling bruges.</string>
-    <string name="first_startup_dialog_confirm_title">Søg!</string>
     <string name="albums">Album</string>
     <string name="finding_albums_on_device">Finder album…</string>
     <string name="albums_found">Fandt alle album!</string>

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Zdjęcia</string>
-    <string name="first_startup_dialog_title">Znaleźć wszystkie albumy na urządzeniu?</string>
-    <string name="first_startup_dialog_body">Przeszukuje wszystkie albumy na tym urządzeniu i dodaje je do Lavender Photos.\nUwaga: Albumy starszych użytkowników zostaną usunięte, jeśli ta opcja zostanie użyta.</string>
-    <string name="first_startup_dialog_confirm_title">Szukaj!</string>
     <string name="albums">Albumy</string>
     <string name="finding_albums_on_device">Wyszukiwanie albumów…</string>
     <string name="albums_found">Znaleziono wszystkie albumy!</string>
@@ -79,7 +76,6 @@
     <string name="favourites">Ulubione</string>
     <string name="favourites_add_this">Dodaj do ulubionych</string>
     <string name="debugging">Debugowanie</string>
-    <string name="debugging_desc">Narzędzia do debugowania problemów</string>
     <string name="logs">Logi</string>
     <string name="record_logs">Rejestry logów</string>
     <string name="record_logs_desc">Przechowuj logi do debugowania. Dotknij, aby wyświetlić.</string>
@@ -134,18 +130,14 @@
     <string name="editing_failed">Nie udało się zapisać edytowanego obrazu</string>
     <string name="settings">Ustawienia</string>
     <string name="settings_general">Ogólne</string>
-    <string name="settings_general_desc">Preferencje i dostosowanie aplikacji</string>
     <string name="settings_theme">Motyw</string>
     <string name="settings_dark_theme">Ciemny motyw</string>
     <string name="settings_look_and_feel">Wygląd i styl</string>
-    <string name="settings_look_and_feel_desc">Zmień wygląd aplikacji</string>
     <string name="settings_theme_follow">Aplikacja dostosowuje się do motywu systemu</string>
     <string name="settings_theme_dark">Aplikacja jest zawsze w ciemnym motywie</string>
     <string name="settings_theme_light">Aplikacja jest zawsze w jasnym motywie</string>
     <string name="settings_privacy">Prywatność i bezpieczeństwo</string>
-    <string name="settings_privacy_desc">Szczegółowa kontrola nad Twoimi danymi</string>
     <string name="settings_memory_storage">Pamięć i przechowywanie</string>
-    <string name="settings_storage_desc">Opcje wydajności i przestrzeni</string>
     <string name="settings_storage">Przechowywanie</string>
     <string name="settings_memory">Pamięć</string>
     <string name="settings_storage_thumbnails_size">Miniatury mają obecnie rozmiar %1$s pikseli. Wyższe wartości wymagają więcej %2$s</string>
@@ -317,7 +309,6 @@
     <string name="settings_light_theme">Jasny motyw</string>
     <string name="settings_Auto_theme">Motyw automatyczny</string>
     <string name="settings_behaviour">Zachowanie</string>
-    <string name="settings_behaviour_desc">Zmień sposób działania aplikacji</string>
     <string name="settings_navigation_exit_immediately">Wyjdź natychmiast</string>
     <string name="settings_navigation_exit_immediately_desc">Pomija powrót do głównego widoku zdjęć po naciśnięciu przycisku Wstecz</string>
     <string name="trash_bin_short">Kosz</string>

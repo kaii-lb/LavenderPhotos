@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Ảnh</string>
-    <string name="first_startup_dialog_title">Tìm tất cả album trên thiết bị?</string>
-    <string name="first_startup_dialog_body">Tìm kiếm mọi album trên thiết bị này và rồi thêm chúng vào Lavender.\nLưu ý: album của người dùng cũ SẼ bị xóa nếu chọn lựa chọn này.</string>
-    <string name="first_startup_dialog_confirm_title">Tìm kiếm!</string>
     <string name="albums">Album</string>
     <string name="finding_albums_on_device">Tìm kiếm album…</string>
     <string name="albums_found">Tìm thấy mọi album!</string>
@@ -82,7 +79,6 @@
     <string name="favourites">Yêu thích</string>
     <string name="favourites_add_this">Thích ảnh/video này</string>
     <string name="debugging">Gỡ lỗi</string>
-    <string name="debugging_desc">Công cụ để gỡ lỗi vấn đề</string>
     <string name="logs">Nhật ký</string>
     <string name="record_logs">Ghi chép nhật ký</string>
     <string name="record_logs_desc">Lưu trữ nhật ký dùng để gỡ lỗi. Nhấn để xem.</string>

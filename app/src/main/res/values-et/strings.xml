@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fotod</string>
-    <string name="first_startup_dialog_title">Kas tuvastad nutiseadmest kõik albumid?</string>
     <string name="albums_found">Tuvastasin kõik albumid!</string>
     <string name="add_album">Lisa album</string>
     <string name="finding_albums_on_device">Otsin albumeid…</string>
     <string name="albums">Albumid</string>
-    <string name="first_startup_dialog_confirm_title">Otsi!</string>
     <string name="albums_name">Albumi nimi</string>
     <string name="albums_type">Albumi tüüp</string>
     <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
@@ -69,7 +67,6 @@
     <string name="data_and_backup">Andmed ja varundus</string>
     <string name="favourites_add_this">Märgi see meedium lemmikuks</string>
     <string name="debugging">Veaotsing</string>
-    <string name="debugging_desc">Tarvikud vigade otsimiseks</string>
     <string name="logs">Logid</string>
     <string name="record_logs">Salvesta logisid</string>
     <string name="record_logs_desc">Salvesta logid veaotsingu eesmärgil. Vaatamiseks klõpsi.</string>

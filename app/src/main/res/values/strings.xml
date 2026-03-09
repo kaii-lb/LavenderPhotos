@@ -644,9 +644,6 @@
     ]]></string>
 
     <!-- First Startup -->
-    <string name="first_startup_dialog_title">Find all albums on device?</string>
-    <string name="first_startup_dialog_body">Searches for every album/folder on this device and adds them to Lavender Photos\' albums tab.</string>
-    <string name="first_startup_dialog_confirm_title">Search!</string>
 
     <!-- Albums -->
     <string name="albums">Albums</string>
@@ -808,7 +805,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
 
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
-    <string name="debugging_desc">Tools for debugging issues</string>
     <string name="debugging_development">Development</string>
     <string name="logs">Logs</string>
     <string name="record_logs">Record Logs</string>
@@ -949,20 +945,16 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="settings_general">General</string>
-    <string name="settings_general_desc">App preferences and customizations</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_dark_theme">Dark Theme</string>
     <string name="settings_light_theme">Light Theme</string>
     <string name="settings_Auto_theme">Auto Theme</string>
     <string name="settings_look_and_feel">Look &amp; Feel</string>
-    <string name="settings_look_and_feel_desc">Change how the app looks</string>
     <string name="settings_theme_follow">App follows the system theme</string>
     <string name="settings_theme_dark">App is always in dark theme</string>
     <string name="settings_theme_light">App is always in light theme</string>
     <string name="settings_privacy">Privacy &amp; Security</string>
-    <string name="settings_privacy_desc">Fine grained control over your data</string>
     <string name="settings_memory_storage">Memory &amp; Storage</string>
-    <string name="settings_storage_desc">Performance and space options</string>
     <string name="settings_storage">Storage</string>
     <string name="settings_memory">Memory</string>
     <string name="settings_storage_thumbnails_size">Thumbnails are currently %1$s pixels. Higher values use more %2$s</string>
@@ -977,7 +969,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
     <string name="settings_about_and_updates">About &amp; Updates</string>
     <string name="settings_behaviour">Behaviour</string>
-    <string name="settings_behaviour_desc">Change how the app works</string>
     <string name="settings_navigation_exit_immediately">Exit Immediately</string>
     <string name="settings_navigation_exit_immediately_desc">Skips going back to the default tab when pressing the back button</string>
     <string name="settings_about_unknown_version">Couldn\'t get version number</string>
@@ -1242,10 +1233,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!--  Tags  -->
     <string name="tags_add">Add a tag!</string>
     <string name="tags_exists">Tag already exists!</string>
-    <string name="tags_applied">Applied:</string>
-    <string name="tags_none_applied">No Tags Applied</string>
-    <string name="tags_available">Available:</string>
-    <string name="tags_add_some">Add some tags!</string>
     <string name="tags_name">Name: %s</string>
     <string name="tags_type">Type: %s</string>
     <string name="tags_path">Path: %s</string>

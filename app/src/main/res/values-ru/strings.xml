@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Фотографии</string>
-    <string name="first_startup_dialog_title">Найти все альбомы на устройстве?</string>
-    <string name="first_startup_dialog_body">Выполняется поиск всех альбомов на этом устройстве и добавление их в Лавандовые фото Photos.\nПримечание: при использовании этой опции альбомы старых пользователей будут удалены.</string>
-    <string name="first_startup_dialog_confirm_title">Найти!</string>
     <string name="albums">Альбомы</string>
     <string name="finding_albums_on_device">Поиск альбомов…</string>
     <string name="albums_found">Найдены все альбомы!</string>
@@ -80,7 +77,6 @@
     <string name="favourites">Избранное</string>
     <string name="favourites_add_this">Добавить этот медиафайл в избранное</string>
     <string name="debugging">Отладка</string>
-    <string name="debugging_desc">Инструменты для отладки</string>
     <string name="logs">Журналы</string>
     <string name="record_logs">Журналы записи</string>
     <string name="record_logs_desc">Сохранение журналов для отладки. Нажмите для просмотра.</string>
@@ -143,18 +139,14 @@
     <string name="editing_failed">Не удалось сохранить отредактированное изображение</string>
     <string name="settings">Настройки</string>
     <string name="settings_general">Основные</string>
-    <string name="settings_general_desc">Настройки приложения</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_dark_theme">Тёмная тема</string>
     <string name="settings_look_and_feel">Внешний вид</string>
-    <string name="settings_look_and_feel_desc">Изменение внешнего вида приложения</string>
     <string name="settings_theme_follow">Приложение следует системной теме</string>
     <string name="settings_theme_dark">Приложение всегда использует тёмную тему</string>
     <string name="settings_theme_light">Приложение всегда использует светлую тему</string>
     <string name="settings_privacy">Конфиденциальность и безопасность</string>
-    <string name="settings_privacy_desc">Тонкое управление данными</string>
     <string name="settings_memory_storage">Память и хранилище</string>
-    <string name="settings_storage_desc">Параметры производительности и места</string>
     <string name="settings_storage">Хранилище</string>
     <string name="settings_memory">Память</string>
     <string name="settings_storage_thumbnails_size">Размер миниатюр в настоящее время составляет %1$s пикселей. Более высокие значения используют больше %2$s пикселей</string>
@@ -870,7 +862,6 @@
     <string name="settings_light_theme">Светлая тема</string>
     <string name="settings_Auto_theme">Автоматическая тема</string>
     <string name="settings_behaviour">Поведение</string>
-    <string name="settings_behaviour_desc">Изменить работу приложения</string>
     <string name="settings_navigation_exit_immediately">Немедленный выход</string>
     <string name="settings_navigation_exit_immediately_desc">Пропускает возврат к основному виду фотографий при нажатии кнопки «Назад»</string>
     <string name="settings_about_unknown_version">Не удалось получить номер версии</string>

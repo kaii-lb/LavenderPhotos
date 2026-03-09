@@ -33,13 +33,10 @@
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
     <string name="updates_start">Почати оновлення</string>
     <string name="settings_privacy">Приватність та безпека</string>
-    <string name="settings_privacy_desc">Детальний контроль над вашими даними</string>
     <string name="settings_look_and_feel">Оформлення та поведінка</string>
-    <string name="settings_look_and_feel_desc">Змінити зовнішній вигляд застосунку</string>
     <string name="settings_dark_theme">Темна тема</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_general">Загальні</string>
-    <string name="settings_general_desc">Налаштування та персоналізація застосунку</string>
     <string name="settings">Налаштування</string>
     <string name="editing_failed">Не вдалося зберегти відредаговане зображення</string>
     <string name="editing_text">Текст</string>
@@ -61,7 +58,6 @@
     <string name="settings_theme_light">Застосунок завжди в світлій темі</string>
     <string name="settings_theme_dark">Застосунок завжди в темній темі</string>
     <string name="settings_theme_follow">Застосунок завжди в системній темі</string>
-    <string name="first_startup_dialog_title">Знайти всі альбоми на пристрої?</string>
     <string name="return_to_previous_page">Повернутися на попередню сторінку</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="locked_folder_help_bottom">Захищені дані неможливо відновити, якщо Ви забули пароль або видалили відбиток пальця.</string>
@@ -78,7 +74,6 @@
     <string name="favourites">Обрані</string>
     <string name="favourites_add_this">Додати цей медіафайл до обраного</string>
     <string name="debugging">Налагодження</string>
-    <string name="debugging_desc">Засоби для діагностики проблем</string>
     <string name="logs">Логи</string>
     <string name="record_logs">Записувати логи</string>
     <string name="record_logs_desc">Зберігає логи для налагодження. Натисніть, щоб переглянути.</string>
@@ -103,7 +98,6 @@
     <string name="editing_exit_on_save">Виходити після збереження</string>
     <string name="editing_exit_on_save_desc">Автоматично виходити з режиму редагування після збереження змін</string>
     <string name="settings_memory_storage">Пам’ять та сховище</string>
-    <string name="settings_storage_desc">Налаштування продуктивності та пам’яті</string>
     <string name="albums_clear_list">Очистити список альбомів</string>
     <string name="albums_is_custom">Це користувацький альбом</string>
     <string name="albums_custom">Користувацький альбом</string>
@@ -199,7 +193,6 @@
     <string name="error_views_secure_prefix">Захищено</string>
     <string name="error_views_favourites_empty">Додайте найцінніші спогади!</string>
     <string name="error_views_folder_non_existent">Тека не існує</string>
-    <string name="first_startup_dialog_confirm_title">Знайти!</string>
     <string name="direct_path_album">Використайте прямий шлях для додавання альбому</string>
     <string name="albums_main_list">Основний список альбомів</string>
     <string name="albums_main_list_selected">Вибрані альбоми відображатимуться на головній сторінці</string>
@@ -222,7 +215,6 @@
     <string name="permissions_overwrite_date_on_move">Перезаписувати дату при переміщенні</string>
     <string name="permissions_overwrite_date_on_move_desc">Встановлювати дату скопійованих/переміщених файлів на поточну, щоб вони були найновішими</string>
     <string name="permissions_needed">Потрібен дозвіл</string>
-    <string name="first_startup_dialog_body">Шукає всі альбоми на цьому пристрої та додає їх у Lavender Photos.\nПримітка: У старих користувачів альбоми будуть видалені, якщо скористатися цією опцією.</string>
     <string name="video_seek_icon_desc">Показує напрям перемотування відео</string>
     <string name="media">Медіафайли</string>
     <string name="media_secure">Захистити</string>
@@ -358,7 +350,6 @@
     <string name="settings_light_theme">Світла тема</string>
     <string name="settings_Auto_theme">Автоматична тема</string>
     <string name="settings_behaviour">Поведінка</string>
-    <string name="settings_behaviour_desc">Змінити принцип роботи програми</string>
     <string name="settings_navigation_exit_immediately">Негайно вийдіть</string>
     <string name="settings_navigation_exit_immediately_desc">Пропускає повернення до головного перегляду фотографій при натисканні кнопки «Назад»</string>
     <string name="settings_about_unknown_version">Не вдалося отримати номер версії</string>

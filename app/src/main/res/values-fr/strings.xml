@@ -2,11 +2,8 @@
 <resources>
     <string name="app_name">Photos</string>
     <string name="finding_albums_on_device">Recherche des albums…</string>
-    <string name="first_startup_dialog_body">Recherche tous les albums sur cet appareil et les ajoute à Lavender Photos.\nNote : si vous possédiez une ancienne version de l\'appli vos albums SERONT effacés si cette option est utilisée.</string>
     <string name="add_album">Ajouter un album</string>
     <string name="albums">Albums</string>
-    <string name="first_startup_dialog_title">Chercher tous les albums de l\'appareil ?</string>
-    <string name="first_startup_dialog_confirm_title">Chercher !</string>
     <string name="direct_path_album">Utiliser un chemin direct pour ajouter un album</string>
     <string name="albums_main_list">Liste principale d\'albums</string>
     <string name="albums_selected">Albums sélectionnés</string>
@@ -73,7 +70,6 @@
     <string name="settings_general">Général</string>
     <string name="settings_dark_theme">Thème sombre</string>
     <string name="settings_theme_dark">L\'appli utilise toujours le thème sombre</string>
-    <string name="settings_storage_desc">Performances et options de stockage</string>
     <string name="settings_storage">Stockage</string>
     <string name="settings_storage_thumbnails_size">Les miniatures font actuellement %1$s pixels. Une plus grande valeur utilisera plus de %2$s</string>
     <string name="settings_storage_thumbnails_cache">Miniatures en cache</string>
@@ -133,12 +129,9 @@
     <string name="settings_privacy">Confidentialité &amp; Sécurité</string>
     <string name="media_erase">Effacer</string>
     <string name="editing_text">Texte</string>
-    <string name="settings_privacy_desc">Contrôle affiné de vos données</string>
     <string name="settings">Paramètres</string>
-    <string name="settings_general_desc">Préférences et personnalisation</string>
     <string name="settings_look_and_feel">Apparence &amp; Ressenti</string>
     <string name="trash_empty">Vider la corbeille ?</string>
-    <string name="settings_look_and_feel_desc">Changez l\'apparence de l\'appli</string>
     <string name="settings_theme_follow">L\'appli suit le thème du système</string>
     <string name="settings_theme_light">L\'appli utilise toujours le thème clair</string>
     <string name="custom_album_remove_media">Retirer</string>
@@ -178,7 +171,6 @@
     <string name="albums_item_count">Nombre de médias</string>
     <string name="albums_non_existent">Aucun album de ce genre n\'existe</string>
     <string name="debugging">Déboguage</string>
-    <string name="debugging_desc">Outils pour déboguer les problèmes</string>
     <string name="logs">Rapports d\'erreur</string>
     <string name="record_logs">Enregistrer les rapports d\'erreur</string>
     <string name="record_logs_desc">Enregistre les rapports d\'erreur pour le débogage. Cliquez pour les voir.</string>
