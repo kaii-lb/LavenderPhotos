@@ -18,8 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.HorizontalSeparator
 import com.kaii.photos.compose.dialogs.InfoRow
@@ -29,6 +27,8 @@ import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.RowPosition
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -67,7 +67,7 @@ fun TabCustomizationDialog(
                             } else if (tab in tabList()) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
+                                        LavenderSnackbarEvent.MessageEvent(
                                             message = resources.getString(R.string.tabs_min_reached),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
@@ -81,7 +81,7 @@ fun TabCustomizationDialog(
                             } else if (tab !in tabList()) {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
+                                        LavenderSnackbarEvent.MessageEvent(
                                             message = resources.getString(R.string.tabs_max_reached),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short
@@ -109,7 +109,7 @@ fun TabCustomizationDialog(
                         } else {
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
                                         message = resources.getString(R.string.tabs_min_reached),
                                         icon = R.drawable.error_2,
                                         duration = SnackbarDuration.Short
@@ -149,7 +149,7 @@ fun TabCustomizationDialog(
             } else {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.tabs_max_reached),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short

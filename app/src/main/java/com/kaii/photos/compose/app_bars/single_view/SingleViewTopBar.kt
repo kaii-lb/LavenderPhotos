@@ -42,13 +42,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -73,7 +73,7 @@ fun SingleViewTopBar(
     ) {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.MessageEvent(
+                LavenderSnackbarEvent.MessageEvent(
                     message = resources.getString(R.string.privacy_scroll_mode_exit_tried),
                     icon = R.drawable.do_not_touch,
                     duration = SnackbarDuration.Short

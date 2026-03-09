@@ -61,8 +61,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
@@ -81,6 +79,8 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.permissions.files.rememberMediaRenamer
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -425,7 +425,7 @@ private fun Content(
                         eraseExifMedia(currentMediaItem.absolutePath)
 
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = resources.getString(R.string.media_exif_done),
                                 icon = R.drawable.checkmark_thin,
                                 duration = SnackbarDuration.Short
@@ -433,7 +433,7 @@ private fun Content(
                         )
                     } catch (e: Throwable) {
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = resources.getString(R.string.media_exif_failed),
                                 icon = R.drawable.error_2,
                                 duration = SnackbarDuration.Short
@@ -452,7 +452,7 @@ private fun Content(
             onRejected = {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.permissions_needed),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short
@@ -567,7 +567,7 @@ private fun IconContentImpl(
     val mediaRenamer = rememberMediaRenamer {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.MessageEvent(
+                LavenderSnackbarEvent.MessageEvent(
                     message = resources.getString(R.string.permissions_needed),
                     icon = R.drawable.error_2,
                     duration = SnackbarDuration.Short

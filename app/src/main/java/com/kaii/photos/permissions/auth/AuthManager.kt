@@ -10,12 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -86,7 +86,7 @@ fun rememberSecureFolderAuthManager(
             onFailure = {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.secure_unlock_failed),
                             duration = SnackbarDuration.Short,
                             icon = R.drawable.secure_folder
@@ -115,7 +115,7 @@ fun rememberExportAuthManager(
             onFailure = {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.secure_unlock_failed),
                             duration = SnackbarDuration.Short,
                             icon = R.drawable.secure_folder

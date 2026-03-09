@@ -33,8 +33,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -52,6 +50,8 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -278,7 +278,7 @@ private fun GeneralSettingsPageImpl(
 
                             if (checked) {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.LoadingEvent(
+                                    LavenderSnackbarEvent.LoadingEvent(
                                         message = if (isAlreadyLoading.value) findingAlbums else foundAlbums,
                                         icon = R.drawable.albums_search,
                                         isLoading = isAlreadyLoading
@@ -308,7 +308,7 @@ private fun GeneralSettingsPageImpl(
                         setAutoDetect(false)
 
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = clearDone,
                                 duration = SnackbarDuration.Short,
                                 icon = R.drawable.albums

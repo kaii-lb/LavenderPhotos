@@ -51,8 +51,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
@@ -77,6 +75,8 @@ import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -319,7 +319,7 @@ private fun BottomBar(
                                 val isLoading = mutableStateOf(true)
 
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.LoadingEvent(
+                                    LavenderSnackbarEvent.LoadingEvent(
                                         message = resources.getString(
                                             if (mediaType == MediaType.Image) R.string.editing_open_with_copying_image
                                             else R.string.editing_open_with_copying_video

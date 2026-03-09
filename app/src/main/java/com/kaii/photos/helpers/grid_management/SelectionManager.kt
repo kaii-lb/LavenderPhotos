@@ -17,8 +17,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -26,6 +24,8 @@ import com.kaii.photos.database.entities.epochToDayStart
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.MediaType
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -93,7 +93,7 @@ class SelectionManager(
         if (_selection.values.flatten().size >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.media_select_limit_reached),
                         icon = R.drawable.lists,
                         duration = SnackbarDuration.Short
@@ -173,7 +173,7 @@ class SelectionManager(
         if (snapshot.values.flatten().size >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.media_select_limit_reached),
                         icon = R.drawable.lists,
                         duration = SnackbarDuration.Short
@@ -229,7 +229,7 @@ class SelectionManager(
             if (snapshot[timestamp]!!.size >= 2000) {
                 scope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_select_limit_reached),
                             icon = R.drawable.lists,
                             duration = SnackbarDuration.Short
@@ -250,7 +250,7 @@ class SelectionManager(
         if (_selection.values.flatten().size >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.media_select_limit_reached),
                         icon = R.drawable.lists,
                         duration = SnackbarDuration.Short

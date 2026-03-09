@@ -41,8 +41,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.media3.common.util.UnstableApi
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
@@ -56,6 +54,8 @@ import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.saveVideo
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -198,7 +198,7 @@ fun VideoEditorTopBar(
                                 ) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
-                                            event = LavenderSnackbarEvents.MessageEvent(
+                                            event = LavenderSnackbarEvent.MessageEvent(
                                                 message = resources.getString(R.string.editing_export_video_failed),
                                                 icon = R.drawable.error_2,
                                                 duration = SnackbarDuration.Short

@@ -78,8 +78,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.widgets.shimmerEffect
@@ -96,6 +94,8 @@ import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -531,7 +531,7 @@ private fun ImageSelector(
         } else {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = resources.getString(R.string.editing_upload_image_failed),
                         icon = R.drawable.broken_image,
                         duration = SnackbarDuration.Short

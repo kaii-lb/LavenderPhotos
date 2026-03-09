@@ -58,8 +58,6 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
@@ -71,6 +69,8 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -105,7 +105,7 @@ suspend fun saveVideo(
     val body = mutableStateOf(context.resources.getString(R.string.editing_export_video_loading_body, 0, 3))
 
     LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvents.ProgressEvent(
+        LavenderSnackbarEvent.ProgressEvent(
             message = context.resources.getString(R.string.editing_export_video_loading),
             body = body,
             icon = R.drawable.videocam,
@@ -533,7 +533,7 @@ suspend fun saveImage(
     val isLoading = mutableStateOf(true)
 
     LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvents.LoadingEvent(
+        LavenderSnackbarEvent.LoadingEvent(
             message = context.resources.getString(R.string.editing_saving),
             icon = R.drawable.image_arrow_up,
             isLoading = isLoading
@@ -709,7 +709,7 @@ suspend fun saveImage(
         isLoading.value = false
 
         LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.MessageEvent(
+            LavenderSnackbarEvent.MessageEvent(
                 message = context.resources.getString(R.string.editing_failed),
                 icon = R.drawable.broken_image,
                 duration = SnackbarDuration.Short
@@ -755,7 +755,7 @@ suspend fun saveImage(
         isLoading.value = false
 
         LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.MessageEvent(
+            LavenderSnackbarEvent.MessageEvent(
                 message = context.resources.getString(R.string.editing_failed),
                 icon = R.drawable.broken_image,
                 duration = SnackbarDuration.Short
@@ -784,7 +784,7 @@ suspend fun saveImage(
         isLoading.value = false
     } else {
         LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.MessageEvent(
+            LavenderSnackbarEvent.MessageEvent(
                 message = context.resources.getString(R.string.editing_failed),
                 icon = R.drawable.broken_image,
                 duration = SnackbarDuration.Short

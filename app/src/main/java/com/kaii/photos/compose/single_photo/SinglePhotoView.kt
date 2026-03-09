@@ -59,8 +59,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -102,6 +100,8 @@ import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
@@ -641,7 +641,7 @@ private fun BottomBar(
                         onRejected = {
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
                                         message = resources.getString(R.string.permissions_needed),
                                         icon = R.drawable.shield_lock,
                                         duration = SnackbarDuration.Short
@@ -658,7 +658,7 @@ private fun BottomBar(
                         onRejected = {
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
                                         message = resources.getString(R.string.permissions_needed),
                                         icon = R.drawable.shield_lock,
                                         duration = SnackbarDuration.Short

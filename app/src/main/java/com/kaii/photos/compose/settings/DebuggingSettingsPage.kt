@@ -33,8 +33,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -50,6 +48,8 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -159,7 +159,7 @@ private fun DebuggingSettingsPageImpl(
                                 if (!exists) {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
-                                            LavenderSnackbarEvents.MessageEvent(
+                                            LavenderSnackbarEvent.MessageEvent(
                                                 message = noLogFile,
                                                 icon = R.drawable.no_log,
                                                 duration = SnackbarDuration.Short
@@ -268,7 +268,7 @@ private fun DebuggingSettingsPageImpl(
 
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = debuggingLoading,
                                 isLoading = isLoading,
                                 icon = R.drawable.logs
@@ -289,7 +289,7 @@ private fun DebuggingSettingsPageImpl(
                 ) {
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = debuggingLoading,
                                 icon = R.drawable.logs,
                                 duration = SnackbarDuration.Short
