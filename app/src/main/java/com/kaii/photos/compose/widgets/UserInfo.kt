@@ -40,8 +40,8 @@ import java.io.File
 fun MainDialogUserInfo(
     loginState: LoginState,
     coroutineScope: CoroutineScope,
-    alwaysShowInfo: Boolean,
-    immichInfo: ImmichBasicInfo,
+    alwaysShowInfo: () -> Boolean,
+    immichInfo: () -> ImmichBasicInfo,
     dismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -57,12 +57,12 @@ fun MainDialogUserInfo(
     ) {
         val navController = LocalNavController.current
         UpdatableProfileImage(
-            loggedIn = alwaysShowInfo || loginState !is LoginState.LoggedOut,
-            pfpUrl = if (alwaysShowInfo && loginState is LoginState.LoggedOut) context.profilePicture else (loginState as? LoginState.LoggedIn)?.pfpUrl ?: "",
+            loggedIn = alwaysShowInfo() || loginState !is LoginState.LoggedOut,
+            pfpUrl = if (alwaysShowInfo() && loginState is LoginState.LoggedOut) context.profilePicture else (loginState as? LoginState.LoggedIn)?.pfpUrl ?: "",
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
-                .clickable(enabled = alwaysShowInfo || loginState !is LoginState.LoggedOut) {
+                .clickable(enabled = alwaysShowInfo() || loginState !is LoginState.LoggedOut) {
                     coroutineScope.launch {
                         dismiss()
                         delay(AnimationConstants.DURATION_SHORT.toLong())
@@ -71,20 +71,20 @@ fun MainDialogUserInfo(
                 }
         )
 
-        val originalName = retain(immichInfo, loginState) {
+        val originalName = retain(immichInfo(), loginState) {
             when (loginState) {
                 is LoginState.LoggedIn -> {
                     loginState.name
                 }
 
                 is LoginState.ServerUnreachable -> {
-                    immichInfo.username.ifBlank {
+                    immichInfo().username.ifBlank {
                         resources.getString(R.string.immich_login_unavailable)
                     }
                 }
 
                 else -> {
-                    if (alwaysShowInfo) immichInfo.username
+                    if (alwaysShowInfo()) immichInfo().username
                     else resources.getString(R.string.immich_login_unavailable)
                 }
             }
@@ -120,8 +120,12 @@ fun UpdatableProfileImage(
         modifier = modifier
     ) {
         it
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
-            .skipMemoryCache(true)
-            .signature(ObjectKey(if (pfpPath is String) pfpUrl else 0))
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .signature(
+                ObjectKey(
+                    if (pfpPath is String) pfpUrl + File(context.profilePicture).lastModified().toString()
+                    else 0
+                )
+            )
     }
 }

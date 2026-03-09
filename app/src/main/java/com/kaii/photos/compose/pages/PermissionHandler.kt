@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
@@ -78,6 +79,7 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.permissions.PermissionsViewModel
 import com.kaii.photos.permissions.StartupManager
 
@@ -394,10 +396,18 @@ fun PermissionHandler(
                             Text(text = stringResource(id = R.string.editing_exit))
                         }
 
+                        val navController = LocalNavController.current
                         Button(
                             onClick = {
                                 viewModel.launch {
                                     startupManager.checkState()
+                                    if (startupManager.state != StartupManager.State.MissingPermissions) {
+                                        navController.navigate(Screens.Startup.ProcessingPage) {
+                                            popUpTo(route = Screens.Startup.PermissionsPage::class) {
+                                                inclusive = true
+                                            }
+                                        }
+                                    }
                                 }
                             },
                             enabled = startupManager.checkPermissions(),
@@ -419,10 +429,19 @@ fun PermissionHandler(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val navController = LocalNavController.current
                     Button(
                         onClick = {
                             viewModel.launch {
                                 startupManager.checkState()
+
+                                if (startupManager.state != StartupManager.State.MissingPermissions) {
+                                    navController.navigate(Screens.Startup.ProcessingPage) {
+                                        popUpTo(route = Screens.Startup.PermissionsPage::class) {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
                             }
                         },
                         enabled = startupManager.checkPermissions(),

@@ -26,25 +26,29 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
-import com.kaii.lavender.snackbars.LavenderSnackbarBox
-import com.kaii.lavender.snackbars.LavenderSnackbarHostState
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
@@ -72,9 +76,10 @@ import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
+import com.kaii.photos.database.sync.SyncManager
+import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.Settings
-import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
@@ -103,9 +108,12 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
 
@@ -118,26 +126,23 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
 
         super.onCreate(savedInstanceState)
-
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val settings = applicationContext.appModule.settings
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            settings.permissions.setIsMediaManager(MediaStore.canManageMedia(applicationContext))
+        val startupManager = StartupManager(context = applicationContext)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            startupManager.checkState()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                appModule.settings.permissions.setIsMediaManager(
+                    MediaStore.canManageMedia(applicationContext)
+                )
+            }
         }
 
-        val startupManager = StartupManager(context = applicationContext)
-        runBlocking { startupManager.checkState() }
-
         setContent {
-            val startupState by startupManager.state.collectAsStateWithLifecycle()
-
-            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(
-                    initialValue = runBlocking(Dispatchers.IO) {
-                        settings.lookAndFeel.getFollowDarkMode().first()
-                    }
-                )
+            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
 
             PhotosTheme(
                 theme = followDarkTheme,
@@ -158,7 +163,7 @@ class MainActivity : ComponentActivity() {
                         startupManager = startupManager,
                         settings = settings,
                         startupPage =
-                            when (startupState) {
+                            when (startupManager.state) {
                                 StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
 
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
@@ -166,16 +171,6 @@ class MainActivity : ComponentActivity() {
                                 else -> Screens.MainPages
                             }
                     )
-                }
-            }
-
-            LaunchedEffect(Unit) {
-                withContext(Dispatchers.IO) {
-                    val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
-                    if (!hasClearedCache) {
-                        settings.storage.clearThumbnailCache()
-                        settings.versions.setHasClearedGlideCache(true)
-                    }
                 }
             }
         }
@@ -192,7 +187,6 @@ class MainActivity : ComponentActivity() {
 
         val context = LocalContext.current
         val navController = LocalNavController.current
-        val coroutineScope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
@@ -206,29 +200,19 @@ class MainActivity : ComponentActivity() {
                 if (checkForUpdatesOnStartup) {
                     val updater = Updater(
                         context = context,
-                        coroutineScope = coroutineScope
+                        coroutineScope = lifecycleScope
                     )
                     updater.startupUpdateCheck(navController)
+                }
+
+                val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
+                if (!hasClearedCache) {
+                    settings.storage.clearThumbnailCache()
+                    settings.versions.setHasClearedGlideCache(true)
                 }
             }
         }
 
-        val searchViewModel: SearchViewModel = viewModel(factory = SearchViewModelFactory(context = context))
-        val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
-            factory = MultiAlbumViewModelFactory(
-                context = context,
-                album = AlbumType.Folder(
-                    id = "",
-                    name = "",
-                    paths = emptySet(),
-                    pinned = false,
-                    immichId = null
-                )
-            )
-        )
-
-        val albumGridState = rememberAlbumGridState()
-        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
         val snackbarHostState = remember { LavenderSnackbarHostState() }
 
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
@@ -261,10 +245,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable<Screens.Startup.ProcessingPage> {
-                    StartupLoadingPage(
-                        startupManager = startupManager,
-                        window = window
-                    )
+                    StartupLoadingPage(startupManager = startupManager)
                 }
 
                 navigation<Screens.MainPages>(
@@ -277,6 +258,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         setupNextScreen(window = window)
 
+                        val deviceAlbums by appModule.albumGridState.albums.collectAsStateWithLifecycle()
                         val storeOwner = remember(it) {
                             navController.getBackStackEntry(Screens.MainPages)
                         }
@@ -285,14 +267,31 @@ class MainActivity : ComponentActivity() {
                             factory = MainGridViewModelFactory(context = context)
                         )
 
+                        val searchViewModel = it.sharedViewModel<SearchViewModel>(
+                            factory = SearchViewModelFactory(context = context)
+                        )
+
+                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
+                            factory = MultiAlbumViewModelFactory(
+                                context = context,
+                                album = AlbumType.Folder(
+                                    id = "",
+                                    name = "",
+                                    paths = emptySet(),
+                                    pinned = false,
+                                    immichId = null
+                                )
+                            )
+                        )
+
                         MainPages(
                             multiAlbumViewModel = multiAlbumViewModel,
                             searchViewModel = searchViewModel,
                             mainGridViewModel = viewModel,
-                            deviceAlbums = deviceAlbums,
+                            deviceAlbums = { deviceAlbums },
                             window = window,
                             incomingIntent = null,
-                            refreshAlbums = albumGridState::refresh
+                            refreshAlbums = appModule.albumGridState::refresh
                         )
                     }
 
@@ -302,7 +301,12 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
-                        multiAlbumViewModel.changePaths(album = screen.album)
+                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
+                            factory = MultiAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
+                        )
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
@@ -316,6 +320,10 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
+
+                        val searchViewModel = it.sharedViewModel<SearchViewModel>(
+                            factory = SearchViewModelFactory(context = context)
+                        )
 
                         SinglePhotoView(
                             window = window,
@@ -336,6 +344,12 @@ class MainActivity : ComponentActivity() {
                         val screen = it.toRoute<Screens.Album.GridView>()
                         setupNextScreen(window = window)
 
+                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
+                            factory = MultiAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
+                        )
                         multiAlbumViewModel.changePaths(album = screen.album)
 
                         SingleAlbumView(
@@ -350,6 +364,12 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.Album.SinglePhoto>()
+                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
+                            factory = MultiAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
+                        )
                         multiAlbumViewModel.changePaths(album = screen.album)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
@@ -368,11 +388,7 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Favourites.GridView> {
                         setupNextScreen(window = window)
 
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Favourites)
-                        }
-                        val viewModel = viewModel<FavouritesViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<FavouritesViewModel>(
                             factory = FavouritesViewModelFactory(context = context)
                         )
 
@@ -380,11 +396,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Favourites.SinglePhoto> {
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Favourites)
-                        }
-                        val viewModel = viewModel<FavouritesViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<FavouritesViewModel>(
                             factory = FavouritesViewModelFactory(context = context)
                         )
 
@@ -408,11 +420,7 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Trash.GridView> {
                         setupNextScreen(window = window)
 
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Trash)
-                        }
-                        val viewModel = viewModel<TrashViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<TrashViewModel>(
                             factory = TrashViewModelFactory(context = context)
                         )
 
@@ -422,11 +430,7 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Trash.SinglePhoto> {
                         val screen = it.toRoute<Screens.Trash.SinglePhoto>()
 
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Trash)
-                        }
-                        val viewModel = viewModel<TrashViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<TrashViewModel>(
                             factory = TrashViewModelFactory(context = context)
                         )
 
@@ -444,12 +448,7 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.SecureFolder.GridView> {
                         setupNextScreen(window = window)
 
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.SecureFolder)
-                        }
-
-                        val viewModel = viewModel<SecureFolderViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<SecureFolderViewModel>(
                             factory = SecureFolderViewModelFactory(context = context)
                         )
 
@@ -457,11 +456,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.SecureFolder.SinglePhoto> {
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.SecureFolder)
-                        }
-                        val viewModel = viewModel<SecureFolderViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<SecureFolderViewModel>(
                             factory = SecureFolderViewModelFactory(context = context)
                         )
 
@@ -490,12 +485,7 @@ class MainActivity : ComponentActivity() {
                         setupNextScreen(window = window)
 
                         val screen = it.toRoute<Screens.Immich.GridView>()
-
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Immich)
-                        }
-                        val viewModel = viewModel<ImmichAlbumViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<ImmichAlbumViewModel>(
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
                                 album = screen.album
@@ -515,11 +505,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val screen = it.toRoute<Screens.Immich.SinglePhoto>()
 
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.Immich)
-                        }
-                        val viewModel = viewModel<ImmichAlbumViewModel>(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<ImmichAlbumViewModel>(
                             factory = ImmichAlbumViewModelFactory(
                                 context = context,
                                 album = screen.album
@@ -547,12 +533,7 @@ class MainActivity : ComponentActivity() {
                         setupNextScreen(window = window)
 
                         val screen = it.toRoute<Screens.CustomAlbum.GridView>()
-
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.CustomAlbum)
-                        }
-                        val viewModel: CustomAlbumViewModel = viewModel(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<CustomAlbumViewModel>(
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 album = screen.album
@@ -571,12 +552,7 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.CustomAlbum.SinglePhoto>()
-
-                        val storeOwner = remember(it) {
-                            navController.getBackStackEntry(Screens.CustomAlbum)
-                        }
-                        val viewModel: CustomAlbumViewModel = viewModel(
-                            viewModelStoreOwner = storeOwner,
+                        val viewModel = it.sharedViewModel<CustomAlbumViewModel>(
                             factory = CustomAlbumViewModelFactory(
                                 context = context,
                                 album = screen.album
@@ -647,7 +623,7 @@ class MainActivity : ComponentActivity() {
                     AlbumGroup(
                         id = screen.id,
                         name = screen.name,
-                        albumGridState = albumGridState
+                        albumGridState = appModule.albumGridState
                     )
                 }
 
@@ -771,21 +747,23 @@ class MainActivity : ComponentActivity() {
         ReportDrawn()
     }
 
-    // override fun onResume() {
-    //     super.onResume()
-    //
-    //     appModule.scope.launch(Dispatchers.IO) {
-    //         if (SyncManager(applicationContext).getGeneration() > 0L) {
-    //             // run work manager immediately after user navigates back to app
-    //             WorkManager.getInstance(applicationContext)
-    //                 .enqueueUniqueWork(
-    //                     SyncWorker::class.java.name,
-    //                     ExistingWorkPolicy.REPLACE,
-    //                     OneTimeWorkRequest.Builder(SyncWorker::class).build()
-    //                 )
-    //         }
-    //     }
-    // }
+    override fun onResume() {
+        super.onResume()
+
+        appModule.scope.launch(Dispatchers.IO) {
+            if (SyncManager(applicationContext).getGeneration() > 0L) {
+                delay(2000) // so it isn't immediate on startup
+
+                // run work manager immediately after user navigates back to app
+                WorkManager.getInstance(applicationContext)
+                    .enqueueUniqueWork(
+                        SyncWorker::class.java.name,
+                        ExistingWorkPolicy.REPLACE,
+                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                    )
+            }
+        }
+    }
 }
 
 fun setupNextScreen(window: Window) {
@@ -795,4 +773,16 @@ fun setupNextScreen(window: Window) {
         visible = true,
         window = window
     ) {}
+}
+
+@Composable
+inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(
+    factory: ViewModelProvider.Factory? = null
+): T {
+    val navGraphRoute = destination.parent?.route ?: return viewModel(factory = factory)
+    val navController = LocalNavController.current
+    val parentEntry = remember(this) {
+        navController.getBackStackEntry(navGraphRoute)
+    }
+    return viewModel(viewModelStoreOwner = parentEntry, factory = factory)
 }

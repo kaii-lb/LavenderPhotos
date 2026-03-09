@@ -11,8 +11,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
@@ -20,6 +18,8 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.permissions.MediaPermissionsState
 import com.kaii.photos.permissions.rememberMediaPermissionsState
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -62,7 +62,7 @@ class FavouritesMigrationState(
         if (favourites.isEmpty()) {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.favourites_migration_none),
                         icon = R.drawable.lists,
                         duration = SnackbarDuration.Short
@@ -84,7 +84,7 @@ class FavouritesMigrationState(
     fun onGranted() {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.MessageEvent(
+                LavenderSnackbarEvent.MessageEvent(
                     message = context.resources.getString(R.string.favourites_migration_started),
                     icon = R.drawable.database_upload,
                     duration = SnackbarDuration.Short
@@ -105,7 +105,7 @@ class FavouritesMigrationState(
                         _state.value = MigrationState.Done
 
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = context.resources.getString(R.string.favourites_migration_done),
                                 icon = R.drawable.checkmark_thin,
                                 duration = SnackbarDuration.Short

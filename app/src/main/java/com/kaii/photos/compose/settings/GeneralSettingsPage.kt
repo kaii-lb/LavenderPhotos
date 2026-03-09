@@ -33,8 +33,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -52,6 +50,8 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -61,7 +61,7 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
 
     val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
-    val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptyList())
+    val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptySet())
     val shouldShowEverything by settings.mainPhotosView.getShowEverything().collectAsStateWithLifecycle(initialValue = false)
     val autoDetectAlbums by settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
     val currentSortMode by settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
@@ -70,14 +70,14 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
     GeneralSettingsPageImpl(
-        allAlbums = allAlbums,
-        mainPhotosPaths = mainPhotosPaths,
-        shouldShowEverything = shouldShowEverything,
-        autoDetectAlbums = autoDetectAlbums,
-        currentSortMode = currentSortMode,
-        tabList = tabList,
-        defaultTab = defaultTab,
-        checkForUpdatesOnStartup = checkForUpdatesOnStartup,
+        allAlbums = { allAlbums },
+        mainPhotosPaths = { mainPhotosPaths },
+        shouldShowEverything = { shouldShowEverything },
+        autoDetectAlbums = { autoDetectAlbums },
+        currentSortMode = { currentSortMode },
+        tabList = { tabList },
+        defaultTab = { defaultTab },
+        checkForUpdatesOnStartup = { checkForUpdatesOnStartup },
         modifier = modifier,
         setShowEverything = settings.mainPhotosView::setShowEverything,
         addMainPhotosAlbum = settings.mainPhotosView::addAlbum,
@@ -96,14 +96,14 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
     GeneralSettingsPageImpl(
-        allAlbums = emptyList(),
-        mainPhotosPaths = emptyList(),
-        shouldShowEverything = false,
-        autoDetectAlbums = false,
-        currentSortMode = MediaItemSortMode.DateTaken,
-        tabList = DefaultTabs.defaultList,
-        defaultTab = DefaultTabs.TabTypes.photos,
-        checkForUpdatesOnStartup = false,
+        allAlbums = { emptyList() },
+        mainPhotosPaths = { emptySet() },
+        shouldShowEverything = { false },
+        autoDetectAlbums = { false },
+        currentSortMode = { MediaItemSortMode.DateTaken },
+        tabList = { DefaultTabs.defaultList },
+        defaultTab = { DefaultTabs.TabTypes.photos },
+        checkForUpdatesOnStartup = { false },
         modifier = modifier,
         setShowEverything = {},
         addMainPhotosAlbum = {},
@@ -120,14 +120,14 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
 
 @Composable
 private fun GeneralSettingsPageImpl(
-    allAlbums: List<AlbumType>,
-    mainPhotosPaths: Collection<String>,
-    shouldShowEverything: Boolean,
-    autoDetectAlbums: Boolean,
-    currentSortMode: MediaItemSortMode,
-    tabList: List<BottomBarTab>,
-    defaultTab: BottomBarTab,
-    checkForUpdatesOnStartup: Boolean,
+    allAlbums: () -> List<AlbumType>,
+    mainPhotosPaths: () -> Set<String>,
+    shouldShowEverything: () -> Boolean,
+    autoDetectAlbums: () -> Boolean,
+    currentSortMode: () -> MediaItemSortMode,
+    tabList: () -> List<BottomBarTab>,
+    defaultTab: () -> BottomBarTab,
+    checkForUpdatesOnStartup: () -> Boolean,
     modifier: Modifier,
     setShowEverything: (value: Boolean) -> Unit,
     addMainPhotosAlbum: (path: String) -> Unit,
@@ -161,8 +161,8 @@ private fun GeneralSettingsPageImpl(
                 val selectedAlbums = remember { mutableStateListOf<String>() }
                 val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
 
-                val singles = remember(allAlbums) {
-                    allAlbums
+                val singles = remember(allAlbums()) {
+                    allAlbums()
                         .filterIsInstance<AlbumType.Folder>()
                         .filter {
                             it.paths.size == 1
@@ -173,20 +173,20 @@ private fun GeneralSettingsPageImpl(
                     title = stringResource(id = R.string.albums_main_list),
                     iconResID = R.drawable.photogrid,
                     position = RowPosition.Single,
-                    checked = shouldShowEverything,
+                    checked = shouldShowEverything(),
                     showBackground = false,
                     summary =
-                        if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_desc_1)
+                        if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = {
                         selectedAlbums.clear()
                         selectedAlbums.addAll(
-                            if (shouldShowEverything) {
+                            if (shouldShowEverything()) {
                                 val flat = singles.flatMap { it.paths }
 
-                                flat - mainPhotosPaths.toSet()
+                                flat - mainPhotosPaths().toSet()
                             } else {
-                                mainPhotosPaths
+                                mainPhotosPaths()
                             }
                         )
 
@@ -200,9 +200,9 @@ private fun GeneralSettingsPageImpl(
                             if (!checked) {
                                 val flat = singles.flatMap { it.paths }
 
-                                flat - mainPhotosPaths.toSet()
+                                flat - mainPhotosPaths().toSet()
                             } else {
-                                mainPhotosPaths
+                                mainPhotosPaths()
                             }
                         )
 
@@ -217,7 +217,7 @@ private fun GeneralSettingsPageImpl(
                     SelectableButtonListDialog(
                         title = stringResource(id = R.string.albums_selected),
                         body =
-                            if (!shouldShowEverything) stringResource(id = R.string.albums_main_list_selected)
+                            if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_selected)
                             else stringResource(id = R.string.albums_main_list_selected_inverse),
                         showDialog = showAlbumsSelectionDialog,
                         onConfirm = {
@@ -242,7 +242,7 @@ private fun GeneralSettingsPageImpl(
                                         text = associatedAlbum.name,
                                         checked = associatedAlbum.paths.first() in selectedAlbums
                                     ) {
-                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything)) {
+                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything())) {
                                             selectedAlbums.remove(associatedAlbum.paths.first())
                                         } else {
                                             selectedAlbums.add(associatedAlbum.paths.first())
@@ -269,7 +269,7 @@ private fun GeneralSettingsPageImpl(
                     iconResID = R.drawable.albums_search,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = autoDetectAlbums
+                    checked = autoDetectAlbums()
                 ) { checked ->
                     // as to keep the MutableState alive even if the user leaves the screen
                     context.appModule.scope.launch(Dispatchers.IO) {
@@ -278,7 +278,7 @@ private fun GeneralSettingsPageImpl(
 
                             if (checked) {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.LoadingEvent(
+                                    LavenderSnackbarEvent.LoadingEvent(
                                         message = if (isAlreadyLoading.value) findingAlbums else foundAlbums,
                                         icon = R.drawable.albums_search,
                                         isLoading = isAlreadyLoading
@@ -308,7 +308,7 @@ private fun GeneralSettingsPageImpl(
                         setAutoDetect(false)
 
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = clearDone,
                                 duration = SnackbarDuration.Short,
                                 icon = R.drawable.albums
@@ -337,7 +337,7 @@ private fun GeneralSettingsPageImpl(
                     iconResID = R.drawable.sorting,
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = currentSortMode != MediaItemSortMode.Disabled && currentSortMode != MediaItemSortMode.DisabledLastModified,
+                    checked = currentSortMode() != MediaItemSortMode.Disabled && currentSortMode() != MediaItemSortMode.DisabledLastModified,
                     onRowClick = {
                         showSortModeSelectorDialog = true
                     },
@@ -346,7 +346,7 @@ private fun GeneralSettingsPageImpl(
                             setSortMode(MediaItemSortMode.DateTaken)
                         } else {
                             setSortMode(
-                                if (currentSortMode == MediaItemSortMode.DateModified) MediaItemSortMode.DisabledLastModified
+                                if (currentSortMode() == MediaItemSortMode.DateModified) MediaItemSortMode.DisabledLastModified
                                 else MediaItemSortMode.Disabled
                             )
                         }
@@ -394,7 +394,7 @@ private fun GeneralSettingsPageImpl(
                         tabList = tabList,
                         setTabList = { newList ->
                             setTabList(newList)
-                            if (defaultTab !in newList) {
+                            if (defaultTab() !in newList) {
                                 setDefaultTab(newList.first())
                             }
                         },
@@ -428,7 +428,7 @@ private fun GeneralSettingsPageImpl(
                     summary = stringResource(id = R.string.updates_check_desc),
                     position = RowPosition.Single,
                     showBackground = false,
-                    checked = checkForUpdatesOnStartup,
+                    checked = checkForUpdatesOnStartup(),
                     onSwitchClick = setCheckUpdatesOnStartup
                 )
             }

@@ -38,12 +38,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.helpers.RowPosition
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -103,7 +103,7 @@ fun TextEntryDialog(
                             .clickable {
                                 coroutineScope.launch {
                                     LavenderSnackbarController.pushEvent(
-                                        LavenderSnackbarEvents.MessageEvent(
+                                        LavenderSnackbarEvent.MessageEvent(
                                             message = errorMessage ?: resources.getString(R.string.paths_should_be_relative),
                                             icon = R.drawable.error_2,
                                             duration = SnackbarDuration.Short

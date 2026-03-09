@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
@@ -15,8 +14,6 @@ import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 private const val TAG = "com.kaii.photos.permissions.StartupState"
@@ -53,8 +50,8 @@ class StartupManager(
 
     private val permissionQueue = mutableStateListOf<String>()
 
-    private val _state = MutableStateFlow(State.MissingPermissions)
-    val state = _state.asStateFlow()
+    var state = State.MissingPermissions
+        private set
 
     init {
         updatePermissionState()
@@ -64,7 +61,7 @@ class StartupManager(
         permList.forEach { perm ->
             val granted = when (perm) {
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE -> {
-                    Environment.isExternalStorageManager()
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && MediaStore.canManageMedia(context.applicationContext)
                 }
 
                 Manifest.permission.MANAGE_MEDIA -> {
@@ -98,7 +95,13 @@ class StartupManager(
         permissionQueue.forEach { Log.d(TAG, "PERMISSION DENIED $it") }
     }
 
-    fun checkPermissions() = permissionQueue.isEmpty()
+    fun checkPermissions(): Boolean {
+        val manageMedia =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
+
+        return permissionQueue.isEmpty() || manageMedia
+    }
 
     suspend fun checkState() = withContext(Dispatchers.IO) {
         val permsGranted = checkPermissions()
@@ -113,17 +116,17 @@ class StartupManager(
                         OneTimeWorkRequest.Builder(SyncWorker::class).build()
                     )
 
-                _state.value = State.Successful
+                state = State.Successful
             }
 
-            permsGranted -> _state.value = State.NeedsIndexing
+            permsGranted -> state = State.NeedsIndexing
 
-            else -> _state.value = State.MissingPermissions
+            else -> state = State.MissingPermissions
         }
     }
 
     fun skipIndexing() {
-        _state.value = State.Successful
+        state = State.Successful
     }
 
     suspend fun launchFirstTimeSyncWorker(

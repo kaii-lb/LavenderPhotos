@@ -47,8 +47,8 @@ private fun AlbumFolderPreview() {
                     )
                 )
             },
-        isSelected = false,
-        immichInfo = ImmichBasicInfo.Empty,
+        isSelected = { false },
+        immichInfo = { ImmichBasicInfo.Empty },
         onClick = {}
     )
 }
@@ -58,18 +58,18 @@ private fun AlbumFolderPreview() {
 fun AlbumFolder(
     name: String,
     info: List<AlbumGridState.Info>,
-    isSelected: Boolean,
-    immichInfo: ImmichBasicInfo,
+    isSelected: () -> Boolean,
+    immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val animatedScale by animateFloatAsState(
-        targetValue = if (isSelected) 0.9f else 1f,
+        targetValue = if (isSelected()) 0.9f else 1f,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+        targetValue = if (isSelected()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
     )
 
@@ -82,7 +82,7 @@ fun AlbumFolder(
             .clip(RoundedCornerShape(size = 24.dp))
             .background(backgroundColor)
             .clickable {
-                if (!isSelected) onClick()
+                if (!isSelected()) onClick()
             }
             .padding(8.dp, 8.dp, 8.dp, 4.dp),
         verticalArrangement = Arrangement.Top,
@@ -108,7 +108,7 @@ fun AlbumFolder(
                 )
             ) {
                 val topItems = if (info.size < 2) {
-                    info.take(2 - info.size) + (0..1-info.size).map {
+                    info.take(2 - info.size) + (0..1 - info.size).map {
                         AlbumGridState.Info(
                             album = AlbumType.PlaceHolder,
                             thumbnail = AlbumGridState.Info.Thumbnail(
@@ -124,7 +124,7 @@ fun AlbumFolder(
                 topItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo
+                        info = immichInfo()
                     )
                 }
             }
@@ -167,7 +167,7 @@ fun AlbumFolder(
                 bottomItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo
+                        info = immichInfo()
                     )
                 }
             }

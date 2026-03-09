@@ -146,11 +146,11 @@ fun AlbumGroup(
         val immichInfo by viewModel.immichInfo.collectAsStateWithLifecycle()
         val sortMode by viewModel.sortMode.collectAsStateWithLifecycle()
 
-        val albums = remember { mutableStateOf(emptyList<AlbumGridState.Album.Single>()) }
+        var albums by remember { mutableStateOf(emptyList<AlbumGridState.Album.Single>()) }
 
         LaunchedEffect(singleAlbums, group, sortMode) {
             withContext(Dispatchers.IO) {
-                albums.value = singleAlbums.filter {
+                albums = singleAlbums.filter {
                     it.id in (group?.albumIds ?: emptyList())
                 }.let { inGroup ->
                     when (sortMode) {
@@ -165,11 +165,11 @@ fun AlbumGroup(
         }
 
         SortableGrid(
-            albumList = albums,
-            tabList = emptyList(),
-            sortMode = sortMode,
+            albumList = { albums },
+            tabList = { emptyList() },
+            sortMode = { sortMode },
             columnSize = columnSize,
-            immichInfo = immichInfo,
+            immichInfo = { immichInfo },
             navController = navController,
             modifier = Modifier.padding(paddingValues),
             isAlbumGroup = true,

@@ -24,18 +24,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 
 @Composable
 fun SortModeHeader(
-    sortMode: AlbumSortMode,
-    tabList: List<BottomBarTab>,
-    @FloatRange(0.0, 1.0) progress: Float,
+    sortMode: () -> AlbumSortMode,
+    showHiddenSecureEntry: () -> Boolean,
+    @FloatRange(0.0, 1.0) progress: () -> Float,
     isAlbumGroup: Boolean,
     modifier: Modifier = Modifier,
-    setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit
+    setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
 ) {
     LazyRow(
         modifier = modifier
@@ -50,12 +48,12 @@ fun SortModeHeader(
         item {
             OutlinedIconButton(
                 onClick = {
-                    setAlbumSortMode(sortMode.flip())
+                    setAlbumSortMode(sortMode().flip())
                 },
-                enabled = sortMode != AlbumSortMode.Custom
+                enabled = sortMode() != AlbumSortMode.Custom
             ) {
                 val animatedRotation by animateFloatAsState(
-                    targetValue = if (sortMode.isDescending) -90f else 90f,
+                    targetValue = if (sortMode().isDescending) -90f else 90f,
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioLowBouncy,
                         stiffness = Spring.StiffnessLow
@@ -75,16 +73,16 @@ fun SortModeHeader(
         item {
             OutlinedButton(
                 onClick = {
-                    setAlbumSortMode(AlbumSortMode.LastModified.byDirection(sortMode.isDescending))
+                    setAlbumSortMode(AlbumSortMode.LastModified.byDirection(sortMode().isDescending))
                 },
                 colors =
-                    if (sortMode == AlbumSortMode.LastModified.byDirection(sortMode.isDescending)) ButtonDefaults.buttonColors()
+                    if (sortMode() == AlbumSortMode.LastModified.byDirection(sortMode().isDescending)) ButtonDefaults.buttonColors()
                     else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
                     text = stringResource(id = R.string.sort_date),
                     modifier = Modifier
-                        .scale(progress)
+                        .scale(progress())
                 )
             }
         }
@@ -92,16 +90,16 @@ fun SortModeHeader(
         item {
             OutlinedButton(
                 onClick = {
-                    setAlbumSortMode(AlbumSortMode.Alphabetically.byDirection(sortMode.isDescending))
+                    setAlbumSortMode(AlbumSortMode.Alphabetically.byDirection(sortMode().isDescending))
                 },
                 colors =
-                    if (sortMode == AlbumSortMode.Alphabetically.byDirection(sortMode.isDescending)) ButtonDefaults.buttonColors()
+                    if (sortMode() == AlbumSortMode.Alphabetically.byDirection(sortMode().isDescending)) ButtonDefaults.buttonColors()
                     else ButtonDefaults.outlinedButtonColors()
             ) {
                 Text(
                     text = stringResource(id = R.string.sort_name),
                     modifier = Modifier
-                        .scale(progress)
+                        .scale(progress())
                 )
             }
         }
@@ -113,19 +111,19 @@ fun SortModeHeader(
                         setAlbumSortMode(AlbumSortMode.Custom)
                     },
                     colors =
-                        if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                        if (sortMode() == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
                         else ButtonDefaults.outlinedButtonColors()
                 ) {
                     Text(
                         text = stringResource(id = R.string.sort_custom),
                         modifier = Modifier
-                            .scale(progress)
+                            .scale(progress())
                     )
                 }
             }
         }
 
-        if (!tabList.contains(DefaultTabs.TabTypes.secure) && !isAlbumGroup) {
+        if (showHiddenSecureEntry() && !isAlbumGroup) {
             item {
                 val authManager = rememberSecureFolderAuthManager()
                 OutlinedButton(
@@ -133,13 +131,13 @@ fun SortModeHeader(
                         authManager.authenticate()
                     },
                     colors =
-                        if (sortMode == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                        if (sortMode() == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
                         else ButtonDefaults.outlinedButtonColors()
                 ) {
                     Text(
                         text = stringResource(id = R.string.secure_folder),
                         modifier = Modifier
-                            .scale(progress)
+                            .scale(progress())
                     )
                 }
             }

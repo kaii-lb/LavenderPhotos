@@ -52,10 +52,17 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
         }
     }
 
@@ -148,7 +155,7 @@ dependencies {
 
     implementation("me.saket.telephoto:zoomable-image-glide:0.18.0")
 
-    implementation("com.github.kaii-lb:Lavender-Snackbars:b79cb851bc")
+    implementation("io.github.kaii_lb.lavender:snackbars-android:0.3.0")
     implementation("io.github.kaii-lb.lavender:immichintegration-android:2.1.0")
 
     implementation("com.mikepenz:aboutlibraries:13.2.1")

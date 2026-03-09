@@ -102,11 +102,11 @@ fun SearchPage(
         val searchingForTags by viewModel.searchingForTags.collectAsStateWithLifecycle()
 
         SearchTextField(
-            searchQuery = searchQuery,
+            searchQuery = { searchQuery },
             searchMode = searchMode,
-            searchingForTags = searchingForTags,
-            tags = tags,
-            selectedTags = selectedTags,
+            searchingForTags = { searchingForTags },
+            tags = { tags },
+            selectedTags = { selectedTags },
             modifier = Modifier
                 .fillMaxWidth(1f)
                 .height(56.dp)

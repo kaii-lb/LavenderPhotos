@@ -16,11 +16,11 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.json.responseJson
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.BuildConfig
 import com.kaii.photos.R
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -197,7 +197,7 @@ class Updater(
 
                         coroutineScope.launch {
                             LavenderSnackbarController.pushEvent(
-                                LavenderSnackbarEvents.ActionEvent(
+                                LavenderSnackbarEvent.ActionEvent(
                                     message = context.resources.getString(R.string.updates_new_version_available),
                                     icon = R.drawable.error_2,
                                     duration = SnackbarDuration.Short,

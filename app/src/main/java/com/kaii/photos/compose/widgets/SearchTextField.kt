@@ -39,7 +39,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -83,11 +82,11 @@ private fun SearchTextFieldPreview() {
         contentAlignment = Alignment.TopCenter
     ) {
         SearchTextField(
-            searchQuery = "",
+            searchQuery = { "" },
             searchMode = SearchMode.Name,
-            searchingForTags = false,
-            tags = emptyList(),
-            selectedTags = remember { mutableStateListOf() },
+            searchingForTags = { false },
+            tags = { emptyList() },
+            selectedTags = { emptyList() },
             onQueryChange = {},
             onSearchModeChange = {},
             onToggleTag = {},
@@ -103,11 +102,11 @@ private fun SearchTextFieldPreview() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SearchTextField(
-    searchQuery: String,
+    searchQuery: () -> String,
     searchMode: SearchMode,
-    searchingForTags: Boolean,
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
+    searchingForTags: () -> Boolean,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
@@ -119,7 +118,7 @@ fun SearchTextField(
     setSearchingForTags: (value: Boolean) -> Unit
 ) {
     BackHandler(
-        enabled = searchQuery.isNotEmpty()
+        enabled = searchQuery().isNotEmpty()
     ) {
         onQueryChange("")
         onSearchModeChange(SearchMode.Name)
@@ -148,7 +147,7 @@ fun SearchTextField(
     }
 
     TextField(
-        value = searchQuery,
+        value = searchQuery(),
         onValueChange = {
             onQueryChange(it)
         },
@@ -157,7 +156,7 @@ fun SearchTextField(
         placeholder = {
             Text(
                 text =
-                    if (searchingForTags) stringResource(id = R.string.search_photo_tag)
+                    if (searchingForTags()) stringResource(id = R.string.search_photo_tag)
                     else placeholdersList.random(),
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp
             )
@@ -230,7 +229,7 @@ fun SearchTextField(
             }
         },
         suffix = {
-            if (searchQuery.isNotEmpty()) {
+            if (searchQuery().isNotEmpty()) {
                 Icon(
                     painter = painterResource(id = R.drawable.close),
                     contentDescription = "Clear search query",

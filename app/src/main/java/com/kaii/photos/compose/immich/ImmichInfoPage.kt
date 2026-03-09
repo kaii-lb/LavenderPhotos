@@ -63,8 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
@@ -86,6 +84,8 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberServerState
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -190,7 +190,7 @@ fun ImmichInfoPage() {
                                 loginState.validateServerAddress(address = value) -> {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
-                                            LavenderSnackbarEvents.MessageEvent(
+                                            LavenderSnackbarEvent.MessageEvent(
                                                 message = resources.getString(R.string.immich_server_unreachable),
                                                 icon = R.drawable.globe_2_cancel,
                                                 duration = SnackbarDuration.Short

@@ -63,7 +63,6 @@ import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -147,9 +146,6 @@ class MediaPicker : ComponentActivity() {
         )
 
         val navController = LocalNavController.current
-        val albumGridState = rememberAlbumGridState()
-        val deviceAlbums = albumGridState.albums.collectAsStateWithLifecycle()
-
         NavHost(
             navController = navController,
             startDestination = Screens.MainPages,
@@ -195,6 +191,7 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     setupNextScreen(window)
 
+                    val deviceAlbums by appModule.albumGridState.albums.collectAsStateWithLifecycle()
                     val storeOwner = remember(it) {
                         navController.getBackStackEntry(Screens.MainPages)
                     }
@@ -207,10 +204,10 @@ class MediaPicker : ComponentActivity() {
                         multiAlbumViewModel = multiAlbumViewModel,
                         searchViewModel = searchViewModel,
                         mainGridViewModel = viewModel,
-                        deviceAlbums = deviceAlbums,
+                        deviceAlbums = { deviceAlbums },
                         window = window,
                         incomingIntent = incomingIntent,
-                        refreshAlbums = albumGridState::refresh
+                        refreshAlbums = appModule.albumGridState::refresh
                     )
                 }
             }
@@ -321,7 +318,7 @@ class MediaPicker : ComponentActivity() {
                 AlbumGroup(
                     id = screen.id,
                     name = screen.name,
-                    albumGridState = albumGridState
+                    albumGridState = appModule.albumGridState
                 )
             }
         }

@@ -10,8 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
@@ -28,6 +26,8 @@ import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -108,7 +108,7 @@ class SecureFolderMigrationManager(
             }
         } else {
             LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.MessageEvent(
+                LavenderSnackbarEvent.MessageEvent(
                     message = context.resources.getString(R.string.secure_export_failed),
                     icon = R.drawable.error_2,
                     duration = SnackbarDuration.Long

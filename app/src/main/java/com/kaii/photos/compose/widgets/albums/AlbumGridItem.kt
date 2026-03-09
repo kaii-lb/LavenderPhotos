@@ -38,18 +38,18 @@ import com.kaii.photos.helpers.TextStylingConstants
 @Composable
 fun AlbumGridItem(
     album: AlbumGridState.Album.Single,
-    isSelected: Boolean,
-    info: ImmichBasicInfo,
+    isSelected: () -> Boolean,
+    info: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val animatedScale by animateFloatAsState(
-        targetValue = if (isSelected) 0.9f else 1f,
+        targetValue = if (isSelected()) 0.9f else 1f,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+        targetValue = if (isSelected()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
     )
 
@@ -62,7 +62,7 @@ fun AlbumGridItem(
             .clip(RoundedCornerShape(24.dp))
             .background(backgroundColor)
             .clickable {
-                if (!isSelected) onClick()
+                if (!isSelected()) onClick()
             },
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -77,7 +77,7 @@ fun AlbumGridItem(
         ) {
             AlbumGlideImage(
                 albumInfo = album.info,
-                info = info
+                info = info()
             )
 
             Row(

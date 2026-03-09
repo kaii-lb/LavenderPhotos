@@ -18,8 +18,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -36,6 +34,8 @@ import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -101,7 +101,7 @@ suspend fun setTrashedOnPhotoList(
     val percentage = mutableFloatStateOf(0f)
 
     LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvents.ProgressEvent(
+        LavenderSnackbarEvent.ProgressEvent(
             message =
                 if (trashed) context.resources.getString(R.string.media_delete_snackbar_title)
                 else context.resources.getString(R.string.media_restore_snackbar_title),
@@ -465,7 +465,7 @@ suspend fun moveImageListToPath(
     val percentage = mutableFloatStateOf(0f)
 
     LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvents.ProgressEvent(
+        LavenderSnackbarEvent.ProgressEvent(
             message = context.resources.getString(R.string.media_move_snackbar_title),
             body = body,
             icon = R.drawable.cut,
@@ -518,7 +518,7 @@ suspend fun copyImageListToPath(
 
     if (showProgressSnackbar) {
         LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvents.ProgressEvent(
+            LavenderSnackbarEvent.ProgressEvent(
                 message = context.resources.getString(R.string.media_copy_snackbar_title),
                 body = body,
                 icon = R.drawable.trash,

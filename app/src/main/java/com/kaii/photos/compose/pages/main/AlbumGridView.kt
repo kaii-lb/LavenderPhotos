@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.LocalNavController
@@ -21,11 +20,11 @@ import com.kaii.photos.helpers.Screens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsGridView(
-    deviceAlbums: State<List<AlbumGridState.Album>>,
-    sortMode: AlbumSortMode,
-    tabList: List<BottomBarTab>,
+    deviceAlbums: () -> List<AlbumGridState.Album>,
+    sortMode: () -> AlbumSortMode,
+    tabList: () -> List<BottomBarTab>,
     columnSize: Int,
-    immichInfo: ImmichBasicInfo,
+    immichInfo: () -> ImmichBasicInfo,
     migrateFav: () -> Boolean,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,

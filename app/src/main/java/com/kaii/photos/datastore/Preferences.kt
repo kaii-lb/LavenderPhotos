@@ -36,31 +36,57 @@ private const val TAG = "com.kaii.photos.datastore.PreferencesClasses"
 val Context.datastore by preferencesDataStore(name = "settings")
 
 class Settings(val context: Context, val scope: CoroutineScope) {
-    val debugging = SettingsDebuggingImpl(context, scope)
+    val debugging by lazy {
+        SettingsDebuggingImpl(context, scope)
+    }
 
-    val permissions = SettingsPermissionsImpl(context, scope)
+    val permissions by lazy {
+        SettingsPermissionsImpl(context, scope)
+    }
 
-    val albums = SettingsAlbumsListImpl(context, scope)
+    val albums by lazy {
+        SettingsAlbumsListImpl(context, scope)
+    }
 
-    val versions = SettingsVersionImpl(context, scope)
+    val versions by lazy {
+        SettingsVersionImpl(context, scope)
+    }
 
-    val storage = SettingsStorageImpl(context, scope)
+    val storage by lazy {
+        SettingsStorageImpl(context, scope)
+    }
 
-    val video = SettingsVideoImpl(context, scope)
+    val video by lazy {
+        SettingsVideoImpl(context, scope)
+    }
 
-    val lookAndFeel = SettingsLookAndFeelImpl(context, scope)
+    val lookAndFeel by lazy {
+        SettingsLookAndFeelImpl(context, scope)
+    }
 
-    val editing = SettingsEditingImpl(context, scope)
+    val editing by lazy {
+        SettingsEditingImpl(context, scope)
+    }
 
-    val mainPhotosView = SettingMainPhotosViewImpl(context, scope)
+    val mainPhotosView by lazy {
+        SettingMainPhotosViewImpl(context, scope)
+    }
 
-    val defaultTabs = SettingsDefaultTabsImpl(context, scope)
+    val defaultTabs by lazy {
+        SettingsDefaultTabsImpl(context, scope)
+    }
 
-    val photoGrid = SettingsPhotoGridImpl(context, scope)
+    val photoGrid by lazy {
+        SettingsPhotoGridImpl(context, scope)
+    }
 
-    val immich = SettingsImmichImpl(context, scope)
+    val immich by lazy {
+        SettingsImmichImpl(context, scope)
+    }
 
-    val behaviour = SettingsBehaviourImpl(context, scope)
+    val behaviour by lazy {
+        SettingsBehaviourImpl(context, scope)
+    }
 }
 
 class SettingsAlbumsListImpl(

@@ -307,11 +307,11 @@ fun SelectViewTopBarLeftButtons(
 
 @Composable
 fun SelectViewTopBarRightButtons(
-    showTagDialog: Boolean,
+    showTagDialog: () -> Boolean,
     setShowTagDialog: (show: Boolean) -> Unit
 ) {
     FilledIconToggleButton(
-        checked = showTagDialog,
+        checked = showTagDialog(),
         onCheckedChange = setShowTagDialog
     ) {
         Icon(
@@ -405,11 +405,11 @@ fun AnimatedImmichBackupIcon(
 @Composable
 fun AnimatedLoginIcon(
     state: LoginState,
-    alwaysShowInfo: Boolean,
+    alwaysShowInfo: () -> Boolean,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = alwaysShowInfo || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
+        targetState = alwaysShowInfo() || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -426,7 +426,7 @@ fun AnimatedLoginIcon(
         if (visible) {
             AnimatedImmichBackupIcon(
                 state = state,
-                alwaysShowInfo = alwaysShowInfo,
+                alwaysShowInfo = alwaysShowInfo(),
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)

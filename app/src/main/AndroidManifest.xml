@@ -15,16 +15,13 @@
         android:name="android.permission.MANAGE_MEDIA"
         android:minSdkVersion="31"
         tools:ignore="ProtectedPermissions" />
-
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
-
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
@@ -35,11 +32,12 @@
     <queries>
         <intent>
             <action android:name="android.intent.action.EDIT" />
+
             <data android:mimeType="image/*" />
         </intent>
-
         <intent>
             <action android:name="android.intent.action.EDIT" />
+
             <data android:mimeType="video/*" />
         </intent>
     </queries>
@@ -47,38 +45,38 @@
     <application
         android:name=".PhotosApplication"
         android:allowBackup="true"
-        android:fullBackupContent="@xml/backup_rules"
+        android:appCategory="image"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:hasFragileUserData="true"
         android:enableOnBackInvokedCallback="true"
+        android:fullBackupContent="@xml/backup_rules"
         android:hardwareAccelerated="true"
+        android:hasFragileUserData="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
-        android:windowSoftInputMode="adjustResize"
         android:usesCleartextTraffic="true"
-        android:appCategory="image">
+        android:windowSoftInputMode="adjustResize">
+
+        <profileable android:shell="true" />
 
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".compose.open_with_view.OpenWithView"
+        <activity
+            android:name=".compose.open_with_view.OpenWithView"
             android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true"
             android:theme="@style/Theme.Photos">
-
             <intent-filter>
                 <action android:name="com.android.camera.action.REVIEW" />
 
@@ -88,7 +86,6 @@
                 <data android:mimeType="image/*" />
                 <data android:mimeType="video/*" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.provider.action.REVIEW" />
 
@@ -98,7 +95,6 @@
                 <data android:mimeType="image/*" />
                 <data android:mimeType="video/*" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
@@ -110,14 +106,12 @@
                 <data android:mimeType="video/*" />
             </intent-filter>
         </activity>
-        
         <activity
-            android:label="Lavender Photos"
             android:name=".compose.MediaPicker"
             android:configChanges="orientation|screenSize|density|screenLayout"
             android:exported="true"
+            android:label="Lavender Photos"
             android:theme="@style/Theme.Photos">
-
             <intent-filter>
                 <action android:name="android.intent.action.GET_CONTENT" />
 
@@ -140,16 +134,17 @@
                 <data android:mimeType="vnd.android.cursor.dir/video" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".compose.pages.WallpaperSetter"
-            android:label="Lavender Photos"
-            android:exported="true"
+        <activity
+            android:name=".compose.pages.WallpaperSetter"
             android:configChanges="orientation|screenSize|density|screenLayout"
+            android:exported="true"
+            android:label="Lavender Photos"
             android:theme="@style/Theme.Photos">
-
             <intent-filter>
                 <action android:name="android.intent.action.SET_WALLPAPER" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
@@ -159,16 +154,15 @@
             android:authorities="com.kaii.photos.LavenderPhotos.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
-
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_provider_paths" />
         </provider>
-
         <provider
             android:name=".mediastore.LavenderContentProvider"
             android:authorities="com.kaii.photos.content_provider"
             android:enabled="true"
             android:exported="false" />
     </application>
+
 </manifest>

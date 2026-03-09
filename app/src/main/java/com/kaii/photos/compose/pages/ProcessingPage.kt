@@ -76,7 +76,7 @@ fun ProcessingPage(startupManager: StartupManager) {
     val animatedCount by animateIntAsState(
         targetValue = (itemCount * currentProgress).roundToInt(),
         animationSpec = AnimationConstants.expressiveTween(
-            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2
+            durationMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG*1
         )
     )
 
@@ -96,13 +96,13 @@ fun ProcessingPage(startupManager: StartupManager) {
     }
 
     val navController = LocalNavController.current
-    LaunchedEffect(currentProgress) {
-        if (currentProgress >= 1f) {
+    LaunchedEffect(animatedFill >= 1f) {
+        if (animatedFill >= 1f) {
             delay(2.seconds)
             startupManager.checkState()
 
             navController.navigate(Screens.MainPages) {
-                popUpTo<Screens.Startup.ProcessingPage> {
+                popUpTo(route = Screens.Startup.ProcessingPage::class) {
                     inclusive = true
                 }
             }
@@ -186,6 +186,13 @@ fun ProcessingPage(startupManager: StartupManager) {
                     clickableItem(
                         onClick = {
                             startupManager.skipIndexing()
+                            if (startupManager.state == StartupManager.State.Successful) {
+                                navController.navigate(Screens.MainPages) {
+                                    popUpTo(route = Screens.Startup.ProcessingPage::class) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
                         },
                         weight = 0.65f,
                         label = skipLabel

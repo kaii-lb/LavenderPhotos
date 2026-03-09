@@ -28,9 +28,12 @@ android {
     }
 
     buildTypes {
-        create("release") {
-            signingConfig = signingConfigs["debug"]
-            matchingFallbacks.addAll(listOf("baselineprof", "release"))
+        create("baselineprofile") {
+            multiDexEnabled = true
+            isDebuggable = false
+
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
         }
     }
 

@@ -62,8 +62,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.HorizontalSeparator
 import com.kaii.photos.compose.dialogs.InfoRow
@@ -73,11 +71,13 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.StoredDrawable
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.createDirectoryPicker
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 
 @Composable
 fun AddTabDialog(
-    tabList: List<BottomBarTab>,
+    tabList: () -> List<BottomBarTab>,
     setTabList: (list: List<BottomBarTab>) -> Unit,
     dismissDialog: () -> Unit
 ) {
@@ -397,16 +397,16 @@ fun AddTabDialog(
             textColor = MaterialTheme.colorScheme.onPrimary,
             position = RowPosition.Single
         ) {
-            if (tabList.size < 8) {
+            if (tabList().size < 8) {
                 if (selectedItem != null && selectedAlbums.isNotEmpty() && tabName != "") {
                     setTabList(
-                        tabList.toMutableList().apply {
+                        tabList().toMutableList().apply {
                             add(
                                 BottomBarTab(
                                     name = tabName,
                                     albumPaths = selectedAlbums.toSet(),
                                     icon = selectedItem!!,
-                                    id = tabList.size,
+                                    id = tabList().size,
                                     isCustom = true
                                 )
                             )
@@ -417,7 +417,7 @@ fun AddTabDialog(
                 } else {
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = resources.getString(R.string.tabs_empty_params),
                                 icon = R.drawable.error_2,
                                 duration = SnackbarDuration.Short
@@ -428,7 +428,7 @@ fun AddTabDialog(
             } else {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.tabs_max_reached),
                             icon = R.drawable.error_2,
                             duration = SnackbarDuration.Short

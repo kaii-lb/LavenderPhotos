@@ -212,13 +212,11 @@ fun HorizontalImageList(
                         } catch (e: Throwable) {
                             Log.d(TAG, e.toString())
                             e.printStackTrace()
-
-                            media.item.uri.toUri().path
                         }
                     }
                 }
 
-                val glideModel =
+                val glideModel = remember(model, media) {
                     when {
                         isSecuredMedia -> model
 
@@ -232,6 +230,7 @@ fun HorizontalImageList(
 
                         else -> media.item.uri
                     }
+                }
 
                 if (blurViews) {
                     var targetAlpha by remember { mutableFloatStateOf(0f) }

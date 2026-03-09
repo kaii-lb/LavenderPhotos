@@ -100,22 +100,21 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppTopBar(
-    alternate: Boolean,
+    alternate: () -> Boolean,
     selectionManager: SelectionManager,
-    pagerState: PagerState,
-    immichInfo: ImmichBasicInfo,
-    tabList: List<BottomBarTab>,
-    alwaysShowImmichInfo: Boolean,
-    extraSecureFolderEntry: Boolean,
-    showTagDialog: Boolean,
+    immichInfo: () -> ImmichBasicInfo,
+    showAddAlbumButton: () -> Boolean,
+    alwaysShowImmichInfo: () -> Boolean,
+    extraSecureFolderEntry: () -> Boolean,
+    showTagDialog: () -> Boolean,
     isFromMediaPicker: Boolean,
-    groups: List<AlbumGroup>,
+    groups: () -> List<AlbumGroup>,
     setShowTagDialog: (show: Boolean) -> Unit,
     addAlbum: (album: AlbumType) -> Unit,
     addGroup: (name: String) -> Unit
 ) {
     val context = LocalContext.current
-    val loginState = rememberLoginState(baseUrl = immichInfo.endpoint)
+    val loginState = rememberLoginState(baseUrl = immichInfo().endpoint)
     val userInfo by loginState.state.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
@@ -148,10 +147,10 @@ fun MainAppTopBar(
         )
     }
 
-    LaunchedEffect(immichInfo) {
+    LaunchedEffect(immichInfo()) {
         withContext(Dispatchers.IO) {
             loginState.refresh(
-                accessToken = immichInfo.accessToken,
+                accessToken = immichInfo().accessToken,
                 pfpSavePath = context.profilePicture,
                 previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
             )
@@ -159,24 +158,26 @@ fun MainAppTopBar(
     }
 
     DualFunctionTopAppBar(
-        alternated = alternate,
+        alternated = alternate(),
         title = {
             val split = stringResource(id = R.string.app_name_full).split(" ")
 
-            val firstName = split.first()
-
-            val secondName =
-                if (split.size >= 2) split[1]
-                else ""
-
-            Row {
+            Row(
+                modifier = Modifier
+                    .wrapContentHeight(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
                 Text(
-                    text = "$firstName ",
+                    text = "${split.first()} ",
                     fontWeight = FontWeight.Bold,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
+
                 Text(
-                    text = secondName,
+                    text =
+                        if (split.size >= 2) split[1]
+                        else "",
                     fontWeight = FontWeight.Normal,
                     fontSize = TextUnit(22f, TextUnitType.Sp)
                 )
@@ -188,7 +189,7 @@ fun MainAppTopBar(
                 horizontalArrangement = Arrangement.End
             ) {
                 AnimatedVisibility(
-                    visible = tabList[pagerState.currentPage] == DefaultTabs.TabTypes.albums && !isFromMediaPicker,
+                    visible = showAddAlbumButton() && !isFromMediaPicker,
                     enter = scaleIn(
                         animationSpec = AnimationConstants.expressiveSpring()
                     ),
@@ -199,7 +200,7 @@ fun MainAppTopBar(
                     var showAlbumTypeDialog by remember { mutableStateOf(false) }
                     if (showAlbumTypeDialog) {
                         AlbumAddChoiceDialog(
-                            groups = groups,
+                            groups = groups(),
                             addAlbum = addAlbum,
                             addGroup = addGroup
                         ) {
@@ -237,7 +238,7 @@ fun MainAppTopBar(
                     IconButton(
                         onClick = {
                             (context as Activity).finish()
-                        },
+                        }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.close),
@@ -266,17 +267,17 @@ fun MainAppTopBar(
 fun MainAppBottomBar(
     pagerState: PagerState,
     tabs: List<BottomBarTab>,
-    defaultTab: BottomBarTab,
+    defaultTab: () -> BottomBarTab,
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior,
-    confirmToDelete: Boolean,
-    doNotTrash: Boolean,
-    preserveDate: Boolean
+    confirmToDelete: () -> Boolean,
+    doNotTrash: () -> Boolean,
+    preserveDate: () -> Boolean
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
             tabs.indexOf(
-                if (defaultTab == DefaultTabs.TabTypes.secure || defaultTab !in tabs) tabs.first() else defaultTab
+                if (defaultTab() == DefaultTabs.TabTypes.secure || defaultTab() !in tabs) tabs.first() else defaultTab()
             )
     )
 

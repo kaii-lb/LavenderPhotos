@@ -68,7 +68,6 @@ import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.datastore.state.rememberAlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.copyImageListToPath
@@ -83,15 +82,15 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoveCopyAlbumListView(
+    albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
     show: MutableState<Boolean>,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     insetsPadding: WindowInsets,
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit
 ) {
-    val albumGridState = rememberAlbumGridState()
     val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
@@ -219,7 +218,7 @@ fun AlbumsListItem(
     position: RowPosition,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     isMoving: Boolean,
-    preserveDate: Boolean,
+    preserveDate: () -> Boolean,
     show: MutableState<Boolean>,
     modifier: Modifier,
     dismissInfoDialog: () -> Unit,
@@ -241,7 +240,7 @@ fun AlbumsListItem(
                         context = context,
                         list = selectedItemsList,
                         destination = album.info.album.paths.first(),
-                        preserveDate = preserveDate
+                        preserveDate = preserveDate()
                     )
                 } else if (album.info.album is AlbumType.Folder) {
                     val list = mutableListOf<MediaStoreData>()
@@ -251,7 +250,7 @@ fun AlbumsListItem(
                             context = context,
                             list = selectedItemsList,
                             destination = path,
-                            overwriteDate = preserveDate
+                            overwriteDate = preserveDate()
                         ) { media ->
                             if (isMoving && !list.contains(media)) {
                                 list.add(media)

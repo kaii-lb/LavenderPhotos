@@ -20,14 +20,14 @@ import com.kaii.photos.reorderable_lists.rememberReorderableListState
 
 @Composable
 fun DefaultTabSelectorDialog(
-    tabList: List<BottomBarTab>,
-    defaultTab: BottomBarTab,
+    tabList: () -> List<BottomBarTab>,
+    defaultTab: () -> BottomBarTab,
     setTabList: (list: List<BottomBarTab>) -> Unit,
     setDefaultTab: (tab: BottomBarTab) -> Unit,
     dismissDialog: () -> Unit
 ) {
-    var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab) }
-    val tabListDynamic = remember { mutableStateListOf<BottomBarTab>().apply { addAll(tabList) } }
+    var selectedTab by remember(defaultTab) { mutableStateOf(defaultTab()) }
+    val tabListDynamic = remember { mutableStateListOf<BottomBarTab>().apply { addAll(tabList()) } }
 
     LavenderDialogBase(
         onDismiss = dismissDialog

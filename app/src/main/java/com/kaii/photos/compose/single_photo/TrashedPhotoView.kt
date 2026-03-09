@@ -188,8 +188,8 @@ private fun SingleTrashedPhotoViewImpl(
             SingleViewTopBar(
                 mediaItem = { mediaItem },
                 visible = appBarsVisible.value,
-                showInfoDialog = showInfoDialog,
-                privacyMode = scrollState.privacyMode,
+                showInfoDialog = { showInfoDialog },
+                privacyMode = { scrollState.privacyMode },
                 isOpenWithDefaultView = false,
                 topBarDetailsFormat = topBarDetailsFormat,
                 showTags = false,
@@ -245,7 +245,7 @@ private fun SingleTrashedPhotoViewImpl(
                     showMoveCopyOptions = false,
                     privacyMode = scrollState.privacyMode,
                     isCustomAlbum = false,
-                    preserveDate = preserveDate,
+                    preserveDate = { preserveDate },
                     dismiss = {
                         coroutineScope.launch {
                             sheetState.hide()

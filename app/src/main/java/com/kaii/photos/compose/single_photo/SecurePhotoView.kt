@@ -199,9 +199,9 @@ fun SecurePhotoView(
             SingleViewTopBar(
                 mediaItem = { currentMediaItem.item },
                 visible = appBarsVisible.value,
-                showInfoDialog = showInfoDialog,
+                showInfoDialog = { showInfoDialog },
                 isOpenWithDefaultView = false,
-                privacyMode = scrollState.privacyMode,
+                privacyMode = { scrollState.privacyMode },
                 topBarDetailsFormat = topBarDetailsFormat,
                 showTags = false,
                 expandInfoDialog = {

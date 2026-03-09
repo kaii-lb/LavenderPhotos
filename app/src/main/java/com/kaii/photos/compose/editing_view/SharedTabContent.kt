@@ -78,8 +78,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
 import com.kaii.photos.compose.widgets.shimmerEffect
@@ -96,6 +94,8 @@ import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -124,10 +124,10 @@ fun SharedEditorFilterContent(
     Row(
         modifier = modifier
             .fillMaxSize(1f),
-        verticalAlignment = Alignment.Companion.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(
             space = 8.dp,
-            alignment = Alignment.Companion.CenterHorizontally
+            alignment = Alignment.CenterHorizontally
         )
     ) {
         Button(
@@ -139,7 +139,7 @@ fun SharedEditorFilterContent(
                 pressedShape = CircleShape
             ),
             enabled = original != last,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .size(56.dp)
         ) {
             Icon(
@@ -159,13 +159,13 @@ fun SharedEditorFilterContent(
                 pressedShape = CircleShape
             ),
             enabled = original != last,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .height(56.dp)
                 .width(108.dp)
         ) {
             Text(
                 text = stringResource(id = if (original != last) R.string.filter_select else R.string.filter_selected),
-                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Companion.Sp)
+                fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp)
             )
         }
     }
@@ -199,7 +199,7 @@ fun SharedEditorDrawContent(
                     drawingPaintState.undoModification()
                 },
                 shape = CircleShape,
-                contentPadding = PaddingValues.Companion.Zero,
+                contentPadding = PaddingValues.Zero,
                 modifier = Modifier
                     .size(56.dp)
             ) {
@@ -238,7 +238,7 @@ fun SharedEditorDrawContent(
                     drawingPaintState.clearModifications()
                 },
                 shape = CircleShape,
-                contentPadding = PaddingValues.Companion.Zero,
+                contentPadding = PaddingValues.Zero,
                 modifier = Modifier
                     .size(56.dp)
             ) {
@@ -531,7 +531,7 @@ private fun ImageSelector(
         } else {
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = resources.getString(R.string.editing_upload_image_failed),
                         icon = R.drawable.broken_image,
                         duration = SnackbarDuration.Short

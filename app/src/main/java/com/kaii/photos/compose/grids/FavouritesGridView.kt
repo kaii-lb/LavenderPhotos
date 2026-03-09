@@ -83,7 +83,7 @@ fun FavouritesGridView(
         topBar = {
             FavouritesViewTopAppBar(
                 selectionManager = selectionManager,
-                showTagDialog = showTagDialog,
+                showTagDialog = { showTagDialog },
                 setShowTagDialog = { showTagDialog = it },
                 onBackClick = {
                     navController.popBackStack()
@@ -108,9 +108,9 @@ fun FavouritesGridView(
                 FavouritesViewBottomAppBar(
                     selectionManager = selectionManager,
                     incomingIntent = incomingIntent,
-                    confirmToDelete = confirmToDelete,
-                    doNotTrash = doNotTrash,
-                    preserveDate = preserveDate
+                    confirmToDelete = { confirmToDelete },
+                    doNotTrash = { doNotTrash },
+                    preserveDate = { preserveDate }
                 )
             }
         }
@@ -121,8 +121,8 @@ fun FavouritesGridView(
         AnimatedMediaTagManager(
             showTagDialog = showTagDialog,
             padding = padding,
-            tags = tags,
-            selectedTags = selectedTags,
+            tags = { tags },
+            selectedTags = { selectedTags },
             onTagAdd = tagViewModel::insertTag,
             onTagClick = tagViewModel::toggleTag,
             onTagDelete = tagViewModel::deleteTag,

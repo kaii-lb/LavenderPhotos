@@ -32,7 +32,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
 fun TagEditingPageTextField(
-    value: String,
+    value: () -> String,
     placeholder: String,
     modifier: Modifier = Modifier,
     onValueChange: (value: String) -> Unit,
@@ -40,7 +40,7 @@ fun TagEditingPageTextField(
     addTag: (name: String) -> Unit
 ) {
     TextField(
-        value = value,
+        value = value(),
         onValueChange = onValueChange,
         placeholder = {
             Text(
@@ -48,14 +48,14 @@ fun TagEditingPageTextField(
             )
         },
         trailingIcon = {
-            if (!exists(value) && value.isNotBlank()) {
+            if (!exists(value()) && value().isNotBlank()) {
                 Box(
                     modifier = Modifier
                         .padding(end = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
-                        onClick = { addTag(value) }
+                        onClick = { addTag(value()) }
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.checkmark_thin),
@@ -106,8 +106,8 @@ fun TagEditingPageTextField(
         ),
         keyboardActions = KeyboardActions(
             onDone = {
-                if (!exists(value) && value.isNotBlank()) {
-                    addTag(value)
+                if (!exists(value()) && value().isNotBlank()) {
+                    addTag(value())
                 }
             }
         ),

@@ -9,13 +9,11 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -28,30 +26,24 @@ class MainGridViewModel(
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = runBlocking(Dispatchers.IO) {
-                getMainPhotosAlbums().first()
-            }
+            initialValue = emptySet()
         )
 
     val defaultTab = settings.defaultTabs.getDefaultTab().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = runBlocking(Dispatchers.IO) {
-            settings.defaultTabs.getDefaultTab().first()
-        }
+        started = SharingStarted.Lazily,
+        initialValue = settings.defaultTabs.defaultTabItem
     )
 
     val tabList = settings.defaultTabs.getTabList().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = runBlocking(Dispatchers.IO) {
-            settings.defaultTabs.getTabList().first()
-        }
+        started = SharingStarted.Lazily,
+        initialValue = emptyList()
     )
 
     val exitImmediately = settings.behaviour.getExitImmediately().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
@@ -81,7 +73,7 @@ class MainGridViewModel(
 
     val alwaysShowImmichInfo = settings.immich.getAlwaysShowUserInfo().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 

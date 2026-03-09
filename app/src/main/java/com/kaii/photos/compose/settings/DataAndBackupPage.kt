@@ -34,8 +34,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
@@ -48,6 +46,8 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.permissions.auth.rememberExportAuthManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -112,7 +112,7 @@ private fun DataAndBackupPageImpl(
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
@@ -160,7 +160,7 @@ private fun DataAndBackupPageImpl(
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
@@ -207,7 +207,7 @@ private fun DataAndBackupPageImpl(
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
@@ -265,7 +265,7 @@ private fun DataAndBackupPageImpl(
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading
@@ -313,7 +313,7 @@ private fun DataAndBackupPageImpl(
 
                         isLoading.value = true
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.LoadingEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
                                 message = resources.getString(R.string.exporting_backup),
                                 icon = R.drawable.folder_export,
                                 isLoading = isLoading

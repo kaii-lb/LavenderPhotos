@@ -14,11 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.di.appModule
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +63,7 @@ class SinglePhotoScrollState(
 
             coroutineScope.launch {
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.MessageEvent(
+                    LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.privacy_scroll_mode_fail),
                         duration = SnackbarDuration.Short,
                         icon = R.drawable.swipe

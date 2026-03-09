@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import com.kaii.photos.R
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -173,6 +174,7 @@ enum class StoredDrawable(
     )
 }
 
+@Immutable
 @Serializable
 data class BottomBarTab(
     val id: Int,
@@ -225,6 +227,7 @@ data class AlbumInfo(
     val immichId: String = ""
 )
 
+@Immutable
 @Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
@@ -240,6 +243,7 @@ data class ImmichBasicInfo(
     }
 }
 
+@Immutable
 @Parcelize
 @Serializable
 sealed interface AlbumType : Parcelable {
@@ -248,6 +252,7 @@ sealed interface AlbumType : Parcelable {
     val pinned: Boolean
     val immichId: String?
 
+    @Immutable
     @Serializable
     data class Folder(
         override val id: String,
@@ -275,6 +280,7 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     data class Custom(
         override val id: String,
@@ -301,6 +307,7 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     data class Cloud(
         override val id: String,
@@ -327,30 +334,13 @@ sealed interface AlbumType : Parcelable {
         }
     }
 
+    @Immutable
     @Serializable
     object PlaceHolder : AlbumType {
         @IgnoredOnParcel override val id = ""
         @IgnoredOnParcel override val name = ""
         @IgnoredOnParcel override val pinned = false
         @IgnoredOnParcel override val immichId = null
-
-        class NavType : androidx.navigation.NavType<PlaceHolder>(isNullableAllowed = false) {
-            override fun get(bundle: Bundle, key: String): PlaceHolder? {
-                return bundle.getString(key)?.let { Json.decodeFromString<PlaceHolder>(it) }
-            }
-
-            override fun parseValue(value: String): PlaceHolder {
-                return Json.decodeFromString(Uri.decode(value))
-            }
-
-            override fun put(bundle: Bundle, key: String, value: PlaceHolder) {
-                bundle.putString(key, Json.encodeToString(value))
-            }
-
-            override fun serializeAsValue(value: PlaceHolder): String {
-                return Uri.encode(Json.encodeToString(value))
-            }
-        }
     }
 
     class NavType : androidx.navigation.NavType<AlbumType>(isNullableAllowed = false) {

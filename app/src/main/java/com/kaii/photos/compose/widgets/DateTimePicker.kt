@@ -41,8 +41,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.ConfirmCancelRow
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
@@ -52,6 +50,8 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -150,7 +150,7 @@ fun DateTimePicker(
             onRejected = {
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvents.MessageEvent(
+                        LavenderSnackbarEvent.MessageEvent(
                             message = resources.getString(R.string.exif_date_changed_failed),
                             icon = R.drawable.event_busy,
                             duration = SnackbarDuration.Short

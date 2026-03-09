@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.di.AppModule
@@ -23,12 +24,13 @@ class PhotosApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        appModule = AppModule(applicationContext)
+        CoroutineScope(Dispatchers.IO).launch {
+            appModule = AppModule(applicationContext)
 
-        // try to migrate from an older album system on app startup
-        appModule.settings.albums.migrate()
+            // try to migrate from an older album system on app startup
+            appModule.settings.albums.migrate()
 
-        appModule.scope.launch(Dispatchers.IO) {
+            MediaDatabase.getInstance(applicationContext)
             registerContentObserver()
         }
     }

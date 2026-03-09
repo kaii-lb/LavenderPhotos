@@ -42,13 +42,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -57,23 +57,23 @@ import kotlin.time.ExperimentalTime
 fun SingleViewTopBar(
     mediaItem: () -> MediaStoreData,
     visible: Boolean,
-    showInfoDialog: Boolean,
-    privacyMode: Boolean,
+    showInfoDialog: () -> Boolean,
+    privacyMode: () -> Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     isOpenWithDefaultView: Boolean,
     showTags: Boolean,
-    showTagDialog: Boolean = false,
+    showTagDialog: () -> Boolean = { false },
     expandInfoDialog: () -> Unit,
     expandTagDialog: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     val resources = LocalResources.current
     BackHandler(
-        enabled = privacyMode
+        enabled = privacyMode()
     ) {
         coroutineScope.launch {
             LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvents.MessageEvent(
+                LavenderSnackbarEvent.MessageEvent(
                     message = resources.getString(R.string.privacy_scroll_mode_exit_tried),
                     icon = R.drawable.do_not_touch,
                     duration = SnackbarDuration.Short
@@ -138,7 +138,7 @@ fun SingleViewTopBar(
                         shape = IconButtonDefaults.filledShape,
                         pressedShape = IconButtonDefaults.mediumPressedShape
                     ),
-                    enabled = !privacyMode
+                    enabled = !privacyMode()
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.back_arrow),
@@ -189,7 +189,7 @@ fun SingleViewTopBar(
             ) {
                 if (showTags) {
                     FilledIconToggleButton(
-                        checked = showTagDialog,
+                        checked = showTagDialog(),
                         onCheckedChange = {
                             expandTagDialog()
                         },
@@ -207,7 +207,7 @@ fun SingleViewTopBar(
                 }
 
                 FilledIconToggleButton(
-                    checked = showInfoDialog,
+                    checked = showInfoDialog(),
                     onCheckedChange = {
                         expandInfoDialog()
                     },

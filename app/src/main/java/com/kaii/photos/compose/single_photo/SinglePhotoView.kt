@@ -59,8 +59,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -102,6 +100,8 @@ import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.favourites.rememberFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
@@ -149,8 +149,8 @@ fun SinglePhotoView(
         blurViews = blurViews,
         useCache = useCache,
         preserveDate = preserveDate,
-        tags = tags,
-        selectedTags = selectedTags,
+        tags = { tags },
+        selectedTags = { selectedTags },
         removeFromCustom = { item ->
             viewModel.remove(items = setOf(item))
         },
@@ -202,8 +202,8 @@ fun SinglePhotoView(
         blurViews = blurViews,
         useCache = useCache,
         preserveDate = preserveDate,
-        tags = tags,
-        selectedTags = selectedTags,
+        tags = { tags },
+        selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
@@ -250,8 +250,8 @@ fun SinglePhotoView(
         blurViews = blurViews,
         useCache = useCache,
         preserveDate = preserveDate,
-        tags = tags,
-        selectedTags = selectedTags,
+        tags = { tags },
+        selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
@@ -298,8 +298,8 @@ fun SinglePhotoView(
         blurViews = blurViews,
         useCache = useCache,
         preserveDate = preserveDate,
-        tags = tags,
-        selectedTags = selectedTags,
+        tags = { tags },
+        selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
@@ -346,8 +346,8 @@ fun SinglePhotoView(
         blurViews = blurViews,
         useCache = useCache,
         preserveDate = preserveDate,
-        tags = tags,
-        selectedTags = selectedTags,
+        tags = { tags },
+        selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
@@ -372,8 +372,8 @@ private fun SinglePhotoViewCommon(
     blurViews: Boolean,
     useCache: Boolean,
     preserveDate: Boolean,
-    tags: List<Tag>,
-    selectedTags: List<Tag>,
+    tags: () -> List<Tag>,
+    selectedTags: () -> List<Tag>,
     removeFromCustom: (MediaStoreData) -> Unit = {},
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
@@ -457,11 +457,11 @@ private fun SinglePhotoViewCommon(
             SingleViewTopBar(
                 mediaItem = { mediaItem },
                 visible = appBarsVisible.value,
-                showInfoDialog = showInfoDialog,
-                privacyMode = scrollState.privacyMode,
+                showInfoDialog = { showInfoDialog },
+                privacyMode = { scrollState.privacyMode },
                 isOpenWithDefaultView = isOpenWithDefaultView,
                 showTags = true,
-                showTagDialog = showTagDialog,
+                showTagDialog = { showTagDialog },
                 topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
                     coroutineScope.launch {
@@ -532,7 +532,7 @@ private fun SinglePhotoViewCommon(
                 sheetState = sheetState,
                 privacyMode = scrollState.privacyMode,
                 isCustomAlbum = album !is AlbumType.Folder,
-                preserveDate = preserveDate,
+                preserveDate = { preserveDate },
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()
@@ -641,7 +641,7 @@ private fun BottomBar(
                         onRejected = {
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
                                         message = resources.getString(R.string.permissions_needed),
                                         icon = R.drawable.shield_lock,
                                         duration = SnackbarDuration.Short
@@ -658,7 +658,7 @@ private fun BottomBar(
                         onRejected = {
                             coroutineScope.launch {
                                 LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvents.MessageEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
                                         message = resources.getString(R.string.permissions_needed),
                                         icon = R.drawable.shield_lock,
                                         duration = SnackbarDuration.Short

@@ -23,8 +23,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.kaii.lavender.snackbars.LavenderSnackbarController
-import com.kaii.lavender.snackbars.LavenderSnackbarEvents
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.dialogs.TitleCloseRow
@@ -34,6 +32,8 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -98,7 +98,7 @@ fun ImmichLoginDialog(
                 val isLoading = mutableStateOf(true)
 
                 LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvents.LoadingEvent(
+                    LavenderSnackbarEvent.LoadingEvent(
                         message = eventTitle.value,
                         icon = R.drawable.account_circle,
                         isLoading = isLoading
@@ -136,7 +136,7 @@ fun ImmichLoginDialog(
 
                         eventTitle.value = resources.getString(R.string.immich_login_failed)
                         LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvents.MessageEvent(
+                            LavenderSnackbarEvent.MessageEvent(
                                 message = resources.getString(R.string.immich_login_failed),
                                 duration = SnackbarDuration.Short,
                                 icon = R.drawable.error_2

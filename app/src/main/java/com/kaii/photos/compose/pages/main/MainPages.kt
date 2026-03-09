@@ -4,6 +4,11 @@ import android.content.Intent
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -76,10 +79,9 @@ fun MainPages(
     multiAlbumViewModel: MultiAlbumViewModel,
     searchViewModel: SearchViewModel,
     mainGridViewModel: MainGridViewModel,
-    deviceAlbums: State<List<AlbumGridState.Album>>,
+    deviceAlbums: () -> List<AlbumGridState.Album>,
     window: Window,
     incomingIntent: Intent?,
-    blur: Boolean = false,
     refreshAlbums: () -> Unit
 ) {
     val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
@@ -87,16 +89,9 @@ fun MainPages(
     val immichInfo by mainGridViewModel.immichInfo.collectAsStateWithLifecycle()
     val exitImmediately by mainGridViewModel.exitImmediately.collectAsStateWithLifecycle()
     val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-    val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
-    val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
     val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
-    val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-    val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
-    val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-    val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
-    val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
@@ -121,7 +116,7 @@ fun MainPages(
     )
 
     var paths by remember { mutableStateOf(mainPhotosPaths) }
-    val selectionManager = rememberSelectionManager(paths = paths)
+    val selectionManager = rememberSelectionManager(paths = { paths })
 
     val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     var showTagDialog by remember { mutableStateOf(false) }
@@ -149,18 +144,21 @@ fun MainPages(
     Scaffold(
         topBar = {
             val groups by mainGridViewModel.groups.collectAsStateWithLifecycle()
+            val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
+            val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
 
             MainAppTopBar(
-                alternate = isSelecting,
+                alternate = { isSelecting },
                 selectionManager = selectionManager,
-                pagerState = pagerState,
-                immichInfo = immichInfo,
-                tabList = tabList,
-                alwaysShowImmichInfo = alwaysShowImmichInfo,
-                extraSecureFolderEntry = extraSecureFolderEntry,
-                showTagDialog = showTagDialog,
+                immichInfo = { immichInfo },
+                showAddAlbumButton = {
+                    tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
+                },
+                alwaysShowImmichInfo = { alwaysShowImmichInfo },
+                extraSecureFolderEntry = { extraSecureFolderEntry },
+                showTagDialog = { showTagDialog },
                 isFromMediaPicker = incomingIntent != null,
-                groups = groups,
+                groups = { groups },
                 setShowTagDialog = {
                     showTagDialog = true
                 },
@@ -169,26 +167,32 @@ fun MainPages(
             )
         },
         bottomBar = {
-            if (incomingIntent == null) {
+            var delayOver by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                delay(AnimationConstants.DURATION.toLong())
+                delayOver = true
+            }
+
+            AnimatedVisibility(
+                visible = tabList.isNotEmpty() && incomingIntent == null && delayOver,
+                enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it },
+                exit = fadeOut() + slideOutVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it }
+            ) {
                 MainAppBottomBar(
                     pagerState = pagerState,
                     selectionManager = selectionManager,
                     tabs = tabList,
-                    defaultTab = defaultTab,
+                    defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
-                    confirmToDelete = confirmToDelete,
-                    doNotTrash = doNotTrash,
-                    preserveDate = preserveDate
+                    confirmToDelete = { confirmToDelete },
+                    doNotTrash = { doNotTrash },
+                    preserveDate = { preserveDate }
                 )
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier
             .fillMaxSize()
-            .then(
-                if (blur) Modifier.blur(64.dp)
-                else Modifier
-            )
             .nestedScroll(
                 object : NestedScrollConnection {
                     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
@@ -218,8 +222,8 @@ fun MainPages(
         AnimatedMediaTagManager(
             showTagDialog = showTagDialog,
             padding = padding,
-            tags = tags,
-            selectedTags = selectedTags,
+            tags = { tags },
+            selectedTags = { selectedTags },
             onTagAdd = tagViewModel::insertTag,
             onTagClick = tagViewModel::toggleTag,
             onTagDelete = tagViewModel::deleteTag,
@@ -230,10 +234,11 @@ fun MainPages(
 
         val isLandscape by rememberDeviceOrientation()
 
+
         val safeDrawingPadding = if (isLandscape) {
             val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
-
             val layoutDirection = LocalLayoutDirection.current
+
             val left = safeDrawing.calculateStartPadding(layoutDirection)
             val right = safeDrawing.calculateEndPadding(layoutDirection)
 
@@ -242,33 +247,39 @@ fun MainPages(
             Pair(0.dp, 0.dp)
         }
 
-        // reset search query on
         var lastPage by rememberSaveable { mutableIntStateOf(0) }
         LaunchedEffect(pagerState) {
-            snapshotFlow { pagerState.currentPage }.collectLatest {
-                setupNextScreen(window = window)
-                selectionManager.clear()
+            coroutineScope.launch {
+                snapshotFlow { pagerState.currentPage }.collectLatest {
+                    setupNextScreen(window = window)
+                    selectionManager.clear()
 
-                if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
-                    searchViewModel.clear()
+                    if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
+                        searchViewModel.clear()
+                    }
+
+                    if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
+                        refreshAlbums()
+                    }
+
+                    lastPage = it
                 }
-
-                if (it == tabList.indexOf(DefaultTabs.TabTypes.albums)) {
-                    refreshAlbums()
-                }
-
-                lastPage = it
             }
         }
 
         LaunchedEffect(Unit) {
-            while (true) {
-                refreshAlbums()
-                delay(5000)
+            coroutineScope.launch {
+                while (true) {
+                    refreshAlbums()
+                    delay(5000)
+                }
             }
         }
 
-        Box {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = !isSelecting,
@@ -285,6 +296,12 @@ fun MainPages(
 
                 when {
                     tab.isCustom -> {
+                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
@@ -302,12 +319,18 @@ fun MainPages(
                             openVideosExternally = openVideosExternally,
                             cacheThumbnails = cacheThumbnails,
                             thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners
+                            useRoundedCorners = useRoundedCorners,
                         )
                     }
 
                     tab == DefaultTabs.TabTypes.photos -> {
-                        LaunchedEffect(Unit) {
+                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+
+                        LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
 
                             multiAlbumViewModel.changePaths(
@@ -319,14 +342,14 @@ fun MainPages(
 
                         MainGridView(
                             viewModel = multiAlbumViewModel,
-                            selectionManager = selectionManager,
                             album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
+                            selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = columnSize,
                             openVideosExternally = openVideosExternally,
                             cacheThumbnails = cacheThumbnails,
                             thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners
+                            useRoundedCorners = useRoundedCorners,
                         )
                     }
 
@@ -341,10 +364,10 @@ fun MainPages(
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
-                            sortMode = sortMode,
-                            tabList = tabList,
+                            sortMode = { sortMode },
+                            tabList = { tabList },
                             columnSize = columnSize,
-                            immichInfo = immichInfo,
+                            immichInfo = { immichInfo },
                             migrateFav = { migrateFav },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
@@ -386,12 +409,12 @@ fun MainPages(
                         MainAppBottomBar(
                             pagerState = pagerState,
                             tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            defaultTab = defaultTab,
+                            defaultTab = { defaultTab },
                             scrollBehaviour = scrollBehaviour,
                             selectionManager = selectionManager,
-                            confirmToDelete = confirmToDelete,
-                            doNotTrash = doNotTrash,
-                            preserveDate = preserveDate
+                            confirmToDelete = { confirmToDelete },
+                            doNotTrash = { doNotTrash },
+                            preserveDate = { preserveDate }
                         )
                     } else {
                         MediaPickerConfirmButton(
