@@ -141,6 +141,11 @@ fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
             Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
         )
 
+        exifInterface.setAttribute(
+            ExifInterface.TAG_OFFSET_TIME_ORIGINAL,
+            Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
+        )
+
         exifInterface.saveAttributes()
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())

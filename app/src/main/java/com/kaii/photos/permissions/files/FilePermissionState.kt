@@ -77,7 +77,7 @@ fun rememberFilePermissionManager(
         state.launcher = launcher
 
         onDispose {
-            state.launcher == null
+            state.launcher = null
         }
     }
 

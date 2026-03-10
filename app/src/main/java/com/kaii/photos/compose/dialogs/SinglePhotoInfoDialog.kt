@@ -66,7 +66,7 @@ import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.compose.pages.WallpaperSetter
-import com.kaii.photos.compose.widgets.DateTimePicker
+import com.kaii.photos.compose.widgets.date_time.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
@@ -320,7 +320,6 @@ private fun Content(
         if (showDateTimePicker) {
             DateTimePicker(
                 mediaItem = currentMediaItem,
-                onSuccess = dismiss,
                 onDismiss = {
                     showDateTimePicker = false
                 }
