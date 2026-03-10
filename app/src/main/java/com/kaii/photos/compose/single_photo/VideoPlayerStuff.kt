@@ -66,7 +66,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -485,12 +485,14 @@ fun VideoPlayer(
         }
     }
 
-    val isPlaying = rememberSaveable { mutableStateOf(shouldPlay.value && shouldAutoPlay) }
-    val lastIsPlaying = rememberSaveable { mutableStateOf(isPlaying.value) }
+    val isPlaying = retain(shouldAutoPlay, shouldPlay.value) {
+        mutableStateOf(shouldPlay.value && shouldAutoPlay)
+    }
+    val lastIsPlaying = retain { mutableStateOf(isPlaying.value) }
 
     /** In Seconds */
-    val currentVideoPosition = rememberSaveable { mutableFloatStateOf(0f) }
-    val duration = rememberSaveable { mutableFloatStateOf(0f) }
+    val currentVideoPosition = retain { mutableFloatStateOf(0f) }
+    val duration = retain { mutableFloatStateOf(0f) }
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(
         videoSource = videoSource,
