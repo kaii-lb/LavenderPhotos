@@ -93,9 +93,9 @@ class TrashViewModel(
 
     fun cancel() = repo.cancel()
 
-    fun deleteAll() {
+    fun deleteAll(context: Context) {
         viewModelScope.launch {
-            repo.deleteAll()
+            repo.deleteAll(context)
         }
     }
 }

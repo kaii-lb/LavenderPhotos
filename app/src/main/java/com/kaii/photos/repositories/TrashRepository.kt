@@ -42,8 +42,6 @@ class TrashRepository(
         override val accessToken: String
     ) : RoomQueryParams(sortMode, format, accessToken)
 
-    private val appContext = context.applicationContext
-
     private val cancellationSignal = CancellationSignal()
     private val dataSource =
         TrashDataSource(
@@ -95,10 +93,10 @@ class TrashRepository(
 
     fun cancel() = cancellationSignal.cancel()
 
-    suspend fun deleteAll() =
+    suspend fun deleteAll(context: Context) =
         withContext(Dispatchers.IO) {
             permanentlyDeletePhotoList(
-                context = appContext,
+                context = context,
                 list = dataSource.query().fastMap { it.uri.toUri() }
             )
         }
