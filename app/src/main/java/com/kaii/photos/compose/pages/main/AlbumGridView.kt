@@ -16,6 +16,7 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,12 +27,16 @@ fun AlbumsGridView(
     columnSize: Int,
     immichInfo: () -> ImmichBasicInfo,
     migrateFav: () -> Boolean,
+    autoDetect: () -> Boolean,
     isMediaPicker: Boolean = false,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
     setAlbumOrder: (order: List<String>) -> Unit,
-    addAlbumToGroup: (albumId: String, groupId: String) -> Unit
+    addAlbumToGroup: (albumId: String, groupId: String) -> Unit,
+    toggleAlbumPin: (album: AlbumGridState.Album) -> Unit,
+    deleteAlbum: (album: AlbumGridState.Album) -> Unit
 ) {
     val navController = LocalNavController.current
+    val authManager = rememberSecureFolderAuthManager()
 
     SortableGrid(
         albumList = deviceAlbums,
@@ -40,6 +45,7 @@ fun AlbumsGridView(
         columnSize = columnSize,
         immichInfo = immichInfo,
         navController = navController,
+        autoDetect = autoDetect,
         prefix = {
             item(
                 span = { GridItemSpan(maxLineSpan) },
@@ -74,7 +80,10 @@ fun AlbumsGridView(
         },
         setAlbumSortMode = setAlbumSortMode,
         setAlbumOrder = setAlbumOrder,
-        addAlbumToGroup = addAlbumToGroup
+        addAlbumToGroup = addAlbumToGroup,
+        authenticateSecureFolder = { authManager.authenticate() },
+        toggleAlbumPin = toggleAlbumPin,
+        deleteAlbum = deleteAlbum,
     )
 }
 

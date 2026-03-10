@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 
 @Composable
 fun SortModeHeader(
@@ -34,6 +33,7 @@ fun SortModeHeader(
     isAlbumGroup: Boolean,
     modifier: Modifier = Modifier,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
+    authenticateSecureFolder: () -> Unit,
 ) {
     LazyRow(
         modifier = modifier
@@ -125,11 +125,8 @@ fun SortModeHeader(
 
         if (showHiddenSecureEntry() && !isAlbumGroup) {
             item {
-                val authManager = rememberSecureFolderAuthManager()
                 OutlinedButton(
-                    onClick = {
-                        authManager.authenticate()
-                    },
+                    onClick = authenticateSecureFolder,
                     colors =
                         if (sortMode() == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
                         else ButtonDefaults.outlinedButtonColors()

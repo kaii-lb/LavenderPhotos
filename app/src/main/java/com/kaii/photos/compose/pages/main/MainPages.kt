@@ -361,6 +361,7 @@ fun MainPages(
                         val columnSize by mainGridViewModel.albumColumnSize.collectAsStateWithLifecycle()
                         val sortMode by mainGridViewModel.albumSortMode.collectAsStateWithLifecycle()
                         val migrateFav by mainGridViewModel.migrateFav.collectAsStateWithLifecycle()
+                        val autoDetect by mainGridViewModel.autoDetect.collectAsStateWithLifecycle()
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
@@ -369,10 +370,13 @@ fun MainPages(
                             columnSize = columnSize,
                             immichInfo = { immichInfo },
                             migrateFav = { migrateFav },
+                            autoDetect = { autoDetect },
                             isMediaPicker = incomingIntent != null,
                             setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
                             setAlbumOrder = mainGridViewModel::setAlbumOrder,
-                            addAlbumToGroup = mainGridViewModel::addAlbumToGroup
+                            addAlbumToGroup = mainGridViewModel::addAlbumToGroup,
+                            toggleAlbumPin = mainGridViewModel::toggleAlbumPin,
+                            deleteAlbum = mainGridViewModel::deleteAlbum
                         )
                     }
 

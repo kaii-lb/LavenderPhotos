@@ -38,6 +38,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.models.album_group.AlbumGroupViewModel
 import com.kaii.photos.models.album_group.AlbumGroupViewModelFactory
+import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -159,23 +160,42 @@ fun AlbumGroup(
                         AlbumSortMode.Alphabetically -> inGroup.sortedBy { it.name }
                         AlbumSortMode.AlphabeticallyDesc -> inGroup.sortedByDescending { it.name }
                         AlbumSortMode.Custom -> inGroup
+                    }.toMutableList().apply {
+                        val pinned = filter { it.pinned }
+                        removeAll(pinned)
+                        addAll(0, pinned)
                     }
                 }
             }
         }
 
+        val authManager = rememberSecureFolderAuthManager()
         SortableGrid(
             albumList = { albums },
-            tabList = { emptyList() },
             sortMode = { sortMode },
+            tabList = { emptyList() },
             columnSize = columnSize,
             immichInfo = { immichInfo },
             navController = navController,
+            autoDetect = { false },
             modifier = Modifier.padding(paddingValues),
             isAlbumGroup = true,
+            removeAlbumIcon = R.drawable.folder_off,
             setAlbumSortMode = viewModel::setAlbumSortMode,
             setAlbumOrder = viewModel::setAlbumOrder,
-            addAlbumToGroup = { _, _ ->}
+            addAlbumToGroup = { _, _ -> },
+            authenticateSecureFolder = { authManager.authenticate() },
+            toggleAlbumPin = {
+                viewModel.toggleAlbumPin(
+                    album = it as AlbumGridState.Album.Single
+                )
+            },
+            deleteAlbum = {
+                viewModel.deleteAlbum(
+                    album = it as AlbumGridState.Album.Single,
+                    group = group!!
+                )
+            }
         )
     }
 }

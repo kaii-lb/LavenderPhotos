@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.widgets.albums
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,21 +61,15 @@ fun AlbumFolder(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val animatedScale by animateFloatAsState(
-        targetValue = if (isSelected()) 0.9f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
-    )
-
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
-        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
     )
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .scale(animatedScale)
             .padding(6.dp)
             .clip(RoundedCornerShape(size = 24.dp))
             .background(backgroundColor)

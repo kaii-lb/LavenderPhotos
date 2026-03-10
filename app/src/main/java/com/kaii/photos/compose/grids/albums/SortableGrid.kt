@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,29 +21,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.center
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
-import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.bumptech.glide.signature.ObjectKey
+import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.albums.AlbumFolder
 import com.kaii.photos.compose.widgets.albums.AlbumGridItem
 import com.kaii.photos.compose.widgets.albums.SortModeHeader
+import com.kaii.photos.compose.widgets.albums.pinDeleteHeader
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -53,8 +51,45 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.Screens
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import com.kaii.photos.reorderable_lists.rememberSortableGridState
+
+@Preview
+@Composable
+private fun SortableGridPreview() {
+    SortableGrid(
+        albumList = {
+            (0..10).map {
+                AlbumGridState.Album.Single(
+                    info = AlbumGridState.Info(
+                        album = AlbumType.PlaceHolder,
+                        thumbnail = AlbumGridState.Info.Thumbnail(
+                            uri = "",
+                            signature = ObjectKey(0),
+                            albumId = it.toString(),
+                            date = 0L
+                        )
+                    ),
+                    id = it.toString(),
+                    name = "Test",
+                    date = 0L,
+                    pinned = false
+                )
+            }
+        },
+        sortMode = { AlbumSortMode.LastModifiedDesc },
+        tabList = { emptyList() },
+        columnSize = 2,
+        immichInfo = { ImmichBasicInfo.Empty },
+        navController = rememberNavController(),
+        autoDetect = { false },
+        setAlbumSortMode = {},
+        setAlbumOrder = {},
+        addAlbumToGroup = { _, _ -> },
+        authenticateSecureFolder = {},
+        toggleAlbumPin = {},
+        deleteAlbum = {},
+    )
+}
 
 @Composable
 fun SortableGrid(
@@ -64,13 +99,18 @@ fun SortableGrid(
     columnSize: Int,
     immichInfo: () -> ImmichBasicInfo,
     navController: NavController,
+    autoDetect: () -> Boolean,
     modifier: Modifier = Modifier,
     isAlbumGroup: Boolean = false,
+    removeAlbumIcon: Int = R.drawable.delete,
     prefix: (LazyGridScope.() -> Unit)? = null,
     suffix: (LazyGridScope.() -> Unit)? = null,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
     setAlbumOrder: (order: List<String>) -> Unit,
-    addAlbumToGroup: (albumId: String, groupId: String) -> Unit
+    addAlbumToGroup: (albumId: String, groupId: String) -> Unit,
+    authenticateSecureFolder: () -> Unit,
+    toggleAlbumPin: (album: AlbumGridState.Album) -> Unit,
+    deleteAlbum: (album: AlbumGridState.Album) -> Unit
 ) {
     var albums by remember { mutableStateOf(albumList()) }
     LaunchedEffect(albumList()) {
@@ -87,15 +127,6 @@ fun SortableGrid(
     ) {
         val density = LocalDensity.current
         val isLandscape by rememberDeviceOrientation()
-
-        val lazyGridState = rememberLazyGridState()
-        var itemOffset by remember { mutableStateOf(Offset.Zero) }
-        var selectedItem by remember { mutableStateOf<AlbumGridState.Album?>(null) }
-        var selectedIsGrouping by remember { mutableStateOf(false) }
-        val addingToGroupScale by animateFloatAsState(
-            targetValue = if (selectedIsGrouping) 0.8f else 1f,
-            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
-        )
 
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
@@ -120,23 +151,35 @@ fun SortableGrid(
                 .height(with(density) { headerHeight.toDp() })
                 .zIndex(1f),
             setAlbumSortMode = setAlbumSortMode,
+            authenticateSecureFolder = authenticateSecureFolder
         )
 
+        val lazyGridState = rememberLazyGridState()
         LaunchedEffect(lazyGridState.isScrollInProgress) {
             if (lazyGridState.isScrollInProgress && lazyGridState.canScrollBackward) {
                 lockHeader = false
             }
         }
 
-        val scrollSpeed = remember { mutableFloatStateOf(0f) }
-        LaunchedEffect(scrollSpeed.floatValue) {
-            if (scrollSpeed.floatValue != 0f) {
-                while (isActive) {
-                    lazyGridState.scrollBy(scrollSpeed.floatValue)
-                    delay(10)
-                }
-            }
-        }
+        val sortableGridState = rememberSortableGridState(
+            gridState = lazyGridState,
+            albums = { albums },
+            hasPrefix = { prefix != null },
+            isAlbumGroup = isAlbumGroup,
+            sortMode = sortMode,
+            autoDetect = autoDetect,
+            setAlbums = { albums = it },
+            setAlbumSortMode = setAlbumSortMode,
+            setAlbumOrder = setAlbumOrder,
+            addAlbumToGroup = addAlbumToGroup,
+            toggleAlbumPin = toggleAlbumPin,
+            deleteAlbum = deleteAlbum
+        )
+
+        val itemScale by animateFloatAsState(
+            targetValue = sortableGridState.itemScale,
+            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+        )
 
         LazyVerticalGrid(
             state = lazyGridState,
@@ -160,109 +203,14 @@ fun SortableGrid(
                     }
                 )
                 .pointerInput(Unit) {
-                    var targetItemIndex: Int? = null
-                    var lastSortMode = sortMode()
-                    val scrollThreshold = with(density) {
-                        60.dp.toPx()
-                    }
-
                     detectDragGesturesAfterLongPress(
-                        onDragStart = { offset ->
-                            lastSortMode = sortMode()
-                            lazyGridState.layoutInfo.visibleItemsInfo
-                                .find { item ->
-                                    IntRect(
-                                        offset = item.offset,
-                                        size = item.size
-                                    ).contains(offset.round()) && !item.key.toString().startsWith("FavAndTrash")
-                                }?.let { item ->
-                                    val offset = if (prefix != null) 1 else 0
-                                    val index = item.index - offset
+                        onDragStart = sortableGridState::onDragStart,
 
-                                    if (index in 0..<albums.size) selectedItem = albums[index]
-                                } ?: run { selectedItem = null }
-                        },
+                        onDrag = sortableGridState::onDrag,
 
-                        onDrag = { change, offset ->
-                            change.consume()
-                            itemOffset += offset
+                        onDragCancel = sortableGridState::onDragCancel,
 
-                            val targetItem = lazyGridState.layoutInfo.visibleItemsInfo
-                                .find { item ->
-                                    IntRect(
-                                        offset = item.offset,
-                                        size = item.size
-                                    ).contains(change.position.round())
-                                }
-
-                            val currentLazyItem =
-                                lazyGridState.layoutInfo.visibleItemsInfo.find {
-                                    it.key == selectedItem?.id
-                                }
-
-                            val distanceFromBottom = lazyGridState.layoutInfo.viewportSize.height - change.position.y
-                            val distanceFromTop = change.position.y // for clarity
-
-                            scrollSpeed.floatValue = when {
-                                distanceFromBottom < scrollThreshold -> scrollThreshold - distanceFromBottom
-                                distanceFromTop < scrollThreshold -> -scrollThreshold + distanceFromTop
-                                else -> 0f
-                            }
-
-                            if (
-                                targetItem != null &&
-                                currentLazyItem != null &&
-                                targetItem.key in albums.map { it.id } &&
-                                !isAlbumGroup
-                            ) {
-                                targetItemIndex = albums.indexOfFirst { it.id == targetItem.key }
-                                val newList = albums.toMutableList()
-
-                                if (albums[targetItemIndex] is AlbumGridState.Album.Group && selectedItem is AlbumGridState.Album.Single) {
-                                    selectedIsGrouping = true
-                                } else {
-                                    selectedIsGrouping = false
-                                    newList.removeAll { it.id == selectedItem?.id }
-                                    newList.add(targetItemIndex, selectedItem!!)
-
-                                    itemOffset =
-                                        change.position - (targetItem.offset + targetItem.size.center).toOffset()
-
-                                    albums = newList
-                                }
-                            }
-                        },
-
-                        onDragCancel = {
-                            selectedItem = null
-                            itemOffset = Offset.Zero
-                            scrollSpeed.floatValue = 0f
-                        },
-
-                        onDragEnd = {
-                            if (!isAlbumGroup &&
-                                targetItemIndex != null &&
-                                albums[targetItemIndex] is AlbumGridState.Album.Group &&
-                                selectedItem is AlbumGridState.Album.Single
-                            ) {
-                                val targetItem = albums[targetItemIndex]
-
-                                addAlbumToGroup(
-                                    selectedItem!!.id,
-                                    targetItem.id
-                                )
-
-                                albums = albums.toMutableList().filter { it.id != selectedItem?.id }
-                                setAlbumSortMode(lastSortMode)
-                            } else if (!isAlbumGroup) {
-                                setAlbumSortMode(AlbumSortMode.Custom)
-                                setAlbumOrder(albums.map { it.id })
-                            }
-
-                            selectedItem = null
-                            itemOffset = Offset.Zero
-                            scrollSpeed.floatValue = 0f
-                        }
+                        onDragEnd = sortableGridState::onDragEnd
                     )
                 },
             horizontalArrangement = Arrangement.Start,
@@ -271,6 +219,11 @@ fun SortableGrid(
             if (prefix != null) {
                 prefix()
             }
+
+            pinDeleteHeader(
+                sortableGridState = sortableGridState,
+                removeAlbumIcon = removeAlbumIcon
+            )
 
             items(
                 count = albums.size,
@@ -282,23 +235,31 @@ fun SortableGrid(
                 }
             ) { index ->
                 val album = albums[index]
+                val itemSelected by remember {
+                    derivedStateOf {
+                        sortableGridState.selectedItem?.id == album.id
+                    }
+                }
 
                 if (album is AlbumGridState.Album.Group) {
                     AlbumFolder(
                         name = album.name,
                         info = album.info,
-                        isSelected = { selectedItem == album },
+                        isSelected = { itemSelected },
                         immichInfo = immichInfo,
                         modifier = Modifier
                             .testTag("album_grid_group_item")
                             .zIndex(
-                                if (selectedItem == album) 1f
+                                if (itemSelected) 1f
                                 else 0f
                             )
                             .graphicsLayer {
-                                if (selectedItem == album) {
-                                    translationX = itemOffset.x
-                                    translationY = itemOffset.y
+                                if (itemSelected) {
+                                    translationX = sortableGridState.itemOffset.x
+                                    translationY = sortableGridState.itemOffset.y
+
+                                    scaleX = itemScale
+                                    scaleY = itemScale
                                 }
                             }
                             .wrapContentSize()
@@ -310,7 +271,7 @@ fun SortableGrid(
                                     durationMillis = 250
                                 ),
                                 placementSpec =
-                                    if (selectedItem == album) null // if is selected don't animate so no weird snapping back and forth happens
+                                    if (itemSelected) null // if is selected don't animate so no weird snapping back and forth happens
                                     else tween(durationMillis = 250)
                             )
                     ) {
@@ -324,21 +285,21 @@ fun SortableGrid(
                 } else {
                     AlbumGridItem(
                         album = album as AlbumGridState.Album.Single,
-                        isSelected = { selectedItem == album },
+                        isSelected = { itemSelected },
                         info = immichInfo,
                         modifier = Modifier
                             .testTag("album_grid_item")
                             .zIndex(
-                                if (selectedItem == album) 1f
+                                if (itemSelected) 1f
                                 else 0f
                             )
                             .graphicsLayer {
-                                if (selectedItem == album) {
-                                    translationX = itemOffset.x
-                                    translationY = itemOffset.y
+                                if (itemSelected) {
+                                    translationX = sortableGridState.itemOffset.x
+                                    translationY = sortableGridState.itemOffset.y
 
-                                    scaleX = addingToGroupScale
-                                    scaleY = addingToGroupScale
+                                    scaleX = itemScale
+                                    scaleY = itemScale
                                 }
                             }
                             .wrapContentSize()
@@ -350,7 +311,7 @@ fun SortableGrid(
                                     durationMillis = 250
                                 ),
                                 placementSpec =
-                                    if (selectedItem == album) null // if is selected don't animate so no weird snapping back and forth happens
+                                    if (itemSelected) null // if is selected don't animate so no weird snapping back and forth happens
                                     else tween(durationMillis = 250)
                             )
                     ) {

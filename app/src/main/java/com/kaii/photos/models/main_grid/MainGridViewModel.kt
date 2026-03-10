@@ -8,6 +8,7 @@ import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -113,6 +114,12 @@ class MainGridViewModel(
         initialValue = emptyList()
     )
 
+    val autoDetect = settings.albums.getAutoDetect().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
     fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
 
@@ -138,6 +145,41 @@ class MainGridViewModel(
                 add(albumId)
             }
         )
+    }
+
+    fun toggleAlbumPin(
+        album: AlbumGridState.Album
+    ) {
+        viewModelScope.launch {
+            if (album is AlbumGridState.Album.Group) {
+                settings.albums.editGroup(
+                    id = album.id,
+                    pinned = !album.pinned
+                )
+            } else {
+                album as AlbumGridState.Album.Single
+
+                settings.albums.edit(
+                    id = album.id,
+                    newInfo = when (album.info.album) {
+                        is AlbumType.Folder -> album.info.album.copy(pinned = !album.pinned)
+                        is AlbumType.Custom -> album.info.album.copy(pinned = !album.pinned)
+                        is AlbumType.Cloud -> album.info.album.copy(pinned = !album.pinned)
+                        else -> AlbumType.PlaceHolder
+                    }
+                )
+            }
+        }
+    }
+
+    fun deleteAlbum(album: AlbumGridState.Album) {
+        viewModelScope.launch {
+            if (album is AlbumGridState.Album.Group) {
+                settings.albums.removeGroup(id = album.id)
+            } else {
+                settings.albums.remove(albumId = album.id)
+            }
+        }
     }
 
     private fun getMainPhotosAlbums() =
