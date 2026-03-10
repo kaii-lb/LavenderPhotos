@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.datastore.SettingsAlbumsListImpl
+import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.permissions.secure_folder.SecureFolderMigrationManager
 import kotlinx.coroutines.CoroutineScope

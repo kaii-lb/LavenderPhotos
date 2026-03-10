@@ -13,7 +13,7 @@ import androidx.compose.ui.util.fastMap
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.SettingsAlbumsListImpl
+import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
