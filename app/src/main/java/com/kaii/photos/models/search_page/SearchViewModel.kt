@@ -74,7 +74,7 @@ class SearchViewModel(
     val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
+        initialValue = true
     )
 
     val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
