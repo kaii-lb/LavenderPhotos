@@ -50,8 +50,8 @@ class SettingsAlbumsListImpl(
                 addAll(
                     list.filter {
                         when (it) {
-                            is AlbumType.Folder -> it.paths !in presentPaths
-                            else -> it.id !in presentIds
+                            is AlbumType.Folder -> it.paths !in presentPaths && it.name.isNotBlank()
+                            else -> it.id !in presentIds && it.name.isNotBlank()
                         }
                     }
                 )

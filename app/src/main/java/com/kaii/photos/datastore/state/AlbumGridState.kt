@@ -145,7 +145,7 @@ class AlbumGridState(
                         .distinctUntilChanged()
                         .collectLatest { list ->
                             updateAlbums(
-                                list.fastMap { album ->
+                                list.fastMapNotNull { album ->
                                     AlbumType.Folder(
                                         id = Uuid.random().toString(),
                                         name = album.filename(),
@@ -156,8 +156,9 @@ class AlbumGridState(
                                 },
                                 albumsFlow.first().fastMapNotNull { album ->
                                     album.id.takeIf {
-                                        album is AlbumType.Folder
-                                                && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+                                        val empty = album is AlbumType.Folder && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+
+                                        empty || album.name.isBlank()
                                     }
                                 }
                             )
@@ -182,6 +183,7 @@ class AlbumGridState(
             coroutineScope = scope,
             apiClient = apiClient
         )
+
         loginManager.refresh(
             accessToken = immichInfo.accessToken,
             pfpSavePath = context.profilePicture,
@@ -207,10 +209,8 @@ class AlbumGridState(
                         else (album as Album.Group).info
                     }
                     .fastMapNotNull { album ->
-                        (album.album as? AlbumType.Cloud)?.id.takeIf {
-                            album.album as AlbumType.Cloud
-
-                            album.album.immichId !in albumIds
+                        album.album.id.takeIf {
+                            album.album is AlbumType.Cloud && album.album.immichId !in albumIds
                         }
                     }
 

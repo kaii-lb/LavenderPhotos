@@ -4,7 +4,9 @@ import androidx.paging.PagingData
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.entities.MediaStoreDataWithExifData
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.exif.exifDataToMediaData
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import kotlinx.coroutines.flow.Flow
@@ -86,6 +88,25 @@ fun Flow<PagingData<PhotoLibraryUIModel.SecuredMedia>>.mapToSecuredMedia(
             item = it.item,
             bytes = it.bytes,
             accessToken = accessToken
+        ) as PhotoLibraryUIModel
+    }
+}
+
+fun Flow<PagingData<MediaStoreDataWithExifData>>.mapToMedia(
+    accessToken: String,
+    is24Hr: Boolean
+) = this.map { pagingData ->
+    pagingData.map {
+        PhotoLibraryUIModel.MediaWithExifData(
+            item = it.media,
+            accessToken = accessToken,
+            mediaData = exifDataToMediaData(
+                name = it.media.displayName,
+                path = it.media.uri,
+                info = it.exifData,
+                is24Hr = is24Hr,
+                fallback = it.media.dateTaken
+            )
         ) as PhotoLibraryUIModel
     }
 }

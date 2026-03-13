@@ -2,8 +2,10 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import android.os.Build
+import android.text.format.DateFormat
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -14,6 +16,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -31,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -71,7 +75,7 @@ class ImmichRepository(
 
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         Params(
-            endpoint = "",
+            endpoint = info.endpoint,
             accessToken = info.accessToken,
             sortMode = sortMode,
             format = format
@@ -97,11 +101,11 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = album.id)
-                else db.customDao().getPagedMediaDateTaken(album = album.id)
+                if (params.sortMode.isDateModified) db.customDao().getPagedMediaWithExifDateModified(album = album.id)
+                else db.customDao().getPagedMediaWithExifDateTaken(album = album.id)
             }
-        ).flow.mapToMedia(accessToken = params.accessToken).cachedIn(scope)
-    }
+        ).flow.mapToMedia(accessToken = params.accessToken, is24Hr = DateFormat.is24HourFormat(appContext))
+    }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = params.flatMapLatest { params ->
@@ -112,7 +116,18 @@ class ImmichRepository(
     }.cachedIn(scope)
 
     init {
-        refresh()
+        scope.launch {
+            params.collectLatest {
+                albumState.value =
+                    AlbumsStateManager(
+                        baseUrl = it.endpoint,
+                        coroutineScope = scope,
+                        apiClient = apiClient
+                    )
+
+                refresh()
+            }
+        }
     }
 
     fun refresh() = scope.launch(Dispatchers.IO) { refetch() }
@@ -140,7 +155,6 @@ class ImmichRepository(
                         displayName = asset.originalFileName,
                         mimeType = asset.originalMimeType,
                         immichUrl = "${snapshot.endpoint}/api/assets/${asset.id}/original",
-                        immichThumbnail = "${snapshot.endpoint}/api/assets/${asset.id}/thumbnail",
                         hash = asset.checksum,
                         size = asset.exifInfo?.fileSizeInByte ?: 0L,
                         favourited = asset.isFavorite
@@ -157,6 +171,14 @@ class ImmichRepository(
 
                 db.customDao().deleteAll(ids = deleted, album = album.id)
                 db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
+
+                db.exifDataDao().upsertAll(
+                    items = state.album.assets.fastMapNotNull {
+                        it.exifInfo?.toExifData(
+                            mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
+                        )
+                    }
+                )
 
                 db.mediaDao().deleteAll(orphans.map { it.id }.toSet())
             }

@@ -12,5 +12,16 @@ enum class MediaData(val icon: Int, val description: Int) {
     ShutterSpeed(icon = R.drawable.shutter_speed, description = R.string.exif_shutter_speed),
     MegaPixels(icon = R.drawable.maybe_megapixel, description = R.string.exif_mp),
     Resolution(icon = R.drawable.resolution, description = R.string.exif_res),
-    Size(icon = R.drawable.storage, description = R.string.exif_size)
+    Size(icon = R.drawable.storage, description = R.string.exif_size);
+
+    companion object {
+        val Empty = mapOf(
+            Name to "",
+            Path to "",
+            Date to "",
+            Size to "",
+            Resolution to "",
+            MegaPixels to ""
+        )
+    }
 }

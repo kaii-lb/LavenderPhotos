@@ -80,12 +80,8 @@ interface MediaDao {
     )
     fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
-    @Query(value = "UPDATE media SET immichUrl = :immichUrl, immichThumbnail = :immichThumbnail WHERE hash = :hash")
-    suspend fun linkToImmich(
-        hash: String,
-        immichUrl: String,
-        immichThumbnail: String
-    )
+    @Query(value = "UPDATE media SET immichUrl = :immichUrl WHERE hash = :hash")
+    suspend fun linkToImmich(hash: String, immichUrl: String)
 
     @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
     fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)
@@ -98,7 +94,7 @@ interface MediaDao {
             @MapColumn(columnName = "id") Long,
             @MapColumn(columnName = "parentPath") String>
 
-    @Query(value = "SELECT DISTINCT parentPath FROM media")
+    @Query(value = "SELECT DISTINCT parentPath FROM media WHERE parentPath != ''")
     fun getAllAlbums(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

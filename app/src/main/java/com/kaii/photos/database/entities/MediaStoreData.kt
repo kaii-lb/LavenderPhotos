@@ -2,6 +2,7 @@ package com.kaii.photos.database.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kaii.photos.mediastore.MediaType
@@ -27,7 +28,6 @@ data class MediaStoreData(
     val mimeType: String,
     val type: MediaType,
     val immichUrl: String?,
-    val immichThumbnail: String?,
     val hash: String?,
     val size: Long,
     val favourited: Boolean
@@ -44,19 +44,25 @@ data class MediaStoreData(
             mimeType = "",
             type = MediaType.Section,
             immichUrl = null,
-            immichThumbnail = null,
             hash = null,
             size = 0L,
             favourited = false
         )
     }
 
+    @Ignore
+    val immichThumbnail = immichUrl?.replace("/original", "/thumbnail")
+
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch seconds*/
+    /** it is returned in unix epoch seconds*/
     fun getDateTakenDay() = epochToDayStart(timestamp = dateTaken)
 
+    /** gets the date modified in days (no hours/minutes/seconds/milliseconds) */
+    /** it is returned in unix epoch seconds*/
+    fun getDateModifiedDay() = epochToDayStart(timestamp = dateModified)
+
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
-    /** its returned in unix epoch seconds*/
+    /** it is returned in unix epoch seconds*/
     fun getMonthTaken(): Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
@@ -69,8 +75,6 @@ data class MediaStoreData(
 
         return calendar.timeInMillis / 1000
     }
-
-    fun getDateModifiedDay() = epochToDayStart(timestamp = dateModified)
 }
 
 /** @param timestamp should be in seconds */

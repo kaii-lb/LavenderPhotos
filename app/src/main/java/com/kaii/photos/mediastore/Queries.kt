@@ -128,7 +128,6 @@ suspend fun getMediaStoreDataForIds(
                         parentPath = absolutePath.parent(),
                         size = size,
                         immichUrl = null,
-                        immichThumbnail = null,
                         hash = null,
                         favourited = favourited
                     )
@@ -245,7 +244,6 @@ suspend fun chunkLoadMediaData(
                                 parentPath = absolutePath.parent(),
                                 size = size,
                                 immichUrl = null,
-                                immichThumbnail = null,
                                 hash = null,
                                 favourited = favourited
                             )
@@ -359,7 +357,6 @@ suspend fun loadMediaDataDelta(
                     parentPath = absolutePath.parent(),
                     size = size,
                     immichUrl = null,
-                    immichThumbnail = null,
                     hash = null,
                     favourited = favourited
                 )

@@ -3,6 +3,7 @@ package com.kaii.photos.helpers.paging
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.mediastore.signature
 
 @Stable
@@ -20,6 +21,14 @@ sealed interface PhotoLibraryUIModel {
     data class Media(
         override val item: MediaStoreData,
         override val accessToken: String? = null
+    ) : MediaImpl
+
+    @Stable
+    @Immutable
+    data class MediaWithExifData(
+        override val item: MediaStoreData,
+        override val accessToken: String? = null,
+        val mediaData: Map<MediaData, String>
     ) : MediaImpl
 
     @Stable

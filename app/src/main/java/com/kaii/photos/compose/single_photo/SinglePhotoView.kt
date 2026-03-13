@@ -2,6 +2,7 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.text.format.DateFormat
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -76,7 +77,9 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveMediaToSecureFolder
@@ -108,6 +111,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun SinglePhotoView(
@@ -467,8 +471,8 @@ private fun SinglePhotoViewCommon(
                     coroutineScope.launch {
                         showTagDialog = false
                         showInfoDialog = true
-                        delay(50)
-                        sheetState.partialExpand()
+                        delay(100)
+                        sheetState.show()
                     }
                 },
                 expandTagDialog = {
@@ -525,13 +529,43 @@ private fun SinglePhotoViewCommon(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
+        var mediaData by remember { mutableStateOf(MediaData.Empty) }
+
         if (showInfoDialog) {
+            // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
+            LaunchedEffect(mediaItem) {
+                val item = items[currentIndex]
+
+                mediaData =
+                    if (item is PhotoLibraryUIModel.MediaWithExifData) {
+                        item.mediaData
+                    } else {
+                        item as PhotoLibraryUIModel.MediaImpl
+
+                        getExifDataForMedia(
+                            inputStream =
+                                context.contentResolver.openInputStream(item.item.uri.toUri())
+                                    ?: File(item.item.absolutePath).inputStream(),
+                            absolutePath = item.item.absolutePath,
+                            is24Hr = DateFormat.is24HourFormat(context),
+                            fallback = item.item.dateTaken
+                        )
+                    }
+            }
+
             SinglePhotoInfoDialog(
-                currentMediaItem = mediaItem,
+                mediaItem = { mediaItem },
+                mediaData = { mediaData },
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
-                privacyMode = scrollState.privacyMode,
-                isCustomAlbum = album !is AlbumType.Folder,
+                privacyMode = { scrollState.privacyMode },
+                albumType =
+                    when (album) {
+                        is AlbumType.Folder -> AlbumType.Folder::class
+                        is AlbumType.Custom -> AlbumType.Custom::class
+                        is AlbumType.Cloud -> AlbumType.Cloud::class
+                        is AlbumType.PlaceHolder -> AlbumType.PlaceHolder::class
+                    },
                 preserveDate = { preserveDate },
                 dismiss = {
                     coroutineScope.launch {

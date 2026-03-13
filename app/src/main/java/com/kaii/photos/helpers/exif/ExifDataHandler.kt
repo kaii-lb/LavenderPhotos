@@ -1,11 +1,11 @@
 package com.kaii.photos.helpers.exif
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -20,24 +20,22 @@ private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
 
 /** @param fallback in seconds */
 @OptIn(ExperimentalTime::class)
-fun getExifDataForMedia(
-    context: Context,
+suspend fun getExifDataForMedia(
     inputStream: InputStream,
     absolutePath: String,
+    is24Hr: Boolean,
     fallback: Long
-): Map<MediaData, Any> {
-    val list = emptyMap<MediaData, Any?>().toMutableMap()
-    val file = File(absolutePath)
+): Map<MediaData, String> = withContext(Dispatchers.IO) {
+    val list = emptyMap<MediaData, String?>().toMutableMap()
 
+    val file = File(absolutePath)
     list[MediaData.Name] = file.name
     list[MediaData.Path] = file.absolutePath
-    list[MediaData.Resolution] = "Loading..."
 
     try {
         val exifInterface = ExifInterface(inputStream)
 
         val datetime = getDateTakenForMedia(inputStream = inputStream, dateModified = fallback)
-        val is24Hr = DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(datetime)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -51,7 +49,9 @@ fun getExifDataForMedia(
 
         list[MediaData.Date] = formattedDateTime
 
-        list[MediaData.LatLong] = exifInterface.latLong
+        list[MediaData.LatLong] = exifInterface.latLong?.let {
+            "${it[0]} ${it[1]}"
+        }
 
         list[MediaData.Device] = exifInterface.getAttribute(ExifInterface.TAG_MODEL)
 
@@ -99,11 +99,11 @@ fun getExifDataForMedia(
             val y = split[1].toInt()
 
             round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
-        }
+        }.toString()
 
         inputStream.close()
 
-        return list
+        return@withContext list
             .mapNotNull { (key, value) ->
                 if (value != null) key to value else null
             }
@@ -114,11 +114,11 @@ fun getExifDataForMedia(
         Log.e(TAG, e.toString())
         e.printStackTrace()
 
-        return emptyMap()
+        return@withContext emptyMap()
     }
 }
 
-fun eraseExifMedia(absolutePath: String) {
+suspend fun eraseExifMedia(absolutePath: String) = withContext(Dispatchers.IO) {
     try {
         val exifInterface = ExifInterface(absolutePath)
 

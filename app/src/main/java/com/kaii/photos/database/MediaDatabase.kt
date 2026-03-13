@@ -20,6 +20,8 @@ import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.daos.TrashedItemEntityDao
 import com.kaii.photos.database.entities.ColorTypeConverter
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.ExifData
+import com.kaii.photos.database.entities.ExifDataDao
 import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
@@ -38,9 +40,10 @@ import com.kaii.photos.database.entities.TrashedItemEntity
             CustomItem::class,
             SyncTask::class,
             Tag::class,
-            TaggedItem::class
+            TaggedItem::class,
+            ExifData::class
         ],
-    version = 13,
+    version = 14,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -49,7 +52,8 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         AutoMigration(from = 8, to = 9, spec = DropCustomIdColumnSpec::class),
         AutoMigration(from = 10, to = 11, spec = DropOldCustomTable::class),
         AutoMigration(from = 11, to = 12),
-        AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class)
+        AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class),
+        AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class)
     ]
 )
 @TypeConverters(ColorTypeConverter::class)
@@ -63,6 +67,7 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun searchDao(): SearchDao
     abstract fun tagDao(): TagDao
     abstract fun taggedItemsDao(): TaggedItemsDao
+    abstract fun exifDataDao(): ExifDataDao
 
     companion object {
         @Volatile
@@ -106,3 +111,6 @@ class DropOldCustomTable : AutoMigrationSpec
 
 @DeleteColumn(tableName = "custom_items", columnName = "album")
 class DropIntAlbumCustomTable : AutoMigrationSpec
+
+@DeleteColumn(tableName = "media", columnName = "immichThumbnail")
+class DropImmichThumbnailColumn : AutoMigrationSpec

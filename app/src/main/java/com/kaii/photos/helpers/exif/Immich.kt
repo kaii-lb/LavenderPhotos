@@ -1,9 +1,7 @@
 package com.kaii.photos.helpers.exif
 
-import android.content.Context
-import android.text.format.DateFormat
 import android.util.Log
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.ExifInfo
+import com.kaii.photos.database.entities.ExifData
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -16,14 +14,14 @@ import kotlin.time.Instant
 private const val TAG = "com.kaii.photos.helpers.exif.Immich"
 
 /** @param fallback in seconds */
-fun getExifDataForMedia(
+fun exifDataToMediaData(
     name: String,
     path: String,
-    info: ExifInfo,
-    context: Context,
+    info: ExifData,
+    is24Hr: Boolean,
     fallback: Long
-): Map<MediaData, Any> {
-    val list = emptyMap<MediaData, Any?>().toMutableMap()
+): Map<MediaData, String> {
+    val list = emptyMap<MediaData, String?>().toMutableMap()
 
     list[MediaData.Name] = name
     list[MediaData.Path] = path
@@ -35,14 +33,14 @@ fun getExifDataForMedia(
                     "T" + it.substringAfter(" ").substringBefore("+")
         }
 
-        val seconds = parsedDateTime?.let {
-            LocalDateTime
-                .parse(it, LocalDateTime.Formats.ISO)
-                .toInstant(TimeZone.currentSystemDefault())
-                .epochSeconds
-        } ?: fallback
+        val seconds =
+            parsedDateTime?.let {
+                LocalDateTime
+                    .parse(it, LocalDateTime.Formats.ISO)
+                    .toInstant(TimeZone.currentSystemDefault())
+                    .epochSeconds
+            } ?: fallback
 
-        val is24Hr = DateFormat.is24HourFormat(context)
         val formattedDateTime =
             Instant.fromEpochSeconds(seconds)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -56,7 +54,7 @@ fun getExifDataForMedia(
 
         list[MediaData.Date] = formattedDateTime
 
-        list[MediaData.LatLong] = listOf(info.latitude, info.longitude)
+        list[MediaData.LatLong] = info.latitude?.let { "${info.latitude} ${info.longitude}" }
 
         list[MediaData.Device] = info.model
 
@@ -74,13 +72,13 @@ fun getExifDataForMedia(
             }
         }
 
-        list[MediaData.MegaPixels] = (list[MediaData.Resolution] as? String)?.let{
+        list[MediaData.MegaPixels] = list[MediaData.Resolution]?.let {
             val split = it.split("x")
             val x = split[0].toInt()
             val y = split[1].toInt()
 
             round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
-        }
+        }?.toString()
 
         return list
             .mapNotNull { (key, value) ->

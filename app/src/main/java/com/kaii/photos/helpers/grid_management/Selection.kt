@@ -65,7 +65,6 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
             parentPath = originalPath,
             size = 0L,
             immichUrl = null, // TODO
-            immichThumbnail = null,
             hash = null,
             favourited = false
         )

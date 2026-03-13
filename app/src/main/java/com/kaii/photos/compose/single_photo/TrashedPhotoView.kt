@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.text.format.DateFormat
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -75,10 +76,13 @@ import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.MediaData
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
@@ -91,6 +95,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun SingleTrashedPhotoView(
@@ -238,13 +243,30 @@ private fun SingleTrashedPhotoViewImpl(
                 }
             }
 
+            var mediaData by remember { mutableStateOf<Map<MediaData, String>>(emptyMap()) }
             if (showInfoDialog) {
+                // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
+                LaunchedEffect(mediaItem) {
+                    val item = items[currentIndex] as PhotoLibraryUIModel.MediaImpl
+
+                    mediaData =
+                        getExifDataForMedia(
+                            inputStream =
+                                context.contentResolver.openInputStream(item.item.uri.toUri())
+                                    ?: File(item.item.absolutePath).inputStream(),
+                            absolutePath = item.item.absolutePath,
+                            is24Hr = DateFormat.is24HourFormat(context),
+                            fallback = item.item.dateTaken
+                        )
+                }
+
                 SinglePhotoInfoDialog(
-                    currentMediaItem = mediaItem,
+                    mediaItem = { mediaItem },
+                    mediaData = { mediaData },
                     sheetState = sheetState,
                     showMoveCopyOptions = false,
-                    privacyMode = scrollState.privacyMode,
-                    isCustomAlbum = false,
+                    privacyMode = { scrollState.privacyMode },
+                    albumType = AlbumType.PlaceHolder::class,
                     preserveDate = { preserveDate },
                     dismiss = {
                         coroutineScope.launch {
@@ -255,18 +277,18 @@ private fun SingleTrashedPhotoViewImpl(
                     togglePrivacyMode = scrollState::togglePrivacyMode
                 )
             }
-
-            HorizontalImageList(
-                items = items,
-                state = state,
-                window = window,
-                appBarsVisible = appBarsVisible,
-                scrollState = scrollState,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground,
-                useCache = useCache
-            )
         }
+
+        HorizontalImageList(
+            items = items,
+            state = state,
+            window = window,
+            appBarsVisible = appBarsVisible,
+            scrollState = scrollState,
+            blurViews = blurViews,
+            useBlackBackground = useBlackBackground,
+            useCache = useCache
+        )
     }
 }
 

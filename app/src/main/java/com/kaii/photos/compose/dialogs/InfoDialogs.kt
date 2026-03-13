@@ -3,6 +3,7 @@ package com.kaii.photos.compose.dialogs
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.text.format.DateFormat
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -202,9 +203,9 @@ fun SingleSecurePhotoInfoDialog(
 
                     showLoadingDialog = false
                     mediaData = getExifDataForMedia(
-                        context = context,
                         inputStream = file.inputStream(),
                         absolutePath = file.absolutePath,
+                        is24Hr = DateFormat.is24HourFormat(context),
                         fallback = currentMediaItem.item.dateModified
                     ).toMutableMap().apply {
                         set(MediaData.Path, currentMediaItem.item.parentPath)

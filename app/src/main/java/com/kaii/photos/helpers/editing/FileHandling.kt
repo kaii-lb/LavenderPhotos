@@ -285,7 +285,6 @@ suspend fun saveVideo(
         uri = uri.toString(),
         size = 0L,
         immichUrl = null,
-        immichThumbnail = null,
         hash = null,
         parentPath = file.absolutePath.parent(),
         favourited = false
@@ -476,7 +475,6 @@ suspend fun saveVideo(
             mimeType = "video/mp4",
             type = MediaType.Video,
             immichUrl = null,
-            immichThumbnail = null,
             hash = null,
             size = tempFileCrop.length(),
             favourited = false
@@ -729,7 +727,6 @@ suspend fun saveImage(
         uri = uri.toString(),
         size = 0L,
         immichUrl = null,
-        immichThumbnail = null,
         hash = null,
         id = 0L,
         parentPath = file.absolutePath.parent(),

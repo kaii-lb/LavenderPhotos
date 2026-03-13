@@ -49,7 +49,6 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
                     uri = uri,
                     hash = null,
                     immichUrl = null,
-                    immichThumbnail = null,
                     favourited = true,
                     parentPath = "",
                     size = 0L
