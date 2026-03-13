@@ -972,6 +972,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_navigation_exit_immediately">Exit Immediately</string>
     <string name="settings_navigation_exit_immediately_desc">Skips going back to the default tab when pressing the back button</string>
     <string name="settings_about_unknown_version">Couldn\'t get version number</string>
+    <string name="settings_storage_export_quality">Editor export quality: %d%%</string>
+    <string name="settings_storage_export_quality_warn">High values lead to large image sizes.</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>

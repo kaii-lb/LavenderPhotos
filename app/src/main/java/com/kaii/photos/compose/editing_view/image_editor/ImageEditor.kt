@@ -114,6 +114,7 @@ fun ImageEditor(
     absolutePath: String,
     isFromOpenWithView: Boolean,
     album: AlbumType?,
+    exportQuality: () -> Int,
     exitOnSave: () -> Boolean,
     overwriteByDefault: () -> Boolean
 ) {
@@ -251,6 +252,7 @@ fun ImageEditor(
                                 .get()
                                 .asImageBitmap(),
                         containerDimens = containerDimens,
+                        exportQuality = exportQuality(),
                         absolutePath = absolutePath,
                         drawingPaintState = drawingPaintState,
                         imageEditingState = imageEditingState,

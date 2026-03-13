@@ -41,4 +41,11 @@ class EditorViewModel(
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
+
+    /** 2 to 8 (20% to 80%) */
+    val exportQuality = settings.storage.getExportQuality().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = 8
+    )
 }

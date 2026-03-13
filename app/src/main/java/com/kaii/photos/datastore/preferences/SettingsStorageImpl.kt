@@ -19,6 +19,7 @@ class SettingsStorageImpl(
 ) {
     private val thumbnailSizeKey = intPreferencesKey("thumbnail_size_key")
     private val cacheThumbnailsKey = booleanPreferencesKey("cache_thumbnails_key")
+    private val exportQualityKey = intPreferencesKey("storage_export_quality")
 
     fun getThumbnailSize(): Flow<Int> =
         context.datastore.data.map {
@@ -45,6 +46,19 @@ class SettingsStorageImpl(
     fun clearThumbnailCache() = scope.launch {
         withContext(Dispatchers.IO) {
             Glide.get(context.applicationContext).clearDiskCache()
+        }
+    }
+
+    /** 2 to 8 (20% to 80%) */
+    fun getExportQuality(): Flow<Int> =
+        context.datastore.data.map {
+            it[exportQualityKey] ?: 8
+        }
+
+    /** @param value should be from 2 to 8 (20% to 80%) */
+    fun setExportQuality(value: Int) = scope.launch {
+        context.datastore.edit {
+            it[exportQualityKey] = value
         }
     }
 }

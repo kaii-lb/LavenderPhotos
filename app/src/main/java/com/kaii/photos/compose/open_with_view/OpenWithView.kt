@@ -202,6 +202,7 @@ class OpenWithView : ComponentActivity() {
                                     absolutePath = screen.absolutePath,
                                     isFromOpenWithView = true,
                                     album = null,
+                                    exportQuality = { 8 },
                                     exitOnSave = { false },
                                     overwriteByDefault = { false }
                                 )

@@ -677,12 +677,14 @@ class MainActivity : ComponentActivity() {
 
                     val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
+                    val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
 
                     ImageEditor(
                         uri = screen.uri.toUri(),
                         absolutePath = screen.absolutePath,
                         isFromOpenWithView = false,
                         album = screen.album,
+                        exportQuality = { exportQuality },
                         exitOnSave = { exitOnSave },
                         overwriteByDefault = { overwriteByDefault }
                     )

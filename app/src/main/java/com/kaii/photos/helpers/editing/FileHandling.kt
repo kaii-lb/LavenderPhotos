@@ -519,6 +519,7 @@ suspend fun saveImage(
     image: ImageBitmap,
     absolutePath: String,
     containerDimens: Size,
+    exportQuality: Int,
     drawingPaintState: DrawingPaintState,
     imageEditingState: ImageEditingState,
     modifications: List<ImageModification>,
@@ -723,7 +724,7 @@ suspend fun saveImage(
         dateTaken = getDateTakenForMedia(absolutePath = absolutePath, dateModified = System.currentTimeMillis() / 1000),
         dateModified = System.currentTimeMillis() / 1000,
         type = MediaType.Image,
-        mimeType = "image/png",
+        mimeType = "image/webp",
         uri = uri.toString(),
         size = 0L,
         immichUrl = null,
@@ -741,7 +742,7 @@ suspend fun saveImage(
                 destination = absolutePath.parent(),
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
-                overrideDisplayName = file.name.removeSuffix(file.extension) + "png",
+                overrideDisplayName = file.name.removeSuffix(file.extension) + "webp",
                 onInsert = { _, _ -> }
             )
         } else {
@@ -764,8 +765,8 @@ suspend fun saveImage(
 
     val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
         cropped.compress(
-            Bitmap.CompressFormat.PNG,
-            100,
+            Bitmap.CompressFormat.WEBP_LOSSY,
+            exportQuality * 10, // exportQuality is from 2 to 8
             outputStream
         )
     } != null

@@ -1,6 +1,8 @@
 package com.kaii.photos.compose.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +55,8 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toLocalDateTime
@@ -313,6 +317,16 @@ private fun LookAndFeelSettingsPageImpl(
 
             item {
                 var currentState by remember { mutableIntStateOf(columnSize()) }
+                val interactionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(interactionSource) {
+                    delay(100)
+                    currentState = columnSize()
+                    interactionSource.interactions.collectLatest {
+                        if (it is PressInteraction.Release) {
+                            currentState = columnSize()
+                        }
+                    }
+                }
 
                 PreferenceRowWithCustomBody(
                     icon = R.drawable.grid_view,
@@ -335,6 +349,7 @@ private fun LookAndFeelSettingsPageImpl(
                                     .background(MaterialTheme.colorScheme.primary)
                             )
                         },
+                        interactionSource = interactionSource,
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
                     )
@@ -343,6 +358,16 @@ private fun LookAndFeelSettingsPageImpl(
 
             item {
                 var currentState by remember { mutableIntStateOf(albumColumnSize()) }
+                val interactionSource = remember { MutableInteractionSource() }
+                LaunchedEffect(interactionSource) {
+                    delay(100)
+                    currentState = albumColumnSize()
+                    interactionSource.interactions.collectLatest {
+                        if (it is PressInteraction.Release) {
+                            currentState = albumColumnSize()
+                        }
+                    }
+                }
 
                 PreferenceRowWithCustomBody(
                     icon = R.drawable.gallery_thumbnail,
@@ -365,6 +390,7 @@ private fun LookAndFeelSettingsPageImpl(
                                     .background(MaterialTheme.colorScheme.primary)
                             )
                         },
+                        interactionSource = interactionSource,
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
                     )
