@@ -71,8 +71,8 @@ import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
-import com.kaii.photos.compose.single_photo.rememberExoPlayerWithLifeCycle
-import com.kaii.photos.compose.single_photo.rememberPlayerView
+import com.kaii.photos.compose.videoplayer.rememberExoPlayerWithLifeCycle
+import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants

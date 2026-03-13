@@ -10,6 +10,9 @@ import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -114,4 +117,29 @@ fun String.toPascalCase(): String {
                 it.uppercase()
             }
         }
+}
+
+fun Duration.formatLikeANormalPerson(): Pair<String, Boolean> {
+    val longboi = this > 60.minutes
+    val formatted = if (longboi) {
+        this.toComponents { hours, minutes, seconds, _ ->
+            String.format(
+                Locale.ENGLISH,
+                "%02d:%02d:%02d",
+                hours,
+                minutes,
+                seconds
+            )
+        }
+    } else {
+        this.toComponents { minutes, seconds, _ ->
+            String.format(
+                Locale.ENGLISH,
+                "%02d:%02d",
+                minutes,
+                seconds
+            )
+        }
+    }
+    return Pair(formatted, longboi)
 }

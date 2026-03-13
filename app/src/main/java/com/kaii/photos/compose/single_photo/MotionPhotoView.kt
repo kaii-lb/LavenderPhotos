@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.motion_photo.MotionPhotoState
 import kotlinx.coroutines.delay

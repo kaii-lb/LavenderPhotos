@@ -17,8 +17,8 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import com.kaii.photos.compose.single_photo.createExoPlayer
-import com.kaii.photos.compose.single_photo.getExoPlayerLifecycleObserver
+import com.kaii.photos.compose.videoplayer.createExoPlayer
+import com.kaii.photos.compose.videoplayer.getExoPlayerLifecycleObserver
 
 @OptIn(UnstableApi::class)
 class MotionPhotoState(

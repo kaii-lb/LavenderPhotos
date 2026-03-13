@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
-import com.kaii.photos.compose.single_photo.VideoPlayerSeekbar
+import com.kaii.photos.compose.videoplayer.VideoPlayerSeekbar
 import com.kaii.photos.compose.widgets.ColorRangeSlider
 import com.kaii.photos.compose.widgets.PopupPillSlider
 import com.kaii.photos.helpers.AnimationConstants
