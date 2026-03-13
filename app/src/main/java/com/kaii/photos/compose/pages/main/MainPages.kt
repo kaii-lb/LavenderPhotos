@@ -25,6 +25,7 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberFloatingToolbarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -111,8 +112,10 @@ fun MainPages(
         }
     }
 
+    val floatingBarState = rememberFloatingToolbarState()
     val scrollBehaviour = FloatingToolbarDefaults.exitAlwaysScrollBehavior(
-        exitDirection = FloatingToolbarExitDirection.Bottom
+        exitDirection = FloatingToolbarExitDirection.Bottom,
+        state = floatingBarState
     )
 
     var paths by remember { mutableStateOf(mainPhotosPaths) }
@@ -137,8 +140,16 @@ fun MainPages(
         }
     }
 
+    var delayOver by remember { mutableStateOf(false) }
     LaunchedEffect(isSelecting) {
-        if (!isSelecting) showTagDialog = false
+        if (!isSelecting) {
+            showTagDialog = false
+        } else if (floatingBarState.offset != 0f) {
+            delayOver = false
+            delay(AnimationConstants.DURATION.toLong())
+            floatingBarState.offset = 0f
+            delayOver = true
+        }
     }
 
     Scaffold(
@@ -167,8 +178,8 @@ fun MainPages(
             )
         },
         bottomBar = {
-            var delayOver by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
+                floatingBarState.offset = 0f
                 delay(AnimationConstants.DURATION.toLong())
                 delayOver = true
             }
@@ -196,26 +207,30 @@ fun MainPages(
             .nestedScroll(
                 object : NestedScrollConnection {
                     override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
-                        scrollBehaviour.onPostScroll(
+                        if (isSelecting) Offset.Zero
+                        else scrollBehaviour.onPostScroll(
                             consumed,
                             available,
                             source
                         )
 
                     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
-                        scrollBehaviour.onPreScroll(
+                        if (isSelecting) Offset.Zero
+                        else scrollBehaviour.onPreScroll(
                             available,
                             source
                         )
 
                     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
-                        scrollBehaviour.onPostFling(
+                        if (isSelecting) Velocity.Zero
+                        else scrollBehaviour.onPostFling(
                             consumed,
                             available
                         )
 
                     override suspend fun onPreFling(available: Velocity): Velocity =
-                        scrollBehaviour.onPreFling(available)
+                        if (isSelecting) Velocity.Zero
+                        else scrollBehaviour.onPreFling(available)
                 }
             )
     ) { padding ->
