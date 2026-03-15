@@ -3,6 +3,7 @@ package com.kaii.photos.compose.grids
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.media.MediaMetadataRetriever
 import android.os.Vibrator
 import android.util.Log
 import android.view.View
@@ -91,6 +92,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
+import com.kaii.photos.compose.single_photo.formatLikeANormalPerson
 import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
@@ -118,6 +120,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
@@ -473,6 +477,8 @@ private fun MediaItem(
         // TODO: possibly move to a less messy and horrible decrypting implementation
         var model by remember { mutableStateOf<Any?>(null) }
         val context = LocalContext.current
+        val metadataRetriever = remember { MediaMetadataRetriever() }
+        val duration = remember { mutableStateOf("") }
 
         LaunchedEffect(isSecureMedia) {
             if (!isSecureMedia || model != null) return@LaunchedEffect
@@ -499,6 +505,23 @@ private fun MediaItem(
                         item.item.uri.toUri().path
                     }
                 }
+        }
+
+        // Handle video duration retrieval and formatting
+        // to show on the thumbnail of video items
+        LaunchedEffect(item.itemKey()) {
+            // if the media is a video, try to retrieve its duration
+            // if the duration is retrieved, format it for display and save in "duration" state variable
+            if (item.item.type == MediaType.Video) {
+                try {
+                    metadataRetriever.setDataSource(context, item.item.uri.toUri())
+                    val durationMillis = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+                    duration.value = durationMillis.toDuration(DurationUnit.MILLISECONDS).formatLikeANormalPerson().first
+                } catch (e: Throwable) {
+                    Log.d(TAG, "Failed to retrieve video metadata for ${item.item.displayName}: ${e.message}")
+                    duration.value = ""
+                }
+            }
         }
 
         GlideImage(
@@ -544,10 +567,11 @@ private fun MediaItem(
         }
 
         if (item.item.type == MediaType.Video) {
-            Box(
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(2.dp)
+                    .padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.movie_filled),
@@ -555,9 +579,19 @@ private fun MediaItem(
                     tint = Color.White,
                     modifier = Modifier
                         .size(20.dp)
-                        .align(Alignment.Center)
                 )
-            }
+                if(duration.value.isNotEmpty()) {
+                    // show video duration text on the thumbnail
+                    Text(
+                        text = duration.value,
+                        color = Color.White,
+                        fontSize = TextUnit(12f, TextUnitType.Sp),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                        )
+                    }
+                }
         }
 
         if (item.item.isRawImage()) {
