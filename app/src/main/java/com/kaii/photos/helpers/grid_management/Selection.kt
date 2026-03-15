@@ -1,6 +1,7 @@
 package com.kaii.photos.helpers.grid_management
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import com.kaii.photos.database.MediaDatabase
@@ -21,6 +22,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
     context: Context
 ): List<PhotoLibraryUIModel.SecuredMedia> = withContext(Dispatchers.IO) {
     val context = context.applicationContext
+    val metadataRetriever = MediaMetadataRetriever()
     val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
     val selectedPaths = fastMap { dao.getSecuredPathFromOriginalPath(originalPath = it.parentPath) }
 
@@ -28,7 +30,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
         file.absolutePath in selectedPaths
     }
 
-    return@withContext secureFolderFiles?.mapNotNull { file ->
+    val list = secureFolderFiles?.mapNotNull { file ->
         val mimeType = Files.probeContentType(Path(file.absolutePath))
 
         val type =
@@ -49,6 +51,13 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
         val originalPath =
             dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
+        val duration = if (type == MediaType.Video) {
+            // thanks to IvanCarapovic
+            // https://github.com/IvanCarapovic/LavenderPhotos/blob/22494d0684ce3dc6f7b6f01ee0a8f41f31787dcd/app/src/main/java/com/kaii/photos/compose/grids/PhotoGridView.kt#L517
+            metadataRetriever.setDataSource(file.absolutePath)
+            metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+        } else null
+
         val item = MediaStoreData(
             type = type,
             id = file.hashCode() * file.length() * file.lastModified(),
@@ -66,7 +75,8 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
             size = 0L,
             immichUrl = null, // TODO
             hash = null,
-            favourited = false
+            favourited = false,
+            duration = duration
         )
 
         PhotoLibraryUIModel.SecuredMedia(
@@ -75,4 +85,8 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
             bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
         )
     } ?: emptyList()
+
+    metadataRetriever.close()
+
+    return@withContext list
 }

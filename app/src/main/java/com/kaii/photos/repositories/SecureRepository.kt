@@ -1,6 +1,7 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.os.FileObserver
 import androidx.core.content.FileProvider
 import androidx.paging.Pager
@@ -34,6 +35,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.math.roundToLong
 
 class SecureRepository(
     scope: CoroutineScope,
@@ -128,6 +130,7 @@ class SecureRepository(
         val snapshot = _fileList.value?.sortedBy { it.lastModified() } ?: return@withContext
 
         val mediaStoreData = items.value.toMutableList()
+        val metadataRetriever = MediaMetadataRetriever()
 
         snapshot.forEach { file ->
             // if file is already processed, skip processing it
@@ -155,6 +158,13 @@ class SecureRepository(
             val originalPath =
                 dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
+            val duration = if (type == MediaType.Video) {
+                // thanks to IvanCarapovic
+                // https://github.com/IvanCarapovic/LavenderPhotos/blob/22494d0684ce3dc6f7b6f01ee0a8f41f31787dcd/app/src/main/java/com/kaii/photos/compose/grids/PhotoGridView.kt#L517
+                metadataRetriever.setDataSource(file.absolutePath)
+                metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+            } else null
+
             val item = MediaStoreData(
                 type = type,
                 id = file.hashCode() * file.length() * file.lastModified(),
@@ -172,7 +182,8 @@ class SecureRepository(
                 size = 0L,
                 immichUrl = null, // TODO
                 hash = null,
-                favourited = false
+                favourited = false,
+                duration = duration?.let { (it / 1000.0).roundToLong() }
             )
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
@@ -183,6 +194,8 @@ class SecureRepository(
 
             mediaStoreData.add(securedItem)
         }
+
+        metadataRetriever.close()
 
         val presentPaths = _fileList.value!!.map { it.absolutePath }
         items.value =

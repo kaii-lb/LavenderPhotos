@@ -43,7 +43,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
             TaggedItem::class,
             ExifData::class
         ],
-    version = 14,
+    version = 15,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -82,7 +82,12 @@ abstract class MediaDatabase : RoomDatabase() {
                     MediaDatabase::class.java,
                     "media-database"
                 ).apply {
-                    addMigrations(Migration3to4(appContext), Migration4to5(appContext), Migration9To10(appContext))
+                    addMigrations(
+                        Migration3to4(appContext),
+                        Migration4to5(appContext),
+                        Migration9To10(appContext),
+                        Migration14To15(appContext)
+                    )
                     enableMultiInstanceInvalidation()
                     fallbackToDestructiveMigrationOnDowngrade(false)
                 }.build()

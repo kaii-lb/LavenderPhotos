@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
+import androidx.core.database.getLongOrNull
 import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
+import kotlin.math.roundToLong
 
 private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
@@ -43,7 +45,8 @@ class TrashDataSource(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.IS_TRASHED,
-                MediaColumns.SIZE
+                MediaColumns.SIZE,
+                MediaColumns.DURATION
             )
     }
 
@@ -118,12 +121,16 @@ class TrashDataSource(
         val holderMap = mutableListOf<MediaStoreData>()
 
         while (cursor.moveToNext()) {
+            // for each item since it changes for images vs videos
+            val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath = cursor.getString(absolutePathColNum)
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
+            val duration = cursor.getLongOrNull(durationColumn)
 
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -147,7 +154,8 @@ class TrashDataSource(
                     size = size,
                     immichUrl = null,
                     hash = null,
-                    favourited = false
+                    favourited = false,
+                    duration = duration?.let { (it / 1000.0).roundToLong() }
                 )
 
             holderMap.add(new)

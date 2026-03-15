@@ -3,7 +3,6 @@ package com.kaii.photos.compose.grids
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import android.media.MediaMetadataRetriever
 import android.os.Vibrator
 import android.util.Log
 import android.view.View
@@ -18,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -76,6 +77,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toIntRect
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
@@ -92,7 +94,6 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.ViewProperties
-import com.kaii.photos.compose.single_photo.formatLikeANormalPerson
 import com.kaii.photos.compose.widgets.FloatingScrollbar
 import com.kaii.photos.compose.widgets.ShowSelectedState
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
@@ -102,6 +103,8 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.formatLikeANormalPerson
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.grid_management.BitmapUriShadowBuilder
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -120,8 +123,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "com.kaii.photos.compose.grids.PhotoGridView"
 
@@ -477,8 +479,6 @@ private fun MediaItem(
         // TODO: possibly move to a less messy and horrible decrypting implementation
         var model by remember { mutableStateOf<Any?>(null) }
         val context = LocalContext.current
-        val metadataRetriever = remember { MediaMetadataRetriever() }
-        val duration = remember { mutableStateOf("") }
 
         LaunchedEffect(isSecureMedia) {
             if (!isSecureMedia || model != null) return@LaunchedEffect
@@ -505,23 +505,6 @@ private fun MediaItem(
                         item.item.uri.toUri().path
                     }
                 }
-        }
-
-        // Handle video duration retrieval and formatting
-        // to show on the thumbnail of video items
-        LaunchedEffect(item.itemKey()) {
-            // if the media is a video, try to retrieve its duration
-            // if the duration is retrieved, format it for display and save in "duration" state variable
-            if (item.item.type == MediaType.Video) {
-                try {
-                    metadataRetriever.setDataSource(context, item.item.uri.toUri())
-                    val durationMillis = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-                    duration.value = durationMillis.toDuration(DurationUnit.MILLISECONDS).formatLikeANormalPerson().first
-                } catch (e: Throwable) {
-                    Log.d(TAG, "Failed to retrieve video metadata for ${item.item.displayName}: ${e.message}")
-                    duration.value = ""
-                }
-            }
         }
 
         GlideImage(
@@ -570,8 +553,15 @@ private fun MediaItem(
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .offset(x = 2.dp, y = (-2).dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .padding(start = 4.dp, top = 0.dp, end = 6.dp, bottom = 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 4.dp,
+                    alignment = Alignment.Start
+                )
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.movie_filled),
@@ -580,18 +570,19 @@ private fun MediaItem(
                     modifier = Modifier
                         .size(20.dp)
                 )
-                if(duration.value.isNotEmpty()) {
+
+                if (item.item.duration != null) {
                     // show video duration text on the thumbnail
                     Text(
-                        text = duration.value,
+                        text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
                         color = Color.White,
-                        fontSize = TextUnit(12f, TextUnitType.Sp),
+                        fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .padding(start = 4.dp)
-                        )
-                    }
+                            .offset(y = 1.dp)
+                    )
                 }
+            }
         }
 
         if (item.item.isRawImage()) {

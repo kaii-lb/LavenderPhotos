@@ -287,7 +287,8 @@ suspend fun saveVideo(
         immichUrl = null,
         hash = null,
         parentPath = file.absolutePath.parent(),
-        favourited = false
+        favourited = false,
+        duration = basicVideoData.duration.toLong()
     )
 
     val tempFile = File(context.cacheDir, "/${media.displayName}")
@@ -477,7 +478,8 @@ suspend fun saveVideo(
             immichUrl = null,
             hash = null,
             size = tempFileCrop.length(),
-            favourited = false
+            favourited = false,
+            duration = (videoEditingState.endTrimPosition - videoEditingState.startTrimPosition).toLong()
         ),
         basePath = tempFileCrop.absolutePath.toBasePath(),
         destination = absolutePath.parent(),
@@ -731,7 +733,8 @@ suspend fun saveImage(
         hash = null,
         id = 0L,
         parentPath = file.absolutePath.parent(),
-        favourited = false
+        favourited = false,
+        duration = null
     )
 
     val newUri =

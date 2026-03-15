@@ -143,3 +143,19 @@ fun Duration.formatLikeANormalPerson(): Pair<String, Boolean> {
     }
     return Pair(formatted, longboi)
 }
+
+fun String.immichDurationToSecondsOrNull(): Long? {
+    val stripped = replace(".", "").replace(":", "")
+
+    if (isBlank() || stripped.all { it == '0' }) return null
+
+    val duration = split(".")[0]
+    val split = duration.split(":").reversed()
+
+    val seconds = split.getOrNull(0)?.toLongOrNull() ?: 0L
+    val minutes = split.getOrNull(1)?.toLongOrNull() ?: 0L
+    val hours = split.getOrNull(2)?.toLongOrNull() ?: 0L
+    val days = split.getOrNull(3)?.toLongOrNull() ?: 0L
+
+    return days * 86400L + hours * 3600L + minutes * 60L + seconds
+}

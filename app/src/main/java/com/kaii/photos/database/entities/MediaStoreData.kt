@@ -30,7 +30,8 @@ data class MediaStoreData(
     val immichUrl: String?,
     val hash: String?,
     val size: Long,
-    val favourited: Boolean
+    val favourited: Boolean,
+    val duration: Long?
 ) {
     companion object {
         val dummyItem = MediaStoreData(
@@ -46,7 +47,8 @@ data class MediaStoreData(
             immichUrl = null,
             hash = null,
             size = 0L,
-            favourited = false
+            favourited = false,
+            duration = null
         )
     }
 

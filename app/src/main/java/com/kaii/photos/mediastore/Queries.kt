@@ -5,6 +5,7 @@ import android.content.Context
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
+import androidx.core.database.getLongOrNull
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToLong
 
 fun getAllMediaStoreIds(context: Context): Set<Long> {
     val cursor =
@@ -59,7 +61,8 @@ suspend fun getMediaStoreDataForIds(
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
                 MediaColumns.SIZE,
-                MediaColumns.IS_FAVORITE
+                MediaColumns.IS_FAVORITE,
+                MediaColumns.DURATION
             )
 
         context.contentResolver.query(
@@ -81,6 +84,9 @@ suspend fun getMediaStoreDataForIds(
             val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
             while (cursor.moveToNext()) {
+                // for each item since it changes for images vs videos
+                val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
                 val absolutePath = cursor.getString(absolutePathColNum)
 
                 val id = cursor.getLong(idColNum)
@@ -91,6 +97,7 @@ suspend fun getMediaStoreDataForIds(
                 val displayName = cursor.getString(displayNameIndex)
                 val size = cursor.getLong(sizeColumn)
                 val favourited = cursor.getInt(favouritedColumn) == 1
+                val duration = cursor.getLongOrNull(durationColumn)
 
                 val type =
                     if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -129,7 +136,8 @@ suspend fun getMediaStoreDataForIds(
                         size = size,
                         immichUrl = null,
                         hash = null,
-                        favourited = favourited
+                        favourited = favourited,
+                        duration = duration?.let { (it / 1000.0).roundToLong() }
                     )
 
                 items.add(new)
@@ -171,7 +179,8 @@ suspend fun chunkLoadMediaData(
                         FileColumns.MEDIA_TYPE,
                         MediaColumns.SIZE,
                         MediaColumns.IS_FAVORITE,
-                        MediaColumns.GENERATION_MODIFIED
+                        MediaColumns.GENERATION_MODIFIED,
+                        MediaColumns.DURATION
                     )
 
                 var newGen = syncManager.getGeneration()
@@ -195,6 +204,9 @@ suspend fun chunkLoadMediaData(
                     val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
                     while (cursor.moveToNext()) {
+                        // for each item since it changes for images vs videos
+                        val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
                         val gen = cursor.getLong(genColNum)
                         if (gen > newGen) newGen = gen
 
@@ -207,6 +219,7 @@ suspend fun chunkLoadMediaData(
                         val displayName = cursor.getString(displayNameIndex)
                         val size = cursor.getLong(sizeColumn)
                         val favourited = cursor.getInt(favouritedColumn) == 1
+                        val duration = cursor.getLongOrNull(durationColumn)
 
                         val type =
                             if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -245,7 +258,8 @@ suspend fun chunkLoadMediaData(
                                 size = size,
                                 immichUrl = null,
                                 hash = null,
-                                favourited = favourited
+                                favourited = favourited,
+                                duration = duration?.let { (it / 1000.0).roundToLong() }
                             )
 
                         items.add(new)
@@ -284,7 +298,8 @@ suspend fun loadMediaDataDelta(
             FileColumns.MEDIA_TYPE,
             MediaColumns.SIZE,
             MediaColumns.IS_FAVORITE,
-            MediaColumns.GENERATION_MODIFIED
+            MediaColumns.GENERATION_MODIFIED,
+            MediaColumns.DURATION
         )
 
     var newGen = syncManager.getGeneration()
@@ -308,6 +323,9 @@ suspend fun loadMediaDataDelta(
         val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
         while (cursor.moveToNext()) {
+            // for each item since it changes for images vs videos
+            val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
             val gen = cursor.getLong(genColNum)
             if (gen > newGen) newGen = gen
 
@@ -320,6 +338,7 @@ suspend fun loadMediaDataDelta(
             val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
             val favourited = cursor.getInt(favouritedColumn) == 1
+            val duration = cursor.getLongOrNull(durationColumn)
 
             val type =
                 if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
@@ -358,7 +377,8 @@ suspend fun loadMediaDataDelta(
                     size = size,
                     immichUrl = null,
                     hash = null,
-                    favourited = favourited
+                    favourited = favourited,
+                    duration = duration?.let { (it / 1000.0).roundToLong() }
                 )
 
             items.add(new)

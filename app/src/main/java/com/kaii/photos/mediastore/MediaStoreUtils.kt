@@ -13,6 +13,7 @@ import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.database.getLongOrNull
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.entities.MediaStoreData
@@ -27,6 +28,7 @@ import com.kaii.photos.helpers.toRelativePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -223,7 +225,8 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
             MediaColumns.DATE_TAKEN,
             MediaColumns.MIME_TYPE,
             MediaColumns.DISPLAY_NAME,
-            MediaColumns.IS_FAVORITE
+            MediaColumns.IS_FAVORITE,
+            MediaColumns.DURATION
         ),
         "${MediaColumns._ID} = ?",
         arrayOf(uri.lastPathSegment),
@@ -241,6 +244,9 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
         val favouritedColumn = mediaCursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
         while (cursor.moveToNext()) {
+            // for each item since it changes for images vs videos
+            val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
             val contentId = cursor.getLong(contentIdColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath: String? = cursor.getString(absolutePathColNum)
@@ -249,6 +255,7 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
             val dateModified = cursor.getLong(dateModifiedColumn)
             val displayName = cursor.getString(displayNameIndex)
             val favourited = cursor.getInt(favouritedColumn) == 1
+            val duration = cursor.getLongOrNull(durationColumn)
 
             Log.d(TAG, "Searching absolute path $absolutePath")
 
@@ -292,7 +299,8 @@ fun ContentResolver.getMediaStoreDataFromUri(uri: Uri): MediaStoreData? {
                 immichUrl = null,
                 hash = null,
                 size = 0L,
-                favourited = favourited
+                favourited = favourited,
+                duration = duration?.let { (it / 1000.0).roundToLong() }
             )
         }
     }

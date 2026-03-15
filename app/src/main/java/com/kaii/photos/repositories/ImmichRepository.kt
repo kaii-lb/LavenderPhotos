@@ -21,6 +21,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.immichDurationToSecondsOrNull
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.MediaType
@@ -157,7 +158,8 @@ class ImmichRepository(
                         immichUrl = "${snapshot.endpoint}/api/assets/${asset.id}/original",
                         hash = asset.checksum,
                         size = asset.exifInfo?.fileSizeInByte ?: 0L,
-                        favourited = asset.isFavorite
+                        favourited = asset.isFavorite,
+                        duration = asset.duration.immichDurationToSecondsOrNull()
                     )
                 }
 
