@@ -101,16 +101,25 @@ class SettingsAlbumsListImpl(
         val list = json.decodeFromString<List<AlbumInfo>>(data)
 
         return list.fastMap {
-            AlbumType.Folder(
-                id = Uuid.random().toString(),
-                name = it.name,
-                pinned = it.isPinned,
-                immichId = null,
-                paths = it.paths.map { path ->
-                    if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
-                    else path
-                }.toSet()
-            )
+            if (it.isCustomAlbum) {
+                AlbumType.Custom(
+                    id = Uuid.random().toString(),
+                    name = it.name,
+                    pinned = it.isPinned,
+                    immichId = null
+                )
+            } else {
+                AlbumType.Folder(
+                    id = Uuid.random().toString(),
+                    name = it.name,
+                    pinned = it.isPinned,
+                    immichId = null,
+                    paths = it.paths.map { path ->
+                        if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
+                        else path
+                    }.toSet()
+                )
+            }
         }
     }
 

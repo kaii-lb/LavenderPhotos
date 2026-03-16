@@ -59,6 +59,9 @@ interface CustomEntityDao {
     )
     suspend fun getOrphanImmichItems(): List<MediaStoreData>
 
+    @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
+    suspend fun getMediaInAlbum(album: String): List<MediaStoreData>
+
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)
 
