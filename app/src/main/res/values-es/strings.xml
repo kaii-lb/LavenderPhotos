@@ -3,17 +3,17 @@
     <string name="albums_auto_detect">Auto detectar álbumes</string>
     <string name="albums_auto_detect_desc">Detecta todas las carpetas con medios en este dispositivo y las agrega a la vista álbumes</string>
     <string name="albums_clear_list">Borrar lista de álbumes</string>
-    <string name="albums_clear_list_desc">Elimine todos los álbumes excepto por Cámara y Descargas</string>
+    <string name="albums_clear_list_desc">Eliminar todos los álbumes no esenciales de la lista de álbumes</string>
     <string name="albums_clear_list_done">Lista de álbumes borrados</string>
     <string name="albums_media_sorting">Clasificación de Medios</string>
     <string name="albums_media_sorting_desc">Establece la clasificación de fotos y videos en cuadrículas</string>
     <string name="albums_is_custom">Este es un álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
     <string name="albums_non_existent">No existen tales álbumes</string>
-    <string name="albums_remove_desc">Eliminar álbum de la lista</string>
+    <string name="albums_remove_desc">Eliminar álbum de la lista?</string>
     <string name="albums_info">Información del Álbum</string>
-    <string name="albums_path">Ruta</string>
-    <string name="albums_item_count">Recuento de Artículos</string>
+    <string name="albums_path">Ruta:</string>
+    <string name="albums_item_count">Recuento de Artículos:</string>
     <string name="albums_name">Nombre del Álbum</string>
     <string name="albums_type">Tipo de Álbum</string>
     <string name="albums_folder">Álbum de Carpetas</string>
@@ -29,7 +29,7 @@
     <string name="tabs_albums_incl">Álbumes Incluidos</string>
     <string name="tabs_confirm">Agregar Pestaña</string>
     <string name="tabs_empty_params">Los parámetros de la pestaña no pueden estar vacíos</string>
-    <string name="tabs_max_reached">No se pueden agregar más de 8 pestañas</string>
+    <string name="tabs_max_reached">No se pueden agregar más de 16 pestañas</string>
     <string name="tabs_min_reached">Debe existir al menos una pestaña</string>
     <string name="return_to_previous_page">Volver a la página anterior</string>
     <string name="app_name_full">Lavender Photos</string>
@@ -48,16 +48,16 @@
     <string name="albums_found">¡Todos los álbumes encontrados!</string>
     <string name="add_album">Agregar un álbum</string>
     <string name="direct_path_album">Usar una ruta directa para agregar un álbum</string>
-    <string name="albums_main_list">Mostrar Todo en Principal</string>
+    <string name="albums_main_list">Álbumes de la Vista Principal</string>
     <string name="albums_main_list_selected">Los álbumes seleccionados aquí se mostrarán en la vista principal de fotos</string>
     <string name="albums_selected">Álbumes Seleccionados</string>
     <string name="updates_notice_desc"><![CDATA[
-            <p>Este actualizador descarga apks de<a href="https://github.com/kaii-lb/LavenderPhotos/releases">Lanzamientos de GitHub</a> lo cual
-                significa que no pasan por el cribado y las pruebas adicionales realizadas en IzzyOnDroid, F-Droid o en otro lugar
+            <p>Este actualizador descarga apks desde <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> lo que
+                significa que no pasan por las revisiones y pruebas adicionales realizadas en IzzyOnDroid, F-Droid u otros lugares.
 
-                <br><br>Las compilaciones alojadas en GitHub siempre están firmadas, revisadas y verificadas por el desarrollador (kaii-lb), pero depende de usted si desea usarlas o no.
+                <br><br>Las compilaciones alojadas en GitHub siempre están firmadas, revisadas y verificadas por el desarrollador (kaii-lb), pero depende de ti si deseas usarlas o no.
 
-                <br><br>Lavender Photos nunca se actualiza automáticamente, y solo se actualiza con el consentimiento explícito del usuario.
+                <br><br>Lavender Photos nunca realiza actualizaciones automáticas, y solo se actualiza con el consentimiento explícito del usuario.
             </p>
         ]]></string>
     <string name="updates_not_found">No Se Encontraron Actualizaciones</string>
@@ -67,7 +67,7 @@
     <string name="updates_checking">Comprobando Actualizaciones</string>
     <string name="updates_start">Iniciar Actualización</string>
     <string name="locked_folder_help_top">La carpeta bloqueada es una carpeta segura para sus imágenes y videos en este dispositivo.\nLos medios protegidos nunca se cargan en ningún lugar y siempre están en el dispositivo, encriptados con una clave exclusiva de la contraseña o los datos de huellas dactilares de su dispositivo.</string>
-    <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.</string>
+    <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.\nLos elementos protegidos se perderán al desinstalar la aplicación, haga una copia de seguridad de ellos en consecuencia.</string>
     <string name="secure_folder">Carpeta Segura</string>
     <string name="secure_processing">Aguanta mientras se procesa este medio</string>
     <string name="secure_encrypting">Cifrado de Archivos</string>
@@ -225,11 +225,11 @@
     <string name="bottom_sheets_square">Cuadrado</string>
     <string name="bottom_sheets_ratio_selected">Esta proporción de cortado esta seleccionada</string>
     <string name="error_views_trash_empty">Los elementos eliminados aparecen aquí</string>
-    <string name="error_views_trash_prefix">Enviado a la Papelera</string>
+    <string name="error_views_trash_prefix">Desechado:</string>
     <string name="error_views_album_empty">Este álbum está vacío</string>
     <string name="error_views_search_not_found">No se puede encontrar ninguna coincidencia</string>
     <string name="error_views_secure_empty">¡Nada de tu multimedia está protegida!</string>
-    <string name="error_views_secure_prefix">Asegurado</string>
+    <string name="error_views_secure_prefix">Asegurado:</string>
     <string name="error_views_favourites_empty">¡Añade tus recuerdos más preciados!</string>
     <string name="error_views_folder_non_existent">La carpeta no existe</string>
     <string name="changelog"><![CDATA[
@@ -758,8 +758,8 @@
     <string name="debugging_spawn_loading_snackbar">Generar carga de barra de información</string>
     <string name="debugging_spawn_loading_snackbar_desc">Depure la barra de información de Lavender cada vez que compose decida hacer algo estúpido</string>
     <string name="debugging_spawn_message_snackbar">Generar un mensaje de información</string>
-    <string name="albums_main_list_desc_1">Los álbumes seleccionados mostrarán sus fotos en la vista principal de fotos</string>
-    <string name="albums_main_list_desc_2">Los álbumes seleccionados se incluirán en la lista negra para que no se muestren en la vista principal de fotos</string>
+    <string name="albums_main_list_desc_1">Mostrar contenido multimedia de los álbumes seleccionados</string>
+    <string name="albums_main_list_desc_2">Mostrar contenido multimedia que no pertenezca a los álbumes seleccionados</string>
     <string name="albums_main_list_selected_inverse">Los álbumes seleccionados aquí no aparecerán en la vista principal de fotos</string>
     <string name="albums_custom_desc">Agregue cualquier medio desde cualquier lugar</string>
     <string name="albums_folder_desc">Cargar medios desde una carpeta</string>
@@ -840,7 +840,7 @@
     <string name="settings_Auto_theme">Tema Auto</string>
     <string name="settings_behaviour">Comportamiento</string>
     <string name="settings_navigation_exit_immediately">Salir Inmediatamente</string>
-    <string name="settings_navigation_exit_immediately_desc">Omite volver a la vista principal de fotos al presionar el botón Atrás</string>
+    <string name="settings_navigation_exit_immediately_desc">Omite volver a la pestaña predeterminada al presionar el botón Atrás</string>
     <string name="trash_bin_short">Basura</string>
     <string name="permissions_do_not_trash">No usar la Papelera</string>
     <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
@@ -882,7 +882,7 @@
     <string name="immich_title">Copia de Seguridad de Immich</string>
     <string name="immich_account">Cuenta Immich</string>
     <string name="immich_login_unavailable">No Ha Iniciado Sesión</string>
-    <string name="immich_login_unavailable_desc">Ninguna cuenta de immich está conectada actualmente</string>
+    <string name="immich_login_unavailable_desc">Ninguna cuenta de immich está conectada</string>
     <string name="immich_login_found">Conectado como:</string>
     <string name="immich_login">Iniciar sesión con Immich</string>
     <string name="immich_login_confirm">Iniciar sesión</string>
@@ -900,7 +900,7 @@
     <string name="immich_state_unknown">Desconocido</string>
     <string name="immich_auth_passowrd">Contraseña</string>
     <string name="immich_auth_email">Email</string>
-    <string name="immich_uuid">Immich UUID</string>
+    <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_desc">Versión: %1$s. Compilación: %2$s</string>
     <string name="immich_server_storage">Almacenamiento en Servidor</string>
     <string name="immich_server_storage_desc">%1$s de %2$s usado</string>
@@ -909,16 +909,16 @@
     <string name="immich_help_general">¿Qué es esto?</string>
     <string name="immich_help_general_desc">Permite la copia de seguridad de medios a nivel de álbum en un servidor Immich</string>
     <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotos y videos autohospedada,
-            eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.
+            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotos y vídeos de auto-alojamiento,
+            que permite que cualquier persona aloje su propio servidor de copia de seguridad en la nube.
             </p>
-            <h3 style="text-align:center;">¿Como Usar?<h3/>
+            <h3 style="text-align:center;">¿Cómo usarlo?<h3/>
             <ul>
-                <li>Autohospedar un <a href="https://immich.app/">Servidor de Immich</a></li>
-                <li>Especifique la dirección del servidor Lavender Photos</li>
-                <li>Inicie sesión con la cuenta de usuario de Immich</li>
-                <li>Vaya a cualquier álbum, haga clic en el icono de la nube</li>
-                <li>¡Comience a hacer copias de seguridad de sus fotos!</li>
+                <li>Auto-aloja un <a href="https://immich.app/">servidor de Immich</a></li>
+                <li>Especifica la dirección del servidor en Lavender Photos</li>
+                <li>Inicia sesión con tu cuenta de usuario de Immich</li>
+                <li>Ve a cualquier álbum y haz clic en el icono de la nube</li>
+                <li>¡Empieza a hacer copias de seguridad de tus fotos!</li>
             </ul>
         ]]></string>
     <string name="immich_server_url_invalid">¡Url Inválida!</string>
@@ -989,4 +989,77 @@
     <string name="look_and_feel_date_format_filename">Nombre de Archivo</string>
     <string name="look_and_feel_date_format_date_taken">Fecha Tomada</string>
     <string name="look_and_feel_date_format_datetime_taken">Fecha y Hora Tomada</string>
+    <string name="albums_remove">Remover</string>
+    <string name="albums_paths">Rutas:</string>
+    <string name="albums_immich_not_backed_up">No respaldado</string>
+    <string name="albums_rename_failure">Nombre de álbum invalido</string>
+    <string name="navigation_away">Navega a otra página</string>
+    <string name="updates_no_changelog">No Hay Registro de Cambios Disponible</string>
+    <string name="secure_restore_failed">Error al restaurar medios</string>
+    <string name="secure_share_media">Compartir medios protegidos</string>
+    <string name="export_location">Ubicación</string>
+    <string name="favourites_remove_this">Remover de favoritos?</string>
+    <string name="favourites_migration">¡Favoritos ha sido renovado!</string>
+    <string name="favourites_migration_notice">Favoritos</string>
+    <string name="favourites_migration_desc">Esta es una forma de realizar un seguimiento de sus mejores momentos; ¡Con Lavender Photos eso significa favoritos que se sincronizan en todas las aplicaciones que lo admiten, con una administración impecable y un sistema de alto rendimiento!\n\nSi vienes de una versión anterior de Lavender Photos, todos tus elementos favoritos anteriores se migrarán al nuevo sistema.\n\nMantenga su teléfono encendido y esta aplicación abierta.</string>
+    <string name="favourites_migration_started">¡Comenzó la migración!</string>
+    <string name="favourites_migration_none">No hay elementos para migrar</string>
+    <string name="favourites_migration_in_progress_short">En Progreso</string>
+    <string name="favourites_migration_done">¡Migración Completada!</string>
+    <string name="favourites_migration_declined">¡Permisos Rechazados!</string>
+    <string name="favourites_migration_declined_desc">¡Lavender Photos no puede transferir sus favoritos de la versión anterior si no le otorga permisos para hacerlo! Esto significa que perderá sus artículos favoritos anteriores.</string>
+    <string name="debugging_development">Desarrollo</string>
+    <string name="permissions_grant_long">Conceder Permiso</string>
+    <string name="media_is_raw">Esta es una imagen RAW</string>
+    <string name="media_select_limit_reached">¡Límite de selección alcanzado!</string>
+    <string name="search_photo_tag">Buscar por una etiqueta</string>
+    <string name="search_by_name">Nombre</string>
+    <string name="search_by_date">Fecha</string>
+    <string name="search_by_tag">Etiqueta</string>
+    <string name="search_no_tags_found">Aún no se han añadido etiquetas…</string>
+    <string name="drag_and_drop_data">Datos De Arrastrar Y Soltar De Lavender Photos</string>
+    <string name="management">Gestión</string>
+    <string name="error_views_main_empty">Parece vacío…</string>
+    <string name="look_and_feel_views">Vistas</string>
+    <string name="look_and_feel_views_blur">Desenfoque de Fondo</string>
+    <string name="look_and_feel_views_blur_desc">Rellene el fondo con una versión borrosa de la imagen actual</string>
+    <string name="immich_login_unreachable">Punto Final Inalcanzable</string>
+    <string name="immich_login_unreachable_desc">No se pudo conectar al servidor</string>
+    <string name="immich_server_info_with_status">Servidor:</string>
+    <string name="immich_server_online">En linea</string>
+    <string name="immich_server_offline">Fuera de línea</string>
+    <string name="immich_server_unreachable">¡No se puede hacer ping al servidor!</string>
+    <string name="immich_server_not_loading">Este álbum no tiene medios o el servidor es inalcanzable</string>
+    <string name="exif_enter_time">Introduzca la Hora</string>
+    <string name="exif_date_changed_failed">Error al cambiar la fecha</string>
+    <string name="privacy_scroll_mode">Modo de Privacidad</string>
+    <string name="privacy_scroll_mode_enabled">Modo de Privacidad: Activado</string>
+    <string name="privacy_scroll_mode_disabled">Modo de Privacidad: Desactivado</string>
+    <string name="privacy_scroll_mode_prompt">Administrar el acceso al desplazamiento y las acciones</string>
+    <string name="privacy_scroll_mode_fail">Error al cambiar el modo de privacidad</string>
+    <string name="privacy_scroll_mode_exit_tried">Modo de privacidad activado</string>
+    <string name="startup_processing_indexing">Descubriendo…</string>
+    <string name="startup_processing_info">Esta es una operación de una sola vez.</string>
+    <string name="startup_processing_progress">Hecho: %s</string>
+    <string name="startup_processing_explanation">¿Por qué la espera?</string>
+    <string name="startup_processing_explanation_desc">Lavender Photos indexa los medios en su dispositivo para proporcionar fechas precisas, tiempos de carga más rápidos y mejores funciones. Esta es una operación <b>única</b>, y debería tomar alrededor de <i> 30 segundos a 2 minutos</i> dependiendo de cuántos elementos haya en su dispositivo. Si interrumpe los procesos, se reanudará en el próximo lanzamiento.</string>
+    <string name="startup_processing_skip">Saltar</string>
+    <string name="main_dialog_greeting">¡Hola, %s!</string>
+    <string name="tags_add">¡Añade una etiqueta!</string>
+    <string name="tags_exists">¡La etiqueta ya existe!</string>
+    <string name="tags_name">Nombre: %s</string>
+    <string name="tags_type">Tipo: %s</string>
+    <string name="tags_path">Ruta: %s</string>
+    <string name="tags_favourited_true">Favorito: Sí</string>
+    <string name="tags_favourited_false">Favorito: No</string>
+    <string name="tags">Etiquetas</string>
+    <string name="tags_delete">Borrar etiqueta \"%s\"?</string>
+    <string name="album_group">Grupo de Álbumes</string>
+    <string name="album_group_desc">Organiza tus álbumes</string>
+    <string name="album_group_name">Nombre del grupo</string>
+    <string name="album_group_name_error">¡El nombre es invalido!</string>
+    <string name="album_group_dialog_name">Nombre:</string>
+    <string name="album_group_delete">¿Eliminar este grupo?</string>
+    <string name="album_group_item_count">Sub-álbumes:</string>
+    <string name="album_group_info">Información del grupo de álbumes</string>
 </resources>
