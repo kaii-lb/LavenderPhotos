@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -88,13 +89,25 @@ fun AlbumGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (album.info.album !is AlbumType.Folder) { // TODO: introduce icon for immich
+                if (album.info.album !is AlbumType.Folder) {
                     Icon(
-                        painter = painterResource(id = R.drawable.art_track),
-                        contentDescription = stringResource(id = R.string.albums_is_custom),
+                        painter = painterResource(
+                            id =
+                                if (album.info.album is AlbumType.Custom) R.drawable.art_track
+                                else R.drawable.cloud
+                        ),
+                        contentDescription = stringResource(
+                            id =
+                                if (album.info.album is AlbumType.Custom) R.string.albums_is_custom
+                                else R.string.albums_is_cloud
+                        ),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier
                             .padding(end = 2.dp)
+                            .size(
+                                if (album.info.album is AlbumType.Custom) 22.dp
+                                else 20.dp
+                            )
                     )
                 }
             }
