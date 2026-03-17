@@ -1,6 +1,7 @@
 package com.kaii.photos.datastore.preferences
 
 import android.content.Context
+import android.os.Environment
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -315,21 +317,30 @@ class SettingsAlbumsListImpl(
             AlbumType.Folder(
                 id = Uuid.random().toString(),
                 name = "Camera",
-                paths = setOf("${baseInternalStorageDirectory}DCIM/Camera"),
+                paths = setOf(
+                    File(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                        "Camera"
+                    ).absolutePath
+                ),
                 pinned = false,
                 immichId = null
             ),
             AlbumType.Folder(
                 id = Uuid.random().toString(),
                 name = "Pictures",
-                paths = setOf("${baseInternalStorageDirectory}Pictures"),
+                paths = setOf(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
+                ),
                 pinned = false,
                 immichId = null
             ),
             AlbumType.Folder(
                 id = Uuid.random().toString(),
                 name = "Download",
-                paths = setOf("${baseInternalStorageDirectory}Download"),
+                paths = setOf(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                ),
                 pinned = false,
                 immichId = null
             )
