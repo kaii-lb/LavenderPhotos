@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.os.Build
 import android.text.format.DateFormat
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
@@ -14,22 +13,21 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
-import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.file_management.CloudFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.immichDurationToSecondsOrNull
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.MediaType
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumGetState
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.UploadAssetRequest
-import io.github.kaii_lb.lavender.immichintegration.state_managers.AlbumsStateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,12 +35,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -66,11 +62,10 @@ class ImmichRepository(
     private val appContext = context.applicationContext
     private val db = MediaDatabase.getInstance(appContext)
 
-    private val albumState = mutableStateOf(
-        AlbumsStateManager(
+    private val albumsClient = mutableStateOf(
+        AlbumsClient(
             baseUrl = "",
-            coroutineScope = scope,
-            apiClient = apiClient
+            client = apiClient
         )
     )
 
@@ -119,11 +114,10 @@ class ImmichRepository(
     init {
         scope.launch {
             params.collectLatest {
-                albumState.value =
-                    AlbumsStateManager(
+                albumsClient.value =
+                    AlbumsClient(
                         baseUrl = it.endpoint,
-                        coroutineScope = scope,
-                        apiClient = apiClient
+                        client = apiClient
                     )
 
                 refresh()
@@ -137,10 +131,13 @@ class ImmichRepository(
     private suspend fun refetch() {
         val snapshot = params.value
 
-        val state = albumState.value.getInfo(
+        val info = albumsClient.value.get(
             id = Uuid.parse(album.immichId!!),
-            accessToken = snapshot.accessToken
+            accessToken = snapshot.accessToken,
+            withoutAssets = false
         )
+
+        val state = info?.let { AlbumGetState.Retrieved(it) } ?: AlbumGetState.Failed
 
         if (state is AlbumGetState.Retrieved) {
             val items =
@@ -189,37 +186,22 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun upload(ids: List<Long>) {
-        val media = db.mediaDao()
-            .getAllMediaDateTaken()
-            .first()
-            .filter { it.id in ids }
+        // TODO
+        // val media = db.mediaDao()
+        //     .getAllMediaDateTaken()
+        //     .first()
+        //     .filter { it.id in ids }
+        //
+        // db.taskDao().insert(
+        //     task = SyncTask(
+        //         dateModified = Clock.System.now().epochSeconds,
+        //         status = if (success) SyncTaskStatus.Synced else SyncTaskStatus.Waiting,
+        //         type = SyncTaskType.Upload,
+        //         itemIds = ids.fastMap { it.toString() }
+        //     )
+        // )
 
-        albumState.value.addAssets(
-            id = Uuid.parse(album.immichId!!),
-            accessToken = params.value.accessToken,
-            assetIds = media.fastMap { item ->
-                UploadAssetRequest(
-                    absolutePath = item.absolutePath,
-                    filename = item.displayName,
-                    size = item.size,
-                    dateTaken = item.dateTaken,
-                    dateModified = item.dateModified,
-                    id = Uuid.random()
-                )
-            },
-            deviceId = Build.MODEL,
-            onItemDone = {},
-            onResult = { success ->
-                db.taskDao().insert(
-                    task = SyncTask(
-                        dateModified = Clock.System.now().epochSeconds,
-                        status = if (success) SyncTaskStatus.Synced else SyncTaskStatus.Waiting,
-                        type = SyncTaskType.Upload,
-                        itemIds = ids.fastMap { it.toString() }
-                    )
-                )
-            }
-        )
+        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
     }
 
     suspend fun syncUploads() {
@@ -252,43 +234,23 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun uploadAssets(task: SyncTask) {
-        val ids = task.itemIds.fastMap { it.toLong() }
-        val media = db.mediaDao()
-            .getAllMediaDateTaken()
-            .first()
-            .filter { it.id in ids }
+        // TODO
+        // val ids = task.itemIds.fastMap { it.toLong() }
+        // val media = db.mediaDao()
+        //     .getAllMediaDateTaken()
+        //     .first()
+        //     .filter { it.id in ids }
+        //
+        // if (success) {
+        //     db.taskDao().update(task = task.copy(status = SyncTaskStatus.Synced))
+        // }
 
-        albumState.value.addAssets(
-            id = Uuid.parse(album.immichId!!),
-            accessToken = params.value.accessToken,
-            assetIds = media.fastMap { item ->
-                UploadAssetRequest(
-                    absolutePath = item.absolutePath,
-                    filename = item.displayName,
-                    size = item.size,
-                    dateTaken = item.dateTaken,
-                    dateModified = item.dateModified,
-                    id = Uuid.random()
-                )
-            },
-            deviceId = Build.MODEL,
-            onItemDone = {},
-            onResult = { success ->
-                if (success) {
-                    db.taskDao().update(task = task.copy(status = SyncTaskStatus.Synced))
-                }
-            }
-        )
+        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
     }
 
     @OptIn(ExperimentalUuidApi::class)
     private fun deleteAssets(ids: List<String>) {
-        ids.forEach {
-            albumState.value.delete(
-                id = Uuid.parse(it),
-                accessToken = params.value.accessToken,
-                onResult = {}
-            )
-        }
+        // TODO: add [SyncTask]
+        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
     }
 }

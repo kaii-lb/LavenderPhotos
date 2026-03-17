@@ -29,14 +29,14 @@ import java.io.File
 import kotlin.reflect.KClass
 import kotlin.uuid.ExperimentalUuidApi
 
-class LocalFileManager(
+class CustomFileManager(
     override val customDao: CustomEntityDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
     override val accessToken: String
 ) : GenericFileManager {
     companion object {
-        private const val TAG = "com.kaii.photos.helpers.file_management.LocalFileManager"
+        private const val TAG = "com.kaii.photos.helpers.file_management.CustomFileManager"
     }
 
     override suspend fun setFavourite(
@@ -44,7 +44,7 @@ class LocalFileManager(
         favourite: Boolean,
         list: List<String>,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ) = withContext(Dispatchers.IO) {
         if (list.isNotEmpty()) {
             val favRequest = MediaStore.createFavoriteRequest(
                 context.contentResolver,
@@ -60,8 +60,6 @@ class LocalFileManager(
                 0,
                 0
             )
-
-            onItemDone(list.size)
         }
     }
 
@@ -70,7 +68,7 @@ class LocalFileManager(
         list: List<String>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = withContext(Dispatchers.IO) {
+    ) {
         val contentResolver = context.contentResolver
 
         val currentTimeMillis = System.currentTimeMillis()

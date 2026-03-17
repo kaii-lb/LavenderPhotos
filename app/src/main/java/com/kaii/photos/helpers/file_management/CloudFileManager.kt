@@ -2,8 +2,10 @@ package com.kaii.photos.helpers.file_management
 
 import android.content.Context
 import android.content.IntentSender
+import android.os.Environment
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
@@ -26,7 +28,8 @@ class CloudFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
+        list: List<String>,
+        onItemDone: (totaCount: Int) -> Unit
     ) {
         assetClient.favourite(
             request = AssetFavouriteRequest(
@@ -34,25 +37,32 @@ class CloudFileManager(
                 isFavorite = favourite
             ),
             accessToken = accessToken
-        )
+        ).let {
+            onItemDone(if (it) list.size else -1)
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setTrashed(
         context: Context,
         list: List<String>,
-        trashed: Boolean
+        trashed: Boolean,
+        onItemDone: (totaCount: Int) -> Unit
     ) {
         if (trashed) {
             assetClient.delete(
                 ids = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
-            )
+            ).let {
+                onItemDone(if (it) list.size else -1)
+            }
         } else {
             assetClient.restore(
                 ids = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
-            )
+            ).let {
+                onItemDone(if (it != null && it > 0) list.size else -1)
+            }
         }
     }
 
@@ -96,7 +106,7 @@ class CloudFileManager(
             preserveDate = preserveDate,
             overrideDisplayName = null,
             onItemDone = onItemDone
-        ).fastMap { Uuid.parse(it) }
+        ).fastMap { Uuid.parse(it.immichId!!) }
 
         return albumsClient.removeAssets(
             albumId = Uuid.parse(origin),
@@ -115,24 +125,14 @@ class CloudFileManager(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totalCount: Int) -> Unit
-    ): List<String> = withContext(Dispatchers.IO) {
+    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         return@withContext when (originType) {
             AlbumType.Folder::class -> {
                 copyToLocal(context, list, origin, destination, preserveDate, overrideDisplayName, onItemDone)
             }
 
             AlbumType.Custom::class -> {
-                val ids = list.fastMap { it.id }
-                val mediaItems = customDao.getMediaInAlbum(album = origin).filter {
-                    it.id in ids
-                }
-                val copied = copyToCustom(list, destination, onItemDone)
-
-                mediaItems.mapNotNull { media ->
-                    media.immichId?.takeIf {
-                        media.id.toString() in copied
-                    }
-                }
+                copyToCustom(context, list, origin, destination, onItemDone)
             }
 
             AlbumType.Cloud::class -> {
@@ -145,6 +145,41 @@ class CloudFileManager(
         }
     }
 
+    override suspend fun copyToCustom(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        origin: String,
+        destination: String,
+        onItemDone: (totalCount: Int) -> Unit
+    ) = withContext(Dispatchers.IO) {
+        val pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        if (!pictures.exists()) pictures.mkdirs()
+
+        val download = File(pictures, "Lavender Photos")
+        if (!download.exists()) download.mkdirs()
+
+        val ids = copyToLocal(
+            context = context,
+            list = list,
+            origin = origin,
+            preserveDate = true,
+            destination = download.absolutePath,
+            overrideDisplayName = null,
+            onItemDone = onItemDone
+        )
+
+        customDao.upsertAll(
+            ids.fastMap { item ->
+                CustomItem(
+                    id = item.id,
+                    album = destination
+                )
+            }
+        )
+
+        return@withContext ids
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun copyToLocal(
         context: Context,
@@ -154,7 +189,7 @@ class CloudFileManager(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totalCount: Int) -> Unit
-    ): List<String> = withContext(Dispatchers.IO) {
+    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         val ids = list.fastMap { it.id }
         val mediaItems = customDao.getMediaInAlbum(album = origin).filter {
             it.id in ids
@@ -177,7 +212,10 @@ class CloudFileManager(
                 .buffered()
                 .write(bytes)
 
-            media.immichId
+            GenericFileManager.CopyResult(
+                id = item.id,
+                immichId = media.immichId
+            )
         }
     }
 }
