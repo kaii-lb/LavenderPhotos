@@ -2,7 +2,9 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import android.text.format.DateFormat
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.paging.Pager
@@ -12,13 +14,10 @@ import androidx.room.withTransaction
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.database.entities.SyncTask
-import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.file_management.CloudFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.immichDurationToSecondsOrNull
 import com.kaii.photos.helpers.paging.mapToMedia
@@ -62,7 +61,7 @@ class ImmichRepository(
     private val appContext = context.applicationContext
     private val db = MediaDatabase.getInstance(appContext)
 
-    private val albumsClient = mutableStateOf(
+    private var albumsClient by mutableStateOf(
         AlbumsClient(
             baseUrl = "",
             client = apiClient
@@ -114,7 +113,7 @@ class ImmichRepository(
     init {
         scope.launch {
             params.collectLatest {
-                albumsClient.value =
+                albumsClient =
                     AlbumsClient(
                         baseUrl = it.endpoint,
                         client = apiClient
@@ -131,7 +130,7 @@ class ImmichRepository(
     private suspend fun refetch() {
         val snapshot = params.value
 
-        val info = albumsClient.value.get(
+        val info = albumsClient.get(
             id = Uuid.parse(album.immichId!!),
             accessToken = snapshot.accessToken,
             withoutAssets = false
@@ -184,73 +183,11 @@ class ImmichRepository(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    suspend fun upload(ids: List<Long>) {
-        // TODO
-        // val media = db.mediaDao()
-        //     .getAllMediaDateTaken()
-        //     .first()
-        //     .filter { it.id in ids }
-        //
-        // db.taskDao().insert(
-        //     task = SyncTask(
-        //         dateModified = Clock.System.now().epochSeconds,
-        //         status = if (success) SyncTaskStatus.Synced else SyncTaskStatus.Waiting,
-        //         type = SyncTaskType.Upload,
-        //         itemIds = ids.fastMap { it.toString() }
-        //     )
-        // )
-
-        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
-    }
-
-    suspend fun syncUploads() {
-        val unsynced = db.taskDao().getUnsyncedTasks()
-
-        unsynced.forEach { task ->
-            when (task.type) {
-                SyncTaskType.Upload -> {
-                    uploadAssets(task = task)
-                }
-
-                SyncTaskType.Delete -> {
-                    deleteAssets(ids = task.itemIds)
-                }
-
-                SyncTaskType.Update -> {
-                    TODO()
-                }
-            }
-        }
-    }
-
     suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
         return@withContext db.customDao().countMediaInAlbum(album = album.id)
     }
 
     suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
         return@withContext db.customDao().mediaSize(album = album.id)
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
-    private suspend fun uploadAssets(task: SyncTask) {
-        // TODO
-        // val ids = task.itemIds.fastMap { it.toLong() }
-        // val media = db.mediaDao()
-        //     .getAllMediaDateTaken()
-        //     .first()
-        //     .filter { it.id in ids }
-        //
-        // if (success) {
-        //     db.taskDao().update(task = task.copy(status = SyncTaskStatus.Synced))
-        // }
-
-        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
-    private fun deleteAssets(ids: List<String>) {
-        // TODO: add [SyncTask]
-        TODO("Needs to use the ${CloudFileManager::class.simpleName} implementation")
     }
 }

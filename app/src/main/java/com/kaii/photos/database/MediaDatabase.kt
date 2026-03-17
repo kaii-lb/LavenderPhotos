@@ -17,7 +17,6 @@ import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TagDao
 import com.kaii.photos.database.daos.TaggedItemsDao
-import com.kaii.photos.database.daos.TrashedItemEntityDao
 import com.kaii.photos.database.entities.ColorTypeConverter
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.ExifData
@@ -28,13 +27,11 @@ import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.database.entities.TaggedItem
-import com.kaii.photos.database.entities.TrashedItemEntity
 
 @Database(
     entities =
         [
             MediaStoreData::class,
-            TrashedItemEntity::class,
             FavouritedItemEntity::class,
             SecuredItemEntity::class,
             CustomItem::class,
@@ -43,7 +40,7 @@ import com.kaii.photos.database.entities.TrashedItemEntity
             TaggedItem::class,
             ExifData::class
         ],
-    version = 15,
+    version = 16,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -53,14 +50,14 @@ import com.kaii.photos.database.entities.TrashedItemEntity
         AutoMigration(from = 10, to = 11, spec = DropOldCustomTable::class),
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class),
-        AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class)
+        AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class),
+        AutoMigration(from = 15, to = 16, spec = DropTrashTableSpec::class)
     ]
 )
 @TypeConverters(ColorTypeConverter::class)
 abstract class MediaDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
     abstract fun favouritesDao(): FavouritedItemEntityDao
-    abstract fun trashedItemEntityDao(): TrashedItemEntityDao
     abstract fun securedItemEntityDao(): SecuredMediaItemEntityDao
     abstract fun customDao(): CustomEntityDao
     abstract fun taskDao(): SyncTaskDao
@@ -119,3 +116,6 @@ class DropIntAlbumCustomTable : AutoMigrationSpec
 
 @DeleteColumn(tableName = "media", columnName = "immichThumbnail")
 class DropImmichThumbnailColumn : AutoMigrationSpec
+
+@DeleteTable(tableName = "TrashedItemEntity")
+class DropTrashTableSpec : AutoMigrationSpec

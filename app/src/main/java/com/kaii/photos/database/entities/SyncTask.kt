@@ -17,6 +17,7 @@ enum class SyncTaskStatus {
 @Serializable
 enum class SyncTaskType {
     Delete,
+    Restore,
     Upload,
     Update
 }
@@ -28,9 +29,11 @@ data class SyncTask(
     val dateModified: Long,
     val status: SyncTaskStatus,
     val type: SyncTaskType,
+    val destination: String?,
     val itemIds: List<String>
 )
 
+@Suppress("unused")
 class SyncTaskConverters {
     @TypeConverter
     fun fromIds(ids: List<String>) = Json.encodeToString(ids)

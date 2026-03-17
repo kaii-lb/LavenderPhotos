@@ -5,7 +5,11 @@ import android.content.IntentSender
 import android.os.Environment
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.SyncTask
+import com.kaii.photos.database.entities.SyncTaskStatus
+import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
@@ -15,13 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.reflect.KClass
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class CloudFileManager(
+    override val customDao: CustomEntityDao,
+    override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val customDao: CustomEntityDao,
     override val accessToken: String
 ) : GenericFileManager {
     @OptIn(ExperimentalUuidApi::class)
@@ -50,18 +56,52 @@ class CloudFileManager(
         onItemDone: (totaCount: Int) -> Unit
     ) {
         if (trashed) {
+            val taskId = syncTaskDao.insert(
+                task = SyncTask(
+                    dateModified = Clock.System.now().epochSeconds,
+                    status = SyncTaskStatus.Processing,
+                    type = SyncTaskType.Delete,
+                    destination = "",
+                    itemIds = list.fastMap { it }
+                )
+            )
+
             assetClient.delete(
                 ids = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
+
+                syncTaskDao.updateTaskStatus(
+                    id = taskId.toInt(),
+                    status =
+                        if (it) SyncTaskStatus.Synced
+                        else SyncTaskStatus.Waiting
+                )
             }
         } else {
+            val taskId = syncTaskDao.insert(
+                task = SyncTask(
+                    dateModified = Clock.System.now().epochSeconds,
+                    status = SyncTaskStatus.Processing,
+                    type = SyncTaskType.Restore,
+                    destination = "",
+                    itemIds = list.fastMap { it }
+                )
+            )
+
             assetClient.restore(
                 ids = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
             ).let {
                 onItemDone(if (it != null && it > 0) list.size else -1)
+
+                syncTaskDao.updateTaskStatus(
+                    id = taskId.toInt(),
+                    status =
+                        if (it != null && it > 0) SyncTaskStatus.Synced
+                        else SyncTaskStatus.Waiting
+                )
             }
         }
     }

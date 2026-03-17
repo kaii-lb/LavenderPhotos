@@ -8,7 +8,11 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapIndexedNotNull
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.SyncTask
+import com.kaii.photos.database.entities.SyncTaskStatus
+import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
@@ -27,6 +31,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import java.io.File
 import kotlin.reflect.KClass
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -43,6 +48,7 @@ interface GenericFileManager {
     )
 
     val customDao: CustomEntityDao
+    val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
     val accessToken: String
@@ -231,6 +237,17 @@ interface GenericFileManager {
         onItemDone(exists.size)
 
         val missing = assets.fastFilter { it.first.id.toString() !in exists }
+
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Upload,
+                destination = destination,
+                itemIds = missing.fastMap { it.second.toString() }
+            )
+        )
+
         val uploaded = missing.fastMapIndexedNotNull { index, item ->
             val assetData = File(item.first.absolutePath).inputStream().buffered().readBytes()
 
@@ -256,6 +273,13 @@ interface GenericFileManager {
                 immichId = resp?.id
             )
         }
+
+        syncTaskDao.updateTaskStatus(
+            id = taskId.toInt(),
+            status =
+                if (missing.size == uploaded.size) SyncTaskStatus.Synced
+                else SyncTaskStatus.Waiting
+        )
 
         val total = media.mapNotNull { item ->
             CopyResult(

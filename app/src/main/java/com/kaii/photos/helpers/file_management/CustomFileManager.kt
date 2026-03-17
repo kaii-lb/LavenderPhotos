@@ -12,6 +12,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -31,6 +32,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 class CustomFileManager(
     override val customDao: CustomEntityDao,
+    override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
     override val accessToken: String
