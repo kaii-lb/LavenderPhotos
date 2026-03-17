@@ -316,10 +316,6 @@
     <string name="permissions_do_not_trash_desc">Natychmiastowe i trwałe usuwanie elementów bez przenoszenia ich najpierw do kosza</string>
     <string name="media">Multimedia</string>
     <string name="media_move_copy_list_search_bar">Wyszukaj album</string>
-    <string name="media_copy_snackbar_title">Kopiowanie multimediów…</string>
-    <string name="media_move_snackbar_title">Przenoszenie multimediów…</string>
-    <string name="media_delete_snackbar_title">Usuwanie multimediów…</string>
-    <string name="media_restore_snackbar_title">Przywracanie multimediów…</string>
     <string name="media_operate_snackbar_body">Wykonano %1$d z %2$d</string>
     <string name="media_tools">Narzędzia</string>
     <string name="media_information">Informacja</string>
@@ -480,7 +476,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="favourites_migration_declined">Uprawnienia odrzucone!</string>
     <string name="favourites_migration_declined_desc">Lavender Photos nie może przenieść Twoich ulubionych ze starej wersji, jeśli nie udzielisz mu na to zgody! Oznacza to utratę wcześniej dodanych do ulubionych elementów.</string>
     <string name="permissions_grant_long">Udziel pozwolenia</string>
-    <string name="exif_enter_time">Wprowadź czas</string>
     <string name="exif_date_changed_failed">Nie udało się zmienić daty</string>
     <string name="favourites_migration_none">Brak elementów do migracji</string>
     <string name="privacy_scroll_mode">Tryb Prywatności</string>

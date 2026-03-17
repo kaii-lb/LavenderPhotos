@@ -81,6 +81,7 @@ interface GenericFileManager {
         context: Context,
         list: List<String>,
         trashed: Boolean,
+        albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     )
 
@@ -90,9 +91,9 @@ interface GenericFileManager {
         newName: String
     ): IntentSender?
 
-    suspend fun renameDirectory(
+    suspend fun renameAlbum(
         context: Context,
-        path: String,
+        album: AlbumType,
         newName: String,
     )
 

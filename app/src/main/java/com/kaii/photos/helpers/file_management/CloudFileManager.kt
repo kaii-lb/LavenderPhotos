@@ -11,6 +11,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -48,11 +49,13 @@ class CloudFileManager(
         }
     }
 
+    /** @param albumId should be immich id of this album */
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setTrashed(
         context: Context,
         list: List<String>,
         trashed: Boolean,
+        albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ) {
         if (trashed) {
@@ -61,13 +64,14 @@ class CloudFileManager(
                     dateModified = Clock.System.now().epochSeconds,
                     status = SyncTaskStatus.Processing,
                     type = SyncTaskType.Delete,
-                    destination = "",
+                    destination = albumId,
                     itemIds = list.fastMap { it }
                 )
             )
 
-            assetClient.delete(
-                ids = list.fastMap { Uuid.parse(it) },
+            albumsClient.removeAssets(
+                albumId = Uuid.parse(albumId!!),
+                assetIds = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
@@ -85,21 +89,22 @@ class CloudFileManager(
                     dateModified = Clock.System.now().epochSeconds,
                     status = SyncTaskStatus.Processing,
                     type = SyncTaskType.Restore,
-                    destination = "",
+                    destination = albumId,
                     itemIds = list.fastMap { it }
                 )
             )
 
-            assetClient.restore(
-                ids = list.fastMap { Uuid.parse(it) },
+            albumsClient.addAssets(
+                albumId = Uuid.parse(albumId!!),
+                assetIds = list.fastMap { Uuid.parse(it) },
                 accessToken = accessToken
             ).let {
-                onItemDone(if (it != null && it > 0) list.size else -1)
+                onItemDone(if (it) list.size else -1)
 
                 syncTaskDao.updateTaskStatus(
                     id = taskId.toInt(),
                     status =
-                        if (it != null && it > 0) SyncTaskStatus.Synced
+                        if (it) SyncTaskStatus.Synced
                         else SyncTaskStatus.Waiting
                 )
             }
@@ -115,16 +120,23 @@ class CloudFileManager(
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun renameDirectory(
+    override suspend fun renameAlbum(
         context: Context,
-        path: String,
+        album: AlbumType,
         newName: String
     ) {
         albumsClient.rename(
-            id = Uuid.parse(path),
+            id = Uuid.parse(album.immichId!!),
             newName = newName,
             accessToken = accessToken
-        )
+        ).let {
+            if (it) {
+                context.appModule.settings.albums.edit(
+                    id = album.id,
+                    newInfo = (album as AlbumType.Folder).copy(name = newName)
+                )
+            }
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)

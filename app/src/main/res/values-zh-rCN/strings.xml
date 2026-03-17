@@ -322,10 +322,6 @@
     <string name="permissions_do_not_trash">不使用回收站</string>
     <string name="permissions_do_not_trash_desc">直接永久删除，不经过回收站</string>
     <string name="media_move_copy_list_search_bar">搜索相册</string>
-    <string name="media_copy_snackbar_title">正在复制媒体…</string>
-    <string name="media_move_snackbar_title">正在移动媒体…</string>
-    <string name="media_delete_snackbar_title">正在删除媒体…</string>
-    <string name="media_restore_snackbar_title">正在恢复媒体文件…</string>
     <string name="media_operate_snackbar_body">已处理 %1$d 项，共 %2$d 项</string>
     <string name="media_tools">工具</string>
     <string name="media_information">信息</string>
@@ -480,7 +476,6 @@
     <string name="look_and_feel_date_format_filename">文件名</string>
     <string name="look_and_feel_date_format_date_taken">拍摄日期</string>
     <string name="look_and_feel_date_format_datetime_taken">拍摄日期和时间</string>
-    <string name="exif_enter_time">输入时间</string>
     <string name="exif_date_changed_failed">更改日期失败</string>
     <string name="favourites_migration_none">没有可迁移的项目</string>
 </resources>

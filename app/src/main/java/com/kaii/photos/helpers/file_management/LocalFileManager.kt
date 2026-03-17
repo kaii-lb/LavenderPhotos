@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
 import android.provider.DocumentsContract
 import android.provider.MediaStore
@@ -14,10 +15,14 @@ import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
+import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
@@ -25,6 +30,7 @@ import com.kaii.photos.mediastore.insertMedia
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.reflect.KClass
@@ -71,8 +77,13 @@ class LocalFileManager(
         context: Context,
         list: List<String>,
         trashed: Boolean,
+        albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (albumId != null) {
+            throw IllegalArgumentException("${LocalFileManager::class.simpleName} should not and does not handle per album media deletion!")
+        }
+
         val contentResolver = context.contentResolver
 
         val currentTimeMillis = System.currentTimeMillis()
@@ -142,26 +153,78 @@ class LocalFileManager(
         }
     }
 
-    /** @param path should be of the form $basePath:relativePath */
-    override suspend fun renameDirectory(
+    override suspend fun renameAlbum(
         context: Context,
-        path: String,
+        album: AlbumType,
         newName: String
     ) {
-        try {
-            val dir =
-                DocumentsContract.buildTreeDocumentUri(
-                    EXTERNAL_DOCUMENTS_AUTHORITY,
-                    path
+        if (album is AlbumType.Folder && album.paths.size == 1) {
+            val basePath = album.paths.first().toBasePath()
+            val currentVolumes = MediaStore.getExternalVolumeNames(context)
+            val volumeName =
+                if (basePath == baseInternalStorageDirectory) "primary"
+                else currentVolumes.find {
+                    val possible =
+                        basePath.replace("/storage/", "").removeSuffix("/")
+                    it == possible || it == possible.lowercase()
+                }
+
+            val relativePath = album.paths.first().toRelativePath(true)
+            try {
+                val dir =
+                    DocumentsContract.buildTreeDocumentUri(
+                        EXTERNAL_DOCUMENTS_AUTHORITY,
+                        "$volumeName:$relativePath"
+                    )
+
+                Log.d(TAG, "Dir is $dir")
+
+                val newDirectory = DocumentFile.fromTreeUri(context, dir)
+                newDirectory?.renameTo(newName)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Couldn't rename directory $volumeName:$relativePath to $newName")
+                e.printStackTrace()
+            }
+
+            val newInfo = album.copy(
+                name = newName,
+                paths = setOf(album.paths.first().replace(album.name, newName))
+            )
+
+            val albums = context.appModule.settings.albums.get().first()
+            albums.filterIsInstance<AlbumType.Folder>().filter { child ->
+                child.paths.any { it.startsWith(album.paths.first()) }
+            }.forEach { child ->
+                context.appModule.settings.albums.edit(
+                    child.id,
+                    child.copy(
+                        paths = child.paths.map {
+                            if (it.startsWith(album.paths.first())) it.replace(album.paths.first(), newInfo.paths.first())
+                            else it
+                        }.toSet()
+                    )
                 )
+            }
 
-            Log.d(TAG, "Dir is $dir")
+            context.appModule.settings.albums.edit(album.id, newInfo)
 
-            val newDirectory = DocumentFile.fromTreeUri(context, dir)
-            newDirectory?.renameTo(newName)
-        } catch (e: Throwable) {
-            Log.e(TAG, "Couldn't rename directory $path to $newName")
-            e.printStackTrace()
+            try {
+                context.contentResolver.releasePersistableUriPermission(
+                    context.getExternalStorageContentUriFromAbsolutePath(
+                        absolutePath = newInfo.paths.first(),
+                        trimDoc = true
+                    ),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            } catch (e: Throwable) {
+                Log.d(TAG, "Couldn't release permission for ${newInfo.paths.first()}")
+                e.printStackTrace()
+            }
+        } else {
+            context.appModule.settings.albums.edit(
+                id = album.id,
+                newInfo = (album as AlbumType.Folder).copy(name = newName)
+            )
         }
     }
 

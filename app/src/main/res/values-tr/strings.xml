@@ -845,10 +845,6 @@
     <string name="media_confirm">Onayla</string>
     <string name="media_okay">Tamam</string>
     <string name="media_move_copy_list_search_bar">Bir albüm ara</string>
-    <string name="media_copy_snackbar_title">Medya kopyalanıyor…</string>
-    <string name="media_move_snackbar_title">Medya taşınıyor…</string>
-    <string name="media_delete_snackbar_title">Medya siliniyor…</string>
-    <string name="media_restore_snackbar_title">Medya geri yükleniyor…</string>
     <string name="media_operate_snackbar_body">%2$d üzerinden %1$d tamamlandı</string>
     <string name="media_tools">Araçlar</string>
     <string name="media_information">Bilgi</string>

@@ -39,8 +39,8 @@ class TrashRepository(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,
         override val format: DisplayDateFormat,
-        override val accessToken: String
-    ) : RoomQueryParams(sortMode, format, accessToken)
+        override val info: ImmichBasicInfo
+    ) : RoomQueryParams(sortMode, format, info)
 
     private val cancellationSignal = CancellationSignal()
     private val dataSource =
@@ -56,9 +56,9 @@ class TrashRepository(
     private val params = combine(info, sortMode, format, items) { info, sortMode, format, items ->
         Params(
             items = items,
-            accessToken = info.accessToken,
             sortMode = sortMode,
-            format = format
+            format = format,
+            info = info
         )
     }
 
@@ -80,7 +80,7 @@ class TrashRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = { ListPagingSource(media = params.items) }
-        ).flow.mapToMedia(accessToken = params.accessToken)
+        ).flow.mapToMedia(accessToken = params.info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

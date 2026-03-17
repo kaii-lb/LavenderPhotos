@@ -48,8 +48,8 @@ class SecureRepository(
         val items: List<PhotoLibraryUIModel.SecuredMedia>,
         override val sortMode: MediaItemSortMode,
         override val format: DisplayDateFormat,
-        override val accessToken: String
-    ) : RoomQueryParams(sortMode, format, accessToken)
+        override val info: ImmichBasicInfo
+    ) : RoomQueryParams(sortMode, format, info)
 
     private val appContext = context.applicationContext
     private val dao = MediaDatabase.getInstance(appContext).securedItemEntityDao()
@@ -76,18 +76,18 @@ class SecureRepository(
     private val params = combine(info, sortMode, format, items) { info, sortMode, format, items ->
         Params(
             items = items,
-            accessToken = info.accessToken,
             sortMode = sortMode,
-            format = format
+            format = format,
+            info = info
         )
     }.stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,
         initialValue = Params(
             items = emptyList(),
-            accessToken = "",
             sortMode = MediaItemSortMode.DateTaken,
-            format = DisplayDateFormat.Default
+            format = DisplayDateFormat.Default,
+            info = ImmichBasicInfo.Empty
         )
     )
 
@@ -107,7 +107,7 @@ class SecureRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
-        ).flow.mapToSecuredMedia(accessToken = params.accessToken)
+        ).flow.mapToSecuredMedia(accessToken = params.info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -188,7 +188,7 @@ class SecureRepository(
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
                 item = item,
-                accessToken = params.value.accessToken,
+                accessToken = params.value.info.accessToken,
                 bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
             )
 

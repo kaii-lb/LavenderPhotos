@@ -1,22 +1,40 @@
 package com.kaii.photos.repositories
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.file_management.GenericFileManager
+import com.kaii.photos.helpers.file_management.LocalFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FavouritesRepository(
-    dao: MediaDao,
+    mediaDao: MediaDao,
+    customDao: CustomEntityDao,
+    syncTaskDao: SyncTaskDao,
+    client: ApiClient,
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
@@ -24,11 +42,25 @@ class FavouritesRepository(
 ) {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
-            accessToken = info.accessToken,
             sortMode = sortMode,
-            format = format
+            format = format,
+            info = info
         )
     }
+
+    private var fileManager = LocalFileManager(
+        customDao = customDao,
+        syncTaskDao = syncTaskDao,
+        assetClient = AssetsClient(
+            baseUrl = "",
+            client = client
+        ),
+        albumsClient = AlbumsClient(
+            baseUrl = "",
+            client = client
+        ),
+        accessToken = ""
+    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow = params.flatMapLatest { params ->
@@ -40,11 +72,11 @@ class FavouritesRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) dao.getPagedFavouritesDateModified()
-                else dao.getPagedFavouritesDateTaken()
+                if (params.sortMode.isDateModified) mediaDao.getPagedFavouritesDateModified()
+                else mediaDao.getPagedFavouritesDateTaken()
             }
         ).flow
-            .mapToMedia(accessToken = params.accessToken)
+            .mapToMedia(accessToken = params.info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,4 +86,62 @@ class FavouritesRepository(
             format = params.format
         )
     }.cachedIn(scope)
+
+    init {
+        scope.launch {
+            params.mapLatest { it.info }
+                .distinctUntilChanged()
+                .collectLatest { info ->
+                    fileManager = LocalFileManager(
+                        customDao = customDao,
+                        syncTaskDao = syncTaskDao,
+                        assetClient = AssetsClient(
+                            baseUrl = info.endpoint,
+                            client = client
+                        ),
+                        albumsClient = AlbumsClient(
+                            baseUrl = info.endpoint,
+                            client = client
+                        ),
+                        accessToken = info.accessToken
+                    )
+                }
+        }
+    }
+
+    fun allowedAlbumTypesFor(
+        action: GenericFileManager.Action
+    ) = fileManager.allowedAlbumTypesFor(
+        action = action,
+        current = AlbumType.Folder::class
+    )
+
+    suspend fun copy(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        destination: String,
+        preserveDate: Boolean,
+        overrideDisplayName: ((displayName: String) -> String)?,
+        onItemDone: (totaCount: Int) -> Unit
+    ) = fileManager.copyItems(context, list, "", AlbumType.Folder::class, destination, preserveDate, overrideDisplayName, onItemDone)
+
+    fun renameItem(
+        context: Context,
+        uri: String,
+        newName: String
+    ) = fileManager.renameItem(context, uri, newName)
+
+    suspend fun setTrashed(
+        context: Context,
+        list: List<String>,
+        trashed: Boolean,
+        onItemDone: (totaCount: Int) -> Unit
+    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
+
+    suspend fun setFavourite(
+        context: Context,
+        favourite: Boolean,
+        list: List<String>,
+        onItemDone: (totaCount: Int) -> Unit
+    ) = fileManager.setFavourite(context, favourite, list, onItemDone)
 }

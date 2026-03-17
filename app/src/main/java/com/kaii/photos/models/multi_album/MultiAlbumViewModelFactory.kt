@@ -12,7 +12,7 @@ class MultiAlbumViewModelFactory(
 ) : ViewModelProvider.NewInstanceFactory() {
 	override fun <T : ViewModel> create(modelClass: Class<T>): T {
 		if (modelClass == MultiAlbumViewModel::class.java) {
-			return MultiAlbumViewModel(context, album) as T
+			return MultiAlbumViewModel(album, context) as T
 		}
 		throw IllegalArgumentException("${MultiAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MultiAlbumViewModel::class.simpleName}!! This should never happen!!")
 	}

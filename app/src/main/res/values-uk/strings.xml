@@ -380,10 +380,6 @@
     <string name="permissions_explanation">Пояснення дозволу</string>
     <string name="media_restore_processing_desc">Будь ласка, зачекайте, поки обробляється медіафайл</string>
     <string name="media_move_copy_list_search_bar">Пошук альбому</string>
-    <string name="media_copy_snackbar_title">Копіювання медіафайлів…</string>
-    <string name="media_move_snackbar_title">Переміщення медіафайлів…</string>
-    <string name="media_delete_snackbar_title">Видалення медіафайлів…</string>
-    <string name="media_restore_snackbar_title">Відновлення медіафайлів…</string>
     <string name="media_operate_snackbar_body">Виконано %1$d з %2$d</string>
     <string name="media_tools">Інструменти</string>
     <string name="media_information">Інформація</string>

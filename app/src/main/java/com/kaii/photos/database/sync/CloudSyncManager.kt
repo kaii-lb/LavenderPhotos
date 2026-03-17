@@ -64,6 +64,7 @@ class CloudSyncManager(
             context = context,
             list = task.itemIds,
             trashed = task.type == SyncTaskType.Delete,
+            albumId = task.destination,
             onItemDone = {
                 // TODO: update progress indicator around pfp?
             }

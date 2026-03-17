@@ -890,10 +890,6 @@
     <string name="permissions_explanation">Пояснение к разрешению</string>
     <string name="media_restore_processing_desc">Пожалуйста, подождите, пока медиафайлы обрабатываются</string>
     <string name="media_move_copy_list_search_bar">Поиск альбома</string>
-    <string name="media_copy_snackbar_title">Копирование медиафайлов…</string>
-    <string name="media_move_snackbar_title">Перемещение медиафайлов…</string>
-    <string name="media_delete_snackbar_title">Удаление медиафайлов…</string>
-    <string name="media_restore_snackbar_title">Восстановление медиафайлов…</string>
     <string name="media_operate_snackbar_body">%1$d из %2$d выполнено</string>
     <string name="media_tools">Инструменты</string>
     <string name="media_information">Информация</string>
@@ -1004,7 +1000,6 @@
     <string name="favourites_migration_started">Перенос начат!</string>
     <string name="export_location">Расположение</string>
     <string name="favourites_migration_none">Нет объектов для переноса</string>
-    <string name="exif_enter_time">время инициализации</string>
     <string name="privacy_scroll_mode">Приватный режим</string>
     <string name="privacy_scroll_mode_enabled">Приватный режим: Включен</string>
     <string name="privacy_scroll_mode_disabled">Приватный режим: Выключен</string>

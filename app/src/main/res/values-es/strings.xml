@@ -845,10 +845,6 @@
     <string name="permissions_do_not_trash">No usar la Papelera</string>
     <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
     <string name="media_move_copy_list_search_bar">Buscar un álbum</string>
-    <string name="media_copy_snackbar_title">Copiando medios…</string>
-    <string name="media_move_snackbar_title">Moviendo medios…</string>
-    <string name="media_delete_snackbar_title">Borrando medios…</string>
-    <string name="media_restore_snackbar_title">Restaurando medios…</string>
     <string name="media_operate_snackbar_body">%1$d de %2$d hecho</string>
     <string name="media_tools">Herramientas</string>
     <string name="media_information">Información</string>

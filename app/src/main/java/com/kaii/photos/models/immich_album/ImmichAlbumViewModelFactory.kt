@@ -12,7 +12,7 @@ class ImmichAlbumViewModelFactory(
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == ImmichAlbumViewModel::class.java) {
-            return ImmichAlbumViewModel(context, album) as T
+            return ImmichAlbumViewModel(album, context) as T
         }
         throw IllegalArgumentException("${ImmichAlbumViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${ImmichAlbumViewModel::class.simpleName}!! This should never happen!!")
     }

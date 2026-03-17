@@ -373,10 +373,6 @@
     <string name="media_confirm">Konfirmasi</string>
     <string name="media_okay">Oke</string>
     <string name="media_move_copy_list_search_bar">Cari album</string>
-    <string name="media_copy_snackbar_title">Menyalin media…</string>
-    <string name="media_move_snackbar_title">Memindahkan media…</string>
-    <string name="media_delete_snackbar_title">Menghapus media…</string>
-    <string name="media_restore_snackbar_title">Memulihkan media…</string>
     <string name="media_operate_snackbar_body">%1$d dari %2$d selesai</string>
     <string name="media_tools">Alat</string>
     <string name="media_information">Informasi</string>
@@ -482,7 +478,6 @@
     <string name="exif_mp">MegaPiksel:</string>
     <string name="exif_res">Resolusi:</string>
     <string name="exif_size">Ukuran:</string>
-    <string name="exif_enter_time">Masukkan Waktu</string>
     <string name="exif_date_changed_failed">Gagal mengubah tanggal</string>
     <string name="privacy_scroll_mode">Mode Privasi</string>
     <string name="privacy_scroll_mode_enabled">Mode Privasi: Diaktifkan</string>

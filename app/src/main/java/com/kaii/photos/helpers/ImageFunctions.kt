@@ -12,8 +12,6 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import android.util.Log
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -34,8 +32,6 @@ import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -97,20 +93,6 @@ suspend fun setTrashedOnPhotoList(
         put(MediaColumns.DATE_MODIFIED, currentTimeMillis)
     }
 
-    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
-    val percentage = mutableFloatStateOf(0f)
-
-    LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvent.ProgressEvent(
-            message =
-                if (trashed) context.resources.getString(R.string.media_delete_snackbar_title)
-                else context.resources.getString(R.string.media_restore_snackbar_title),
-            body = body,
-            icon = R.drawable.content_paste,
-            percentage = percentage
-        )
-    )
-
     try {
         setFavouriteOnMedia(
             context = context,
@@ -127,14 +109,11 @@ suspend fun setTrashedOnPhotoList(
             if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
             else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
 
-        list.forEachIndexed { index, uri ->
+        list.forEach { uri ->
             // order is very important!
             // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
             File(map[uri]!!).setLastModified(currentTimeMillis)
             contentResolver.update(uri, trashedValues, null)
-
-            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
-            percentage.floatValue = (index + 1f) / list.size
         }
     } catch (e: Throwable) {
         Log.e(TAG, "Setting trashed $trashed on photo list failed.")
@@ -461,24 +440,12 @@ suspend fun moveImageListToPath(
 ) = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
-    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
-    val percentage = mutableFloatStateOf(0f)
-
-    LavenderSnackbarController.pushEvent(
-        LavenderSnackbarEvent.ProgressEvent(
-            message = context.resources.getString(R.string.media_move_snackbar_title),
-            body = body,
-            icon = R.drawable.cut,
-            percentage = percentage
-        )
-    )
-
     val items = getMediaStoreDataForIds(
         ids = list.fastMap { it.id }.toSet(),
         context = context
     )
 
-    items.forEachIndexed { index, media ->
+    items.forEach { media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
@@ -490,14 +457,9 @@ suspend fun moveImageListToPath(
                 contentResolver.copyUriToUri(original, new)
             }
         )?.let {
-            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
-            percentage.floatValue = (index + 1f) / list.size
-
             contentResolver.delete(media.uri.toUri(), null)
         }
     }
-
-    percentage.floatValue = 1f
 }
 
 /** @param destination where to copy said files to, should be relative
@@ -513,27 +475,13 @@ suspend fun copyImageListToPath(
 ): MutableList<Uri> = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
-    val body = mutableStateOf(context.resources.getString(R.string.media_operate_snackbar_body, 0, list.size))
-    val percentage = mutableFloatStateOf(0f)
-
-    if (showProgressSnackbar) {
-        LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvent.ProgressEvent(
-                message = context.resources.getString(R.string.media_copy_snackbar_title),
-                body = body,
-                icon = R.drawable.trash,
-                percentage = percentage
-            )
-        )
-    }
-
     val items = getMediaStoreDataForIds(
         ids = list.fastMap { it.id }.toSet(),
         context = context
     )
 
     val newUris = mutableListOf<Uri>()
-    items.forEachIndexed { index, media ->
+    items.forEach { media ->
         contentResolver.insertMedia(
             context = context,
             media = media,
@@ -547,14 +495,9 @@ suspend fun copyImageListToPath(
                 newUris.add(new)
             }
         )?.let {
-            body.value = context.resources.getString(R.string.media_operate_snackbar_body, index + 1, list.size)
-            percentage.floatValue = (index + 1f) / list.size
-
             onSingleItemDone(media)
         }
     }
-
-    percentage.floatValue = 1f
 
     return@withContext newUris
 }

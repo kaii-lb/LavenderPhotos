@@ -1,22 +1,30 @@
 package com.kaii.photos.models.multi_album
 
 import android.content.Context
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.MediaRepository
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class MultiAlbumViewModel(
-    context: Context,
-    album: AlbumType.Folder
+    private val album: AlbumType.Folder,
+    context: Context
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -122,9 +130,14 @@ class MultiAlbumViewModel(
         initialValue = false
     )
 
+    private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo =
         MediaRepository(
-            dao = MediaDatabase.getInstance(context.applicationContext).mediaDao(),
+            mediaDao = db.mediaDao(),
+            customDao = db.customDao(),
+            syncTaskDao = db.taskDao(),
+            client = context.applicationContext.appModule.apiClient,
+            album = album,
             scope = viewModelScope,
             initialAlbum = album,
             info = immichInfo,
@@ -156,6 +169,162 @@ class MultiAlbumViewModel(
 
     fun removeAlbum(id: String) {
         settings.albums.remove(id)
+    }
+
+    fun allowedAlbumTypesFor(
+        action: GenericFileManager.Action
+    ) = repo.allowedAlbumTypesFor(action)
+
+    fun copy(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        targetAlbumId: String,
+        overrideDisplayName: ((displayName: String) -> String)?
+    ) {
+        viewModelScope.launch {
+            val percentage = mutableFloatStateOf(0f)
+            val body = mutableStateOf(
+                context.resources.getString(
+                    R.string.media_copy_snackbar_body,
+                    0, list.size
+                )
+            )
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.ProgressEvent(
+                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    body = body,
+                    icon = R.drawable.content_paste,
+                    percentage = percentage
+                )
+            )
+
+            repo.copy(context, list, targetAlbumId, preserveDate.value, overrideDisplayName) {
+                percentage.floatValue = it.toFloat() / list.size
+                body.value = context.resources.getString(
+                    R.string.media_copy_snackbar_body,
+                    it, list.size
+                )
+            }
+        }
+    }
+
+    fun move(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        targetAlbumId: String
+    ) {
+        viewModelScope.launch {
+            val percentage = mutableFloatStateOf(0f)
+            val body = mutableStateOf(
+                context.resources.getString(
+                    R.string.media_move_snackbar_body,
+                    0, list.size
+                )
+            )
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.ProgressEvent(
+                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    body = body,
+                    icon = R.drawable.cut,
+                    percentage = percentage
+                )
+            )
+
+            repo.move(context, list, targetAlbumId, preserveDate.value) {
+                percentage.floatValue = it.toFloat() / list.size
+                body.value = context.resources.getString(
+                    R.string.media_move_snackbar_body,
+                    it, list.size
+                )
+            }
+        }
+    }
+
+    fun renameItem(
+        context: Context,
+        uri: String,
+        newName: String
+    ) {
+        viewModelScope.launch {
+            repo.renameItem(context, uri, newName)
+        }
+    }
+
+    fun renameAlbum(
+        context: Context,
+        newName: String
+    ) {
+        viewModelScope.launch {
+            repo.renameDirectory(context, newName)
+        }
+    }
+
+    fun setTrashed(
+        context: Context,
+        list: List<String>,
+        trashed: Boolean
+    ) {
+        viewModelScope.launch {
+            val percentage = mutableFloatStateOf(0f)
+            val body = mutableStateOf(
+                context.resources.getString(
+                    R.string.media_delete_snackbar_body,
+                    0, list.size
+                )
+            )
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.ProgressEvent(
+                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    body = body,
+                    icon = R.drawable.delete,
+                    percentage = percentage
+                )
+            )
+
+            repo.setTrashed(context, list, trashed) {
+                percentage.floatValue = it.toFloat() / list.size
+                body.value = context.resources.getString(
+                    R.string.media_delete_snackbar_body,
+                    it, list.size
+                )
+            }
+        }
+    }
+
+    fun setFavourite(
+        context: Context,
+        favourite: Boolean,
+        list: List<String>
+    ) {
+        viewModelScope.launch {
+            val percentage = mutableFloatStateOf(0f)
+            val body = mutableStateOf(
+                context.resources.getString(
+                    R.string.media_restore_snackbar_body,
+                    0, list.size
+                )
+            )
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.ProgressEvent(
+                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    body = body,
+                    icon = R.drawable.untrash,
+                    percentage = percentage
+                )
+            )
+
+            repo.setFavourite(context, favourite, list) {
+                percentage.floatValue = it.toFloat() / list.size
+                body.value = context.resources.getString(
+                    R.string.media_restore_snackbar_body,
+                    it, list.size
+                )
+            }
+        }
     }
 }
 

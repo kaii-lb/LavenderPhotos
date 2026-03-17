@@ -287,10 +287,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Okay</string>
     <string name="media_move_copy_list_search_bar">Procurar por um álbum</string>
-    <string name="media_copy_snackbar_title">Copiando mídia…</string>
-    <string name="media_move_snackbar_title">Movendo mídia…</string>
-    <string name="media_delete_snackbar_title">Apagando mídia…</string>
-    <string name="media_restore_snackbar_title">Restaurando mídia…</string>
     <string name="media_operate_snackbar_body">%1$d de %2$d concluído</string>
     <string name="media_tools">Ferramentas</string>
     <string name="media_information">Informação</string>
