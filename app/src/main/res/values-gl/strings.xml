@@ -539,4 +539,9 @@
     <string name="album_group_delete">Eliminar este grupo?</string>
     <string name="album_group_item_count">Sub-álbums:</string>
     <string name="album_group_info">Info do grupo de álbums</string>
+    <string name="settings_storage_export_quality">Calidade de exportación do editor: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Valores altos crean imaxes de maior tamaño.</string>
+    <string name="next">Seguinte</string>
+    <string name="error">Erro!</string>
+    <string name="exif_date_changer_go_back">Volver ao selector de data</string>
 </resources>
