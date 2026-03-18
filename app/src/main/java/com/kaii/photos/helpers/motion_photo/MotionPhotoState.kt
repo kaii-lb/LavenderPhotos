@@ -19,10 +19,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.compose.videoplayer.createExoPlayer
 import com.kaii.photos.compose.videoplayer.getExoPlayerLifecycleObserver
+import com.kaii.photos.database.entities.MediaStoreData
 
 @OptIn(UnstableApi::class)
 class MotionPhotoState(
     uri: Uri,
+    accessToken: String,
     private val context: Context,
     private val lifecycle: Lifecycle
 ) : RememberObserver {
@@ -35,6 +37,8 @@ class MotionPhotoState(
 
     val exoPlayer = createExoPlayer(
         videoSource = uri,
+        item = MediaStoreData.dummyItem.copy(uri = uri.toString()),
+        accessToken = accessToken,
         context = context,
         currentVideoPosition = currentVideoPosition,
         duration = duration,
@@ -89,13 +93,14 @@ class MotionPhotoState(
 }
 
 @Composable
-fun rememberMotionPhotoState(uri: Uri): MotionPhotoState {
+fun rememberMotionPhotoState(uri: Uri, accessToken: String): MotionPhotoState {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    return remember {
+    return remember(uri, accessToken) {
         MotionPhotoState(
             uri = uri,
+            accessToken = accessToken,
             context = context,
             lifecycle = lifecycleOwner.lifecycle
         )

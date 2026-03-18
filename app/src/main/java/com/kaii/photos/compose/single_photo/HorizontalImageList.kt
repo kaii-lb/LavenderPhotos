@@ -46,6 +46,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
+import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.EncryptionManager
@@ -160,9 +161,9 @@ fun HorizontalImageList(
                     }
                 }
 
-                // TODO: handle immich
                 VideoPlayer(
                     item = media.item,
+                    accessToken = media.accessToken ?: "",
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = videoAutoplay,
                     scrollState = scrollState,
@@ -262,7 +263,7 @@ fun HorizontalImageList(
 
                 if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
-                        state = rememberMotionPhotoState(uri = motionPhoto.uri),
+                        state = rememberMotionPhotoState(uri = motionPhoto.uri, accessToken = media.accessToken ?: ""),
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,

@@ -20,17 +20,22 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import com.google.common.net.HttpHeaders
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(UnstableApi::class)
 @Composable
 fun rememberExoPlayerWithLifeCycle(
     videoSource: Uri,
-    absolutePath: String?,
+    item: MediaStoreData,
+    accessToken: String,
     isPlaying: MutableState<Boolean>,
     duration: MutableFloatState,
     currentVideoPosition: MutableFloatState,
@@ -41,6 +46,8 @@ fun rememberExoPlayerWithLifeCycle(
     val exoPlayer = remember {
         createExoPlayer(
             videoSource,
+            item,
+            accessToken,
             context,
             currentVideoPosition,
             duration,
@@ -52,7 +59,7 @@ fun rememberExoPlayerWithLifeCycle(
 
     DisposableEffect(lifecycleOwner.lifecycle.currentStateAsState().value) {
         val lifecycleObserver =
-            getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, absolutePath)
+            getExoPlayerLifecycleObserver(exoPlayer, isPlaying, context as Activity, item.absolutePath)
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
 
@@ -66,6 +73,8 @@ fun rememberExoPlayerWithLifeCycle(
 @OptIn(UnstableApi::class)
 fun createExoPlayer(
     videoSource: Uri,
+    item: MediaStoreData,
+    accessToken: String,
     context: Context,
     currentVideoPosition: MutableFloatState,
     duration: MutableFloatState,
@@ -109,10 +118,24 @@ fun createExoPlayer(
             videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
             repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
-            val dataSourceFactory = DefaultDataSource.Factory(context)
 
-            val source = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(MediaItem.fromUri(videoSource))
+            val source = if (item.immichUrl == null) {
+                val factory = DefaultDataSource.Factory(context)
+                ProgressiveMediaSource.Factory(factory)
+                    .createMediaSource(MediaItem.fromUri(videoSource))
+            } else {
+                val factory = DefaultHttpDataSource.Factory()
+                    .setAllowCrossProtocolRedirects(true)
+                    .setConnectTimeoutMs(10.seconds.inWholeMilliseconds.toInt())
+                    .setDefaultRequestProperties(
+                        mapOf(
+                            HttpHeaders.AUTHORIZATION to "bearer $accessToken"
+                        )
+                    )
+
+                ProgressiveMediaSource.Factory(factory)
+                    .createMediaSource(MediaItem.fromUri(videoSource))
+            }
 
             setMediaSource(source)
             prepare()

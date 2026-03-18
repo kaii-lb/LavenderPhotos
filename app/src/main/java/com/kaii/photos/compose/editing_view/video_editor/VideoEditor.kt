@@ -74,6 +74,7 @@ import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.videoplayer.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -114,10 +115,12 @@ fun VideoEditor(
     val useBlackBackground by viewModel.startMuted.collectAsStateWithLifecycle()
     val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
+    val info by viewModel.immichInfo.collectAsStateWithLifecycle()
 
     VideoEditorImpl(
         uri = uri,
         absolutePath = absolutePath,
+        accessToken = info.accessToken,
         album = album,
         window = window,
         isFromOpenWithView = isFromOpenWithView,
@@ -135,6 +138,7 @@ fun VideoEditor(
 fun VideoEditorImpl(
     uri: Uri,
     absolutePath: String,
+    accessToken: String,
     album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean,
@@ -154,7 +158,8 @@ fun VideoEditorImpl(
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(
         videoSource = uri,
-        absolutePath = absolutePath,
+        item = MediaStoreData.dummyItem.copy(uri = uri.toString(), absolutePath = absolutePath),
+        accessToken = accessToken,
         isPlaying = isPlaying,
         duration = duration,
         currentVideoPosition = currentVideoPosition,

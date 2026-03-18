@@ -1,9 +1,10 @@
-package com.kaii.photos.compose.single_photo
+package com.kaii.photos.compose.videoplayer
 
 import android.app.Activity
 import android.util.Log
 import android.view.Window
 import androidx.activity.compose.BackHandler
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -69,9 +70,6 @@ import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.videoplayer.VideoPlayerControls
-import com.kaii.photos.compose.videoplayer.rememberExoPlayerWithLifeCycle
-import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -90,13 +88,14 @@ import kotlin.math.ceil
 // special thanks to @bedirhansaricayir on GitHub, helped with a LOT of performance stuff
 // https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
 
-private const val TAG = "com.kaii.photos.compose.single_photo.VideoPlayerStuff"
+private const val TAG = "com.kaii.photos.compose.videoplayer.VideoPlayer"
 
 // TODO: rework to use a class or viewmodel instead of this mess
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
+    accessToken: String,
     appBarsVisible: MutableState<Boolean>,
     shouldAutoPlay: Boolean,
     scrollState: SinglePhotoScrollState,
@@ -110,7 +109,9 @@ fun VideoPlayer(
     val context = LocalContext.current
     val navController = LocalNavController.current
     val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
-    var videoSource by remember { mutableStateOf(item.uri.toUri()) }
+    var videoSource by remember { mutableStateOf(
+        item.immichUrl?.replace("original", "video/playback")?.toUri() ?: item.uri.toUri()
+    )}
 
     if (isSecuredMedia) {
         var securedMediaProgress by remember { mutableFloatStateOf(0f) }
@@ -191,7 +192,8 @@ fun VideoPlayer(
 
     val exoPlayer = rememberExoPlayerWithLifeCycle(
         videoSource = videoSource,
-        absolutePath = item.absolutePath,
+        item = item,
+        accessToken = accessToken,
         isPlaying = isPlaying,
         duration = duration,
         currentVideoPosition = currentVideoPosition,
@@ -313,7 +315,7 @@ fun VideoPlayer(
             .then(
                 if (isPlaying.value && shouldPlay.value) {
                     Modifier.keepScreenOn()
-                } else Modifier
+                } else Modifier.Companion
             )
     ) {
         AndroidView(

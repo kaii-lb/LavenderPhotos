@@ -57,9 +57,9 @@ import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
-import com.kaii.photos.compose.single_photo.VideoPlayer
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.transformable
+import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
@@ -140,6 +140,7 @@ fun OpenWithContent(
                     item = MediaStoreData.dummyItem.copy(
                         uri = uri.toString()
                     ),
+                    accessToken = "",
                     appBarsVisible = appBarsVisible,
                     shouldAutoPlay = false,
                     scrollState = scrollState,
@@ -154,7 +155,7 @@ fun OpenWithContent(
                 )
             } else {
                 if (motionPhoto.isMotionPhoto.value) {
-                    val state = rememberMotionPhotoState(uri = uri)
+                    val state = rememberMotionPhotoState(uri = uri, accessToken = "")
                     releaseExoPlayer.value = state::release
 
                     BackHandler {
