@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +50,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import com.kaii.photos.R
@@ -67,11 +67,11 @@ import kotlin.math.roundToInt
 
 @Composable
 fun TrimContent(
-    currentPosition: MutableFloatState,
+    currentPosition: () -> Float,
     basicData: BasicVideoData,
     videoEditingState: VideoEditingState,
     thumbnails: List<Bitmap>,
-    onSeek: (Float) -> Unit,
+    onSeek: (Float) -> Unit
 ) {
     val actualDuration by rememberUpdatedState(videoEditingState.endTrimPosition - videoEditingState.startTrimPosition)
 
@@ -112,7 +112,7 @@ fun TrimContent(
                 }
             }
 
-            BoxWithConstraints boxybox@{
+            BoxWithConstraints boxybox@ {
                 val leftHandlePosition by remember(videoEditingState.startTrimPosition) {
                     derivedStateOf {
                         this@boxybox.maxWidth * videoEditingState.startTrimPosition / duration
@@ -131,15 +131,14 @@ fun TrimContent(
 
                 val seekHandlePosition by remember {
                     derivedStateOf {
-                        leftHandlePosition + seekbarWidth * (currentPosition.floatValue - videoEditingState.startTrimPosition) / actualDuration
+                        leftHandlePosition + seekbarWidth * (currentPosition() - videoEditingState.startTrimPosition) / actualDuration
                     }
                 }
 
                 val videoPositionDraggableState = rememberDraggableState { change ->
                     with(localDensity) {
-                        val new = currentPosition.floatValue + (change * actualDuration / seekbarWidth.toPx())
-                        currentPosition.floatValue = new.coerceIn(videoEditingState.startTrimPosition, videoEditingState.endTrimPosition)
-                        onSeek(currentPosition.floatValue)
+                        val new = currentPosition() + (change * actualDuration / seekbarWidth.toPx())
+                        onSeek(new.coerceIn(videoEditingState.startTrimPosition, videoEditingState.endTrimPosition))
                     }
                 }
 
@@ -153,7 +152,12 @@ fun TrimContent(
                 // seek handle
                 Box(
                     modifier = Modifier
-                        .offset(x = animatedSeekOffset + 4.dp, y = 4.dp)
+                        .offset {
+                            IntOffset(
+                                x = (animatedSeekOffset + 4.dp).roundToPx(),
+                                y = 4.dp.roundToPx()
+                            )
+                        }
                         .width(6.dp)
                         .height(this@boxybox.maxHeight - 8.dp)
                         .clip(CircleShape)
@@ -175,7 +179,7 @@ fun TrimContent(
                         val new = videoEditingState.startTrimPosition + (change * duration / this@boxybox.maxWidth.toPx())
                         videoEditingState.setStartTrimPosition(new)
 
-                        currentPosition.floatValue = videoEditingState.startTrimPosition
+                        onSeek(new)
                     }
                 }
                 val animatedLeftHandlePos by animateDpAsState(
@@ -193,8 +197,7 @@ fun TrimContent(
                     },
                     onDragStopped = {
                         isDraggingManually = false
-                        currentPosition.floatValue = videoEditingState.startTrimPosition
-                        onSeek(currentPosition.floatValue)
+                        onSeek(videoEditingState.startTrimPosition)
                     }
                 )
 
@@ -203,7 +206,7 @@ fun TrimContent(
                         val new = videoEditingState.endTrimPosition + (change * duration / this@boxybox.maxWidth.toPx())
                         videoEditingState.setEndTrimPosition(new)
 
-                        currentPosition.floatValue = videoEditingState.endTrimPosition
+                        onSeek(new)
                     }
                 }
                 val animatedRightHandlePos by animateDpAsState(
@@ -221,15 +224,19 @@ fun TrimContent(
                     },
                     onDragStopped = {
                         isDraggingManually = false
-                        currentPosition.floatValue = videoEditingState.endTrimPosition
-                        onSeek(currentPosition.floatValue)
+                        onSeek(videoEditingState.endTrimPosition)
                     }
                 )
 
                 // connector between two handles and gives "inverted rounding" on inside
                 Box(
                     modifier = Modifier
-                        .offset(x = animatedLeftHandlePos)
+                        .offset {
+                            IntOffset(
+                                x = animatedLeftHandlePos.roundToPx(),
+                                y = 0
+                            )
+                        }
                         .width(animatedRightHandlePos - animatedLeftHandlePos)
                         .requiredHeight(this@BoxWithConstraints.maxHeight)
                         .graphicsLayer {

@@ -14,7 +14,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +31,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
@@ -53,9 +51,9 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
+import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
@@ -69,7 +67,6 @@ import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import java.io.File
-import kotlin.math.abs
 
 private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageList"
 
@@ -89,7 +86,10 @@ fun HorizontalImageList(
 ) {
     val windowSize = LocalWindowInfo.current.containerSize / 4
 
-    val videoAutoplay by scrollState.videoAutoplay.collectAsStateWithLifecycle()
+    val videoPlayerState = retainVideoPlayerState(
+        isOpenWithView = false,
+        onPlaybackStateChanged = {},
+    )
 
     HorizontalPager(
         state = state,
@@ -113,13 +113,6 @@ fun HorizontalImageList(
                 zoomableState.resetZoom(
                     animationSpec = snap()
                 )
-            }
-        }
-
-        val shouldPlay = remember(state) {
-            derivedStateOf {
-                (abs(state.currentPageOffsetFraction) < 0.5f && state.currentPage == index)
-                        || (abs(state.currentPageOffsetFraction) > 0.5f && state.currentPage == index)
             }
         }
 
@@ -164,16 +157,19 @@ fun HorizontalImageList(
                 VideoPlayer(
                     item = media.item,
                     accessToken = media.accessToken ?: "",
+                    state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
-                    shouldAutoPlay = videoAutoplay,
                     scrollState = scrollState,
                     window = window,
-                    shouldPlay = shouldPlay,
                     blurViews = blurViews,
                     useBlackBackground = useBlackBackground,
+                    shouldPlay = {
+                        state.currentPage == index
+                    },
+                    useCache = useCache,
                     modifier = Modifier
                         .fillMaxSize(1f)
-                        .transformable()
+                        .transformable(),
                 )
             }
         } else {
@@ -263,10 +259,13 @@ fun HorizontalImageList(
 
                 if (motionPhoto.isMotionPhoto.value) {
                     MotionPhotoView(
-                        state = rememberMotionPhotoState(uri = motionPhoto.uri, accessToken = media.accessToken ?: ""),
+                        item = media.item,
+                        state = videoPlayerState,
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
+                        accessToken = media.accessToken ?: "",
+                        shouldPlay = { state.currentPage == index },
                         blurViews = blurViews,
                         useBlackBackground = useBlackBackground,
                         glideImageView = @Composable { modifier ->
@@ -280,7 +279,7 @@ fun HorizontalImageList(
                                 modifier = modifier,
                                 disableSetBarVisibility = true
                             )
-                        }
+                        },
                     )
                 } else {
                     GlideView(

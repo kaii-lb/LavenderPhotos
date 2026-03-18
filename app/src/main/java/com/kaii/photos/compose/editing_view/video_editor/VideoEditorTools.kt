@@ -22,9 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -62,16 +60,18 @@ import kotlinx.coroutines.launch
 fun VideoEditorBottomTools(
     pagerState: PagerState,
     modifications: SnapshotStateList<VideoModification>,
-    currentPosition: MutableFloatState,
+    currentPosition: Float,
     duration: Float,
-    isPlaying: MutableState<Boolean>,
-    isMuted: MutableState<Boolean>,
+    isPlaying: Boolean,
+    isMuted: Boolean,
     totalModCount: MutableIntState,
     videoEditingState: VideoEditingState,
     drawingPaintState: DrawingPaintState,
     modifier: Modifier = Modifier,
     onSeek: (position: Float) -> Unit,
-    onSeekFinished: () -> Unit
+    onSeekFinished: () -> Unit,
+    togglePlayback: () -> Unit,
+    toggleMute: () -> Unit
 ) {
     val toolsPagerState = rememberPagerState { 2 }
 
@@ -101,7 +101,9 @@ fun VideoEditorBottomTools(
                 videoEditingState = videoEditingState,
                 onSeek = onSeek,
                 onSeekFinished = onSeekFinished,
-                modifier = Modifier
+                modifier = Modifier,
+                togglePlayback = togglePlayback,
+                toggleMute = toggleMute
             )
         } else {
             VideoEditorAdjustmentTools(
@@ -110,7 +112,7 @@ fun VideoEditorBottomTools(
                 modifications = modifications,
                 drawingPaintState = drawingPaintState,
                 currentEditorPage = pagerState.currentPage,
-                currentVideoPosition = currentPosition.floatValue
+                currentVideoPosition = currentPosition
             )
         }
     }
@@ -120,14 +122,16 @@ fun VideoEditorBottomTools(
 fun VideoEditorPlaybackControls(
     pagerState: PagerState,
     toolsPagerState: PagerState,
-    currentPosition: MutableFloatState,
+    currentPosition: Float,
     duration: Float,
-    isPlaying: MutableState<Boolean>,
-    isMuted: MutableState<Boolean>,
+    isPlaying: Boolean,
+    isMuted: Boolean,
     modifier: Modifier = Modifier,
     videoEditingState: VideoEditingState,
     onSeek: (position: Float) -> Unit,
-    onSeekFinished: () -> Unit
+    onSeekFinished: () -> Unit,
+    togglePlayback: () -> Unit,
+    toggleMute: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -137,14 +141,12 @@ fun VideoEditorPlaybackControls(
         horizontalArrangement = Arrangement.Start
     ) {
         FilledTonalIconButton(
-            onClick = {
-                isPlaying.value = !isPlaying.value
-            },
+            onClick = togglePlayback,
             modifier = Modifier
                 .size(32.dp)
         ) {
             Icon(
-                painter = painterResource(id = if (isPlaying.value) R.drawable.pause else R.drawable.play_arrow),
+                painter = painterResource(id = if (isPlaying) R.drawable.pause else R.drawable.play_arrow),
                 contentDescription = stringResource(id = R.string.video_play_toggle)
             )
         }
@@ -160,8 +162,12 @@ fun VideoEditorPlaybackControls(
 
             if (animatedSeekbarWidth != 0.dp) {
                 VideoPlayerSeekbar(
-                    currentPosition = currentPosition.floatValue,
-                    duration = duration,
+                    currentPosition = {
+                        currentPosition
+                    },
+                    duration = {
+                        duration
+                    },
                     onValueChange = onSeek,
                     onValueChangeFinished = onSeekFinished,
                     modifier = Modifier
@@ -179,14 +185,12 @@ fun VideoEditorPlaybackControls(
             )
         ) {
             FilledTonalIconButton(
-                onClick = {
-                    isMuted.value = !isMuted.value
-                },
+                onClick = toggleMute,
                 modifier = Modifier
                     .size(32.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
+                    painter = painterResource(id = if (isMuted) R.drawable.volume_mute else R.drawable.volume_max),
                     contentDescription = stringResource(id = R.string.video_mute_toggle)
                 )
             }

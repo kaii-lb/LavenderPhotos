@@ -21,17 +21,17 @@ import com.kaii.photos.helpers.AnimationConstants
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoPlayerSeekbar(
-    currentPosition: Float,
-    duration: Float,
+    currentPosition: () -> Float,
+    duration: () -> Float,
     modifier: Modifier = Modifier,
     onValueChangeFinished: () -> Unit = {},
-    onValueChange: (position: Float) -> Unit
+    onValueChange: (Float) -> Unit
 ) {
     val localInteractionSource = remember { MutableInteractionSource() }
     val isDraggingSlider by localInteractionSource.collectIsDraggedAsState()
 
     val animatedPosition by animateFloatAsState(
-        targetValue = currentPosition,
+        targetValue = currentPosition(),
         animationSpec =
             if (isDraggingSlider) snap()
             else tween(
@@ -42,7 +42,7 @@ fun VideoPlayerSeekbar(
 
     Slider(
         value = animatedPosition,
-        valueRange = 0f..duration,
+        valueRange = 0f..duration().coerceAtLeast(0f),
         onValueChange = onValueChange,
         onValueChangeFinished = onValueChangeFinished,
         thumb = {

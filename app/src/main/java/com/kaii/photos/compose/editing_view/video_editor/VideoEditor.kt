@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.editing_view.video_editor
 
-import android.app.Activity
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
@@ -33,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -71,7 +69,6 @@ import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
-import com.kaii.photos.compose.videoplayer.rememberExoPlayerWithLifeCycle
 import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
@@ -84,9 +81,9 @@ import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
-import com.kaii.photos.helpers.editing.applyEffects
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
+import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
 import kotlinx.coroutines.Dispatchers
@@ -110,9 +107,8 @@ fun VideoEditor(
         factory = EditorViewModelFactory(context = LocalContext.current)
     )
 
-    val startMuted by viewModel.startMuted.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
-    val useBlackBackground by viewModel.startMuted.collectAsStateWithLifecycle()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
     val info by viewModel.immichInfo.collectAsStateWithLifecycle()
@@ -124,7 +120,6 @@ fun VideoEditor(
         album = album,
         window = window,
         isFromOpenWithView = isFromOpenWithView,
-        startMuted = startMuted,
         blurViews = blurViews,
         useBlackBackground = useBlackBackground,
         exitOnSave = { exitOnSave },
@@ -142,27 +137,14 @@ fun VideoEditorImpl(
     album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean,
-    startMuted: Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
     exitOnSave: () -> Boolean,
     overwriteByDefault: () -> Boolean
 ) {
-    val isPlaying = remember { mutableStateOf(false) }
-    val isMuted = remember(startMuted) { mutableStateOf(startMuted) }
-
-    /** In Seconds */
-    val currentVideoPosition = remember { mutableFloatStateOf(0f) }
-    val duration = remember { mutableFloatStateOf(0f) }
     var exoPlayerLoading by remember { mutableStateOf(true) }
-
-    val exoPlayer = rememberExoPlayerWithLifeCycle(
-        videoSource = uri,
-        item = MediaStoreData.dummyItem.copy(uri = uri.toString(), absolutePath = absolutePath),
-        accessToken = accessToken,
-        isPlaying = isPlaying,
-        duration = duration,
-        currentVideoPosition = currentVideoPosition,
+    val videoPlayerState = retainVideoPlayerState(
+        isOpenWithView = isFromOpenWithView,
         onPlaybackStateChanged = { playbackState ->
             if (exoPlayerLoading) {
                 exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
@@ -170,74 +152,71 @@ fun VideoEditorImpl(
         }
     )
 
+    val context = LocalContext.current
+    LaunchedEffect(uri) {
+        videoPlayerState.setSource(
+            context = context,
+            item = MediaStoreData.dummyItem.copy(
+                uri = uri.toString(),
+                absolutePath = absolutePath
+            ),
+            accessToken = accessToken,
+            shouldPlay = { true },
+            progress = {}
+        )
+    }
+
     val videoEditingState = rememberVideoEditingState(
-        duration = duration.floatValue
+        duration = videoPlayerState.duration
     )
     val drawingPaintState = rememberDrawingPaintState(
         isVideo = true
     )
 
-    LaunchedEffect(isMuted.value, exoPlayerLoading) {
-        if (isMuted.value) exoPlayer.volume = 0f
-        else exoPlayer.volume = 1f
-    }
+    LaunchedEffect(videoEditingState.startTrimPosition, videoPlayerState.currentPosition) {
+        if (videoPlayerState.currentPosition * 1000 < videoEditingState.startTrimPosition * 1000) {
+            videoPlayerState.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
 
-    LaunchedEffect(startMuted) {
-        isMuted.value = startMuted
-    }
-
-    LaunchedEffect(videoEditingState.startTrimPosition, currentVideoPosition.floatValue) {
-        if (currentVideoPosition.floatValue * 1000 < videoEditingState.startTrimPosition * 1000) {
-            exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
-            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-
-            if (isPlaying.value) {
-                exoPlayer.play()
+            if (videoPlayerState.isPlaying) {
+                videoPlayerState.play()
             } else {
-                exoPlayer.pause()
+                videoPlayerState.pause()
             }
         }
     }
 
-    LaunchedEffect(isPlaying.value) {
-        if (!isPlaying.value) {
+    LaunchedEffect(videoPlayerState.isPlaying) {
+        if (!videoPlayerState.isPlaying) {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-            exoPlayer.pause()
+            videoPlayerState.pause()
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-            exoPlayer.play()
+            videoPlayerState.play()
         }
 
-        currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
         val end = videoEditingState.endTrimPosition * 1000
         val threshold = 150f
-        val current = currentVideoPosition.floatValue * 1000
+        val current = videoPlayerState.currentPosition * 1000
         if (current in (end - threshold)..(end + threshold) || current >= end) {
             delay(1000)
-            exoPlayer.pause()
-            exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
-            currentVideoPosition.floatValue = videoEditingState.startTrimPosition
+            videoPlayerState.pause()
+            videoPlayerState.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
             Log.d(TAG, "Ending video...")
-            isPlaying.value = false
         }
 
-        while (isPlaying.value) {
-            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-
+        while (videoPlayerState.isPlaying) {
             // again here since exoplayer doesn't know we might be ending video early
             // because of the way it works (this is easier)
             val end = videoEditingState.endTrimPosition * 1000
             val threshold = 150f
-            val current = currentVideoPosition.floatValue * 1000
+            val current = videoPlayerState.currentPosition * 1000
             if (current in (end - threshold)..(end + threshold) || current >= end) {
                 delay(1000)
-                exoPlayer.pause()
-                exoPlayer.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
-                currentVideoPosition.floatValue = videoEditingState.startTrimPosition
+                videoPlayerState.pause()
+                videoPlayerState.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
                 Log.d(TAG, "Ending video...")
-                isPlaying.value = false
             }
 
             delay(100)
@@ -259,7 +238,7 @@ fun VideoEditorImpl(
     }
 
     LaunchedEffect(videoEditingState.speed) {
-        exoPlayer.setPlaybackSpeed(videoEditingState.speed)
+        videoPlayerState.setPlaybackSpeed(videoEditingState.speed)
     }
 
     val pagerState = rememberPagerState { VideoEditorTabs.entries.size }
@@ -269,25 +248,25 @@ fun VideoEditorImpl(
     var basicVideoData by remember {
         mutableStateOf(
             BasicVideoData(
-                duration = exoPlayer.duration / 1000f,
-                width = exoPlayer.videoSize.width,
-                height = exoPlayer.videoSize.height,
+                duration = videoPlayerState.duration / 1000f,
+                width = videoPlayerState.videoSize.width,
+                height = videoPlayerState.videoSize.height,
                 absolutePath = absolutePath,
-                bitrate = exoPlayer.videoFormat?.bitrate ?: 0,
+                bitrate = videoPlayerState.videoFormat?.bitrate ?: 0,
                 frameRate =
-                    if (exoPlayer.videoFormat?.frameRate?.toInt() == -1 || exoPlayer.videoFormat?.frameRate == null) 0f
-                    else exoPlayer.videoFormat!!.frameRate,
-                audioChannelCount = exoPlayer.audioFormat?.channelCount ?: 2
+                    if (videoPlayerState.videoFormat?.frameRate?.toInt() == -1 || videoPlayerState.videoFormat?.frameRate == null) 0f
+                    else videoPlayerState.videoFormat!!.frameRate,
+                audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
             )
         )
     }
 
     Log.d(TAG, "basic video data $basicVideoData")
 
-    LaunchedEffect(duration.floatValue) {
-        val videoFormat = exoPlayer.videoFormat
+    LaunchedEffect(videoPlayerState.duration) {
+        val videoFormat = videoPlayerState.videoFormat
         var tries = 0
-        val audioChannelCount = exoPlayer.audioFormat?.channelCount ?: 2
+        val audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
 
         withContext(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
@@ -296,13 +275,13 @@ fun VideoEditorImpl(
             // this mess is because exoplayer doesn't really know what res the video is all the time
             val frame = metadata.frameAtTime
             val size = if (frame == null) {
-                if (exoPlayer.videoSize == VideoSize.UNKNOWN) {
+                if (videoPlayerState.videoSize == VideoSize.UNKNOWN) {
                     VideoSize(
-                        exoPlayer.videoFormat?.width ?: 1,
-                        exoPlayer.videoFormat?.height ?: 1
+                        videoPlayerState.videoFormat?.width ?: 1,
+                        videoPlayerState.videoFormat?.height ?: 1
                     )
                 } else {
-                    exoPlayer.videoSize
+                    videoPlayerState.videoSize
                 }
             } else {
                 VideoSize(frame.width, frame.height)
@@ -315,7 +294,7 @@ fun VideoEditorImpl(
                     if (possible == null) {
                         val frameCount = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toFloat() ?: 0f
 
-                        frameCount / duration.floatValue
+                        frameCount / videoPlayerState.duration
                     } else {
                         possible
                     }
@@ -337,7 +316,7 @@ fun VideoEditorImpl(
 
                 basicVideoData =
                     BasicVideoData(
-                        duration = duration.floatValue,
+                        duration = videoPlayerState.duration,
                         frameRate = frameRate,
                         absolutePath = absolutePath,
                         bitrate = bitrate,
@@ -354,7 +333,7 @@ fun VideoEditorImpl(
     }
 
     LaunchedEffect(videoEditingState.volume) {
-        exoPlayer.volume = videoEditingState.volume
+        videoPlayerState.setVolume(videoEditingState.volume)
     }
 
     LaunchedEffect(videoEditingState.frameRate) {
@@ -372,7 +351,7 @@ fun VideoEditorImpl(
             )
         }
 
-        exoPlayer.applyEffects(
+        videoPlayerState.applyEffects(
             uri = uri,
             effectList = videoEditingState.effectList
         )
@@ -389,7 +368,7 @@ fun VideoEditorImpl(
             )
         }
 
-        exoPlayer.applyEffects(
+        videoPlayerState.applyEffects(
             uri = uri,
             effectList = videoEditingState.effectList
         )
@@ -427,18 +406,16 @@ fun VideoEditorImpl(
         bottomBar = {
             VideoEditorBottomBar(
                 pagerState = pagerState,
-                currentPosition = currentVideoPosition,
+                currentPosition = { videoPlayerState.currentPosition },
                 basicData = basicVideoData,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
                 modifications = modifications,
                 uri = uri,
                 onSeek = { pos ->
-                    val wasPlaying = isPlaying.value
-                    exoPlayer.seekTo(
+                    videoPlayerState.seekTo(
                         (pos * 1000f).coerceAtMost(videoEditingState.endTrimPosition * 1000f).toLong()
                     )
-                    isPlaying.value = wasPlaying
                 },
                 increaseModCount = {
                     totalModCount.intValue += 1
@@ -472,16 +449,6 @@ fun VideoEditorImpl(
         ) {
             val animatedRotation by animateFloatAsState(
                 targetValue = videoEditingState.rotation
-            )
-
-            val context = LocalContext.current
-            val playerView = rememberPlayerView(
-                exoPlayer = exoPlayer,
-                activity = context as Activity,
-                absolutePath = absolutePath,
-                useTextureView = true,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground
             )
 
             val width = this@BoxWithConstraints.maxWidth - 48.dp
@@ -633,7 +600,7 @@ fun VideoEditorImpl(
                     .makeDrawCanvas(
                         drawingPaintState = drawingPaintState,
                         textMeasurer = textMeasurer,
-                        currentVideoPosition = currentVideoPosition,
+                        currentVideoPosition = videoPlayerState.currentPosition,
                         enabled = pagerState.currentPage == VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw),
                         addText = { position ->
                             tapPosition = position
@@ -642,9 +609,18 @@ fun VideoEditorImpl(
                     ),
                 contentAlignment = Alignment.Center
             ) {
+                val playerView = rememberPlayerView(
+                    useTextureView = true,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground
+                )
+
                 AndroidView(
                     factory = {
                         playerView
+                    },
+                    update = {
+                        videoPlayerState.linkPlayerView(it)
                     },
                     modifier = Modifier
                         .width(width)
@@ -725,9 +701,9 @@ fun VideoEditorImpl(
                 VideoFilterPage(
                     pagerState = filterPagerState,
                     drawingPaintState = drawingPaintState,
-                    currentVideoPosition = currentVideoPosition,
+                    currentVideoPosition = videoPlayerState.currentPosition,
                     absolutePath = absolutePath,
-                    allowedToRefresh = isPlaying.value || isSeeking
+                    allowedToRefresh = videoPlayerState.isPlaying || isSeeking
                 )
             }
 
@@ -780,10 +756,10 @@ fun VideoEditorImpl(
             VideoEditorBottomTools(
                 pagerState = pagerState,
                 modifications = modifications,
-                isPlaying = isPlaying,
-                isMuted = isMuted,
-                currentPosition = currentVideoPosition,
-                duration = duration.floatValue,
+                currentPosition = videoPlayerState.currentPosition,
+                duration = videoPlayerState.duration,
+                isPlaying = videoPlayerState.isPlaying,
+                isMuted = videoPlayerState.isMuted,
                 totalModCount = totalModCount,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
@@ -791,17 +767,19 @@ fun VideoEditorImpl(
                     .align(Alignment.BottomCenter),
                 onSeek = { pos ->
                     isSeeking = true
-                    val wasPlaying = isPlaying.value
 
-                    exoPlayer.seekTo(
-                        (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+                    videoPlayerState.seekTo(
+                        (pos * 1000f).coerceAtMost(videoPlayerState.duration * 1000f).toLong()
                     )
-
-                    isPlaying.value = wasPlaying
                 },
                 onSeekFinished = {
                     isSeeking = false
-                }
+                },
+                togglePlayback = {
+                    if (videoPlayerState.isPlaying) videoPlayerState.pause()
+                    else videoPlayerState.play()
+                },
+                toggleMute = videoPlayerState::toggleMute
             )
         }
     }

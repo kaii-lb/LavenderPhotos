@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo
 
-import android.app.Activity
 import android.view.Window
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -10,6 +9,7 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,8 +22,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.videoplayer.rememberPlayerView
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.motion_photo.MotionPhotoState
+import com.kaii.photos.helpers.video.VideoPlayerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.ZoomableState
@@ -33,18 +34,32 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MotionPhotoView(
-    state: MotionPhotoState,
+    item: MediaStoreData,
+    state: VideoPlayerState,
     zoomableState: ZoomableState,
     appBarsVisible: MutableState<Boolean>,
     window: Window,
+    accessToken: String,
+    shouldPlay: () -> Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
     glideImageView: @Composable (modifier: Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(item) {
+        state.setSource(
+            context = context,
+            item = item,
+            accessToken = accessToken,
+            loop = true,
+            shouldPlay = shouldPlay,
+            progress = {}
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -70,6 +85,7 @@ fun MotionPhotoView(
                             delay(100.milliseconds)
                         }
                     }
+
                     waitForUpOrCancellation()
                     initialTouchHeldJob.cancel()
 
@@ -84,26 +100,28 @@ fun MotionPhotoView(
                     }
 
                     state.pause()
+                    state.seekTo(position = 0)
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        val playerView = rememberPlayerView(
-            exoPlayer = state.exoPlayer,
-            activity = context as Activity,
-            absolutePath = null,
-            blurViews = blurViews,
-            useBlackBackground = useBlackBackground
+        val alpha by animateFloatAsState(
+            targetValue = if (state.isPlaying) 1f else 0f,
+            animationSpec = tween(durationMillis = AnimationConstants.DURATION)
         )
 
-        val alpha by animateFloatAsState(
-            targetValue = if (state.playing) 1f else 0f,
-            animationSpec = tween(durationMillis = AnimationConstants.DURATION)
+        val playerView = rememberPlayerView(
+            useTextureView = false,
+            blurViews = blurViews,
+            useBlackBackground = useBlackBackground
         )
 
         AndroidView(
             factory = {
                 playerView
+            },
+            update = {
+                state.linkPlayerView(it)
             },
             modifier = Modifier
                 .fillMaxSize()

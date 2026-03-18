@@ -12,7 +12,6 @@ import androidx.compose.foundation.gestures.calculateRotation
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -55,7 +54,7 @@ import kotlin.math.abs
 @Composable
 fun Modifier.makeDrawCanvas(
     drawingPaintState: DrawingPaintState,
-    currentVideoPosition: MutableFloatState,
+    currentVideoPosition: Float,
     textMeasurer: TextMeasurer,
     enabled: Boolean,
     addText: (position: Offset) -> Unit
@@ -294,7 +293,7 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
     drawingPaintState: DrawingPaintState,
     initialDown: PointerInputChange,
     down: PointerInputChange,
-    currentVideoPosition: MutableFloatState,
+    currentVideoPosition: Float,
     addText: (Offset) -> Unit
 ) {
     var currentText: SharedModification.DrawingText? = null
@@ -320,7 +319,7 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
         if (drawingPaintState.selectedItem == null) {
             drawingPaintState.setRecordKeyframes(
                 record = false,
-                currentTime = currentVideoPosition.floatValue
+                currentTime = currentVideoPosition
             )
             addText(down.position)
         } else {
@@ -346,7 +345,7 @@ private suspend fun AwaitPointerEventScope.handleTextDrawing(
                         DrawingKeyframe.DrawingTextKeyframe(
                             position = position,
                             color = currentText.text.paint.color,
-                            time = currentVideoPosition.floatValue * 1000f,
+                            time = currentVideoPosition * 1000f,
                             strokeWidth = currentText.text.paint.strokeWidth,
                             rotation = currentText.text.rotation
                         )
@@ -411,7 +410,7 @@ private fun handleTextTransform(
     panChange: Offset,
     rotationChange: Float,
     textMeasurer: TextMeasurer,
-    currentVideoPosition: MutableFloatState,
+    currentVideoPosition: Float,
     currentText: MutableState<SharedModification.DrawingText?>
 ) {
     if (tappedOnText.value == null) return
@@ -435,7 +434,7 @@ private fun handleTextTransform(
             DrawingKeyframe.DrawingTextKeyframe(
                 position = positon,
                 color = tappedOnText.value!!.text.paint.color,
-                time = currentVideoPosition.floatValue * 1000f,
+                time = currentVideoPosition * 1000f,
                 strokeWidth = strokeWidth,
                 rotation = tappedOnText.value!!.text.rotation + rotationChange
             )
@@ -497,7 +496,7 @@ private suspend fun AwaitPointerEventScope.handleImageDrawing(
     drawingPaintState: DrawingPaintState,
     initialDown: PointerInputChange,
     down: PointerInputChange,
-    currentVideoPosition: MutableFloatState
+    currentVideoPosition: Float
 ) {
     var currentImage: SharedModification.DrawingImage? = null
     var touchOffset = Offset.Zero
@@ -549,7 +548,7 @@ private suspend fun AwaitPointerEventScope.handleImageDrawing(
 
             drawingPaintState.setRecordKeyframes(
                 record = false,
-                currentTime = currentVideoPosition.floatValue
+                currentTime = currentVideoPosition
             )
         } else {
             drawingPaintState.setSelectedItem(null)
@@ -571,7 +570,7 @@ private suspend fun AwaitPointerEventScope.handleImageDrawing(
                     if (drawingPaintState.recordKeyframes) {
                         DrawingKeyframe.DrawingImageKeyframe(
                             position = position,
-                            time = currentVideoPosition.floatValue * 1000f,
+                            time = currentVideoPosition * 1000f,
                             rotation = currentImage.image.rotation,
                             size = currentImage.image.size
                         )
@@ -633,7 +632,7 @@ private fun handleImageTransform(
     zoomChange: Float,
     panChange: Offset,
     rotationChange: Float,
-    currentVideoPosition: MutableFloatState,
+    currentVideoPosition: Float,
     currentImage: MutableState<SharedModification.DrawingImage?>
 ) {
     if (tappedOnImage.value == null) return
@@ -647,7 +646,7 @@ private fun handleImageTransform(
         if (drawingPaintState.recordKeyframes) {
             DrawingKeyframe.DrawingImageKeyframe(
                 position = positon,
-                time = currentVideoPosition.floatValue * 1000f,
+                time = currentVideoPosition * 1000f,
                 rotation = tappedOnImage.value!!.image.rotation + rotationChange,
                 size = newSize
             )

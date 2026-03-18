@@ -7,41 +7,27 @@ import android.os.CancellationSignal
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.di.appModule
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SinglePhotoScrollState(
-    private val muteOnStartFlow: Flow<Boolean>,
-    private val autoPlayFlow: Flow<Boolean>,
     private val coroutineScope: CoroutineScope,
-    private val isOpenWithView: Boolean,
     private val context: Context
 ) {
-    private var _privacyMode by mutableStateOf(false)
-    private var _videoLock by mutableStateOf(false)
-    private var _videoWasMuted by mutableStateOf(false)
-    private val _videoAutoplay = MutableStateFlow(false)
-
-    val privacyMode by derivedStateOf { _privacyMode }
-    val videoLock by derivedStateOf { _videoLock }
-    val videoWasMuted by derivedStateOf { _videoWasMuted }
-    val videoAutoplay = _videoAutoplay.asStateFlow()
+    var privacyMode by mutableStateOf(false)
+        private set
+    var videoLock by mutableStateOf(false)
+        private set
 
     private val prompt = BiometricPrompt.Builder(context)
         .setTitle(context.resources.getString(R.string.privacy_scroll_mode))
@@ -55,7 +41,7 @@ class SinglePhotoScrollState(
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
             super.onAuthenticationSucceeded(result)
 
-            _privacyMode = !_privacyMode
+            privacyMode = !privacyMode
         }
 
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
@@ -73,30 +59,9 @@ class SinglePhotoScrollState(
         }
     }
 
-    init {
-        coroutineScope.launch {
-            muteOnStartFlow.collect {
-                _videoWasMuted = it && !isOpenWithView
-            }
-        }
-
-        coroutineScope.launch {
-            autoPlayFlow.collect {
-                _videoAutoplay.value = it || isOpenWithView
-            }
-        }
-    }
-
+    @JvmName("setVideoLockMethod")
     fun setVideoLock(value: Boolean) {
-        _videoLock = value
-    }
-
-    fun resetMute() = coroutineScope.launch {
-        _videoWasMuted = muteOnStartFlow.first() && !isOpenWithView
-    }
-
-    fun setWasMuted(value: Boolean) {
-        _videoWasMuted = value
+        videoLock = value
     }
 
     fun togglePrivacyMode() {
@@ -109,18 +74,15 @@ class SinglePhotoScrollState(
 }
 
 @Composable
-fun rememberSinglePhotoScrollState(
+fun retainSinglePhotoScrollState(
     isOpenWithView: Boolean
 ): SinglePhotoScrollState {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val state = remember(isOpenWithView) {
+    val state = retain(isOpenWithView) {
         SinglePhotoScrollState(
-            muteOnStartFlow = context.appModule.settings.video.getMuteOnStart(),
-            autoPlayFlow = context.appModule.settings.video.getShouldAutoPlay(),
             coroutineScope = coroutineScope,
-            isOpenWithView = isOpenWithView,
             context = context
         )
     }

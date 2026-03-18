@@ -20,8 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,22 +30,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
 
 @Composable
 fun VideoPlayerControls(
-    exoPlayer: ExoPlayer,
-    isPlaying: MutableState<Boolean>,
-    isMuted: MutableState<Boolean>,
-    currentVideoPosition: MutableFloatState,
-    duration: MutableFloatState,
-    title: String,
+    isPlaying: () -> Boolean,
+    isMuted: () -> Boolean,
+    currentVideoPosition: () -> Float,
+    duration: () -> Float,
+    title: () -> String,
+    playbackSpeed: () -> Float,
     modifier: Modifier,
     onAnyTap: () -> Unit,
-    setLastWasMuted: (Boolean) -> Unit
+    togglePlayPause: () -> Unit,
+    seekBack: () -> Unit,
+    seekForward: () -> Unit,
+    seekTo: (position: Long) -> Unit,
+    toggleMute: () -> Unit,
+    setPlaybackSpeed: (speed: Float) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -65,7 +67,7 @@ fun VideoPlayerControls(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = if (title == "") stringResource(id = R.string.media) else title,
+                    text = if (title() == "") stringResource(id = R.string.media) else title(),
                     fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     overflow = TextOverflow.Ellipsis,
@@ -89,11 +91,12 @@ fun VideoPlayerControls(
             VideoPlayerControllerBottomControls(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
-                isPlaying = isPlaying,
                 isMuted = isMuted,
-                exoPlayer = exoPlayer,
+                playbackSpeed = playbackSpeed,
                 onAnyTap = onAnyTap,
-                setLastWasMuted = setLastWasMuted
+                seekTo = seekTo,
+                toggleMute = toggleMute,
+                setPlaybackSpeed = setPlaybackSpeed
             )
         }
 
@@ -107,9 +110,7 @@ fun VideoPlayerControls(
         ) {
             FilledTonalIconButton(
                 onClick = {
-                    val prev = isPlaying.value
-                    exoPlayer.seekBack()
-                    isPlaying.value = prev
+                    seekBack()
 
                     onAnyTap()
                 },
@@ -128,7 +129,7 @@ fun VideoPlayerControls(
 
             FilledTonalIconButton(
                 onClick = {
-                    isPlaying.value = !isPlaying.value
+                    togglePlayPause()
 
                     onAnyTap()
                 },
@@ -136,7 +137,7 @@ fun VideoPlayerControls(
                     .size(48.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = if (!isPlaying.value) R.drawable.play_arrow else R.drawable.pause),
+                    painter = painterResource(id = if (!isPlaying()) R.drawable.play_arrow else R.drawable.pause),
                     contentDescription = stringResource(id = R.string.video_play_toggle)
                 )
             }
@@ -145,9 +146,7 @@ fun VideoPlayerControls(
 
             FilledTonalIconButton(
                 onClick = {
-                    val prev = isPlaying.value
-                    exoPlayer.seekForward()
-                    isPlaying.value = prev
+                    seekForward()
 
                     onAnyTap()
                 },

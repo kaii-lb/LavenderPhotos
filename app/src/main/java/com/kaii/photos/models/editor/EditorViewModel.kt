@@ -13,12 +13,6 @@ class EditorViewModel(
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
-    val startMuted = settings.video.getMuteOnStart().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
     val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),

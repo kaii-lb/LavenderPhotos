@@ -38,7 +38,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -69,9 +68,9 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
-import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
+import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -92,21 +91,24 @@ fun OpenWithContent(
     val appBarsVisible = remember { mutableStateOf(true) }
     val context = LocalContext.current
 
-    val releaseExoPlayer: MutableState<() -> Unit> = remember { mutableStateOf({}) }
-
     val mimeType = context.contentResolver.getType(uri) ?: "image/*"
     val type =
         if (mimeType.contains("image")) MediaType.Image
         else MediaType.Video
 
-    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = true)
+    val scrollState = retainSinglePhotoScrollState(isOpenWithView = true)
+
+    val videoPlayerState = retainVideoPlayerState(
+        isOpenWithView = true,
+        onPlaybackStateChanged = {},
+    )
 
     Scaffold(
         topBar = {
             TopBar(
                 appBarsVisible = appBarsVisible
             ) {
-                releaseExoPlayer.value()
+                videoPlayerState.release(context)
             }
         },
         bottomBar = {
@@ -134,40 +136,36 @@ fun OpenWithContent(
             val motionPhoto = rememberMotionPhoto(uri = uri)
 
             if (type == MediaType.Video) {
-                val shouldPlay = rememberSaveable { mutableStateOf(true) }
-
                 VideoPlayer(
                     item = MediaStoreData.dummyItem.copy(
                         uri = uri.toString()
                     ),
                     accessToken = "",
+                    state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
-                    shouldAutoPlay = false,
                     scrollState = scrollState,
                     window = window,
-                    shouldPlay = shouldPlay,
-                    isOpenWithView = true,
+                    shouldPlay = { true },
                     blurViews = blurViews,
                     useBlackBackground = useBlackBackground,
+                    isOpenWithView = true,
+                    useCache = false,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .transformable()
                 )
             } else {
                 if (motionPhoto.isMotionPhoto.value) {
-                    val state = rememberMotionPhotoState(uri = uri, accessToken = "")
-                    releaseExoPlayer.value = state::release
-
-                    BackHandler {
-                        state.release()
-                        (context as Activity).finish()
-                    }
-
                     MotionPhotoView(
-                        state = state,
+                        item = MediaStoreData.dummyItem.copy(
+                            uri = uri.toString()
+                        ),
+                        state = videoPlayerState,
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
+                        accessToken = "",
+                        shouldPlay = { true },
                         blurViews = blurViews,
                         useBlackBackground = useBlackBackground,
                         glideImageView = @Composable { modifier ->
@@ -181,7 +179,7 @@ fun OpenWithContent(
                                 useCache = false,
                                 disableSetBarVisibility = true
                             )
-                        }
+                        },
                     )
                 } else {
                     BackHandler {

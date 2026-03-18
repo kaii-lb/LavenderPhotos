@@ -95,7 +95,7 @@ import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
-import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
+import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
@@ -189,7 +189,7 @@ fun SecurePhotoView(
         }
     }
 
-    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
+    val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(

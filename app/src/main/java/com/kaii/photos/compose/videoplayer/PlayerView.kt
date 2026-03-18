@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.videoplayer
 
-import android.app.Activity
 import android.util.Xml
 import android.view.ViewGroup
 import androidx.annotation.OptIn
@@ -13,18 +12,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.kaii.photos.R
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import java.io.File
 
 @OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerView(
-    exoPlayer: ExoPlayer,
-    activity: Activity,
-    absolutePath: String?,
     blurViews: Boolean,
     useBlackBackground: Boolean,
     useTextureView: Boolean = false
@@ -57,7 +50,6 @@ fun rememberPlayerView(
             )
 
             useController = false
-            player = exoPlayer
 
             setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
 
@@ -68,22 +60,9 @@ fun rememberPlayerView(
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(playerView) {
         onDispose {
-            if (!activity.isChangingConfigurations) {
-                playerView.player = null
-                exoPlayer.release()
-
-                if (absolutePath != null) {
-                    // delete decrypted video if exists
-                    getSecureDecryptedVideoFile(
-                        name = File(absolutePath).name,
-                        context = activity.applicationContext
-                    ).apply {
-                        if (exists()) delete()
-                    }
-                }
-            }
+            playerView.player = null
         }
     }
 

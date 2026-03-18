@@ -85,7 +85,7 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.scrolling.rememberSinglePhotoScrollState
+import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.models.trash_bin.TrashViewModel
@@ -183,7 +183,7 @@ private fun SingleTrashedPhotoViewImpl(
         }
     )
 
-    val scrollState = rememberSinglePhotoScrollState(isOpenWithView = false)
+    val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()

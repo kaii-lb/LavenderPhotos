@@ -18,8 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +34,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
@@ -47,13 +44,14 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerControllerBottomControls(
-    currentVideoPosition: MutableFloatState,
-    duration: MutableFloatState,
-    isPlaying: MutableState<Boolean>,
-    exoPlayer: ExoPlayer,
-    isMuted: MutableState<Boolean>,
+    currentVideoPosition: () -> Float,
+    duration: () -> Float,
+    isMuted: () -> Boolean,
+    playbackSpeed: () -> Float,
     onAnyTap: () -> Unit,
-    setLastWasMuted: (Boolean) -> Unit
+    seekTo: (position: Long) -> Unit,
+    toggleMute: () -> Unit,
+    setPlaybackSpeed: (speed: Float) -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -64,7 +62,7 @@ fun VideoPlayerControllerBottomControls(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val currentDurationFormatted =
-            currentVideoPosition.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+            currentVideoPosition().roundToInt().seconds.formatLikeANormalPerson()
 
         // video progress
         Row(
@@ -87,25 +85,22 @@ fun VideoPlayerControllerBottomControls(
             )
         }
 
-        duration.floatValue = duration.floatValue.coerceAtLeast(0f)
 
         VideoPlayerSeekbar(
-            currentPosition = currentVideoPosition.floatValue,
-            duration = duration.floatValue,
+            currentPosition = currentVideoPosition,
+            duration = duration,
             modifier = Modifier
                 .weight(1f)
         ) { pos ->
             onAnyTap()
 
-            val prev = isPlaying.value
-            exoPlayer.seekTo(
-                (pos * 1000f).coerceAtMost(duration.floatValue * 1000f).toLong()
+            seekTo(
+                (pos * 1000f).coerceAtMost(duration() * 1000f).toLong()
             )
-            isPlaying.value = prev
         }
 
         val formattedDuration =
-            duration.floatValue.roundToInt().seconds.formatLikeANormalPerson()
+            duration().coerceAtLeast(0f).roundToInt().seconds.formatLikeANormalPerson()
 
         // total duration
         Row(
@@ -131,8 +126,7 @@ fun VideoPlayerControllerBottomControls(
         // mute button
         FilledTonalIconButton(
             onClick = {
-                isMuted.value = !isMuted.value
-                setLastWasMuted(isMuted.value)
+                toggleMute()
 
                 onAnyTap()
             },
@@ -140,7 +134,7 @@ fun VideoPlayerControllerBottomControls(
                 .size(32.dp)
         ) {
             Icon(
-                painter = painterResource(id = if (isMuted.value) R.drawable.volume_mute else R.drawable.volume_max),
+                painter = painterResource(id = if (isMuted()) R.drawable.volume_mute else R.drawable.volume_max),
                 contentDescription = stringResource(id = R.string.video_mute_toggle),
                 modifier = Modifier
                     .size(24.dp)
@@ -149,7 +143,7 @@ fun VideoPlayerControllerBottomControls(
 
         val isLandscape by rememberDeviceOrientation()
         if (isLandscape) {
-            var currentPlaybackSpeed by remember { mutableFloatStateOf(exoPlayer.playbackParameters.speed) }
+            var currentPlaybackSpeed by remember { mutableFloatStateOf(playbackSpeed()) }
 
             FilledTonalButton(
                 onClick = {
@@ -162,7 +156,7 @@ fun VideoPlayerControllerBottomControls(
                             else -> 1f
                         }
 
-                    exoPlayer.setPlaybackSpeed(new)
+                    setPlaybackSpeed(new)
                     currentPlaybackSpeed = new
                 },
                 contentPadding = PaddingValues(horizontal = 4.dp),

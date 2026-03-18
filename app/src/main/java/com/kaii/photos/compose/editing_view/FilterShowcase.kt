@@ -25,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -157,7 +156,7 @@ fun FilterShowcase(
 @Composable
 fun VideoFilterPage(
     drawingPaintState: DrawingPaintState,
-    currentVideoPosition: MutableFloatState,
+    currentVideoPosition: Float,
     absolutePath: String,
     allowedToRefresh: Boolean,
     pagerState: PagerState,
@@ -166,17 +165,17 @@ fun VideoFilterPage(
     var bitmap: ImageBitmap? by remember { mutableStateOf(null) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(currentVideoPosition.floatValue, allowedToRefresh) {
+    LaunchedEffect(currentVideoPosition, allowedToRefresh) {
         if (allowedToRefresh) return@LaunchedEffect
 
         coroutineScope.launch(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
             metadata.setDataSource(absolutePath)
 
-            // just so the image doesn't flash a million times and we don't cause a million recompositions
+            // just so the image doesn't flash a million times, and we don't cause a million recompositions
             var localBitmap = ImageBitmap(8, 8)
 
-            metadata.getFrameAtTime((currentVideoPosition.floatValue * 1000 * 1000).toLong())?.let {
+            metadata.getFrameAtTime((currentVideoPosition * 1000 * 1000).toLong())?.let {
                 localBitmap = it.asImageBitmap()
             }
 

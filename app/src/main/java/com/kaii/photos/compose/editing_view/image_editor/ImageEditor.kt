@@ -35,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -487,7 +486,7 @@ fun ImageEditor(
                         .makeDrawCanvas(
                             drawingPaintState = drawingPaintState,
                             textMeasurer = textMeasurer,
-                            currentVideoPosition = remember { mutableFloatStateOf(0f) },
+                            currentVideoPosition = 0f,
                             enabled = pagerState.currentPage == ImageEditorTabs.entries.indexOf(ImageEditorTabs.Draw),
                             addText = { position ->
                                 tapPosition = position

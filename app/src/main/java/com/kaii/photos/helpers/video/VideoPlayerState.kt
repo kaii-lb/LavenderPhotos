@@ -1,0 +1,291 @@
+package com.kaii.photos.helpers.video
+
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.RetainedEffect
+import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
+import androidx.media3.common.Effect
+import androidx.media3.common.Format
+import androidx.media3.common.VideoSize
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.PlayerView
+import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import kotlin.math.ceil
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class VideoPlayerState(
+    context: Context,
+    autoPlayFlow: Flow<Boolean>,
+    private val coroutineScope: CoroutineScope,
+    private val muteOnStartFlow: Flow<Boolean>,
+    private val isOpenWithView: Boolean,
+    onPlaybackStateChanged: (state: Int) -> Unit
+) {
+    companion object {
+        private const val TAG = "com.kaii.photos.helpers.video.VideoPlayerState"
+    }
+
+    private var playingJob: Job? = null
+    private var currentSource = ""
+    private var autoPlay = false
+    private var loop = true // default to true to avoid autoplaying when we don't mean it (motionphoto)
+
+    /** In Seconds */
+    var currentPosition by mutableFloatStateOf(0f)
+        private set
+    var duration by mutableFloatStateOf(0f)
+        private set
+
+    var isMuted by mutableStateOf(true)
+        private set
+    var isPlaying by mutableStateOf(false)
+        private set
+
+    var controlsVisible by mutableStateOf(true)
+    var shouldPlay = { true }
+
+    var videoTitle by mutableStateOf("")
+        private set
+
+    private val player = LavenderExoPlayer(
+        context = context,
+        onDurationChanged = { new ->
+            duration = new
+        },
+        onCurrentPositionChanged = { new ->
+            currentPosition = new
+        },
+        onPlaybackStateChanged = onPlaybackStateChanged
+    )
+
+    val playbackSpeed: Float
+        get() = player.playbackSpeed
+
+    val videoSize: VideoSize
+        get() = player.videoSize
+
+    val videoFormat: Format?
+        get() = player.videoFormat
+
+    val audioFormat: Format?
+        get() = player.audioFormat
+
+    init {
+        coroutineScope.launch {
+            muteOnStartFlow.collectLatest {
+                isMuted = it && !isOpenWithView
+                player.setMute(isMuted)
+            }
+        }
+
+        coroutineScope.launch {
+            autoPlayFlow.collectLatest {
+                autoPlay = it || isOpenWithView
+                if (shouldPlay() && autoPlay && !loop) {
+                    play()
+                }
+            }
+        }
+    }
+
+    fun toggleMute() {
+        isMuted = !isMuted
+        player.setMute(isMuted)
+    }
+
+    fun resetMute() = coroutineScope.launch {
+        isMuted = muteOnStartFlow.first() && !isOpenWithView
+    }
+
+    fun release(context: Context) {
+        player.release()
+
+        context.appModule.scope.launch(Dispatchers.IO) {
+            val dir = File(context.appSecureVideoCacheDir)
+
+            dir.listFiles()?.forEach { if (it.exists()) it.delete() }
+        }
+    }
+
+    suspend fun setSource(
+        context: Context,
+        item: MediaStoreData,
+        accessToken: String,
+        loop: Boolean = false,
+        shouldPlay: () -> Boolean,
+        progress: (Float) -> Unit
+    ) {
+        this.loop = loop
+        this.shouldPlay = shouldPlay
+
+        var uri = item.immichUrl?.replace("original", "video/playback") ?: item.uri
+        if (currentSource == uri) return
+
+        // secure item, needs decoding
+        if (item.absolutePath.startsWith(context.appSecureFolderDir)) {
+            uri = withContext(Dispatchers.IO) {
+                val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
+                    .getIvFromSecuredPath(item.absolutePath)
+
+                if (iv == null) {
+                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                    return@withContext ""
+                }
+
+                val output =
+                    EncryptionManager.decryptVideo(
+                        absolutePath = item.absolutePath,
+                        iv = iv,
+                        context = context,
+                        progress = progress
+                    )
+
+                return@withContext output.toUri().toString()
+            }
+        }
+
+        videoTitle = item.displayName
+
+        player.setSource(
+            context = context,
+            uri = uri,
+            isNetworked = item.immichUrl != null,
+            accessToken = accessToken,
+            loop = loop
+        )
+
+        player.setPlayWhenReady(autoPlay && shouldPlay() && !loop)
+        if (shouldPlay() && autoPlay && !loop) {
+            play()
+        }
+    }
+
+    fun play() {
+        if (!shouldPlay()) return
+
+        isPlaying = true
+
+        player.setScrubbingModeEnabled(false)
+        player.play()
+
+        playingJob?.cancel()
+        playingJob = coroutineScope.launch {
+            while (isPlaying && shouldPlay()) {
+                currentPosition = player.currentPosition
+
+                delay(250)
+
+                if (ceil(currentPosition) >= ceil(duration) && duration != 0f && isPlaying && !loop) {
+                    launch {
+                        controlsVisible = true
+                        isPlaying = false
+                        delay(2000)
+                        player.pause()
+                        player.seekTo(0)
+                        currentPosition = 0f
+                    }
+                }
+            }
+        }
+    }
+
+    fun pause() {
+        isPlaying = false
+        controlsVisible = true
+        playingJob?.cancel()
+        playingJob = null
+
+        player.pause()
+
+        if (currentPosition > 0f) player.setScrubbingModeEnabled(true)
+    }
+
+    fun seekBack() {
+        val prev = isPlaying
+        player.seekBack()
+        isPlaying = prev
+    }
+
+    fun seekForward() {
+        val prev = isPlaying
+        player.seekForward()
+        isPlaying = prev
+    }
+
+    /** @param position in millisecond */
+    fun seekTo(position: Long) {
+        val prev = isPlaying
+        player.seekTo(position)
+        currentPosition = player.currentPosition
+        isPlaying = prev
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        if (speed !in 0.5f..4f) return
+
+        player.setPlaybackSpeed(speed)
+    }
+
+    fun setVolume(volume: Float) = player.setVolume(volume)
+
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun applyEffects(uri: Uri, effectList: List<Effect>) {
+        player.applyEffects(uri, effectList)
+    }
+
+    fun linkPlayerView(playerView: PlayerView) = player.linkPlayerView(playerView)
+}
+
+@Composable
+fun retainVideoPlayerState(
+    isOpenWithView: Boolean,
+    onPlaybackStateChanged: (state: Int) -> Unit
+): VideoPlayerState {
+    val context = LocalContext.current
+    val settings = context.applicationContext.appModule.settings
+    val coroutineScope = rememberCoroutineScope()
+
+    val state = retain {
+        VideoPlayerState(
+            context = context,
+            coroutineScope = coroutineScope,
+            muteOnStartFlow = settings.video.getMuteOnStart(),
+            autoPlayFlow = settings.video.getShouldAutoPlay(),
+            isOpenWithView = isOpenWithView,
+            onPlaybackStateChanged = onPlaybackStateChanged
+        )
+    }
+
+    RetainedEffect(state) {
+        onRetire {
+            state.release(context)
+        }
+    }
+
+    return state
+}

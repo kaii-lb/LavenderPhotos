@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.videoplayer
 
 import android.app.Activity
-import android.util.Log
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
@@ -40,13 +39,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,84 +61,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
-import com.kaii.photos.LocalNavController
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.VideoPlayerConstants
-import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import kotlinx.coroutines.Dispatchers
+import com.kaii.photos.helpers.video.VideoPlayerState
+import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import kotlin.math.ceil
 
-// special thanks to @bedirhansaricayir on GitHub, helped with a LOT of performance stuff
-// https://github.com/bedirhansaricayir/Instagram-Reels-Jetpack-Compose/blob/master/app/src/main/java/com/reels/example/presentation/components/ExploreVideoPlayer.kt
-
-private const val TAG = "com.kaii.photos.compose.videoplayer.VideoPlayer"
-
-// TODO: rework to use a class or viewmodel instead of this mess
 @OptIn(UnstableApi::class)
+@kotlin.OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
     accessToken: String,
+    state: VideoPlayerState,
     appBarsVisible: MutableState<Boolean>,
-    shouldAutoPlay: Boolean,
     scrollState: SinglePhotoScrollState,
     window: Window,
-    shouldPlay: State<Boolean>,
+    shouldPlay: () -> Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
+    useCache: Boolean,
     modifier: Modifier = Modifier,
-    isOpenWithView: Boolean = false
+    isOpenWithView: Boolean = false,
+    isSecuredMedia: Boolean = false
 ) {
     val context = LocalContext.current
-    val navController = LocalNavController.current
-    val isSecuredMedia = item.absolutePath.startsWith(context.appSecureFolderDir)
-    var videoSource by remember { mutableStateOf(
-        item.immichUrl?.replace("original", "video/playback")?.toUri() ?: item.uri.toUri()
-    )}
+    var securedMediaProgress by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(shouldPlay()) {
+        if (shouldPlay()) {
+            state.setSource(
+                context = context,
+                item = item,
+                accessToken = accessToken,
+                shouldPlay = shouldPlay,
+                progress = {
+                    securedMediaProgress = it
+                }
+            )
+        }
+    }
 
     if (isSecuredMedia) {
-        var securedMediaProgress by remember { mutableFloatStateOf(0f) }
-        var continueToVideo by remember { mutableStateOf(!isSecuredMedia) }
-
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
-                val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
-                    .getIvFromSecuredPath(item.absolutePath)
-
-                if (iv == null) {
-                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
-                    return@withContext
-                }
-
-                val output =
-                    EncryptionManager.decryptVideo(
-                        absolutePath = item.absolutePath,
-                        iv = iv,
-                        context = context
-                    ) {
-                        securedMediaProgress = it
-                    }
-
-                videoSource = output.toUri()
-                continueToVideo = true
-            }
-        }
-
-        if (!continueToVideo) {
+        if (securedMediaProgress < 1f) {
             Column(
                 modifier = modifier
                     .fillMaxSize(1f),
@@ -181,36 +152,17 @@ fun VideoPlayer(
         }
     }
 
-    val isPlaying = retain(shouldAutoPlay, shouldPlay.value) {
-        mutableStateOf(shouldPlay.value && shouldAutoPlay)
+    BackHandler(
+        enabled = isOpenWithView
+    ) {
+        state.pause()
+        state.resetMute()
+        state.release(context)
+
+        (context as Activity).finish()
     }
-    val lastIsPlaying = retain { mutableStateOf(isPlaying.value) }
 
-    /** In Seconds */
-    val currentVideoPosition = retain { mutableFloatStateOf(0f) }
-    val duration = retain { mutableFloatStateOf(0f) }
-
-    val exoPlayer = rememberExoPlayerWithLifeCycle(
-        videoSource = videoSource,
-        item = item,
-        accessToken = accessToken,
-        isPlaying = isPlaying,
-        duration = duration,
-        currentVideoPosition = currentVideoPosition,
-        onPlaybackStateChanged = {}
-    )
-    val playerView = rememberPlayerView(
-        exoPlayer = exoPlayer,
-        activity = context as Activity,
-        absolutePath = item.absolutePath,
-        blurViews = blurViews,
-        useBlackBackground = useBlackBackground
-    )
-
-    val isMuted = remember(scrollState.videoWasMuted) { mutableStateOf(scrollState.videoWasMuted) }
-    val controlsVisible = remember { mutableStateOf(true) }
     var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
-
     LaunchedEffect(showVideoPlayerControlsTimeout) {
         delay(VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT)
         setBarVisibility(
@@ -218,113 +170,55 @@ fun VideoPlayer(
             window = window
         ) {
             appBarsVisible.value = it
-
-            controlsVisible.value = it
+            state.controlsVisible = it
         }
 
         showVideoPlayerControlsTimeout = 0
     }
 
-    BackHandler {
-        isPlaying.value = false
-        currentVideoPosition.floatValue = 0f
-        duration.floatValue = 0f
-        scrollState.resetMute()
-
-        exoPlayer.stop()
-        exoPlayer.release()
-
-        if (isOpenWithView) context.finish()
-        else navController.popBackStack()
-    }
-
-
-    val isLandscape by rememberDeviceOrientation()
-    LaunchedEffect(isPlaying.value, isLandscape, shouldPlay.value) {
-        if (!isPlaying.value || !shouldPlay.value) {
-            controlsVisible.value = true
-
-            if (!isLandscape) {
-                setBarVisibility(
-                    visible = true,
-                    window = window
-                ) {
-                    appBarsVisible.value = true
-                }
-            }
-
-            exoPlayer.pause()
-
-            if (currentVideoPosition.floatValue > 0f) exoPlayer.isScrubbingModeEnabled = true
-        } else {
-            exoPlayer.isScrubbingModeEnabled = false
-            exoPlayer.play()
-        }
-
-        lastIsPlaying.value = isPlaying.value
-
-        currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-
-        if (shouldPlay.value && isPlaying.value && shouldAutoPlay && !exoPlayer.isPlaying) {
-            exoPlayer.play()
-        }
-
-        while (isPlaying.value && shouldPlay.value) {
-            currentVideoPosition.floatValue = exoPlayer.currentPosition / 1000f
-
-            delay(250)
-
-            if (ceil(currentVideoPosition.floatValue) >= ceil(duration.floatValue) && duration.floatValue != 0f && isPlaying.value) {
-                launch {
-                    controlsVisible.value = true
-                    delay(1000)
-                    exoPlayer.pause()
-                    exoPlayer.seekTo(0)
-                    currentVideoPosition.floatValue = 0f
-                    isPlaying.value = false
-                }
-            }
-        }
-    }
-
-
-    LaunchedEffect(controlsVisible.value) {
-        if (controlsVisible.value) showVideoPlayerControlsTimeout += 1
-    }
-
-    LaunchedEffect(isMuted.value) {
-        exoPlayer.volume = if (isMuted.value) 0f else 1f
-
-        exoPlayer.setAudioAttributes(
-            AudioAttributes.Builder().apply {
-                setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                AudioAttributes.DEFAULT
-                setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
-            }.build(),
-            !isMuted.value
-        )
-    }
-
-    LaunchedEffect(shouldAutoPlay, shouldPlay.value) {
-        exoPlayer.playWhenReady = shouldAutoPlay && shouldPlay.value
+    LaunchedEffect(state.controlsVisible) {
+        if (state.controlsVisible) showVideoPlayerControlsTimeout += 1
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize(1f)
             .then(
-                if (isPlaying.value && shouldPlay.value) {
+                if (state.isPlaying && shouldPlay()) {
                     Modifier.keepScreenOn()
                 } else Modifier.Companion
             )
     ) {
-        AndroidView(
-            factory = {
-                playerView
-            },
-            modifier = modifier
-                .align(Alignment.Center)
-        )
+        if (!shouldPlay()) {
+            GlideImage(
+                model = item.uri.toUri(),
+                contentScale = ContentScale.Fit,
+                contentDescription = null,
+                loading = placeholder(R.drawable.broken_image),
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                it.signature(item.signature())
+                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+            }
+        } else {
+            val playerView = rememberPlayerView(
+                useTextureView = false,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground
+            )
+
+            AndroidView(
+                factory = {
+                    playerView
+                },
+                update = {
+                    state.linkPlayerView(it)
+                },
+                modifier = modifier
+                    .align(Alignment.Center)
+            )
+        }
 
         var doubleTapDisplayTimeMillis by remember { mutableIntStateOf(0) }
         val isLandscape by rememberDeviceOrientation()
@@ -357,7 +251,7 @@ fun VideoPlayer(
                 window = window
             ) {
                 appBarsVisible.value = it
-                if (!isLandscape) controlsVisible.value = it
+                if (!isLandscape) state.controlsVisible = it
             }
         }
 
@@ -369,30 +263,26 @@ fun VideoPlayer(
                         onTap = { position ->
                             if (!scrollState.videoLock && doubleTapDisplayTimeMillis == 0) {
                                 setBarVisibility(
-                                    visible = if (isLandscape) false else !controlsVisible.value,
+                                    visible = if (isLandscape) false else !state.controlsVisible,
                                     window = window
                                 ) {
                                     appBarsVisible.value = it
                                 }
 
-                                controlsVisible.value = !controlsVisible.value
+                                state.controlsVisible = !state.controlsVisible
                             } else if (!scrollState.videoLock && doubleTapDisplayTimeMillis != 0) {
                                 if (position.x < size.width / 2) {
                                     if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
                                         0
                                     doubleTapDisplayTimeMillis -= 1000
 
-                                    val prev = isPlaying.value
-                                    exoPlayer.seekBack()
-                                    isPlaying.value = prev
+                                    state.seekBack()
                                 } else if (position.x >= size.width / 2) {
                                     if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis =
                                         0
                                     doubleTapDisplayTimeMillis += 1000
 
-                                    val prev = isPlaying.value
-                                    exoPlayer.seekForward()
-                                    isPlaying.value = prev
+                                    state.seekForward()
                                 }
 
                                 showVideoPlayerControlsTimeout += 1
@@ -404,16 +294,12 @@ fun VideoPlayer(
                                 if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis -= 1000
 
-                                val prev = isPlaying.value
-                                exoPlayer.seekBack()
-                                isPlaying.value = prev
+                                state.seekBack()
                             } else if (!scrollState.videoLock && position.x >= size.width / 2) {
                                 if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
                                 doubleTapDisplayTimeMillis += 1000
 
-                                val prev = isPlaying.value
-                                exoPlayer.seekForward()
-                                isPlaying.value = prev
+                                state.seekForward()
                             }
 
                             showVideoPlayerControlsTimeout += 1
@@ -520,9 +406,8 @@ fun VideoPlayer(
             }
         }
 
-        val title = remember { File(item.absolutePath).nameWithoutExtension }
         AnimatedVisibility(
-            visible = controlsVisible.value,
+            visible = state.controlsVisible,
             enter = fadeIn(
                 animationSpec = AnimationConstants.expressiveTween()
             ),
@@ -534,24 +419,42 @@ fun VideoPlayer(
                 .align(Alignment.Center)
         ) {
             VideoPlayerControls(
-                exoPlayer = exoPlayer,
-                isPlaying = isPlaying,
-                isMuted = isMuted,
-                currentVideoPosition = currentVideoPosition,
-                duration = duration,
-                title = title,
+                isPlaying = {
+                    state.isPlaying
+                },
+                isMuted = {
+                    state.isMuted
+                },
+                currentVideoPosition = {
+                    state.currentPosition
+                },
+                duration = {
+                    state.duration
+                },
+                title = {
+                    state.videoTitle
+                },
+                playbackSpeed = {
+                    state.playbackSpeed
+                },
                 modifier = Modifier
                     .fillMaxSize(1f),
                 onAnyTap = {
                     showVideoPlayerControlsTimeout += 1
                 },
-                setLastWasMuted = { new ->
-                    scrollState.setWasMuted(new)
-                }
+                togglePlayPause = {
+                    if (state.isPlaying) state.pause()
+                    else state.play()
+                },
+                seekBack = state::seekBack,
+                seekForward = state::seekForward,
+                seekTo = state::seekTo,
+                toggleMute = state::toggleMute,
+                setPlaybackSpeed = state::setPlaybackSpeed
             )
         }
 
-        if ((scrollState.videoLock || controlsVisible.value) && isLandscape) {
+        if ((scrollState.videoLock || state.controlsVisible) && isLandscape) {
             Row(
                 modifier = Modifier
                     .wrapContentSize()
@@ -588,7 +491,7 @@ fun VideoPlayer(
                     )
                 }
 
-                if (controlsVisible.value) {
+                if (state.controlsVisible) {
                     Column(
                         modifier = Modifier
                             .wrapContentSize(),

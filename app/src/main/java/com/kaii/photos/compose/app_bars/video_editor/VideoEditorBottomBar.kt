@@ -27,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +75,7 @@ private const val TAG = "com.kaii.photos.app_bars.video_editor.VideoEditorBottom
 @Composable
 fun VideoEditorBottomBar(
     pagerState: PagerState,
-    currentPosition: MutableFloatState,
+    currentPosition: () -> Float,
     basicData: BasicVideoData,
     videoEditingState: VideoEditingState,
     drawingPaintState: DrawingPaintState,
@@ -241,7 +240,7 @@ fun VideoEditorBottomBar(
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Draw) -> {
                         SharedEditorDrawContent(
                             drawingPaintState = drawingPaintState,
-                            currentTime = currentPosition.floatValue
+                            currentTime = currentPosition()
                         )
                     }
 
