@@ -21,19 +21,15 @@ import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
-import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
-import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
-import com.kaii.photos.mediastore.insertMedia
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.reflect.KClass
 import kotlin.uuid.ExperimentalUuidApi
 
 class LocalFileManager(
@@ -41,7 +37,8 @@ class LocalFileManager(
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val accessToken: String
+    override val accessToken: String,
+    override val endpoint: String
 ) : GenericFileManager {
     companion object {
         private const val TAG = "com.kaii.photos.helpers.file_management.LocalFileManager"
@@ -50,8 +47,7 @@ class LocalFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
+        list: List<String>
     ) {
         if (list.isNotEmpty()) {
             val favRequest = MediaStore.createFavoriteRequest(
@@ -68,8 +64,6 @@ class LocalFileManager(
                 0,
                 0
             )
-
-            onItemDone(list.size)
         }
     }
 
@@ -96,8 +90,7 @@ class LocalFileManager(
             setFavourite(
                 context = context,
                 favourite = false,
-                list = list,
-                onItemDone = {}
+                list = list
             )
         } catch (e: Throwable) {
             Log.d(TAG, "Failed setting fav on trash list. ${e.message}")
@@ -231,39 +224,41 @@ class LocalFileManager(
     override suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
-        val contentResolver = context.contentResolver
-
-        val items = getMediaStoreDataForIds(
-            ids = list.fastMap { it.id }.toSet(),
-            context = context
-        )
-
-        var count = 1
-        items.forEachIndexed { index, media ->
-            contentResolver.insertMedia(
-                context = context,
-                media = media,
-                destination = destination,
-                basePath = media.absolutePath.toBasePath(),
-                currentVolumes = MediaStore.getExternalVolumeNames(context),
-                preserveDate = preserveDate,
-                onInsert = { original, new ->
-                    contentResolver.copyUriToUri(original, new)
-                }
-            )?.let {
-                count += index
-                onItemDone(count)
-                contentResolver.delete(media.uri.toUri(), null)
-            }
+        if (destination !is AlbumType.Folder || origin !is AlbumType.Folder) {
+            throw IllegalArgumentException("Cannot move items between ${origin::class.simpleName} and ${destination::class.simpleName}")
         }
 
-        return@withContext count == items.size
+        var count = 0
+        val toBeDeleted = mutableListOf<String>()
+
+        copyItems(
+            context = context,
+            list = list,
+            origin = origin,
+            destination = destination,
+            preserveDate = preserveDate,
+            overrideDisplayName = null,
+            onItemDone = { uri ->
+                if (!toBeDeleted.contains(uri)) {
+                    toBeDeleted.add(uri)
+                }
+
+                count += 1
+                onItemDone(uri)
+            }
+        )
+
+        permanentlyDelete(
+            context = context,
+            list = toBeDeleted
+        )
+
+        return@withContext count == list.size
     }
 
     /** @param overrideDisplayName should not contain file extension */
@@ -271,23 +266,22 @@ class LocalFileManager(
     override suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        when (originType) {
-            AlbumType.Folder::class -> {
+        when (destination) {
+            is AlbumType.Folder -> {
                 copyToLocal(context, list, origin, destination, preserveDate, overrideDisplayName, onItemDone)
             }
 
-            AlbumType.Custom::class -> {
+            is AlbumType.Custom -> {
                 copyToCustom(context, list, origin, destination, onItemDone)
             }
 
-            AlbumType.Custom::class -> {
+            is AlbumType.Cloud -> {
                 copyToCloud(context, list, destination, onItemDone)
             }
 

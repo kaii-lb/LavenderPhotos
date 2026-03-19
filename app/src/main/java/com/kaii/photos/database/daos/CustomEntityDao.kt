@@ -62,6 +62,9 @@ interface CustomEntityDao {
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
     suspend fun getMediaInAlbum(album: String): List<MediaStoreData>
 
+    @Query(value = "UPDATE media SET immichUrl = :immichUrl, hash = :hash WHERE id = :id")
+    suspend fun linkToImmich(id: Long, hash: String, immichUrl: String)
+
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)
 

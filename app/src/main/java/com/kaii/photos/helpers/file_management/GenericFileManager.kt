@@ -1,12 +1,14 @@
 package com.kaii.photos.helpers.file_management
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
-import android.os.Build
 import android.provider.MediaStore
+import android.provider.Settings
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapIndexedNotNull
+import androidx.core.net.toUri
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
@@ -14,6 +16,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.copyUriToUri
@@ -52,6 +55,7 @@ interface GenericFileManager {
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
     val accessToken: String
+    val endpoint: String
 
     fun allowedAlbumTypesFor(
         action: Action,
@@ -72,8 +76,7 @@ interface GenericFileManager {
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
+        list: List<String>
     )
 
     @OptIn(ExperimentalUuidApi::class)
@@ -84,6 +87,27 @@ interface GenericFileManager {
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     )
+
+    suspend fun permanentlyDelete(
+        context: Context,
+        list: List<String>
+    ) {
+        if (list.isNotEmpty()) {
+            val deleteRequest = MediaStore.createDeleteRequest(
+                context.contentResolver,
+                list.map { it.toUri() }
+            )
+
+            (context as Activity).startIntentSenderForResult(
+                deleteRequest.intentSender,
+                9997,
+                null,
+                0,
+                0,
+                0
+            )
+        }
+    }
 
     fun renameItem(
         context: Context,
@@ -100,47 +124,45 @@ interface GenericFileManager {
     suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): Boolean
 
     /** @param overrideDisplayName should not contain file extension */
     suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)? = null,
-        onItemDone: (totaCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): List<CopyResult>
 
     suspend fun copyToCustom(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        destination: String,
-        onItemDone: (totalCount: Int) -> Unit
+        origin: AlbumType,
+        destination: AlbumType.Custom,
+        onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
         customDao.upsertAll(
             items = list.fastMap {
                 CustomItem(
                     id = it.id,
-                    album = destination
+                    album = destination.id
                 )
             }
         )
 
-        onItemDone(list.size)
-
         val ids = list.fastMap { it.id }
-        val mediaItems = customDao.getMediaInAlbum(album = origin).filter {
+        val mediaItems = customDao.getMediaInAlbum(album = destination.id).filter {
             it.id in ids
         }
+
+        mediaItems.forEach { onItemDone(it.uri) }
 
         return@withContext mediaItems.fastMap {
             CopyResult(
@@ -150,14 +172,15 @@ interface GenericFileManager {
         }
     }
 
+    /** @param onItemDone gives the uri of the current item copied */
     suspend fun copyToLocal(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType.Folder,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totalCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ) = withContext(Dispatchers.IO) {
         val contentResolver = context.contentResolver
 
@@ -168,37 +191,40 @@ interface GenericFileManager {
 
         val newItems = mutableListOf<CopyResult>()
         items.forEachIndexed { index, media ->
-            contentResolver.insertMedia(
-                context = context,
-                media = media,
-                destination = destination,
-                basePath = media.absolutePath.toBasePath(),
-                overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
-                currentVolumes = MediaStore.getExternalVolumeNames(context),
-                preserveDate = preserveDate,
-                onInsert = { original, new ->
-                    contentResolver.copyUriToUri(original, new)
-                    newItems.add(
-                        CopyResult(
-                            id = new.lastPathSegment!!.toLong(),
-                            immichId = media.immichId
+            destination.paths.forEach { path ->
+                contentResolver.insertMedia(
+                    context = context,
+                    media = media,
+                    destination = path,
+                    basePath = media.absolutePath.toBasePath(),
+                    overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
+                    currentVolumes = MediaStore.getExternalVolumeNames(context),
+                    preserveDate = preserveDate,
+                    onInsert = { original, new ->
+                        contentResolver.copyUriToUri(original, new)
+                        newItems.add(
+                            CopyResult(
+                                id = new.lastPathSegment!!.toLong(),
+                                immichId = media.immichId
+                            )
                         )
-                    )
-                }
-            )?.let {
-                onItemDone(index + 1)
+                    }
+                )
             }
+
+            onItemDone(media.uri)
         }
 
         return@withContext newItems.toList()
     }
 
+    /** @param destination is the immich album id */
     @OptIn(ExperimentalUuidApi::class)
     suspend fun copyToCloud(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
-        onItemDone: (totalCount: Int) -> Unit
+        destination: AlbumType.Cloud,
+        onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
         val media = getMediaStoreDataForIds(
             ids = list.fastMap { it.id }.toSet(),
@@ -215,17 +241,21 @@ interface GenericFileManager {
                     dateTaken = it.dateTaken,
                     dateModified = it.dateModified
                 ),
-                it.id
+                it
             )
+        }
+
+        val hashes = media.associate { item ->
+            val hash = item.hash ?: calculateSha1Checksum(file = File(item.absolutePath))
+
+            item.id to hash
         }
 
         val exists = assetClient.check(
             assets = AssetBulkUploadRequest(
                 assets.map { item ->
-                    val checksum = item.first.filename // TODO
-
                     AssetBulkUploadCheckItem(
-                        checksum = checksum,
+                        checksum = hashes[item.second.id]!!,
                         id = item.first.id.toString()
                     )
                 }
@@ -235,7 +265,19 @@ interface GenericFileManager {
             it.id
         } ?: emptyList()
 
-        onItemDone(exists.size)
+        media
+            .filter {
+                it.immichId in exists && it.immichId != null
+            }
+            .forEach { item ->
+                customDao.linkToImmich(
+                    id = item.id,
+                    hash = hashes[item.id]!!,
+                    immichUrl = item.immichUrl!!
+                )
+
+                onItemDone(item.uri)
+            }
 
         val missing = assets.fastFilter { it.first.id.toString() !in exists }
 
@@ -244,19 +286,23 @@ interface GenericFileManager {
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Upload,
-                destination = destination,
+                destination = destination.immichId,
                 itemIds = missing.fastMap { it.second.toString() }
             )
         )
 
-        val uploaded = missing.fastMapIndexedNotNull { index, item ->
+        // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
+        @SuppressLint("HardwareIds")
+        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+        val uploaded = missing.fastMap { item ->
             val assetData = File(item.first.absolutePath).inputStream().buffered().readBytes()
 
             val resp = assetClient.upload(
                 AssetUploadRequest(
                     assetData = assetData,
                     deviceAssetId = "${item.first.filename}-${item.first.size}",
-                    deviceId = Build.MODEL, // TODO: check if this is the right format
+                    deviceId = deviceId,
                     fileCreatedAt = Instant.fromEpochSeconds(item.first.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                     fileModifiedAt = Instant.fromEpochSeconds(item.first.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                     metadata = emptyList(),
@@ -265,12 +311,19 @@ interface GenericFileManager {
                 accessToken = accessToken
             )
 
+
             if (resp != null) {
-                onItemDone(exists.size + index + 1)
+                customDao.linkToImmich(
+                    id = item.second.id,
+                    hash = hashes[item.second.id]!!,
+                    immichUrl = "$endpoint/api/assets/${resp.id}/original"
+                )
+
+                onItemDone(media.first { it.id == item.second.id }.uri)
             }
 
             CopyResult(
-                id = item.second,
+                id = item.second.id,
                 immichId = resp?.id
             )
         }
@@ -292,7 +345,7 @@ interface GenericFileManager {
         } + uploaded
 
         albumsClient.addAssets(
-            albumId = Uuid.parse(destination),
+            albumId = Uuid.parse(destination.immichId),
             assetIds = total.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = accessToken
         )

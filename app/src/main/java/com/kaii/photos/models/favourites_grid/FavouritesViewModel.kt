@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.file_management.GenericFileManager
@@ -123,7 +124,7 @@ class FavouritesViewModel(
     fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        targetAlbumId: String,
+        destination: AlbumType,
         overrideDisplayName: ((displayName: String) -> String)?
     ) {
         viewModelScope.launch {
@@ -144,7 +145,7 @@ class FavouritesViewModel(
                 )
             )
 
-            repo.copy(context, list, targetAlbumId, preserveDate.value, overrideDisplayName) {
+            repo.copy(context, list, destination, preserveDate.value, overrideDisplayName) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_copy_snackbar_body,
@@ -220,13 +221,7 @@ class FavouritesViewModel(
                 )
             )
 
-            repo.setFavourite(context, favourite, list) {
-                percentage.floatValue = it.toFloat() / list.size
-                body.value = context.resources.getString(
-                    R.string.media_restore_snackbar_body,
-                    it, list.size
-                )
-            }
+            repo.setFavourite(context, favourite, list)
         }
     }
 }

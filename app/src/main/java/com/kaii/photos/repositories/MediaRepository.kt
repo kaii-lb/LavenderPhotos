@@ -79,7 +79,8 @@ class MediaRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = ""
+        accessToken = "",
+        endpoint = ""
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -134,7 +135,8 @@ class MediaRepository(
                             baseUrl = info.endpoint,
                             client = client
                         ),
-                        accessToken = info.accessToken
+                        accessToken = info.accessToken,
+                        endpoint = info.endpoint
                     )
                 }
         }
@@ -150,19 +152,33 @@ class MediaRepository(
     suspend fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.copyItems(context, list, album.id, AlbumType.Folder::class, destination, preserveDate, overrideDisplayName, onItemDone)
+    ) {
+        var count = 0
+
+        fileManager.copyItems(context, list, album, destination, preserveDate, overrideDisplayName) {
+            count += 1
+            onItemDone(count)
+        }
+    }
 
     suspend fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
+        destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
-    ) = fileManager.moveItems(context, list, album.id, AlbumType.Folder::class, destination, preserveDate, onItemDone)
+    ) {
+        var count = 0
+
+        fileManager.moveItems(context, list, album, destination, preserveDate) {
+            count += 1
+            onItemDone(count)
+        }
+    }
 
     fun renameItem(
         context: Context,
@@ -185,7 +201,6 @@ class MediaRepository(
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setFavourite(context, favourite, list, onItemDone)
+        list: List<String>
+    ) = fileManager.setFavourite(context, favourite, list)
 }

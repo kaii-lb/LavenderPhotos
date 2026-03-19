@@ -6,6 +6,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.file_management.CloudFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
@@ -52,7 +53,12 @@ class CloudSyncManager(
         fileManager.copyToCloud(
             context = context,
             list = items,
-            destination = task.destination!!,
+            destination =
+                AlbumType.Cloud(
+                    id = task.destination!!,
+                    name = "",
+                    pinned = false
+                ),
             onItemDone = {
                 // TODO: update progress indicator around pfp?
             }

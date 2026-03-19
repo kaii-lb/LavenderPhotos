@@ -59,7 +59,8 @@ class FavouritesRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = ""
+        accessToken = "",
+        endpoint = ""
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -103,7 +104,8 @@ class FavouritesRepository(
                             baseUrl = info.endpoint,
                             client = client
                         ),
-                        accessToken = info.accessToken
+                        accessToken = info.accessToken,
+                        endpoint = info.endpoint
                     )
                 }
         }
@@ -119,11 +121,18 @@ class FavouritesRepository(
     suspend fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.copyItems(context, list, "", AlbumType.Folder::class, destination, preserveDate, overrideDisplayName, onItemDone)
+    ) {
+        var count = 0
+
+        fileManager.copyItems(context, list, AlbumType.PlaceHolder, destination, preserveDate, overrideDisplayName) {
+            count += 1
+            onItemDone(count)
+        }
+    }
 
     fun renameItem(
         context: Context,
@@ -141,7 +150,6 @@ class FavouritesRepository(
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setFavourite(context, favourite, list, onItemDone)
+        list: List<String>
+    ) = fileManager.setFavourite(context, favourite, list)
 }

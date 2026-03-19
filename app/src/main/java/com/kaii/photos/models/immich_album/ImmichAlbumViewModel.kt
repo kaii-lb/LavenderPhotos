@@ -171,7 +171,7 @@ class ImmichAlbumViewModel(
     fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        targetAlbumId: String,
+        destination: AlbumType,
         overrideDisplayName: ((displayName: String) -> String)?
     ) {
         viewModelScope.launch {
@@ -192,7 +192,7 @@ class ImmichAlbumViewModel(
                 )
             )
 
-            repo.copy(context, list, targetAlbumId, preserveDate.value, overrideDisplayName) {
+            repo.copy(context, list, destination, preserveDate.value, overrideDisplayName) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_copy_snackbar_body,
@@ -205,7 +205,7 @@ class ImmichAlbumViewModel(
     fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        targetAlbumId: String
+        destination: AlbumType
     ) {
         viewModelScope.launch {
             val percentage = mutableFloatStateOf(0f)
@@ -225,7 +225,7 @@ class ImmichAlbumViewModel(
                 )
             )
 
-            repo.move(context, list, targetAlbumId, preserveDate.value) {
+            repo.move(context, list, destination, preserveDate.value) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_move_snackbar_body,
@@ -300,13 +300,7 @@ class ImmichAlbumViewModel(
                 )
             )
 
-            repo.setFavourite(context, favourite, list) {
-                percentage.floatValue = it.toFloat() / list.size
-                body.value = context.resources.getString(
-                    R.string.media_restore_snackbar_body,
-                    it, list.size
-                )
-            }
+            repo.setFavourite(context, favourite, list)
         }
     }
 }

@@ -80,9 +80,6 @@ interface MediaDao {
     )
     fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
-    @Query(value = "UPDATE media SET immichUrl = :immichUrl WHERE hash = :hash")
-    suspend fun linkToImmich(hash: String, immichUrl: String)
-
     @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
     fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)
 

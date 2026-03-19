@@ -19,7 +19,6 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.reflect.KClass
 import kotlin.uuid.ExperimentalUuidApi
 
 class CustomFileManager(
@@ -27,7 +26,8 @@ class CustomFileManager(
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val accessToken: String
+    override val accessToken: String,
+    override val endpoint: String
 ) : GenericFileManager {
     companion object {
         private const val TAG = "com.kaii.photos.helpers.file_management.CustomFileManager"
@@ -36,8 +36,7 @@ class CustomFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
+        list: List<String>
     ) = withContext(Dispatchers.IO) {
         if (list.isNotEmpty()) {
             val favRequest = MediaStore.createFavoriteRequest(
@@ -72,6 +71,8 @@ class CustomFileManager(
             ids = list.fastMap { it.toLong() }.toSet(),
             album = albumId!!
         )
+
+        onItemDone(list.size)
     }
 
     /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
@@ -121,25 +122,30 @@ class CustomFileManager(
     override suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
+        if (destination !is AlbumType.Custom || origin !is AlbumType.Custom) {
+            throw IllegalArgumentException("Cannot move items between ${origin::class.simpleName} and ${destination::class.simpleName}")
+        }
+
         customDao.upsertAll(
             items = list.fastMap {
                 CustomItem(
                     id = it.id,
-                    album = destination
+                    album = destination.id
                 )
             }
         )
 
         customDao.deleteAll(
             ids = list.fastMap { it.id }.toSet(),
-            album = origin
+            album = origin.id
         )
+
+        list.forEach { onItemDone(it.toUri().toString()) }
 
         true
     }
@@ -149,23 +155,22 @@ class CustomFileManager(
     override suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: String,
-        originType: KClass<out AlbumType>,
-        destination: String,
+        origin: AlbumType,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
+        onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        when (originType) {
-            AlbumType.Folder::class -> {
+        when (destination) {
+            is AlbumType.Folder -> {
                 copyToLocal(context, list, origin, destination, preserveDate, overrideDisplayName, onItemDone)
             }
 
-            AlbumType.Custom::class -> {
+            is AlbumType.Custom -> {
                 copyToCustom(context, list, origin, destination, onItemDone)
             }
 
-            AlbumType.Custom::class -> {
+            is AlbumType.Cloud -> {
                 copyToCloud(context, list, destination, onItemDone)
             }
 

@@ -73,7 +73,8 @@ class ImmichRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = ""
+        accessToken = "",
+        endpoint = ""
     )
 
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
@@ -199,7 +200,8 @@ class ImmichRepository(
                             baseUrl = info.endpoint,
                             client = client
                         ),
-                        accessToken = info.accessToken
+                        accessToken = info.accessToken,
+                        endpoint = info.endpoint
                     )
                 }
 
@@ -217,19 +219,33 @@ class ImmichRepository(
     suspend fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
+        destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.copyItems(context, list, album.id, AlbumType.Cloud::class, destination, preserveDate, overrideDisplayName, onItemDone)
+    ) {
+        var count = 0
+
+        fileManager.copyItems(context, list, album, destination, preserveDate, overrideDisplayName) {
+            count += 1
+            onItemDone(count)
+        }
+    }
 
     suspend fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: String,
+        destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
-    ) = fileManager.moveItems(context, list, album.id, AlbumType.Cloud::class, destination, preserveDate, onItemDone)
+    ) {
+        var count = 0
+
+        fileManager.moveItems(context, list, album, destination, preserveDate) {
+            count += 1
+            onItemDone(count)
+        }
+    }
 
     suspend fun renameAlbum(
         context: Context,
@@ -246,7 +262,6 @@ class ImmichRepository(
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setFavourite(context, favourite, list, onItemDone)
+        list: List<String>
+    ) = fileManager.setFavourite(context, favourite, list)
 }

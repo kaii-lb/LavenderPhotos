@@ -60,14 +60,13 @@ suspend fun calculateSha1Checksum(
     jobs.chunked(32).forEach {
         it.joinAll()
     }
-    // jobs.joinAll()
 
     cancellationSignal.setOnCancelListener {
         jobs.forEach {
             it.cancel()
             it.cancelChildren()
         }
-        results = ConcurrentHashMap<String, String>()
+        results = ConcurrentHashMap()
     }
 
     return@coroutineScope results
