@@ -3,8 +3,8 @@ package com.kaii.photos.helpers
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
-import android.os.VibratorManager
 import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -22,13 +22,13 @@ fun rememberVibratorManager() : Vibrator {
 
 fun Vibrator.vibrateShort() {
     vibrate(
-        VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+        VibrationEffect.createOneShot(30, 1)
     )
 }
 
 fun Vibrator.vibrateLong() {
     vibrate(
-        VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+        VibrationEffect.createOneShot(60, 10)
     )
 }
 

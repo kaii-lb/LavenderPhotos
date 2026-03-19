@@ -126,6 +126,12 @@ class CustomAlbumViewModel(
         initialValue = false
     )
 
+    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     fun remove(items: Set<MediaStoreData>) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.remove(items, album.id)

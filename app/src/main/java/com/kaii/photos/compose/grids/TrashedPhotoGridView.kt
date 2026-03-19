@@ -34,6 +34,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.trash_grid.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.trash_grid.TrashedPhotoGridViewTopBar
+import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
@@ -131,6 +132,7 @@ fun TrashedPhotoGridView(
             val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
             val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
             val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+            val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
             PhotoGrid(
                 pagingItems = pagingItems,
@@ -138,11 +140,12 @@ fun TrashedPhotoGridView(
                 viewProperties = ViewProperties.Trash,
                 selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null,
-                columnSize = columnSize,
-                openVideosExternally = openVideosExternally,
-                cacheThumbnails = cacheThumbnails,
-                thumbnailSize = thumbnailSize,
-                useRoundedCorners = useRoundedCorners,
+                columnSize = { columnSize },
+                openVideosExternally = { openVideosExternally },
+                cacheThumbnails = { cacheThumbnails },
+                thumbnailSize = { thumbnailSize },
+                useRoundedCorners = { useRoundedCorners },
+                vibrateOnClick = { vibrateOnClick }
             )
         }
     }

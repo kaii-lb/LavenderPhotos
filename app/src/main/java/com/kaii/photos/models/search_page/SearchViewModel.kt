@@ -113,6 +113,12 @@ class SearchViewModel(
         initialValue = true
     )
 
+    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     private val searchManager = SearchManager(
         searchRepo = SearchRepository(
             searchDao = MediaDatabase.getInstance(context.applicationContext).searchDao(),

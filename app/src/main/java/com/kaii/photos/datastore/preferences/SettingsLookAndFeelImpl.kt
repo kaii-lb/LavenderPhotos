@@ -25,6 +25,7 @@ class SettingsLookAndFeelImpl(
     private val useRoundedCorners = booleanPreferencesKey("look_and_feel_use_rounded_corners") // for photo grid
     private val topBarDetailsFormat = intPreferencesKey("look_and_feel_top_bar_details_format")
     private val blurForViews = booleanPreferencesKey("look_and_feel_blur_views")
+    private val vibrateOnMediaClick = booleanPreferencesKey("look_and_feel_vibrate_on_media_click")
 
     /** 0 is follow system
      * 1 is dark
@@ -132,6 +133,17 @@ class SettingsLookAndFeelImpl(
     fun setBlurViews(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[blurForViews] = value
+        }
+    }
+
+    fun getVibrateOnMediaClick() =
+        context.datastore.data.map {
+            it[vibrateOnMediaClick] ?: true
+        }
+
+    fun setVibrateOnMediaClick(value: Boolean) = scope.launch {
+        context.datastore.edit {
+            it[vibrateOnMediaClick] = value
         }
     }
 }

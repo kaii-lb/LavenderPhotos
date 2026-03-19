@@ -25,7 +25,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.R
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
-import com.kaii.photos.compose.grids.PhotoGrid
+import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.SearchTextField
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
@@ -63,6 +63,7 @@ fun SearchPage(
             val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
             val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
             val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+            val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
             PhotoGrid(
                 pagingItems = items,
@@ -72,11 +73,12 @@ fun SearchPage(
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
-                columnSize = columnSize,
-                openVideosExternally = openVideosExternally,
-                cacheThumbnails = cacheThumbnails,
-                thumbnailSize = thumbnailSize,
-                useRoundedCorners = useRoundedCorners,
+                columnSize = { columnSize },
+                openVideosExternally = { openVideosExternally },
+                cacheThumbnails = { cacheThumbnails },
+                thumbnailSize = { thumbnailSize },
+                useRoundedCorners = { useRoundedCorners },
+                vibrateOnClick = { vibrateOnClick },
                 modifier = Modifier
                     .align(Alignment.Center)
             )

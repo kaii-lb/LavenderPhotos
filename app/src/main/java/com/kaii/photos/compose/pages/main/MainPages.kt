@@ -316,6 +316,7 @@ fun MainPages(
                         val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
                         val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
                         val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by multiAlbumViewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
@@ -330,11 +331,12 @@ fun MainPages(
                             album = tab.toAlbum(),
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
-                            columnSize = columnSize,
-                            openVideosExternally = openVideosExternally,
-                            cacheThumbnails = cacheThumbnails,
-                            thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners,
+                            columnSize = { columnSize },
+                            openVideosExternally = { openVideosExternally },
+                            cacheThumbnails = { cacheThumbnails },
+                            thumbnailSize = { thumbnailSize },
+                            useRoundedCorners = { useRoundedCorners },
+                            vibrateOnClick = { vibrateOnClick }
                         )
                     }
 
@@ -344,6 +346,7 @@ fun MainPages(
                         val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
                         val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
                         val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by multiAlbumViewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
@@ -360,11 +363,12 @@ fun MainPages(
                             album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
-                            columnSize = columnSize,
-                            openVideosExternally = openVideosExternally,
-                            cacheThumbnails = cacheThumbnails,
-                            thumbnailSize = thumbnailSize,
-                            useRoundedCorners = useRoundedCorners,
+                            columnSize = { columnSize },
+                            openVideosExternally = { openVideosExternally },
+                            cacheThumbnails = { cacheThumbnails },
+                            thumbnailSize = { thumbnailSize },
+                            useRoundedCorners = { useRoundedCorners },
+                            vibrateOnClick = { vibrateOnClick }
                         )
                     }
 

@@ -41,7 +41,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
-import com.kaii.photos.compose.grids.PhotoGrid
+import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
@@ -117,6 +117,7 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
+    val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
@@ -126,7 +127,7 @@ fun SingleAlbumView(
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Album,
-        columnSize = columnSize,
+        columnSize = { columnSize },
         openVideosExternally = { openVideosExternally },
         cacheThumbnails = { cacheThumbnails },
         thumbnailSize = { thumbnailSize },
@@ -134,6 +135,7 @@ fun SingleAlbumView(
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
         preserveDate = { preserveDate },
+        vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
         mediaCount = viewModel::getMediaCount,
@@ -180,6 +182,7 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
+    val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -206,7 +209,7 @@ fun SingleAlbumView(
         selectionManager = selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.CustomAlbum,
-        columnSize = columnSize,
+        columnSize = { columnSize },
         openVideosExternally = { openVideosExternally },
         cacheThumbnails = { cacheThumbnails },
         thumbnailSize = { thumbnailSize },
@@ -214,6 +217,7 @@ fun SingleAlbumView(
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
         preserveDate = { preserveDate },
+        vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
         mediaCount = viewModel::getMediaCount,
@@ -260,6 +264,7 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
+    val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -288,7 +293,7 @@ fun SingleAlbumView(
         viewProperties = ViewProperties.Immich,
         tags = { tags },
         selectedTags = { selectedTags },
-        columnSize = columnSize,
+        columnSize = { columnSize },
         openVideosExternally = { openVideosExternally },
         cacheThumbnails = { cacheThumbnails },
         thumbnailSize = { thumbnailSize },
@@ -296,6 +301,7 @@ fun SingleAlbumView(
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
         preserveDate = { preserveDate },
+        vibrateOnClick = { vibrateOnClick },
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
@@ -316,7 +322,7 @@ private fun SingleAlbumViewCommon(
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
     viewProperties: ViewProperties,
-    columnSize: Int,
+    columnSize: () -> Int,
     openVideosExternally: () -> Boolean,
     cacheThumbnails: () -> Boolean,
     thumbnailSize: () -> Int,
@@ -324,6 +330,7 @@ private fun SingleAlbumViewCommon(
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
     preserveDate: () -> Boolean,
+    vibrateOnClick: () -> Boolean,
     modifier: Modifier = Modifier,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
@@ -461,10 +468,11 @@ private fun SingleAlbumViewCommon(
                 viewProperties = viewProperties,
                 isMediaPicker = incomingIntent != null,
                 columnSize = columnSize,
-                openVideosExternally = openVideosExternally(),
-                cacheThumbnails = cacheThumbnails(),
-                thumbnailSize = thumbnailSize(),
-                useRoundedCorners = useRoundedCorners(),
+                openVideosExternally = openVideosExternally,
+                cacheThumbnails = cacheThumbnails,
+                thumbnailSize = thumbnailSize,
+                useRoundedCorners = useRoundedCorners,
+                vibrateOnClick = vibrateOnClick
             )
         }
     }

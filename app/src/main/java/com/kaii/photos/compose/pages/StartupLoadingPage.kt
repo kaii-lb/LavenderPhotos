@@ -66,11 +66,12 @@ fun StartupLoadingPage(
                 album = album,
                 selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
                 isMediaPicker = false,
-                columnSize = 3,
-                openVideosExternally = false,
-                cacheThumbnails = true,
-                thumbnailSize = 256,
-                useRoundedCorners = false,
+                columnSize = { 3 },
+                openVideosExternally = { false },
+                cacheThumbnails = { true },
+                thumbnailSize = { 256 },
+                useRoundedCorners = { false },
+                vibrateOnClick = { false }
             )
         }
 

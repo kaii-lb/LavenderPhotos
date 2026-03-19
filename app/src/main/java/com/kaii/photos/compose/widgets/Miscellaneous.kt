@@ -183,7 +183,7 @@ fun SimpleTab(
 
 @Composable
 fun ShowSelectedState(
-    isSelected: Boolean,
+    isSelected: () -> Boolean,
     modifier: Modifier = Modifier,
     showIcon: Boolean = true
 ) {
@@ -216,10 +216,10 @@ fun ShowSelectedState(
                 .padding(2.dp)
         ) {
             Icon(
-                painter = painterResource(id = if (isSelected) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
+                painter = painterResource(id = if (isSelected()) R.drawable.file_is_selected_background else R.drawable.file_not_selected_background),
                 contentDescription = "file is selected indicator",
                 tint =
-                    if (isSelected)
+                    if (isSelected())
                         MaterialTheme.colorScheme.primary
                     else {
                         if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.background
@@ -231,7 +231,7 @@ fun ShowSelectedState(
             )
 
             AnimatedVisibility(
-                visible = isSelected,
+                visible = isSelected(),
                 enter =
                     scaleIn(
                         animationSpec = tween(

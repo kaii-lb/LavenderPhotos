@@ -130,6 +130,12 @@ class MultiAlbumViewModel(
         initialValue = false
     )
 
+    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo =
         MediaRepository(

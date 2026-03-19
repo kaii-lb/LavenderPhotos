@@ -41,6 +41,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewTopAppBar
+import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
@@ -166,17 +167,19 @@ fun SecureFolderView(
             val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
             val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
             val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+            val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
             PhotoGrid(
                 pagingItems = items,
                 album = AlbumType.PlaceHolder,
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.SecureFolder,
-                columnSize = columnSize,
-                openVideosExternally = openVideosExternally,
-                cacheThumbnails = cacheThumbnails,
-                thumbnailSize = thumbnailSize,
-                useRoundedCorners = useRoundedCorners,
+                columnSize = { columnSize },
+                openVideosExternally = { openVideosExternally },
+                cacheThumbnails = { cacheThumbnails },
+                thumbnailSize = { thumbnailSize },
+                useRoundedCorners = { useRoundedCorners },
+                vibrateOnClick = { vibrateOnClick }
             )
         }
     }

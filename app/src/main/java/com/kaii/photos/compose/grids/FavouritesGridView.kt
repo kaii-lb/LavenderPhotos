@@ -38,6 +38,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewTopAppBar
+import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.AlbumType
@@ -161,6 +162,7 @@ fun FavouritesGridView(
             val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
             val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
             val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+            val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
             PhotoGrid(
                 pagingItems = pagingItems,
@@ -168,11 +170,12 @@ fun FavouritesGridView(
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.Favourites,
                 isMediaPicker = incomingIntent != null,
-                columnSize = columnSize,
-                openVideosExternally = openVideosExternally,
-                cacheThumbnails = cacheThumbnails,
-                thumbnailSize = thumbnailSize,
-                useRoundedCorners = useRoundedCorners,
+                columnSize = { columnSize },
+                openVideosExternally = { openVideosExternally },
+                cacheThumbnails = { cacheThumbnails },
+                thumbnailSize = { thumbnailSize },
+                useRoundedCorners = { useRoundedCorners },
+                vibrateOnClick = { vibrateOnClick }
             )
         }
     }

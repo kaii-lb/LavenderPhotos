@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.settings.DateFormatDialog
@@ -77,8 +79,10 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
     val topBarDetailsFormat by settings.getTopBarDetailsFormat().collectAsStateWithLifecycle(initialValue = TopBarDetailsFormat.FileName)
     val useBlackBackground by settings.getUseBlackBackgroundForViews().collectAsStateWithLifecycle(initialValue = false)
     val blurViews by settings.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
+    val vibrateOnMediaClick by settings.getVibrateOnMediaClick().collectAsStateWithLifecycle(initialValue = false)
 
     LookAndFeelSettingsPageImpl(
+        navController = LocalNavController.current,
         followDarkMode = { followDarkMode },
         displayDateFormat = { displayDateFormat },
         useRoundedCorners = { useRoundedCorners },
@@ -88,6 +92,7 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
         topBarDetailsFormat = { topBarDetailsFormat },
         useBlackBackground = { useBlackBackground },
         blurViews = { blurViews },
+        vibrateOnMediaClick = { vibrateOnMediaClick },
         modifier = modifier,
         setFollowDarkMode = settings::setFollowDarkMode,
         setDisplayDateFormat = settings::setDisplayDateFormat,
@@ -97,7 +102,8 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
         setAlbumColumnSize = settings::setAlbumColumnSize,
         setTopBarDetailsFormat = settings::setTopBarDetailsFormat,
         setUseBlackBackground = settings::setUseBlackBackgroundForViews,
-        setBlurViews = settings::setBlurViews
+        setBlurViews = settings::setBlurViews,
+        setVibrateOnMediaClick = settings::setVibrateOnMediaClick
     )
 }
 
@@ -105,6 +111,7 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun LookAndFeelSettingsPagePreview() {
     LookAndFeelSettingsPageImpl(
+        navController = rememberNavController(),
         followDarkMode = { 0 },
         displayDateFormat = { DisplayDateFormat.Default },
         useRoundedCorners = { false },
@@ -114,6 +121,7 @@ private fun LookAndFeelSettingsPagePreview() {
         topBarDetailsFormat = { TopBarDetailsFormat.FileName },
         useBlackBackground = { false },
         blurViews = { false },
+        vibrateOnMediaClick = { true },
         modifier = Modifier,
         setFollowDarkMode = { },
         setDisplayDateFormat = {},
@@ -123,13 +131,15 @@ private fun LookAndFeelSettingsPagePreview() {
         setAlbumColumnSize = {},
         setTopBarDetailsFormat = {},
         setUseBlackBackground = {},
-        setBlurViews = {}
+        setBlurViews = {},
+        setVibrateOnMediaClick = {}
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 private fun LookAndFeelSettingsPageImpl(
+    navController: NavController,
     followDarkMode: () -> Int,
     displayDateFormat: () -> DisplayDateFormat,
     useRoundedCorners: () -> Boolean,
@@ -139,6 +149,7 @@ private fun LookAndFeelSettingsPageImpl(
     topBarDetailsFormat: () -> TopBarDetailsFormat,
     useBlackBackground: () -> Boolean,
     blurViews: () -> Boolean,
+    vibrateOnMediaClick: () -> Boolean,
     modifier: Modifier,
     setFollowDarkMode: (value: Int) -> Unit,
     setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
@@ -148,11 +159,12 @@ private fun LookAndFeelSettingsPageImpl(
     setAlbumColumnSize: (value: Int) -> Unit,
     setTopBarDetailsFormat: (value: TopBarDetailsFormat) -> Unit,
     setUseBlackBackground: (value: Boolean) -> Unit,
-    setBlurViews: (value: Boolean) -> Unit
+    setBlurViews: (value: Boolean) -> Unit,
+    setVibrateOnMediaClick: (value: Boolean) -> Unit
 ) {
     Scaffold(
         topBar = {
-            DebuggingSettingsTopBar()
+            DebuggingSettingsTopBar(navController = navController)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -310,6 +322,18 @@ private fun LookAndFeelSettingsPageImpl(
             }
 
             item {
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.look_and_feel_vibrate_on_media_click),
+                    summary = stringResource(id = R.string.look_and_feel_vibrate_on_media_click_desc),
+                    position = RowPosition.Single,
+                    iconResID = R.drawable.mobile_vibrate,
+                    showBackground = false,
+                    checked = vibrateOnMediaClick(),
+                    onSwitchClick = setVibrateOnMediaClick
+                )
+            }
+
+            item {
                 PreferencesSeparatorText(
                     text = stringResource(id = R.string.look_and_feel_grids)
                 )
@@ -432,9 +456,9 @@ private fun LookAndFeelSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DebuggingSettingsTopBar() {
-    val navController = LocalNavController.current
-
+private fun DebuggingSettingsTopBar(
+    navController: NavController
+) {
     TopAppBar(
         title = {
             Text(

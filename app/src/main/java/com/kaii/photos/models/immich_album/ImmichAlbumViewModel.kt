@@ -106,6 +106,12 @@ class ImmichAlbumViewModel(
         initialValue = false
     )
 
+    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = true
+    )
+
     val albums = settings.albums.get().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
