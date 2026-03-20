@@ -13,6 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -43,7 +44,7 @@ fun TrashedPhotoGridViewBottomBar(
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.toUri() },
+            uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
             contentResolver = context.contentResolver
         )
     }
@@ -62,7 +63,7 @@ fun TrashPhotoGridBottomBarItems(
         onClick = {
             coroutineScope.launch {
                 shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.toUri() },
+                    uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
                     context = context,
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
@@ -82,7 +83,7 @@ fun TrashPhotoGridBottomBarItems(
             context.appModule.scope.launch(Dispatchers.IO) {
                 setTrashedOnPhotoList(
                     context = context,
-                    list = selectedItemsList.fastMap { it.toUri() },
+                    list = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
                     trashed = false
                 )
 
@@ -97,7 +98,7 @@ fun TrashPhotoGridBottomBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_restore)
     ) {
         permissionState.get(
-            uris = selectedItemsList.map { it.toUri() }
+            uris = selectedItemsList.map { it.uri.toUri() } // TODO: move to file manager
         )
     }
 
@@ -120,10 +121,11 @@ fun TrashPhotoGridBottomBarItems(
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
+        // TODO: move to file manager
         context.appModule.scope.launch(Dispatchers.IO) {
             permanentlyDeletePhotoList(
                 context = context,
-                list = selectedItemsList.fastMap { it.toUri() }
+                list = selectedItemsList.fastMap { it.uri.toUri() }
             )
 
             selectionManager.clear()

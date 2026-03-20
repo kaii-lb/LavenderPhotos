@@ -15,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -53,9 +54,10 @@ fun FavouritesViewBottomAppBar(
         val context = LocalContext.current
         val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
+        // TODO: move to file manager
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.toUri() },
+            uris = selectedItemsList.fastMap { it.uri.toUri() },
             contentResolver = context.contentResolver
         )
     }
@@ -76,8 +78,9 @@ fun FavouritesBottomAppBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch {
+                // TODO: move to file manager
                 shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.toUri() },
+                    uris = selectedItemsList.fastMap { it.uri.toUri() },
                     context = context,
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
@@ -127,9 +130,10 @@ fun FavouritesBottomAppBarItems(
         confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
     ) {
         coroutineScope.launch {
+            // TODO: move to file manager
             favState.setFavourite(
                 favourite = false,
-                list = selectedItemsList.fastMap { it.toUri() }
+                list = selectedItemsList.fastMap { it.uri.toUri() }
             )
         }
     }
@@ -150,15 +154,16 @@ fun FavouritesBottomAppBarItems(
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             context.appModule.scope.launch(Dispatchers.IO) {
+                // TODO: move to file manager
                 if (doNotTrash()) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsList.fastMap { it.toUri() }
+                        list = selectedItemsList.fastMap { it.uri.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsList.fastMap { it.toUri() },
+                        list = selectedItemsList.fastMap { it.uri.toUri() },
                         trashed = true
                     )
                 }
@@ -174,8 +179,9 @@ fun FavouritesBottomAppBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
         coroutineScope.launch {
+            // TODO: move to file manager
             permissionState.get(
-                uris = selectedItemsList.fastMap { it.toUri() }
+                uris = selectedItemsList.fastMap { it.uri.toUri() }
             )
         }
     }
@@ -186,8 +192,9 @@ fun FavouritesBottomAppBarItems(
                 showDeleteDialog.value = true
             } else {
                 coroutineScope.launch {
+                    // TODO: move to file manager
                     permissionState.get(
-                        uris = selectedItemsList.fastMap { it.toUri() }
+                        uris = selectedItemsList.fastMap { it.uri.toUri() }
                     )
                 }
             }

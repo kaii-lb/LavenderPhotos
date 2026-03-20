@@ -51,9 +51,8 @@ interface MediaDao {
     suspend fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
 
     @Query(
-        value = "SELECT id," +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
-                "absolutePath as parentPath " +
+        value = "SELECT id, uri, parentPath, " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths) LIMIT 2000"
@@ -61,9 +60,8 @@ interface MediaDao {
     fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id," +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
-                "absolutePath as parentPath " +
+        value = "SELECT id, uri, parentPath, " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1 LIMIT 2000"
@@ -71,9 +69,8 @@ interface MediaDao {
     fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id," +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage, " +
-                "absolutePath as parentPath " +
+        value = "SELECT id, uri, parentPath, " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 LIMIT 2000"
@@ -93,6 +90,15 @@ interface MediaDao {
 
     @Query(value = "SELECT DISTINCT parentPath FROM media WHERE parentPath != ''")
     fun getAllAlbums(): Flow<List<String>>
+
+    @Query(value = "UPDATE media SET immichUrl = :immichUrl, hash = :hash WHERE id = :id")
+    suspend fun linkToImmich(id: Long, hash: String, immichUrl: String)
+
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM media WHERE id = :id)")
+    suspend fun exists(id: Long): Boolean
+
+    @Query(value = "SELECT * FROM media WHERE id IN (:ids)")
+    suspend fun getMedia(ids: List<Long>): List<MediaStoreData>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)

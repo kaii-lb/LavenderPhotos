@@ -29,6 +29,7 @@ class CustomAlbumViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo = CustomRepository(
+        mediaDao = db.mediaDao(),
         customDao = db.customDao(),
         syncTaskDao = db.taskDao(),
         client = context.applicationContext.appModule.apiClient,

@@ -50,7 +50,6 @@ suspend fun ContentResolver.insertMedia(
     overrideDisplayName: String? = null,
     onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
-    val file = File(media.absolutePath)
     val volumeName =
         if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
         else currentVolumes.find {
@@ -75,7 +74,7 @@ suspend fun ContentResolver.insertMedia(
 
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
-            put(MediaColumns.DISPLAY_NAME, overrideDisplayName ?: file.name)
+            put(MediaColumns.DISPLAY_NAME, overrideDisplayName ?: media.displayName)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
 
@@ -108,7 +107,7 @@ suspend fun ContentResolver.insertMedia(
         return@withContext null
     }
 
-    val fileName = overrideDisplayName ?: file.nameWithoutExtension
+    val fileName = overrideDisplayName ?: media.displayName.substringBeforeLast(".")
     val fullUriPath = context.getExternalStorageContentUriFromAbsolutePath(destination, true)
 
     try {
@@ -118,7 +117,7 @@ suspend fun ContentResolver.insertMedia(
         val createdFile = directory?.createFile(media.mimeType, fileName)
 
         if (createdFile == null) {
-            Log.e(TAG, "Unable to create document file for directory $destination and file ${file.absolutePath}")
+            Log.e(TAG, "Unable to create document file for directory $destination and file ${media.absolutePath} ${media.uri}")
             return@withContext null
         }
 
@@ -337,6 +336,8 @@ fun ContentResolver.setDateForMedia(
     dateTaken: Long,
     overwriteLastModified: Boolean = true
 ) {
+    if (uri.toString().startsWith("http")) return
+
     try {
         if (type == MediaType.Image) {
             openFileDescriptor(uri, "rw")?.use { fd ->

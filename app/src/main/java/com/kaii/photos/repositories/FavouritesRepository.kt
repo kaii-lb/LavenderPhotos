@@ -49,6 +49,7 @@ class FavouritesRepository(
     }
 
     private var fileManager = LocalFileManager(
+        mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
@@ -94,6 +95,7 @@ class FavouritesRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = LocalFileManager(
+                        mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,
                         assetClient = AssetsClient(
@@ -128,7 +130,7 @@ class FavouritesRepository(
     ) {
         var count = 0
 
-        fileManager.copyItems(context, list, AlbumType.PlaceHolder, destination, preserveDate, overrideDisplayName) {
+        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
         }

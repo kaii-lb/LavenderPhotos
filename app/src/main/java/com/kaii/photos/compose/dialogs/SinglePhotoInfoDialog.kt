@@ -607,11 +607,13 @@ private fun IconContentImpl(
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
 
+        // TODO: move to file manager
         MoveCopyAlbumListView(
             show = show,
             selectedItemsList = listOf(
                 SelectionManager.SelectedItem(
                     id = mediaItem().id,
+                    uri = mediaItem().uri,
                     isImage = mediaItem().type == MediaType.Image,
                     parentPath = mediaItem().parentPath
                 )

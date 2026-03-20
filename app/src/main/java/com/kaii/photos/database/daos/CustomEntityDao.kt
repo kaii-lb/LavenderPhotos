@@ -39,9 +39,8 @@ interface CustomEntityDao {
     suspend fun getThumbnailForAlbumDateModified(album: String): MediaStoreData?
 
     @Query(
-        value = "SELECT media.id," +
-                "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage, " +
-                "media.absolutePath as parentPath " +
+        value = "SELECT media.id, media.uri, media.parentPath, " +
+                "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN custom_items ON media.id = custom_items.id " +
                 "WHERE " +
@@ -61,12 +60,6 @@ interface CustomEntityDao {
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
     suspend fun getMediaInAlbum(album: String): List<MediaStoreData>
-
-    @Query(value = "UPDATE media SET immichUrl = :immichUrl, hash = :hash WHERE id = :id")
-    suspend fun linkToImmich(id: Long, hash: String, immichUrl: String)
-
-    @Query(value = "SELECT EXISTS(SELECT 1 FROM media WHERE id = :id)")
-    suspend fun exists(id: Long): Boolean
 
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)

@@ -728,10 +728,12 @@ private fun BottomBar(
                     onGranted = {
                         context.appModule.scope.launch {
                             val item = currentItem()
+                            // TODO: move to file manager
                             moveMediaToSecureFolder(
                                 list = listOf(
                                     SelectionManager.SelectedItem(
                                         id = item.id,
+                                        uri = item.uri,
                                         isImage = item.type == MediaType.Image,
                                         parentPath = item.parentPath
                                     )

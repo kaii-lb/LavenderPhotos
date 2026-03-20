@@ -164,6 +164,7 @@ class SecureFolderMigrationManager(
             list = mediaItems.fastMap {
                 SelectionManager.SelectedItem(
                     id = it.id,
+                    uri = it.uri,
                     isImage = it.type == MediaType.Image,
                     parentPath = it.parentPath
                 )

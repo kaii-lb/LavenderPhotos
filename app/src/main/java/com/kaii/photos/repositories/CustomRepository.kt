@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
@@ -35,6 +36,7 @@ import kotlinx.coroutines.withContext
 class CustomRepository(
     private val customDao: CustomEntityDao,
     private val album: AlbumType,
+    mediaDao: MediaDao,
     syncTaskDao: SyncTaskDao,
     client: ApiClient,
     scope: CoroutineScope,
@@ -51,6 +53,7 @@ class CustomRepository(
     }
 
     private var fileManager = CustomFileManager(
+        mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
@@ -110,6 +113,7 @@ class CustomRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = CustomFileManager(
+                        mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,
                         assetClient = AssetsClient(
@@ -144,7 +148,7 @@ class CustomRepository(
     ) {
         var count = 0
 
-        fileManager.copyItems(context, list, album, destination, preserveDate, overrideDisplayName) {
+        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
         }
@@ -159,7 +163,7 @@ class CustomRepository(
     ) {
         var count = 0
 
-        fileManager.moveItems(context, list, album, destination, preserveDate) {
+        fileManager.moveItems(context, list, destination, preserveDate) {
             count += 1
             onItemDone(count)
         }

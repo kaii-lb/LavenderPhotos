@@ -1,9 +1,6 @@
 package com.kaii.photos.helpers.grid_management
 
-import android.content.ContentUris
 import android.content.Context
-import android.net.Uri
-import android.provider.MediaStore
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,14 +39,15 @@ class SelectionManager(
 ) {
     data class SelectedItem(
         val id: Long,
+        val uri: String,
         val isImage: Boolean,
         val parentPath: String
     ) {
-        fun toUri(): Uri {
-            val uriParentPath =
-                if (isImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            return ContentUris.withAppendedId(uriParentPath, id)
-        }
+        val isCloud: Boolean
+            get() = !uri.startsWith("content")
+
+        val immichId: String?
+            get() = uri.split("/").dropLast(1).last().takeIf { isCloud }
     }
 
     private var _selection by mutableStateOf<Map<Long, List<SelectedItem>>>(emptyMap())
@@ -113,6 +111,7 @@ class SelectionManager(
                 val media = list.fastMap {
                     SelectedItem(
                         id = it.item.id,
+                        uri = it.item.uri,
                         isImage = it.item.type == MediaType.Image,
                         parentPath = it.item.parentPath
                     )
@@ -154,6 +153,7 @@ class SelectionManager(
             snapshot[key] = (snapshot[key] ?: emptyList()) + list.map {
                 SelectedItem(
                     id = it.id,
+                    uri = it.uri,
                     isImage = it.type == MediaType.Image,
                     parentPath = it.parentPath
                 )
@@ -267,6 +267,7 @@ class SelectionManager(
         val list = (snapshot[key] ?: emptyList()) + listOf(
             SelectedItem(
                 id = item.id,
+                uri = item.uri,
                 isImage = item.type == MediaType.Image,
                 parentPath = item.parentPath
             )
@@ -398,6 +399,7 @@ fun rememberSelectionManager(
                         if (key in timestamp..timestamp + 86400) {
                             SelectionManager.SelectedItem(
                                 id = item.id,
+                                uri = item.uri,
                                 isImage = item.type == MediaType.Image,
                                 parentPath = item.parentPath
                             )

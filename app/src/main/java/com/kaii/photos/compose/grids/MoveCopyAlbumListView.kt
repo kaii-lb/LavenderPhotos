@@ -52,7 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -185,7 +186,16 @@ fun MoveCopyAlbumListView(
                     ) { index ->
                         AlbumsListItem(
                             album = albumsList[index],
-                            position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
+                            position =
+                                when {
+                                    index == albumsList.size - 1 && albumsList.size != 1 -> RowPosition.Bottom
+
+                                    albumsList.size == 1 -> RowPosition.Single
+
+                                    index == 0 -> RowPosition.Top
+
+                                    else -> RowPosition.Middle
+                                },
                             selectedItemsList = selectedItemsList,
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,
@@ -237,7 +247,11 @@ fun AlbumsListItem(
     val dirPermissionManager = rememberDirectoryPermissionManager(
         onGranted = {
             filePermissionManager.get(
-                uris = selectedItemsList.fastMap { it.toUri() }
+                uris = selectedItemsList.fastMapNotNull { item ->
+                    item.uri.takeIf { uri ->
+                        !uri.startsWith("http")
+                    }?.toUri()
+                }
             )
         }
     )
@@ -255,10 +269,13 @@ fun AlbumsListItem(
                 } else {
                     show.value = false
 
-                    onClick()
-
-                    clear()
-                    dismissInfoDialog()
+                    filePermissionManager.get(
+                        uris = selectedItemsList.fastMapNotNull { item ->
+                            item.uri.takeIf { uri ->
+                                !uri.startsWith("http")
+                            }?.toUri()
+                        }
+                    )
                 }
             },
         verticalAlignment = Alignment.CenterVertically

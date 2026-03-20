@@ -10,6 +10,7 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.SyncTask
@@ -50,6 +51,7 @@ interface GenericFileManager {
         val immichId: String?
     )
 
+    val mediaDao: MediaDao
     val customDao: CustomEntityDao
     val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
@@ -124,7 +126,6 @@ interface GenericFileManager {
     suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
@@ -134,7 +135,6 @@ interface GenericFileManager {
     suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)? = null,
@@ -144,7 +144,6 @@ interface GenericFileManager {
     suspend fun copyToCustom(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
@@ -176,7 +175,6 @@ interface GenericFileManager {
     suspend fun copyToLocal(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType.Folder,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
@@ -223,7 +221,6 @@ interface GenericFileManager {
     suspend fun copyToCloud(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType.Cloud,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
@@ -272,7 +269,7 @@ interface GenericFileManager {
                 it.immichId in exists && it.immichId != null
             }
             .forEach { item ->
-                customDao.linkToImmich(
+                mediaDao.linkToImmich(
                     id = item.id,
                     hash = hashes[item.id]!!,
                     immichUrl = item.immichUrl!!
@@ -314,7 +311,7 @@ interface GenericFileManager {
             )
 
             if (resp != null) {
-                customDao.linkToImmich(
+                mediaDao.linkToImmich(
                     id = item.second.id,
                     hash = hashes[item.second.id]!!,
                     immichUrl = "$endpoint/api/assets/${resp.id}/original"

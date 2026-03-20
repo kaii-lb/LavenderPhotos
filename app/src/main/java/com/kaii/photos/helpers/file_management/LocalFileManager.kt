@@ -13,6 +13,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
@@ -33,6 +34,7 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
 class LocalFileManager(
+    override val mediaDao: MediaDao,
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
@@ -224,13 +226,12 @@ class LocalFileManager(
     override suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
-        if (destination !is AlbumType.Folder || origin !is AlbumType.Folder) {
-            throw IllegalArgumentException("Cannot move items between ${origin::class.simpleName} and ${destination::class.simpleName}")
+        if (destination !is AlbumType.Folder) {
+            throw IllegalArgumentException("Cannot move items between ${AlbumType.Folder::class.simpleName} and ${destination::class.simpleName}")
         }
 
         var count = 0
@@ -239,7 +240,6 @@ class LocalFileManager(
         copyItems(
             context = context,
             list = list,
-            origin = origin,
             destination = destination,
             preserveDate = preserveDate,
             overrideDisplayName = null,
@@ -266,7 +266,6 @@ class LocalFileManager(
     override suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
@@ -274,15 +273,15 @@ class LocalFileManager(
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         when (destination) {
             is AlbumType.Folder -> {
-                copyToLocal(context, list, origin, destination, preserveDate, overrideDisplayName, onItemDone)
+                copyToLocal(context, list, destination, preserveDate, overrideDisplayName, onItemDone)
             }
 
             is AlbumType.Custom -> {
-                copyToCustom(context, list, origin, destination, onItemDone)
+                copyToCustom(context, list, destination, onItemDone)
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, origin, destination, onItemDone)
+                copyToCloud(context, list, destination, onItemDone)
             }
 
             else -> {

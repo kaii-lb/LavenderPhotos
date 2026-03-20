@@ -45,6 +45,7 @@ class CloudSyncManager(
             .fastMap {
                 SelectionManager.SelectedItem(
                     id = it.id,
+                    uri = it.uri,
                     isImage = it.type == MediaType.Image,
                     parentPath = it.parentPath
                 )
@@ -53,7 +54,6 @@ class CloudSyncManager(
         fileManager.copyToCloud(
             context = context,
             list = items,
-            origin = AlbumType.PlaceHolder, // TODO
             destination =
                 AlbumType.Cloud(
                     id = task.destination!!,

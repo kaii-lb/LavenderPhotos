@@ -120,6 +120,7 @@ class ImmichAlbumViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo = ImmichRepository(
+        mediaDao = db.mediaDao(),
         customDao = db.customDao(),
         syncTaskDao = db.taskDao(),
         album = album,

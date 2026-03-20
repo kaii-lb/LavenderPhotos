@@ -43,7 +43,7 @@ class FilePermissionsState(
     }
 
     fun get(uris: List<Uri>) {
-        if (checkGranted(uris = uris)) {
+        if (uris.isEmpty() || checkGranted(uris = uris)) {
             onGranted()
             return
         }

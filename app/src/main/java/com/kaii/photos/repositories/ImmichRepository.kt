@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import androidx.room.withTransaction
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
@@ -51,6 +52,7 @@ import kotlin.uuid.Uuid
 class ImmichRepository(
     private val album: AlbumType,
     private val scope: CoroutineScope,
+    mediaDao: MediaDao,
     customDao: CustomEntityDao,
     syncTaskDao: SyncTaskDao,
     sortMode: Flow<MediaItemSortMode>,
@@ -63,6 +65,7 @@ class ImmichRepository(
     private val db = MediaDatabase.getInstance(appContext)
 
     private var fileManager = CloudFileManager(
+        mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
@@ -141,7 +144,7 @@ class ImmichRepository(
                         dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                         type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
                         absolutePath = "",
-                        parentPath = "",
+                        parentPath = album.id,
                         displayName = asset.originalFileName,
                         mimeType = asset.originalMimeType,
                         immichUrl = "${snapshot.info.endpoint}/api/assets/${asset.id}/original",
@@ -190,6 +193,7 @@ class ImmichRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = CloudFileManager(
+                        mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,
                         assetClient = AssetsClient(
@@ -226,7 +230,7 @@ class ImmichRepository(
     ) {
         var count = 0
 
-        fileManager.copyItems(context, list, album, destination, preserveDate, overrideDisplayName) {
+        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
         }
@@ -241,7 +245,7 @@ class ImmichRepository(
     ) {
         var count = 0
 
-        fileManager.moveItems(context, list, album, destination, preserveDate) {
+        fileManager.moveItems(context, list, destination, preserveDate) {
             count += 1
             onItemDone(count)
         }

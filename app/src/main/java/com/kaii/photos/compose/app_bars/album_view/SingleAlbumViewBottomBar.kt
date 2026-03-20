@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
@@ -41,7 +42,7 @@ fun SingleAlbumViewBottomBar(
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.toUri() }, // TODO
+            uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
             contentResolver = context.contentResolver
         )
     }

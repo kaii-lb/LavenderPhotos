@@ -69,6 +69,7 @@ class MediaRepository(
     }
 
     private var fileManager = LocalFileManager(
+        mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
@@ -125,6 +126,7 @@ class MediaRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = LocalFileManager(
+                        mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,
                         assetClient = AssetsClient(
@@ -159,7 +161,7 @@ class MediaRepository(
     ) {
         var count = 0
 
-        fileManager.copyItems(context, list, album, destination, preserveDate, overrideDisplayName) {
+        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
         }
@@ -174,7 +176,7 @@ class MediaRepository(
     ) {
         var count = 0
 
-        fileManager.moveItems(context, list, album, destination, preserveDate) {
+        fileManager.moveItems(context, list, destination, preserveDate) {
             count += 1
             onItemDone(count)
         }

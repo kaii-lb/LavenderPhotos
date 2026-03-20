@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -442,7 +443,7 @@ fun MainPages(
                     } else {
                         MediaPickerConfirmButton(
                             incomingIntent = incomingIntent,
-                            uris = selectedItemsList.fastMap { it.toUri() },
+                            uris = selectedItemsList.fastMap { it.uri.toUri() },
                             contentResolver = context.contentResolver
                         )
                     }

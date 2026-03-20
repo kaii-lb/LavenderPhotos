@@ -35,6 +35,7 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LoadingDialog
@@ -129,7 +130,7 @@ fun SelectingBottomBarItems(
         onClick = {
             coroutineScope.launch(Dispatchers.IO) {
                 shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.toUri() },
+                    uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
                     context = context,
                     hasVideos = selectedItemsList.fastAny { !it.isImage }
                 )
@@ -189,15 +190,16 @@ fun SelectingBottomBarItems(
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             context.appModule.scope.launch(Dispatchers.IO) {
+                // TODO: move to file manager
                 if (doNotTrash()) {
                     permanentlyDeletePhotoList(
                         context = context,
-                        list = selectedItemsList.fastMap { it.toUri() }
+                        list = selectedItemsList.fastMap { it.uri.toUri() }
                     )
                 } else {
                     setTrashedOnPhotoList(
                         context = context,
-                        list = selectedItemsList.fastMap { it.toUri() },
+                        list = selectedItemsList.fastMap { it.uri.toUri() },
                         trashed = true
                     )
                 }
@@ -215,7 +217,7 @@ fun SelectingBottomBarItems(
             confirmButtonLabel = stringResource(id = R.string.media_delete)
         ) {
             permissionState.get(
-                uris = selectedItemsList.fastMap { it.toUri() }
+                uris = selectedItemsList.fastMap { it.uri.toUri() }
             )
         }
     } else {
@@ -239,11 +241,12 @@ fun SelectingBottomBarItems(
 
     IconButton(
         onClick = {
+            // TODO: move to
             if (confirmToDelete()) {
                 showDeleteDialog.value = true
             } else if (albumInfo is AlbumType.Folder) {
                 permissionState.get(
-                    uris = selectedItemsList.fastMap { it.toUri() }
+                    uris = selectedItemsList.fastMap { it.uri.toUri() }
                 )
             } else {
                 context.appModule.scope.launch(Dispatchers.IO) {
@@ -293,17 +296,18 @@ fun SelectingBottomBarItems(
         onGranted = {
             showLoadingDialog = true
             filePermissionState.get(
-                uris = selectedItemsList.map { it.toUri() }
+                uris = selectedItemsList.map { it.uri.toUri() }
             )
         }
     )
 
     IconButton(
         onClick = {
+            // TODO: move to file manager
             if (selectedItemsList.isNotEmpty()) {
                 dirPermissionManager.start(
                     directories = selectedItemsList.fastMapNotNull {
-                        context.contentResolver.getAbsolutePathFromUri(it.toUri())?.parent()
+                        context.contentResolver.getAbsolutePathFromUri(it.uri.toUri())?.parent()
                     }.fastDistinctBy {
                         it
                     }.toSet()

@@ -21,7 +21,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import com.bumptech.glide.Glide
@@ -99,7 +100,11 @@ fun Modifier.dragSelectionHandler(
                         if (selected) {
                             isDragAndDropping = true
                             coroutineScope.launch(Dispatchers.IO) {
-                                val items = selectionManager.selection.first().fastMap { it.toUri() }
+                                val items = selectionManager.selection.first().fastMapNotNull { item ->
+                                    item.uri.takeIf { uri ->
+                                        !uri.startsWith("http")
+                                    }?.toUri()
+                                }
 
                                 val clipData = ClipData.newUri(
                                     context.contentResolver,

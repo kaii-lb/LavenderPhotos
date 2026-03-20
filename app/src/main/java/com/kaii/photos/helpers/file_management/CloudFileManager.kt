@@ -6,6 +6,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.SyncTask
@@ -15,6 +16,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -28,6 +30,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class CloudFileManager(
+    override val mediaDao: MediaDao,
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
@@ -156,66 +159,42 @@ class CloudFileManager(
     override suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
-        if (destination !is AlbumType.Cloud || origin !is AlbumType.Cloud) {
-            throw IllegalArgumentException("Cannot move items between ${origin::class.simpleName} and ${destination::class.simpleName}")
+        if (destination !is AlbumType.Cloud) {
+            throw IllegalArgumentException("Cannot move items between ${AlbumType.Cloud::class.simpleName} and ${destination::class.simpleName}")
         }
+
+        val origins = list.map { it.parentPath }.distinct().filter { it != destination.immichId }
 
         val assetIds = copyItems(
             context = context,
             list = list,
-            origin = origin,
             destination = destination,
             preserveDate = preserveDate,
             overrideDisplayName = null,
             onItemDone = onItemDone
         ).fastMap { Uuid.parse(it.immichId!!) }
 
-        return albumsClient.removeAssets(
-            albumId = Uuid.parse(origin.immichId),
-            assetIds = assetIds,
-            accessToken = accessToken
-        )
-    }
+        var success = true
 
-    @OptIn(ExperimentalUuidApi::class)
-    override suspend fun copyToCloud(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
-        destination: AlbumType.Cloud,
-        onItemDone: (uri: String) -> Unit
-    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        val ids = list.fastMap { it.id }
-        val media = customDao.getMediaInAlbum(album = origin.id).filter {
-            it.id in ids
-        }
-
-        albumsClient.addAssets(
-            albumId = Uuid.parse(destination.immichId),
-            assetIds = media.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = accessToken
-        )
-
-        media.forEach { onItemDone(it.uri) }
-
-        return@withContext media.fastMap {
-            GenericFileManager.CopyResult(
-                id = it.id,
-                immichId = it.immichId
+        origins.forEach { origin ->
+            success = success && albumsClient.removeAssets(
+                albumId = Uuid.parse(origin),
+                assetIds = assetIds,
+                accessToken = accessToken
             )
         }
+
+        return success
     }
 
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
@@ -223,15 +202,15 @@ class CloudFileManager(
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         return@withContext when (destination) {
             is AlbumType.Folder -> {
-                copyToLocal(context, list, origin, destination, preserveDate, overrideDisplayName, onItemDone)
+                copyToLocal(context, list, destination, preserveDate, overrideDisplayName, onItemDone)
             }
 
             is AlbumType.Custom -> {
-                copyToCustom(context, list, origin, destination, onItemDone)
+                copyToCustom(context, list, destination, onItemDone)
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, origin, destination, onItemDone)
+                copyToCloud(context, list, destination, onItemDone)
             }
 
             else -> {
@@ -241,10 +220,34 @@ class CloudFileManager(
     }
 
     @OptIn(ExperimentalUuidApi::class)
+    override suspend fun copyToCloud(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        destination: AlbumType.Cloud,
+        onItemDone: (uri: String) -> Unit
+    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+        val items = list.filter { it.parentPath != destination.immichId }
+
+        albumsClient.addAssets(
+            albumId = Uuid.parse(destination.immichId),
+            assetIds = items.fastMap { Uuid.parse(it.immichId!!) },
+            accessToken = accessToken
+        )
+
+        items.forEach { onItemDone(it.uri) }
+
+        return@withContext items.fastMap {
+            GenericFileManager.CopyResult(
+                id = it.id,
+                immichId = it.immichId
+            )
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun copyToCustom(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
     ) = withContext(Dispatchers.IO) {
@@ -265,14 +268,13 @@ class CloudFileManager(
         val ids = copyToLocal(
             context = context,
             list = list,
-            origin = origin,
             preserveDate = true,
             destination = album,
             overrideDisplayName = null,
             onItemDone = onItemDone
         )
 
-        while (!customDao.exists(ids.last().id)) {
+        while (!mediaDao.exists(ids.last().id)) {
             delay(500)
         }
 
@@ -292,18 +294,17 @@ class CloudFileManager(
     override suspend fun copyToLocal(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
         destination: AlbumType.Folder,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        val ids = list.fastMap { it.id }
-        val mediaItems = customDao.getMediaInAlbum(album = origin.id).filter {
-            it.id in ids
+        val contentResolver = context.contentResolver
+
+        val mediaItems = list.chunked(500).flatMap { chunk ->
+            mediaDao.getMedia(ids = chunk.fastMap { it.id })
         }
 
-        val contentResolver = context.contentResolver
         return@withContext list.mapNotNull { item ->
             val media = mediaItems.first { it.id == item.id }
             val bytes = assetClient.download(
@@ -326,9 +327,19 @@ class CloudFileManager(
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     preserveDate = preserveDate,
                     onInsert = { _, new ->
-                        newId = new.lastPathSegment!!.toLong()
                         contentResolver.openOutputStream(new)?.use {
                             it.buffered().write(bytes)
+                        }
+
+                        if (new.toString().startsWith("content")) {
+                            newId = new.lastPathSegment!!.toLong()
+                        } else {
+                            val path = new.toString().substringAfter(":")
+                            val new = contentResolver.getUriFromAbsolutePath(
+                                absolutePath = path,
+                                type = media.type
+                            )
+                            newId = new?.lastPathSegment?.toLong() ?: 0
                         }
                     }
                 )
