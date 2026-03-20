@@ -138,7 +138,7 @@ class FavouritesViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    message = context.resources.getString(R.string.media_copy_snackbar_title),
                     body = body,
                     icon = R.drawable.content_paste,
                     percentage = percentage
@@ -181,7 +181,7 @@ class FavouritesViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    message = context.resources.getString(R.string.media_delete_snackbar_title),
                     body = body,
                     icon = R.drawable.delete,
                     percentage = percentage
@@ -204,23 +204,6 @@ class FavouritesViewModel(
         list: List<String>
     ) {
         viewModelScope.launch {
-            val percentage = mutableFloatStateOf(0f)
-            val body = mutableStateOf(
-                context.resources.getString(
-                    R.string.media_restore_snackbar_body,
-                    0, list.size
-                )
-            )
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
-                    body = body,
-                    icon = R.drawable.untrash,
-                    percentage = percentage
-                )
-            )
-
             repo.setFavourite(context, favourite, list)
         }
     }

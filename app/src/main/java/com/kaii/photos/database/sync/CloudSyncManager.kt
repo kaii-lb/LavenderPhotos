@@ -53,6 +53,7 @@ class CloudSyncManager(
         fileManager.copyToCloud(
             context = context,
             list = items,
+            origin = AlbumType.PlaceHolder, // TODO
             destination =
                 AlbumType.Cloud(
                     id = task.destination!!,

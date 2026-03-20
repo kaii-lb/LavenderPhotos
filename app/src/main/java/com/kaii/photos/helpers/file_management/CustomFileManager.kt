@@ -171,7 +171,7 @@ class CustomFileManager(
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, destination, onItemDone)
+                copyToCloud(context, list, origin, destination, onItemDone)
             }
 
             else -> {

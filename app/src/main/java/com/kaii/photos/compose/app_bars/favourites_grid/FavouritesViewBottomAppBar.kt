@@ -21,6 +21,7 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -95,10 +96,12 @@ fun FavouritesBottomAppBarItems(
     MoveCopyAlbumListView(
         show = show,
         selectedItemsList = selectedItemsList,
-        isMoving = false,
-        preserveDate = preserveDate,
         insetsPadding = WindowInsets.statusBars,
-        clear = selectionManager::clear
+        clear = selectionManager::clear,
+        isMoving = { false },
+        currentAlbum = { AlbumType.PlaceHolder },
+        allowedAlbumsFor = { emptyList() }, // TODO
+        onClick = {}
     )
 
     IconButton(

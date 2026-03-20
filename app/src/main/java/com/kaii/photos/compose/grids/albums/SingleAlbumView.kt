@@ -48,6 +48,7 @@ import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -62,6 +63,7 @@ import com.kaii.photos.models.tag_page.TagViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 @Composable
 fun SingleAlbumView(
@@ -115,10 +117,10 @@ fun SingleAlbumView(
     val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
@@ -134,17 +136,33 @@ fun SingleAlbumView(
         useRoundedCorners = { useRoundedCorners },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
-        preserveDate = { preserveDate },
         vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
+        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
-        removeAlbum = viewModel::removeAlbum
+        removeAlbum = viewModel::removeAlbum,
+        process = { list, album, isMoving ->
+            if (isMoving) {
+                viewModel.move(
+                    context = context,
+                    list = list,
+                    destination = album
+                )
+            } else {
+                viewModel.copy(
+                    context = context,
+                    list = list,
+                    destination = album,
+                    overrideDisplayName = null
+                )
+            }
+        }
     )
 }
 
@@ -180,7 +198,6 @@ fun SingleAlbumView(
     val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
@@ -201,6 +218,7 @@ fun SingleAlbumView(
         }
     }
 
+    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
@@ -216,17 +234,33 @@ fun SingleAlbumView(
         useRoundedCorners = { useRoundedCorners },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
-        preserveDate = { preserveDate },
         vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
+        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
-        removeAlbum = viewModel::removeAlbum
+        removeAlbum = viewModel::removeAlbum,
+        process = { list, album, isMoving ->
+            if (isMoving) {
+                viewModel.move(
+                    context = context,
+                    list = list,
+                    destination = album
+                )
+            } else {
+                viewModel.copy(
+                    context = context,
+                    list = list,
+                    destination = album,
+                    overrideDisplayName = null
+                )
+            }
+        }
     )
 }
 
@@ -262,7 +296,6 @@ fun SingleAlbumView(
     val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
     val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
@@ -283,6 +316,7 @@ fun SingleAlbumView(
         }
     }
 
+    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
@@ -300,15 +334,31 @@ fun SingleAlbumView(
         useRoundedCorners = { useRoundedCorners },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
-        preserveDate = { preserveDate },
         vibrateOnClick = { vibrateOnClick },
+        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
         mediaCount = viewModel::getMediaCount,
         albumSize = viewModel::getMediaSize,
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
-        removeAlbum = viewModel::removeAlbum
+        removeAlbum = viewModel::removeAlbum,
+        process = { list, album, isMoving ->
+            if (isMoving) {
+                viewModel.move(
+                    context = context,
+                    list = list,
+                    destination = album
+                )
+            } else {
+                viewModel.copy(
+                    context = context,
+                    list = list,
+                    destination = album,
+                    overrideDisplayName = null
+                )
+            }
+        }
     )
 }
 
@@ -329,8 +379,8 @@ private fun SingleAlbumViewCommon(
     useRoundedCorners: () -> Boolean,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean,
     vibrateOnClick: () -> Boolean,
+    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
     modifier: Modifier = Modifier,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
@@ -340,7 +390,8 @@ private fun SingleAlbumViewCommon(
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
-    removeAlbum: (id: String) -> Unit
+    removeAlbum: (id: String) -> Unit,
+    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -418,7 +469,8 @@ private fun SingleAlbumViewCommon(
                     incomingIntent = incomingIntent,
                     confirmToDelete = confirmToDelete,
                     doNotTrash = doNotTrash,
-                    preserveDate = preserveDate
+                    allowedAlbumsFor = allowedAlbumsFor,
+                    process = process
                 )
             }
         }

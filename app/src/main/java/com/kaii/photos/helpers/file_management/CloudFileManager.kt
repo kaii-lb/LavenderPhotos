@@ -20,6 +20,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.time.Clock
@@ -182,6 +183,35 @@ class CloudFileManager(
     }
 
     @OptIn(ExperimentalUuidApi::class)
+    override suspend fun copyToCloud(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        origin: AlbumType,
+        destination: AlbumType.Cloud,
+        onItemDone: (uri: String) -> Unit
+    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+        val ids = list.fastMap { it.id }
+        val media = customDao.getMediaInAlbum(album = origin.id).filter {
+            it.id in ids
+        }
+
+        albumsClient.addAssets(
+            albumId = Uuid.parse(destination.immichId),
+            assetIds = media.fastMap { Uuid.parse(it.immichId!!) },
+            accessToken = accessToken
+        )
+
+        media.forEach { onItemDone(it.uri) }
+
+        return@withContext media.fastMap {
+            GenericFileManager.CopyResult(
+                id = it.id,
+                immichId = it.immichId
+            )
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
     override suspend fun copyItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
@@ -201,7 +231,7 @@ class CloudFileManager(
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, destination, onItemDone)
+                copyToCloud(context, list, origin, destination, onItemDone)
             }
 
             else -> {
@@ -242,6 +272,10 @@ class CloudFileManager(
             onItemDone = onItemDone
         )
 
+        while (!customDao.exists(ids.last().id)) {
+            delay(500)
+        }
+
         customDao.upsertAll(
             ids.fastMap { item ->
                 CustomItem(
@@ -272,9 +306,8 @@ class CloudFileManager(
         val contentResolver = context.contentResolver
         return@withContext list.mapNotNull { item ->
             val media = mediaItems.first { it.id == item.id }
-            val uuid = media.immichId!!
             val bytes = assetClient.download(
-                id = Uuid.parse(uuid),
+                id = Uuid.parse(media.immichId!!),
                 accessToken = accessToken
             )
 
@@ -282,6 +315,7 @@ class CloudFileManager(
 
             onItemDone(media.uri)
 
+            var newId = 0L
             destination.paths.forEach { path ->
                 contentResolver.insertMedia(
                     context = context,
@@ -292,6 +326,7 @@ class CloudFileManager(
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     preserveDate = preserveDate,
                     onInsert = { _, new ->
+                        newId = new.lastPathSegment!!.toLong()
                         contentResolver.openOutputStream(new)?.use {
                             it.buffered().write(bytes)
                         }
@@ -300,7 +335,7 @@ class CloudFileManager(
             }
 
             GenericFileManager.CopyResult(
-                id = item.id,
+                id = newId,
                 immichId = media.immichId
             )
         }

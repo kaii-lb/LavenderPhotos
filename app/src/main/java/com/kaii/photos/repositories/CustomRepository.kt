@@ -153,7 +153,7 @@ class CustomRepository(
     suspend fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType.Custom,
+        destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
     ) {

@@ -178,7 +178,7 @@ class CustomAlbumViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    message = context.resources.getString(R.string.media_copy_snackbar_title),
                     body = body,
                     icon = R.drawable.content_paste,
                     percentage = percentage
@@ -198,7 +198,7 @@ class CustomAlbumViewModel(
     fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType.Custom
+        destination: AlbumType
     ) {
         viewModelScope.launch {
             val percentage = mutableFloatStateOf(0f)
@@ -211,7 +211,7 @@ class CustomAlbumViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    message = context.resources.getString(R.string.media_move_snackbar_title),
                     body = body,
                     icon = R.drawable.cut,
                     percentage = percentage
@@ -263,7 +263,7 @@ class CustomAlbumViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
+                    message = context.resources.getString(R.string.media_delete_snackbar_title),
                     body = body,
                     icon = R.drawable.delete,
                     percentage = percentage
@@ -286,23 +286,6 @@ class CustomAlbumViewModel(
         list: List<String>
     ) {
         viewModelScope.launch {
-            val percentage = mutableFloatStateOf(0f)
-            val body = mutableStateOf(
-                context.resources.getString(
-                    R.string.media_restore_snackbar_body,
-                    0, list.size
-                )
-            )
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_operate_snackbar_body),
-                    body = body,
-                    icon = R.drawable.untrash,
-                    percentage = percentage
-                )
-            )
-
             repo.setFavourite(context, favourite, list)
         }
     }

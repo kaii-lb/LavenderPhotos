@@ -372,7 +372,8 @@ fun MainAppBottomBar(
                                         selectionManager = selectionManager,
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
-                                        preserveDate = preserveDate
+                                        allowedAlbumsFor = { emptyList() }, // TODO
+                                        process = { _, _, _ -> }
                                     )
                                 }
                             }

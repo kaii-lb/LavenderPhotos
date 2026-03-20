@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -63,33 +62,29 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.widgets.ClearableTextField
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.moveImageListToPath
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoveCopyAlbumListView(
     albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
     show: MutableState<Boolean>,
+    currentAlbum: () -> AlbumType,
+    isMoving: () -> Boolean,
     selectedItemsList: List<SelectionManager.SelectedItem>,
-    isMoving: Boolean,
-    preserveDate: () -> Boolean,
     insetsPadding: WindowInsets,
+    allowedAlbumsFor: () -> List<KClass<out AlbumType>>,
     dismissInfoDialog: () -> Unit = {},
-    clear: () -> Unit
+    clear: () -> Unit,
+    onClick: (album: AlbumType) -> Unit
 ) {
     val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
 
@@ -101,9 +96,11 @@ fun MoveCopyAlbumListView(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull()) {
-        albumsList = originalAlbumsList.filter {
-            it.name.contains(searchedForText.value, true)
+    LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull(), allowedAlbumsFor(), isMoving()) {
+        albumsList = originalAlbumsList.filter { album ->
+            album.name.contains(searchedForText.value, true)
+                    && album.info.album::class in allowedAlbumsFor()
+                    && if (isMoving()) album.id != currentAlbum().id else true
         }
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
@@ -126,7 +123,7 @@ fun MoveCopyAlbumListView(
             modifier = Modifier
                 .windowInsetsPadding(
                     insetsPadding
-                ),
+                )
         ) {
             BackHandler(
                 enabled = show.value && !WindowInsets.isImeVisible
@@ -190,15 +187,16 @@ fun MoveCopyAlbumListView(
                             album = albumsList[index],
                             position = if (index == albumsList.size - 1 && albumsList.size != 1) RowPosition.Bottom else if (albumsList.size == 1) RowPosition.Single else if (index == 0) RowPosition.Top else RowPosition.Middle,
                             selectedItemsList = selectedItemsList,
-                            isMoving = isMoving,
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,
-                            preserveDate = preserveDate,
                             modifier = Modifier
                                 .fillParentMaxWidth(1f)
                                 .padding(8.dp, 0.dp)
-                                .animateItem()
+                                .animateItem(),
+                            onClick = {
+                                onClick(albumsList[index].info.album)
+                            }
                         )
                     }
                 }
@@ -217,58 +215,22 @@ fun AlbumsListItem(
     album: AlbumGridState.Album.Single,
     position: RowPosition,
     selectedItemsList: List<SelectionManager.SelectedItem>,
-    isMoving: Boolean,
-    preserveDate: () -> Boolean,
     show: MutableState<Boolean>,
     modifier: Modifier,
     dismissInfoDialog: () -> Unit,
-    clear: () -> Unit
+    clear: () -> Unit,
+    onClick: () -> Unit
 ) {
     val (shape, spacerHeight) = getDefaultShapeSpacerForPosition(position, 24.dp)
-    val context = LocalContext.current
 
     val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
             show.value = false
 
-            context.appModule.scope.launch(Dispatchers.IO) {
-                if (isMoving
-                    && album.info.album is AlbumType.Folder
-                    && album.info.album.paths.size == 1
-                ) {
-                    moveImageListToPath(
-                        context = context,
-                        list = selectedItemsList,
-                        destination = album.info.album.paths.first(),
-                        preserveDate = preserveDate()
-                    )
-                } else if (album.info.album is AlbumType.Folder) {
-                    val list = mutableListOf<MediaStoreData>()
+            onClick()
 
-                    album.info.album.paths.forEach { path ->
-                        copyImageListToPath(
-                            context = context,
-                            list = selectedItemsList,
-                            destination = path,
-                            overwriteDate = preserveDate()
-                        ) { media ->
-                            if (isMoving && !list.contains(media)) {
-                                list.add(media)
-                            }
-                        }
-                    }
-
-                    if (list.isNotEmpty()) {
-                        permanentlyDeletePhotoList(
-                            context = context,
-                            list = list.fastMap { it.uri.toUri() }
-                        )
-                    }
-                }
-
-                clear()
-                dismissInfoDialog()
-            }
+            clear()
+            dismissInfoDialog()
         }
     )
 
@@ -293,19 +255,7 @@ fun AlbumsListItem(
                 } else {
                     show.value = false
 
-                    // TODO: possibly make this less messy
-                    context.appModule.scope.launch(Dispatchers.IO) {
-                        MediaDatabase.getInstance(context)
-                            .customDao()
-                            .upsertAll(
-                                items = selectedItemsList.fastMap {
-                                    CustomItem(
-                                        id = it.id,
-                                        album = album.id
-                                    )
-                                }
-                            )
-                    }
+                    onClick()
 
                     clear()
                     dismissInfoDialog()
@@ -339,13 +289,25 @@ fun AlbumsListItem(
                 .weight(1f)
         )
 
-        if (album.info.album !is AlbumType.Folder) { // TODO: introduce icon for immich
+        if (album.info.album !is AlbumType.Folder) {
             Icon(
-                painter = painterResource(id = R.drawable.art_track),
-                contentDescription = stringResource(id = R.string.albums_is_custom),
+                painter = painterResource(
+                    id =
+                        if (album.info.album is AlbumType.Custom) R.drawable.art_track
+                        else R.drawable.cloud
+                ),
+                contentDescription = stringResource(
+                    id =
+                        if (album.info.album is AlbumType.Custom) R.string.albums_is_custom
+                        else R.string.albums_is_cloud
+                ),
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .padding(end = 2.dp)
+                    .size(
+                        if (album.info.album is AlbumType.Custom) 22.dp
+                        else 20.dp
+                    )
             )
         }
 

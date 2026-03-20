@@ -45,6 +45,7 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
@@ -56,6 +57,7 @@ import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,7 +117,8 @@ fun SelectingBottomBarItems(
     selectionManager: SelectionManager,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean
+    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
+    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -145,10 +148,16 @@ fun SelectingBottomBarItems(
     MoveCopyAlbumListView(
         show = show,
         selectedItemsList = selectedItemsList,
-        isMoving = isMoving,
         clear = selectionManager::clear,
-        preserveDate = preserveDate,
-        insetsPadding = WindowInsets.statusBars
+        isMoving = { isMoving },
+        currentAlbum = { albumInfo },
+        insetsPadding = WindowInsets.statusBars,
+        allowedAlbumsFor = { allowedAlbumsFor(
+            if (isMoving) GenericFileManager.Action.Move else GenericFileManager.Action.Copy
+        )},
+        onClick = { album ->
+            process(selectedItemsList, album, isMoving)
+        }
     )
 
     IconButton(
@@ -156,7 +165,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = albumInfo is AlbumType.Folder && !selectedItemsList.isEmpty()
+        enabled = !selectedItemsList.isEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),

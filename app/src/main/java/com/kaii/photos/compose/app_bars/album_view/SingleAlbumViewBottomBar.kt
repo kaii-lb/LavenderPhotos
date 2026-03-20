@@ -10,7 +10,9 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.app_bars.SelectingBottomBarItems
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import kotlin.reflect.KClass
 
 @Composable
 fun SingleAlbumViewBottomBar(
@@ -19,7 +21,8 @@ fun SingleAlbumViewBottomBar(
     incomingIntent: Intent? = null,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean
+    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
+    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
@@ -28,7 +31,8 @@ fun SingleAlbumViewBottomBar(
                 selectionManager = selectionManager,
                 confirmToDelete = confirmToDelete,
                 doNotTrash = doNotTrash,
-                preserveDate = preserveDate
+                allowedAlbumsFor = allowedAlbumsFor,
+                process = process
             )
         }
     } else {
@@ -37,7 +41,7 @@ fun SingleAlbumViewBottomBar(
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.toUri() },
+            uris = selectedItemsList.fastMap { it.toUri() }, // TODO
             contentResolver = context.contentResolver
         )
     }

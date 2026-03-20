@@ -128,7 +128,6 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -152,7 +151,6 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
-        preserveDate = preserveDate,
         tags = { tags },
         selectedTags = { selectedTags },
         removeFromCustom = { item ->
@@ -181,7 +179,6 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -205,7 +202,6 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
-        preserveDate = preserveDate,
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -229,7 +225,6 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -253,7 +248,6 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
-        preserveDate = preserveDate,
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -277,7 +271,6 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -301,7 +294,6 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
-        preserveDate = preserveDate,
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -325,7 +317,6 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
-    val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -349,7 +340,6 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
-        preserveDate = preserveDate,
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -375,7 +365,6 @@ private fun SinglePhotoViewCommon(
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: Boolean,
     useCache: Boolean,
-    preserveDate: Boolean,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
     removeFromCustom: (MediaStoreData) -> Unit = {},
@@ -559,14 +548,7 @@ private fun SinglePhotoViewCommon(
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
                 privacyMode = { scrollState.privacyMode },
-                albumType =
-                    when (album) {
-                        is AlbumType.Folder -> AlbumType.Folder::class
-                        is AlbumType.Custom -> AlbumType.Custom::class
-                        is AlbumType.Cloud -> AlbumType.Cloud::class
-                        is AlbumType.PlaceHolder -> AlbumType.PlaceHolder::class
-                    },
-                preserveDate = { preserveDate },
+                album = { album },
                 dismiss = {
                     coroutineScope.launch {
                         sheetState.hide()

@@ -56,7 +56,7 @@ data class MediaStoreData(
     val immichThumbnail = immichUrl?.replace("/original", "/thumbnail")
 
     @Ignore
-    val immichId = immichUrl?.split("/")[3]
+    val immichId = immichUrl?.split("/")?.dropLast(1)?.last()
 
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** it is returned in unix epoch seconds*/

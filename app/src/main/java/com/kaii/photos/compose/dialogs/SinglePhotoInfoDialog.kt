@@ -85,7 +85,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.reflect.KClass
 
 private const val TAG = "com.kaii.photos.compose.dialogs.SinglePhotoInfoDialogs"
 
@@ -97,8 +96,7 @@ fun SinglePhotoInfoDialog(
     sheetState: SheetState,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
-    albumType: KClass<out AlbumType>,
-    preserveDate: () -> Boolean,
+    album: () -> AlbumType,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -147,8 +145,7 @@ fun SinglePhotoInfoDialog(
                             mediaData = mediaData,
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
-                            albumType = albumType,
-                            preserveDate = preserveDate,
+                            album = album,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -169,8 +166,7 @@ fun SinglePhotoInfoDialog(
                             mediaData = mediaData,
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
-                            albumType = albumType,
-                            preserveDate = preserveDate,
+                            album = album,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode
                         )
@@ -187,8 +183,7 @@ private fun Content(
     mediaData: () -> Map<MediaData, String>,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
-    albumType: KClass<out AlbumType>,
-    preserveDate: () -> Boolean,
+    album: () -> AlbumType,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
 ) {
@@ -253,8 +248,7 @@ private fun Content(
                     mediaItem = mediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
-                    isCustomAlbum = albumType == AlbumType.Custom::class || albumType == AlbumType.Cloud::class,
-                    preserveDate = preserveDate,
+                    album = album,
                     dismiss = dismiss
                 )
             }
@@ -275,8 +269,7 @@ private fun Content(
                     mediaItem = mediaItem,
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
-                    isCustomAlbum = albumType == AlbumType.Custom::class || albumType == AlbumType.Cloud::class,
-                    preserveDate = preserveDate,
+                    album = album,
                     dismiss = dismiss
                 )
             }
@@ -343,7 +336,7 @@ private fun Content(
                     onClick = {
                         if (key == MediaData.Date &&
                             mediaItem().type == MediaType.Image &&
-                            albumType != AlbumType.Cloud::class &&
+                            album::class != AlbumType.Cloud::class &&
                             !privacyMode()
                         ) {
                             showDateTimePicker = true
@@ -494,16 +487,14 @@ private fun RowScope.IconContent(
     mediaItem: () -> MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
-    isCustomAlbum: Boolean,
-    preserveDate: () -> Boolean,
+    album: () -> AlbumType,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         mediaItem = mediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
-        isCustomAlbum = isCustomAlbum,
-        preserveDate = preserveDate,
+        album = album,
         modifier = Modifier.weight(1f),
         dismiss = dismiss
     )
@@ -514,16 +505,14 @@ private fun ColumnScope.IconContent(
     mediaItem: () -> MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
-    isCustomAlbum: Boolean,
-    preserveDate: () -> Boolean,
+    album: () -> AlbumType,
     dismiss: () -> Unit
 ) {
     IconContentImpl(
         mediaItem = mediaItem,
         showMoveCopyOptions = showMoveCopyOptions,
         privacyMode = privacyMode,
-        isCustomAlbum = isCustomAlbum,
-        preserveDate = preserveDate,
+        album = album,
         modifier = Modifier.weight(1f),
         dismiss = dismiss
     )
@@ -534,8 +523,7 @@ private fun IconContentImpl(
     mediaItem: () -> MediaStoreData,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
-    isCustomAlbum: Boolean,
-    preserveDate: () -> Boolean,
+    album: () -> AlbumType,
     modifier: Modifier,
     dismiss: () -> Unit
 ) {
@@ -628,11 +616,13 @@ private fun IconContentImpl(
                     parentPath = mediaItem().parentPath
                 )
             ),
-            isMoving = isMoving,
             insetsPadding = WindowInsets.statusBars,
             dismissInfoDialog = dismiss,
-            preserveDate = preserveDate,
-            clear = {}
+            clear = {},
+            isMoving = { isMoving },
+            currentAlbum = album,
+            allowedAlbumsFor = { emptyList() }, // TODO
+            onClick = {}
         )
 
         IconButton(
@@ -640,7 +630,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode() && !isCustomAlbum,
+            enabled = !privacyMode(),
             modifier = modifier
                 .height(48.dp)
         ) {

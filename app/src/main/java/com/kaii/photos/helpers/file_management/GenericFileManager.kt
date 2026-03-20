@@ -223,25 +223,27 @@ interface GenericFileManager {
     suspend fun copyToCloud(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
+        origin: AlbumType,
         destination: AlbumType.Cloud,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
+        val ids = list.fastMap { it.id }.toSet()
         val media = getMediaStoreDataForIds(
-            ids = list.fastMap { it.id }.toSet(),
+            ids = ids,
             context = context
         )
 
-        val assets = media.map {
+        val assets = media.map { item ->
             Pair(
                 UploadAssetRequest(
-                    absolutePath = it.absolutePath,
-                    filename = it.displayName,
-                    id = Uuid.parse(it.immichId ?: ""),
-                    size = it.size,
-                    dateTaken = it.dateTaken,
-                    dateModified = it.dateModified
+                    absolutePath = item.absolutePath,
+                    filename = item.displayName,
+                    id = item.immichId?.let { Uuid.parse(it) } ?: Uuid.NIL,
+                    size = item.size,
+                    dateTaken = item.dateTaken,
+                    dateModified = item.dateModified
                 ),
-                it
+                item
             )
         }
 
@@ -311,7 +313,6 @@ interface GenericFileManager {
                 accessToken = accessToken
             )
 
-
             if (resp != null) {
                 customDao.linkToImmich(
                     id = item.second.id,
@@ -340,7 +341,7 @@ interface GenericFileManager {
                 id = item.id,
                 immichId = item.immichId
             ).takeIf {
-                it.immichId in exists
+                it.immichId in exists && it.immichId != null
             }
         } + uploaded
 
