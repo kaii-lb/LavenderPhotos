@@ -1,6 +1,8 @@
 package com.kaii.photos.models.search_page
 
 import android.content.Context
+import android.text.format.DateFormat
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.MediaDatabase
@@ -9,7 +11,9 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.search.SearchManager
 import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.repositories.SearchRepository
@@ -17,6 +21,7 @@ import com.kaii.photos.repositories.TagRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 
 class SearchViewModel(
     context: Context
@@ -202,5 +207,25 @@ class SearchViewModel(
     }
 
     fun clear() = searchManager.clear()
+
+    suspend fun getExifData(
+        context: Context,
+        media: PhotoLibraryUIModel.MediaImpl
+    ) =
+        if (media.item.isCloud) {
+            searchManager.getExifData(
+                media = media.item,
+                is24Hr = DateFormat.is24HourFormat(context)
+            )
+        } else {
+            getExifDataForMedia(
+                inputStream =
+                    context.contentResolver.openInputStream(media.item.uri.toUri())
+                        ?: File(media.item.absolutePath).inputStream(),
+                absolutePath = media.item.absolutePath,
+                is24Hr = DateFormat.is24HourFormat(context),
+                fallback = media.item.dateTaken
+            )
+        }
 }
 

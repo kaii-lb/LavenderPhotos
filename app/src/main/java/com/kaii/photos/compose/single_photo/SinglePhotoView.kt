@@ -2,7 +2,6 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.text.format.DateFormat
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -79,7 +78,6 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
-import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveMediaToSecureFolder
@@ -96,6 +94,7 @@ import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
+import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
@@ -111,7 +110,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 @Composable
 fun SinglePhotoView(
@@ -138,6 +136,7 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         navController = LocalNavController.current,
@@ -159,7 +158,10 @@ fun SinglePhotoView(
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
-        setTagMediaId = tagViewModel::setMediaId
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = {
+            viewModel.getExifData(context, it)
+        }
     )
 }
 
@@ -189,6 +191,7 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -207,7 +210,62 @@ fun SinglePhotoView(
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
-        setTagMediaId = tagViewModel::setMediaId
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = {
+            viewModel.getExifData(context, it)
+        }
+    )
+}
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+@Composable
+fun SinglePhotoView(
+    window: Window,
+    viewModel: MainGridViewModel,
+    index: Int,
+    album: AlbumType.Folder,
+    isOpenWithDefaultView: Boolean = false,
+) {
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    SinglePhotoViewCommon(
+        items = items,
+        startIndex = index,
+        album = album,
+        navController = LocalNavController.current,
+        window = window,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        useBlackBackground = useBlackBackground,
+        confirmToDelete = confirmToDelete,
+        doNotTrash = doNotTrash,
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = blurViews,
+        useCache = useCache,
+        tags = { tags },
+        selectedTags = { selectedTags },
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = {
+            viewModel.getExifData(context, it)
+        }
     )
 }
 
@@ -235,6 +293,7 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -253,7 +312,10 @@ fun SinglePhotoView(
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
-        setTagMediaId = tagViewModel::setMediaId
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = {
+            viewModel.getExifData(context, it)
+        }
     )
 }
 
@@ -281,6 +343,7 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -299,7 +362,10 @@ fun SinglePhotoView(
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
-        setTagMediaId = tagViewModel::setMediaId
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = {
+            viewModel.getExifData(context, it)
+        }
     )
 }
 
@@ -345,7 +411,8 @@ fun SinglePhotoView(
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
-        setTagMediaId = tagViewModel::setMediaId
+        setTagMediaId = tagViewModel::setMediaId,
+        getExifData = viewModel::getExifData
     )
 }
 
@@ -371,7 +438,8 @@ private fun SinglePhotoViewCommon(
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
-    setTagMediaId: (id: Long) -> Unit
+    setTagMediaId: (id: Long) -> Unit,
+    getExifData: suspend (media: PhotoLibraryUIModel.MediaImpl) -> Map<MediaData, String>
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -525,21 +593,9 @@ private fun SinglePhotoViewCommon(
             LaunchedEffect(mediaItem) {
                 val item = items[currentIndex]
 
-                mediaData =
-                    if (item is PhotoLibraryUIModel.MediaWithExifData) {
-                        item.mediaData
-                    } else {
-                        item as PhotoLibraryUIModel.MediaImpl
+                item as PhotoLibraryUIModel.MediaImpl
 
-                        getExifDataForMedia(
-                            inputStream =
-                                context.contentResolver.openInputStream(item.item.uri.toUri())
-                                    ?: File(item.item.absolutePath).inputStream(),
-                            absolutePath = item.item.absolutePath,
-                            is24Hr = DateFormat.is24HourFormat(context),
-                            fallback = item.item.dateTaken
-                        )
-                    }
+                mediaData = getExifData(item)
             }
 
             SinglePhotoInfoDialog(

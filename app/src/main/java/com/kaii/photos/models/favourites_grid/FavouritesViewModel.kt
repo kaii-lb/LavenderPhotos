@@ -1,8 +1,10 @@
 package com.kaii.photos.models.favourites_grid
 
 import android.content.Context
+import android.text.format.DateFormat
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
@@ -10,14 +12,17 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.repositories.FavouritesRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 
 class FavouritesViewModel(
     context: Context
@@ -116,6 +121,18 @@ class FavouritesViewModel(
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    suspend fun getExifData(
+        context: Context,
+        media: PhotoLibraryUIModel.MediaImpl
+    ) = getExifDataForMedia(
+        inputStream =
+            context.contentResolver.openInputStream(media.item.uri.toUri())
+                ?: File(media.item.absolutePath).inputStream(),
+        absolutePath = media.item.absolutePath,
+        is24Hr = DateFormat.is24HourFormat(context),
+        fallback = media.item.dateTaken
+    )
 
     fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
 

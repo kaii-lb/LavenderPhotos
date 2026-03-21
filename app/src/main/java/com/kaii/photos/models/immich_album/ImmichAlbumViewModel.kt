@@ -12,6 +12,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.repositories.ImmichRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -164,6 +165,9 @@ class ImmichAlbumViewModel(
     fun removeAlbum(id: String) {
         settings.albums.remove(id)
     }
+
+    fun getExifData(media: PhotoLibraryUIModel.MediaImpl) =
+        (media as PhotoLibraryUIModel.MediaWithExifData).mediaData
 
     fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
 

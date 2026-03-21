@@ -1,9 +1,11 @@
 package com.kaii.photos.models.main_grid
 
 import android.content.Context
+import android.text.format.DateFormat
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
@@ -15,9 +17,12 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.repositories.HybridRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -26,6 +31,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -179,6 +185,24 @@ class MainGridViewModel(
         initialValue = true
     )
 
+    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = TopBarDetailsFormat.FileName
+    )
+
+    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
+    val useCache = settings.storage.getCacheThumbnails().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     fun changePaths(paths: Set<String>) = repo.changePaths(new = paths)
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
@@ -274,6 +298,18 @@ class MainGridViewModel(
                 mainAlbums
             }
         }
+
+    suspend fun getExifData(
+        context: Context,
+        media: PhotoLibraryUIModel.MediaImpl
+    ) = getExifDataForMedia(
+        inputStream =
+            context.contentResolver.openInputStream(media.item.uri.toUri())
+                ?: File(media.item.absolutePath).inputStream(),
+        absolutePath = media.item.absolutePath,
+        is24Hr = DateFormat.is24HourFormat(context),
+        fallback = media.item.dateTaken
+    )
 
     fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
 
