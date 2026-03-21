@@ -93,7 +93,6 @@ fun MainPages(
     val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
     val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
     val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
-    val preserveDate by mainGridViewModel.preserveDate.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
@@ -197,8 +196,7 @@ fun MainPages(
                     defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
                     confirmToDelete = { confirmToDelete },
-                    doNotTrash = { doNotTrash },
-                    preserveDate = { preserveDate }
+                    doNotTrash = { doNotTrash }
                 )
             }
         },
@@ -437,8 +435,7 @@ fun MainPages(
                             scrollBehaviour = scrollBehaviour,
                             selectionManager = selectionManager,
                             confirmToDelete = { confirmToDelete },
-                            doNotTrash = { doNotTrash },
-                            preserveDate = { preserveDate }
+                            doNotTrash = { doNotTrash }
                         )
                     } else {
                         MediaPickerConfirmButton(

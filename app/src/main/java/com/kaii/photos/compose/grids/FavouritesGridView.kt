@@ -95,7 +95,6 @@ fun FavouritesGridView(
             val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
             val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
             val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
-            val preserveDate by viewModel.preserveDate.collectAsStateWithLifecycle()
 
             AnimatedVisibility(
                 visible = isSelecting,
@@ -106,12 +105,19 @@ fun FavouritesGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
+                val context = LocalContext.current
                 FavouritesViewBottomAppBar(
                     selectionManager = selectionManager,
                     incomingIntent = incomingIntent,
                     confirmToDelete = { confirmToDelete },
                     doNotTrash = { doNotTrash },
-                    preserveDate = { preserveDate }
+                    allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+                    process = { action ->
+                        viewModel.runAction(
+                            context = context,
+                            action = action
+                        )
+                    }
                 )
             }
         }

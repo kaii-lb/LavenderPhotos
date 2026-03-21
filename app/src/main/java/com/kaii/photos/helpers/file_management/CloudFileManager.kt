@@ -69,7 +69,7 @@ class CloudFileManager(
                     status = SyncTaskStatus.Processing,
                     type = SyncTaskType.Delete,
                     destination = albumId,
-                    itemIds = list.fastMap { it }
+                    itemIds = list
                 )
             )
 

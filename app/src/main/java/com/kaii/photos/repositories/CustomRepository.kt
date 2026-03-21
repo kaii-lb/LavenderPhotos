@@ -1,6 +1,7 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
+import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -12,7 +13,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.file_management.CustomFileManager
-import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
@@ -132,9 +132,9 @@ class CustomRepository(
     }
 
     fun allowedAlbumTypesFor(
-        action: GenericFileManager.Action
+        moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(
-        action = action,
+        moving = moving,
         current = AlbumType.Custom::class
     )
 
@@ -182,14 +182,19 @@ class CustomRepository(
 
     suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, album.id, onItemDone)
+    ) = fileManager.setTrashed(context, list.fastMap { it.uri }, trashed, album.id, onItemDone)
+
+    suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list.fastMap { it.uri })
 
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
-    ) = fileManager.setFavourite(context, favourite, list)
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.setFavourite(context, favourite, list.fastMap { it.uri })
 }

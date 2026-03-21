@@ -22,8 +22,8 @@ fun SingleAlbumViewBottomBar(
     incomingIntent: Intent? = null,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
-    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {

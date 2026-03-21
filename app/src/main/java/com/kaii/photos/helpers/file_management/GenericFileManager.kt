@@ -41,9 +41,39 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 interface GenericFileManager {
-    enum class Action {
-        Copy,
-        Move
+    interface Action {
+        data class Copy(
+            val list: List<SelectionManager.SelectedItem>,
+            val destination: AlbumType
+        ) : Action
+
+        data class Move(
+            val list: List<SelectionManager.SelectedItem>,
+            val destination: AlbumType
+        ) : Action
+
+        data class Trash(
+            val list: List<SelectionManager.SelectedItem>,
+            val trashed: Boolean
+        ) : Action
+
+        data class Delete(
+             val list: List<SelectionManager.SelectedItem>
+        ) : Action
+
+        data class Favourite(
+            val list: List<SelectionManager.SelectedItem>,
+            val favourite: Boolean
+        ) : Action
+
+        data class RenameItem(
+            val uri: String,
+            val newName: String
+        ) : Action
+
+        data class RenameAlbum(
+            val newName: String
+        ) : Action
     }
 
     data class CopyResult(
@@ -60,10 +90,10 @@ interface GenericFileManager {
     val endpoint: String
 
     fun allowedAlbumTypesFor(
-        action: Action,
+        moving: Boolean,
         current: KClass<out AlbumType>
     ): List<KClass<out AlbumType>> {
-        return if (action == Action.Copy) {
+        return if (!moving) {
             listOf(
                 AlbumType.Folder::class,
                 AlbumType.Custom::class,
@@ -120,7 +150,7 @@ interface GenericFileManager {
     suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String,
+        newName: String
     )
 
     suspend fun moveItems(

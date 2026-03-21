@@ -177,15 +177,73 @@ class MultiAlbumViewModel(
         settings.albums.remove(id)
     }
 
-    fun allowedAlbumTypesFor(
-        action: GenericFileManager.Action
-    ) = repo.allowedAlbumTypesFor(action)
+    fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
 
-    fun copy(
+    fun runAction(
+        context: Context,
+        action: GenericFileManager.Action
+    ) {
+        when (action) {
+            is GenericFileManager.Action.Copy -> {
+                copy(
+                    context = context,
+                    list = action.list,
+                    destination = action.destination
+                )
+            }
+
+            is GenericFileManager.Action.Move -> {
+                move(
+                    context = context,
+                    list = action.list,
+                    destination = action.destination
+                )
+            }
+
+            is GenericFileManager.Action.Trash -> {
+                setTrashed(
+                    context = context,
+                    list = action.list,
+                    trashed = action.trashed
+                )
+            }
+
+            is GenericFileManager.Action.Delete -> {
+                delete(
+                    context = context,
+                    list = action.list
+                )
+            }
+
+            is GenericFileManager.Action.Favourite -> {
+                setFavourite(
+                    context = context,
+                    favourite = action.favourite,
+                    list = action.list
+                )
+            }
+
+            is GenericFileManager.Action.RenameItem -> {
+                renameItem(
+                    context = context,
+                    uri = action.uri,
+                    newName = action.newName
+                )
+            }
+
+            is GenericFileManager.Action.RenameAlbum -> {
+                renameAlbum(
+                    context = context,
+                    newName = action.newName
+                )
+            }
+        }
+    }
+
+    private fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        overrideDisplayName: ((displayName: String) -> String)?
+        destination: AlbumType
     ) {
         viewModelScope.launch {
             val percentage = mutableFloatStateOf(0f)
@@ -205,7 +263,7 @@ class MultiAlbumViewModel(
                 )
             )
 
-            repo.copy(context, list, destination, preserveDate.value, overrideDisplayName) {
+            repo.copy(context, list, destination, preserveDate.value, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_copy_snackbar_body,
@@ -215,7 +273,7 @@ class MultiAlbumViewModel(
         }
     }
 
-    fun move(
+    private fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
@@ -248,7 +306,7 @@ class MultiAlbumViewModel(
         }
     }
 
-    fun renameItem(
+    private fun renameItem(
         context: Context,
         uri: String,
         newName: String
@@ -258,7 +316,7 @@ class MultiAlbumViewModel(
         }
     }
 
-    fun renameAlbum(
+    private fun renameAlbum(
         context: Context,
         newName: String
     ) {
@@ -267,9 +325,9 @@ class MultiAlbumViewModel(
         }
     }
 
-    fun setTrashed(
+    private fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
     ) {
         viewModelScope.launch {
@@ -300,10 +358,19 @@ class MultiAlbumViewModel(
         }
     }
 
-    fun setFavourite(
+    private fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        viewModelScope.launch {
+            repo.delete(context, list)
+        }
+    }
+
+    private fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
+        list: List<SelectionManager.SelectedItem>
     ) {
         viewModelScope.launch {
             repo.setFavourite(context, favourite, list)

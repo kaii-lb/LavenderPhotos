@@ -20,23 +20,24 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
-import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun TrashedPhotoGridViewBottomBar(
     selectionManager: SelectionManager,
-    incomingIntent: Intent?
+    incomingIntent: Intent?,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
-            TrashPhotoGridBottomBarItems(selectionManager = selectionManager)
+            TrashPhotoGridBottomBarItems(
+                selectionManager = selectionManager,
+                process = process
+            )
         }
     } else {
         val context = LocalContext.current
@@ -52,7 +53,8 @@ fun TrashedPhotoGridViewBottomBar(
 
 @Composable
 fun TrashPhotoGridBottomBarItems(
-    selectionManager: SelectionManager
+    selectionManager: SelectionManager,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -80,15 +82,14 @@ fun TrashPhotoGridBottomBarItems(
     val showRestoreDialog = remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                setTrashedOnPhotoList(
-                    context = context,
-                    list = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
+            process(
+                GenericFileManager.Action.Trash(
+                    list = selectedItemsList,
                     trashed = false
                 )
+            )
 
-                selectionManager.clear()
-            }
+            selectionManager.clear()
         }
     )
 
@@ -98,7 +99,7 @@ fun TrashPhotoGridBottomBarItems(
         confirmButtonLabel = stringResource(id = R.string.media_restore)
     ) {
         permissionState.get(
-            uris = selectedItemsList.map { it.uri.toUri() } // TODO: move to file manager
+            uris = selectedItemsList.map { it.uri.toUri() }
         )
     }
 
@@ -121,15 +122,13 @@ fun TrashPhotoGridBottomBarItems(
         dialogBody = stringResource(id = R.string.action_cannot_be_undone),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        // TODO: move to file manager
-        context.appModule.scope.launch(Dispatchers.IO) {
-            permanentlyDeletePhotoList(
-                context = context,
-                list = selectedItemsList.fastMap { it.uri.toUri() }
+        process(
+            GenericFileManager.Action.Delete(
+                list = selectedItemsList
             )
+        )
 
-            selectionManager.clear()
-        }
+        selectionManager.clear()
     }
 
     IconButton(

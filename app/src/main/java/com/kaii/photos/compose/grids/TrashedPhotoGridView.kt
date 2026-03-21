@@ -73,7 +73,7 @@ fun TrashedPhotoGridView(
             TrashedPhotoGridViewTopBar(
                 selectionManager = selectionManager,
                 deleteAll = {
-                    viewModel.deleteAll(context)
+                    viewModel.deleteAll(context = context)
                 },
                 onBackClick = {
                     viewModel.cancel()
@@ -91,9 +91,16 @@ fun TrashedPhotoGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
+                val context = LocalContext.current
                 TrashedPhotoGridViewBottomBar(
                     selectionManager = selectionManager,
-                    incomingIntent = incomingIntent
+                    incomingIntent = incomingIntent,
+                    process = { action ->
+                        viewModel.runAction(
+                            context = context,
+                            action = action
+                        )
+                    }
                 )
             }
         }

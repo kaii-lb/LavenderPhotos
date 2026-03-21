@@ -19,7 +19,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.file_management.CloudFileManager
-import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.immichDurationToSecondsOrNull
@@ -213,12 +212,7 @@ class ImmichRepository(
         }
     }
 
-    fun allowedAlbumTypesFor(
-        action: GenericFileManager.Action
-    ) = fileManager.allowedAlbumTypesFor(
-        action = action,
-        current = AlbumType.Cloud::class
-    )
+    fun allowedAlbumTypesFor(moving: Boolean) = fileManager.allowedAlbumTypesFor(moving = moving, current = AlbumType.Cloud::class)
 
     suspend fun copy(
         context: Context,
@@ -258,14 +252,14 @@ class ImmichRepository(
 
     suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, album.id, onItemDone)
+    ) = fileManager.setTrashed(context, list.fastMap { it.immichId!! }, trashed, album.id, onItemDone)
 
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
-    ) = fileManager.setFavourite(context, favourite, list)
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.setFavourite(context, favourite, list.fastMap { it.immichId!! })
 }

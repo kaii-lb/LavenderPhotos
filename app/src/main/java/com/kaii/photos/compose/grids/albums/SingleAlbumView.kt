@@ -147,21 +147,11 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { list, album, isMoving ->
-            if (isMoving) {
-                viewModel.move(
-                    context = context,
-                    list = list,
-                    destination = album
-                )
-            } else {
-                viewModel.copy(
-                    context = context,
-                    list = list,
-                    destination = album,
-                    overrideDisplayName = null
-                )
-            }
+        process = { action ->
+            viewModel.runAction(
+                context = context,
+                action = action
+            )
         }
     )
 }
@@ -245,21 +235,11 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { list, album, isMoving ->
-            if (isMoving) {
-                viewModel.move(
-                    context = context,
-                    list = list,
-                    destination = album
-                )
-            } else {
-                viewModel.copy(
-                    context = context,
-                    list = list,
-                    destination = album,
-                    overrideDisplayName = null
-                )
-            }
+        process = { action ->
+            viewModel.runAction(
+                context = context,
+                action = action
+            )
         }
     )
 }
@@ -343,21 +323,11 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { list, album, isMoving ->
-            if (isMoving) {
-                viewModel.move(
-                    context = context,
-                    list = list,
-                    destination = album
-                )
-            } else {
-                viewModel.copy(
-                    context = context,
-                    list = list,
-                    destination = album,
-                    overrideDisplayName = null
-                )
-            }
+        process = { action ->
+            viewModel.runAction(
+                context = context,
+                action = action
+            )
         }
     )
 }
@@ -380,7 +350,7 @@ private fun SingleAlbumViewCommon(
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
     vibrateOnClick: () -> Boolean,
-    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     modifier: Modifier = Modifier,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
@@ -391,7 +361,7 @@ private fun SingleAlbumViewCommon(
     onTagDelete: (tag: Tag) -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
     removeAlbum: (id: String) -> Unit,
-    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

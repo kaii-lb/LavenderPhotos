@@ -50,8 +50,6 @@ import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -118,8 +116,8 @@ fun SelectingBottomBarItems(
     selectionManager: SelectionManager,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (action: GenericFileManager.Action) -> List<KClass<out AlbumType>>,
-    process: (list: List<SelectionManager.SelectedItem>, album: AlbumType, isMoving: Boolean) -> Unit
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -153,11 +151,19 @@ fun SelectingBottomBarItems(
         isMoving = { isMoving },
         currentAlbum = { albumInfo },
         insetsPadding = WindowInsets.statusBars,
-        allowedAlbumsFor = { allowedAlbumsFor(
-            if (isMoving) GenericFileManager.Action.Move else GenericFileManager.Action.Copy
-        )},
+        allowedAlbumsFor = {
+            allowedAlbumsFor(isMoving)
+        },
         onClick = { album ->
-            process(selectedItemsList, album, isMoving)
+            process(
+                if (isMoving) GenericFileManager.Action.Move(
+                    list = selectedItemsList,
+                    destination = album
+                ) else GenericFileManager.Action.Copy(
+                    list = selectedItemsList,
+                    destination = album
+                )
+            )
         }
     )
 
@@ -189,23 +195,20 @@ fun SelectingBottomBarItems(
 
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                // TODO: move to file manager
+            process(
                 if (doNotTrash()) {
-                    permanentlyDeletePhotoList(
-                        context = context,
-                        list = selectedItemsList.fastMap { it.uri.toUri() }
+                    GenericFileManager.Action.Delete(
+                        list = selectedItemsList
                     )
                 } else {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = selectedItemsList.fastMap { it.uri.toUri() },
+                    GenericFileManager.Action.Trash(
+                        list = selectedItemsList,
                         trashed = true
                     )
                 }
+            )
 
-                selectionManager.clear()
-            }
+            selectionManager.clear()
         }
     )
 
@@ -226,22 +229,19 @@ fun SelectingBottomBarItems(
             dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
         ) {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                MediaDatabase.getInstance(context)
-                    .customDao()
-                    .deleteAll(
-                        ids = selectedItemsList.fastMap { it.id }.toSet(),
-                        album = albumInfo.id
-                    )
+            process(
+                GenericFileManager.Action.Trash(
+                    list = selectedItemsList,
+                    trashed = true
+                )
+            )
 
-                selectionManager.clear()
-            }
+            selectionManager.clear()
         }
     }
 
     IconButton(
         onClick = {
-            // TODO: move to
             if (confirmToDelete()) {
                 showDeleteDialog.value = true
             } else if (albumInfo is AlbumType.Folder) {
@@ -249,16 +249,14 @@ fun SelectingBottomBarItems(
                     uris = selectedItemsList.fastMap { it.uri.toUri() }
                 )
             } else {
-                context.appModule.scope.launch(Dispatchers.IO) {
-                    MediaDatabase.getInstance(context)
-                        .customDao()
-                        .deleteAll(
-                            ids = selectedItemsList.fastMap { it.id }.toSet(),
-                            album = albumInfo.id
-                        )
+                process(
+                    GenericFileManager.Action.Trash(
+                        list = selectedItemsList,
+                        trashed = true
+                    )
+                )
 
-                    selectionManager.clear()
-                }
+                selectionManager.clear()
             }
         },
         enabled = selectedItemsList.isNotEmpty()
@@ -279,6 +277,7 @@ fun SelectingBottomBarItems(
 
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
+            // TODO
             context.appModule.scope.launch(Dispatchers.IO) {
                 moveMediaToSecureFolder(
                     list = selectedItemsList,

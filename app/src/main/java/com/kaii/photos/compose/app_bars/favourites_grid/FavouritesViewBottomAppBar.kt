@@ -23,15 +23,12 @@ import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareMultipleImages
-import com.kaii.photos.permissions.favourites.rememberListFavouritesState
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 @Composable
 fun FavouritesViewBottomAppBar(
@@ -39,7 +36,8 @@ fun FavouritesViewBottomAppBar(
     incomingIntent: Intent?,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
@@ -47,7 +45,8 @@ fun FavouritesViewBottomAppBar(
                 selectionManager = selectionManager,
                 confirmToDelete = confirmToDelete,
                 doNotTrash = doNotTrash,
-                preserveDate = preserveDate
+                allowedAlbumsFor = allowedAlbumsFor,
+                process = process
             )
         }
     } else {
@@ -68,7 +67,8 @@ fun FavouritesBottomAppBarItems(
     selectionManager: SelectionManager,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -103,8 +103,15 @@ fun FavouritesBottomAppBarItems(
         clear = selectionManager::clear,
         isMoving = { false },
         currentAlbum = { AlbumType.PlaceHolder },
-        allowedAlbumsFor = { emptyList() }, // TODO
-        onClick = {}
+        allowedAlbumsFor = { allowedAlbumsFor(false) },
+        onClick = { album ->
+            process(
+                GenericFileManager.Action.Copy(
+                    list = selectedItemsList,
+                    destination = album
+                )
+            )
+        }
     )
 
     IconButton(
@@ -119,23 +126,21 @@ fun FavouritesBottomAppBarItems(
         )
     }
 
-    val showUnFavDialog = remember { mutableStateOf(false) }
-    val favState = rememberListFavouritesState {
-        selectionManager.clear()
-    }
 
+    val showUnFavDialog = remember { mutableStateOf(false) }
     ConfirmationDialog(
         showDialog = showUnFavDialog,
         dialogTitle = stringResource(id = R.string.favourites_remove_this),
         confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
     ) {
-        coroutineScope.launch {
-            // TODO: move to file manager
-            favState.setFavourite(
-                favourite = false,
-                list = selectedItemsList.fastMap { it.uri.toUri() }
+        process(
+            GenericFileManager.Action.Favourite(
+                list = selectedItemsList,
+                favourite = false
             )
-        }
+        )
+
+        selectionManager.clear()
     }
 
     IconButton(
@@ -153,23 +158,18 @@ fun FavouritesBottomAppBarItems(
     val showDeleteDialog = remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                // TODO: move to file manager
-                if (doNotTrash()) {
-                    permanentlyDeletePhotoList(
-                        context = context,
-                        list = selectedItemsList.fastMap { it.uri.toUri() }
-                    )
-                } else {
-                    setTrashedOnPhotoList(
-                        context = context,
-                        list = selectedItemsList.fastMap { it.uri.toUri() },
-                        trashed = true
-                    )
-                }
-
-                selectionManager.clear()
+            if (doNotTrash()) {
+                GenericFileManager.Action.Delete(
+                    list = selectedItemsList
+                )
+            } else {
+                GenericFileManager.Action.Trash(
+                    list = selectedItemsList,
+                    trashed = true
+                )
             }
+
+            selectionManager.clear()
         }
     )
 
@@ -178,12 +178,9 @@ fun FavouritesBottomAppBarItems(
         dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
         confirmButtonLabel = stringResource(id = R.string.media_delete)
     ) {
-        coroutineScope.launch {
-            // TODO: move to file manager
-            permissionState.get(
-                uris = selectedItemsList.fastMap { it.uri.toUri() }
-            )
-        }
+        permissionState.get(
+            uris = selectedItemsList.fastMap { it.uri.toUri() }
+        )
     }
 
     IconButton(
@@ -191,12 +188,9 @@ fun FavouritesBottomAppBarItems(
             if (confirmToDelete()) {
                 showDeleteDialog.value = true
             } else {
-                coroutineScope.launch {
-                    // TODO: move to file manager
-                    permissionState.get(
-                        uris = selectedItemsList.fastMap { it.uri.toUri() }
-                    )
-                }
+                permissionState.get(
+                    uris = selectedItemsList.fastMap { it.uri.toUri() }
+                )
             }
         },
         enabled = selectedItemsList.isNotEmpty()

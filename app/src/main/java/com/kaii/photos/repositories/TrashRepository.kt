@@ -3,19 +3,25 @@ package com.kaii.photos.repositories
 import android.content.Context
 import android.os.CancellationSignal
 import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.file_management.LocalFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.mediastore.TrashDataSource
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,9 +32,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class TrashRepository(
+    mediaDao: MediaDao,
+    customDao: CustomEntityDao,
+    syncTaskDao: SyncTaskDao,
+    client: ApiClient,
     scope: CoroutineScope,
     context: Context,
     sortMode: Flow<MediaItemSortMode>,
@@ -48,6 +57,22 @@ class TrashRepository(
             context = context,
             cancellationSignal = cancellationSignal
         )
+
+    private var fileManager = LocalFileManager(
+        mediaDao = mediaDao,
+        customDao = customDao,
+        syncTaskDao = syncTaskDao,
+        assetClient = AssetsClient(
+            baseUrl = "",
+            client = client
+        ),
+        albumsClient = AlbumsClient(
+            baseUrl = "",
+            client = client
+        ),
+        accessToken = "",
+        endpoint = ""
+    )
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
 
@@ -93,11 +118,19 @@ class TrashRepository(
 
     fun cancel() = cancellationSignal.cancel()
 
-    suspend fun deleteAll(context: Context) =
-        withContext(Dispatchers.IO) {
-            permanentlyDeletePhotoList(
-                context = context,
-                list = dataSource.query().fastMap { it.uri.toUri() }
-            )
-        }
+    suspend fun setTrashed(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        trash: Boolean,
+        onItemDone: (totaCount: Int) -> Unit
+    ) = fileManager.setTrashed(context, list.fastMap { it.uri }, trash, null, onItemDone)
+
+    suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list.fastMap { it.uri })
+
+    suspend fun deleteAll(
+        context: Context
+    ) = fileManager.permanentlyDelete(context, dataSource.query().fastMap { it.uri })
 }

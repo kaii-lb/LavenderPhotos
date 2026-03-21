@@ -271,8 +271,7 @@ fun MainAppBottomBar(
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior,
     confirmToDelete: () -> Boolean,
-    doNotTrash: () -> Boolean,
-    preserveDate: () -> Boolean
+    doNotTrash: () -> Boolean
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -348,7 +347,10 @@ fun MainAppBottomBar(
                         ) {
                             when (currentTab) {
                                 DefaultTabs.TabTypes.trash -> {
-                                    TrashPhotoGridBottomBarItems(selectionManager = selectionManager)
+                                    TrashPhotoGridBottomBarItems(
+                                        selectionManager = selectionManager,
+                                        process = {}
+                                    )
                                 }
 
                                 DefaultTabs.TabTypes.favourites -> {
@@ -356,7 +358,8 @@ fun MainAppBottomBar(
                                         selectionManager = selectionManager,
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
-                                        preserveDate = preserveDate
+                                        allowedAlbumsFor = { emptyList() }, // TODO
+                                        process = {}
                                     )
                                 }
 
@@ -373,7 +376,7 @@ fun MainAppBottomBar(
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
                                         allowedAlbumsFor = { emptyList() }, // TODO
-                                        process = { _, _, _ -> }
+                                        process = {}
                                     )
                                 }
                             }

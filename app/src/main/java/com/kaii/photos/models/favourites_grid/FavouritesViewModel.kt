@@ -117,15 +117,51 @@ class FavouritesViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    fun allowedAlbumTypesFor(
+    fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
+
+    fun runAction(
+        context: Context,
         action: GenericFileManager.Action
-    ) = repo.allowedAlbumTypesFor(action)
+    ) {
+        when (action) {
+            is GenericFileManager.Action.Copy -> {
+                copy(
+                    context = context,
+                    list = action.list,
+                    destination = action.destination
+                )
+            }
+
+            is GenericFileManager.Action.Trash -> {
+                setTrashed(
+                    context = context,
+                    list = action.list,
+                    trashed = action.trashed
+                )
+            }
+
+            is GenericFileManager.Action.Favourite -> {
+                setFavourite(
+                    context = context,
+                    favourite = action.favourite,
+                    list = action.list
+                )
+            }
+
+            is GenericFileManager.Action.RenameItem -> {
+                renameItem(
+                    context = context,
+                    uri = action.uri,
+                    newName = action.newName
+                )
+            }
+        }
+    }
 
     fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        overrideDisplayName: ((displayName: String) -> String)?
+        destination: AlbumType
     ) {
         viewModelScope.launch {
             val percentage = mutableFloatStateOf(0f)
@@ -145,7 +181,7 @@ class FavouritesViewModel(
                 )
             )
 
-            repo.copy(context, list, destination, preserveDate.value, overrideDisplayName) {
+            repo.copy(context, list, destination, preserveDate.value, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_copy_snackbar_body,
@@ -167,7 +203,7 @@ class FavouritesViewModel(
 
     fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
     ) {
         viewModelScope.launch {
@@ -201,7 +237,7 @@ class FavouritesViewModel(
     fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
+        list: List<SelectionManager.SelectedItem>
     ) {
         viewModelScope.launch {
             repo.setFavourite(context, favourite, list)
