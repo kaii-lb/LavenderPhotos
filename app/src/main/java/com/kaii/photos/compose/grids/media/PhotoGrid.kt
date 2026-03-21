@@ -57,7 +57,7 @@ import com.kaii.photos.mediastore.MediaType
 @Composable
 fun PhotoGrid(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
-    album: AlbumType,
+    album: () -> AlbumType,
     modifier: Modifier = Modifier,
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,
@@ -112,7 +112,7 @@ private fun DeviceMedia(
     viewProperties: ViewProperties,
     selectionManager: SelectionManager,
     gridState: LazyGridState,
-    album: AlbumType,
+    album: () -> AlbumType,
     isMediaPicker: Boolean,
     isMainPage: Boolean,
     columnSize: () -> Int,
@@ -267,7 +267,7 @@ private fun DeviceMedia(
 
                                             context.startActivity(intent)
                                         } else {
-                                            navController.navigate(viewProperties.navigate(album, index))
+                                            navController.navigate(viewProperties.navigate(album(), index))
                                         }
                                     }
                                 }

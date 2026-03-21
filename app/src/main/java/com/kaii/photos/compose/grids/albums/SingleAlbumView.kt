@@ -485,7 +485,7 @@ private fun SingleAlbumViewCommon(
         ) {
             PhotoGrid(
                 pagingItems = pagingItems,
-                album = album(),
+                album = album,
                 selectionManager = selectionManager,
                 viewProperties = viewProperties,
                 isMediaPicker = incomingIntent != null,

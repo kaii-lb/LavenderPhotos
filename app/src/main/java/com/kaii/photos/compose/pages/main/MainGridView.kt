@@ -7,12 +7,12 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.main_grid.MainGridViewModel
 
 @Composable
 fun MainGridView(
-    viewModel: MultiAlbumViewModel,
-    album: AlbumType.Folder,
+    viewModel: MainGridViewModel,
+    album: () -> AlbumType.Folder,
     selectionManager: SelectionManager,
     isMediaPicker: Boolean,
     columnSize: () -> Int,

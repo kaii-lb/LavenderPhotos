@@ -70,8 +70,7 @@ class TrashRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = "",
-        endpoint = ""
+        info = ImmichBasicInfo.Empty
     )
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)

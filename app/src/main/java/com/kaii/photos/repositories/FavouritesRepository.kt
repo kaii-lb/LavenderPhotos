@@ -60,8 +60,7 @@ class FavouritesRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = "",
-        endpoint = ""
+        info = ImmichBasicInfo.Empty
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,8 +105,7 @@ class FavouritesRepository(
                             baseUrl = info.endpoint,
                             client = client
                         ),
-                        accessToken = info.accessToken,
-                        endpoint = info.endpoint
+                        info = info
                     )
                 }
         }

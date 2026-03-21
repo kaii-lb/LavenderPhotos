@@ -18,8 +18,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 
 @Composable
@@ -28,9 +26,7 @@ fun StartupLoadingPage(
 ) {
     val context = LocalContext.current
 
-    val mainGridViewModel = viewModel<MainGridViewModel>(
-        factory = MainGridViewModelFactory(context = context)
-    )
+    val mainGridViewModel = viewModel<MainGridViewModel>(factory = MainGridViewModelFactory(context = context))
     val mainPhotosAlbums by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
 
     var album by remember {
@@ -45,16 +41,9 @@ fun StartupLoadingPage(
         )
     }
 
-    val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
-        factory = MultiAlbumViewModelFactory(
-            context = context,
-            album = album
-        )
-    )
-
     LaunchedEffect(mainPhotosAlbums) {
         album = album.copy(paths = mainPhotosAlbums)
-        multiAlbumViewModel.changePaths(album = album)
+        mainGridViewModel.changePaths(paths = mainPhotosAlbums)
     }
 
     Box {
@@ -62,8 +51,8 @@ fun StartupLoadingPage(
             modifier = Modifier.blur(64.dp)
         ) {
             MainGridView(
-                viewModel = multiAlbumViewModel,
-                album = album,
+                viewModel = mainGridViewModel,
+                album = { album },
                 selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
                 isMediaPicker = false,
                 columnSize = { 3 },

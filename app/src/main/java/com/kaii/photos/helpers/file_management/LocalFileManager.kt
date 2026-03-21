@@ -16,6 +16,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
 import com.kaii.photos.helpers.baseInternalStorageDirectory
@@ -39,8 +40,7 @@ class LocalFileManager(
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val accessToken: String,
-    override val endpoint: String
+    override val info: ImmichBasicInfo
 ) : GenericFileManager {
     companion object {
         private const val TAG = "com.kaii.photos.helpers.file_management.LocalFileManager"

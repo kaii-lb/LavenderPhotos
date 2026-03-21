@@ -75,8 +75,7 @@ class ImmichRepository(
             baseUrl = "",
             client = client
         ),
-        accessToken = "",
-        endpoint = ""
+        info = ImmichBasicInfo.Empty
     )
 
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
@@ -203,8 +202,7 @@ class ImmichRepository(
                             baseUrl = info.endpoint,
                             client = client
                         ),
-                        accessToken = info.accessToken,
-                        endpoint = info.endpoint
+                        info = info
                     )
                 }
 

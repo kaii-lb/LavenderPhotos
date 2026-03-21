@@ -171,7 +171,7 @@ fun SecureFolderView(
 
             PhotoGrid(
                 pagingItems = items,
-                album = AlbumType.PlaceHolder,
+                album = { AlbumType.PlaceHolder },
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.SecureFolder,
                 columnSize = { columnSize },

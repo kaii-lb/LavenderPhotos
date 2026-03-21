@@ -17,6 +17,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
@@ -58,7 +59,7 @@ interface GenericFileManager {
         ) : Action
 
         data class Delete(
-             val list: List<SelectionManager.SelectedItem>
+            val list: List<SelectionManager.SelectedItem>
         ) : Action
 
         data class Favourite(
@@ -86,8 +87,7 @@ interface GenericFileManager {
     val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
-    val accessToken: String
-    val endpoint: String
+    val info: ImmichBasicInfo
 
     fun allowedAlbumTypesFor(
         moving: Boolean,
@@ -289,7 +289,7 @@ interface GenericFileManager {
                     )
                 }
             ),
-            accessToken = accessToken
+            accessToken = info.accessToken
         )?.map {
             it.id
         } ?: emptyList()
@@ -337,14 +337,14 @@ interface GenericFileManager {
                     metadata = emptyList(),
                     filename = item.first.filename
                 ),
-                accessToken = accessToken
+                accessToken = info.accessToken
             )
 
             if (resp != null) {
                 mediaDao.linkToImmich(
                     id = item.second.id,
                     hash = hashes[item.second.id]!!,
-                    immichUrl = "$endpoint/api/assets/${resp.id}/original"
+                    immichUrl = "${info.endpoint}/api/assets/${resp.id}/original"
                 )
 
                 onItemDone(media.first { it.id == item.second.id }.uri)
@@ -375,7 +375,7 @@ interface GenericFileManager {
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
             assetIds = total.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = accessToken
+            accessToken = info.accessToken
         )
 
         return@withContext total

@@ -66,7 +66,6 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.main_grid.MainGridViewModel
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
@@ -78,9 +77,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainPages(
-    multiAlbumViewModel: MultiAlbumViewModel,
-    searchViewModel: SearchViewModel,
     mainGridViewModel: MainGridViewModel,
+    searchViewModel: SearchViewModel,
     deviceAlbums: () -> List<AlbumGridState.Album>,
     window: Window,
     incomingIntent: Intent?,
@@ -311,23 +309,21 @@ fun MainPages(
                 when {
                     tab.isCustom -> {
                         val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by multiAlbumViewModel.vibrateOnClick.collectAsStateWithLifecycle()
+                        val openVideosExternally by mainGridViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by mainGridViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by mainGridViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by mainGridViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by mainGridViewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
-                            multiAlbumViewModel.changePaths(
-                                album = tab.toAlbum()
-                            )
+                            mainGridViewModel.changePaths(paths = tab.albumPaths)
                         }
 
                         MainGridView(
-                            viewModel = multiAlbumViewModel,
-                            album = tab.toAlbum(),
+                            viewModel = mainGridViewModel,
+                            album = { tab.toAlbum() },
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = { columnSize },
@@ -341,25 +337,21 @@ fun MainPages(
 
                     tab == DefaultTabs.TabTypes.photos -> {
                         val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by multiAlbumViewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by multiAlbumViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by multiAlbumViewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by multiAlbumViewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by multiAlbumViewModel.vibrateOnClick.collectAsStateWithLifecycle()
+                        val openVideosExternally by mainGridViewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by mainGridViewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by mainGridViewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by mainGridViewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by mainGridViewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
 
-                            multiAlbumViewModel.changePaths(
-                                album = tab.copy(
-                                    albumPaths = mainPhotosPaths
-                                ).toAlbum()
-                            )
+                            mainGridViewModel.changePaths(paths = mainPhotosPaths)
                         }
 
                         MainGridView(
-                            viewModel = multiAlbumViewModel,
-                            album = tab.copy(albumPaths = mainPhotosPaths).toAlbum(),
+                            viewModel = mainGridViewModel,
+                            album = { tab.copy(albumPaths = mainPhotosPaths).toAlbum() },
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = { columnSize },

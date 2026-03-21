@@ -172,7 +172,7 @@ fun FavouritesGridView(
 
             PhotoGrid(
                 pagingItems = pagingItems,
-                album = AlbumType.PlaceHolder,
+                album = { AlbumType.PlaceHolder },
                 selectionManager = selectionManager,
                 viewProperties = ViewProperties.Favourites,
                 isMediaPicker = incomingIntent != null,

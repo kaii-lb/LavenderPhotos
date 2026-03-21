@@ -271,23 +271,9 @@ class MainActivity : ComponentActivity() {
                             factory = SearchViewModelFactory(context = context)
                         )
 
-                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
-                            factory = MultiAlbumViewModelFactory(
-                                context = context,
-                                album = AlbumType.Folder(
-                                    id = "",
-                                    name = "",
-                                    paths = emptySet(),
-                                    pinned = false,
-                                    immichId = null
-                                )
-                            )
-                        )
-
                         MainPages(
-                            multiAlbumViewModel = multiAlbumViewModel,
-                            searchViewModel = searchViewModel,
                             mainGridViewModel = viewModel,
+                            searchViewModel = searchViewModel,
                             deviceAlbums = { deviceAlbums },
                             window = window,
                             incomingIntent = null,

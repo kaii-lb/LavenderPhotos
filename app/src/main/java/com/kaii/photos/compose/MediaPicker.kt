@@ -132,18 +132,6 @@ class MediaPicker : ComponentActivity() {
     ) {
         val context = LocalContext.current
         val searchViewModel: SearchViewModel = viewModel(factory = SearchViewModelFactory(context = context))
-        val multiAlbumViewModel = viewModel<MultiAlbumViewModel>(
-            factory = MultiAlbumViewModelFactory(
-                context = context,
-                album = AlbumType.Folder(
-                    id = "",
-                    name = "",
-                    paths = emptySet(),
-                    pinned = false,
-                    immichId = null
-                )
-            )
-        )
 
         val navController = LocalNavController.current
         NavHost(
@@ -201,9 +189,8 @@ class MediaPicker : ComponentActivity() {
                     )
 
                     MainPages(
-                        multiAlbumViewModel = multiAlbumViewModel,
-                        searchViewModel = searchViewModel,
                         mainGridViewModel = viewModel,
+                        searchViewModel = searchViewModel,
                         deviceAlbums = { deviceAlbums },
                         window = window,
                         incomingIntent = incomingIntent,

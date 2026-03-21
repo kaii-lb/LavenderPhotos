@@ -143,7 +143,7 @@ fun TrashedPhotoGridView(
 
             PhotoGrid(
                 pagingItems = pagingItems,
-                album = AlbumType.PlaceHolder,
+                album = { AlbumType.PlaceHolder },
                 viewProperties = ViewProperties.Trash,
                 selectionManager = selectionManager,
                 isMediaPicker = incomingIntent != null,

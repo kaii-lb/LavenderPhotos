@@ -13,6 +13,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
@@ -35,8 +36,7 @@ class CloudFileManager(
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val accessToken: String,
-    override val endpoint: String
+    override val info: ImmichBasicInfo
 ) : GenericFileManager {
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setFavourite(
@@ -49,7 +49,7 @@ class CloudFileManager(
                 ids = list.fastMap { Uuid.parse(it) },
                 isFavorite = favourite
             ),
-            accessToken = accessToken
+            accessToken = info.accessToken
         )
     }
 
@@ -76,7 +76,7 @@ class CloudFileManager(
             albumsClient.removeAssets(
                 albumId = Uuid.parse(albumId!!),
                 assetIds = list.fastMap { Uuid.parse(it) },
-                accessToken = accessToken
+                accessToken = info.accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
 
@@ -101,7 +101,7 @@ class CloudFileManager(
             albumsClient.addAssets(
                 albumId = Uuid.parse(albumId!!),
                 assetIds = list.fastMap { Uuid.parse(it) },
-                accessToken = accessToken
+                accessToken = info.accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
 
@@ -122,7 +122,7 @@ class CloudFileManager(
     ) {
         assetClient.delete(
             ids = list.fastMap { Uuid.parse(it) },
-            accessToken = accessToken,
+            accessToken = info.accessToken,
             force = true
         )
     }
@@ -144,7 +144,7 @@ class CloudFileManager(
         albumsClient.rename(
             id = Uuid.parse(album.immichId!!),
             newName = newName,
-            accessToken = accessToken
+            accessToken = info.accessToken
         ).let {
             if (it) {
                 context.appModule.settings.albums.edit(
@@ -184,7 +184,7 @@ class CloudFileManager(
             success = success && albumsClient.removeAssets(
                 albumId = Uuid.parse(origin),
                 assetIds = assetIds,
-                accessToken = accessToken
+                accessToken = info.accessToken
             )
         }
 
@@ -231,7 +231,7 @@ class CloudFileManager(
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
             assetIds = items.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = accessToken
+            accessToken = info.accessToken
         )
 
         items.forEach { onItemDone(it.uri) }
@@ -309,7 +309,7 @@ class CloudFileManager(
             val media = mediaItems.first { it.id == item.id }
             val bytes = assetClient.download(
                 id = Uuid.parse(media.immichId!!),
-                accessToken = accessToken
+                accessToken = info.accessToken
             )
 
             if (bytes == null) return@mapNotNull null
