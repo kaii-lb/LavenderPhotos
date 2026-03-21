@@ -235,12 +235,12 @@ fun AlbumsListItem(
 
     val filePermissionManager = rememberFilePermissionManager(
         onGranted = {
-            show.value = false
-
             onClick()
 
             clear()
             dismissInfoDialog()
+
+            show.value = false
         }
     )
 
@@ -267,12 +267,10 @@ fun AlbumsListItem(
                         directories = album.info.album.paths
                     )
                 } else {
-                    show.value = false
-
                     filePermissionManager.get(
                         uris = selectedItemsList.fastMapNotNull { item ->
-                            item.uri.takeIf { uri ->
-                                !uri.startsWith("http")
+                            item.uri.takeIf {
+                                !item.isCloud
                             }?.toUri()
                         }
                     )
