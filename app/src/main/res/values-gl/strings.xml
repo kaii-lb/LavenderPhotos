@@ -351,7 +351,6 @@
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Ok</string>
     <string name="media_move_copy_list_search_bar">Buscar un álbum</string>
-    <string name="media_operate_snackbar_body">Completado %1$d de %2$d</string>
     <string name="media_tools">Ferramentas</string>
     <string name="media_information">Información</string>
     <string name="media_is_raw">Esta é unha imaxe RAW</string>

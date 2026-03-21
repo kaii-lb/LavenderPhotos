@@ -890,7 +890,6 @@
     <string name="permissions_explanation">Пояснение к разрешению</string>
     <string name="media_restore_processing_desc">Пожалуйста, подождите, пока медиафайлы обрабатываются</string>
     <string name="media_move_copy_list_search_bar">Поиск альбома</string>
-    <string name="media_operate_snackbar_body">%1$d из %2$d выполнено</string>
     <string name="media_tools">Инструменты</string>
     <string name="media_information">Информация</string>
     <string name="wallpaper_homescreen">Главный экран</string>

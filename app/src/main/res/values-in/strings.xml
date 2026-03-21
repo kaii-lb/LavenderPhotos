@@ -373,7 +373,6 @@
     <string name="media_confirm">Konfirmasi</string>
     <string name="media_okay">Oke</string>
     <string name="media_move_copy_list_search_bar">Cari album</string>
-    <string name="media_operate_snackbar_body">%1$d dari %2$d selesai</string>
     <string name="media_tools">Alat</string>
     <string name="media_information">Informasi</string>
     <string name="media_is_raw">Ini adalah gambar RAW</string>

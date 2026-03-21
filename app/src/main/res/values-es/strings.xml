@@ -845,7 +845,6 @@
     <string name="permissions_do_not_trash">No usar la Papelera</string>
     <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
     <string name="media_move_copy_list_search_bar">Buscar un álbum</string>
-    <string name="media_operate_snackbar_body">%1$d de %2$d hecho</string>
     <string name="media_tools">Herramientas</string>
     <string name="media_information">Información</string>
     <string name="wallpaper_homescreen">Pantalla de Inicio</string>
@@ -1026,7 +1025,6 @@
     <string name="immich_server_offline">Fuera de línea</string>
     <string name="immich_server_unreachable">¡No se puede hacer ping al servidor!</string>
     <string name="immich_server_not_loading">Este álbum no tiene medios o el servidor es inalcanzable</string>
-    <string name="exif_enter_time">Introduzca la Hora</string>
     <string name="exif_date_changed_failed">Error al cambiar la fecha</string>
     <string name="privacy_scroll_mode">Modo de Privacidad</string>
     <string name="privacy_scroll_mode_enabled">Modo de Privacidad: Activado</string>

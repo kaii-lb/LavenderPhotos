@@ -316,7 +316,6 @@
     <string name="permissions_do_not_trash_desc">Natychmiastowe i trwałe usuwanie elementów bez przenoszenia ich najpierw do kosza</string>
     <string name="media">Multimedia</string>
     <string name="media_move_copy_list_search_bar">Wyszukaj album</string>
-    <string name="media_operate_snackbar_body">Wykonano %1$d z %2$d</string>
     <string name="media_tools">Narzędzia</string>
     <string name="media_information">Informacja</string>
     <string name="edit_desc">Lavender Photos edytował plik w %1$s</string>

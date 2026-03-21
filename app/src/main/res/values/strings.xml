@@ -1053,11 +1053,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_copy_snackbar_body">Copying %1$d out of %2$d</string>
     <string name="media_move_snackbar_body">Moving %1$d out of %2$d</string>
     <string name="media_delete_snackbar_body">Deleting %1$d out of %2$d</string>
-    <string name="media_restore_snackbar_body">Restoring %1$d out of %2$d</string>
     <string name="media_copy_snackbar_title">Copying items…</string>
     <string name="media_move_snackbar_title">Moving items…</string>
     <string name="media_delete_snackbar_title">Deleting items…</string>
-    <string name="media_restore_snackbar_title">Restoring items…</string>
     <string name="media_tools">Tools</string>
     <string name="media_information">Information</string>
     <string name="media_is_raw">This is a RAW image</string>
