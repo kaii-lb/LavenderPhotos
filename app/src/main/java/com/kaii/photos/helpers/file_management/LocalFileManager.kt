@@ -152,7 +152,7 @@ class LocalFileManager(
         context: Context,
         album: AlbumType,
         newName: String
-    ) {
+    ): Unit = withContext(Dispatchers.IO) {
         if (album is AlbumType.Folder && album.paths.size == 1) {
             val basePath = album.paths.first().toBasePath()
             val currentVolumes = MediaStore.getExternalVolumeNames(context)
@@ -230,6 +230,8 @@ class LocalFileManager(
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (destination !is AlbumType.Folder) {
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Folder::class.simpleName} and ${destination::class.simpleName}")
         }

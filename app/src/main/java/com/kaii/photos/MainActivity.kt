@@ -272,7 +272,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         MainPages(
-                            mainGridViewModel = viewModel,
+                            viewModel = viewModel,
                             searchViewModel = searchViewModel,
                             deviceAlbums = { deviceAlbums },
                             window = window,

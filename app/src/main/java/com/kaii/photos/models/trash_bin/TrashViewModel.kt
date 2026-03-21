@@ -143,14 +143,18 @@ class TrashViewModel(
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
-                    R.string.media_delete_snackbar_body,
+                    if (trashed) R.string.media_delete_snackbar_body
+                    else R.string.media_restoring_snackbar_body,
                     0, list.size
                 )
             )
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_delete_snackbar_title),
+                    message = context.resources.getString(
+                        if (trashed) R.string.media_delete_snackbar_title
+                        else R.string.media_restoring_snackbar_title
+                    ),
                     body = body,
                     icon = R.drawable.delete,
                     percentage = percentage
@@ -160,7 +164,8 @@ class TrashViewModel(
             repo.setTrashed(context, list, trashed) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
-                    R.string.media_delete_snackbar_body,
+                    if (trashed) R.string.media_delete_snackbar_body
+                    else R.string.media_restoring_snackbar_body,
                     it, list.size
                 )
             }

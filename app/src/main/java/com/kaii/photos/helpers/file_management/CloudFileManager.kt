@@ -43,7 +43,7 @@ class CloudFileManager(
         context: Context,
         favourite: Boolean,
         list: List<String>
-    ) {
+    ): Unit = withContext(Dispatchers.IO) {
         assetClient.favourite(
             request = AssetFavouriteRequest(
                 ids = list.fastMap { Uuid.parse(it) },
@@ -61,7 +61,7 @@ class CloudFileManager(
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ) = withContext(Dispatchers.IO) {
         if (trashed) {
             val taskId = syncTaskDao.insert(
                 task = SyncTask(
@@ -119,7 +119,7 @@ class CloudFileManager(
     override suspend fun permanentlyDelete(
         context: Context,
         list: List<String>
-    ) {
+    ): Unit = withContext(Dispatchers.IO) {
         assetClient.delete(
             ids = list.fastMap { Uuid.parse(it) },
             accessToken = info.accessToken,
@@ -162,7 +162,9 @@ class CloudFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
-    ): Boolean {
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (destination !is AlbumType.Cloud) {
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Cloud::class.simpleName} and ${destination::class.simpleName}")
         }
@@ -188,7 +190,7 @@ class CloudFileManager(
             )
         }
 
-        return success
+        return@withContext success
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -200,6 +202,8 @@ class CloudFileManager(
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext emptyList()
+
         return@withContext when (destination) {
             is AlbumType.Folder -> {
                 copyToLocal(context, list, destination, preserveDate, overrideDisplayName, onItemDone)

@@ -96,7 +96,7 @@ class HybridFileManager(
         val immich = list.filter { it.uri.startsWith("http") }
         val local = list - immich.toSet()
 
-        return cloudFileManager.moveItems(context, immich, destination, preserveDate, onItemDone) &&
+        return cloudFileManager.copyItems(context, immich, destination, preserveDate, null, onItemDone).size == immich.size &&
                 localFileManager.moveItems(context, local, destination, preserveDate, onItemDone)
     }
 

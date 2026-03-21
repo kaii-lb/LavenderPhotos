@@ -275,6 +275,8 @@ class MainGridViewModel(
             }
         }
 
+    fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
+
     fun runAction(
         context: Context,
         action: GenericFileManager.Action
@@ -378,7 +380,7 @@ class MainGridViewModel(
 
             LavenderSnackbarController.pushEvent(
                 LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_delete_snackbar_title),
+                    message = context.resources.getString(R.string.media_move_snackbar_title),
                     body = body,
                     icon = R.drawable.cut,
                     percentage = percentage

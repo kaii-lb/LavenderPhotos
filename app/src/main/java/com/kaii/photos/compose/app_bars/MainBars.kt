@@ -86,6 +86,7 @@ import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -96,6 +97,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,7 +273,9 @@ fun MainAppBottomBar(
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior,
     confirmToDelete: () -> Boolean,
-    doNotTrash: () -> Boolean
+    doNotTrash: () -> Boolean,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -358,8 +362,8 @@ fun MainAppBottomBar(
                                         selectionManager = selectionManager,
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
-                                        allowedAlbumsFor = { emptyList() }, // TODO
-                                        process = {}
+                                        allowedAlbumsFor = allowedAlbumsFor,
+                                        process = process
                                     )
                                 }
 
@@ -375,8 +379,8 @@ fun MainAppBottomBar(
                                         selectionManager = selectionManager,
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
-                                        allowedAlbumsFor = { emptyList() }, // TODO
-                                        process = {}
+                                        allowedAlbumsFor = allowedAlbumsFor,
+                                        process = process
                                     )
                                 }
                             }

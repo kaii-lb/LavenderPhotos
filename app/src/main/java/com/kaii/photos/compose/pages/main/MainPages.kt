@@ -77,20 +77,20 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainPages(
-    mainGridViewModel: MainGridViewModel,
+    viewModel: MainGridViewModel,
     searchViewModel: SearchViewModel,
     deviceAlbums: () -> List<AlbumGridState.Album>,
     window: Window,
     incomingIntent: Intent?,
     refreshAlbums: () -> Unit
 ) {
-    val defaultTab by mainGridViewModel.defaultTab.collectAsStateWithLifecycle()
-    val tabList by mainGridViewModel.tabList.collectAsStateWithLifecycle()
-    val immichInfo by mainGridViewModel.immichInfo.collectAsStateWithLifecycle()
-    val exitImmediately by mainGridViewModel.exitImmediately.collectAsStateWithLifecycle()
-    val mainPhotosPaths by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
-    val confirmToDelete by mainGridViewModel.confirmToDelete.collectAsStateWithLifecycle()
-    val doNotTrash by mainGridViewModel.doNotTrash.collectAsStateWithLifecycle()
+    val defaultTab by viewModel.defaultTab.collectAsStateWithLifecycle()
+    val tabList by viewModel.tabList.collectAsStateWithLifecycle()
+    val immichInfo by viewModel.immichInfo.collectAsStateWithLifecycle()
+    val exitImmediately by viewModel.exitImmediately.collectAsStateWithLifecycle()
+    val mainPhotosPaths by viewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
         initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
@@ -152,9 +152,9 @@ fun MainPages(
 
     Scaffold(
         topBar = {
-            val groups by mainGridViewModel.groups.collectAsStateWithLifecycle()
-            val alwaysShowImmichInfo by mainGridViewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
-            val extraSecureFolderEntry by mainGridViewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
+            val groups by viewModel.groups.collectAsStateWithLifecycle()
+            val alwaysShowImmichInfo by viewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
+            val extraSecureFolderEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
 
             MainAppTopBar(
                 alternate = { isSelecting },
@@ -171,8 +171,8 @@ fun MainPages(
                 setShowTagDialog = {
                     showTagDialog = true
                 },
-                addAlbum = mainGridViewModel::addAlbum,
-                addGroup = mainGridViewModel::addGroup
+                addAlbum = viewModel::addAlbum,
+                addGroup = viewModel::addGroup
             )
         },
         bottomBar = {
@@ -187,6 +187,7 @@ fun MainPages(
                 enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it },
                 exit = fadeOut() + slideOutVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it }
             ) {
+                val context = LocalContext.current
                 MainAppBottomBar(
                     pagerState = pagerState,
                     selectionManager = selectionManager,
@@ -194,7 +195,14 @@ fun MainPages(
                     defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
                     confirmToDelete = { confirmToDelete },
-                    doNotTrash = { doNotTrash }
+                    doNotTrash = { doNotTrash },
+                    allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+                    process = { action ->
+                        viewModel.runAction(
+                            context = context,
+                            action = action
+                        )
+                    }
                 )
             }
         },
@@ -308,21 +316,21 @@ fun MainPages(
 
                 when {
                     tab.isCustom -> {
-                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by mainGridViewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by mainGridViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by mainGridViewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by mainGridViewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by mainGridViewModel.vibrateOnClick.collectAsStateWithLifecycle()
+                        val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
-                            mainGridViewModel.changePaths(paths = tab.albumPaths)
+                            viewModel.changePaths(paths = tab.albumPaths)
                         }
 
                         MainGridView(
-                            viewModel = mainGridViewModel,
+                            viewModel = viewModel,
                             album = { tab.toAlbum() },
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
@@ -336,21 +344,21 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.photos -> {
-                        val columnSize by mainGridViewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by mainGridViewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by mainGridViewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by mainGridViewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by mainGridViewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by mainGridViewModel.vibrateOnClick.collectAsStateWithLifecycle()
+                        val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+                        val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+                        val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+                        val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+                        val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+                        val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
                         LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
 
-                            mainGridViewModel.changePaths(paths = mainPhotosPaths)
+                            viewModel.changePaths(paths = mainPhotosPaths)
                         }
 
                         MainGridView(
-                            viewModel = mainGridViewModel,
+                            viewModel = viewModel,
                             album = { tab.copy(albumPaths = mainPhotosPaths).toAlbum() },
                             selectionManager = selectionManager,
                             isMediaPicker = incomingIntent != null,
@@ -368,10 +376,10 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.albums -> {
-                        val columnSize by mainGridViewModel.albumColumnSize.collectAsStateWithLifecycle()
-                        val sortMode by mainGridViewModel.albumSortMode.collectAsStateWithLifecycle()
-                        val migrateFav by mainGridViewModel.migrateFav.collectAsStateWithLifecycle()
-                        val autoDetect by mainGridViewModel.autoDetect.collectAsStateWithLifecycle()
+                        val columnSize by viewModel.albumColumnSize.collectAsStateWithLifecycle()
+                        val sortMode by viewModel.albumSortMode.collectAsStateWithLifecycle()
+                        val migrateFav by viewModel.migrateFav.collectAsStateWithLifecycle()
+                        val autoDetect by viewModel.autoDetect.collectAsStateWithLifecycle()
 
                         AlbumsGridView(
                             deviceAlbums = deviceAlbums,
@@ -382,11 +390,11 @@ fun MainPages(
                             migrateFav = { migrateFav },
                             autoDetect = { autoDetect },
                             isMediaPicker = incomingIntent != null,
-                            setAlbumSortMode = mainGridViewModel::setAlbumSortMode,
-                            setAlbumOrder = mainGridViewModel::setAlbumOrder,
-                            addAlbumToGroup = mainGridViewModel::addAlbumToGroup,
-                            toggleAlbumPin = mainGridViewModel::toggleAlbumPin,
-                            deleteAlbum = mainGridViewModel::deleteAlbum
+                            setAlbumSortMode = viewModel::setAlbumSortMode,
+                            setAlbumOrder = viewModel::setAlbumOrder,
+                            addAlbumToGroup = viewModel::addAlbumToGroup,
+                            toggleAlbumPin = viewModel::toggleAlbumPin,
+                            deleteAlbum = viewModel::deleteAlbum
                         )
                     }
 
@@ -427,7 +435,14 @@ fun MainPages(
                             scrollBehaviour = scrollBehaviour,
                             selectionManager = selectionManager,
                             confirmToDelete = { confirmToDelete },
-                            doNotTrash = { doNotTrash }
+                            doNotTrash = { doNotTrash },
+                            allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+                            process = { action ->
+                                viewModel.runAction(
+                                    context = context,
+                                    action = action
+                                )
+                            }
                         )
                     } else {
                         MediaPickerConfirmButton(

@@ -39,7 +39,7 @@ class CustomFileManager(
         context: Context,
         favourite: Boolean,
         list: List<String>
-    ) = withContext(Dispatchers.IO) {
+    ) {
         if (list.isNotEmpty()) {
             val favRequest = MediaStore.createFavoriteRequest(
                 context.contentResolver,
@@ -64,7 +64,7 @@ class CustomFileManager(
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ) = withContext(Dispatchers.IO) {
         if (!trashed) {
             throw IllegalArgumentException("${CustomFileManager::class.simpleName} cannot restore an item! This should never happen!")
         }
@@ -127,6 +127,8 @@ class CustomFileManager(
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (destination !is AlbumType.Custom) {
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Custom::class.simpleName} and ${destination::class.simpleName}")
         }
@@ -164,6 +166,8 @@ class CustomFileManager(
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext emptyList()
+
         when (destination) {
             is AlbumType.Folder -> {
                 copyToLocal(context, list, destination, preserveDate, overrideDisplayName, onItemDone)
