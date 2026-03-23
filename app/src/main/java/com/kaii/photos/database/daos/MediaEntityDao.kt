@@ -88,7 +88,9 @@ interface MediaDao {
             @MapColumn(columnName = "id") Long,
             @MapColumn(columnName = "parentPath") String>
 
-    @Query(value = "SELECT DISTINCT parentPath FROM media WHERE parentPath != ''")
+    // parentPath LIKE '/storage/%' because we want to ignore immich media
+    // with an album id as their parent path
+    @Query(value = "SELECT DISTINCT parentPath FROM media WHERE parentPath != '' AND parentPath LIKE '/storage/%'")
     fun getAllAlbums(): Flow<List<String>>
 
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, hash = :hash WHERE id = :id")
