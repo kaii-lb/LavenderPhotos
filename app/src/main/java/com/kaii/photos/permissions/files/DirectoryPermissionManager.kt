@@ -50,6 +50,14 @@ class DirectoryPermissionManager(
 
     fun start(directories: Set<String>) {
         if (running) throw IllegalStateException("Cannot get directory permissions while another permission request is running!")
+
+        // cloud/custom albums
+        if (directories.isEmpty()) {
+            running = false
+            onGranted()
+            return
+        }
+
         if (directories.all { it.isBlank() }) throw IllegalArgumentException("Cannot get directory permissions for directories with blank paths!")
 
         val previous = context.contentResolver.persistedUriPermissions
@@ -104,7 +112,7 @@ fun rememberDirectoryPermissionManager(
         state.launcher = launcher
 
         onDispose {
-            state.launcher == null
+            state.launcher = null
         }
     }
 

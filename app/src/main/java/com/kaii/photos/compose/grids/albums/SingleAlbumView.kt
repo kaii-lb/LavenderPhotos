@@ -369,6 +369,7 @@ private fun SingleAlbumViewCommon(
 
     if (showInfoDialog) {
         val vibratorManager = rememberVibratorManager()
+
         AlbumInfoDialog(
             albumInfo = album,
             albums = albums,
@@ -385,6 +386,11 @@ private fun SingleAlbumViewCommon(
                 }
             },
             editAlbum = editAlbum,
+            renameAlbum = {
+                process(
+                    GenericFileManager.Action.RenameAlbum(newName = it)
+                )
+            },
             removeAlbum = {
                 coroutineScope.launch {
                     sheetState.hide()

@@ -183,7 +183,7 @@ class CloudFileManager(
             if (it) {
                 context.appModule.settings.albums.edit(
                     id = album.id,
-                    newInfo = (album as AlbumType.Folder).copy(name = newName)
+                    newInfo = (album as AlbumType.Cloud).copy(name = newName)
                 )
             }
         }

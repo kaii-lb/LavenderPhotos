@@ -51,7 +51,7 @@ class AlbumGridState(
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
-    private val updateAlbums: (added: List<AlbumType>, removed: List<String>) -> Unit
+    private val updateAlbums: (added: List<AlbumType>, updated: List<AlbumType.Cloud>, removed: List<String>) -> Unit
 ) {
     @Immutable
     sealed interface Album {
@@ -154,6 +154,7 @@ class AlbumGridState(
                                         immichId = ""
                                     )
                                 },
+                                emptyList(),
                                 albumsFlow.first().fastMapNotNull { album ->
                                     album.id.takeIf {
                                         val empty = album is AlbumType.Folder && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
@@ -214,6 +215,16 @@ class AlbumGridState(
                         }
                     }
 
+                val updated = _albums.value
+                    .filterIsInstance<Album.Single>()
+                    .fastMapNotNull { album ->
+                        val match = state.albums.find { it.id == album.id }
+
+                        val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
+
+                        match?.albumName?.let { changed?.copy(name = it) }
+                    }
+
                 updateAlbums(
                     state.albums.fastMapNotNull { album ->
                         AlbumType.Cloud(
@@ -222,6 +233,7 @@ class AlbumGridState(
                             pinned = false
                         )
                     },
+                    updated,
                     removedOrImmichIdChanged
                 )
             }
@@ -393,8 +405,16 @@ fun createAlbumGridState(
     albumsOrderFlow = context.appModule.settings.albums.getOrder(),
     info = context.appModule.settings.immich.getImmichBasicInfo(),
     apiClient = apiClient,
-    updateAlbums = { added, removed ->
-        context.appModule.settings.albums.add(added)
-        context.appModule.settings.albums.removeAll(removed)
+    updateAlbums = { added, updated, removed ->
+        val settings = context.appModule.settings.albums
+        settings.add(added)
+        settings.removeAll(removed)
+
+        updated.forEach { album ->
+            settings.edit(
+                id = album.id,
+                newInfo = album
+            )
+        }
     }
 )

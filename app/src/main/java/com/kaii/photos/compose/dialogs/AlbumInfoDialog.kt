@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -61,9 +60,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.helpers.renameDirectory
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +79,7 @@ fun AlbumInfoDialog(
     albumSize: suspend () -> String,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    renameAlbum: (newName: String) -> Unit,
     removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit,
 ) {
@@ -143,6 +140,7 @@ fun AlbumInfoDialog(
                                 autoDetectAlbums = autoDetectAlbums,
                                 toggleSelectionMode = toggleSelectionMode,
                                 editAlbum = editAlbum,
+                                renameAlbum = renameAlbum,
                                 removeAlbum = removeAlbum,
                                 dismiss = dismiss
                             )
@@ -194,6 +192,7 @@ fun AlbumInfoDialog(
                             toggleSelectionMode = toggleSelectionMode,
                             editAlbum = editAlbum,
                             removeAlbum = removeAlbum,
+                            renameAlbum = renameAlbum,
                             dismiss = dismiss
                         )
 
@@ -225,6 +224,7 @@ private fun IconContentHorizontal(
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    renameAlbum: (newName: String) -> Unit,
     removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
@@ -247,6 +247,7 @@ private fun IconContentHorizontal(
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
             editAlbum = editAlbum,
+            renameAlbum = renameAlbum,
             removeAlbum = removeAlbum,
             dismiss = dismiss
         )
@@ -261,6 +262,7 @@ private fun IconContentVertical(
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    renameAlbum: (newName: String) -> Unit,
     removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
@@ -282,6 +284,7 @@ private fun IconContentVertical(
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
             editAlbum = editAlbum,
+            renameAlbum = renameAlbum,
             removeAlbum = removeAlbum,
             dismiss = dismiss
         )
@@ -296,6 +299,7 @@ private fun IconContentImpl(
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
+    renameAlbum: (newName: String) -> Unit,
     removeAlbum: (id: String) -> Unit,
     dismiss: () -> Unit
 ) {
@@ -307,69 +311,9 @@ private fun IconContentImpl(
         onGranted = {
             val album = albumInfo()
             if (fileName != album.name) {
-                if (album is AlbumType.Folder && album.paths.size == 1) {
-                    val basePath = album.paths.first().toBasePath()
-                    val currentVolumes = MediaStore.getExternalVolumeNames(context)
-                    val volumeName =
-                        if (basePath == baseInternalStorageDirectory) "primary"
-                        else currentVolumes.find {
-                            val possible =
-                                basePath.replace("/storage/", "").removeSuffix("/")
-                            it == possible || it == possible.lowercase()
-                        }
-
-                    renameDirectory(
-                        context = context,
-                        absolutePath = album.paths.first(),
-                        newName = fileName,
-                        base = volumeName!!
-                    )
-
-                    val newInfo = album.copy(
-                        name = fileName,
-                        paths = setOf(album.paths.first().replace(album.name, fileName))
-                    )
-
-                    albums().filterIsInstance<AlbumType.Folder>().filter { child ->
-                        child.paths.any { it.startsWith(album.paths.first()) }
-                    }.forEach { child ->
-                        editAlbum(
-                            child.id,
-                            child.copy(
-                                paths = child.paths.map {
-                                    if (it.startsWith(album.paths.first())) it.replace(album.paths.first(), newInfo.paths.first())
-                                    else it
-                                }.toSet()
-                            )
-                        )
-                    }
-
-                    editAlbum(album.id, newInfo)
-
-                    try {
-                        context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(
-                                absolutePath = newInfo.paths.first(),
-                                trimDoc = true
-                            ),
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for ${newInfo.paths.first()}")
-                        e.printStackTrace()
-                    }
-                } else {
-                    editAlbum(
-                        album.id,
-                        when (album) {
-                            is AlbumType.Folder -> album.copy(name = fileName)
-                            is AlbumType.Custom -> album.copy(name = fileName)
-                            is AlbumType.Cloud -> album.copy(name = fileName)
-                            else -> AlbumType.PlaceHolder
-                        }
-                    )
-                }
+                renameAlbum(fileName)
             }
+
             dismiss()
         }
     )
@@ -381,7 +325,6 @@ private fun IconContentImpl(
             startValue = albumInfo().name.substringBeforeLast("."),
             errorMessage = stringResource(id = R.string.albums_rename_failure),
             onConfirm = { _ ->
-                // TODO: check if this works for custom albums
                 permissionManager.start(
                     directories = (albumInfo() as? AlbumType.Folder)?.paths ?: emptySet()
                 )
