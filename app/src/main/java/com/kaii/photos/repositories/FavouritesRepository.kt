@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -11,7 +10,7 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.file_management.LocalFileManager
+import com.kaii.photos.helpers.file_management.HybridFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
@@ -48,7 +47,7 @@ class FavouritesRepository(
         )
     }
 
-    private var fileManager = LocalFileManager(
+    private var fileManager = HybridFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -93,7 +92,7 @@ class FavouritesRepository(
             params.mapLatest { it.info }
                 .distinctUntilChanged()
                 .collectLatest { info ->
-                    fileManager = LocalFileManager(
+                    fileManager = HybridFileManager(
                         mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,
@@ -145,11 +144,16 @@ class FavouritesRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list.fastMap { it.uri }, trashed, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
+
+    suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list)
 
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list.fastMap { it.uri })
+    ) = fileManager.setFavourite(context, favourite, list)
 }

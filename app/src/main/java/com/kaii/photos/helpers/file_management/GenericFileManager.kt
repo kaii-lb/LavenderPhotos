@@ -1,7 +1,7 @@
 package com.kaii.photos.helpers.file_management
 
 import android.annotation.SuppressLint
-import android.app.Activity
+import android.app.PendingIntent
 import android.content.Context
 import android.content.IntentSender
 import android.provider.MediaStore
@@ -20,7 +20,9 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.toActivity
 import com.kaii.photos.helpers.toBasePath
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
@@ -108,13 +110,19 @@ interface GenericFileManager {
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
-    )
+        list: List<SelectionManager.SelectedItem>
+    ): PendingIntent? =
+        if (list.isEmpty()) null
+        else MediaStore.createFavoriteRequest(
+            context.contentResolver,
+            list.fastMap { it.uri.toUri() },
+            favourite
+        )
 
     @OptIn(ExperimentalUuidApi::class)
     suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
@@ -122,15 +130,15 @@ interface GenericFileManager {
 
     suspend fun permanentlyDelete(
         context: Context,
-        list: List<String>
+        list: List<SelectionManager.SelectedItem>
     ) {
         if (list.isNotEmpty()) {
             val deleteRequest = MediaStore.createDeleteRequest(
                 context.contentResolver,
-                list.map { it.toUri() }
+                list.map { it.uri.toUri() }
             )
 
-            (context as Activity).startIntentSenderForResult(
+            context.toActivity()?.startIntentSenderForResult(
                 deleteRequest.intentSender,
                 9997,
                 null,
@@ -316,7 +324,14 @@ interface GenericFileManager {
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Upload,
                 destination = destination.immichId,
-                itemIds = missing.fastMap { it.second.toString() }
+                items = missing.fastMap {
+                    SelectionManager.SelectedItem(
+                        id = it.second.id,
+                        uri = it.second.uri,
+                        isImage = it.second.type == MediaType.Image,
+                        parentPath = it.second.parentPath
+                    )
+                }
             )
         )
 

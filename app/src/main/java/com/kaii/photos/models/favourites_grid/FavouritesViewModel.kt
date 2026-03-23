@@ -22,6 +22,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 class FavouritesViewModel(
@@ -139,43 +140,50 @@ class FavouritesViewModel(
     fun runAction(
         context: Context,
         action: GenericFileManager.Action
-    ) {
-        when (action) {
-            is GenericFileManager.Action.Copy -> {
-                copy(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Trash -> {
-                setTrashed(
-                    context = context,
-                    list = action.list,
-                    trashed = action.trashed
-                )
-            }
-
-            is GenericFileManager.Action.Favourite -> {
-                setFavourite(
-                    context = context,
-                    favourite = action.favourite,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.RenameItem -> {
-                renameItem(
-                    context = context,
-                    uri = action.uri,
-                    newName = action.newName
-                )
-            }
+    ) = when (action) {
+        is GenericFileManager.Action.Copy -> {
+            copy(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
         }
+
+        is GenericFileManager.Action.Trash -> {
+            setTrashed(
+                context = context,
+                list = action.list,
+                trashed = action.trashed
+            )
+        }
+
+        is GenericFileManager.Action.Delete -> {
+            delete(
+                context = context,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.Favourite -> {
+            setFavourite(
+                context = context,
+                favourite = action.favourite,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.RenameItem -> {
+            renameItem(
+                context = context,
+                uri = action.uri,
+                newName = action.newName
+            )
+        }
+
+        else -> null
     }
 
-    fun copy(
+    private fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
@@ -208,17 +216,13 @@ class FavouritesViewModel(
         }
     }
 
-    fun renameItem(
+    private fun renameItem(
         context: Context,
         uri: String,
         newName: String
-    ) {
-        viewModelScope.launch {
-            repo.renameItem(context, uri, newName)
-        }
-    }
+    ) = repo.renameItem(context, uri, newName)
 
-    fun setTrashed(
+    private fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
@@ -251,13 +255,28 @@ class FavouritesViewModel(
         }
     }
 
-    fun setFavourite(
+    private fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) {
+    ) = if (list.first().isCloud) {
         viewModelScope.launch {
             repo.setFavourite(context, favourite, list)
+        }
+        null
+    } else {
+        // this is okay since local media's setFavourite is not a blocking function
+        runBlocking {
+            repo.setFavourite(context, favourite, list)
+        }
+    }
+
+    private fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        viewModelScope.launch {
+            repo.delete(context, list)
         }
     }
 }

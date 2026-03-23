@@ -1,16 +1,12 @@
 package com.kaii.photos.helpers
 
 import android.app.Activity
-import android.app.RecoverableSecurityException
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.provider.MediaStore.MediaColumns
 import android.util.Log
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
@@ -28,8 +24,6 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
-import com.kaii.photos.mediastore.getPathsFromUriList
-import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import kotlinx.coroutines.Dispatchers
@@ -53,71 +47,6 @@ fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
             0,
             0
         )
-    }
-}
-
-fun setFavouriteOnMedia(
-    context: Context,
-    favourite: Boolean,
-    list: List<Uri>
-) {
-    if (list.isNotEmpty()) {
-        val favRequest = MediaStore.createFavoriteRequest(
-            context.contentResolver,
-            list,
-            favourite
-        )
-
-        (context as Activity).startIntentSenderForResult(
-            favRequest.intentSender,
-            9998,
-            null,
-            0,
-            0,
-            0
-        )
-    }
-}
-
-/** @param list is a list of pairs of item uri and its absolute path */
-suspend fun setTrashedOnPhotoList(
-    context: Context,
-    list: List<Uri>,
-    trashed: Boolean
-) {
-    val contentResolver = context.contentResolver
-
-    val currentTimeMillis = System.currentTimeMillis()
-    val trashedValues = ContentValues().apply {
-        put(MediaColumns.IS_TRASHED, trashed)
-        put(MediaColumns.DATE_MODIFIED, currentTimeMillis)
-    }
-
-    try {
-        setFavouriteOnMedia(
-            context = context,
-            favourite = false,
-            list = list
-        )
-    } catch (e: Throwable) {
-        Log.d(TAG, "Failed setting fav on trash list. ${e.message}")
-        e.printStackTrace()
-    }
-
-    try {
-        val map =
-            if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
-            else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
-
-        list.forEach { uri ->
-            // order is very important!
-            // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-            File(map[uri]!!).setLastModified(currentTimeMillis)
-            contentResolver.update(uri, trashedValues, null)
-        }
-    } catch (e: Throwable) {
-        Log.e(TAG, "Setting trashed $trashed on photo list failed.")
-        e.printStackTrace()
     }
 }
 
@@ -383,31 +312,6 @@ suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: 
     }
 }
 
-/** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
-fun renameImage(context: Context, uri: Uri, newName: String): IntentSender? {
-    val contentResolver = context.contentResolver
-
-    val contentValues = ContentValues().apply {
-        put(MediaColumns.DISPLAY_NAME, newName)
-    }
-
-    try {
-        contentResolver.update(uri, contentValues, null)
-        contentResolver.notifyChange(uri, null)
-
-        return null
-    } catch (securityException: SecurityException) {
-        Log.e(TAG, securityException.toString())
-        securityException.printStackTrace()
-
-        val recoverableSecurityException =
-            securityException as? RecoverableSecurityException ?: throw RuntimeException(securityException.message, securityException)
-
-        val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
-        return intentSender
-    }
-}
-
 fun renameDirectory(
     context: Context,
     absolutePath: String,
@@ -431,37 +335,6 @@ fun renameDirectory(
     }
 }
 
-/** @param destination where to move said files to, should be relative*/
-suspend fun moveImageListToPath(
-    context: Context,
-    list: List<SelectionManager.SelectedItem>,
-    destination: String,
-    preserveDate: Boolean
-) = withContext(Dispatchers.IO) {
-    val contentResolver = context.contentResolver
-
-    val items = getMediaStoreDataForIds(
-        ids = list.fastMap { it.id }.toSet(),
-        context = context
-    )
-
-    items.forEach { media ->
-        contentResolver.insertMedia(
-            context = context,
-            media = media,
-            destination = destination,
-            basePath = media.absolutePath.toBasePath(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            preserveDate = preserveDate,
-            onInsert = { original, new ->
-                contentResolver.copyUriToUri(original, new)
-            }
-        )?.let {
-            contentResolver.delete(media.uri.toUri(), null)
-        }
-    }
-}
-
 /** @param destination where to copy said files to, should be relative
 @param overrideDisplayName should not contain file extension */
 suspend fun copyImageListToPath(
@@ -469,7 +342,6 @@ suspend fun copyImageListToPath(
     list: List<SelectionManager.SelectedItem>,
     destination: String,
     overwriteDate: Boolean,
-    showProgressSnackbar: Boolean = true,
     overrideDisplayName: ((displayName: String) -> String)? = null,
     onSingleItemDone: (media: MediaStoreData) -> Unit
 ): MutableList<Uri> = withContext(Dispatchers.IO) {

@@ -25,6 +25,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 class MultiAlbumViewModel(
@@ -147,7 +148,7 @@ class MultiAlbumViewModel(
             mediaDao = db.mediaDao(),
             customDao = db.customDao(),
             syncTaskDao = db.taskDao(),
-            client = context.applicationContext.appModule.apiClient,
+            client = context.appModule.apiClient,
             album = album,
             scope = viewModelScope,
             initialAlbum = album,
@@ -199,62 +200,62 @@ class MultiAlbumViewModel(
     fun runAction(
         context: Context,
         action: GenericFileManager.Action
-    ) {
-        when (action) {
-            is GenericFileManager.Action.Copy -> {
-                copy(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Move -> {
-                move(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Trash -> {
-                setTrashed(
-                    context = context,
-                    list = action.list,
-                    trashed = action.trashed
-                )
-            }
-
-            is GenericFileManager.Action.Delete -> {
-                delete(
-                    context = context,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.Favourite -> {
-                setFavourite(
-                    context = context,
-                    favourite = action.favourite,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.RenameItem -> {
-                renameItem(
-                    context = context,
-                    uri = action.uri,
-                    newName = action.newName
-                )
-            }
-
-            is GenericFileManager.Action.RenameAlbum -> {
-                renameAlbum(
-                    context = context,
-                    newName = action.newName
-                )
-            }
+    ) = when (action) {
+        is GenericFileManager.Action.Copy -> {
+            copy(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
         }
+
+        is GenericFileManager.Action.Move -> {
+            move(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
+        }
+
+        is GenericFileManager.Action.Trash -> {
+            setTrashed(
+                context = context,
+                list = action.list,
+                trashed = action.trashed
+            )
+        }
+
+        is GenericFileManager.Action.Delete -> {
+            delete(
+                context = context,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.Favourite -> {
+            setFavourite(
+                context = context,
+                favourite = action.favourite,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.RenameItem -> {
+            renameItem(
+                context = context,
+                uri = action.uri,
+                newName = action.newName
+            )
+        }
+
+        is GenericFileManager.Action.RenameAlbum -> {
+            renameAlbum(
+                context = context,
+                newName = action.newName
+            )
+        }
+
+        else -> null
     }
 
     private fun copy(
@@ -327,11 +328,7 @@ class MultiAlbumViewModel(
         context: Context,
         uri: String,
         newName: String
-    ) {
-        viewModelScope.launch {
-            repo.renameItem(context, uri, newName)
-        }
-    }
+    ) = repo.renameItem(context, uri, newName)
 
     private fun renameAlbum(
         context: Context,
@@ -388,10 +385,6 @@ class MultiAlbumViewModel(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) {
-        viewModelScope.launch {
-            repo.setFavourite(context, favourite, list)
-        }
-    }
+    ) = runBlocking { repo.setFavourite(context, favourite, list) } // this is okay since local media's setFavourite is not a blocking function
 }
 

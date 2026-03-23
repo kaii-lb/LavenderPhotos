@@ -18,6 +18,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.TrashDataSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
@@ -122,14 +123,24 @@ class TrashRepository(
         list: List<SelectionManager.SelectedItem>,
         trash: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list.fastMap { it.uri }, trash, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trash, null, onItemDone)
 
     suspend fun delete(
         context: Context,
         list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list.fastMap { it.uri })
+    ) = fileManager.permanentlyDelete(context, list)
 
     suspend fun deleteAll(
         context: Context
-    ) = fileManager.permanentlyDelete(context, dataSource.query().fastMap { it.uri })
+    ) = fileManager.permanentlyDelete(
+        context,
+        dataSource.query().fastMap {
+            SelectionManager.SelectedItem(
+                id = it.id,
+                uri = it.uri,
+                isImage = it.type == MediaType.Image,
+                parentPath = it.parentPath
+            )
+        }
+    )
 }

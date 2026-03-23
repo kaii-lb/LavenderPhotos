@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers.file_management
 
-import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
@@ -46,32 +45,9 @@ class LocalFileManager(
         private const val TAG = "com.kaii.photos.helpers.file_management.LocalFileManager"
     }
 
-    override suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<String>
-    ) {
-        if (list.isNotEmpty()) {
-            val favRequest = MediaStore.createFavoriteRequest(
-                context.contentResolver,
-                list.fastMap { it.toUri() },
-                favourite
-            )
-
-            (context as Activity).startIntentSenderForResult(
-                favRequest.intentSender,
-                9998,
-                null,
-                0,
-                0,
-                0
-            )
-        }
-    }
-
     override suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
@@ -89,18 +65,7 @@ class LocalFileManager(
         }
 
         try {
-            setFavourite(
-                context = context,
-                favourite = false,
-                list = list
-            )
-        } catch (e: Throwable) {
-            Log.d(TAG, "Failed setting fav on trash list. ${e.message}")
-            e.printStackTrace()
-        }
-
-        try {
-            val list = list.fastMap { it.toUri() }
+            val list = list.fastMap { it.uri.toUri() }
             val map =
                 if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
                 else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
@@ -237,7 +202,7 @@ class LocalFileManager(
         }
 
         var count = 0
-        val toBeDeleted = mutableListOf<String>()
+        val toBeDeleted = mutableListOf<SelectionManager.SelectedItem>()
 
         copyItems(
             context = context,
@@ -246,8 +211,9 @@ class LocalFileManager(
             preserveDate = preserveDate,
             overrideDisplayName = null,
             onItemDone = { uri ->
-                if (!toBeDeleted.contains(uri)) {
-                    toBeDeleted.add(uri)
+                val item = list.first { it.uri == uri }
+                if (!toBeDeleted.contains(item)) {
+                    toBeDeleted.add(item)
                 }
 
                 count += 1

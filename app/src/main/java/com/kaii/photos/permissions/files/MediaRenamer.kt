@@ -2,6 +2,7 @@ package com.kaii.photos.permissions.files
 
 import android.app.Activity
 import android.content.Context
+import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,10 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.kaii.photos.helpers.renameImage
 
 class MediaRenamer(
-    private val context: Context
+    private val context: Context,
+    private val rename: (context: Context, uri: Uri, name: String) -> IntentSender?
 ) {
     private var uri: Uri? = null
     private var newName: String? = null
@@ -25,10 +26,10 @@ class MediaRenamer(
         this.uri = uri
         this.newName = newName
 
-        val intentSender = renameImage(
-            context = context,
-            uri = uri,
-            newName = newName
+        val intentSender = rename(
+            context,
+            uri,
+            newName
         )
 
         if (intentSender != null) {
@@ -50,11 +51,12 @@ class MediaRenamer(
 
 @Composable
 fun rememberMediaRenamer(
+    rename: (context: Context, uri: Uri, name: String) -> IntentSender?,
     onFailure: () -> Unit
 ): MediaRenamer {
     val context = LocalContext.current
     val state = remember {
-        MediaRenamer(context = context)
+        MediaRenamer(context = context, rename = rename)
     }
 
     val launcher =
@@ -70,7 +72,7 @@ fun rememberMediaRenamer(
         state.launcher = launcher
 
         onDispose {
-            state.launcher == null
+            state.launcher = null
         }
     }
 

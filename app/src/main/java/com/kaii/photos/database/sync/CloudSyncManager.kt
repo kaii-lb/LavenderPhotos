@@ -31,16 +31,17 @@ class CloudSyncManager(
 
                 SyncTaskType.Restore -> deleteOrRestoreTask(task = task)
 
-                SyncTaskType.Update -> TODO()
+                SyncTaskType.Favourite -> TODO()
             }
         }
     }
 
     private suspend fun uploadTask(task: SyncTask) = withContext(Dispatchers.IO) {
+        val ids = task.items.fastMap { it.id }
         val items = mediaDao.getAllMediaDateTaken()
             .first()
             .filter {
-                it.id.toString() in task.itemIds
+                it.id in ids
             }
             .fastMap {
                 SelectionManager.SelectedItem(
@@ -69,7 +70,7 @@ class CloudSyncManager(
     private suspend fun deleteOrRestoreTask(task: SyncTask) = withContext(Dispatchers.IO) {
         fileManager.setTrashed(
             context = context,
-            list = task.itemIds,
+            list = task.items,
             trashed = task.type == SyncTaskType.Delete,
             albumId = task.destination,
             onItemDone = {

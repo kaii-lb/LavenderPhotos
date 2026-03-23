@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -316,55 +317,55 @@ class MainGridViewModel(
     fun runAction(
         context: Context,
         action: GenericFileManager.Action
-    ) {
-        when (action) {
-            is GenericFileManager.Action.Copy -> {
-                copy(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Move -> {
-                move(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Trash -> {
-                setTrashed(
-                    context = context,
-                    list = action.list,
-                    trashed = action.trashed
-                )
-            }
-
-            is GenericFileManager.Action.Delete -> {
-                delete(
-                    context = context,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.Favourite -> {
-                setFavourite(
-                    context = context,
-                    favourite = action.favourite,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.RenameItem -> {
-                renameItem(
-                    context = context,
-                    uri = action.uri,
-                    newName = action.newName
-                )
-            }
+    ) = when (action) {
+        is GenericFileManager.Action.Copy -> {
+            copy(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
         }
+
+        is GenericFileManager.Action.Move -> {
+            move(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
+        }
+
+        is GenericFileManager.Action.Trash -> {
+            setTrashed(
+                context = context,
+                list = action.list,
+                trashed = action.trashed
+            )
+        }
+
+        is GenericFileManager.Action.Delete -> {
+            delete(
+                context = context,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.Favourite -> {
+            setFavourite(
+                context = context,
+                favourite = action.favourite,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.RenameItem -> {
+            renameItem(
+                context = context,
+                uri = action.uri,
+                newName = action.newName
+            )
+        }
+
+        else -> null
     }
 
     private fun copy(
@@ -437,11 +438,7 @@ class MainGridViewModel(
         context: Context,
         uri: String,
         newName: String
-    ) {
-        viewModelScope.launch {
-            repo.renameItem(context, uri, newName)
-        }
-    }
+    ) = repo.renameItem(context, uri, newName)
 
     private fun setTrashed(
         context: Context,
@@ -489,8 +486,14 @@ class MainGridViewModel(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) {
+    ) = if (list.first().isCloud) {
         viewModelScope.launch {
+            repo.setFavourite(context, favourite, list)
+        }
+        null
+    } else {
+        // this is okay since local media's setFavourite is not a blocking function
+        runBlocking {
             repo.setFavourite(context, favourite, list)
         }
     }

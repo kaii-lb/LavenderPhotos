@@ -159,7 +159,7 @@ class ImmichRepository(
             val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
             db.withTransaction {
-                db.mediaDao().upsertAll(items = items.filter { it.id !in mediaIds })
+                db.mediaDao().upsertAll(items = items)
 
                 db.customDao().deleteAll(ids = deleted, album = album.id)
                 db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
@@ -253,11 +253,16 @@ class ImmichRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list.fastMap { it.immichId!! }, trashed, album.id, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, album.id, onItemDone)
+
+    suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list)
 
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list.fastMap { it.immichId!! })
+    ) = fileManager.setFavourite(context, favourite, list)
 }

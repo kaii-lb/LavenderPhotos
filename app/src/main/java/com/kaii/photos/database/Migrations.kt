@@ -168,3 +168,10 @@ class Migration14To15(val context: Context) : Migration(startVersion = 14, endVe
         }
     }
 }
+
+class Migration16To17(val context: Context) : Migration(startVersion = 16, endVersion = 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE sync_tasks DROP COLUMN itemIds")
+        db.execSQL("ALTER TABLE sync_tasks ADD COLUMN items TEXT NOT NULL DEFAULT '[]'")
+    }
+}

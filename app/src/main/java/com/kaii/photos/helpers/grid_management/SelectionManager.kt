@@ -29,6 +29,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.milliseconds
 
 class SelectionManager(
@@ -37,6 +38,7 @@ class SelectionManager(
     private val context: Context,
     private val getMediaInDate: (Long) -> List<SelectedItem>
 ) {
+    @Serializable
     data class SelectedItem(
         val id: Long,
         val uri: String,
@@ -44,7 +46,7 @@ class SelectionManager(
         val parentPath: String
     ) {
         val isCloud: Boolean
-            get() = !uri.startsWith("content")
+            get() = uri.startsWith("http")
 
         val immichId: String?
             get() = uri.split("/").dropLast(1).last().takeIf { isCloud }

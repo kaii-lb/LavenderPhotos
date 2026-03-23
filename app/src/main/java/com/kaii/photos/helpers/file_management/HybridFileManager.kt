@@ -1,5 +1,6 @@
 package com.kaii.photos.helpers.file_management
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.IntentSender
 import com.kaii.photos.database.daos.CustomEntityDao
@@ -40,23 +41,23 @@ class HybridFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
-    ) {
-        val immich = list.filter { it.startsWith("http") }
+        list: List<SelectionManager.SelectedItem>
+    ): PendingIntent? {
+        val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         cloudFileManager.setFavourite(context, favourite, immich)
-        localFileManager.setFavourite(context, favourite, local)
+        return localFileManager.setFavourite(context, favourite, local)
     }
 
     override suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ) {
-        val immich = list.filter { it.startsWith("http") }
+        val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         cloudFileManager.setTrashed(context, immich, trashed, albumId, onItemDone)
@@ -93,7 +94,7 @@ class HybridFileManager(
         preserveDate: Boolean,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
-        val immich = list.filter { it.uri.startsWith("http") }
+        val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         return cloudFileManager.copyItems(context, immich, destination, preserveDate, null, onItemDone).size == immich.size &&
@@ -108,7 +109,7 @@ class HybridFileManager(
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> {
-        val immich = list.filter { it.uri.startsWith("http") }
+        val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         return cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, onItemDone) +

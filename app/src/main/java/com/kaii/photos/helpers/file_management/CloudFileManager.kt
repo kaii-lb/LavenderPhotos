@@ -42,26 +42,50 @@ class CloudFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<String>
-    ): Unit = withContext(Dispatchers.IO) {
+        list: List<SelectionManager.SelectedItem>
+    ) = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext null
+
+        // TODO: sync task to update if there's no active connection
+        mediaDao.setFavouriteOnMedia(
+            ids = list.fastMap { it.id }.toSet(),
+            favourite = favourite
+        )
+
         assetClient.favourite(
             request = AssetFavouriteRequest(
-                ids = list.fastMap { Uuid.parse(it) },
+                ids = list.fastMap { Uuid.parse(it.immichId!!) },
                 isFavorite = favourite
             ),
             accessToken = info.accessToken
         )
+
+        null
     }
 
     /** @param albumId should be immich id of this album */
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (albumId == null) {
+            // TODO: sync task to update if there's no active connection
+            mediaDao.deleteAll(
+                ids = list.fastMap { it.id }.toSet()
+            )
+            assetClient.delete(
+                ids = list.fastMap { Uuid.parse(it.immichId!!) },
+                accessToken = info.accessToken,
+                force = true
+            )
+
+            return@withContext
+        }
+
         if (trashed) {
             val taskId = syncTaskDao.insert(
                 task = SyncTask(
@@ -69,13 +93,18 @@ class CloudFileManager(
                     status = SyncTaskStatus.Processing,
                     type = SyncTaskType.Delete,
                     destination = albumId,
-                    itemIds = list
+                    items = list
                 )
             )
 
+            customDao.deleteAll(
+                ids = list.fastMap { it.id }.toSet(),
+                album = albumId
+            )
+
             albumsClient.removeAssets(
-                albumId = Uuid.parse(albumId!!),
-                assetIds = list.fastMap { Uuid.parse(it) },
+                albumId = Uuid.parse(albumId),
+                assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
                 accessToken = info.accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
@@ -94,13 +123,13 @@ class CloudFileManager(
                     status = SyncTaskStatus.Processing,
                     type = SyncTaskType.Restore,
                     destination = albumId,
-                    itemIds = list.fastMap { it }
+                    items = list
                 )
             )
 
             albumsClient.addAssets(
-                albumId = Uuid.parse(albumId!!),
-                assetIds = list.fastMap { Uuid.parse(it) },
+                albumId = Uuid.parse(albumId),
+                assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
                 accessToken = info.accessToken
             ).let {
                 onItemDone(if (it) list.size else -1)
@@ -118,10 +147,15 @@ class CloudFileManager(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun permanentlyDelete(
         context: Context,
-        list: List<String>
+        list: List<SelectionManager.SelectedItem>
     ): Unit = withContext(Dispatchers.IO) {
+        // TODO: sync task to update if there's no active connection
+        mediaDao.deleteAll(
+            ids = list.fastMap { it.id }.toSet()
+        )
+
         assetClient.delete(
-            ids = list.fastMap { Uuid.parse(it) },
+            ids = list.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = info.accessToken,
             force = true
         )

@@ -200,6 +200,13 @@ class ImmichAlbumViewModel(
                 )
             }
 
+            is GenericFileManager.Action.Delete -> {
+                delete(
+                    context = context,
+                    list = action.list
+                )
+            }
+
             is GenericFileManager.Action.Favourite -> {
                 setFavourite(
                     context = context,
@@ -322,6 +329,15 @@ class ImmichAlbumViewModel(
                     it, list.size
                 )
             }
+        }
+    }
+
+    private fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        viewModelScope.launch {
+            repo.delete(context, list)
         }
     }
 

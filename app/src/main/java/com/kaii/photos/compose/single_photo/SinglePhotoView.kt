@@ -2,6 +2,8 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.Context
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -78,15 +80,14 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
@@ -99,7 +100,8 @@ import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
-import com.kaii.photos.permissions.favourites.rememberFavouritesState
+import com.kaii.photos.permissions.favourites.rememberCloudFavouritesState
+import com.kaii.photos.permissions.favourites.rememberLocalFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -110,6 +112,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 
 @Composable
 fun SinglePhotoView(
@@ -136,7 +139,6 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         navController = LocalNavController.current,
@@ -152,16 +154,13 @@ fun SinglePhotoView(
         useCache = useCache,
         tags = { tags },
         selectedTags = { selectedTags },
-        removeFromCustom = { item ->
-            viewModel.remove(items = setOf(item))
-        },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = {
-            viewModel.getExifData(context, it)
-        }
+        getExifData = viewModel::getExifData,
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -191,7 +190,6 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -211,9 +209,9 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = {
-            viewModel.getExifData(context, it)
-        }
+        getExifData = viewModel::getExifData,
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -243,7 +241,6 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -263,9 +260,9 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = {
-            viewModel.getExifData(context, it)
-        }
+        getExifData = viewModel::getExifData,
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -293,7 +290,6 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -313,9 +309,9 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = {
-            viewModel.getExifData(context, it)
-        }
+        getExifData = viewModel::getExifData,
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -343,7 +339,6 @@ fun SinglePhotoView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
@@ -363,9 +358,9 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = {
-            viewModel.getExifData(context, it)
-        }
+        getExifData = viewModel::getExifData,
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -412,7 +407,11 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData
+        getExifData = { _, media ->
+            viewModel.getExifData(media)
+        },
+        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+        process = viewModel::runAction
     )
 }
 
@@ -434,12 +433,13 @@ private fun SinglePhotoViewCommon(
     useCache: Boolean,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
-    removeFromCustom: (MediaStoreData) -> Unit = {},
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     setTagMediaId: (id: Long) -> Unit,
-    getExifData: suspend (media: PhotoLibraryUIModel.MediaImpl) -> Map<MediaData, String>
+    getExifData: suspend (context: Context, media: PhotoLibraryUIModel.MediaImpl) -> Map<MediaData, String>,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -548,7 +548,7 @@ private fun SinglePhotoViewCommon(
                 visible = appBarsVisible.value,
                 currentItem = { mediaItem },
                 privacyMode = scrollState.privacyMode,
-                isCustom = album !is AlbumType.Folder,
+                isCustom = album is AlbumType.Custom || album is AlbumType.Cloud,
                 confirmToDelete = confirmToDelete,
                 doNotTrash = doNotTrash,
                 showEditingView = {
@@ -580,7 +580,7 @@ private fun SinglePhotoViewCommon(
                         }
                     }
                 },
-                removeFromCustom = removeFromCustom
+                process = process
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -595,7 +595,7 @@ private fun SinglePhotoViewCommon(
 
                 item as PhotoLibraryUIModel.MediaImpl
 
-                mediaData = getExifData(item)
+                mediaData = getExifData(context, item)
             }
 
             SinglePhotoInfoDialog(
@@ -611,7 +611,9 @@ private fun SinglePhotoViewCommon(
                         showInfoDialog = false
                     }
                 },
-                togglePrivacyMode = scrollState::togglePrivacyMode
+                togglePrivacyMode = scrollState::togglePrivacyMode,
+                allowedAlbumsFor = allowedAlbumsFor,
+                process = process
             )
         }
 
@@ -669,7 +671,7 @@ private fun BottomBar(
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
     showEditingView: () -> Unit,
-    removeFromCustom: (MediaStoreData) -> Unit
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     var showLoadingDialog by remember { mutableStateOf(false) }
 
@@ -708,7 +710,7 @@ private fun BottomBar(
                 floatingActionButton = {
                     val filePermissionManager = rememberFilePermissionManager(
                         onGranted = {
-                            showEditingView()
+                            showEditingView() // TODO: support cloud media
                         },
                         onRejected = {
                             coroutineScope.launch {
@@ -784,7 +786,7 @@ private fun BottomBar(
                     onGranted = {
                         context.appModule.scope.launch {
                             val item = currentItem()
-                            // TODO: move to file manager
+
                             moveMediaToSecureFolder(
                                 list = listOf(
                                     SelectionManager.SelectedItem(
@@ -797,8 +799,6 @@ private fun BottomBar(
                                 context = context,
                                 applicationDatabase = MediaDatabase.getInstance(context)
                             ) {
-                                removeFromCustom(item)
-
                                 showLoadingDialog = false
                             }
                         }
@@ -830,7 +830,7 @@ private fun BottomBar(
                     onClick = {
                         showMoveToSecureFolderDialog.value = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !isCustom
+                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !currentItem().isCloud
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),
@@ -838,19 +838,47 @@ private fun BottomBar(
                     )
                 }
 
-                val favState = rememberFavouritesState(media = currentItem())
+                fun setFavourite(favourite: Boolean): PendingIntent? {
+                    val item = currentItem()
+
+                    return process(
+                        context,
+                        GenericFileManager.Action.Favourite(
+                            list = listOf(
+                                SelectionManager.SelectedItem(
+                                    id = item.id,
+                                    uri = item.uri,
+                                    isImage = item.type == MediaType.Image,
+                                    parentPath = item.parentPath
+                                )
+                            ),
+                            favourite = favourite
+                        )
+                    ) as? PendingIntent?
+                }
+
+                val favState = if (currentItem().isCloud) {
+                    rememberCloudFavouritesState(
+                        media = currentItem(),
+                        setFavourite = { setFavourite(it) }
+                    )
+                } else {
+                    rememberLocalFavouritesState(
+                        media = currentItem(),
+                        setFavourite = { setFavourite(it) }
+                    )
+                }
 
                 val vibratorManager = rememberVibratorManager()
                 val isFavourited by favState.state.collectAsStateWithLifecycle()
 
                 IconButton(
                     onClick = {
-                        vibratorManager.vibrateShort()
+                        coroutineScope.launch {
+                            vibratorManager.vibrateShort()
 
-                        favState.setFavourite(
-                            uri = currentItem().uri.toUri(),
-                            favourite = !isFavourited
-                        )
+                            favState.favourite(favourite = !isFavourited)
+                        }
                     },
                     enabled = !privacyMode
                 ) {
@@ -863,24 +891,27 @@ private fun BottomBar(
                 // TODO: look into possibly sharing permission managers?
                 val trashFilePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        context.appModule.scope.launch(Dispatchers.IO) {
-                            if (!isCustom) {
-                                if (doNotTrash) {
-                                    permanentlyDeletePhotoList(
-                                        context = context,
-                                        list = listOf(currentItem().uri.toUri())
-                                    )
-                                } else {
-                                    setTrashedOnPhotoList(
-                                        context = context,
-                                        list = listOf(currentItem().uri.toUri()),
-                                        trashed = true
-                                    )
-                                }
+                        val item = currentItem()
+                        val list = listOf(
+                            SelectionManager.SelectedItem(
+                                id = item.id,
+                                uri = item.uri,
+                                isImage = item.type == MediaType.Image,
+                                parentPath = item.parentPath
+                            )
+                        )
+
+                        process(
+                            context,
+                            if (doNotTrash) {
+                                GenericFileManager.Action.Delete(list = list)
                             } else {
-                                removeFromCustom(currentItem())
+                                GenericFileManager.Action.Trash(
+                                    list = list,
+                                    trashed = true
+                                )
                             }
-                        }
+                        )
                     }
                 )
 
@@ -907,9 +938,33 @@ private fun BottomBar(
                                 }
                         )
                     ) {
-                        trashFilePermissionManager.get(
-                            uris = listOf(currentItem().uri.toUri())
+                        val item = currentItem()
+                        val list = listOf(
+                            SelectionManager.SelectedItem(
+                                id = item.id,
+                                uri = item.uri,
+                                isImage = item.type == MediaType.Image,
+                                parentPath = item.parentPath
+                            )
                         )
+
+                        if (item.isCloud) {
+                            process(
+                                context,
+                                if (doNotTrash) {
+                                    GenericFileManager.Action.Delete(list = list)
+                                } else {
+                                    GenericFileManager.Action.Trash(
+                                        list = list,
+                                        trashed = true
+                                    )
+                                }
+                            )
+                        } else {
+                            trashFilePermissionManager.get(
+                                uris = listOf(currentItem().uri.toUri())
+                            )
+                        }
                     }
                 }
 
@@ -918,9 +973,33 @@ private fun BottomBar(
                         if (confirmToDelete) {
                             showDeleteDialog.value = true
                         } else {
-                            trashFilePermissionManager.get(
-                                uris = listOf(currentItem().uri.toUri())
+                            val item = currentItem()
+                            val list = listOf(
+                                SelectionManager.SelectedItem(
+                                    id = item.id,
+                                    uri = item.uri,
+                                    isImage = item.type == MediaType.Image,
+                                    parentPath = item.parentPath
+                                )
                             )
+
+                            if (item.isCloud) {
+                                process(
+                                    context,
+                                    if (doNotTrash) {
+                                        GenericFileManager.Action.Delete(list = list)
+                                    } else {
+                                        GenericFileManager.Action.Trash(
+                                            list = list,
+                                            trashed = true
+                                        )
+                                    }
+                                )
+                            } else {
+                                trashFilePermissionManager.get(
+                                    uris = listOf(currentItem().uri.toUri())
+                                )
+                            }
                         }
                     },
                     enabled = !privacyMode

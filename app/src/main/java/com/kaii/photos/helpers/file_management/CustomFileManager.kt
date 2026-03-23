@@ -1,6 +1,5 @@
 package com.kaii.photos.helpers.file_management
 
-import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
@@ -35,32 +34,9 @@ class CustomFileManager(
         private const val TAG = "com.kaii.photos.helpers.file_management.CustomFileManager"
     }
 
-    override suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<String>
-    ) {
-        if (list.isNotEmpty()) {
-            val favRequest = MediaStore.createFavoriteRequest(
-                context.contentResolver,
-                list.fastMap { it.toUri() },
-                favourite
-            )
-
-            (context as Activity).startIntentSenderForResult(
-                favRequest.intentSender,
-                9998,
-                null,
-                0,
-                0,
-                0
-            )
-        }
-    }
-
     override suspend fun setTrashed(
         context: Context,
-        list: List<String>,
+        list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
@@ -70,7 +46,7 @@ class CustomFileManager(
         }
 
         customDao.deleteAll(
-            ids = list.fastMap { it.toLong() }.toSet(),
+            ids = list.fastMap { it.id }.toSet(),
             album = albumId!!
         )
 

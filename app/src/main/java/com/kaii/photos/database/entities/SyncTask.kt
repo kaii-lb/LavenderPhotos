@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -19,7 +20,7 @@ enum class SyncTaskType {
     Delete,
     Restore,
     Upload,
-    Update
+    Favourite
 }
 
 @Entity(tableName = "sync_tasks")
@@ -30,7 +31,7 @@ data class SyncTask(
     val status: SyncTaskStatus,
     val type: SyncTaskType,
     val destination: String?,
-    val itemIds: List<String>
+    val items: List<SelectionManager.SelectedItem>
 )
 
 @Suppress("unused")
@@ -40,4 +41,10 @@ class SyncTaskConverters {
 
     @TypeConverter
     fun toIds(ids: String): List<String> = Json.decodeFromString(ids)
+
+    @TypeConverter
+    fun fromItems(items: List<SelectionManager.SelectedItem>) = Json.encodeToString(items)
+
+    @TypeConverter
+    fun toItems(items: String): List<SelectionManager.SelectedItem> = Json.decodeFromString(items)
 }

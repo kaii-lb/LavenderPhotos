@@ -1,5 +1,6 @@
 package com.kaii.photos.repositories
 
+import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.ui.util.fastMap
@@ -8,24 +9,37 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.cachedIn
 import com.kaii.photos.R
+import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SearchDao
+import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
+import com.kaii.photos.helpers.file_management.HybridFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -64,13 +78,17 @@ class SearchRepository(
     scope: CoroutineScope,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    format: DisplayDateFormat,
+    client: ApiClient,
+    mediaDao: MediaDao,
+    customDao: CustomEntityDao,
+    syncTaskDao: SyncTaskDao
 ) {
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,
         val format: DisplayDateFormat,
-        val accessToken: String,
+        val info: ImmichBasicInfo,
         val mode: SearchMode,
         val tags: Set<Tag>
     )
@@ -80,11 +98,49 @@ class SearchRepository(
             query = "",
             sortMode = sortMode,
             format = format,
-            accessToken = info.accessToken,
+            info = info,
             mode = SearchMode.Name,
             tags = emptySet()
         )
     )
+
+    private var fileManager = HybridFileManager(
+        mediaDao = mediaDao,
+        customDao = customDao,
+        syncTaskDao = syncTaskDao,
+        assetClient = AssetsClient(
+            baseUrl = "",
+            client = client
+        ),
+        albumsClient = AlbumsClient(
+            baseUrl = "",
+            client = client
+        ),
+        info = ImmichBasicInfo.Empty
+    )
+
+    init {
+        scope.launch {
+            params.mapLatest { it.info }
+                .distinctUntilChanged()
+                .collectLatest { info ->
+                    fileManager = HybridFileManager(
+                        mediaDao = mediaDao,
+                        customDao = customDao,
+                        syncTaskDao = syncTaskDao,
+                        assetClient = AssetsClient(
+                            baseUrl = info.endpoint,
+                            client = client
+                        ),
+                        albumsClient = AlbumsClient(
+                            baseUrl = info.endpoint,
+                            client = client
+                        ),
+                        info = info
+                    )
+                }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val mediaFlow = params.flatMapLatest { details ->
@@ -119,7 +175,7 @@ class SearchRepository(
                     }
                 }
             }
-        ).flow.mapToMedia(accessToken = details.accessToken)
+        ).flow.mapToMedia(accessToken = details.info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -144,14 +200,14 @@ class SearchRepository(
     fun update(
         sortMode: MediaItemSortMode?,
         format: DisplayDateFormat?,
-        accessToken: String?,
+        info: ImmichBasicInfo?,
         mode: SearchMode?
     ) {
         val snapshot = params.value
         params.value = snapshot.copy(
             sortMode = sortMode ?: snapshot.sortMode,
             format = format ?: snapshot.format,
-            accessToken = accessToken ?: snapshot.accessToken,
+            info = info ?: snapshot.info,
             mode = mode ?: snapshot.mode
         )
     }
@@ -188,6 +244,68 @@ class SearchRepository(
             )
         }
     }
+
+    fun allowedAlbumTypesFor(
+        moving: Boolean
+    ) = fileManager.allowedAlbumTypesFor(
+        moving = moving,
+        current = AlbumType.Folder::class
+    )
+
+    suspend fun copy(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        destination: AlbumType,
+        preserveDate: Boolean,
+        overrideDisplayName: ((displayName: String) -> String)?,
+        onItemDone: (totaCount: Int) -> Unit
+    ) {
+        var count = 0
+
+        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
+            count += 1
+            onItemDone(count)
+        }
+    }
+
+    suspend fun move(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        destination: AlbumType,
+        preserveDate: Boolean,
+        onItemDone: (totalCount: Int) -> Unit
+    ) {
+        var count = 0
+
+        fileManager.moveItems(context, list, destination, preserveDate) {
+            count += 1
+            onItemDone(count)
+        }
+    }
+
+    fun renameItem(
+        context: Context,
+        uri: String,
+        newName: String
+    ) = fileManager.renameItem(context, uri, newName)
+
+    suspend fun setTrashed(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        trashed: Boolean,
+        onItemDone: (totaCount: Int) -> Unit
+    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
+
+    suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list)
+
+    suspend fun setFavourite(
+        context: Context,
+        favourite: Boolean,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.setFavourite(context, favourite, list)
 
     private fun searchByDate(query: String): PagingSource<Int, MediaStoreData> {
         var source = searchByDateFormat(query)

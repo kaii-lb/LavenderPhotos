@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.location.Geocoder
 import android.os.Build
 import android.util.Log
@@ -75,6 +76,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
+import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -85,6 +87,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.reflect.KClass
 
 private const val TAG = "com.kaii.photos.compose.dialogs.SinglePhotoInfoDialogs"
 
@@ -98,7 +101,9 @@ fun SinglePhotoInfoDialog(
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
-    togglePrivacyMode: () -> Unit
+    togglePrivacyMode: () -> Unit,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
@@ -147,7 +152,9 @@ fun SinglePhotoInfoDialog(
                             privacyMode = privacyMode,
                             album = album,
                             dismiss = dismiss,
-                            togglePrivacyMode = togglePrivacyMode
+                            togglePrivacyMode = togglePrivacyMode,
+                            allowedAlbumsFor = allowedAlbumsFor,
+                            process = process
                         )
                     }
                 } else {
@@ -168,7 +175,9 @@ fun SinglePhotoInfoDialog(
                             privacyMode = privacyMode,
                             album = album,
                             dismiss = dismiss,
-                            togglePrivacyMode = togglePrivacyMode
+                            togglePrivacyMode = togglePrivacyMode,
+                            allowedAlbumsFor = allowedAlbumsFor,
+                            process = process
                         )
                     }
                 }
@@ -185,7 +194,9 @@ private fun Content(
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
-    togglePrivacyMode: () -> Unit
+    togglePrivacyMode: () -> Unit,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     val context = LocalContext.current
 
@@ -249,7 +260,9 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     album = album,
-                    dismiss = dismiss
+                    dismiss = dismiss,
+                    allowedAlbumsFor = allowedAlbumsFor,
+                    process = process
                 )
             }
         } else {
@@ -270,7 +283,9 @@ private fun Content(
                     showMoveCopyOptions = showMoveCopyOptions,
                     privacyMode = privacyMode,
                     album = album,
-                    dismiss = dismiss
+                    dismiss = dismiss,
+                    allowedAlbumsFor = allowedAlbumsFor,
+                    process = process
                 )
             }
         }
@@ -488,7 +503,9 @@ private fun RowScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     IconContentImpl(
         mediaItem = mediaItem,
@@ -496,7 +513,9 @@ private fun RowScope.IconContent(
         privacyMode = privacyMode,
         album = album,
         modifier = Modifier.weight(1f),
-        dismiss = dismiss
+        dismiss = dismiss,
+        allowedAlbumsFor = allowedAlbumsFor,
+        process = process
     )
 }
 
@@ -506,7 +525,9 @@ private fun ColumnScope.IconContent(
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     IconContentImpl(
         mediaItem = mediaItem,
@@ -514,7 +535,9 @@ private fun ColumnScope.IconContent(
         privacyMode = privacyMode,
         album = album,
         modifier = Modifier.weight(1f),
-        dismiss = dismiss
+        dismiss = dismiss,
+        allowedAlbumsFor = allowedAlbumsFor,
+        process = process
     )
 }
 
@@ -525,7 +548,9 @@ private fun IconContentImpl(
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     modifier: Modifier,
-    dismiss: () -> Unit
+    dismiss: () -> Unit,
+    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
+    process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
     val file = remember(mediaItem()) { File(mediaItem().absolutePath) }
     var originalFileName by remember(file) {
@@ -546,17 +571,28 @@ private fun IconContentImpl(
     val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
 
-    val mediaRenamer = rememberMediaRenamer {
-        coroutineScope.launch {
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.MessageEvent(
-                    message = resources.getString(R.string.permissions_needed),
-                    icon = R.drawable.error_2,
-                    duration = SnackbarDuration.Short
+    val mediaRenamer = rememberMediaRenamer(
+        rename = { context, uri, newName ->
+            process(
+                context,
+                GenericFileManager.Action.RenameItem(
+                    uri = uri.toString(),
+                    newName = newName
                 )
-            )
+            ) as? IntentSender
+        },
+        onFailure = {
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = resources.getString(R.string.permissions_needed),
+                        icon = R.drawable.error_2,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
         }
-    }
+    )
 
     var showRenameDialog by remember { mutableStateOf(false) }
     if (showRenameDialog) {
@@ -589,25 +625,27 @@ private fun IconContentImpl(
         )
     }
 
-    IconButton(
-        onClick = {
-            showRenameDialog = true
-        },
-        enabled = !privacyMode(),
-        modifier = modifier
-            .height(48.dp)
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.name),
-            contentDescription = "rename this media"
-        )
+    if (!mediaItem().isCloud) {
+        IconButton(
+            onClick = {
+                showRenameDialog = true
+            },
+            enabled = !privacyMode(),
+            modifier = modifier
+                .height(48.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.name),
+                contentDescription = "rename this media"
+            )
+        }
     }
 
     if (showMoveCopyOptions) {
+        val context = LocalContext.current
         val show = remember { mutableStateOf(false) }
         var isMoving by remember { mutableStateOf(false) }
 
-        // TODO: move to file manager
         MoveCopyAlbumListView(
             show = show,
             selectedItemsList = listOf(
@@ -623,8 +661,31 @@ private fun IconContentImpl(
             clear = {},
             isMoving = { isMoving },
             currentAlbum = album,
-            allowedAlbumsFor = { emptyList() }, // TODO
-            onClick = {}
+            allowedAlbumsFor = {
+                allowedAlbumsFor(isMoving)
+            },
+            onClick = { album ->
+                val item = mediaItem()
+                val list = listOf(
+                    SelectionManager.SelectedItem(
+                        id = item.id,
+                        uri = item.uri,
+                        isImage = item.type == MediaType.Image,
+                        parentPath = item.parentPath
+                    )
+                )
+
+                process(
+                    context,
+                    if (isMoving) GenericFileManager.Action.Move(
+                        list = list,
+                        destination = album
+                    ) else GenericFileManager.Action.Copy(
+                        list = list,
+                        destination = album
+                    )
+                )
+            }
         )
 
         IconButton(
@@ -632,7 +693,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode(),
+            enabled = !privacyMode() && !(album() is AlbumType.PlaceHolder && mediaItem().isCloud), // disable cut if we're in search view for a cloud item
             modifier = modifier
                 .height(48.dp)
         ) {
@@ -658,7 +719,7 @@ private fun IconContentImpl(
         }
     }
 
-    if (mediaItem().type == MediaType.Image) {
+    if (mediaItem().type == MediaType.Image && !mediaItem().isCloud) {
         val context = LocalContext.current
 
         IconButton(

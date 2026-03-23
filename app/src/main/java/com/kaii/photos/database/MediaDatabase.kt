@@ -40,7 +40,7 @@ import com.kaii.photos.database.entities.TaggedItem
             TaggedItem::class,
             ExifData::class
         ],
-    version = 16,
+    version = 17,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -83,7 +83,8 @@ abstract class MediaDatabase : RoomDatabase() {
                         Migration3to4(appContext),
                         Migration4to5(appContext),
                         Migration9To10(appContext),
-                        Migration14To15(appContext)
+                        Migration14To15(appContext),
+                        Migration16To17(appContext)
                     )
                     enableMultiInstanceInvalidation()
                     fallbackToDestructiveMigrationOnDowngrade(false)
@@ -118,4 +119,5 @@ class DropIntAlbumCustomTable : AutoMigrationSpec
 class DropImmichThumbnailColumn : AutoMigrationSpec
 
 @DeleteTable(tableName = "TrashedItemEntity")
+@DeleteColumn(tableName = "sync_tasks", columnName = "itemIds")
 class DropTrashTableSpec : AutoMigrationSpec

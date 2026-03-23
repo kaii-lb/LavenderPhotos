@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.text.format.DateFormat
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
@@ -77,17 +78,17 @@ import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
+import com.kaii.photos.helpers.file_management.GenericFileManager
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
-import com.kaii.photos.helpers.permanentlyDeletePhotoList
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
-import com.kaii.photos.helpers.setTrashedOnPhotoList
 import com.kaii.photos.helpers.shareImage
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -117,7 +118,8 @@ fun SingleTrashedPhotoView(
         useBlackBackground = useBlackBackground,
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
-        useCache = useCache
+        useCache = useCache,
+        process = viewModel::runAction
     )
 }
 
@@ -132,7 +134,8 @@ private fun SingleTrashedPhotoViewImpl(
     useBlackBackground: Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: Boolean,
-    useCache: Boolean
+    useCache: Boolean,
+    process: (context: Context, action: GenericFileManager.Action) -> Unit
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -152,28 +155,31 @@ private fun SingleTrashedPhotoViewImpl(
         }
     }
 
-    val runPermaDeleteAction = remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    LaunchedEffect(runPermaDeleteAction.value) {
-        if (runPermaDeleteAction.value) withContext(Dispatchers.IO) {
-            permanentlyDeletePhotoList(context, listOf(mediaItem.uri.toUri()))
-
-            runPermaDeleteAction.value = false
-        }
-    }
-
     val state = rememberPagerState(
         initialPage = startIndex
     ) {
         items.itemCount
     }
 
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
     TrashDeleteDialog(
         showDialog = showDialog,
         onDelete = {
-            runPermaDeleteAction.value = true
+            process(
+                context,
+                GenericFileManager.Action.Delete(
+                    list = listOf(
+                        SelectionManager.SelectedItem(
+                            id = mediaItem.id,
+                            uri = mediaItem.uri,
+                            isImage = mediaItem.type == MediaType.Image,
+                            parentPath = mediaItem.parentPath
+                        )
+                    )
+                )
+            )
         },
         onDismiss = {
             showDialog = false
@@ -211,7 +217,8 @@ private fun SingleTrashedPhotoViewImpl(
                 privacyMode = scrollState.privacyMode,
                 showDeleteDialog = {
                     showDialog = true
-                }
+                },
+                process = process
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -270,7 +277,9 @@ private fun SingleTrashedPhotoViewImpl(
                             showInfoDialog = false
                         }
                     },
-                    togglePrivacyMode = scrollState::togglePrivacyMode
+                    togglePrivacyMode = scrollState::togglePrivacyMode,
+                    allowedAlbumsFor = { emptyList() },
+                    process = process
                 )
             }
         }
@@ -294,7 +303,8 @@ private fun BottomBar(
     visible: Boolean,
     item: () -> MediaStoreData,
     privacyMode: Boolean,
-    showDeleteDialog: () -> Unit
+    showDeleteDialog: () -> Unit,
+    process: (context: Context, action: GenericFileManager.Action) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -359,13 +369,20 @@ private fun BottomBar(
             ) {
                 val permissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        context.appModule.scope.launch(Dispatchers.IO) {
-                            setTrashedOnPhotoList(
-                                context = context,
-                                list = listOf(item().uri.toUri()),
+                        process(
+                            context,
+                            GenericFileManager.Action.Trash(
+                                list = listOf(
+                                    SelectionManager.SelectedItem(
+                                        id = item().id,
+                                        uri = item().uri,
+                                        isImage = item().type == MediaType.Image,
+                                        parentPath = item().parentPath
+                                    )
+                                ),
                                 trashed = false
                             )
-                        }
+                        )
                     }
                 )
 

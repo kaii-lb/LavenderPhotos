@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -174,16 +173,16 @@ class HybridRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list.fastMap { it.uri }, trashed, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
 
     suspend fun delete(
         context: Context,
         list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list.fastMap { it.uri })
+    ) = fileManager.permanentlyDelete(context, list)
 
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list.fastMap { it.uri })
+    ) = fileManager.setFavourite(context, favourite, list)
 }

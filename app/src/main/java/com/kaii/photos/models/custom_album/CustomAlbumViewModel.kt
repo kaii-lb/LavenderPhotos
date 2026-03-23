@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
@@ -20,10 +19,10 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.repositories.CustomRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 class CustomAlbumViewModel(
@@ -138,12 +137,6 @@ class CustomAlbumViewModel(
         initialValue = true
     )
 
-    fun remove(items: Set<MediaStoreData>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repo.remove(items, album.id)
-        }
-    }
-
     suspend fun getMediaCount() = repo.getMediaCount()
     suspend fun getMediaSize(): String {
         val bytes = repo.getMediaSize()
@@ -180,62 +173,62 @@ class CustomAlbumViewModel(
     fun runAction(
         context: Context,
         action: GenericFileManager.Action
-    ) {
-        when (action) {
-            is GenericFileManager.Action.Copy -> {
-                copy(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Move -> {
-                move(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
-            is GenericFileManager.Action.Trash -> {
-                setTrashed(
-                    context = context,
-                    list = action.list,
-                    trashed = action.trashed
-                )
-            }
-
-            is GenericFileManager.Action.Delete -> {
-                delete(
-                    context = context,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.Favourite -> {
-                setFavourite(
-                    context = context,
-                    favourite = action.favourite,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.RenameItem -> {
-                renameItem(
-                    context = context,
-                    uri = action.uri,
-                    newName = action.newName
-                )
-            }
-
-            is GenericFileManager.Action.RenameAlbum -> {
-                renameAlbum(
-                    context = context,
-                    newName = action.newName
-                )
-            }
+    ) = when (action) {
+        is GenericFileManager.Action.Copy -> {
+            copy(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
         }
+
+        is GenericFileManager.Action.Move -> {
+            move(
+                context = context,
+                list = action.list,
+                destination = action.destination
+            )
+        }
+
+        is GenericFileManager.Action.Trash -> {
+            setTrashed(
+                context = context,
+                list = action.list,
+                trashed = action.trashed
+            )
+        }
+
+        is GenericFileManager.Action.Delete -> {
+            delete(
+                context = context,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.Favourite -> {
+            setFavourite(
+                context = context,
+                favourite = action.favourite,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.RenameItem -> {
+            renameItem(
+                context = context,
+                uri = action.uri,
+                newName = action.newName
+            )
+        }
+
+        is GenericFileManager.Action.RenameAlbum -> {
+            renameAlbum(
+                context = context,
+                newName = action.newName
+            )
+        }
+
+        else -> null
     }
 
     private fun copy(
@@ -308,11 +301,7 @@ class CustomAlbumViewModel(
         context: Context,
         uri: String,
         newName: String
-    ) {
-        viewModelScope.launch {
-            repo.renameItem(context, uri, newName)
-        }
-    }
+    ) = repo.renameItem(context, uri, newName)
 
     private fun renameAlbum(
         context: Context,
@@ -365,13 +354,9 @@ class CustomAlbumViewModel(
         }
     }
 
-    private fun setFavourite(
+    fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
-    ) {
-        viewModelScope.launch {
-            repo.setFavourite(context, favourite, list)
-        }
-    }
+    ) = runBlocking { repo.setFavourite(context, favourite, list) } // this is okay since local media's setFavourite is not a blocking function
 }

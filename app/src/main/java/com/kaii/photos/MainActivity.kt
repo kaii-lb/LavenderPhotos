@@ -287,17 +287,22 @@ class MainActivity : ComponentActivity() {
                         )
                     ) {
                         val screen = it.toRoute<Screens.MainPages.MainGrid.SinglePhoto>()
-                        val multiAlbumViewModel = it.sharedViewModel<MultiAlbumViewModel>(
-                            factory = MultiAlbumViewModelFactory(
-                                context = context,
-                                album = screen.album
-                            )
+                        val storeOwner = remember(it) {
+                            navController.getBackStackEntry(Screens.MainPages)
+                        }
+                        val viewModel = viewModel<MainGridViewModel>(
+                            viewModelStoreOwner = storeOwner,
+                            factory = MainGridViewModelFactory(context = context)
                         )
+
+                        LaunchedEffect(Unit) {
+                            viewModel.changePaths(screen.album.paths)
+                        }
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(
                             window = window,
-                            viewModel = multiAlbumViewModel,
+                            viewModel = viewModel,
                             index = editIndex ?: screen.index,
                             album = screen.album
                         )
