@@ -51,7 +51,7 @@ class CloudFileManager(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Favourite,
-                destination = null,
+                destination = favourite.toString(),
                 items = list
             )
         )
