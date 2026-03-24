@@ -1,6 +1,7 @@
 package com.kaii.photos.models.immich_album
 
 import android.content.Context
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.ImmichRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -25,7 +27,8 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
     private val album: AlbumType,
-    context: Context
+    context: Context,
+    private val scope: CoroutineScope = context.appModule.scope
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -231,7 +234,7 @@ class ImmichAlbumViewModel(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -255,6 +258,16 @@ class ImmichAlbumViewModel(
                     R.string.media_copy_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -264,7 +277,7 @@ class ImmichAlbumViewModel(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -288,6 +301,16 @@ class ImmichAlbumViewModel(
                     R.string.media_move_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -306,7 +329,7 @@ class ImmichAlbumViewModel(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -330,6 +353,16 @@ class ImmichAlbumViewModel(
                     R.string.media_delete_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -338,7 +371,7 @@ class ImmichAlbumViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        viewModelScope.launch {
+        scope.launch {
             repo.delete(context, list)
         }
     }
@@ -348,7 +381,7 @@ class ImmichAlbumViewModel(
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
     ) {
-        viewModelScope.launch {
+        scope.launch {
             repo.setFavourite(context, favourite, list)
         }
     }

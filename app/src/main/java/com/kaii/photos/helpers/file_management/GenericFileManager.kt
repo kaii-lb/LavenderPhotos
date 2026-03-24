@@ -135,7 +135,7 @@ interface GenericFileManager {
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    )
+    ) : Boolean
 
     suspend fun permanentlyDelete(
         context: Context,

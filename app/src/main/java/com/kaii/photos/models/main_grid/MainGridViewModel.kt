@@ -1,6 +1,7 @@
 package com.kaii.photos.models.main_grid
 
 import android.content.Context
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
@@ -23,6 +24,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.HybridRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -33,7 +35,8 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainGridViewModel(
-    context: Context
+    context: Context,
+    private val scope: CoroutineScope = context.appModule.scope
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -362,7 +365,7 @@ class MainGridViewModel(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -386,6 +389,16 @@ class MainGridViewModel(
                     R.string.media_copy_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -395,7 +408,7 @@ class MainGridViewModel(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -419,6 +432,16 @@ class MainGridViewModel(
                     R.string.media_move_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -434,7 +457,7 @@ class MainGridViewModel(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -458,6 +481,16 @@ class MainGridViewModel(
                     R.string.media_delete_snackbar_body,
                     it, list.size
                 )
+            }.let { success ->
+                if (!success) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
+                            icon = R.drawable.delete,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
             }
         }
     }
@@ -466,7 +499,7 @@ class MainGridViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        viewModelScope.launch {
+        scope.launch {
             repo.delete(context, list)
         }
     }
@@ -476,7 +509,7 @@ class MainGridViewModel(
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
     ) = if (list.first().isCloud) {
-        viewModelScope.launch {
+        scope.launch {
             repo.setFavourite(context, favourite, list)
         }
         null

@@ -56,12 +56,12 @@ class HybridFileManager(
         trashed: Boolean,
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ) : Boolean {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        cloudFileManager.setTrashed(context, immich, trashed, albumId, onItemDone)
-        localFileManager.setTrashed(context, local, trashed, albumId, onItemDone)
+        return cloudFileManager.setTrashed(context, immich, trashed, albumId, onItemDone) &&
+            localFileManager.setTrashed(context, local, trashed, albumId, onItemDone)
     }
 
     override fun renameItem(

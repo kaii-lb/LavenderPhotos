@@ -51,6 +51,8 @@ class CustomFileManager(
         )
 
         onItemDone(list.size)
+
+        return@withContext true
     }
 
     /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */

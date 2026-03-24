@@ -223,13 +223,13 @@ class SearchRepository(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ): Boolean {
         var count = 0
 
-        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
+        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
-        }
+        }.size == list.size
     }
 
     suspend fun move(
@@ -238,10 +238,10 @@ class SearchRepository(
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
-    ) {
+    ): Boolean {
         var count = 0
 
-        fileManager.moveItems(context, list, destination, preserveDate) {
+        return fileManager.moveItems(context, list, destination, preserveDate) {
             count += 1
             onItemDone(count)
         }

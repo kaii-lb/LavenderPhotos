@@ -98,7 +98,9 @@ class CloudFileManager(
                 list = list
             )
 
-            return@withContext
+            onItemDone(list.size)
+
+            return@withContext true
         }
 
         val taskId = syncTaskDao.insert(
@@ -129,6 +131,10 @@ class CloudFileManager(
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
             )
+
+            onItemDone(list.size)
+
+            return@withContext success
         }
     }
 
@@ -136,7 +142,7 @@ class CloudFileManager(
     override suspend fun permanentlyDelete(
         context: Context,
         list: List<SelectionManager.SelectedItem>
-    ): Unit = withContext(Dispatchers.IO) {
+    ) = withContext(Dispatchers.IO) {
         val taskId = syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,

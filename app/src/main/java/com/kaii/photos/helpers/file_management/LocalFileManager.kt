@@ -64,7 +64,7 @@ class LocalFileManager(
             put(MediaStore.MediaColumns.DATE_MODIFIED, currentTimeMillis)
         }
 
-        try {
+        return@withContext try {
             val list = list.fastMap { it.uri.toUri() }
             val map =
                 if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
@@ -78,9 +78,13 @@ class LocalFileManager(
 
                 onItemDone(index + 1)
             }
+
+            true
         } catch (e: Throwable) {
             Log.e(TAG, "Setting trashed $trashed on photo list failed.")
             e.printStackTrace()
+
+            false
         }
     }
 

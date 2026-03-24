@@ -49,8 +49,8 @@ import kotlin.uuid.Uuid
 class ImmichRepository(
     private val album: AlbumType,
     private val scope: CoroutineScope,
-    mediaDao: MediaDao,
-    customDao: CustomEntityDao,
+    private val mediaDao: MediaDao,
+    private val customDao: CustomEntityDao,
     syncTaskDao: SyncTaskDao,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
@@ -58,8 +58,7 @@ class ImmichRepository(
     client: ApiClient,
     context: Context
 ) {
-    private val appContext = context.applicationContext
-    private val db = MediaDatabase.getInstance(appContext)
+    private val db = MediaDatabase.getInstance(context.applicationContext)
 
     private var fileManager = CloudFileManager(
         mediaDao = mediaDao,
@@ -102,8 +101,8 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = album.id)
-                else db.customDao().getPagedMediaDateTaken(album = album.id)
+                if (params.sortMode.isDateModified) customDao.getPagedMediaDateModified(album = album.id)
+                else customDao.getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(accessToken = params.info.accessToken)
     }.cachedIn(scope)
@@ -151,16 +150,16 @@ class ImmichRepository(
                     )
                 }
 
-            val mediaIds = db.customDao().getAllIdsIn(album = album.id).toSet()
-            val orphans = db.customDao().getOrphanImmichItems().toSet()
+            val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()
+            val orphans = customDao.getOrphanImmichItems().toSet()
             val added = items.fastMap { it.id }.toSet() - mediaIds
             val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
             db.withTransaction {
-                db.mediaDao().upsertAll(items = items)
+                mediaDao.upsertAll(items = items)
 
-                db.customDao().deleteAll(ids = deleted, album = album.id)
-                db.customDao().upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
+                customDao.deleteAll(ids = deleted, album = album.id)
+                customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
 
                 db.exifDataDao().upsertAll(
                     items = state.album.assets.fastMapNotNull {
@@ -170,7 +169,7 @@ class ImmichRepository(
                     }
                 )
 
-                db.mediaDao().deleteAll(orphans.map { it.id }.toSet())
+                mediaDao.deleteAll(orphans.map { it.id }.toSet())
             }
         }
     }
@@ -222,13 +221,13 @@ class ImmichRepository(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ): Boolean {
         var count = 0
 
-        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
+        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
-        }
+        }.size == list.size
     }
 
     suspend fun move(
@@ -237,10 +236,10 @@ class ImmichRepository(
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
-    ) {
+    ): Boolean {
         var count = 0
 
-        fileManager.moveItems(context, list, destination, preserveDate) {
+        return fileManager.moveItems(context, list, destination, preserveDate) {
             count += 1
             onItemDone(count)
         }

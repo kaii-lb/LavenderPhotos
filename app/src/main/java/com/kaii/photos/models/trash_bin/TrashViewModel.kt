@@ -14,12 +14,14 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.TrashRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TrashViewModel(
-    context: Context
+    context: Context,
+    private val scope: CoroutineScope = context.appModule.scope
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -139,7 +141,7 @@ class TrashViewModel(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
     ) {
-        viewModelScope.launch {
+        scope.launch {
             val percentage = mutableFloatStateOf(0f)
             val body = mutableStateOf(
                 context.resources.getString(
@@ -176,7 +178,7 @@ class TrashViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        viewModelScope.launch {
+        scope.launch {
             repo.delete(context, list)
         }
     }
@@ -184,7 +186,7 @@ class TrashViewModel(
     fun deleteAll(
         context: Context
     ) {
-        viewModelScope.launch {
+        scope.launch {
             repo.deleteAll(context)
         }
     }
