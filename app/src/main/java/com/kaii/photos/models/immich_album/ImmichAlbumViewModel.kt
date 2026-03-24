@@ -260,6 +260,7 @@ class ImmichAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -303,6 +304,7 @@ class ImmichAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -355,6 +357,7 @@ class ImmichAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

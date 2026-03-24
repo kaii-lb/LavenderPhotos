@@ -21,6 +21,7 @@ import com.kaii.photos.repositories.MediaRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -281,6 +282,7 @@ class MultiAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -324,6 +326,7 @@ class MultiAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -382,6 +385,7 @@ class MultiAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
+                    delay(1000)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

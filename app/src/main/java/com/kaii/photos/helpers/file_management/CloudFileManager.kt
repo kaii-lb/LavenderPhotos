@@ -42,11 +42,12 @@ class CloudFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int?
     ) = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext null
 
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -86,6 +87,7 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
         if (!trashed) {
@@ -95,7 +97,8 @@ class CloudFileManager(
         if (albumId == null) {
             permanentlyDelete(
                 context = context,
-                list = list
+                list = list,
+                taskId = taskId
             )
 
             onItemDone(list.size)
@@ -103,7 +106,7 @@ class CloudFileManager(
             return@withContext true
         }
 
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -141,9 +144,10 @@ class CloudFileManager(
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun permanentlyDelete(
         context: Context,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int?
     ) = withContext(Dispatchers.IO) {
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -183,9 +187,10 @@ class CloudFileManager(
     override suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String
-    ) {
-        val taskId = syncTaskDao.insert(
+        newName: String,
+        taskId: Int?
+    ) = withContext(Dispatchers.IO) {
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -227,6 +232,7 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType,
         preserveDate: Boolean,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
@@ -235,7 +241,7 @@ class CloudFileManager(
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Cloud::class.simpleName} and ${destination::class.simpleName}")
         }
 
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -298,6 +304,7 @@ class CloudFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext emptyList()
@@ -312,7 +319,7 @@ class CloudFileManager(
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, destination, onItemDone)
+                copyToCloud(context, list, destination, taskId, onItemDone)
             }
 
             else -> {
@@ -326,11 +333,12 @@ class CloudFileManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType.Cloud,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         val items = list.filter { it.parentPath != destination.immichId }
 
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,

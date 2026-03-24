@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.di.AppModule
@@ -15,6 +16,7 @@ import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -32,6 +34,9 @@ class PhotosApplication : Application() {
 
             MediaDatabase.getInstance(applicationContext)
             registerContentObserver()
+
+            delay(2000)
+            CloudSyncWorker.enqueue(applicationContext)
         }
     }
 

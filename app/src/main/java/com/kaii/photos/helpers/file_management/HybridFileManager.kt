@@ -41,13 +41,14 @@ class HybridFileManager(
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int?
     ): PendingIntent? {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        cloudFileManager.setFavourite(context, favourite, immich)
-        return localFileManager.setFavourite(context, favourite, local)
+        cloudFileManager.setFavourite(context, favourite, immich, taskId)
+        return localFileManager.setFavourite(context, favourite, local, taskId)
     }
 
     override suspend fun setTrashed(
@@ -55,13 +56,14 @@ class HybridFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) : Boolean {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        return cloudFileManager.setTrashed(context, immich, trashed, albumId, onItemDone) &&
-            localFileManager.setTrashed(context, local, trashed, albumId, onItemDone)
+        return cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone) &&
+            localFileManager.setTrashed(context, local, trashed, albumId, taskId, onItemDone)
     }
 
     override fun renameItem(
@@ -79,7 +81,8 @@ class HybridFileManager(
     override suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String
+        newName: String,
+        taskId: Int?
     ) {
         throw NotImplementedError(
             "Despite the name, there is not one scenario in which this should be called from main pages. " +
@@ -92,13 +95,14 @@ class HybridFileManager(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType,
         preserveDate: Boolean,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        return cloudFileManager.copyItems(context, immich, destination, preserveDate, null, onItemDone).size == immich.size &&
-                localFileManager.moveItems(context, local, destination, preserveDate, onItemDone)
+        return cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size &&
+                localFileManager.moveItems(context, local, destination, preserveDate, taskId, onItemDone)
     }
 
     override suspend fun copyItems(
@@ -107,12 +111,13 @@ class HybridFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        return cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, onItemDone) +
-                localFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, onItemDone)
+        return cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, taskId, onItemDone) +
+                localFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
     }
 }

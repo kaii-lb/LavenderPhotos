@@ -258,7 +258,7 @@ class SearchRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
 
     suspend fun delete(
         context: Context,

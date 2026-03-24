@@ -50,6 +50,7 @@ class LocalFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
         if (albumId != null) {
@@ -120,7 +121,8 @@ class LocalFileManager(
     override suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String
+        newName: String,
+        taskId: Int?
     ): Unit = withContext(Dispatchers.IO) {
         if (album is AlbumType.Folder && album.paths.size == 1) {
             val basePath = album.paths.first().toBasePath()
@@ -197,6 +199,7 @@ class LocalFileManager(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType,
         preserveDate: Boolean,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
@@ -214,6 +217,7 @@ class LocalFileManager(
             destination = destination,
             preserveDate = preserveDate,
             overrideDisplayName = null,
+            taskId = taskId,
             onItemDone = { uri ->
                 val item = list.first { it.uri == uri }
                 if (!toBeDeleted.contains(item)) {
@@ -241,6 +245,7 @@ class LocalFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         when (destination) {
@@ -253,7 +258,7 @@ class LocalFileManager(
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, destination, onItemDone)
+                copyToCloud(context, list, destination, taskId, onItemDone)
             }
 
             else -> {

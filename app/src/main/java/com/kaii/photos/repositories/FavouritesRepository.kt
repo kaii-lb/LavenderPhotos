@@ -130,13 +130,13 @@ class FavouritesRepository(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (totaCount: Int) -> Unit
-    ) {
+    ): Boolean {
         var count = 0
 
-        fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
+        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
             count += 1
             onItemDone(count)
-        }
+        }.size == list.size
     }
 
     fun renameItem(
@@ -150,7 +150,7 @@ class FavouritesRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
 
     suspend fun delete(
         context: Context,

@@ -123,7 +123,7 @@ class TrashRepository(
         list: List<SelectionManager.SelectedItem>,
         trash: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trash, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trash, null, null, onItemDone)
 
     suspend fun delete(
         context: Context,

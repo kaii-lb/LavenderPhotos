@@ -39,6 +39,7 @@ class CustomFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
         if (!trashed) {
@@ -87,7 +88,8 @@ class CustomFileManager(
     override suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String
+        newName: String,
+        taskId: Int?
     ) {
         val settings = context.appModule.settings.albums
 
@@ -103,6 +105,7 @@ class CustomFileManager(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType,
         preserveDate: Boolean,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
@@ -142,6 +145,7 @@ class CustomFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
+        taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext emptyList()
@@ -156,7 +160,7 @@ class CustomFileManager(
             }
 
             is AlbumType.Cloud -> {
-                copyToCloud(context, list, destination, onItemDone)
+                copyToCloud(context, list, destination, taskId, onItemDone)
             }
 
             else -> {

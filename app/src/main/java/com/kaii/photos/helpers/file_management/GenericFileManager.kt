@@ -119,7 +119,8 @@ interface GenericFileManager {
     suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int? = null
     ): PendingIntent? =
         if (list.isEmpty()) null
         else MediaStore.createFavoriteRequest(
@@ -134,12 +135,14 @@ interface GenericFileManager {
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        taskId: Int? = null,
         onItemDone: (totaCount: Int) -> Unit
     ) : Boolean
 
     suspend fun permanentlyDelete(
         context: Context,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int? = null
     ) {
         if (list.isNotEmpty()) {
             val deleteRequest = MediaStore.createDeleteRequest(
@@ -167,7 +170,8 @@ interface GenericFileManager {
     suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
-        newName: String
+        newName: String,
+        taskId: Int? = null
     )
 
     suspend fun getExifData(
@@ -220,6 +224,7 @@ interface GenericFileManager {
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType,
         preserveDate: Boolean,
+        taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
     ): Boolean
 
@@ -230,6 +235,7 @@ interface GenericFileManager {
         destination: AlbumType,
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)? = null,
+        taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult>
 
@@ -314,6 +320,7 @@ interface GenericFileManager {
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType.Cloud,
+        taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
         val ids = list.fastMap { it.id }.toSet()
@@ -381,7 +388,7 @@ interface GenericFileManager {
 
         val missing = assets.fastFilter { it.first.id.toString() !in exists }
 
-        val taskId = syncTaskDao.insert(
+        val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
@@ -434,13 +441,6 @@ interface GenericFileManager {
             )
         }
 
-        syncTaskDao.updateTaskStatus(
-            id = taskId.toInt(),
-            status =
-                if (missing.size == uploaded.size) SyncTaskStatus.Synced
-                else SyncTaskStatus.Waiting
-        )
-
         val total = media.mapNotNull { item ->
             CopyResult(
                 id = item.id,
@@ -448,13 +448,20 @@ interface GenericFileManager {
             ).takeIf {
                 it.immichId in exists && it.immichId != null
             }
-        } + uploaded
+        } + uploaded.filter { it.immichId != null }
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
             assetIds = total.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = info.accessToken
-        )
+        ).let { success ->
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
+            )
+        }
 
         return@withContext total
     }

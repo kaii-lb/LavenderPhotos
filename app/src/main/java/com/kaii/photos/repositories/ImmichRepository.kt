@@ -255,7 +255,7 @@ class ImmichRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, album.id, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, album.id, null, onItemDone)
 
     suspend fun delete(
         context: Context,

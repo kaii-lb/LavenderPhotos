@@ -60,7 +60,7 @@ fun exifDataToMediaData(
 
         list[MediaData.FNumber] = info.fNumber?.let { "f/$it" }
 
-        list[MediaData.ShutterSpeed] = info.exposureTime?.toDouble()?.toFraction()
+        list[MediaData.ShutterSpeed] = info.exposureTime
 
         list[MediaData.Size] = info.fileSizeInByte?.let { bytes ->
             if (bytes < 1000000) { // less than a mb display in kb
