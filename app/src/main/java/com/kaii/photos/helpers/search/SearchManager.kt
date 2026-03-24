@@ -92,9 +92,9 @@ class SearchManager(
     }
 
     suspend fun getExifData(
-        media: MediaStoreData,
-        is24Hr: Boolean
-    ) = searchRepo.getExifData(media, is24Hr)
+        context: Context,
+        media: MediaStoreData
+    ) = searchRepo.getExifData(context, media)
 
     fun allowedAlbumTypesFor(
         moving: Boolean

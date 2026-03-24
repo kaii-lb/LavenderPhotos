@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.IntentSender
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.format.DateFormat
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
@@ -13,12 +14,16 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.calculateSha1Checksum
+import com.kaii.photos.helpers.exif.MediaData
+import com.kaii.photos.helpers.exif.exifDataToMediaData
+import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toActivity
 import com.kaii.photos.helpers.toBasePath
@@ -34,9 +39,13 @@ import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUp
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.UploadAssetRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import java.io.File
+import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -161,6 +170,51 @@ interface GenericFileManager {
         newName: String
     )
 
+    suspend fun getExifData(
+        context: Context,
+        media: MediaStoreData
+    ) =
+        if (media.isCloud) {
+            val is24Hr = DateFormat.is24HourFormat(context)
+
+            customDao.getExifData(id = media.id)?.let { exifData ->
+                exifDataToMediaData(
+                    name = media.displayName,
+                    path = media.uri,
+                    info = exifData,
+                    is24Hr = is24Hr,
+                    fallback = media.dateTaken
+                )
+            } ?: run {
+                val formattedDateTime =
+                    Instant.fromEpochSeconds(media.dateTaken)
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .toJavaLocalDateTime()
+                        .format(
+                            DateTimeFormatter.ofPattern(
+                                if (is24Hr) "EEE dd MMM yyyy - HH:mm:ss"
+                                else "EEE dd MMM yyyy - h:mm:ss a"
+                            )
+                        )
+
+                mapOf(
+                    MediaData.Name to media.displayName,
+                    MediaData.Path to media.uri,
+                    MediaData.Size to media.size.toString(),
+                    MediaData.Date to formattedDateTime
+                )
+            }
+        } else {
+            getExifDataForMedia(
+                inputStream =
+                    context.contentResolver.openInputStream(media.uri.toUri())
+                        ?: File(media.absolutePath).inputStream(),
+                absolutePath = media.absolutePath,
+                is24Hr = DateFormat.is24HourFormat(context),
+                fallback = media.dateTaken
+            )
+        }
+
     suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
@@ -266,6 +320,15 @@ interface GenericFileManager {
         val media = getMediaStoreDataForIds(
             ids = ids,
             context = context
+        )
+
+        customDao.upsertAll(
+            items = media.map {
+                CustomItem(
+                    id = it.id,
+                    album = destination.id
+                )
+            }
         )
 
         val assets = media.map { item ->

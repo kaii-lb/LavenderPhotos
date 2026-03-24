@@ -46,7 +46,16 @@ class CloudFileManager(
     ) = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext null
 
-        // TODO: sync task to update if there's no active connection
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Favourite,
+                destination = null,
+                items = list
+            )
+        )
+
         mediaDao.setFavouriteOnMedia(
             ids = list.fastMap { it.id }.toSet(),
             favourite = favourite
@@ -58,7 +67,14 @@ class CloudFileManager(
                 isFavorite = favourite
             ),
             accessToken = info.accessToken
-        )
+        ).let { success ->
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
+            )
+        }
 
         null
     }
@@ -72,75 +88,47 @@ class CloudFileManager(
         albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (!trashed) {
+            throw IllegalArgumentException("Cannot restore files to albums!")
+        }
+
         if (albumId == null) {
-            // TODO: sync task to update if there's no active connection
-            mediaDao.deleteAll(
-                ids = list.fastMap { it.id }.toSet()
-            )
-            assetClient.delete(
-                ids = list.fastMap { Uuid.parse(it.immichId!!) },
-                accessToken = info.accessToken,
-                force = true
+            permanentlyDelete(
+                context = context,
+                list = list
             )
 
             return@withContext
         }
 
-        if (trashed) {
-            val taskId = syncTaskDao.insert(
-                task = SyncTask(
-                    dateModified = Clock.System.now().epochSeconds,
-                    status = SyncTaskStatus.Processing,
-                    type = SyncTaskType.Delete,
-                    destination = albumId,
-                    items = list
-                )
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Trash,
+                destination = albumId,
+                items = list
             )
+        )
 
-            customDao.deleteAll(
-                ids = list.fastMap { it.id }.toSet(),
-                album = albumId
+        customDao.deleteAll(
+            ids = list.fastMap { it.id }.toSet(),
+            album = albumId
+        )
+
+        albumsClient.removeAssets(
+            albumId = Uuid.parse(albumId),
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
+            accessToken = info.accessToken
+        ).let { success ->
+            onItemDone(if (success) list.size else -1)
+
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
             )
-
-            albumsClient.removeAssets(
-                albumId = Uuid.parse(albumId),
-                assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-                accessToken = info.accessToken
-            ).let {
-                onItemDone(if (it) list.size else -1)
-
-                syncTaskDao.updateTaskStatus(
-                    id = taskId.toInt(),
-                    status =
-                        if (it) SyncTaskStatus.Synced
-                        else SyncTaskStatus.Waiting
-                )
-            }
-        } else {
-            val taskId = syncTaskDao.insert(
-                task = SyncTask(
-                    dateModified = Clock.System.now().epochSeconds,
-                    status = SyncTaskStatus.Processing,
-                    type = SyncTaskType.Restore,
-                    destination = albumId,
-                    items = list
-                )
-            )
-
-            albumsClient.addAssets(
-                albumId = Uuid.parse(albumId),
-                assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-                accessToken = info.accessToken
-            ).let {
-                onItemDone(if (it) list.size else -1)
-
-                syncTaskDao.updateTaskStatus(
-                    id = taskId.toInt(),
-                    status =
-                        if (it) SyncTaskStatus.Synced
-                        else SyncTaskStatus.Waiting
-                )
-            }
         }
     }
 
@@ -149,7 +137,16 @@ class CloudFileManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ): Unit = withContext(Dispatchers.IO) {
-        // TODO: sync task to update if there's no active connection
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Delete,
+                destination = null,
+                items = list
+            )
+        )
+
         mediaDao.deleteAll(
             ids = list.fastMap { it.id }.toSet()
         )
@@ -157,8 +154,15 @@ class CloudFileManager(
         assetClient.delete(
             ids = list.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = info.accessToken,
-            force = true
-        )
+            force = false
+        ).let { success ->
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
+            )
+        }
     }
 
     override fun renameItem(
@@ -175,17 +179,39 @@ class CloudFileManager(
         album: AlbumType,
         newName: String
     ) {
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.RenameAlbum,
+                destination = album.id,
+                items = listOf(
+                    SelectionManager.SelectedItem(
+                        id = 0L,
+                        uri = newName,
+                        isImage = false,
+                        parentPath = ""
+                    )
+                )
+            )
+        )
+
+        context.appModule.settings.albums.edit(
+            id = album.id,
+            newInfo = (album as AlbumType.Cloud).copy(name = newName)
+        )
+
         albumsClient.rename(
-            id = Uuid.parse(album.immichId!!),
+            id = Uuid.parse(album.immichId),
             newName = newName,
             accessToken = info.accessToken
-        ).let {
-            if (it) {
-                context.appModule.settings.albums.edit(
-                    id = album.id,
-                    newInfo = (album as AlbumType.Cloud).copy(name = newName)
-                )
-            }
+        ).let { success ->
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
+            )
         }
     }
 
@@ -203,7 +229,32 @@ class CloudFileManager(
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Cloud::class.simpleName} and ${destination::class.simpleName}")
         }
 
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Move,
+                destination = destination.id,
+                items = list
+            )
+        )
+
+        customDao.upsertAll(
+            items = list.map {
+                CustomItem(
+                    id = it.id,
+                    album = destination.id
+                )
+            }
+        )
+
         val origins = list.map { it.parentPath }.distinct().filter { it != destination.immichId }
+        origins.forEach { origin ->
+            customDao.deleteAll(
+                ids = list.fastMap { it.id }.toSet(),
+                album = origin
+            )
+        }
 
         val assetIds = copyItems(
             context = context,
@@ -223,6 +274,13 @@ class CloudFileManager(
                 accessToken = info.accessToken
             )
         }
+
+        syncTaskDao.updateTaskStatus(
+            id = taskId.toInt(),
+            status =
+                if (success) SyncTaskStatus.Synced
+                else SyncTaskStatus.Waiting
+        )
 
         return@withContext success
     }
@@ -266,11 +324,28 @@ class CloudFileManager(
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         val items = list.filter { it.parentPath != destination.immichId }
 
+        val taskId = syncTaskDao.insert(
+            task = SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Copy,
+                destination = destination.id,
+                items = list
+            )
+        )
+
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
             assetIds = items.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = info.accessToken
-        )
+        ).let { success ->
+            syncTaskDao.updateTaskStatus(
+                id = taskId.toInt(),
+                status =
+                    if (success) SyncTaskStatus.Synced
+                    else SyncTaskStatus.Waiting
+            )
+        }
 
         items.forEach { onItemDone(it.uri) }
 

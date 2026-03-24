@@ -19,8 +19,6 @@ import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.exif.exifDataToMediaData
 import com.kaii.photos.helpers.file_management.HybridFileManager
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -31,7 +29,6 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +37,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -54,12 +50,8 @@ import kotlinx.datetime.number
 import kotlinx.datetime.onDay
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.plusYear
-import kotlinx.datetime.toJavaLocalDateTime
-import kotlinx.datetime.toLocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.repositories.SearchRepository"
 
@@ -213,37 +205,9 @@ class SearchRepository(
     }
 
     suspend fun getExifData(
-        media: MediaStoreData,
-        is24Hr: Boolean
-    ) = withContext(Dispatchers.IO) {
-        searchDao.getExifData(id = media.id)?.let { exifData ->
-            exifDataToMediaData(
-                name = media.displayName,
-                path = media.uri,
-                info = exifData,
-                is24Hr = is24Hr,
-                fallback = media.dateTaken
-            )
-        } ?: run {
-            val formattedDateTime =
-                Instant.fromEpochSeconds(media.dateTaken)
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .toJavaLocalDateTime()
-                    .format(
-                        DateTimeFormatter.ofPattern(
-                            if (is24Hr) "EEE dd MMM yyyy - HH:mm:ss"
-                            else "EEE dd MMM yyyy - h:mm:ss a"
-                        )
-                    )
-
-            mapOf(
-                MediaData.Name to media.displayName,
-                MediaData.Path to media.uri,
-                MediaData.Size to media.size.toString(),
-                MediaData.Date to formattedDateTime
-            )
-        }
-    }
+        context: Context,
+        media: MediaStoreData
+    ) = fileManager.getExifData(context, media)
 
     fun allowedAlbumTypesFor(
         moving: Boolean
@@ -507,7 +471,11 @@ class SearchRepository(
 
             query.isBlank() && tags.isNotEmpty() -> taggedItemsDao.getAllInTagsDateTaken(tags = tagIds, tagCount = tagIds.size)
 
-            query.isNotBlank() && tags.isNotEmpty() && dateModified -> taggedItemsDao.searchInTagsDateModified(query = "%$query%", tags = tagIds, tagCount = tagIds.size)
+            query.isNotBlank() && tags.isNotEmpty() && dateModified -> taggedItemsDao.searchInTagsDateModified(
+                query = "%$query%",
+                tags = tagIds,
+                tagCount = tagIds.size
+            )
 
             query.isNotBlank() && tags.isNotEmpty() -> taggedItemsDao.searchInTagsDateTaken(query = "%$query%", tags = tagIds, tagCount = tagIds.size)
 

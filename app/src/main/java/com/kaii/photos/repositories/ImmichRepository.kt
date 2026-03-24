@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.text.format.DateFormat
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.paging.Pager
@@ -103,10 +102,10 @@ class ImmichRepository(
                 initialLoadSize = 80
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) db.customDao().getPagedMediaWithExifDateModified(album = album.id)
-                else db.customDao().getPagedMediaWithExifDateTaken(album = album.id)
+                if (params.sortMode.isDateModified) db.customDao().getPagedMediaDateModified(album = album.id)
+                else db.customDao().getPagedMediaDateTaken(album = album.id)
             }
-        ).flow.mapToMedia(accessToken = params.info.accessToken, is24Hr = DateFormat.is24HourFormat(appContext))
+        ).flow.mapToMedia(accessToken = params.info.accessToken)
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -208,6 +207,11 @@ class ImmichRepository(
             refresh()
         }
     }
+
+    suspend fun getExifData(
+        context: Context,
+        media: MediaStoreData
+    ) = fileManager.getExifData(context, media)
 
     fun allowedAlbumTypesFor(moving: Boolean) = fileManager.allowedAlbumTypesFor(moving = moving, current = AlbumType.Cloud::class)
 

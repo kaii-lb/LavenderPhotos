@@ -6,8 +6,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.ExifData
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.database.entities.MediaStoreDataWithExifData
 import com.kaii.photos.helpers.grid_management.SelectionManager
 
 @Dao
@@ -17,14 +17,6 @@ interface CustomEntityDao {
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(album: String): PagingSource<Int, MediaStoreData>
-
-    @Transaction
-    @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateTaken DESC")
-    fun getPagedMediaWithExifDateTaken(album: String): PagingSource<Int, MediaStoreDataWithExifData>
-
-    @Transaction
-    @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateModified DESC")
-    fun getPagedMediaWithExifDateModified(album: String): PagingSource<Int, MediaStoreDataWithExifData>
 
     @Query(value = "SELECT COUNT(id) FROM custom_items WHERE album = :album")
     fun countMediaInAlbum(album: String): Int
@@ -60,6 +52,10 @@ interface CustomEntityDao {
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
     suspend fun getMediaInAlbum(album: String): List<MediaStoreData>
+
+    @Transaction
+    @Query(value = "SELECT * FROM media_exif_data WHERE mediaId = :id")
+    suspend fun getExifData(id: Long): ExifData?
 
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)

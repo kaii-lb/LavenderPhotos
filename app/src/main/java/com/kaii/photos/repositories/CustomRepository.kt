@@ -128,6 +128,11 @@ class CustomRepository(
         }
     }
 
+    suspend fun getExifData(
+        context: Context,
+        media: MediaStoreData
+    ) = fileManager.getExifData(context, media)
+
     fun allowedAlbumTypesFor(
         moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(

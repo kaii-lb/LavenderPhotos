@@ -18,9 +18,12 @@ enum class SyncTaskStatus {
 @Serializable
 enum class SyncTaskType {
     Delete,
-    Restore,
+    Trash,
     Upload,
-    Favourite
+    Favourite,
+    RenameAlbum,
+    Move,
+    Copy
 }
 
 @Entity(tableName = "sync_tasks")

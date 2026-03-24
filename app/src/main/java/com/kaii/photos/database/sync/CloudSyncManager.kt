@@ -26,12 +26,12 @@ class CloudSyncManager(
         unsynced.forEach { task ->
             when (task.type) {
                 SyncTaskType.Upload -> uploadTask(task = task)
-
-                SyncTaskType.Delete -> deleteOrRestoreTask(task = task)
-
-                SyncTaskType.Restore -> deleteOrRestoreTask(task = task)
-
+                SyncTaskType.Trash -> trashTask(task = task)
                 SyncTaskType.Favourite -> TODO()
+                SyncTaskType.Delete -> TODO()
+                SyncTaskType.RenameAlbum -> TODO()
+                SyncTaskType.Move -> TODO()
+                SyncTaskType.Copy -> TODO()
             }
         }
     }
@@ -67,11 +67,11 @@ class CloudSyncManager(
         )
     }
 
-    private suspend fun deleteOrRestoreTask(task: SyncTask) = withContext(Dispatchers.IO) {
+    private suspend fun trashTask(task: SyncTask) = withContext(Dispatchers.IO) {
         fileManager.setTrashed(
             context = context,
             list = task.items,
-            trashed = task.type == SyncTaskType.Delete,
+            trashed = true,
             albumId = task.destination,
             onItemDone = {
                 // TODO: update progress indicator around pfp?

@@ -7,12 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.repositories.ImmichRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -166,8 +166,10 @@ class ImmichAlbumViewModel(
         settings.albums.remove(id)
     }
 
-    fun getExifData(media: PhotoLibraryUIModel.MediaImpl) =
-        (media as PhotoLibraryUIModel.MediaWithExifData).mediaData
+    suspend fun getExifData(
+        context: Context,
+        media: MediaStoreData
+    ) = repo.getExifData(context, media)
 
     fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
 

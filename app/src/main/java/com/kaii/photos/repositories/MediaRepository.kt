@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -140,6 +141,11 @@ class MediaRepository(
                 }
         }
     }
+
+    suspend fun getExifData(
+        context: Context,
+        media: MediaStoreData
+    ) = fileManager.getExifData(context, media)
 
     fun allowedAlbumTypesFor(
         moving: Boolean

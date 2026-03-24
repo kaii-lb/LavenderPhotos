@@ -407,9 +407,7 @@ fun SinglePhotoView(
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = { _, media ->
-            viewModel.getExifData(media)
-        },
+        getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         process = viewModel::runAction
     )
@@ -437,7 +435,7 @@ private fun SinglePhotoViewCommon(
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     setTagMediaId: (id: Long) -> Unit,
-    getExifData: suspend (context: Context, media: PhotoLibraryUIModel.MediaImpl) -> Map<MediaData, String>,
+    getExifData: suspend (context: Context, media: MediaStoreData) -> Map<MediaData, String>,
     allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
@@ -595,7 +593,7 @@ private fun SinglePhotoViewCommon(
 
                 item as PhotoLibraryUIModel.MediaImpl
 
-                mediaData = getExifData(context, item)
+                mediaData = getExifData(context, item.item)
             }
 
             SinglePhotoInfoDialog(
