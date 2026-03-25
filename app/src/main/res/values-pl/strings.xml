@@ -533,4 +533,9 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="album_group_delete">Usunąć tę grupę?</string>
     <string name="album_group_item_count">Podalbumy:</string>
     <string name="album_group_info">Informacje o grupie albumów</string>
+    <string name="settings_storage_export_quality">Jakość eksportu: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Wysokie wartości skutkują dużymi rozmiarami obrazów.</string>
+    <string name="next">Następny</string>
+    <string name="error">Błąd!</string>
+    <string name="exif_date_changer_go_back">Wróć do selektora dat</string>
 </resources>
