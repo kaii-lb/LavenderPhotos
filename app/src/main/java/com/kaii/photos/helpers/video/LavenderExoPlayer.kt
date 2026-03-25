@@ -12,19 +12,17 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.FileDataSource
 import androidx.media3.datasource.cache.CacheDataSink
 import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.NoOpCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import com.google.common.net.HttpHeaders
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.editing.applyEffects
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,12 +33,6 @@ class LavenderExoPlayer(
     onCurrentPositionChanged: (position: Float) -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
 ) {
-    private var cache = SimpleCache(
-        context.externalCacheDir ?: context.cacheDir,
-        NoOpCacheEvictor(),
-        StandaloneDatabaseProvider(context)
-    )
-
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
             DefaultLoadControl.Builder().apply {
@@ -174,7 +166,7 @@ class LavenderExoPlayer(
                 .createMediaSource(MediaItem.fromUri(uri.toUri()))
         } else {
             val cacheSink = CacheDataSink.Factory()
-                .setCache(cache)
+                .setCache(context.appModule.cache)
 
             val downstream = FileDataSource.Factory()
             val upstream = DefaultHttpDataSource.Factory()
@@ -187,7 +179,7 @@ class LavenderExoPlayer(
                 )
 
             val factory = CacheDataSource.Factory()
-                .setCache(cache)
+                .setCache(context.appModule.cache)
                 .setCacheWriteDataSinkFactory(cacheSink)
                 .setCacheReadDataSourceFactory(downstream)
                 .setUpstreamDataSourceFactory(upstream)
@@ -206,7 +198,6 @@ class LavenderExoPlayer(
     }
 
     fun release() {
-        cache.release()
         exoPlayer.stop()
         exoPlayer.release()
     }

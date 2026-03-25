@@ -1,6 +1,10 @@
 package com.kaii.photos.di
 
 import android.content.Context
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.cache.NoOpCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
@@ -12,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 val Context.appModule: AppModule
     get() = (applicationContext as PhotosApplication).appModule
 
+@UnstableApi
 class AppModule(
     context: Context
 ) {
@@ -28,6 +33,14 @@ class AppModule(
             context = context,
             coroutineScope = scope,
             apiClient = apiClient
+        )
+    }
+
+    val cache by lazy {
+        SimpleCache(
+            context.externalCacheDir ?: context.cacheDir,
+            NoOpCacheEvictor(),
+            StandaloneDatabaseProvider(context.applicationContext)
         )
     }
 }
