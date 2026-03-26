@@ -241,7 +241,7 @@ private fun MemoryAndStorageSettingsPageImpl(
                 }
 
                 PreferenceRowWithCustomBody(
-                    icon = R.drawable.grid_view,
+                    icon = R.drawable.hd,
                     title = stringResource(id = R.string.settings_storage_export_quality, currentQuality * 10)
                 ) {
                     Column(
