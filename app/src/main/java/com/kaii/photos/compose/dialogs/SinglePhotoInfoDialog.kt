@@ -410,7 +410,8 @@ private fun Content(
                         icon = R.drawable.error,
                         position = RowPosition.Single,
                         containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
+                        contentColor = MaterialTheme.colorScheme.onError,
+                        enabled = !privacyMode()
                     ) {
                         showConfirmEraseDialog.value = true
                     }
@@ -489,7 +490,8 @@ private fun Content(
                 icon = R.drawable.error,
                 position = RowPosition.Single,
                 containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError
+                contentColor = MaterialTheme.colorScheme.onError,
+                enabled = !privacyMode()
             ) {
                 showConfirmEraseDialog.value = true
             }

@@ -1,19 +1,12 @@
 package com.kaii.photos.compose.dialogs
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -33,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,10 +51,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,60 +66,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.kaii.photos.R
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.editing.darkenColor
 import kotlinx.coroutines.delay
 
-@Composable
-fun DialogClickableItem(
-    text: String,
-    @DrawableRes iconResId: Int,
-    position: RowPosition,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    action: (() -> Unit)? = null
-) {
-    val (shape, _) = getDefaultShapeSpacerForPosition(position = position, innerCornerRadius = 2.dp)
-
-    val clickableModifier =
-        if (action != null && enabled) Modifier.clickable { action() } else Modifier
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth(1f)
-            .height(42.dp)
-            .clip(shape)
-            .then(clickableModifier)
-            .background(
-                if (enabled) MaterialTheme.colorScheme.surfaceVariant
-                else darkenColor(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), 0.1f)
-            )
-            .wrapContentHeight(align = Alignment.CenterVertically)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
-    ) {
-        Icon(
-            painter = painterResource(id = iconResId),
-            contentDescription = "icon describing: $text",
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .size(20.dp)
-        )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Text(
-            text = text,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = TextUnit(16f, TextUnitType.Sp),
-            textAlign = TextAlign.Start,
-            modifier = Modifier
-                .wrapContentSize()
-        )
-    }
-}
-
-/** Do not use background colors for your composable
+/** Do not use background colours for your composable
 currently you need to calculate dp height of your composable manually */
 @Composable
 fun DialogExpandableItem(
@@ -273,128 +212,6 @@ fun getDefaultShapeSpacerForPosition(
     }
 
     return Pair(shape, height)
-}
-
-@Composable
-fun AnimatableText(
-    first: String,
-    second: String,
-    state: Boolean,
-    modifier: Modifier,
-) {
-    AnimatedContent(
-        targetState = state,
-        label = "Dialog name animated content",
-        transitionSpec = {
-            (expandHorizontally(
-                animationSpec = tween(
-                    durationMillis = 350
-                ),
-                expandFrom = Alignment.Start
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = 350,
-                )
-            )).togetherWith(
-                shrinkHorizontally(
-                    animationSpec = tween(
-                        durationMillis = 350
-                    ),
-                    shrinkTowards = Alignment.End
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 350,
-                    )
-                )
-            )
-        },
-        modifier = modifier
-            .wrapContentHeight()
-    ) { showFirst ->
-        if (showFirst) {
-            Text(
-                text = first,
-                fontWeight = FontWeight.Bold,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                modifier = modifier
-                    .wrapContentSize()
-            )
-        } else {
-            Text(
-                text = second,
-                fontWeight = FontWeight.Bold,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
-                modifier = modifier
-                    .wrapContentSize()
-            )
-        }
-    }
-}
-
-@Composable
-fun DialogInfoText(
-    firstText: String,
-    secondText: String,
-    iconResId: Int,
-    color: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    onClick: (() -> Unit)? = null
-) {
-    val context = LocalContext.current
-
-    Row(
-        modifier = Modifier
-            .height(36.dp)
-            .background(color)
-            .padding(10.dp, 4.dp)
-            .clickable {
-                if (onClick == null) {
-                    val clipboardManager =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clipData = ClipData.newPlainText(firstText, secondText)
-                    clipboardManager.setPrimaryClip(clipData)
-                } else onClick()
-            },
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = iconResId),
-            contentDescription = "$firstText: $secondText",
-            tint = contentColor,
-            modifier = Modifier
-                .size(16.dp)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        val state = rememberScrollState()
-        Text(
-            text = if (firstText == "") "" else "$firstText: ",
-            color = contentColor,
-            style = TextStyle(
-                textAlign = TextAlign.Start,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-            ),
-            maxLines = 1,
-            softWrap = true,
-            modifier = Modifier
-                .wrapContentWidth()
-        )
-
-        Text(
-            text = secondText,
-            color = contentColor,
-            style = TextStyle(
-                textAlign = TextAlign.Start,
-                fontSize = TextUnit(14f, TextUnitType.Sp),
-            ),
-            maxLines = 1,
-            softWrap = true,
-            modifier = Modifier
-                .weight(1f)
-                .horizontalScroll(state)
-        )
-    }
 }
 
 @Composable
@@ -739,6 +556,7 @@ fun TallDialogInfoRow(
     containerColor: Color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surfaceContainerLow,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     navigatesAway: Boolean = false,
+    enabled: Boolean = true,
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
@@ -754,8 +572,10 @@ fun TallDialogInfoRow(
             .fillMaxWidth(1f)
             .height(64.dp)
             .clip(shape)
-            .background(containerColor)
+            .background(containerColor.copy(alpha = if (enabled) 1f else 0.4f))
             .combinedClickable(
+                enabled = enabled,
+
                 onClick = onClick,
 
                 onLongClick = onLongClick
@@ -773,7 +593,7 @@ fun TallDialogInfoRow(
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = "$title: $info",
-                tint = contentColor
+                tint = contentColor.copy(alpha = if (enabled) 1f else 0.4f)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -782,7 +602,7 @@ fun TallDialogInfoRow(
                 text = title,
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = contentColor
+                color = contentColor.copy(alpha = if (enabled) 1f else 0.4f)
             )
 
             Spacer(modifier = Modifier.width(4.dp))
@@ -791,7 +611,7 @@ fun TallDialogInfoRow(
                 text = info,
                 fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                 fontWeight = FontWeight.Normal,
-                color = contentColor,
+                color = contentColor.copy(alpha = if (enabled) 1f else 0.4f),
                 maxLines = 1,
                 modifier = Modifier
                     .weight(1f)
@@ -801,7 +621,8 @@ fun TallDialogInfoRow(
             if (navigatesAway) {
                 Icon(
                     painter = painterResource(id = R.drawable.other_page_indicator),
-                    contentDescription = stringResource(id = R.string.navigation_away)
+                    contentDescription = stringResource(id = R.string.navigation_away),
+                    tint = contentColor.copy(alpha = if (enabled) 1f else 0.4f)
                 )
             }
         }
@@ -809,7 +630,7 @@ fun TallDialogInfoRow(
         Spacer(
             modifier = Modifier
                 .height(spacerHeight)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = if (enabled) 1f else 0.4f))
         )
     }
 }

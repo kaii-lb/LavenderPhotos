@@ -197,7 +197,8 @@ fun SingleViewTopBar(
                             shape = IconButtonDefaults.filledShape,
                             pressedShape = IconButtonDefaults.extraSmallPressedShape,
                             checkedShape = IconButtonDefaults.mediumSelectedRoundShape
-                        )
+                        ),
+                        enabled = !privacyMode()
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.sell),
