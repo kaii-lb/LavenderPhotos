@@ -17,6 +17,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -279,10 +281,15 @@ private fun DebuggingSettingsPageImpl(
                         isLoading.value = false
                     }
                 }
+            }
+
+            item {
+                val resources = LocalResources.current
+                val coroutineScope = rememberCoroutineScope()
 
                 PreferencesRow(
                     title = stringResource(id = R.string.debugging_spawn_message_snackbar),
-                    iconResID = R.drawable.progress_activity,
+                    iconResID = R.drawable.chat,
                     summary = stringResource(id = R.string.debugging_spawn_message_snackbar_desc),
                     position = RowPosition.Single,
                     showBackground = false
@@ -290,11 +297,51 @@ private fun DebuggingSettingsPageImpl(
                     coroutineScope.launch {
                         LavenderSnackbarController.pushEvent(
                             LavenderSnackbarEvent.MessageEvent(
-                                message = debuggingLoading,
+                                message = resources.getString(R.string.debugging_loading),
                                 icon = R.drawable.logs,
                                 duration = SnackbarDuration.Short
                             )
                         )
+                    }
+                }
+            }
+
+            item {
+                val resources = LocalResources.current
+                val coroutineScope = rememberCoroutineScope()
+
+                val percentage = remember { mutableFloatStateOf(0f) }
+                val body = remember { mutableStateOf("Progress: 0%") }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.debugging_spawn_progress_snackbar),
+                    iconResID = R.drawable.avg_pace,
+                    summary = stringResource(id = R.string.debugging_spawn_progress_snackbar_desc),
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    coroutineScope.launch {
+                        percentage.floatValue = 0f
+                        body.value = "Progress: 0%"
+
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvent.ProgressEvent(
+                                message = resources.getString(R.string.debugging_loading),
+                                body = body,
+                                percentage = percentage,
+                                icon = R.drawable.logs
+                            )
+                        )
+
+                        delay(3000)
+
+                        val count = 5
+                        repeat(count) {
+                            percentage.floatValue += 1f / count
+                            body.value = "Progress: ${(percentage.floatValue * 100f).toString().substring(0, 3).removeSuffix(".")}%"
+
+                            delay(3000)
+                        }
                     }
                 }
             }
