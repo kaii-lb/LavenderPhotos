@@ -538,4 +538,16 @@
     <string name="next">Seguinte</string>
     <string name="error">Erro!</string>
     <string name="exif_date_changer_go_back">Volver ao selector de data</string>
+    <string name="albums_is_cloud">Este álbum está só na nube</string>
+    <string name="media_snackbar_operation_failed">Fallou a sincronización!</string>
+    <string name="media_copy_snackbar_title">Copiando elementos…</string>
+    <string name="media_move_snackbar_title">Movendo elementos…</string>
+    <string name="media_delete_snackbar_title">Eliminando elementos…</string>
+    <string name="media_restoring_snackbar_title">Restablecendo elementos…</string>
+    <string name="media_copy_snackbar_body">Copiando %1$d de %2$d</string>
+    <string name="media_move_snackbar_body">Movendo %1$d de %2$d</string>
+    <string name="media_delete_snackbar_body">Eliminando %1$d de %2$d</string>
+    <string name="media_restoring_snackbar_body">Restablecendo %1$d de %2$d</string>
+    <string name="look_and_feel_vibrate_on_media_click">Vibrar ao premer</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">Prodúcese unha pequena vibración ao tocar nun elemento multimedia.</string>
 </resources>
