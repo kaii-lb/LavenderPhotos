@@ -106,6 +106,8 @@ fun HorizontalImageList(
             }
             .testTag("single_photo_horizontal_pager")
     ) { index ->
+        if (items[index] == null || items[index] !is PhotoLibraryUIModel.MediaImpl) return@HorizontalPager
+
         val zoomableState = rememberGlideZoomableState()
 
         if (state.settledPage != index) {
