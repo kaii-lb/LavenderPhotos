@@ -484,7 +484,7 @@ suspend fun saveVideo(
         basePath = tempFileCrop.absolutePath.toBasePath(),
         destination = absolutePath.parent(),
         currentVolumes = MediaStore.getExternalVolumeNames(context),
-        preserveDate = false,
+        preserveDate = true,
         overrideDisplayName = null,
         onInsert = { _, new ->
             context.contentResolver.copyUriToUri(
@@ -511,6 +511,15 @@ suspend fun saveVideo(
         absolutePath = path,
         type = MediaType.Video
     )
+
+    contentUri?.let {
+        context.contentResolver.setDateForMedia(
+            uri = it,
+            type = media.type,
+            dateTaken = if (overwrite) media.dateTaken else Clock.System.now().epochSeconds,
+            overwriteLastModified = true
+        )
+    }
 
     return@withContext contentUri?.lastPathSegment?.toLongOrNull() ?: -1L
 }
@@ -724,9 +733,9 @@ suspend fun saveImage(
         displayName = file.name,
         absolutePath = file.absolutePath,
         dateTaken = getDateTakenForMedia(absolutePath = absolutePath, dateModified = System.currentTimeMillis() / 1000),
-        dateModified = System.currentTimeMillis() / 1000,
+        dateModified = Clock.System.now().epochSeconds,
         type = MediaType.Image,
-        mimeType = "image/webp",
+        mimeType = "image/jpeg",
         uri = uri.toString(),
         size = 0L,
         immichUrl = null,
@@ -745,7 +754,7 @@ suspend fun saveImage(
                 destination = absolutePath.parent(),
                 basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
-                overrideDisplayName = file.name.removeSuffix(file.extension) + "webp",
+                overrideDisplayName = file.name.removeSuffix(file.extension) + "jpeg",
                 onInsert = { _, _ -> }
             )
         } else {
@@ -768,7 +777,7 @@ suspend fun saveImage(
 
     val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
         cropped.compress(
-            Bitmap.CompressFormat.WEBP_LOSSY,
+            Bitmap.CompressFormat.JPEG,
             exportQuality * 10, // exportQuality is from 2 to 8
             outputStream
         )
@@ -777,8 +786,8 @@ suspend fun saveImage(
     context.contentResolver.setDateForMedia(
         uri = newUri,
         type = media.type,
-        dateTaken = if (overwrite) media.dateTaken * 1000 else System.currentTimeMillis(),
-        overwriteLastModified = false
+        dateTaken = if (overwrite) media.dateTaken else Clock.System.now().epochSeconds,
+        overwriteLastModified = true
     )
 
     if (wroteData) {
