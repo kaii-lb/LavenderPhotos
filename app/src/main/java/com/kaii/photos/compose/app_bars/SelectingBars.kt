@@ -46,7 +46,7 @@ import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.file_management.GenericFileManager
+import com.kaii.photos.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent

@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.file_management
+package com.kaii.photos.file_management
 
 import android.content.Context
 import android.content.IntentSender

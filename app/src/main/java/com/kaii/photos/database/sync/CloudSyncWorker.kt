@@ -11,8 +11,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.file_management.CloudFileManager
-import com.kaii.photos.helpers.file_management.LocalFileManager
+import com.kaii.photos.file_management.CloudFileManager
+import com.kaii.photos.file_management.LocalFileManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.delay
