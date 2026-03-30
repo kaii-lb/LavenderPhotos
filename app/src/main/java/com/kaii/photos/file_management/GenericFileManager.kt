@@ -398,8 +398,9 @@ interface GenericFileManager {
                     SelectionManager.SelectedItem(
                         id = it.second.id,
                         uri = it.second.uri,
+                        immichUrl = it.second.immichUrl,
                         isImage = it.second.type == MediaType.Image,
-                        parentPath = it.second.parentPath
+                        albumId = destination.immichId // this isn't used anywhere so it is fine (should probably be fixed tho)
                     )
                 }
             )

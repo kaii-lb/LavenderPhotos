@@ -177,7 +177,8 @@ private fun DeviceMedia(
                     pagingItems = pagingItems,
                     isDragSelecting = isDragSelecting,
                     context = context,
-                    thumbnailSettings = Pair(cacheThumbnails(), thumbnailSize())
+                    thumbnailSettings = Pair(cacheThumbnails(), thumbnailSize()),
+                    albumId = { album().id }
                 )
         ) {
             items(
@@ -224,7 +225,7 @@ private fun DeviceMedia(
                                         .takeIf { vibrateOnClick() }
                                         ?.vibrateLong()
 
-                                    selectionManager.toggle(item)
+                                    selectionManager.toggle(item, album().id)
                                 }
                             )
                         }
@@ -246,7 +247,7 @@ private fun DeviceMedia(
                                         .takeIf { vibrateOnClick() }
                                         ?.vibrateShort()
 
-                                    selectionManager.toggle(item)
+                                    selectionManager.toggle(item, album().id)
                                 },
                                 navigateToItem = {
                                     if (!isMediaPicker) {

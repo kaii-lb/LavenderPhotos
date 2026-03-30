@@ -9,7 +9,8 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 
 @Dao
 interface SyncTaskDao {
-    @Query(value = "SELECT * FROM sync_tasks WHERE status = 'Waiting'")
+    // sort ascendingly by time added so operations are applied in the correct order
+    @Query(value = "SELECT * FROM sync_tasks WHERE status = 'Waiting' ORDER BY dateModified ASC")
     suspend fun getUnsyncedTasks(): List<SyncTask>
 
     @Query(value = "UPDATE sync_tasks SET status = :status WHERE id = :id")

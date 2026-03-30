@@ -46,7 +46,8 @@ fun Modifier.dragSelectionHandler(
     gridState: LazyGridState,
     isDragSelecting: MutableState<Boolean>,
     context: Context,
-    thumbnailSettings: Pair<Boolean, Int>
+    thumbnailSettings: Pair<Boolean, Int>,
+    albumId: () -> String
 ) = composed {
     val localDensity = LocalDensity.current
     val resources = LocalResources.current
@@ -150,7 +151,7 @@ fun Modifier.dragSelectionHandler(
                             initialKey = index
                             currentKey = index
 
-                            selectionManager.addMedia(item.item)
+                            selectionManager.addMedia(item.item, albumId())
                         }
                     }
                 }
@@ -209,7 +210,7 @@ fun Modifier.dragSelectionHandler(
                                     }
                                 }
 
-                            selectionManager.updateSelection(added = toBeAdded, removed = toBeRemoved)
+                            selectionManager.updateSelection(added = toBeAdded, removed = toBeRemoved, albumId = albumId())
 
                             currentKey = index
                         }

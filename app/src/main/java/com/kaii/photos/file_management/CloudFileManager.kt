@@ -200,8 +200,9 @@ class CloudFileManager(
                     SelectionManager.SelectedItem(
                         id = 0L,
                         uri = newName,
+                        immichUrl = null,
                         isImage = false,
-                        parentPath = ""
+                        albumId = ""
                     )
                 )
             )
@@ -260,7 +261,7 @@ class CloudFileManager(
             }
         )
 
-        val origins = list.map { it.parentPath }.distinct().filter { it != destination.immichId }
+        val origins = list.map { it.albumId }.distinct().filter { it != destination.immichId }
         origins.forEach { origin ->
             customDao.deleteAll(
                 ids = list.fastMap { it.id }.toSet(),
@@ -336,7 +337,7 @@ class CloudFileManager(
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        val items = list.filter { it.parentPath != destination.immichId }
+        val items = list.filter { it.albumId != destination.immichId }
 
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(

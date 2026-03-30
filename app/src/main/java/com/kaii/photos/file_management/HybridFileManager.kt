@@ -44,11 +44,13 @@ class HybridFileManager(
         list: List<SelectionManager.SelectedItem>,
         taskId: Int?
     ): PendingIntent? {
-        val immich = list.filter { it.isCloud }
-        val local = list - immich.toSet()
+        val immich = list.filter { it.immichUrl != null }
+        val local = list.filter { !it.isCloud }
 
+        val success = localFileManager.setFavourite(context, favourite, local, taskId)
         cloudFileManager.setFavourite(context, favourite, immich, taskId)
-        return localFileManager.setFavourite(context, favourite, local, taskId)
+
+        return success
     }
 
     override suspend fun setTrashed(
@@ -58,12 +60,26 @@ class HybridFileManager(
         albumId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
-    ) : Boolean {
-        val immich = list.filter { it.isCloud }
-        val local = list - immich.toSet()
+    ): Boolean {
+        val immich = list.filter { it.immichUrl != null }
+        val local = list.filter { !it.isCloud }
 
-        return cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone) &&
-            localFileManager.setTrashed(context, local, trashed, albumId, taskId, onItemDone)
+        val localSuccess = localFileManager.setTrashed(context, local, trashed, albumId, taskId, onItemDone)
+        val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone)
+
+        return localSuccess && cloudSuccess
+    }
+
+    override suspend fun permanentlyDelete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        taskId: Int?
+    ) {
+        val immich = list.filter { it.immichUrl != null }
+        val local = list.filter { !it.isCloud }
+
+        localFileManager.permanentlyDelete(context, local, taskId)
+        cloudFileManager.permanentlyDelete(context, immich, taskId)
     }
 
     override fun renameItem(
@@ -84,10 +100,21 @@ class HybridFileManager(
         newName: String,
         taskId: Int?
     ) {
-        throw NotImplementedError(
-            "Despite the name, there is not one scenario in which this should be called from main pages. " +
-                    "Do not try to rename albums from any multi-album view."
-        )
+        if (album.immichId != null) {
+            cloudFileManager.renameAlbum(
+                context = context,
+                album = album,
+                newName = newName,
+                taskId = taskId
+            )
+        } else {
+            localFileManager.renameAlbum(
+                context = context,
+                album = album,
+                newName = newName,
+                taskId = taskId
+            )
+        }
     }
 
     override suspend fun moveItems(
@@ -101,8 +128,21 @@ class HybridFileManager(
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        return cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size &&
-                localFileManager.moveItems(context, local, destination, preserveDate, taskId, onItemDone)
+        val immichSuccess = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size
+        val localSuccess = localFileManager.moveItems(context, local, destination, preserveDate, taskId, onItemDone)
+
+        if (immichSuccess && destination.immichId != null) {
+            cloudFileManager.setTrashed(
+                context = context,
+                list = immich,
+                trashed = true,
+                albumId = destination.immichId,
+                taskId = null,
+                onItemDone = {}
+            )
+        }
+
+        return localSuccess && immichSuccess
     }
 
     override suspend fun copyItems(
@@ -117,7 +157,9 @@ class HybridFileManager(
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        return cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, taskId, onItemDone) +
-                localFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
+        val localResult = localFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
+        val cloudResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
+
+        return localResult + cloudResult
     }
 }

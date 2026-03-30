@@ -22,8 +22,6 @@ class CloudSyncManager(
         val unsynced = taskDao.getUnsyncedTasks()
 
         unsynced.forEach { task ->
-            println("TASK $task")
-
             when (task.type) {
                 SyncTaskType.Upload -> uploadTask(task = task)
                 SyncTaskType.Trash -> trashTask(task = task)
