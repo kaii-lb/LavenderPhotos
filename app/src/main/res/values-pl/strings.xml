@@ -538,4 +538,16 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="next">Następny</string>
     <string name="error">Błąd!</string>
     <string name="exif_date_changer_go_back">Wróć do selektora dat</string>
+    <string name="albums_is_cloud">Album dostępny wyłącznie w chmurze</string>
+    <string name="media_snackbar_operation_failed">Synchronizacja nieudana!</string>
+    <string name="media_copy_snackbar_title">Kopiowanie elementów…</string>
+    <string name="media_move_snackbar_title">Przenoszenie elementów…</string>
+    <string name="media_delete_snackbar_title">Usuwanie elementów…</string>
+    <string name="media_restoring_snackbar_title">Przywracanie elementów…</string>
+    <string name="media_copy_snackbar_body">Kopiowanie %1$d z %2$d</string>
+    <string name="media_move_snackbar_body">Przenoszenie %1$d z %2$d</string>
+    <string name="media_delete_snackbar_body">Usuwanie %1$d z %2$d</string>
+    <string name="media_restoring_snackbar_body">Przywracanie %1$d z %2$d</string>
+    <string name="look_and_feel_vibrate_on_media_click">Wibracje po kliknięciu</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">Stuknięcie w element multimedialny powoduje krótką wibrację.</string>
 </resources>
