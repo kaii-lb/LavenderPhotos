@@ -31,7 +31,7 @@ interface CustomEntityDao {
     suspend fun getThumbnailForAlbumDateModified(album: String): MediaStoreData?
 
     @Query(
-        value = "SELECT media.id, media.uri, media.parentPath, " +
+        value = "SELECT media.id, media.uri, media.immichUrl, media.parentPath, " +
                 "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN custom_items ON media.id = custom_items.id " +
@@ -43,12 +43,6 @@ interface CustomEntityDao {
 
     @Query(value = "SELECT id FROM custom_items WHERE album = :album")
     suspend fun getAllIdsIn(album: String): List<Long>
-
-    @Query(
-        value = "SELECT media.* FROM media LEFT JOIN custom_items ON custom_items.id = media.id " +
-                "WHERE media.uri LIKE 'http%' AND custom_items.id IS NULL"
-    )
-    suspend fun getOrphanImmichItems(): List<MediaStoreData>
 
     @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
     suspend fun getMediaInAlbum(album: String): List<MediaStoreData>

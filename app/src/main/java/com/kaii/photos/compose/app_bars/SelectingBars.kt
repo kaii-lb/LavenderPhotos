@@ -158,6 +158,7 @@ fun SelectingBottomBarItems(
             process(
                 if (isMoving) GenericFileManager.Action.Move(
                     list = selectedItemsList,
+                    origin = albumInfo,
                     destination = album
                 ) else GenericFileManager.Action.Copy(
                     list = selectedItemsList,
@@ -172,7 +173,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !selectedItemsList.isEmpty()
+        enabled = !selectedItemsList.isEmpty() && albumInfo !is AlbumType.Cloud
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),

@@ -189,14 +189,6 @@ class ImmichAlbumViewModel(
                 )
             }
 
-            is GenericFileManager.Action.Move -> {
-                move(
-                    context = context,
-                    list = action.list,
-                    destination = action.destination
-                )
-            }
-
             is GenericFileManager.Action.Trash -> {
                 setTrashed(
                     context = context,
@@ -256,50 +248,6 @@ class ImmichAlbumViewModel(
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_copy_snackbar_body,
-                    it, list.size
-                )
-            }.let { success ->
-                if (!success) {
-                    delay(1000)
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvent.MessageEvent(
-                            message = context.resources.getString(R.string.media_snackbar_operation_failed),
-                            icon = R.drawable.delete,
-                            duration = SnackbarDuration.Short
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    private fun move(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType
-    ) {
-        scope.launch {
-            val percentage = mutableFloatStateOf(0f)
-            val body = mutableStateOf(
-                context.resources.getString(
-                    R.string.media_move_snackbar_body,
-                    0, list.size
-                )
-            )
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(R.string.media_move_snackbar_title),
-                    body = body,
-                    icon = R.drawable.cut,
-                    percentage = percentage
-                )
-            )
-
-            repo.move(context, list, destination, preserveDate.value) {
-                percentage.floatValue = it.toFloat() / list.size
-                body.value = context.resources.getString(
-                    R.string.media_move_snackbar_body,
                     it, list.size
                 )
             }.let { success ->

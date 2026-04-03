@@ -22,7 +22,6 @@ enum class SyncTaskType {
     Upload,
     Favourite,
     RenameAlbum,
-    Move,
     Copy
 }
 

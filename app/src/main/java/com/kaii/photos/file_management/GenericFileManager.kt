@@ -61,6 +61,7 @@ interface GenericFileManager {
 
         data class Move(
             val list: List<SelectionManager.SelectedItem>,
+            val origin: AlbumType,
             val destination: AlbumType
         ) : Action
 
@@ -225,6 +226,7 @@ interface GenericFileManager {
         destination: AlbumType,
         preserveDate: Boolean,
         taskId: Int? = null,
+        origin: AlbumType? = null,
         onItemDone: (uri: String) -> Unit
     ): Boolean
 
@@ -399,8 +401,8 @@ interface GenericFileManager {
                         id = it.second.id,
                         uri = it.second.uri,
                         immichUrl = it.second.immichUrl,
-                        isImage = it.second.type == MediaType.Image,
-                        albumId = destination.immichId // this isn't used anywhere so it is fine (should probably be fixed tho)
+                        parentPath = it.second.parentPath,
+                        isImage = it.second.type == MediaType.Image
                     )
                 }
             )

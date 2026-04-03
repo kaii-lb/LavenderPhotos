@@ -106,9 +106,14 @@ class CustomFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         taskId: Int?,
+        origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
+
+        if (origin == null) {
+            throw IllegalArgumentException("${CustomFileManager::class.simpleName} cannot move without a given origin! It should never be null.")
+        }
 
         if (destination !is AlbumType.Custom) {
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Custom::class.simpleName} and ${destination::class.simpleName}")
@@ -123,14 +128,10 @@ class CustomFileManager(
             }
         )
 
-        list.groupBy {
-            it.parentPath
-        }.forEach { (albumId, items) ->
-            customDao.deleteAll(
-                ids = items.fastMap { it.id }.toSet(),
-                album = albumId
-            )
-        }
+        customDao.deleteAll(
+            ids = list.fastMap { it.id }.toSet(),
+            album = origin.id
+        )
 
         list.forEach { onItemDone(it.uri) }
 

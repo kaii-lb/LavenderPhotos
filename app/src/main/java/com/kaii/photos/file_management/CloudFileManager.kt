@@ -201,8 +201,8 @@ class CloudFileManager(
                         id = 0L,
                         uri = newName,
                         immichUrl = null,
-                        isImage = false,
-                        albumId = ""
+                        parentPath = "",
+                        isImage = false
                     )
                 )
             )
@@ -234,68 +234,10 @@ class CloudFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         taskId: Int?,
+        origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext true
-
-        if (destination !is AlbumType.Cloud) {
-            throw IllegalArgumentException("Cannot move items between ${AlbumType.Cloud::class.simpleName} and ${destination::class.simpleName}")
-        }
-
-        val taskId = taskId ?: syncTaskDao.insert(
-            task = SyncTask(
-                dateModified = Clock.System.now().epochSeconds,
-                status = SyncTaskStatus.Processing,
-                type = SyncTaskType.Move,
-                destination = destination.id,
-                items = list
-            )
-        )
-
-        customDao.upsertAll(
-            items = list.map {
-                CustomItem(
-                    id = it.id,
-                    album = destination.id
-                )
-            }
-        )
-
-        val origins = list.map { it.albumId }.distinct().filter { it != destination.immichId }
-        origins.forEach { origin ->
-            customDao.deleteAll(
-                ids = list.fastMap { it.id }.toSet(),
-                album = origin
-            )
-        }
-
-        val assetIds = copyItems(
-            context = context,
-            list = list,
-            destination = destination,
-            preserveDate = preserveDate,
-            overrideDisplayName = null,
-            onItemDone = onItemDone
-        ).fastMap { Uuid.parse(it.immichId!!) }
-
-        var success = true
-
-        origins.forEach { origin ->
-            success = success && albumsClient.removeAssets(
-                albumId = Uuid.parse(origin),
-                assetIds = assetIds,
-                accessToken = info.accessToken
-            )
-        }
-
-        syncTaskDao.updateTaskStatus(
-            id = taskId.toInt(),
-            status =
-                if (success) SyncTaskStatus.Synced
-                else SyncTaskStatus.Waiting
-        )
-
-        return@withContext success
+        throw NotImplementedError("Immich does not have this functionality.")
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -337,8 +279,6 @@ class CloudFileManager(
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        val items = list.filter { it.albumId != destination.immichId }
-
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
@@ -351,7 +291,7 @@ class CloudFileManager(
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
-            assetIds = items.fastMap { Uuid.parse(it.immichId!!) },
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
             accessToken = info.accessToken
         ).let { success ->
             syncTaskDao.updateTaskStatus(
@@ -362,9 +302,9 @@ class CloudFileManager(
             )
         }
 
-        items.forEach { onItemDone(it.uri) }
+        list.forEach { onItemDone(it.uri) }
 
-        return@withContext items.fastMap {
+        return@withContext list.fastMap {
             GenericFileManager.CopyResult(
                 id = it.id,
                 immichId = it.immichId

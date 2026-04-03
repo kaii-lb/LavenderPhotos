@@ -139,7 +139,7 @@ class ImmichRepository(
                         dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                         type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
                         absolutePath = "",
-                        parentPath = album.id,
+                        parentPath = "",
                         displayName = asset.originalFileName,
                         mimeType = asset.originalMimeType,
                         immichUrl = "${snapshot.info.endpoint}/api/assets/${asset.id}/original",
@@ -151,7 +151,6 @@ class ImmichRepository(
                 }
 
             val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()
-            val orphans = customDao.getOrphanImmichItems().toSet()
             val added = items.fastMap { it.id }.toSet() - mediaIds
             val deleted = mediaIds - items.fastMap { it.id }.toSet()
 
@@ -168,8 +167,6 @@ class ImmichRepository(
                         )
                     }
                 )
-
-                mediaDao.deleteAll(orphans.map { it.id }.toSet())
             }
         }
     }
@@ -228,21 +225,6 @@ class ImmichRepository(
             count += 1
             onItemDone(count)
         }.size == list.size
-    }
-
-    suspend fun move(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.moveItems(context, list, destination, preserveDate) {
-            count += 1
-            onItemDone(count)
-        }
     }
 
     suspend fun renameAlbum(

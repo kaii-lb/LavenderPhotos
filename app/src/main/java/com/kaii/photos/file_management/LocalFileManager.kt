@@ -200,9 +200,14 @@ class LocalFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         taskId: Int?,
+        origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
+
+        if (origin != null) {
+            throw IllegalArgumentException("${LocalFileManager::class.simpleName} cannot move with a given origin! It should always be null.")
+        }
 
         if (destination !is AlbumType.Folder) {
             throw IllegalArgumentException("Cannot move items between ${AlbumType.Folder::class.simpleName} and ${destination::class.simpleName}")
@@ -248,6 +253,8 @@ class LocalFileManager(
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext emptyList()
+
         when (destination) {
             is AlbumType.Folder -> {
                 copyToLocal(context, list, destination, preserveDate, overrideDisplayName, onItemDone)

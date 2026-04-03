@@ -589,6 +589,8 @@ private fun SinglePhotoViewCommon(
         if (showInfoDialog) {
             // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
             LaunchedEffect(mediaItem) {
+                if (items.itemCount <= 0) return@LaunchedEffect
+
                 val item = items[currentIndex]
 
                 item as PhotoLibraryUIModel.MediaImpl
@@ -708,7 +710,7 @@ private fun BottomBar(
                 floatingActionButton = {
                     val filePermissionManager = rememberFilePermissionManager(
                         onGranted = {
-                            showEditingView() // TODO: support cloud media
+                            showEditingView()
                         },
                         onRejected = {
                             coroutineScope.launch {
@@ -742,9 +744,13 @@ private fun BottomBar(
 
                     FilledIconButton(
                         onClick = {
-                            dirPermissionManager.start(
-                                directories = setOf(currentItem().absolutePath.parent())
-                            )
+                            if (!currentItem().isCloud) {
+                                dirPermissionManager.start(
+                                    directories = setOf(currentItem().absolutePath.parent())
+                                )
+                            } else {
+                                showEditingView() // TODO: support cloud media
+                            }
                         },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = vibrantFloatingToolbarColors().fabContentColor,
@@ -770,7 +776,7 @@ private fun BottomBar(
             ) {
                 IconButton(
                     onClick = {
-                        shareImage(currentItem().uri.toUri(), context)
+                        shareImage(currentItem().uri.toUri(), context) // TODO: support cloud media
                     },
                     enabled = !privacyMode
                 ) {
@@ -790,6 +796,7 @@ private fun BottomBar(
                                     SelectionManager.SelectedItem(
                                         id = item.id,
                                         uri = item.uri,
+                                        immichUrl = item.immichUrl,
                                         isImage = item.type == MediaType.Image,
                                         parentPath = item.parentPath
                                     )
@@ -846,6 +853,7 @@ private fun BottomBar(
                                 SelectionManager.SelectedItem(
                                     id = item.id,
                                     uri = item.uri,
+                                    immichUrl = item.immichUrl,
                                     isImage = item.type == MediaType.Image,
                                     parentPath = item.parentPath
                                 )
@@ -894,6 +902,7 @@ private fun BottomBar(
                             SelectionManager.SelectedItem(
                                 id = item.id,
                                 uri = item.uri,
+                                immichUrl = item.immichUrl,
                                 isImage = item.type == MediaType.Image,
                                 parentPath = item.parentPath
                             )
@@ -901,7 +910,7 @@ private fun BottomBar(
 
                         process(
                             context,
-                            if (doNotTrash) {
+                            if (doNotTrash && !isCustom) {
                                 GenericFileManager.Action.Delete(list = list)
                             } else {
                                 GenericFileManager.Action.Trash(
@@ -922,7 +931,7 @@ private fun BottomBar(
                                 when {
                                     isCustom -> R.string.custom_album_remove_media_desc
 
-                                    doNotTrash -> R.string.media_delete_permanently_confirm
+                                    doNotTrash && !isCustom -> R.string.media_delete_permanently_confirm
 
                                     else -> R.string.media_delete_confirm
                                 }
@@ -941,6 +950,7 @@ private fun BottomBar(
                             SelectionManager.SelectedItem(
                                 id = item.id,
                                 uri = item.uri,
+                                immichUrl = item.immichUrl,
                                 isImage = item.type == MediaType.Image,
                                 parentPath = item.parentPath
                             )
@@ -949,14 +959,10 @@ private fun BottomBar(
                         if (item.isCloud) {
                             process(
                                 context,
-                                if (doNotTrash) {
-                                    GenericFileManager.Action.Delete(list = list)
-                                } else {
-                                    GenericFileManager.Action.Trash(
-                                        list = list,
-                                        trashed = true
-                                    )
-                                }
+                                GenericFileManager.Action.Trash(
+                                    list = list,
+                                    trashed = true
+                                )
                             )
                         } else {
                             trashFilePermissionManager.get(
@@ -976,6 +982,7 @@ private fun BottomBar(
                                 SelectionManager.SelectedItem(
                                     id = item.id,
                                     uri = item.uri,
+                                    immichUrl = item.immichUrl,
                                     isImage = item.type == MediaType.Image,
                                     parentPath = item.parentPath
                                 )
@@ -984,14 +991,10 @@ private fun BottomBar(
                             if (item.isCloud) {
                                 process(
                                     context,
-                                    if (doNotTrash) {
-                                        GenericFileManager.Action.Delete(list = list)
-                                    } else {
-                                        GenericFileManager.Action.Trash(
-                                            list = list,
-                                            trashed = true
-                                        )
-                                    }
+                                    GenericFileManager.Action.Trash(
+                                        list = list,
+                                        trashed = true
+                                    )
                                 )
                             } else {
                                 trashFilePermissionManager.get(

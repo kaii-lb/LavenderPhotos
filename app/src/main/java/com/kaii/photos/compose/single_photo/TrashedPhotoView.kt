@@ -174,6 +174,7 @@ private fun SingleTrashedPhotoViewImpl(
                         SelectionManager.SelectedItem(
                             id = mediaItem.id,
                             uri = mediaItem.uri,
+                            immichUrl = mediaItem.immichUrl,
                             isImage = mediaItem.type == MediaType.Image,
                             parentPath = mediaItem.parentPath
                         )
@@ -376,6 +377,7 @@ private fun BottomBar(
                                     SelectionManager.SelectedItem(
                                         id = item().id,
                                         uri = item().uri,
+                                        immichUrl = item().immichUrl,
                                         isImage = item().type == MediaType.Image,
                                         parentPath = item().parentPath
                                     )

@@ -654,6 +654,7 @@ private fun IconContentImpl(
                 SelectionManager.SelectedItem(
                     id = mediaItem().id,
                     uri = mediaItem().uri,
+                    immichUrl = mediaItem().immichUrl,
                     isImage = mediaItem().type == MediaType.Image,
                     parentPath = mediaItem().parentPath
                 )
@@ -666,12 +667,13 @@ private fun IconContentImpl(
             allowedAlbumsFor = {
                 allowedAlbumsFor(isMoving)
             },
-            onClick = { album ->
+            onClick = { destination ->
                 val item = mediaItem()
                 val list = listOf(
                     SelectionManager.SelectedItem(
                         id = item.id,
                         uri = item.uri,
+                        immichUrl = item.immichUrl,
                         isImage = item.type == MediaType.Image,
                         parentPath = item.parentPath
                     )
@@ -681,10 +683,11 @@ private fun IconContentImpl(
                     context,
                     if (isMoving) GenericFileManager.Action.Move(
                         list = list,
-                        destination = album
+                        origin = album(),
+                        destination = destination
                     ) else GenericFileManager.Action.Copy(
                         list = list,
-                        destination = album
+                        destination = destination
                     )
                 )
             }
@@ -695,7 +698,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode() && !(album() is AlbumType.PlaceHolder && mediaItem().isCloud), // disable cut if we're in search view for a cloud item
+            enabled = !privacyMode() && !mediaItem().isCloud, // disable cut for cloud items
             modifier = modifier
                 .height(48.dp)
         ) {

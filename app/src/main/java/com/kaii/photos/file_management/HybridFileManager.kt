@@ -123,13 +123,18 @@ class HybridFileManager(
         destination: AlbumType,
         preserveDate: Boolean,
         taskId: Int?,
+        origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
+        if (origin != null) {
+            throw IllegalArgumentException("${HybridFileManager::class.simpleName} cannot move with a given origin! It should always be null.")
+        }
+
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         val immichSuccess = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size
-        val localSuccess = localFileManager.moveItems(context, local, destination, preserveDate, taskId, onItemDone)
+        val localSuccess = localFileManager.moveItems(context, local, destination, preserveDate, taskId, origin, onItemDone)
 
         if (immichSuccess && destination.immichId != null) {
             cloudFileManager.setTrashed(

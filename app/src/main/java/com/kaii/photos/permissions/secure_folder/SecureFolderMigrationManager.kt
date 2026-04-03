@@ -165,6 +165,7 @@ class SecureFolderMigrationManager(
                 SelectionManager.SelectedItem(
                     id = it.id,
                     uri = it.uri,
+                    immichUrl = it.immichUrl,
                     isImage = it.type == MediaType.Image,
                     parentPath = it.parentPath
                 )

@@ -159,13 +159,14 @@ class CustomRepository(
     suspend fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
+        origin: AlbumType,
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
     ): Boolean {
         var count = 0
 
-        return fileManager.moveItems(context, list, destination, preserveDate) {
+        return fileManager.moveItems(context, list, destination, preserveDate, null, origin) {
             count += 1
             onItemDone(count)
         }

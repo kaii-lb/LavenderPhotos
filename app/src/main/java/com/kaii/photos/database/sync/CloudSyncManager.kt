@@ -28,7 +28,6 @@ class CloudSyncManager(
                 SyncTaskType.Favourite -> favouriteTask(task = task)
                 SyncTaskType.Delete -> deleteTask(task = task)
                 SyncTaskType.RenameAlbum -> renameAlbumTask(task = task)
-                SyncTaskType.Move -> moveTask(task = task)
                 SyncTaskType.Copy -> copyTask(task = task)
             }
         }
@@ -88,24 +87,6 @@ class CloudSyncManager(
             album = album,
             newName = task.items.first().uri,
             taskId = task.id
-        )
-    }
-
-    private suspend fun moveTask(task: SyncTask) = withContext(Dispatchers.IO) {
-        val album = context.appModule.settings.albums
-            .get()
-            .first()
-            .first { it.id == task.destination }
-
-        cloudFileManager.moveItems(
-            context = context,
-            list = task.items,
-            destination = album,
-            preserveDate = true,
-            taskId = task.id,
-            onItemDone = {
-                // TODO: update progress indicator around pfp?
-            }
         )
     }
 

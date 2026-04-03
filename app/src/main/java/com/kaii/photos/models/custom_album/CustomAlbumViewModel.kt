@@ -179,6 +179,7 @@ class CustomAlbumViewModel(
             move(
                 context = context,
                 list = action.list,
+                origin = action.origin,
                 destination = action.destination
             )
         }
@@ -271,6 +272,7 @@ class CustomAlbumViewModel(
     private fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
+        origin: AlbumType,
         destination: AlbumType
     ) {
         scope.launch {
@@ -291,7 +293,7 @@ class CustomAlbumViewModel(
                 )
             )
 
-            repo.move(context, list, destination, preserveDate.value) {
+            repo.move(context, list, origin, destination, preserveDate.value) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_move_snackbar_body,

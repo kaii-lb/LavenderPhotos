@@ -44,7 +44,7 @@ class SelectionManager(
         val uri: String,
         val immichUrl: String?,
         val isImage: Boolean,
-        val albumId: String
+        val parentPath: String
     ) {
         val immichId: String?
             get() = immichUrl?.split("/")?.dropLast(1)?.last()
@@ -64,9 +64,9 @@ class SelectionManager(
     @OptIn(FlowPreview::class)
     val count = selection.map { it.size }.debounce(25.milliseconds)
 
-    fun toggle(item: PhotoLibraryUIModel, albumId: String) {
+    fun toggle(item: PhotoLibraryUIModel) {
         if (item is PhotoLibraryUIModel.MediaImpl) {
-            toggleMedia(item = item.item, albumId)
+            toggleMedia(item = item.item)
         } else if (item is PhotoLibraryUIModel.Section) {
             toggleSection(timestamp = item.timestamp)
         }
@@ -90,8 +90,7 @@ class SelectionManager(
     }
 
     fun addAll(
-        items: List<PhotoLibraryUIModel?>,
-        albumId: String
+        items: List<PhotoLibraryUIModel?>
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
         if (_selection.values.flatten().size >= 2000) {
@@ -120,7 +119,7 @@ class SelectionManager(
                         uri = it.item.uri,
                         immichUrl = it.item.immichUrl,
                         isImage = it.item.type == MediaType.Image,
-                        albumId = albumId
+                        parentPath = it.item.parentPath
                     )
                 }
 
@@ -138,16 +137,15 @@ class SelectionManager(
         _sections = sections
     }
 
-    fun addMedia(item: MediaStoreData, albumId: String) {
+    fun addMedia(item: MediaStoreData) {
         val key = getMediaKey(item)
 
-        add(item, key, albumId)
+        add(item, key)
     }
 
     fun updateSelection(
         added: List<MediaStoreData>,
-        removed: List<MediaStoreData>,
-        albumId: String
+        removed: List<MediaStoreData>
     ) = scope.launch(Dispatchers.IO) {
         val snapshot = _selection.toMutableMap()
         val sections = _sections.toMutableList()
@@ -164,7 +162,7 @@ class SelectionManager(
                     uri = it.uri,
                     immichUrl = it.immichUrl,
                     isImage = it.type == MediaType.Image,
-                    albumId = albumId
+                    parentPath = it.parentPath
                 )
             }
             snapshot[key] = snapshot[key]!!.distinct()
@@ -214,13 +212,13 @@ class SelectionManager(
         else -> item.getDateTakenDay()
     }
 
-    private fun toggleMedia(item: MediaStoreData, albumId: String) {
+    private fun toggleMedia(item: MediaStoreData) {
         val key = getMediaKey(item)
 
         if (_selection[key]?.any { it.id == item.id } == true) {
             remove(item, key)
         } else {
-            add(item, key, albumId)
+            add(item, key)
         }
     }
 
@@ -256,8 +254,7 @@ class SelectionManager(
 
     private fun add(
         item: MediaStoreData,
-        key: Long,
-        albumId: String
+        key: Long
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
         if (_selection.values.flatten().size >= 2000) {
@@ -283,7 +280,7 @@ class SelectionManager(
                 uri = item.uri,
                 immichUrl = item.immichUrl,
                 isImage = item.type == MediaType.Image,
-                albumId = albumId
+                parentPath = item.parentPath
             )
         )
         snapshot[key] = list.distinct()
@@ -416,7 +413,7 @@ fun rememberSelectionManager(
                                 uri = item.uri,
                                 immichUrl = item.immichUrl,
                                 isImage = item.type == MediaType.Image,
-                                albumId = "" // this is okay since this selection manager is only used in secure folder and trash
+                                parentPath = item.parentPath
                             )
                         } else null
                     } else null

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.util.fastMap
+import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
@@ -27,7 +28,6 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.toSecureMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
-import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaType
@@ -143,9 +143,14 @@ fun SecureFolderViewBottomAppBar(
 
             isGettingPermissions.value = true
 
-            restorePermissionState.start(
-                directories = selectedItemsList.fastMap { it.parentPath.parent() }.distinct().toSet()
-            )
+            context.appModule.scope.launch(Dispatchers.IO) {
+                val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
+                val directories = selectedItemsList.fastMapNotNull {
+                    dao.getOriginalPathFromSecuredPath(securedPath = it.parentPath)
+                }.distinct().toSet()
+
+                restorePermissionState.start(directories = directories)
+            }
         }
 
         IconButton(
