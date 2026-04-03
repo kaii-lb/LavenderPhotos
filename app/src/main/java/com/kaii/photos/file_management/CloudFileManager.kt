@@ -90,6 +90,8 @@ class CloudFileManager(
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (!trashed) {
             throw IllegalArgumentException("Cannot restore files to albums!")
         }
@@ -147,6 +149,8 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         taskId: Int?
     ) = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext
+
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,

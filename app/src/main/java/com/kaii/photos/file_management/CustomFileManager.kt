@@ -42,6 +42,8 @@ class CustomFileManager(
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (!trashed) {
             throw IllegalArgumentException("${CustomFileManager::class.simpleName} cannot restore an item! This should never happen!")
         }

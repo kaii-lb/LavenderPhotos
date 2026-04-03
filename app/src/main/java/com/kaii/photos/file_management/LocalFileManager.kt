@@ -53,6 +53,8 @@ class LocalFileManager(
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext true
+
         if (albumId != null) {
             throw IllegalArgumentException("${LocalFileManager::class.simpleName} should not and does not handle per album media deletion!")
         }
