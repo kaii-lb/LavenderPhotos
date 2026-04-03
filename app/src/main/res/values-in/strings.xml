@@ -534,4 +534,21 @@
     <string name="album_group_delete">Hapus grup ini?</string>
     <string name="album_group_item_count">Sub-album:</string>
     <string name="album_group_info">Info grup album</string>
+    <string name="albums_is_cloud">Album ini hanya tersedia di cloud</string>
+    <string name="settings_storage_export_quality">Kualitas ekspor editor: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Nilai tinggi menghasilkan ukuran gambar yang besar.</string>
+    <string name="media_snackbar_operation_failed">Sinkronisasi Gagal!</string>
+    <string name="media_copy_snackbar_title">Menyalin item…</string>
+    <string name="media_move_snackbar_title">Memindahkan item…</string>
+    <string name="media_delete_snackbar_title">Menghapus item…</string>
+    <string name="media_restoring_snackbar_title">Memulihkan item…</string>
+    <string name="media_copy_snackbar_body">Menyalin %1$d dari %2$d</string>
+    <string name="media_move_snackbar_body">Memindahkan %1$d dari %2$d</string>
+    <string name="media_delete_snackbar_body">Menghapus %1$d dari %2$d</string>
+    <string name="media_restoring_snackbar_body">Memulihkan %1$d dari %2$d</string>
+    <string name="next">Berikutnya</string>
+    <string name="error">Kesalahan!</string>
+    <string name="look_and_feel_vibrate_on_media_click">Getar saat Diklik</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">Apakah mengetuk item media akan mengeluarkan getaran singkat.</string>
+    <string name="exif_date_changer_go_back">Kembali ke pemilih tanggal</string>
 </resources>
