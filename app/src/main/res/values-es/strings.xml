@@ -1056,4 +1056,21 @@
     <string name="album_group_delete">¿Eliminar este grupo?</string>
     <string name="album_group_item_count">Sub-álbumes:</string>
     <string name="album_group_info">Información del grupo de álbumes</string>
+    <string name="exif_date_changer_go_back">Volver al selector de fechas</string>
+    <string name="settings_storage_export_quality">Calidad de exportación del editor: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Los valores altos conducen a tamaños de imagen grandes.</string>
+    <string name="next">Siguiente</string>
+    <string name="error">Error!</string>
+    <string name="albums_is_cloud">Este es un álbum solo en la nube</string>
+    <string name="media_snackbar_operation_failed">Sincronización Fallida!</string>
+    <string name="media_copy_snackbar_title">Copiando elementos…</string>
+    <string name="media_move_snackbar_title">Moviendo elementos…</string>
+    <string name="media_delete_snackbar_title">Eliminando elementos…</string>
+    <string name="media_restoring_snackbar_title">Restaurando elementos…</string>
+    <string name="media_copy_snackbar_body">Copiando %1$d de %2$d</string>
+    <string name="media_move_snackbar_body">Moviendo %1$d de %2$d</string>
+    <string name="media_delete_snackbar_body">Eliminando %1$d de %2$d</string>
+    <string name="media_restoring_snackbar_body">Restaurando %1$d de %2$d</string>
+    <string name="look_and_feel_vibrate_on_media_click">Vibrar al hacer clic</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">Si tocas un elemento multimedia genera una vibración breve.</string>
 </resources>
