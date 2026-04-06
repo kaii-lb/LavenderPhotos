@@ -14,7 +14,6 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -31,7 +30,7 @@ class CustomFileManager(
     override val info: ImmichBasicInfo
 ) : GenericFileManager {
     companion object {
-        private const val TAG = "com.kaii.photos.helpers.file_management.CustomFileManager"
+        private val TAG = CustomFileManager::class.qualifiedName
     }
 
     override suspend fun setTrashed(
@@ -85,20 +84,6 @@ class CustomFileManager(
             val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
             return intentSender
         }
-    }
-
-    override suspend fun renameAlbum(
-        context: Context,
-        album: AlbumType,
-        newName: String,
-        taskId: Int?
-    ) {
-        val settings = context.appModule.settings.albums
-
-        settings.edit(
-            id = album.id,
-            newInfo = (album as AlbumType.Custom).copy(name = newName)
-        )
     }
 
     /** @param destination id of the destination album */

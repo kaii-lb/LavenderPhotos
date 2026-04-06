@@ -69,6 +69,7 @@ class MediaRepository(
     }
 
     private var fileManager = HybridFileManager(
+        isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -125,6 +126,7 @@ class MediaRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = HybridFileManager(
+                        isCustom = false,
                         mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,

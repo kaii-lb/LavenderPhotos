@@ -60,6 +60,7 @@ class HybridRepository(
     }
 
     private var fileManager = HybridFileManager(
+        isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -108,6 +109,7 @@ class HybridRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = HybridFileManager(
+                        isCustom = false,
                         mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,

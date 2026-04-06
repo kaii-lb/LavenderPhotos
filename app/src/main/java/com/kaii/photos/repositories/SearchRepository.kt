@@ -97,6 +97,7 @@ class SearchRepository(
     )
 
     private var fileManager = HybridFileManager(
+        isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -117,6 +118,7 @@ class SearchRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = HybridFileManager(
+                        isCustom = false,
                         mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,

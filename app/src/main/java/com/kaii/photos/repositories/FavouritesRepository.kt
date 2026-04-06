@@ -49,6 +49,7 @@ class FavouritesRepository(
     }
 
     private var fileManager = HybridFileManager(
+        isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -94,6 +95,7 @@ class FavouritesRepository(
                 .distinctUntilChanged()
                 .collectLatest { info ->
                     fileManager = HybridFileManager(
+                        isCustom = false,
                         mediaDao = mediaDao,
                         customDao = customDao,
                         syncTaskDao = syncTaskDao,

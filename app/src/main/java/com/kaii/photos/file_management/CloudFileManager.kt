@@ -14,7 +14,6 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
@@ -210,20 +209,19 @@ class CloudFileManager(
                     )
                 )
             )
-        )
+        ).toInt()
 
-        context.appModule.settings.albums.edit(
-            id = album.id,
-            newInfo = (album as AlbumType.Cloud).copy(name = newName)
-        )
+        super.renameAlbum(context, album, newName, taskId)
 
         albumsClient.rename(
-            id = Uuid.parse(album.immichId),
+            id = Uuid.parse(
+                uuidString = (album as AlbumType.Cloud).immichId
+            ),
             newName = newName,
             accessToken = info.accessToken
         ).let { success ->
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting

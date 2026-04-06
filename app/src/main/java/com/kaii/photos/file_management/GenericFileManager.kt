@@ -2,11 +2,14 @@ package com.kaii.photos.file_management
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.app.RecoverableSecurityException
+import android.content.ContentValues
 import android.content.Context
 import android.content.IntentSender
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
@@ -20,6 +23,7 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
@@ -53,6 +57,10 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 interface GenericFileManager {
+    companion object {
+        private val TAG = GenericFileManager::class.qualifiedName
+    }
+
     interface Action {
         data class Copy(
             val list: List<SelectionManager.SelectedItem>,
@@ -162,18 +170,48 @@ interface GenericFileManager {
         }
     }
 
+    /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
     fun renameItem(
         context: Context,
         uri: String,
         newName: String
-    ): IntentSender?
+    ): IntentSender? {
+        val contentResolver = context.contentResolver
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, newName)
+        }
+
+        try {
+            contentResolver.update(uri.toUri(), contentValues, null)
+            contentResolver.notifyChange(uri.toUri(), null)
+
+            return null
+        } catch (securityException: SecurityException) {
+            Log.e(TAG, securityException.toString())
+            securityException.printStackTrace()
+
+            val recoverableSecurityException =
+                securityException as? RecoverableSecurityException ?: throw RuntimeException(securityException.message, securityException)
+
+            val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
+            return intentSender
+        }
+    }
 
     suspend fun renameAlbum(
         context: Context,
         album: AlbumType,
         newName: String,
         taskId: Int? = null
-    )
+    ) {
+        val settings = context.appModule.settings.albums
+
+        settings.edit(
+            id = album.id,
+            newInfo = (album as AlbumType.Custom).copy(name = newName)
+        )
+    }
 
     suspend fun getExifData(
         context: Context,

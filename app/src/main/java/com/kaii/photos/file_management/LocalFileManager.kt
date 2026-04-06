@@ -1,34 +1,22 @@
 package com.kaii.photos.file_management
 
-import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
-import android.content.IntentSender
-import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.EXTERNAL_DOCUMENTS_AUTHORITY
-import com.kaii.photos.helpers.baseInternalStorageDirectory
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.helpers.toRelativePath
-import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
@@ -42,7 +30,7 @@ class LocalFileManager(
     override val info: ImmichBasicInfo
 ) : GenericFileManager {
     companion object {
-        private const val TAG = "com.kaii.photos.helpers.file_management.LocalFileManager"
+        private val TAG = LocalFileManager::class.qualifiedName
     }
 
     override suspend fun setTrashed(
@@ -88,111 +76,6 @@ class LocalFileManager(
             e.printStackTrace()
 
             false
-        }
-    }
-
-    /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
-    override fun renameItem(
-        context: Context,
-        uri: String,
-        newName: String
-    ): IntentSender? {
-        val contentResolver = context.contentResolver
-
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, newName)
-        }
-
-        try {
-            contentResolver.update(uri.toUri(), contentValues, null)
-            contentResolver.notifyChange(uri.toUri(), null)
-
-            return null
-        } catch (securityException: SecurityException) {
-            Log.e(TAG, securityException.toString())
-            securityException.printStackTrace()
-
-            val recoverableSecurityException =
-                securityException as? RecoverableSecurityException ?: throw RuntimeException(securityException.message, securityException)
-
-            val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
-            return intentSender
-        }
-    }
-
-    override suspend fun renameAlbum(
-        context: Context,
-        album: AlbumType,
-        newName: String,
-        taskId: Int?
-    ): Unit = withContext(Dispatchers.IO) {
-        if (album is AlbumType.Folder && album.paths.size == 1) {
-            val basePath = album.paths.first().toBasePath()
-            val currentVolumes = MediaStore.getExternalVolumeNames(context)
-            val volumeName =
-                if (basePath == baseInternalStorageDirectory) "primary"
-                else currentVolumes.find {
-                    val possible =
-                        basePath.replace("/storage/", "").removeSuffix("/")
-                    it == possible || it == possible.lowercase()
-                }
-
-            val relativePath = album.paths.first().toRelativePath(true)
-            try {
-                val dir =
-                    DocumentsContract.buildTreeDocumentUri(
-                        EXTERNAL_DOCUMENTS_AUTHORITY,
-                        "$volumeName:$relativePath"
-                    )
-
-                Log.d(TAG, "Dir is $dir")
-
-                val newDirectory = DocumentFile.fromTreeUri(context, dir)
-                newDirectory?.renameTo(newName)
-            } catch (e: Throwable) {
-                Log.e(TAG, "Couldn't rename directory $volumeName:$relativePath to $newName")
-                e.printStackTrace()
-            }
-
-            val newInfo = album.copy(
-                name = newName,
-                paths = setOf(album.paths.first().replace(album.name, newName))
-            )
-
-            val albums = context.appModule.settings.albums.get().first()
-            albums.filterIsInstance<AlbumType.Folder>().filter { child ->
-                child.paths.any { it.startsWith(album.paths.first()) }
-            }.forEach { child ->
-                context.appModule.settings.albums.edit(
-                    child.id,
-                    child.copy(
-                        paths = child.paths.map {
-                            if (it.startsWith(album.paths.first())) it.replace(album.paths.first(), newInfo.paths.first())
-                            else it
-                        }.toSet()
-                    )
-                )
-            }
-
-            context.appModule.settings.albums.edit(album.id, newInfo)
-
-            try {
-                context.contentResolver.releasePersistableUriPermission(
-                    context.getExternalStorageContentUriFromAbsolutePath(
-                        absolutePath = newInfo.paths.first(),
-                        trimDoc = true
-                    ),
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-            } catch (e: Throwable) {
-                Log.d(TAG, "Couldn't release permission for ${newInfo.paths.first()}")
-                e.printStackTrace()
-            }
-        } else {
-            context.appModule.settings.albums.edit(
-                id = album.id,
-                newInfo = (album as AlbumType.Folder).copy(name = newName)
-            )
         }
     }
 
