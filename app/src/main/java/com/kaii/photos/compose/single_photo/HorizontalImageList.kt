@@ -41,6 +41,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.transformable
@@ -67,6 +68,7 @@ import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import java.io.File
+import kotlin.time.Clock
 
 private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageList"
 
@@ -355,7 +357,11 @@ fun GlideView(
         modifier = modifier
             .fillMaxSize()
     ) {
-        it.signature(item.signature())
+        it
+            .signature(
+                if (useCache) item.signature()
+                else ObjectKey(Clock.System.now().toEpochMilliseconds())
+            )
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .downsample(DownsampleStrategy.FIT_CENTER)
             .error(if (isHidden) R.drawable.empty_image else R.drawable.broken_image)

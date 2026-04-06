@@ -43,4 +43,4 @@ fun MediaStoreData.isRawImage(): Boolean {
     return this.mimeType.lowercase() in rawTypes
 }
 
-fun MediaStoreData.signature() = ObjectKey(dateTaken + dateModified + absolutePath.hashCode() + id + mimeType.hashCode())
+fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())
