@@ -101,6 +101,9 @@ fun OpenWithContent(
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = true,
         onPlaybackStateChanged = {},
+        onControlsTimeout = {
+            appBarsVisible.value = false
+        }
     )
 
     Scaffold(

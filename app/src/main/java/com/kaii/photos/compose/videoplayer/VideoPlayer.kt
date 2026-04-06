@@ -71,7 +71,6 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
@@ -160,24 +159,6 @@ fun VideoPlayer(
         state.release(context)
 
         (context as Activity).finish()
-    }
-
-    var showVideoPlayerControlsTimeout by remember { mutableIntStateOf(0) }
-    LaunchedEffect(showVideoPlayerControlsTimeout) {
-        delay(VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT)
-        setBarVisibility(
-            visible = false,
-            window = window
-        ) {
-            appBarsVisible.value = it
-            state.controlsVisible = it
-        }
-
-        showVideoPlayerControlsTimeout = 0
-    }
-
-    LaunchedEffect(state.controlsVisible) {
-        if (state.controlsVisible) showVideoPlayerControlsTimeout += 1
     }
 
     Box(
@@ -270,6 +251,7 @@ fun VideoPlayer(
                                 }
 
                                 state.controlsVisible = !state.controlsVisible
+                                state.delayHide()
                             } else if (!scrollState.videoLock && doubleTapDisplayTimeMillis != 0) {
                                 if (position.x < size.width / 2) {
                                     if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
@@ -285,7 +267,7 @@ fun VideoPlayer(
                                     state.seekForward()
                                 }
 
-                                showVideoPlayerControlsTimeout += 1
+                                state.delayHide()
                             }
                         },
 
@@ -302,7 +284,7 @@ fun VideoPlayer(
                                 state.seekForward()
                             }
 
-                            showVideoPlayerControlsTimeout += 1
+                            state.delayHide()
                         }
                     )
                 }
@@ -425,6 +407,9 @@ fun VideoPlayer(
                 isMuted = {
                     state.isMuted
                 },
+                isRepeatModeOn = {
+                    state.isRepeatModeOn
+                },
                 currentVideoPosition = {
                     state.currentPosition
                 },
@@ -440,7 +425,7 @@ fun VideoPlayer(
                 modifier = Modifier
                     .fillMaxSize(1f),
                 onAnyTap = {
-                    showVideoPlayerControlsTimeout += 1
+                    state.delayHide()
                 },
                 togglePlayPause = {
                     if (state.isPlaying) state.pause()
@@ -450,7 +435,8 @@ fun VideoPlayer(
                 seekForward = state::seekForward,
                 seekTo = state::seekTo,
                 toggleMute = state::toggleMute,
-                setPlaybackSpeed = state::setPlaybackSpeed
+                toggleRepeatMode = state::toggleRepeatMode,
+                setPlaybackSpeed = state::setPlaybackSpeed,
             )
         }
 
@@ -471,7 +457,7 @@ fun VideoPlayer(
                     checked = scrollState.videoLock,
                     onCheckedChange = {
                         scrollState.setVideoLock(it)
-                        showVideoPlayerControlsTimeout += 1
+                        state.delayHide()
                     },
                     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
                         checkedContainerColor = MaterialTheme.colorScheme.primary,
@@ -510,7 +496,7 @@ fun VideoPlayer(
                                     appBarsVisible.value = it
                                 }
 
-                                showVideoPlayerControlsTimeout += 1
+                                state.delayHide()
                                 scrollState.setVideoLock(false)
                             },
                             colors = IconButtonDefaults.filledTonalIconButtonColors().copy(

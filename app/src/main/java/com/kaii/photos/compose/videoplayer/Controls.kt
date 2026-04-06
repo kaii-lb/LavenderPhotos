@@ -38,6 +38,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 fun VideoPlayerControls(
     isPlaying: () -> Boolean,
     isMuted: () -> Boolean,
+    isRepeatModeOn: () -> Boolean,
     currentVideoPosition: () -> Float,
     duration: () -> Float,
     title: () -> String,
@@ -49,6 +50,7 @@ fun VideoPlayerControls(
     seekForward: () -> Unit,
     seekTo: (position: Long) -> Unit,
     toggleMute: () -> Unit,
+    toggleRepeatMode: () -> Unit,
     setPlaybackSpeed: (speed: Float) -> Unit
 ) {
     BoxWithConstraints(
@@ -84,7 +86,7 @@ fun VideoPlayerControls(
 
         Row(
             modifier = Modifier
-                .height(if (isLandscape) 48.dp else 172.dp)
+                .height(if (isLandscape) 72.dp else 196.dp)
                 .align(Alignment.BottomCenter),
             verticalAlignment = Alignment.Top
         ) {
@@ -92,10 +94,12 @@ fun VideoPlayerControls(
                 currentVideoPosition = currentVideoPosition,
                 duration = duration,
                 isMuted = isMuted,
+                isRepeatModeOn = isRepeatModeOn,
                 playbackSpeed = playbackSpeed,
                 onAnyTap = onAnyTap,
                 seekTo = seekTo,
                 toggleMute = toggleMute,
+                toggleRepeatMode = toggleRepeatMode,
                 setPlaybackSpeed = setPlaybackSpeed
             )
         }

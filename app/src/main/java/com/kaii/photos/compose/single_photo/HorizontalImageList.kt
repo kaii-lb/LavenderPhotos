@@ -91,6 +91,9 @@ fun HorizontalImageList(
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = false,
         onPlaybackStateChanged = {},
+        onControlsTimeout = {
+            appBarsVisible.value = false
+        }
     )
 
     HorizontalPager(

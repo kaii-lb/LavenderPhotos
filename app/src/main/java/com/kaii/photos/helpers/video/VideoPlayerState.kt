@@ -13,6 +13,8 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.Effect
 import androidx.media3.common.Format
 import androidx.media3.common.VideoSize
@@ -22,6 +24,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +47,7 @@ class VideoPlayerState(
     private val coroutineScope: CoroutineScope,
     private val muteOnStartFlow: Flow<Boolean>,
     private val isOpenWithView: Boolean,
+    private val onControlsTimeout: () -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
 ) {
     companion object {
@@ -51,9 +55,11 @@ class VideoPlayerState(
     }
 
     private var playingJob: Job? = null
+    private var timeoutJob: Job? = null
     private var currentSource = ""
     private var autoPlay = false
-    private var loop = true // default to true to avoid autoplaying when we don't mean it (motionphoto)
+    private var loop = true // default to true to avoid autoplaying when we don't mean it (motion-photo)
+    private var hideTimeout = 0L
 
     /** In Seconds */
     var currentPosition by mutableFloatStateOf(0f)
@@ -64,6 +70,8 @@ class VideoPlayerState(
     var isMuted by mutableStateOf(true)
         private set
     var isPlaying by mutableStateOf(false)
+        private set
+    var isRepeatModeOn by mutableStateOf(false)
         private set
 
     var controlsVisible by mutableStateOf(true)
@@ -120,6 +128,11 @@ class VideoPlayerState(
 
     fun resetMute() = coroutineScope.launch {
         isMuted = muteOnStartFlow.first() && !isOpenWithView
+    }
+
+    fun toggleRepeatMode() {
+        isRepeatModeOn = !isRepeatModeOn
+        player.setRepeatMode(isRepeatModeOn)
     }
 
     fun release(context: Context) {
@@ -185,6 +198,26 @@ class VideoPlayerState(
         }
     }
 
+    private suspend fun startTimeout() {
+        while (hideTimeout > 0) {
+            delay(1000)
+            hideTimeout -= 1000
+        }
+
+        if (!isPlaying) return
+
+        controlsVisible = false
+        onControlsTimeout()
+    }
+
+    fun delayHide() {
+        timeoutJob?.cancel()
+        timeoutJob = coroutineScope.launch {
+            hideTimeout = VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT
+            startTimeout()
+        }
+    }
+
     fun play() {
         if (!shouldPlay()) return
 
@@ -195,20 +228,26 @@ class VideoPlayerState(
 
         playingJob?.cancel()
         playingJob = coroutineScope.launch {
+            delayHide()
+
             while (isPlaying && shouldPlay()) {
                 currentPosition = player.currentPosition
 
                 delay(250)
 
-                if (ceil(currentPosition) >= ceil(duration) && duration != 0f && isPlaying && !loop) {
-                    launch {
-                        controlsVisible = true
-                        isPlaying = false
-                        delay(2000)
-                        player.pause()
-                        player.seekTo(0)
-                        currentPosition = 0f
-                    }
+                if (ceil(currentPosition) >= ceil(duration) &&
+                    duration != 0f &&
+                    isPlaying &&
+                    !loop &&
+                    !isRepeatModeOn
+                ) launch {
+                    controlsVisible = true
+                    isPlaying = false
+                    delay(2000)
+                    delayHide()
+                    player.pause()
+                    player.seekTo(0)
+                    currentPosition = 0f
                 }
             }
         }
@@ -220,6 +259,7 @@ class VideoPlayerState(
         playingJob?.cancel()
         playingJob = null
 
+        delayHide()
         player.pause()
 
         if (currentPosition > 0f) player.setScrubbingModeEnabled(true)
@@ -264,6 +304,7 @@ class VideoPlayerState(
 @Composable
 fun retainVideoPlayerState(
     isOpenWithView: Boolean,
+    onControlsTimeout: () -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
 ): VideoPlayerState {
     val context = LocalContext.current
@@ -277,8 +318,14 @@ fun retainVideoPlayerState(
             muteOnStartFlow = settings.video.getMuteOnStart(),
             autoPlayFlow = settings.video.getShouldAutoPlay(),
             isOpenWithView = isOpenWithView,
+            onControlsTimeout = onControlsTimeout,
             onPlaybackStateChanged = onPlaybackStateChanged
         )
+    }
+
+    // pause video when activity goes into background or another activity displays on top of it
+    LifecycleEventEffect(event = Lifecycle.Event.ON_PAUSE) {
+        state.pause()
     }
 
     RetainedEffect(state) {

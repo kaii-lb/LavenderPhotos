@@ -3,6 +3,7 @@ package com.kaii.photos.compose.videoplayer
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,9 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,7 +37,6 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
-import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.formatLikeANormalPerson
 import kotlin.math.roundToInt
@@ -47,104 +48,72 @@ fun VideoPlayerControllerBottomControls(
     currentVideoPosition: () -> Float,
     duration: () -> Float,
     isMuted: () -> Boolean,
+    isRepeatModeOn: () -> Boolean,
     playbackSpeed: () -> Float,
     onAnyTap: () -> Unit,
     seekTo: (position: Long) -> Unit,
     toggleMute: () -> Unit,
+    toggleRepeatMode: () -> Unit,
     setPlaybackSpeed: (speed: Float) -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .wrapContentHeight()
-            .padding(16.dp, 0.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+        horizontalAlignment = Alignment.End
     ) {
-        val currentDurationFormatted =
-            currentVideoPosition().roundToInt().seconds.formatLikeANormalPerson()
-
-        // video progress
         Row(
             modifier = Modifier
-                .height(32.dp)
-                .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
-                .clip(RoundedCornerShape(1000.dp))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(4.dp, 0.dp),
+                .wrapContentSize(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = currentDurationFormatted.first,
-                style = TextStyle(
-                    fontSize = TextUnit(12f, TextUnitType.Sp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                ),
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 8.dp,
+                alignment = Alignment.End
             )
-        }
-
-
-        VideoPlayerSeekbar(
-            currentPosition = currentVideoPosition,
-            duration = duration,
-            modifier = Modifier
-                .weight(1f)
-        ) { pos ->
-            onAnyTap()
-
-            seekTo(
-                (pos * 1000f).coerceAtMost(duration() * 1000f).toLong()
-            )
-        }
-
-        val formattedDuration =
-            duration().coerceAtLeast(0f).roundToInt().seconds.formatLikeANormalPerson()
-
-        // total duration
-        Row(
-            modifier = Modifier
-                .height(32.dp)
-                .width(if (formattedDuration.second) 72.dp else 48.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(1000.dp))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(4.dp, 0.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = formattedDuration.first,
-                style = TextStyle(
-                    fontSize = TextUnit(12f, TextUnitType.Sp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-            )
-        }
+            // repeat mode button
+            FilledTonalIconToggleButton(
+                checked = isRepeatModeOn(),
+                onCheckedChange = {
+                    toggleRepeatMode()
 
-        // mute button
-        FilledTonalIconButton(
-            onClick = {
-                toggleMute()
-
-                onAnyTap()
-            },
-            modifier = Modifier
-                .size(32.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = if (isMuted()) R.drawable.volume_mute else R.drawable.volume_max),
-                contentDescription = stringResource(id = R.string.video_mute_toggle),
+                    onAnyTap()
+                },
                 modifier = Modifier
-                    .size(24.dp)
-            )
-        }
+                    .size(32.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = if (isRepeatModeOn()) R.drawable.repeat_one else R.drawable.repeat),
+                    contentDescription = stringResource(id = R.string.video_mute_toggle),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
 
-        val isLandscape by rememberDeviceOrientation()
-        if (isLandscape) {
+            // mute button
+            FilledTonalIconToggleButton(
+                checked = isMuted(),
+                onCheckedChange = {
+                    toggleMute()
+
+                    onAnyTap()
+                },
+                modifier = Modifier
+                    .size(32.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = if (isMuted()) R.drawable.volume_mute else R.drawable.volume_max),
+                    contentDescription = stringResource(id = R.string.video_mute_toggle),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+
+
             var currentPlaybackSpeed by remember { mutableFloatStateOf(playbackSpeed()) }
 
+            // speed button
             FilledTonalButton(
                 onClick = {
                     val new =
@@ -168,6 +137,76 @@ fun VideoPlayerControllerBottomControls(
                     text = "${currentPlaybackSpeed}X",
                     fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
                     fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val currentDurationFormatted =
+                currentVideoPosition().roundToInt().seconds.formatLikeANormalPerson()
+
+            // video progress
+            Row(
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(if (currentDurationFormatted.second) 72.dp else 48.dp)
+                    .clip(RoundedCornerShape(1000.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .padding(4.dp, 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = currentDurationFormatted.first,
+                    style = TextStyle(
+                        fontSize = TextUnit(12f, TextUnitType.Sp),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center,
+                    ),
+                )
+            }
+
+
+            VideoPlayerSeekbar(
+                currentPosition = currentVideoPosition,
+                duration = duration,
+                modifier = Modifier
+                    .weight(1f)
+            ) { pos ->
+                onAnyTap()
+
+                seekTo(
+                    (pos * 1000f).coerceAtMost(duration() * 1000f).toLong()
+                )
+            }
+
+            val formattedDuration =
+                duration().coerceAtLeast(0f).roundToInt().seconds.formatLikeANormalPerson()
+
+            // total duration
+            Row(
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(if (formattedDuration.second) 72.dp else 48.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(1000.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .padding(4.dp, 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = formattedDuration.first,
+                    style = TextStyle(
+                        fontSize = TextUnit(12f, TextUnitType.Sp),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center,
+                    )
                 )
             }
         }

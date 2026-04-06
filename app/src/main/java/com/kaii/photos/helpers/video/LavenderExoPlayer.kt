@@ -137,6 +137,16 @@ class LavenderExoPlayer(
         exoPlayer.isScrubbingModeEnabled = enabled
     }
 
+    fun setRepeatMode(value: Boolean) {
+        if (value) {
+            exoPlayer.pauseAtEndOfMediaItems = false
+            exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+        } else {
+            exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
+            exoPlayer.pauseAtEndOfMediaItems = true
+        }
+    }
+
     /** @param uri either the content uri of a local media item or the link to the **original** cloud media
      * @param isNetworked whether this is a cloud media item or not
      * @param accessToken self-explanatory, should not be null if [isNetworked] is true*/
@@ -152,13 +162,7 @@ class LavenderExoPlayer(
         if (exoPlayer.isCommandAvailable(Player.COMMAND_STOP)) exoPlayer.stop()
         if (exoPlayer.isCommandAvailable(Player.COMMAND_CHANGE_MEDIA_ITEMS)) exoPlayer.clearMediaItems()
 
-        if (loop) {
-            exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-            exoPlayer.pauseAtEndOfMediaItems = false
-        } else {
-            exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-            exoPlayer.pauseAtEndOfMediaItems = true
-        }
+        setRepeatMode(loop)
 
         val source = if (!isNetworked) {
             val factory = DefaultDataSource.Factory(context)

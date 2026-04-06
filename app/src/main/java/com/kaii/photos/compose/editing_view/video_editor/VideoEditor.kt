@@ -145,6 +145,7 @@ fun VideoEditorImpl(
     var exoPlayerLoading by remember { mutableStateOf(true) }
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = isFromOpenWithView,
+        onControlsTimeout = {},
         onPlaybackStateChanged = { playbackState ->
             if (exoPlayerLoading) {
                 exoPlayerLoading = playbackState == ExoPlayer.STATE_BUFFERING
