@@ -76,6 +76,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.image_editor.ImageEditorBottomBar
@@ -105,6 +106,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Clock
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -246,6 +248,9 @@ fun ImageEditor(
                             Glide.with(context)
                                 .asBitmap()
                                 .load(uri)
+                                .skipMemoryCache(true)
+                                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))
                                 .override(Target.SIZE_ORIGINAL)
                                 .submit()
                                 .get()
@@ -277,22 +282,32 @@ fun ImageEditor(
                             )
                     }
 
-                    if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
+                    if (navMediaId == -1L || overwrite) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.remove<Int>("editIndex")
+                    } else {
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set("editIndex", 0)
+                    }
 
+                    if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
                         navController.popBackStack()
                     }
                 },
                 navigateBack = {
-                    if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
+                    if (navMediaId == -1L || overwrite) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.remove<Int>("editIndex")
+                    } else {
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set("editIndex", 0)
+                    }
 
-                        navController.popBackStack()
-                    } else {
+                    if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                         navController.popBackStack()
                     }
                 }

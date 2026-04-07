@@ -451,8 +451,10 @@ private fun SinglePhotoViewCommon(
         )
     }
 
-    LaunchedEffect(rememberUpdatedState(startIndex).value) {
-        state.scrollToPage(startIndex)
+    val updatedStartIndex by rememberUpdatedState(startIndex)
+    LaunchedEffect(updatedStartIndex, items.itemCount > 0) {
+        state.scrollToPage(updatedStartIndex)
+        println("SCROLL $updatedStartIndex")
     }
 
     val context = LocalContext.current

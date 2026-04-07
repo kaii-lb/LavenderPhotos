@@ -80,6 +80,7 @@ fun VideoEditorTopBar(
 ) {
     val navController = LocalNavController.current
     var navMediaId by remember { mutableLongStateOf(-1L) }
+    var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
     TopAppBar(
         title = {},
@@ -103,13 +104,19 @@ fun VideoEditorTopBar(
                 val coroutineScope = rememberCoroutineScope()
                 FilledTonalIconButton(
                     onClick = {
-                        if (lastSavedModCount.intValue < modifications.size) {
-                            showDialog.value = true
-                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
+                        if (navMediaId == -1L || overwrite) {
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.remove<Int>("editIndex")
+                        } else {
                             navController.previousBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("editIndex", 0)
+                        }
 
+                        if (lastSavedModCount.intValue < modifications.size) {
+                            showDialog.value = true
+                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                             navController.popBackStack()
                         } else {
                             navController.popBackStack()
@@ -133,7 +140,6 @@ fun VideoEditorTopBar(
         },
         actions = {
             var showDropDown by remember { mutableStateOf(false) }
-            var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
             DropdownMenu(
                 expanded = showDropDown,
@@ -208,6 +214,17 @@ fun VideoEditorTopBar(
                                 }
 
                                 delay(PhotoGridConstants.UPDATE_TIME * 2)
+
+                                if (navMediaId == -1L || overwrite) {
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.remove<Int>("editIndex")
+                                } else {
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set("editIndex", 0)
+                                }
+
                                 if (customAlbumId != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
                                     MediaDatabase.getInstance(context)
                                         .customDao()
@@ -222,10 +239,6 @@ fun VideoEditorTopBar(
                                 }
 
                                 if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set("editIndex", 0)
-
                                     navController.popBackStack()
                                 }
                             }
