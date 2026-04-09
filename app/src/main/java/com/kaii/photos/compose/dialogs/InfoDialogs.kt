@@ -137,30 +137,18 @@ fun SingleSecurePhotoInfoDialog(
 
             LaunchedEffect(currentMediaItem) {
                 withContext(Dispatchers.IO) {
-                    showLoadingDialog = true
+                    val threshold = 500
 
                     val file = if (currentMediaItem.item.type == MediaType.Video) {
+                        showLoadingDialog = true
                         val originalFile = File(currentMediaItem.item.absolutePath)
                         val cachedFile = getSecureDecryptedVideoFile(
-                            name = currentMediaItem.item.displayName,
+                            name = originalFile.name,
                             context = context
                         )
 
-                        if (!cachedFile.exists()) {
-                            val iv = currentMediaItem.bytes?.getIv()
-
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${currentMediaItem.item.displayName} was null, aborting")
-                                return@withContext
-                            }
-                            EncryptionManager.decryptVideo(
-                                absolutePath = originalFile.absolutePath,
-                                iv = iv,
-                                context = context,
-                                progress = {}
-                            )
-                        } else if (cachedFile.length() < originalFile.length()) {
-                            while (cachedFile.length() < originalFile.length()) {
+                        if (cachedFile.length() < originalFile.length()) {
+                            while (cachedFile.length() + threshold < originalFile.length()) {
                                 delay(100)
                             }
 
@@ -190,7 +178,6 @@ fun SingleSecurePhotoInfoDialog(
 
                             cachedFile
                         } else if (cachedFile.length() < originalFile.length()) {
-                            val threshold = 500
                             while (cachedFile.length() + threshold < originalFile.length()) {
                                 delay(100)
                             }
@@ -209,6 +196,7 @@ fun SingleSecurePhotoInfoDialog(
                         fallback = currentMediaItem.item.dateModified
                     ).toMutableMap().apply {
                         set(MediaData.Path, currentMediaItem.item.parentPath)
+                        set(MediaData.Name, currentMediaItem.item.displayName)
                     }
                 }
             }

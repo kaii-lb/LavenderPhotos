@@ -3,6 +3,7 @@ package com.kaii.photos.repositories
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.os.FileObserver
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -44,6 +45,10 @@ class SecureRepository(
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
 ) {
+    companion object {
+        private val TAG = SecureRepository::class.qualifiedName
+    }
+
     private data class Params(
         val items: List<PhotoLibraryUIModel.SecuredMedia>,
         override val sortMode: MediaItemSortMode,
@@ -161,8 +166,15 @@ class SecureRepository(
             val duration = if (type == MediaType.Video) {
                 // thanks to IvanCarapovic
                 // https://github.com/IvanCarapovic/LavenderPhotos/blob/22494d0684ce3dc6f7b6f01ee0a8f41f31787dcd/app/src/main/java/com/kaii/photos/compose/grids/PhotoGridView.kt#L517
-                metadataRetriever.setDataSource(file.absolutePath)
-                metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+                try {
+                    metadataRetriever.setDataSource(file.absolutePath)
+                    metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+                } catch (e: RuntimeException) {
+                    Log.e(TAG, e.toString())
+                    Log.e(TAG, "The failing file was ${file.absolutePath}")
+                    e.printStackTrace()
+                    null
+                }
             } else null
 
             val item = MediaStoreData(
