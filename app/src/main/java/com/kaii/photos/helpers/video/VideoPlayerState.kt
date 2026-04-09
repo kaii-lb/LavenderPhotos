@@ -34,7 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -46,6 +46,7 @@ class VideoPlayerState(
     autoPlayFlow: Flow<Boolean>,
     private val coroutineScope: CoroutineScope,
     private val muteOnStartFlow: Flow<Boolean>,
+    private val loopFlow: Flow<Int>,
     private val isOpenWithView: Boolean,
     private val onControlsTimeout: () -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
@@ -80,10 +81,21 @@ class VideoPlayerState(
     var videoTitle by mutableStateOf("")
         private set
 
-    private val player = LavenderExoPlayer(
+    private val player: LavenderExoPlayer = LavenderExoPlayer(
         context = context,
         onDurationChanged = { new ->
             duration = new
+
+            coroutineScope.launch {
+                isRepeatModeOn =
+                    when (loopFlow.last()) {
+                        0 -> false
+                        1 -> new <= 30f
+                        else -> true
+                    }
+
+                player.setRepeatMode(isRepeatModeOn)
+            }
         },
         onCurrentPositionChanged = { new ->
             currentPosition = new
@@ -119,6 +131,19 @@ class VideoPlayerState(
                 }
             }
         }
+
+        coroutineScope.launch {
+            loopFlow.collectLatest {
+                isRepeatModeOn =
+                    when (it) {
+                        0 -> false
+                        1 -> player.duration <= 30f
+                        else -> true
+                    }
+
+                player.setRepeatMode(isRepeatModeOn)
+            }
+        }
     }
 
     fun toggleMute() {
@@ -127,7 +152,7 @@ class VideoPlayerState(
     }
 
     fun resetMute() = coroutineScope.launch {
-        isMuted = muteOnStartFlow.first() && !isOpenWithView
+        isMuted = muteOnStartFlow.last() && !isOpenWithView
     }
 
     fun toggleRepeatMode() {
@@ -196,6 +221,15 @@ class VideoPlayerState(
         if (shouldPlay() && autoPlay && !loop) {
             play()
         }
+
+        isRepeatModeOn =
+            when (loopFlow.last()) {
+                0 -> false
+                1 -> player.duration <= 30f
+                else -> true
+            }
+
+        player.setRepeatMode(isRepeatModeOn)
     }
 
     private suspend fun startTimeout() {
@@ -317,6 +351,7 @@ fun retainVideoPlayerState(
             coroutineScope = coroutineScope,
             muteOnStartFlow = settings.video.getMuteOnStart(),
             autoPlayFlow = settings.video.getShouldAutoPlay(),
+            loopFlow = settings.behaviour.getLoopVideos(),
             isOpenWithView = isOpenWithView,
             onControlsTimeout = onControlsTimeout,
             onPlaybackStateChanged = onPlaybackStateChanged

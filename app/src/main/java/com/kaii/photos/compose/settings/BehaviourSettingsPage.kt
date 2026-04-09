@@ -24,10 +24,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -44,6 +47,7 @@ fun BehaviourSettingsPage(
     val overwriteByDefault by settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
     val exitOnSave by settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
     val exitImmediately by settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
+    val loopVideos by settings.behaviour.getLoopVideos().collectAsStateWithLifecycle(initialValue = 0)
 
     BehaviourSettingsPageImpl(
         shouldAutoPlay = { shouldAutoPlay },
@@ -52,13 +56,16 @@ fun BehaviourSettingsPage(
         overwriteByDefault = { overwriteByDefault },
         exitOnSave = { exitOnSave },
         exitImmediately = { exitImmediately },
+        loopVideos = { loopVideos },
+        navController = LocalNavController.current,
         modifier = modifier,
         setShouldAutoPlay = settings.video::setShouldAutoPlay,
         setMuteOnStart = settings.video::setMuteOnStart,
         setOpenVideosExternally = settings.behaviour::setOpenVideosExternally,
         setOverwriteByDefault = settings.editing::setOverwriteByDefault,
         setExitOnSave = settings.editing::setExitOnSave,
-        setExitImmediately = settings.behaviour::setExitImmediately
+        setExitImmediately = settings.behaviour::setExitImmediately,
+        setLoopVideos = settings.behaviour::setLoopVideos
     )
 }
 
@@ -72,13 +79,16 @@ fun BehaviourSettingsPagePreview() {
         overwriteByDefault = { false },
         exitOnSave = { false },
         exitImmediately = { false },
+        loopVideos = { 0 },
+        navController = rememberNavController(),
         modifier = Modifier,
         setShouldAutoPlay = {},
         setMuteOnStart = {},
         setOpenVideosExternally = {},
         setOverwriteByDefault = {},
         setExitOnSave = {},
-        setExitImmediately = {}
+        setExitImmediately = {},
+        setLoopVideos = {}
     )
 }
 
@@ -90,17 +100,20 @@ private fun BehaviourSettingsPageImpl(
     overwriteByDefault: () -> Boolean,
     exitOnSave: () -> Boolean,
     exitImmediately: () -> Boolean,
+    loopVideos: () -> Int,
+    navController: NavController,
     modifier: Modifier,
     setShouldAutoPlay: (value: Boolean) -> Unit,
     setMuteOnStart: (value: Boolean) -> Unit,
     setOpenVideosExternally: (value: Boolean) -> Unit,
     setOverwriteByDefault: (value: Boolean) -> Unit,
     setExitOnSave: (value: Boolean) -> Unit,
-    setExitImmediately: (value: Boolean) -> Unit
+    setExitImmediately: (value: Boolean) -> Unit,
+    setLoopVideos: (value: Int) -> Unit
 ) {
     Scaffold(
         topBar = {
-            BehaviourSettingsTopBar()
+            BehaviourSettingsTopBar(navController = navController)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -113,6 +126,34 @@ private fun BehaviourSettingsPageImpl(
         ) {
             item {
                 PreferencesSeparatorText(stringResource(id = R.string.video))
+            }
+
+            item {
+                PreferencesThreeStateSwitchRow(
+                    title =
+                        when (loopVideos()) {
+                            0 -> stringResource(id = R.string.settings_behaviour_loop_never)
+                            1 -> stringResource(id = R.string.settings_behaviour_loop_under_30)
+                            else -> stringResource(id = R.string.settings_behaviour_loop_always)
+                        },
+                    summary = stringResource(
+                        id = when (loopVideos()) {
+                            0 -> R.string.settings_behaviour_loop_never_desc
+                            1 -> R.string.settings_behaviour_loop_under_30_desc
+                            else -> R.string.settings_behaviour_loop_always_desc
+                        }
+                    ),
+                    iconResID = R.drawable.palette,
+                    currentPosition = loopVideos(),
+                    trackIcons = listOf(
+                        R.drawable.close,
+                        R.drawable.replay_30,
+                        R.drawable.repeat
+                    ),
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onStateChange = setLoopVideos
+                )
             }
 
             item {
@@ -153,7 +194,6 @@ private fun BehaviourSettingsPageImpl(
                     onSwitchClick = setOpenVideosExternally
                 )
             }
-
 
             item {
                 PreferencesSeparatorText(stringResource(id = R.string.editing))
@@ -207,9 +247,9 @@ private fun BehaviourSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BehaviourSettingsTopBar() {
-    val navController = LocalNavController.current
-
+fun BehaviourSettingsTopBar(
+    navController: NavController
+) {
     TopAppBar(
         title = {
             Text(

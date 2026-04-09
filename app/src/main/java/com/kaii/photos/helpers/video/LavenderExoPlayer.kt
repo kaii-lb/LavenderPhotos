@@ -98,6 +98,10 @@ class LavenderExoPlayer(
     val currentPosition: Float
         get() = exoPlayer.currentPosition / 1000f
 
+    /** in seconds */
+    val duration: Float
+        get() = exoPlayer.duration / 1000f
+
     val playbackSpeed: Float
         get() = exoPlayer.playbackParameters.speed
 

@@ -977,6 +977,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_about_unknown_version">Couldn\'t get version number</string>
     <string name="settings_storage_export_quality">Editor export quality: %d%%</string>
     <string name="settings_storage_export_quality_warn">High values lead to large image sizes.</string>
+    <string name="settings_behaviour_loop_never">Never Loop Videos</string>
+    <string name="settings_behaviour_loop_under_30">Loop Under 30s</string>
+    <string name="settings_behaviour_loop_always">Loop Videos</string>
+    <string name="settings_behaviour_loop_never_desc">Video playback stops when the end is reached</string>
+    <string name="settings_behaviour_loop_under_30_desc">All videos that are under 30 seconds will be looped infinitely</string>
+    <string name="settings_behaviour_loop_always_desc">All videos, regardless of duration, will be looped infinitely</string>
 
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>
