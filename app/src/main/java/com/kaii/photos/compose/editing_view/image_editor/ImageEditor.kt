@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.editing_view.image_editor
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
@@ -269,7 +270,7 @@ fun ImageEditor(
                     )
 
                     delay(PhotoGridConstants.UPDATE_TIME * 2)
-                    if (album?.id.takeIf { album!! !is AlbumType.Folder } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
+                    if (album?.id.takeIf { album !is AlbumType.Folder } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
                         MediaDatabase.getInstance(context)
                             .customDao()
                             .upsertAll(
@@ -309,6 +310,8 @@ fun ImageEditor(
 
                     if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                         navController.popBackStack()
+                    } else if (isFromOpenWithView) {
+                        (context as Activity).finish()
                     }
                 }
             )

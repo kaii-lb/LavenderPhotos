@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.app_bars.video_editor
 
+import android.app.Activity
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
@@ -102,6 +103,7 @@ fun VideoEditorTopBar(
                 }
 
                 val coroutineScope = rememberCoroutineScope()
+                val context = LocalContext.current
                 FilledTonalIconButton(
                     onClick = {
                         if (navMediaId == -1L || overwrite) {
@@ -118,8 +120,8 @@ fun VideoEditorTopBar(
                             showDialog.value = true
                         } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                             navController.popBackStack()
-                        } else {
-                            navController.popBackStack()
+                        } else if (isFromOpenWithView) {
+                            (context as Activity).finish()
                         }
                     },
                     enabled = true,

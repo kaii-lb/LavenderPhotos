@@ -399,7 +399,7 @@ fun VideoEditorImpl(
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
-                customAlbumId = album?.id.takeIf { album!! !is AlbumType.Folder },
+                customAlbumId = album?.id.takeIf { album !is AlbumType.Folder },
                 exitOnSave = exitOnSave,
                 overwriteByDefault = overwriteByDefault
             )
