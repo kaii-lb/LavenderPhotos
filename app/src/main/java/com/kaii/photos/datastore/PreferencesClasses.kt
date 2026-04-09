@@ -207,11 +207,11 @@ data class BottomBarTab(
         return result
     }
 
-    fun toAlbum() =
+    fun toAlbum(paths: Set<String>? = null) =
         AlbumType.Folder(
             id = id.toString(),
             name = name,
-            paths = albumPaths,
+            paths = paths ?: albumPaths,
             pinned = false,
             immichId = null
         )

@@ -280,6 +280,13 @@ class SearchViewModel(
             )
         }
 
+        is GenericFileManager.Action.Share -> {
+            share(
+                context = context,
+                list = action.list
+            )
+        }
+
         else -> null
     }
 
@@ -443,6 +450,28 @@ class SearchViewModel(
         // this is okay since local media's setFavourite is not a blocking function
         runBlocking {
             searchManager.setFavourite(context, favourite, list)
+        }
+    }
+
+    private fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            if (list.any { it.isCloud }) {
+                LavenderSnackbarController.pushEvent(
+                    event = LavenderSnackbarEvent.LoadingEvent(
+                        message = context.resources.getString(R.string.media_sharing),
+                        icon = R.drawable.share,
+                        isLoading = isLoading
+                    )
+                )
+            }
+
+            searchManager.share(context, list)
+            isLoading.value = false
         }
     }
 }

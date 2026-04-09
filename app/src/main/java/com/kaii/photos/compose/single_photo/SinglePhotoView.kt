@@ -88,7 +88,6 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
-import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.setDateForMedia
@@ -454,7 +453,6 @@ private fun SinglePhotoViewCommon(
     val updatedStartIndex by rememberUpdatedState(startIndex)
     LaunchedEffect(updatedStartIndex, items.itemCount > 0) {
         state.scrollToPage(updatedStartIndex)
-        println("SCROLL $updatedStartIndex")
     }
 
     val context = LocalContext.current
@@ -778,7 +776,21 @@ private fun BottomBar(
             ) {
                 IconButton(
                     onClick = {
-                        shareImage(currentItem().uri.toUri(), context) // TODO: support cloud media
+                        val item = currentItem()
+                        process(
+                            context,
+                            GenericFileManager.Action.Share(
+                                list = listOf(
+                                    SelectionManager.SelectedItem(
+                                        id = item.id,
+                                        uri = item.uri,
+                                        immichUrl = item.immichUrl,
+                                        isImage = item.type == MediaType.Image,
+                                        parentPath = item.parentPath
+                                    )
+                                )
+                            )
+                        )
                     },
                     enabled = !privacyMode
                 ) {

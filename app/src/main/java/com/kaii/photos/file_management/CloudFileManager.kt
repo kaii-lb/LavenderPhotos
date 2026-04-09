@@ -5,6 +5,7 @@ import android.content.IntentSender
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
+import androidx.core.content.FileProvider
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
@@ -14,10 +15,12 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toBasePath
-import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
+import com.kaii.photos.mediastore.toContentId
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
@@ -37,6 +40,49 @@ class CloudFileManager(
     override val albumsClient: AlbumsClient,
     override val info: ImmichBasicInfo
 ) : GenericFileManager {
+    @OptIn(ExperimentalUuidApi::class)
+    override suspend fun getShareItems(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): List<SelectionManager.SelectedItem> {
+        val names = list.chunked(500).flatMap { chunk ->
+            mediaDao.getMedia(ids = chunk.fastMap { it.id })
+        }.associate { it.id to it.displayName }
+
+        return list.mapNotNull { item ->
+            val file = File(context.cacheDir, names[item.id]!!)
+
+            val checksumOriginal = calculateSha1Checksum(file = file)
+            val checksumCloud = assetClient.get(
+                id = Uuid.parse(item.immichId!!),
+                accessToken = info.accessToken
+            )?.checksum
+
+            val checksumMatch = checksumCloud == checksumOriginal
+
+            val uri = FileProvider.getUriForFile(
+                context,
+                LAVENDER_FILE_PROVIDER_AUTHORITY,
+                file
+            ).toString()
+
+            if (checksumMatch) {
+                item.copy(uri = uri)
+            } else {
+                assetClient.download(
+                    id = Uuid.parse(item.immichId!!),
+                    accessToken = info.accessToken
+                )?.let { bytes ->
+                    if (!file.exists()) file.createNewFile()
+
+                    file.outputStream().buffered().write(bytes)
+
+                    item.copy(uri = uri)
+                }
+            }
+        }
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setFavourite(
         context: Context,
@@ -373,18 +419,18 @@ class CloudFileManager(
 
         val mediaItems = list.chunked(500).flatMap { chunk ->
             mediaDao.getMedia(ids = chunk.fastMap { it.id })
-        }
+        }.associateBy { it.id }
 
         return@withContext list.mapNotNull { item ->
-            val media = mediaItems.first { it.id == item.id }
+            val media = mediaItems[item.id]!!
             val bytes = assetClient.download(
-                id = Uuid.parse(media.immichId!!),
+                id = Uuid.parse(item.immichId!!),
                 accessToken = info.accessToken
             )
 
             if (bytes == null) return@mapNotNull null
 
-            onItemDone(media.uri)
+            onItemDone(item.uri)
 
             var newId = 0L
             destination.paths.forEach { path ->
@@ -396,28 +442,23 @@ class CloudFileManager(
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     preserveDate = preserveDate,
-                    onInsert = { _, new ->
-                        contentResolver.openOutputStream(new)?.use {
-                            it.buffered().write(bytes)
-                        }
+                    onInsert = { _, _ -> }
+                )?.let { new ->
+                    newId = new.toContentId(contentResolver = contentResolver, type = media.type)
 
-                        if (new.toString().startsWith("content")) {
-                            newId = new.lastPathSegment!!.toLong()
-                        } else {
-                            val path = new.toString().substringAfter(":")
-                            val new = contentResolver.getUriFromAbsolutePath(
-                                absolutePath = path,
-                                type = media.type
-                            )
-                            newId = new?.lastPathSegment?.toLong() ?: 0
-                        }
+                    contentResolver.openOutputStream(new)?.use {
+                        if (bytes.size <= 8 * 1024) it.write(bytes)
+                        else it.buffered().write(bytes)
+
+                        it.flush()
+                        it.close()
                     }
-                )
+                }
             }
 
             GenericFileManager.CopyResult(
                 id = newId,
-                immichId = media.immichId
+                immichId = item.immichId
             )
         }
     }

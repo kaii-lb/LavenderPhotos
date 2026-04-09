@@ -10,6 +10,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.LocalFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
 
 class TrashRepository(
     mediaDao: MediaDao,
@@ -44,7 +46,7 @@ class TrashRepository(
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
-) {
+) : BaseRepo {
     private data class Params(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,
@@ -59,7 +61,7 @@ class TrashRepository(
             cancellationSignal = cancellationSignal
         )
 
-    private var fileManager = LocalFileManager(
+    override var fileManager = LocalFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -118,14 +120,14 @@ class TrashRepository(
 
     fun cancel() = cancellationSignal.cancel()
 
-    suspend fun setTrashed(
+    override suspend fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        trash: Boolean,
+        trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trash, null, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
 
-    suspend fun delete(
+    override suspend fun delete(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) = fileManager.permanentlyDelete(context, list)
@@ -144,4 +146,20 @@ class TrashRepository(
             )
         }
     )
+
+    override suspend fun getMediaCount(): Int {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
+
+    override suspend fun getMediaSize(): Long {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
+
+    override fun allowedAlbumTypesFor(moving: Boolean): List<KClass<out AlbumType>> {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
+
+    override suspend fun renameAlbum(context: Context, newName: String) {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
 }

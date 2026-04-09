@@ -57,10 +57,10 @@ class ImmichRepository(
     info: Flow<ImmichBasicInfo>,
     client: ApiClient,
     context: Context
-) {
+) : BaseRepo {
     private val db = MediaDatabase.getInstance(context.applicationContext)
 
-    private var fileManager = CloudFileManager(
+    override var fileManager = CloudFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
@@ -171,14 +171,6 @@ class ImmichRepository(
         }
     }
 
-    suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().countMediaInAlbum(album = album.id)
-    }
-
-    suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().mediaSize(album = album.id)
-    }
-
     init {
         scope.launch {
             info
@@ -204,49 +196,30 @@ class ImmichRepository(
         }
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = fileManager.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(moving: Boolean) = fileManager.allowedAlbumTypesFor(moving = moving, current = AlbumType.Cloud::class)
-
-    suspend fun copy(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
-            count += 1
-            onItemDone(count)
-        }.size == list.size
+    override suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+        return@withContext db.customDao().countMediaInAlbum(album = album.id)
     }
 
-    suspend fun renameAlbum(
-        context: Context,
-        newName: String
-    ) = fileManager.renameAlbum(context, album, newName)
+    override suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+        return@withContext db.customDao().mediaSize(album = album.id)
+    }
 
-    suspend fun setTrashed(
+    override fun allowedAlbumTypesFor(
+        moving: Boolean
+    ) = fileManager.allowedAlbumTypesFor(
+        moving = moving,
+        current = AlbumType.Cloud::class
+    )
+
+    override suspend fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
     ) = fileManager.setTrashed(context, list, trashed, album.id, null, onItemDone)
 
-    suspend fun delete(
+    override suspend fun renameAlbum(
         context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list)
+        newName: String
+    ) = fileManager.renameAlbum(context, album, newName)
 }

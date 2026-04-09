@@ -115,7 +115,7 @@ class SearchManager(
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
-    ) = searchRepo.move(context, list, destination, preserveDate, onItemDone)
+    ) = searchRepo.move(context, list, null, destination, preserveDate, onItemDone)
 
     fun renameItem(
         context: Context,
@@ -140,4 +140,9 @@ class SearchManager(
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
     ) = searchRepo.setFavourite(context, favourite, list)
+
+    suspend fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = searchRepo.share(context, list)
 }

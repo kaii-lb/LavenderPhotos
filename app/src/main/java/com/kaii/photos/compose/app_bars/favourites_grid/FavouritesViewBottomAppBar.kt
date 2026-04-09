@@ -13,7 +13,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,7 +24,6 @@ import com.kaii.photos.compose.grids.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
@@ -70,7 +68,6 @@ fun FavouritesBottomAppBarItems(
     allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     process: (action: GenericFileManager.Action) -> Unit
 ) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -78,11 +75,10 @@ fun FavouritesBottomAppBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch {
-                // TODO: move to file manager
-                shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() },
-                    context = context,
-                    hasVideos = selectedItemsList.fastAny { !it.isImage }
+                process(
+                    GenericFileManager.Action.Share(
+                        list = selectedItemsList
+                    )
                 )
             }
         },

@@ -11,7 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,7 +21,6 @@ import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
 
@@ -56,7 +54,6 @@ fun TrashPhotoGridBottomBarItems(
     selectionManager: SelectionManager,
     process: (action: GenericFileManager.Action) -> Unit
 ) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -64,10 +61,10 @@ fun TrashPhotoGridBottomBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch {
-                shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
-                    context = context,
-                    hasVideos = selectedItemsList.fastAny { !it.isImage }
+                process(
+                    GenericFileManager.Action.Share(
+                        list = selectedItemsList
+                    )
                 )
             }
         },

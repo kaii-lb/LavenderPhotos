@@ -2,6 +2,7 @@ package com.kaii.photos.helpers
 
 import android.os.CancellationSignal
 import android.util.Log
+import com.github.kittinunf.fuel.util.encodeBase64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private const val TAG = "com.kaii.photos.helpers.ChecksumUtils"
 
+/** return a base64 encoded sha1 hash */
 @OptIn(ExperimentalStdlibApi::class)
 fun calculateSha1Checksum(file: File): String {
     if (!file.exists()) {
@@ -33,7 +35,7 @@ fun calculateSha1Checksum(file: File): String {
         }
     }
 
-    return digest.digest().toHexString()
+    return digest.digest().encodeBase64().decodeToString()
 }
 
 suspend fun calculateSha1Checksum(

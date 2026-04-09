@@ -133,6 +133,13 @@ class TrashViewModel(
                     list = action.list
                 )
             }
+
+            is GenericFileManager.Action.Share -> {
+                share(
+                    context = context,
+                    list = action.list
+                )
+            }
         }
     }
 
@@ -180,6 +187,15 @@ class TrashViewModel(
     ) {
         scope.launch {
             repo.delete(context, list)
+        }
+    }
+
+    private fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            repo.share(context, list)
         }
     }
 

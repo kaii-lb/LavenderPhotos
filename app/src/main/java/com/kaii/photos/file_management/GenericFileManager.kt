@@ -5,7 +5,9 @@ import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.IntentSender
+import android.net.Uri
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.format.DateFormat
@@ -35,6 +37,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
+import com.kaii.photos.mediastore.toContentId
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
@@ -95,6 +98,10 @@ interface GenericFileManager {
         data class RenameAlbum(
             val newName: String
         ) : Action
+
+        data class Share(
+            val list: List<SelectionManager.SelectedItem>
+        ) : Action
     }
 
     data class CopyResult(
@@ -121,6 +128,46 @@ interface GenericFileManager {
             )
         } else {
             listOf(current)
+        }
+    }
+
+    suspend fun getShareItems(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = list
+
+    suspend fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        val items = getShareItems(context, list)
+
+        if (items.size == 1) {
+            val item = items.first()
+
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                type = if (item.isImage) "image/*" else "video/*"
+                putExtra(Intent.EXTRA_STREAM, item.uri.toUri())
+            }
+
+            val chooserIntent = Intent.createChooser(shareIntent, null)
+            context.startActivity(chooserIntent)
+        } else {
+            val hasVideos = items.any { !it.isImage }
+            val intent = Intent().apply {
+                action = Intent.ACTION_SEND_MULTIPLE
+                type = if (hasVideos) "video/*" else "image/*"
+            }
+
+            val fileUris = ArrayList<Uri>()
+            items.forEach {
+                fileUris.add(it.uri.toUri())
+            }
+
+            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
+
+            context.startActivity(Intent.createChooser(intent, null))
         }
     }
 
@@ -338,9 +385,10 @@ interface GenericFileManager {
                     preserveDate = preserveDate,
                     onInsert = { original, new ->
                         contentResolver.copyUriToUri(original, new)
+
                         newItems.add(
                             CopyResult(
-                                id = new.lastPathSegment!!.toLong(),
+                                id = new.toContentId(contentResolver = contentResolver, type = media.type),
                                 immichId = media.immichId
                             )
                         )

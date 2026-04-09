@@ -222,6 +222,13 @@ class CustomAlbumViewModel(
             )
         }
 
+        is GenericFileManager.Action.Share -> {
+            share(
+                context = context,
+                list = action.list
+            )
+        }
+
         else -> null
     }
 
@@ -382,9 +389,18 @@ class CustomAlbumViewModel(
         }
     }
 
-    fun setFavourite(
+    private fun setFavourite(
         context: Context,
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
     ) = runBlocking { repo.setFavourite(context, favourite, list) } // this is okay since local media's setFavourite is not a blocking function
+
+    private fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            repo.share(context, list)
+        }
+    }
 }

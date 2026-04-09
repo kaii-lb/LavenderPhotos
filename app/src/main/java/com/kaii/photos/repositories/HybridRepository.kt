@@ -7,19 +7,18 @@ import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.HybridFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HybridRepository(
@@ -37,11 +37,11 @@ class HybridRepository(
     syncTaskDao: SyncTaskDao,
     client: ApiClient,
     scope: CoroutineScope,
-    initialPaths: Set<String>,
+    initialAlbum: AlbumType.Folder,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
-) {
+) : BaseRepo {
     private data class Params(
         val paths: Set<String>,
         override val sortMode: MediaItemSortMode,
@@ -49,17 +49,17 @@ class HybridRepository(
         override val info: ImmichBasicInfo
     ) : RoomQueryParams(sortMode, format, info)
 
-    private val paths = MutableStateFlow(initialPaths)
-    private val params = combine(info, sortMode, format, paths) { info, sortMode, format, paths ->
+    private val album = MutableStateFlow(initialAlbum)
+    private val params = combine(info, sortMode, format, album) { info, sortMode, format, album ->
         Params(
-            paths = paths,
+            paths = album.paths,
             sortMode = sortMode,
             format = format,
             info = info
         )
     }
 
-    private var fileManager = HybridFileManager(
+    override var fileManager = HybridFileManager(
         isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
@@ -99,8 +99,8 @@ class HybridRepository(
         )
     }.cachedIn(scope)
 
-    fun changePaths(new: Set<String>) {
-        paths.value = new
+    fun changeAlbum(album: AlbumType.Folder) {
+        this.album.value = album
     }
 
     init {
@@ -127,70 +127,23 @@ class HybridRepository(
         }
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = fileManager.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(
+    override fun allowedAlbumTypesFor(
         moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(
         moving = moving,
         current = AlbumType.Folder::class
     )
 
-    suspend fun copy(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
-            count += 1
-            onItemDone(count)
-        }.size == list.size
+    override suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+        return@withContext mediaDao.countMediaInPaths(paths = album.value.paths)
     }
 
-    suspend fun move(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.moveItems(context, list, destination, preserveDate) {
-            count += 1
-            onItemDone(count)
-        }
+    override suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+        return@withContext mediaDao.mediaSize(paths = album.value.paths)
     }
 
-    fun renameItem(
+    override suspend fun renameAlbum(
         context: Context,
-        uri: String,
         newName: String
-    ) = fileManager.renameItem(context, uri, newName)
-
-    suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
-
-    suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list)
+    ) = fileManager.renameAlbum(context, album.value, newName)
 }

@@ -7,13 +7,11 @@ import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.HybridFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
@@ -39,7 +37,7 @@ class FavouritesRepository(
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
-) {
+) : BaseRepo {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -48,7 +46,7 @@ class FavouritesRepository(
         )
     }
 
-    private var fileManager = HybridFileManager(
+    override var fileManager = HybridFileManager(
         isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
@@ -113,55 +111,22 @@ class FavouritesRepository(
         }
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = fileManager.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(
+    override fun allowedAlbumTypesFor(
         moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(
         moving = moving,
         current = AlbumType.Folder::class
     )
 
-    suspend fun copy(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
-            count += 1
-            onItemDone(count)
-        }.size == list.size
+    override suspend fun getMediaCount(): Int {
+        throw IllegalAccessException("This cannot and should not be called in a favourites context.")
     }
 
-    fun renameItem(
-        context: Context,
-        uri: String,
-        newName: String
-    ) = fileManager.renameItem(context, uri, newName)
+    override suspend fun getMediaSize(): Long {
+        throw IllegalAccessException("This cannot and should not be called in a favourites context.")
+    }
 
-    suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
-
-    suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list)
+    override suspend fun renameAlbum(context: Context, newName: String) {
+        throw IllegalAccessException("This cannot and should not be called in a favourites context.")
+    }
 }

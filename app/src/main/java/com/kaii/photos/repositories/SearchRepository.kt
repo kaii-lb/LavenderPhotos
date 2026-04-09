@@ -21,7 +21,6 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.HybridFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
@@ -75,7 +74,7 @@ class SearchRepository(
     mediaDao: MediaDao,
     customDao: CustomEntityDao,
     syncTaskDao: SyncTaskDao
-) {
+) : BaseRepo {
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,
@@ -96,7 +95,7 @@ class SearchRepository(
         )
     )
 
-    private var fileManager = HybridFileManager(
+    override var fileManager = HybridFileManager(
         isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
@@ -206,72 +205,24 @@ class SearchRepository(
         )
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = fileManager.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(
+    override fun allowedAlbumTypesFor(
         moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(
         moving = moving,
         current = AlbumType.Folder::class
     )
 
-    suspend fun copy(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
-            count += 1
-            onItemDone(count)
-        }.size == list.size
+    override suspend fun getMediaCount(): Int {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
     }
 
-    suspend fun move(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        onItemDone: (totalCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.moveItems(context, list, destination, preserveDate) {
-            count += 1
-            onItemDone(count)
-        }
+    override suspend fun getMediaSize(): Long {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
     }
 
-    fun renameItem(
-        context: Context,
-        uri: String,
-        newName: String
-    ) = fileManager.renameItem(context, uri, newName)
-
-    suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
-
-    suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list)
+    override suspend fun renameAlbum(context: Context, newName: String) {
+        throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
 
     private fun searchByDate(query: String): PagingSource<Int, MediaStoreData> {
         var source = searchByDateFormat(query)

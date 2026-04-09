@@ -326,7 +326,7 @@ fun MainPages(
                         LaunchedEffect(Unit) {
                             paths = tab.albumPaths
 
-                            viewModel.changePaths(paths = tab.albumPaths)
+                            viewModel.changeAlbum(album = tab.toAlbum())
                         }
 
                         MainGridView(
@@ -354,7 +354,7 @@ fun MainPages(
                         LaunchedEffect(mainPhotosPaths) {
                             paths = mainPhotosPaths
 
-                            viewModel.changePaths(paths = mainPhotosPaths)
+                            viewModel.changeAlbum(album = tab.toAlbum(paths = mainPhotosPaths))
                         }
 
                         MainGridView(

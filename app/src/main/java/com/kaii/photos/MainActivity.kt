@@ -296,7 +296,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         LaunchedEffect(Unit) {
-                            viewModel.changePaths(screen.album.paths)
+                            viewModel.changeAlbum(screen.album)
                         }
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
@@ -341,7 +341,7 @@ class MainActivity : ComponentActivity() {
                                 album = screen.album
                             )
                         )
-                        multiAlbumViewModel.changePaths(album = screen.album)
+                        multiAlbumViewModel.changeAlbum(album = screen.album)
 
                         SingleAlbumView(
                             album = screen.album,
@@ -361,7 +361,7 @@ class MainActivity : ComponentActivity() {
                                 album = screen.album
                             )
                         )
-                        multiAlbumViewModel.changePaths(album = screen.album)
+                        multiAlbumViewModel.changeAlbum(album = screen.album)
 
                         val editIndex = it.savedStateHandle.get<Int>("editIndex")
                         SinglePhotoView(

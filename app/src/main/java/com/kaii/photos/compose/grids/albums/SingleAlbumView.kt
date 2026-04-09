@@ -89,7 +89,7 @@ fun SingleAlbumView(
     if (dynamicAlbum == null) return
 
     LaunchedEffect(dynamicAlbum) {
-        viewModel.changePaths(album = dynamicAlbum!!)
+        viewModel.changeAlbum(album = dynamicAlbum!!)
     }
 
     val selectionManager = rememberSelectionManager(paths = { dynamicAlbum!!.paths })

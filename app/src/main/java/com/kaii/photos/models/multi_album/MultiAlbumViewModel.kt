@@ -17,7 +17,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.repositories.MediaRepository
+import com.kaii.photos.repositories.HybridRepository
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class MultiAlbumViewModel(
-    private val album: AlbumType.Folder,
+    album: AlbumType.Folder,
     context: Context,
     private val scope: CoroutineScope = context.appModule.scope
 ) : ViewModel() {
@@ -144,14 +144,13 @@ class MultiAlbumViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo =
-        MediaRepository(
+        HybridRepository(
             mediaDao = db.mediaDao(),
             customDao = db.customDao(),
             syncTaskDao = db.taskDao(),
             client = context.appModule.apiClient,
-            album = album,
-            scope = viewModelScope,
             initialAlbum = album,
+            scope = viewModelScope,
             info = immichInfo,
             sortMode = sortMode,
             format = displayDateFormat
@@ -165,9 +164,9 @@ class MultiAlbumViewModel(
         media: MediaStoreData
     ) = repo.getExifData(context, media)
 
-    fun changePaths(
+    fun changeAlbum(
         album: AlbumType.Folder
-    ) = repo.changePaths(new = album.paths)
+    ) = repo.changeAlbum(album = album)
 
     suspend fun getMediaCount() = repo.getMediaCount()
     suspend fun getMediaSize(): String {
@@ -248,6 +247,13 @@ class MultiAlbumViewModel(
             )
         }
 
+        is GenericFileManager.Action.Share -> {
+            share(
+                context = context,
+                list = action.list
+            )
+        }
+
         else -> null
     }
 
@@ -318,7 +324,7 @@ class MultiAlbumViewModel(
                 )
             )
 
-            repo.move(context, list, destination, preserveDate.value) {
+            repo.move(context, list, null, destination, preserveDate.value) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_move_snackbar_body,
@@ -350,7 +356,7 @@ class MultiAlbumViewModel(
         newName: String
     ) {
         scope.launch {
-            repo.renameDirectory(context, newName)
+            repo.renameAlbum(context, newName)
         }
     }
 
@@ -412,5 +418,14 @@ class MultiAlbumViewModel(
         favourite: Boolean,
         list: List<SelectionManager.SelectedItem>
     ) = runBlocking { repo.setFavourite(context, favourite, list) } // this is okay since local media's setFavourite is not a blocking function
+
+    private fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            repo.share(context, list)
+        }
+    }
 }
 

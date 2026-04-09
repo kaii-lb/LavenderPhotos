@@ -69,6 +69,7 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import com.kaii.photos.mediastore.toContentId
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -802,5 +803,7 @@ suspend fun saveImage(
         )
     }
 
-    return newUri.lastPathSegment?.toLongOrNull() ?: -1L
+    val newId = newUri.toContentId(contentResolver = context.contentResolver, type = media.type)
+
+    return newId
 }

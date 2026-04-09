@@ -87,7 +87,6 @@ import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
-import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -340,10 +339,19 @@ private fun BottomBar(
                     FilledIconButton(
                         onClick = {
                             val item = item()
-                            shareImage(
-                                uri = item.uri.toUri(),
-                                context = context,
-                                mimeType = item.mimeType
+                            process(
+                                context,
+                                GenericFileManager.Action.Share(
+                                    list = listOf(
+                                        SelectionManager.SelectedItem(
+                                            id = item.id,
+                                            uri = item.uri,
+                                            immichUrl = item.immichUrl,
+                                            isImage = item.type == MediaType.Image,
+                                            parentPath = item.parentPath
+                                        )
+                                    )
+                                )
                             )
                         },
                         colors = IconButtonDefaults.iconButtonColors(

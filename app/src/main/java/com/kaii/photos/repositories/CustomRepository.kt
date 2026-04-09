@@ -42,7 +42,7 @@ class CustomRepository(
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
-) {
+) : BaseRepo {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -51,7 +51,7 @@ class CustomRepository(
         )
     }
 
-    private var fileManager = HybridFileManager(
+    override var fileManager = HybridFileManager(
         isCustom = true,
         mediaDao = mediaDao,
         customDao = customDao,
@@ -98,11 +98,11 @@ class CustomRepository(
         customDao.deleteAll(ids = items.map { it.id }.toSet(), album = albumId)
     }
 
-    suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
+    override suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
         return@withContext customDao.countMediaInAlbum(album = album.id)
     }
 
-    suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
+    override suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
         return@withContext customDao.mediaSize(album = album.id)
     }
 
@@ -130,38 +130,17 @@ class CustomRepository(
         }
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = fileManager.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(
+    override fun allowedAlbumTypesFor(
         moving: Boolean
     ) = fileManager.allowedAlbumTypesFor(
         moving = moving,
         current = AlbumType.Custom::class
     )
 
-    suspend fun copy(
+    override suspend fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
-        destination: AlbumType,
-        preserveDate: Boolean,
-        overrideDisplayName: ((displayName: String) -> String)?,
-        onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
-        var count = 0
-
-        return fileManager.copyItems(context, list, destination, preserveDate, overrideDisplayName) {
-            count += 1
-            onItemDone(count)
-        }.size == list.size
-    }
-
-    suspend fun move(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        origin: AlbumType,
+        origin: AlbumType?,
         destination: AlbumType,
         preserveDate: Boolean,
         onItemDone: (totalCount: Int) -> Unit
@@ -174,32 +153,15 @@ class CustomRepository(
         }
     }
 
-    fun renameItem(
-        context: Context,
-        uri: String,
-        newName: String
-    ) = fileManager.renameItem(context, uri, newName)
-
-    suspend fun renameAlbum(
+    override suspend fun renameAlbum(
         context: Context,
         newName: String
     ) = fileManager.renameAlbum(context, album, newName)
 
-    suspend fun setTrashed(
+    override suspend fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
     ) = fileManager.setTrashed(context, list, trashed, album.id, null, onItemDone)
-
-    suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun setFavourite(
-        context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.setFavourite(context, favourite, list)
 }

@@ -13,7 +13,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 
 class HybridFileManager(
-    isCustom: Boolean,
+    private val isCustom: Boolean,
     override val mediaDao: MediaDao,
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
@@ -51,6 +51,20 @@ class HybridFileManager(
             )
         }
 
+    override suspend fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        val immich = list.filter { it.isCloud }
+        val total = (list - immich.toSet()).toMutableList()
+
+        if (immich.isNotEmpty()) {
+            total += cloudFileManager.getShareItems(context, immich)
+        }
+
+        otherFileManager.share(context, total)
+    }
+
     override suspend fun setFavourite(
         context: Context,
         favourite: Boolean,
@@ -75,12 +89,11 @@ class HybridFileManager(
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean {
         val immich = list.filter { it.immichUrl != null }
-        val local = list.filter { !it.isCloud }
 
-        val localSuccess = otherFileManager.setTrashed(context, local, trashed, albumId, taskId, onItemDone)
+        val otherSuccess = otherFileManager.setTrashed(context, list, trashed, albumId.takeIf { isCustom }, taskId, onItemDone)
         val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone)
 
-        return localSuccess && cloudSuccess
+        return otherSuccess && cloudSuccess
     }
 
     override suspend fun permanentlyDelete(
@@ -89,9 +102,8 @@ class HybridFileManager(
         taskId: Int?
     ) {
         val immich = list.filter { it.immichUrl != null }
-        val local = list.filter { !it.isCloud }
 
-        otherFileManager.permanentlyDelete(context, local, taskId)
+        otherFileManager.permanentlyDelete(context, list, taskId)
         cloudFileManager.permanentlyDelete(context, immich, taskId)
     }
 
@@ -139,28 +151,26 @@ class HybridFileManager(
         origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
-        if (origin != null) {
-            throw IllegalArgumentException("${HybridFileManager::class.simpleName} cannot move with a given origin! It should always be null.")
+        val otherSuccess = otherFileManager.moveItems(context, list, destination, preserveDate, taskId, origin.takeIf { isCustom }, onItemDone)
+
+        var immichSuccess = true
+        if (destination.immichId != null) {
+            val immich = list.filter { it.isCloud }
+            immichSuccess = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size
+
+            if (origin?.immichId != null && immichSuccess) {
+                immichSuccess = cloudFileManager.setTrashed(
+                    context = context,
+                    list = immich,
+                    trashed = true,
+                    albumId = origin.immichId,
+                    taskId = null,
+                    onItemDone = {}
+                )
+            }
         }
 
-        val immich = list.filter { it.isCloud }
-        val local = list - immich.toSet()
-
-        val localSuccess = otherFileManager.moveItems(context, local, destination, preserveDate, taskId, origin, onItemDone)
-        val immichSuccess = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size
-
-        if (immichSuccess && destination.immichId != null) {
-            cloudFileManager.setTrashed(
-                context = context,
-                list = immich,
-                trashed = true,
-                albumId = destination.immichId,
-                taskId = null,
-                onItemDone = {}
-            )
-        }
-
-        return localSuccess && immichSuccess
+        return otherSuccess && immichSuccess
     }
 
     override suspend fun copyItems(
@@ -175,9 +185,9 @@ class HybridFileManager(
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
-        val localResult = otherFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
-        val cloudResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
+        val otherResult = otherFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
+        val immichResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone)
 
-        return localResult + cloudResult
+        return otherResult + immichResult
     }
 }

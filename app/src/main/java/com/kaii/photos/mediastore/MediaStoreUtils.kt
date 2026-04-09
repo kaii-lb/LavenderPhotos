@@ -400,6 +400,13 @@ fun ContentResolver.isFavourited(uri: Uri): Boolean {
 fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
     if (uri.lastPathSegment == null) return null
 
+    val id = uri.toContentId(
+        contentResolver = this,
+        type =
+            if (getType(uri)?.startsWith("image") == true) MediaType.Image
+            else MediaType.Video
+    )
+
     val mediaCursor = query(
         MEDIA_STORE_FILE_URI,
         arrayOf(
@@ -407,7 +414,7 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
             MediaColumns.DATA
         ),
         "${MediaColumns._ID} = ? AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
-        arrayOf(uri.lastPathSegment!!),
+        arrayOf(id.toString()),
         null
     )
 
@@ -513,3 +520,20 @@ fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, St
 
     return paths
 }
+
+fun Uri.toContentId(contentResolver: ContentResolver, type: MediaType) =
+    if (toString().startsWith("content://media")) {
+        lastPathSegment!!.toLong()
+    } else {
+        val docPath = path!!.substringAfter("/document/")
+        val basePath =
+            if (docPath.startsWith("primary")) baseInternalStorageDirectory
+            else "/storage/" + docPath.split(":").first()
+
+        val path = basePath + path!!.substringAfter(":").substringAfter(":")
+
+        contentResolver.getUriFromAbsolutePath(
+            absolutePath = path,
+            type = type
+        )?.lastPathSegment?.toLong() ?: 0L
+    }

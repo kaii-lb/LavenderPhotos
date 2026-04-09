@@ -31,7 +31,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
@@ -50,7 +49,6 @@ import com.kaii.photos.file_management.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.helpers.shareMultipleImages
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -127,10 +125,10 @@ fun SelectingBottomBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch(Dispatchers.IO) {
-                shareMultipleImages(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
-                    context = context,
-                    hasVideos = selectedItemsList.fastAny { !it.isImage }
+                process(
+                    GenericFileManager.Action.Share(
+                        list = selectedItemsList
+                    )
                 )
             }
         },
