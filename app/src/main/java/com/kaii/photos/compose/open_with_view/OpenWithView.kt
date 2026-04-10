@@ -363,6 +363,7 @@ private fun InitSinglePhotoView(
             window = window,
             viewModel = multiAlbumViewModel,
             index = index,
+            editId = { 0L },
             album = AlbumType.Folder(
                 id = "",
                 name = "",

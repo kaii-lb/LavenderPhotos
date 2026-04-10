@@ -283,30 +283,18 @@ fun ImageEditor(
                             )
                     }
 
-                    if (navMediaId == -1L || overwrite) {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.remove<Int>("editIndex")
-                    } else {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("editIndex", 0)
-                    }
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("editId", navMediaId)
 
                     if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
                         navController.popBackStack()
                     }
                 },
                 navigateBack = {
-                    if (navMediaId == -1L || overwrite) {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.remove<Int>("editIndex")
-                    } else {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("editIndex", 0)
-                    }
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("editId", navMediaId)
 
                     if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
                         navController.popBackStack()

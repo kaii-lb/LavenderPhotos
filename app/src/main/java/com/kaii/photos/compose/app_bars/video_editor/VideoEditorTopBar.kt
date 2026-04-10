@@ -106,15 +106,9 @@ fun VideoEditorTopBar(
                 val context = LocalContext.current
                 FilledTonalIconButton(
                     onClick = {
-                        if (navMediaId == -1L || overwrite) {
-                            navController.previousBackStackEntry
-                                ?.savedStateHandle
-                                ?.remove<Int>("editIndex")
-                        } else {
-                            navController.previousBackStackEntry
-                                ?.savedStateHandle
-                                ?.set("editIndex", 0)
-                        }
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("editId", navMediaId)
 
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
@@ -217,15 +211,9 @@ fun VideoEditorTopBar(
 
                                 delay(PhotoGridConstants.UPDATE_TIME * 2)
 
-                                if (navMediaId == -1L || overwrite) {
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.remove<Int>("editIndex")
-                                } else {
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set("editIndex", 0)
-                                }
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("editId", navMediaId)
 
                                 if (customAlbumId != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
                                     MediaDatabase.getInstance(context)

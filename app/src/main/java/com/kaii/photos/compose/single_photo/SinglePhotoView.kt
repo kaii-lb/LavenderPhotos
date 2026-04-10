@@ -43,8 +43,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -119,6 +118,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: CustomAlbumViewModel,
     index: Int,
+    editId: () -> Long,
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -143,6 +143,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         startIndex = index,
+        editId = editId,
         album = album,
         isOpenWithDefaultView = isOpenWithDefaultView,
         useBlackBackground = useBlackBackground,
@@ -169,6 +170,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MultiAlbumViewModel,
     index: Int,
+    editId: () -> Long,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -192,6 +194,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
+        editId = editId,
         album = album,
         navController = LocalNavController.current,
         window = window,
@@ -220,6 +223,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MainGridViewModel,
     index: Int,
+    editId: () -> Long,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -243,6 +247,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
+        editId = editId,
         album = album,
         navController = LocalNavController.current,
         window = window,
@@ -270,7 +275,8 @@ fun SinglePhotoView(
 fun SinglePhotoView(
     viewModel: SearchViewModel,
     window: Window,
-    index: Int
+    index: Int,
+    editId: () -> Long
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -292,6 +298,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
+        editId = editId,
         album = AlbumType.PlaceHolder,
         navController = LocalNavController.current,
         window = window,
@@ -319,7 +326,8 @@ fun SinglePhotoView(
 fun SinglePhotoView(
     viewModel: FavouritesViewModel,
     window: Window,
-    index: Int
+    index: Int,
+    editId: () -> Long
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -341,6 +349,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
+        editId = editId,
         album = AlbumType.PlaceHolder,
         navController = LocalNavController.current,
         window = window,
@@ -368,6 +377,7 @@ fun SinglePhotoView(
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
+    editId: () -> Long,
     album: AlbumType.Cloud
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -390,6 +400,7 @@ fun SinglePhotoView(
     SinglePhotoViewCommon(
         items = items,
         startIndex = index,
+        editId = editId,
         album = album,
         navController = LocalNavController.current,
         window = window,
@@ -418,6 +429,7 @@ fun SinglePhotoView(
 private fun SinglePhotoViewCommon(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
+    editId: () -> Long,
     album: AlbumType,
     navController: NavHostController,
     window: Window,
@@ -444,15 +456,34 @@ private fun SinglePhotoViewCommon(
         items.itemCount
     }
 
-    var currentIndex by rememberSaveable {
+    var currentIndex by retain {
         mutableIntStateOf(
             startIndex
         )
     }
 
-    val updatedStartIndex by rememberUpdatedState(startIndex)
-    LaunchedEffect(updatedStartIndex, items.itemCount > 0) {
-        state.scrollToPage(updatedStartIndex)
+    LaunchedEffect(editId(), items.itemCount > 0) {
+        if (items.itemCount <= 0) return@LaunchedEffect
+
+        for (i in 0..5) {
+            val item = items[i] as? PhotoLibraryUIModel.MediaImpl
+
+            if (item?.item?.id == editId()) {
+                state.scrollToPage(i)
+                return@LaunchedEffect
+            }
+        }
+
+        val left = (currentIndex - 5).coerceAtLeast(0)
+        val right = (currentIndex + 5).coerceAtMost(items.itemCount - 1)
+        for (i in left..right) {
+            val item = items[i] as? PhotoLibraryUIModel.MediaImpl
+
+            if (item?.item?.id == editId()) {
+                state.scrollToPage(i)
+                break
+            }
+        }
     }
 
     val context = LocalContext.current

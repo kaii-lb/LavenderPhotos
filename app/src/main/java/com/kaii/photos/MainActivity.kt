@@ -299,18 +299,26 @@ class MainActivity : ComponentActivity() {
                             viewModel.changeAlbum(screen.album)
                         }
 
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
+
                         SinglePhotoView(
                             window = window,
                             viewModel = viewModel,
-                            index = editIndex ?: screen.index,
+                            index = screen.index,
+                            editId = { editId },
                             album = screen.album
                         )
                     }
 
                     composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
 
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
                             factory = SearchViewModelFactory(context = context)
@@ -319,7 +327,8 @@ class MainActivity : ComponentActivity() {
                         SinglePhotoView(
                             window = window,
                             viewModel = searchViewModel,
-                            index = editIndex ?: screen.index
+                            index = screen.index,
+                            editId = { editId }
                         )
                     }
                 }
@@ -363,11 +372,16 @@ class MainActivity : ComponentActivity() {
                         )
                         multiAlbumViewModel.changeAlbum(album = screen.album)
 
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
+
                         SinglePhotoView(
                             window = window,
                             viewModel = multiAlbumViewModel,
-                            index = editIndex ?: screen.index,
+                            index = screen.index,
+                            editId = { editId },
                             album = screen.album
                         )
                     }
@@ -392,11 +406,16 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
+
                         SinglePhotoView(
                             viewModel = viewModel,
                             window = window,
-                            index = editIndex ?: screen.index
+                            index = screen.index,
+                            editId = { editId }
                         )
                     }
 
@@ -503,11 +522,16 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
+
                         SinglePhotoView(
                             viewModel = viewModel,
                             window = window,
-                            index = editIndex ?: screen.index,
+                            index = screen.index,
+                            editId = { editId },
                             album = screen.album
                         )
                     }
@@ -550,11 +574,16 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editIndex = it.savedStateHandle.get<Int>("editIndex")
+                        val editId by it.savedStateHandle.getStateFlow(
+                            key = "editId",
+                            initialValue = -1L
+                        ).collectAsStateWithLifecycle()
+
                         SinglePhotoView(
                             album = screen.album,
                             viewModel = viewModel,
-                            index = editIndex ?: screen.index,
+                            index = screen.index,
+                            editId = { editId },
                             window = window
                         )
                     }
