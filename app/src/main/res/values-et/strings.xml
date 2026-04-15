@@ -245,4 +245,6 @@
     <string name="privacy_scroll_mode">Privaatsusrežiim</string>
     <string name="privacy_scroll_mode_enabled">Privaatsusrežiim: sisselülitatud</string>
     <string name="privacy_scroll_mode_disabled">Privaatsusrežiim: väljalülitatud</string>
+    <string name="album_add_path_placeholder">Allalaadimised/Filmid</string>
+    <string name="media_secure">Turvaline</string>
 </resources>
