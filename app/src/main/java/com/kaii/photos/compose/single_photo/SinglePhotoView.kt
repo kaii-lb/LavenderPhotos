@@ -465,7 +465,8 @@ private fun SinglePhotoViewCommon(
     LaunchedEffect(editId(), items.itemCount > 0) {
         if (items.itemCount <= 0) return@LaunchedEffect
 
-        for (i in 0..5) {
+        val end = (items.itemCount - 1).coerceAtMost(5)
+        for (i in 0..end) {
             val item = items[i] as? PhotoLibraryUIModel.MediaImpl
 
             if (item?.item?.id == editId()) {
