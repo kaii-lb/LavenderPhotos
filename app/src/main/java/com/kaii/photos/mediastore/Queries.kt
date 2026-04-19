@@ -280,9 +280,10 @@ suspend fun loadMediaDataDelta(
 ) = withContext(Dispatchers.IO) {
     val items = mutableListOf<MediaStoreData>()
     val syncManager = SyncManager(context)
+    val generation = syncManager.getGeneration() - 1
 
     items.clear()
-    val selectionArgs = arrayOf(syncManager.getGeneration().toString())
+    val selectionArgs = arrayOf(generation.toString())
     val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
             "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
 
@@ -302,7 +303,7 @@ suspend fun loadMediaDataDelta(
             MediaColumns.DURATION
         )
 
-    var newGen = syncManager.getGeneration()
+    var newGen = generation
     context.contentResolver.query(
         MEDIA_STORE_FILE_URI,
         projection,
