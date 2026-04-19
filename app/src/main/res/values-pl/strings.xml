@@ -361,8 +361,8 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">Usunąć serwer?</string>
     <string name="immich_clear_endpoint_desc">Czy na pewno chcesz usunąć ten adres serwera?</string>
-    <string name="immich_logout">Wylogować?</string>
-    <string name="immich_logout_desc">Czy na pewno chcesz wylogować się z tego konta?</string>
+    <string name="immich_logout_question">Wylogować?</string>
+    <string name="immich_logout_question_desc">Czy na pewno chcesz wylogować się z tego konta?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Nieznany</string>
     <string name="immich_auth_passowrd">Hasło</string>

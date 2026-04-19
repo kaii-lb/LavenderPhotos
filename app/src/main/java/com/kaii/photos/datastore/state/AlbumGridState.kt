@@ -179,19 +179,20 @@ class AlbumGridState(
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
         val immichInfo = info.first()
-        val loginManager = LoginStateManager(
+        val loginManager = LoginStateManager(coroutineScope = scope)
+
+        loginManager.setBaseUrl(
             baseUrl = immichInfo.endpoint,
-            coroutineScope = scope,
             apiClient = apiClient
         )
 
-        loginManager.refresh(
+        val state = loginManager.refresh(
             accessToken = immichInfo.accessToken,
             pfpSavePath = context.profilePicture,
             previousPfpUrl = context.profilePicture
-        ).join()
+        )
 
-        if (loginManager.state.value !is LoginState.LoggedIn) return@withContext
+        if (state !is LoginState.LoggedIn) return@withContext
 
         val albumState = AllAlbumsState(
             baseUrl = immichInfo.endpoint,

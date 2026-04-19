@@ -45,7 +45,6 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -88,21 +87,18 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppTopBar(
     alternate: () -> Boolean,
+    userInfo: () -> LoginState,
     selectionManager: SelectionManager,
     immichInfo: () -> ImmichBasicInfo,
     showAddAlbumButton: () -> Boolean,
@@ -115,10 +111,6 @@ fun MainAppTopBar(
     addAlbum: (album: AlbumType) -> Unit,
     addGroup: (name: String) -> Unit
 ) {
-    val context = LocalContext.current
-    val loginState = rememberLoginState(baseUrl = immichInfo().endpoint)
-    val userInfo by loginState.state.collectAsStateWithLifecycle()
-
     val coroutineScope = rememberCoroutineScope()
     val vibratorManager = rememberVibratorManager()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -127,7 +119,7 @@ fun MainAppTopBar(
     if (showMainDialog) {
         MainDialog(
             sheetState = sheetState,
-            loginState = loginState,
+            userInfo = userInfo,
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
             alwaysShowImmichInfo = alwaysShowImmichInfo,
@@ -147,16 +139,6 @@ fun MainAppTopBar(
                 }
             }
         )
-    }
-
-    LaunchedEffect(immichInfo()) {
-        withContext(Dispatchers.IO) {
-            loginState.refresh(
-                accessToken = immichInfo().accessToken,
-                pfpSavePath = context.profilePicture,
-                previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-            )
-        }
     }
 
     DualFunctionTopAppBar(
@@ -226,7 +208,7 @@ fun MainAppTopBar(
 
                 if (!isFromMediaPicker) {
                     AnimatedLoginIcon(
-                        state = userInfo,
+                        state = userInfo(),
                         alwaysShowInfo = alwaysShowImmichInfo
                     ) {
                         coroutineScope.launch {

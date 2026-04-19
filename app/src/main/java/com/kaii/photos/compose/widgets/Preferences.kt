@@ -69,6 +69,8 @@ fun PreferencesRow(
     titleTextSize: Float = 18f,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    cornerRadius: Dp = 0.dp,
+    innerCornerRadius: Dp = 0.dp,
     action: (() -> Unit)? = null
 ) {
     PreferencesRowBase(
@@ -89,6 +91,8 @@ fun PreferencesRow(
         enabled = enabled,
         backgroundColor = backgroundColor,
         contentColor = contentColor,
+        cornerRadius = cornerRadius,
+        innerCornerRadius = innerCornerRadius,
         action = action
     )
 }
@@ -106,6 +110,8 @@ fun PreferencesRow(
     titleTextSize: Float = 18f,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    cornerRadius: Dp = 0.dp,
+    innerCornerRadius: Dp = 0.dp,
     action: (() -> Unit)? = null
 ) {
     PreferencesRowBase(
@@ -126,6 +132,8 @@ fun PreferencesRow(
         enabled = enabled,
         backgroundColor = backgroundColor,
         contentColor = contentColor,
+        cornerRadius = cornerRadius,
+        innerCornerRadius = innerCornerRadius,
         action = action
     )
 }
@@ -142,9 +150,11 @@ private fun PreferencesRowBase(
     enabled: Boolean = true,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    cornerRadius: Dp,
+    innerCornerRadius: Dp,
     action: (() -> Unit)? = null
 ) {
-    val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
+    val (shape, _) = getDefaultShapeSpacerForPosition(position, cornerRadius, innerCornerRadius)
 
     val clickable = if (action != null && enabled) {
         Modifier.clickable {
@@ -185,7 +195,7 @@ private fun PreferencesRowBase(
         Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
-            tint = MaterialTheme.colorScheme.onBackground,
+            tint = contentColor,
             modifier = Modifier
                 .size(28.dp)
         )
@@ -624,19 +634,43 @@ fun PreferenceRowWithCustomBody(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    showBackground: Boolean = false,
+    position: RowPosition = RowPosition.Single,
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    cornerRadius: Dp = 0.dp,
+    innerCornerRadius: Dp = 0.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val (shape, _) = getDefaultShapeSpacerForPosition(position, cornerRadius, innerCornerRadius)
+    val clip = if (showBackground) Modifier.clip(shape) else Modifier
+    val backgroundColor = when {
+        enabled && showBackground -> {
+            backgroundColor
+        }
+
+        !enabled && showBackground -> {
+            backgroundColor.copy(alpha = 0.6f)
+        }
+
+        else -> {
+            Color.Transparent
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth(1f)
             .wrapContentHeight()
+            .then(clip)
+            .background(backgroundColor)
             .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(id = icon),
-            contentDescription = "Show storage space on immich server",
-            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = if (enabled) 1f else 0.6f),
+            contentDescription = "Preferences row icon: $title",
+            tint = contentColor.copy(alpha = if (enabled) 1f else 0.6f),
             modifier = Modifier
                 .size(28.dp)
         )
@@ -647,7 +681,7 @@ fun PreferenceRowWithCustomBody(
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth(1f)
-                .padding(0.dp, 8.dp),
+                .padding(top = 8.dp),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.Start
         ) {
@@ -655,7 +689,7 @@ fun PreferenceRowWithCustomBody(
                 text = title,
                 fontSize = TextUnit(18f, TextUnitType.Sp),
                 textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f)
+                color = contentColor.copy(alpha = if (enabled) 1f else 0.6f)
             )
 
             Column(

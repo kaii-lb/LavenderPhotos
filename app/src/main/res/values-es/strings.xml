@@ -889,8 +889,8 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">¿Eliminar Servidor?</string>
     <string name="immich_clear_endpoint_desc">¿Está seguro de que desea eliminar esta dirección de servidor?</string>
-    <string name="immich_logout">¿Cerrar sesión?</string>
-    <string name="immich_logout_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
+    <string name="immich_logout_question">¿Cerrar sesión?</string>
+    <string name="immich_logout_question_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Desconocido</string>
     <string name="immich_auth_passowrd">Contraseña</string>

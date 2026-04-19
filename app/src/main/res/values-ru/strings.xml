@@ -943,8 +943,8 @@
     <string name="immich_endpoint_base_placeholder">https://мой.сервер.immich.com/</string>
     <string name="immich_clear_endpoint">Удалить сервер?</string>
     <string name="immich_clear_endpoint_desc">Вы уверены, что хотите удалить этот адрес сервера?</string>
-    <string name="immich_logout">Выйти?</string>
-    <string name="immich_logout_desc">Вы уверены, что хотите выйти из этой учётки?</string>
+    <string name="immich_logout_question">Выйти?</string>
+    <string name="immich_logout_question_desc">Вы уверены, что хотите выйти из этой учётки?</string>
     <string name="immich_email">Электронная почта:</string>
     <string name="immich_state_unknown">Неизвестно</string>
     <string name="immich_auth_passowrd">Пароль</string>

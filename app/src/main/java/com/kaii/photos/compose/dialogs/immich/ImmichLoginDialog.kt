@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.dialogs.user_action
+package com.kaii.photos.compose.dialogs.immich
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,17 +7,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,22 +25,14 @@ import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.dialogs.TitleCloseRow
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.ClearableTextField
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 @Composable
 fun ImmichLoginDialog(
-    loginState: LoginStateManager,
-    endpoint: String,
-    setImmichBasicInfo: (info: ImmichBasicInfo) -> Unit,
-    onDismiss: () -> Unit,
+    login: (email: String, password: String, userAgent: String, onDone: suspend (success: Boolean) -> Unit) -> Unit,
+    onDismiss: () -> Unit
 ) {
     LavenderDialogBase(
         onDismiss = onDismiss,
@@ -89,71 +78,20 @@ fun ImmichLoginDialog(
                 }
             )
 
-            val coroutineScope = rememberCoroutineScope()
-            val resources = LocalResources.current
-
-            suspend fun login() {
-                val eventTitle =
-                    mutableStateOf(resources.getString(R.string.immich_login_ongoing))
-                val isLoading = mutableStateOf(true)
-
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvent.LoadingEvent(
-                        message = eventTitle.value,
-                        icon = R.drawable.account_circle,
-                        isLoading = isLoading
-                    )
-                )
-
-                loginState.login(
-                    email = email.value.trim(),
-                    password = password.value.trim(),
-                    userAgent = System.getProperty("http.agent") ?: ""
-                ).let { state ->
-                    setImmichBasicInfo(
-                        if (state is LoginState.LoggedIn) {
-                            ImmichBasicInfo(
-                                endpoint = endpoint,
-                                accessToken = state.accessToken,
-                                username = state.name
-                            )
-                        } else {
-                            ImmichBasicInfo(
-                                endpoint = endpoint,
-                                accessToken = "",
-                                username = ""
-                            )
-                        }
-                    )
-
-                    if (state is LoginState.LoggedIn) {
-                        eventTitle.value = resources.getString(R.string.immich_login_successful)
-                        isLoading.value = false
-
-                        onDismiss()
-                    } else {
-                        password.value = ""
-
-                        eventTitle.value = resources.getString(R.string.immich_login_failed)
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvent.MessageEvent(
-                                message = resources.getString(R.string.immich_login_failed),
-                                duration = SnackbarDuration.Short,
-                                icon = R.drawable.error_2
-                            )
-                        )
-                    }
-                }
-            }
-
             ClearableTextField(
                 text = password,
                 placeholder = stringResource(id = R.string.immich_auth_passowrd),
                 modifier = Modifier.Companion,
                 icon = R.drawable.password,
                 onConfirm = {
-                    coroutineScope.launch {
-                        login()
+                    login(
+                        email.value,
+                        password.value,
+                        System.getProperty("http.agent") ?: ""
+                    ) { success ->
+                        password.value = ""
+
+                        if (success) onDismiss()
                     }
                 },
                 visualTransformation = PasswordVisualTransformation(mask = '\u2B24'),
@@ -178,8 +116,14 @@ fun ImmichLoginDialog(
                 textColor = MaterialTheme.colorScheme.onPrimary,
                 position = RowPosition.Single
             ) {
-                coroutineScope.launch {
-                    login()
+                login(
+                    email.value,
+                    password.value,
+                    System.getProperty("http.agent") ?: ""
+                ) { success ->
+                    password.value = ""
+
+                    if (success) onDismiss()
                 }
             }
         }

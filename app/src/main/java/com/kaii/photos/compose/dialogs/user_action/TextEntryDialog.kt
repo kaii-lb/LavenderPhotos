@@ -2,6 +2,7 @@ package com.kaii.photos.compose.dialogs.user_action
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.pages.FullWidthDialogButton
+import com.kaii.photos.compose.widgets.infiniteLoadingIndicator
 import com.kaii.photos.helpers.RowPosition
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -53,6 +55,7 @@ fun TextEntryDialog(
     placeholder: String? = null,
     startValue: String = "",
     errorMessage: String? = null,
+    type: KeyboardType = KeyboardType.Text,
     onConfirm: suspend (text: String) -> Boolean,
     onValueChange: (text: String) -> Boolean,
     onDismiss: () -> Unit
@@ -136,11 +139,11 @@ fun TextEntryDialog(
             ),
             keyboardOptions = KeyboardOptions(
                 autoCorrectEnabled = false,
-                keyboardType = KeyboardType.Text,
+                keyboardType = type,
                 imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(
-                onSearch = {
+                onDone = {
                     keyboardController?.hide()
                 }
             ),
@@ -154,17 +157,29 @@ fun TextEntryDialog(
 
         val coroutineScope = rememberCoroutineScope()
         var isLoading by remember { mutableStateOf(false) }
-        FullWidthDialogButton(
-            text = stringResource(id = R.string.media_confirm),
-            color = MaterialTheme.colorScheme.primary,
-            textColor = MaterialTheme.colorScheme.onPrimary,
-            position = RowPosition.Single,
-            enabled = !showError && !isLoading
+
+        Box(
+            modifier = Modifier
+                .infiniteLoadingIndicator {
+                    isLoading
+                }
         ) {
-            coroutineScope.launch(Dispatchers.IO) {
-                isLoading = true
-                showError = !onConfirm(text.trim())
-                isLoading = false
+            FullWidthDialogButton(
+                text = stringResource(id = R.string.media_confirm),
+                color = MaterialTheme.colorScheme.primary,
+                textColor = MaterialTheme.colorScheme.onPrimary,
+                position = RowPosition.Single,
+                enabled = !showError && !isLoading
+            ) {
+                keyboardController?.hide()
+
+                coroutineScope.launch(Dispatchers.IO) {
+                    isLoading = true
+                    showError = !onConfirm(text.trim())
+                    isLoading = false
+
+                    if (!showError) onDismiss()
+                }
             }
         }
     }

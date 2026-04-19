@@ -366,8 +366,8 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">删除服务器？</string>
     <string name="immich_clear_endpoint_desc">确定要删除该服务器地址吗？</string>
-    <string name="immich_logout">退出账户？</string>
-    <string name="immich_logout_desc">确定要退出此账户吗？</string>
+    <string name="immich_logout_question">退出账户？</string>
+    <string name="immich_logout_question_desc">确定要退出此账户吗？</string>
     <string name="immich_email">邮箱：</string>
     <string name="immich_state_unknown">未知</string>
     <string name="immich_auth_passowrd">密码</string>

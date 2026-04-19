@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentType
@@ -49,6 +50,7 @@ fun ClearableTextField(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     contentType: ContentType? = null,
+    shape: Shape = CircleShape,
     onConfirm: () -> Unit,
     onClear: () -> Unit
 ) {
@@ -114,10 +116,18 @@ fun ClearableTextField(
                 onSearch = {
                     onConfirm()
                     keyboardController?.hide()
+                },
+                onGo = {
+                    onConfirm()
+                    keyboardController?.hide()
+                },
+                onDone = {
+                    onConfirm()
+                    keyboardController?.hide()
                 }
             ),
             visualTransformation = visualTransformation,
-            shape = CircleShape,
+            shape = shape,
             modifier = Modifier
                 .weight(1f)
                 .semantics {

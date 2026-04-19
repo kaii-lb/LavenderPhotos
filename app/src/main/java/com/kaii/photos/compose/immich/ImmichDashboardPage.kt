@@ -46,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -61,13 +60,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
-import com.kaii.photos.compose.dialogs.user_action.ImmichLoginDialog
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
@@ -77,30 +74,21 @@ import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.profilePicture
+import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
-import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberLoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.rememberServerState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ImmichInfoPage() {
-    val viewModel = viewModel<ImmichInfoViewModel>(
-        factory = ImmichInfoViewModelFactory(context = LocalContext.current)
-    )
-
+fun ImmichDashboardPage(
+    viewModel: ImmichInfoViewModel
+) {
     val loginInfo by viewModel.info.collectAsStateWithLifecycle()
-    val loginState = rememberLoginState(baseUrl = loginInfo.endpoint)
-    val serverState = rememberServerState(baseUrl = loginInfo.endpoint)
-
     val navController = LocalNavController.current
     Scaffold(
         topBar = {
@@ -129,10 +117,15 @@ fun ImmichInfoPage() {
             )
         }
     ) { innerPadding ->
-        val context = LocalContext.current
-        val userInfo by loginState.state.collectAsStateWithLifecycle()
+        val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
         var isLoadingInfo by remember { mutableStateOf(true) }
         val pullToRefreshState = rememberPullToRefreshState()
+
+        LaunchedEffect(viewModel.refreshStatus) {
+            viewModel.refreshStatus.collect { status ->
+                isLoadingInfo = status == OperationStatus.Loading
+            }
+        }
 
         LazyColumn(
             modifier = Modifier
@@ -142,16 +135,7 @@ fun ImmichInfoPage() {
                     isRefreshing = isLoadingInfo,
                     state = pullToRefreshState,
                     onRefresh = {
-                        isLoadingInfo = true
-                        loginState.refresh(
-                            accessToken = loginInfo.accessToken,
-                            pfpSavePath = context.profilePicture,
-                            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-                        ).invokeOnCompletion {
-                            serverState.fetch(accessToken = loginInfo.accessToken)
-
-                            isLoadingInfo = false
-                        }
+                        viewModel.refresh()
                     }
                 ),
             verticalArrangement = Arrangement.Top,
@@ -175,7 +159,7 @@ fun ImmichInfoPage() {
                         errorMessage = resources.getString(R.string.immich_server_url_invalid),
                         onConfirm = { value ->
                             when {
-                                loginState.validateServerAddress(address = value) && serverState.ping(address = value) -> {
+                                viewModel.validateServerAddress(address = value) && viewModel.ping(address = value) -> {
                                     viewModel.setInfo(
                                         ImmichBasicInfo(
                                             endpoint = value.removeSuffix("/"),
@@ -187,7 +171,7 @@ fun ImmichInfoPage() {
                                     true
                                 }
 
-                                loginState.validateServerAddress(address = value) -> {
+                                viewModel.validateServerAddress(address = value) -> {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvent.MessageEvent(
@@ -206,7 +190,7 @@ fun ImmichInfoPage() {
                             }
                         },
                         onValueChange = { value ->
-                            loginState.validateServerAddress(address = value)
+                            viewModel.validateServerAddress(address = value)
                         },
                         onDismiss = {
                             showAddressDialog = false
@@ -223,11 +207,7 @@ fun ImmichInfoPage() {
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            if (loginInfo.accessToken != "") {
-                                loginState.logout(accessToken = loginInfo.accessToken)
-                            }
-
-                            viewModel.setInfo(ImmichBasicInfo.Empty)
+                            viewModel.logout()
                         }
 
                         showClearEndpointDialog.value = false
@@ -249,59 +229,6 @@ fun ImmichInfoPage() {
             }
 
             item {
-                var showLoginDialog by remember { mutableStateOf(false) }
-
-                if (showLoginDialog) {
-                    ImmichLoginDialog(
-                        loginState = loginState,
-                        endpoint = loginInfo.endpoint,
-                        setImmichBasicInfo = viewModel::setInfo,
-                        onDismiss = {
-                            showLoginDialog = false
-                        }
-                    )
-                }
-
-                LaunchedEffect(loginInfo) {
-                    isLoadingInfo = true
-                    while (true) {
-                        loginState.refresh(
-                            accessToken = loginInfo.accessToken,
-                            pfpSavePath = context.profilePicture,
-                            previousPfpUrl = (userInfo as? LoginState.LoggedIn)?.pfpUrl ?: ""
-                        ).invokeOnCompletion {
-                            serverState.fetch(accessToken = loginInfo.accessToken)
-
-                            isLoadingInfo = false
-                        }
-
-                        delay(30.seconds)
-                    }
-                }
-
-                val showLogoutDialog = remember { mutableStateOf(false) }
-                val coroutineScope = rememberCoroutineScope()
-                if (showLogoutDialog.value) {
-                    ConfirmationDialogWithBody(
-                        showDialog = showLogoutDialog,
-                        dialogTitle = stringResource(id = R.string.immich_logout),
-                        dialogBody = stringResource(id = R.string.immich_logout_desc),
-                        confirmButtonLabel = stringResource(id = R.string.media_confirm),
-                    ) {
-                        coroutineScope.launch {
-                            if (loginInfo.accessToken == "") return@launch
-
-                            loginState.logout(accessToken = loginInfo.accessToken).invokeOnCompletion {
-                                viewModel.setInfo(
-                                    ImmichBasicInfo.Empty.copy(endpoint = loginInfo.endpoint)
-                                )
-                            }
-                        }
-
-                        showLogoutDialog.value = false
-                    }
-                }
-
                 val resources = LocalResources.current
                 val title by remember {
                     derivedStateOf {
@@ -343,11 +270,8 @@ fun ImmichInfoPage() {
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .clickable(enabled = userInfo !is LoginState.ServerUnreachable) {
-                            if (loginInfo.endpoint != "" && !isLoadingInfo) {
-                                if (userInfo is LoginState.LoggedOut) showLoginDialog = true
-                                else showLogoutDialog.value = true
-                            }
+                        .clickable(enabled = userInfo is LoginState.LoggedIn) {
+                            navController.navigate(Screens.Immich.Account)
                         }
                         .padding(16.dp, 12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -426,8 +350,8 @@ fun ImmichInfoPage() {
             }
 
             item {
-                val serverInfo by serverState.state.collectAsStateWithLifecycle()
-                val userInfo by loginState.state.collectAsStateWithLifecycle()
+                val serverInfo by viewModel.serverInfo.collectAsStateWithLifecycle()
+                val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
                 val resources = LocalResources.current
 
                 val info by remember {

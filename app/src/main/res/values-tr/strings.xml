@@ -922,8 +922,8 @@
     <string name="immich_endpoint_base_placeholder">https://sunucum.immich.com/</string>
     <string name="immich_clear_endpoint">Sunucu Kaldırılsın mı?</string>
     <string name="immich_clear_endpoint_desc">Bu sunucu adresini kaldırmak istediğinizden emin misiniz?</string>
-    <string name="immich_logout">Çıkış Yapılsın mı?</string>
-    <string name="immich_logout_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
+    <string name="immich_logout_question">Çıkış Yapılsın mı?</string>
+    <string name="immich_logout_question_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
     <string name="immich_email">E-posta:</string>
     <string name="immich_state_unknown">Bilinmiyor</string>
     <string name="immich_auth_passowrd">Parola</string>

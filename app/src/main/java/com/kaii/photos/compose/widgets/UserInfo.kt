@@ -66,7 +66,7 @@ fun MainDialogUserInfo(
                     coroutineScope.launch {
                         dismiss()
                         delay(AnimationConstants.DURATION_SHORT.toLong())
-                        navController.navigate(Screens.Immich.InfoPage)
+                        navController.navigate(Screens.Immich.Dashboard)
                     }
                 }
         )

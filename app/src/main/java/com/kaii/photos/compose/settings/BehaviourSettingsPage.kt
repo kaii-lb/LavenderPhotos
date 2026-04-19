@@ -247,7 +247,7 @@ private fun BehaviourSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BehaviourSettingsTopBar(
+private fun BehaviourSettingsTopBar(
     navController: NavController
 ) {
     TopAppBar(

@@ -72,7 +72,10 @@ interface Screens {
     @Serializable
     object Immich {
         @Serializable
-        object InfoPage: Screens
+        object Dashboard: Screens
+
+        @Serializable
+        object Account: Screens
 
         @Serializable
         data class GridView(

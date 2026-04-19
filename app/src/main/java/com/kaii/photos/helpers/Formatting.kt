@@ -11,6 +11,8 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.pow
+import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -159,3 +161,6 @@ fun String.immichDurationToSecondsOrNull(): Long? {
 
     return days * 86400L + hours * 3600L + minutes * 60L + seconds
 }
+
+/** @param n is the precision of the output */
+fun Long.bytesToGB(n: Int = 2) = ((this.toDouble() / (1024 * 1024 * 1024)) * 10f.pow(n)).roundToLong() / 10f.pow(n)

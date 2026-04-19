@@ -370,8 +370,8 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">Remover Servidor?</string>
     <string name="immich_clear_endpoint_desc">Você tem certeza que deseja remover este endereço de servidor?</string>
-    <string name="immich_logout">Sair?</string>
-    <string name="immich_logout_desc">Você tem certeza que deseja sair dessa conta?</string>
+    <string name="immich_logout_question">Sair?</string>
+    <string name="immich_logout_question_desc">Você tem certeza que deseja sair dessa conta?</string>
     <string name="immich_email">E-mail:</string>
     <string name="immich_state_unknown">Desconhecido</string>
     <string name="immich_auth_passowrd">Senha</string>

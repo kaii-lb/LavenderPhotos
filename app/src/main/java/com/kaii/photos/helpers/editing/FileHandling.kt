@@ -109,7 +109,7 @@ suspend fun saveVideo(
         LavenderSnackbarEvent.ProgressEvent(
             message = context.resources.getString(R.string.editing_export_video_loading),
             body = body,
-            icon = R.drawable.videocam,
+            icon = R.drawable.videocam_filled,
             percentage = percentage
         )
     )

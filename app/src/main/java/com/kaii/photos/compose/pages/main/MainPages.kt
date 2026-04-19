@@ -155,9 +155,11 @@ fun MainPages(
             val groups by viewModel.groups.collectAsStateWithLifecycle()
             val alwaysShowImmichInfo by viewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
             val extraSecureFolderEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
+            val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
 
             MainAppTopBar(
                 alternate = { isSelecting },
+                userInfo = { userInfo },
                 selectionManager = selectionManager,
                 immichInfo = { immichInfo },
                 showAddAlbumButton = {

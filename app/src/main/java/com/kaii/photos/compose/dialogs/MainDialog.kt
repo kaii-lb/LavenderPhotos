@@ -39,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -57,7 +56,6 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -147,7 +145,7 @@ private enum class AboutLinkItems(
 @Composable
 fun MainDialog(
     sheetState: SheetState,
-    loginState: LoginStateManager,
+    userInfo: () -> LoginState,
     coroutineScope: CoroutineScope,
     extraSecureFolderEntry: () -> Boolean,
     alwaysShowImmichInfo: () -> Boolean,
@@ -194,11 +192,9 @@ fun MainDialog(
                     horizontalAlignment = Alignment.Start
                 ) {
                     item {
-                        val userInfo by loginState.state.collectAsStateWithLifecycle()
-
-                        if (userInfo is LoginState.LoggedIn || alwaysShowImmichInfo()) {
+                        if (userInfo() is LoginState.LoggedIn || alwaysShowImmichInfo()) {
                             MainDialogUserInfo(
-                                loginState = userInfo,
+                                loginState = userInfo(),
                                 coroutineScope = coroutineScope,
                                 alwaysShowInfo = alwaysShowImmichInfo,
                                 immichInfo = immichInfo,
@@ -270,7 +266,7 @@ fun MainDialog(
                                 coroutineScope.launch {
                                     dismiss()
                                     delay(AnimationConstants.DURATION_SHORT.toLong())
-                                    navController.navigate(Screens.Immich.InfoPage)
+                                    navController.navigate(Screens.Immich.Dashboard)
                                 }
                             }
                         )

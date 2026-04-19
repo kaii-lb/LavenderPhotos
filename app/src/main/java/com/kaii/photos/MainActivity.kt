@@ -58,7 +58,8 @@ import com.kaii.photos.compose.grids.SecureFolderView
 import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
-import com.kaii.photos.compose.immich.ImmichInfoPage
+import com.kaii.photos.compose.immich.ImmichAccountPage
+import com.kaii.photos.compose.immich.ImmichDashboardPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
@@ -93,6 +94,8 @@ import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
+import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
+import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -481,10 +484,26 @@ class MainActivity : ComponentActivity() {
                 }
 
                 navigation<Screens.Immich>(
-                    startDestination = Screens.Immich.InfoPage
+                    startDestination = Screens.Immich.Dashboard
                 ) {
-                    composable<Screens.Immich.InfoPage> {
-                        ImmichInfoPage()
+                    composable<Screens.Immich.Dashboard> {
+                        val viewModel = it.sharedViewModel<ImmichInfoViewModel>(
+                            factory = ImmichInfoViewModelFactory(
+                                context = context
+                            )
+                        )
+
+                        ImmichDashboardPage(viewModel = viewModel)
+                    }
+
+                    composable<Screens.Immich.Account> {
+                        val viewModel = it.sharedViewModel<ImmichInfoViewModel>(
+                            factory = ImmichInfoViewModelFactory(
+                                context = context
+                            )
+                        )
+
+                        ImmichAccountPage(viewModel = viewModel)
                     }
 
                     composable<Screens.Immich.GridView>(

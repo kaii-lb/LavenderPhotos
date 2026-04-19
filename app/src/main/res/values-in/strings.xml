@@ -436,8 +436,8 @@
     <string name="immich_endpoint_base_placeholder">[https://my.immich.server.com/](https://my.immich.server.com/)</string>
     <string name="immich_clear_endpoint">Hapus Server?</string>
     <string name="immich_clear_endpoint_desc">Apakah Anda yakin ingin menghapus alamat server ini?</string>
-    <string name="immich_logout">Keluar?</string>
-    <string name="immich_logout_desc">Apakah Anda yakin ingin keluar dari akun ini?</string>
+    <string name="immich_logout_question">Keluar?</string>
+    <string name="immich_logout_question_desc">Apakah Anda yakin ingin keluar dari akun ini?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Tidak diketahui</string>
     <string name="immich_auth_passowrd">Kata Sandi</string>
