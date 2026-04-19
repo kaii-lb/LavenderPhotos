@@ -387,7 +387,29 @@ class AlbumGridState(
             list
         }
 
-        _singleAlbums.value = singleAlbums
+        _singleAlbums.value = when (params.albumSortMode) {
+            AlbumSortMode.LastModified -> {
+                singleAlbums.sortedBy { it.date }
+            }
+
+            AlbumSortMode.LastModifiedDesc -> {
+                singleAlbums.sortedByDescending { it.date }
+            }
+
+            AlbumSortMode.Alphabetically -> {
+                singleAlbums.sortedBy { it.name }
+            }
+
+            AlbumSortMode.AlphabeticallyDesc -> {
+                singleAlbums.sortedByDescending { it.name }
+            }
+
+            else -> {
+                val lut = singleAlbums.associateBy { it.id }
+
+                params.order.mapNotNull { lut[it] } + singleAlbums.filter { it.id !in lut.keys }
+            }
+        }
     }
 }
 
