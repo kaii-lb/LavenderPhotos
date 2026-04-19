@@ -160,7 +160,7 @@ class SearchRepository(
                     }
 
                     details.mode == SearchMode.Date -> {
-                        searchByDate(query = details.query)
+                        searchByDate(query = details.query) ?: ListPagingSource(media = emptyList())
                     }
 
                     else -> {
@@ -224,30 +224,30 @@ class SearchRepository(
         throw IllegalAccessException("This cannot and should not be called in a search context.")
     }
 
-    private fun searchByDate(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByDate(query: String): PagingSource<Int, MediaStoreData>? {
         var source = searchByDateFormat(query)
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByDayNumberMonthYear(query)
         }
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByDayMonthYear(query)
         }
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByYearMonth(query)
         }
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByYear(query)
         }
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByMonth(query)
         }
 
-        if (source::class == ListPagingSource::class) {
+        if (source == null) {
             source = searchByDay(query)
         }
 
@@ -269,7 +269,7 @@ class SearchRepository(
     )
 
     @OptIn(FormatStringsInDatetimeFormats::class, ExperimentalTime::class)
-    private fun searchByDateFormat(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByDateFormat(query: String): PagingSource<Int, MediaStoreData>? {
         var parsed: LocalDate? = null
 
         for (format in formats) {
@@ -286,7 +286,7 @@ class SearchRepository(
             }
         }
 
-        if (parsed == null) return ListPagingSource(media = emptyList())
+        if (parsed == null) return null
 
         val start = LocalDate(parsed.year, parsed.month, parsed.day).atStartOfDayIn(TimeZone.currentSystemDefault())
 
@@ -297,7 +297,7 @@ class SearchRepository(
         )
     }
 
-    private fun searchByYear(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByYear(query: String): PagingSource<Int, MediaStoreData>? {
         return query.trim().toIntOrNull()?.let { yearDate ->
             val year = YearMonth(year = yearDate, month = 1)
 
@@ -306,45 +306,44 @@ class SearchRepository(
                 endDate = year.plusYear().onDay(1).atStartOfDayIn(TimeZone.currentSystemDefault()).epochSeconds,
                 dateModified = params.value.sortMode.isDateModified
             )
-        } ?: ListPagingSource(media = emptyList())
+        }
     }
 
-    private fun searchByMonth(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByMonth(query: String): PagingSource<Int, MediaStoreData>? {
         val dateModified = params.value.sortMode.isDateModified
 
         val search = query.trim().uppercase()
 
-        return if (search in Month.entries.fastMap { it.name }) {
-            val month = Month.valueOf(search).number.toString().padStart(2, '0')
-            searchDao.searchByMonth(month = month, dateModified = dateModified)
-        } else {
-            ListPagingSource(media = emptyList())
-        }
+        return Month.entries
+            .find { it.name == search }
+            ?.let { month ->
+                val number = month.number.toString().padStart(2, '0')
+                searchDao.searchByMonth(month = number, dateModified = dateModified)
+            }
     }
 
-    private fun searchByDay(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByDay(query: String): PagingSource<Int, MediaStoreData>? {
         val dateModified = params.value.sortMode.isDateModified
 
         val search = query.trim().uppercase()
 
-        return if (search in DayOfWeek.entries.fastMap { it.name }) {
-            val day = DayOfWeek.valueOf(search).isoDayNumber.toString()
-            searchDao.searchByDay(day = day, dateModified = dateModified)
-        } else {
-            ListPagingSource(media = emptyList())
-        }
+        return DayOfWeek.entries
+            .find { it.name == search }
+            ?.let { day ->
+                val number = (day.isoDayNumber % 7).toString() // %6 since sunday = 0
+                searchDao.searchByDay(day = number, dateModified = dateModified)
+            }
     }
 
-    private fun searchByYearMonth(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByYearMonth(query: String): PagingSource<Int, MediaStoreData>? {
         val search = query.trim().uppercase().split(" ")
-        val emptySource = ListPagingSource(media = emptyList())
 
-        if (search.size < 2) return emptySource
+        if (search.size < 2) return null
 
         val month = search[0]
         val year = search[1].toIntOrNull()
 
-        if (year == null || month !in Month.entries.fastMap { it.name }) return emptySource
+        if (year == null || month !in Month.entries.fastMap { it.name }) return null
 
         val yearMonth = YearMonth(
             year = year,
@@ -358,24 +357,23 @@ class SearchRepository(
         )
     }
 
-    private fun searchByDayNumberMonthYear(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByDayNumberMonthYear(query: String): PagingSource<Int, MediaStoreData>? {
         val search = query.trim().uppercase().split(" ")
-        val emptySource = ListPagingSource(media = emptyList())
 
-        if (search.size < 3) return emptySource
+        if (search.size < 3) return null
 
         val day = search[0].toIntOrNull()
         val month = search[1]
         val year = search[2].toIntOrNull()
 
-        if (day == null || year == null || month !in Month.entries.fastMap { it.name }) return emptySource
+        if (day == null || year == null || month !in Month.entries.fastMap { it.name }) return null
 
         val yearMonth = YearMonth(
             year = year,
             month = Month.valueOf(month).number
         )
 
-        if (day < yearMonth.days.start.day || day > yearMonth.days.endInclusive.day) return emptySource
+        if (day < yearMonth.days.start.day || day > yearMonth.days.endInclusive.day) return null
 
         val start = yearMonth.onDay(day).atStartOfDayIn(TimeZone.currentSystemDefault())
 
@@ -386,17 +384,16 @@ class SearchRepository(
         )
     }
 
-    private fun searchByDayMonthYear(query: String): PagingSource<Int, MediaStoreData> {
+    private fun searchByDayMonthYear(query: String): PagingSource<Int, MediaStoreData>? {
         val search = query.trim().uppercase().split(" ")
-        val emptySource = ListPagingSource(media = emptyList())
 
-        if (search.size < 3) return emptySource
+        if (search.size < 3) return null
 
         val dayName = search[0]
         val month = search[1]
         val year = search[2].toIntOrNull()
 
-        if (year == null || month !in Month.entries.fastMap { it.name } || dayName !in DayOfWeek.entries.fastMap { it.name }) return emptySource
+        if (year == null || month !in Month.entries.fastMap { it.name } || dayName !in DayOfWeek.entries.fastMap { it.name }) return null
 
         val yearMonth = YearMonth(
             year = year,

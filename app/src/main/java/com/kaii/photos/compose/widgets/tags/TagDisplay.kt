@@ -175,7 +175,10 @@ private fun TagFlowRow(
         ),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        tags().filter { it.name.contains(searchQuery()) || !searchingForTags() }
+        tags()
+            .filter {
+                it.name.lowercase().contains(searchQuery().lowercase()) || !searchingForTags()
+            }
             .sortedBy { it.name }
             .sortedBy { !selectedTags().contains(it) }
             .apply {

@@ -15,7 +15,7 @@ interface SearchDao {
             "ORDER BY CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END DESC")
     fun searchByMonth(month: String, dateModified: Boolean): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT * FROM media WHERE strftime('%u', dateTaken, 'unixepoch') = :day " +
+    @Query(value = "SELECT * FROM media WHERE strftime('%w', dateTaken, 'unixepoch') = :day " +
             "ORDER BY CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END DESC")
     fun searchByDay(day: String, dateModified: Boolean): PagingSource<Int, MediaStoreData>
 
