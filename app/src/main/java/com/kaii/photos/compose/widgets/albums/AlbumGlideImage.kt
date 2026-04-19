@@ -24,6 +24,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.AlbumType
@@ -76,8 +77,12 @@ fun AlbumGlideImage(
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             ) {
-                it.signature(albumInfo.thumbnail.signature)
+                val request = it.signature(albumInfo.thumbnail.signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
+
+                // try to load GIFs, if it fails fallback to bitmaps
+                // this is fine performance wise
+                request.clone().decode(GifDrawable::class.java).error(request)
             }
         } else {
             var timedOut by remember { mutableStateOf(false) }

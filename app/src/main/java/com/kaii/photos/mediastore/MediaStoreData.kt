@@ -38,9 +38,17 @@ fun ByteArray.getThumbnailIv() = copyOfRange(16, 32)
 fun ByteArray.getOriginalPath() = decodeToString(32, size)
 
 fun MediaStoreData.isRawImage(): Boolean {
-    val rawTypes = listOf("image/dng", "image/tiff", "image/x-raw-adobe") // might not be complete for glide?
+    val rawTypes = listOf(
+        "image/dng",
+        "image/x-adobe-dng",
+        "image/x-raw-adobe",
+        "image/tiff",
+        "image/x-canon-cr2"
+    ) // might not be complete for glide?
 
     return this.mimeType.lowercase() in rawTypes
 }
+
+fun MediaStoreData.isGIF(): Boolean = this.mimeType.lowercase() == "image/gif"
 
 fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())

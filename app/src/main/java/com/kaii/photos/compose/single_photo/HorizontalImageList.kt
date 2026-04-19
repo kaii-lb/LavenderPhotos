@@ -41,6 +41,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
@@ -360,7 +361,7 @@ fun GlideView(
         modifier = modifier
             .fillMaxSize()
     ) {
-        it
+        val request = it
             .signature(
                 if (useCache) item.signature()
                 else ObjectKey(Clock.System.now().toEpochMilliseconds())
@@ -376,5 +377,9 @@ fun GlideView(
                     .override(windowSize.width, windowSize.height)
             )
             .transition(withCrossFade(if (isHidden) 250 else 100))
+
+        // try to load GIFs, if it fails fallback to bitmaps
+        // this is fine performance wise
+        request.clone().decode(GifDrawable::class.java).error(request)
     }
 }

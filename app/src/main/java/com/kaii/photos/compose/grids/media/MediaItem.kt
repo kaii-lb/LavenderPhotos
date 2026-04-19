@@ -57,6 +57,7 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import com.kaii.photos.mediastore.isGIF
 import com.kaii.photos.mediastore.isRawImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -240,6 +241,23 @@ fun MediaItem(
                     tint = Color.White,
                     modifier = Modifier
                         .size(28.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
+        if (item.item.isGIF()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(2.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.gif_2),
+                    contentDescription = stringResource(id = R.string.media_is_gif),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
                         .align(Alignment.Center)
                 )
             }
