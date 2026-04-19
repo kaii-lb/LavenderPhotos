@@ -1,7 +1,6 @@
 package com.kaii.photos.datastore.preferences
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -20,14 +19,14 @@ class SettingsImmichImpl(
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
     private val immichToken = byteArrayPreferencesKey("immich_token")
     private val username = stringPreferencesKey("immich_username")
-    private val alwaysShowUserInfo =
-        booleanPreferencesKey("immich_always_show_user_info") // always show the main app bar's pfp and username, even if not logged in.
+    private val userId = stringPreferencesKey("immich_user_id")
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty
         val token = data[immichToken] ?: return@map ImmichBasicInfo.Empty
         val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo.Empty
-        val username = data[username] ?: ""
+        val username = data[username] ?: return@map ImmichBasicInfo.Empty
+        val userId = data[userId] ?: return@map ImmichBasicInfo.Empty
 
         val decToken = EncryptionManager.decryptBytes(
             bytes = token,
@@ -37,7 +36,8 @@ class SettingsImmichImpl(
         ImmichBasicInfo(
             endpoint = endpoint,
             accessToken = decToken.decodeToString(),
-            username = username
+            username = username,
+            userId = userId
         )
     }
 
@@ -49,17 +49,7 @@ class SettingsImmichImpl(
             data[immichEndpoint] = info.endpoint
             data[immichToken] = enc
             data[immichEncryptionIV] = iv
-        }
-    }
-
-    fun getAlwaysShowUserInfo() =
-        context.datastore.data.map {
-            it[alwaysShowUserInfo] == true
-        }
-
-    fun setAlwaysShowUserInfo(value: Boolean) = scope.launch {
-        context.datastore.edit {
-            it[alwaysShowUserInfo] = value
+            data[userId] = info.userId
         }
     }
 }

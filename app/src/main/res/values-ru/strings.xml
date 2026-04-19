@@ -943,11 +943,10 @@
     <string name="immich_endpoint_base_placeholder">https://мой.сервер.immich.com/</string>
     <string name="immich_clear_endpoint">Удалить сервер?</string>
     <string name="immich_clear_endpoint_desc">Вы уверены, что хотите удалить этот адрес сервера?</string>
-    <string name="immich_logout_question">Выйти?</string>
     <string name="immich_logout_question_desc">Вы уверены, что хотите выйти из этой учётки?</string>
     <string name="immich_email">Электронная почта:</string>
     <string name="immich_state_unknown">Неизвестно</string>
-    <string name="immich_auth_passowrd">Пароль</string>
+    <string name="immich_auth_password">Пароль</string>
     <string name="immich_auth_email">Электронная почта</string>
     <string name="immich_uuid">ИД в Immich</string>
     <string name="immich_server_info_desc">Версия: %1$s. Сборка: %2$s</string>
@@ -972,8 +971,6 @@
 ]]></string>
     <string name="immich_server_url_invalid">Неверный URL-адрес!</string>
     <string name="immich_misc">Разное</string>
-    <string name="immich_always_show_user_info">Всегда показывать инфо пользователя</string>
-    <string name="immich_always_show_user_info_desc">Отображает информацию о пользователе независимо от того, может ли приложение связаться с сервером или нет</string>
     <string name="exif_name">Название:</string>
     <string name="exif_path">Путь:</string>
     <string name="exif_date">Дата:</string>

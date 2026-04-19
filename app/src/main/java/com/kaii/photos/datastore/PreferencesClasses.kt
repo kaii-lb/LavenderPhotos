@@ -232,13 +232,15 @@ data class AlbumInfo(
 data class ImmichBasicInfo(
     val endpoint: String,
     val accessToken: String,
-    val username: String
+    val username: String,
+    val userId: String
 ) {
     companion object {
         val Empty = ImmichBasicInfo(
             endpoint = "",
             accessToken = "",
-            username = ""
+            username = "",
+            userId = ""
         )
     }
 }

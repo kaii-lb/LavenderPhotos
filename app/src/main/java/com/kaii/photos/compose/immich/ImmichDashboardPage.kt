@@ -69,7 +69,6 @@ import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
@@ -118,7 +117,7 @@ fun ImmichDashboardPage(
         }
     ) { innerPadding ->
         val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
-        var isLoadingInfo by remember { mutableStateOf(true) }
+        var isLoadingInfo by remember { mutableStateOf(false) }
         val pullToRefreshState = rememberPullToRefreshState()
 
         LaunchedEffect(viewModel.refreshStatus) {
@@ -157,21 +156,24 @@ fun ImmichDashboardPage(
                         title = stringResource(id = R.string.immich_endpoint_base),
                         placeholder = stringResource(id = R.string.immich_endpoint_base_placeholder),
                         errorMessage = resources.getString(R.string.immich_server_url_invalid),
-                        onConfirm = { value ->
+                        onConfirm = { address ->
+                            val address = address.trim()
+
                             when {
-                                viewModel.validateServerAddress(address = value) && viewModel.ping(address = value) -> {
+                                viewModel.validateServerAddress(address = address) && viewModel.ping(address = address) -> {
                                     viewModel.setInfo(
                                         ImmichBasicInfo(
-                                            endpoint = value.removeSuffix("/"),
+                                            endpoint = address.removeSuffix("/"),
                                             accessToken = loginInfo.accessToken,
-                                            username = loginInfo.username
+                                            username = loginInfo.username,
+                                            userId = loginInfo.userId
                                         )
                                     )
                                     showAddressDialog = false
                                     true
                                 }
 
-                                viewModel.validateServerAddress(address = value) -> {
+                                viewModel.validateServerAddress(address = address) -> {
                                     coroutineScope.launch {
                                         LavenderSnackbarController.pushEvent(
                                             LavenderSnackbarEvent.MessageEvent(
@@ -237,12 +239,12 @@ fun ImmichDashboardPage(
                                 resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).name
                             }
 
-                            is LoginState.ServerUnreachable -> {
-                                resources.getString(R.string.immich_login_unreachable)
+                            is LoginState.LoggedOut -> {
+                                resources.getString(R.string.immich_login_unavailable)
                             }
 
                             else -> {
-                                resources.getString(R.string.immich_login_unavailable)
+                                resources.getString(R.string.immich_login_unreachable)
                             }
                         }
                     }
@@ -255,12 +257,12 @@ fun ImmichDashboardPage(
                                 resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).email
                             }
 
-                            is LoginState.ServerUnreachable -> {
-                                resources.getString(R.string.immich_login_unreachable_desc)
+                            is LoginState.LoggedOut -> {
+                                resources.getString(R.string.immich_login_unavailable_desc)
                             }
 
                             else -> {
-                                resources.getString(R.string.immich_login_unavailable_desc)
+                                resources.getString(R.string.immich_login_unreachable_desc)
                             }
                         }
                     }
@@ -270,29 +272,22 @@ fun ImmichDashboardPage(
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .clickable(enabled = userInfo is LoginState.LoggedIn) {
-                            navController.navigate(Screens.Immich.Account)
+                        .clickable(enabled = userInfo !is LoginState.ServerUnreachable && !isLoadingInfo) {
+                            navController.navigate(
+                                if (userInfo is LoginState.LoggedIn) Screens.Immich.Account
+                                else Screens.Immich.Login
+                            )
                         }
                         .padding(16.dp, 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (userInfo is LoginState.LoggedIn && (userInfo as LoginState.LoggedIn).pfpUrl.isNotBlank()) {
-                        UpdatableProfileImage(
-                            loggedIn = true,
-                            pfpUrl = (userInfo as LoginState.LoggedIn).pfpUrl,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(id = R.drawable.account_circle),
-                            contentDescription = "an icon describing: $title",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(28.dp)
-                        )
-                    }
+                    UpdatableProfileImage(
+                        immichInfo = { loginInfo },
+                        userInfo = { userInfo },
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                    )
 
                     Spacer(modifier = Modifier.width(16.dp))
 
@@ -463,20 +458,6 @@ fun ImmichDashboardPage(
 
             item {
                 PreferencesSeparatorText(text = stringResource(id = R.string.immich_misc))
-            }
-
-            item {
-                val alwaysShowInfo by viewModel.alwaysShow.collectAsStateWithLifecycle()
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.immich_always_show_user_info),
-                    summary = stringResource(id = R.string.immich_always_show_user_info_desc),
-                    iconResID = R.drawable.id_card,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    checked = alwaysShowInfo,
-                    onSwitchClick = viewModel::setAlwaysShow
-                )
             }
 
             item {

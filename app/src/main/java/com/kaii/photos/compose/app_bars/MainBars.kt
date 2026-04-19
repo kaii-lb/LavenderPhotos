@@ -102,7 +102,6 @@ fun MainAppTopBar(
     selectionManager: SelectionManager,
     immichInfo: () -> ImmichBasicInfo,
     showAddAlbumButton: () -> Boolean,
-    alwaysShowImmichInfo: () -> Boolean,
     extraSecureFolderEntry: () -> Boolean,
     showTagDialog: () -> Boolean,
     isFromMediaPicker: Boolean,
@@ -122,7 +121,6 @@ fun MainAppTopBar(
             userInfo = userInfo,
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
-            alwaysShowImmichInfo = alwaysShowImmichInfo,
             immichInfo = immichInfo,
             toggleSelectMode = {
                 vibratorManager.vibrateShort()
@@ -208,8 +206,8 @@ fun MainAppTopBar(
 
                 if (!isFromMediaPicker) {
                     AnimatedLoginIcon(
-                        state = userInfo(),
-                        alwaysShowInfo = alwaysShowImmichInfo
+                        state = userInfo,
+                        immichInfo = immichInfo
                     ) {
                         coroutineScope.launch {
                             showMainDialog = true

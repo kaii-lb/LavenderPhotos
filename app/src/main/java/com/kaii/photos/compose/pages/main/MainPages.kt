@@ -153,7 +153,6 @@ fun MainPages(
     Scaffold(
         topBar = {
             val groups by viewModel.groups.collectAsStateWithLifecycle()
-            val alwaysShowImmichInfo by viewModel.alwaysShowImmichInfo.collectAsStateWithLifecycle()
             val extraSecureFolderEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
             val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
 
@@ -165,7 +164,6 @@ fun MainPages(
                 showAddAlbumButton = {
                     tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
                 },
-                alwaysShowImmichInfo = { alwaysShowImmichInfo },
                 extraSecureFolderEntry = { extraSecureFolderEntry },
                 showTagDialog = { showTagDialog },
                 isFromMediaPicker = incomingIntent != null,

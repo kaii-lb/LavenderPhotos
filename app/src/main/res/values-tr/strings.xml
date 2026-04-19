@@ -922,11 +922,10 @@
     <string name="immich_endpoint_base_placeholder">https://sunucum.immich.com/</string>
     <string name="immich_clear_endpoint">Sunucu Kaldırılsın mı?</string>
     <string name="immich_clear_endpoint_desc">Bu sunucu adresini kaldırmak istediğinizden emin misiniz?</string>
-    <string name="immich_logout_question">Çıkış Yapılsın mı?</string>
     <string name="immich_logout_question_desc">Bu hesaptan çıkış yapmak istediğinizden emin misiniz?</string>
     <string name="immich_email">E-posta:</string>
     <string name="immich_state_unknown">Bilinmiyor</string>
-    <string name="immich_auth_passowrd">Parola</string>
+    <string name="immich_auth_password">Parola</string>
     <string name="immich_auth_email">E-posta</string>
     <string name="immich_uuid">Immich UUID</string>
     <string name="immich_server_info_desc">Sürüm: %1$s. Yapı: %2$s</string>
@@ -953,6 +952,4 @@
     </string>
     <string name="immich_server_url_invalid">Geçersiz Url!</string>
     <string name="immich_misc">Çeşitli</string>
-    <string name="immich_always_show_user_info">Kullanıcı Bilgisini Her Zaman Göster</string>
-    <string name="immich_always_show_user_info_desc">Uygulamanın sunucuya ulaşıp ulaşamadığına bakılmaksızın kullanıcı bilgilerini gösterir</string>
 </resources>

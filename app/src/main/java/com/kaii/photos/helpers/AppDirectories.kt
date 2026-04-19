@@ -78,4 +78,4 @@ val Context.appSecureThumbnailCacheDir: String
     }
 
 val Context.profilePicture: String
-        get() = "$appStorageDir/immich_pfp.png"
+        get() = "$filesDir/immich_pfp.png"

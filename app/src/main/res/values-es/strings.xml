@@ -889,11 +889,10 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">¿Eliminar Servidor?</string>
     <string name="immich_clear_endpoint_desc">¿Está seguro de que desea eliminar esta dirección de servidor?</string>
-    <string name="immich_logout_question">¿Cerrar sesión?</string>
     <string name="immich_logout_question_desc">¿Está seguro de que desea cerrar sesión en esta cuenta?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Desconocido</string>
-    <string name="immich_auth_passowrd">Contraseña</string>
+    <string name="immich_auth_password">Contraseña</string>
     <string name="immich_auth_email">Email</string>
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_desc">Versión: %1$s. Compilación: %2$s</string>
@@ -922,8 +921,6 @@
     <string name="look_and_feel_rounded_corners">Esquinas redondeadas de las miniaturas</string>
     <string name="look_and_feel_rounded_corners_desc">Esquinas redondeadas en las miniaturas de las cuadrículas de fotos</string>
     <string name="immich_misc">Misceláneos</string>
-    <string name="immich_always_show_user_info">Mostrar siempre la información del usuario</string>
-    <string name="immich_always_show_user_info_desc">Muestra información al usuario sobre si la aplicación puede conectarse al servidor o no</string>
     <string name="navigation_photos">Fotos</string>
     <string name="navigation_secure">Seguro</string>
     <string name="navigation_albums">Álbumes</string>

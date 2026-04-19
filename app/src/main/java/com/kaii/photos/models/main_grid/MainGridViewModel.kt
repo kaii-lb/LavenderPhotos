@@ -96,12 +96,6 @@ class MainGridViewModel(
         initialValue = AlbumSortMode.LastModifiedDesc
     )
 
-    val alwaysShowImmichInfo = settings.immich.getAlwaysShowUserInfo().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
     val confirmToDelete = settings.permissions.getConfirmToDelete().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),

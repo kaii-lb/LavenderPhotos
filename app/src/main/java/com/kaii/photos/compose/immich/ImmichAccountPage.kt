@@ -70,6 +70,7 @@ import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
 import com.kaii.photos.models.OperationStatus
@@ -89,10 +90,12 @@ fun ImmichAccountPage(
     val context = LocalContext.current
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
     val serverInfo by viewModel.serverInfo.collectAsStateWithLifecycle()
+    val immichInfo by viewModel.info.collectAsStateWithLifecycle()
 
     ImmichAccountPageImpl(
         userInfo = { userInfo },
         serverInfo = { serverInfo },
+        immichInfo = { immichInfo },
         operationStatus = viewModel.operationStatus,
         refreshStatus = viewModel.refreshStatus,
         navController = LocalNavController.current,
@@ -162,6 +165,7 @@ private fun ImmichAccountPagePreview() {
                 )
             )
         },
+        immichInfo = { ImmichBasicInfo.Empty },
         operationStatus = emptyFlow(),
         refreshStatus = emptyFlow(),
         navController = rememberNavController(),
@@ -179,6 +183,7 @@ private fun ImmichAccountPagePreview() {
 private fun ImmichAccountPageImpl(
     userInfo: () -> LoginState,
     serverInfo: () -> ServerInfoState,
+    immichInfo: () -> ImmichBasicInfo,
     operationStatus: Flow<OperationStatus>,
     refreshStatus: Flow<OperationStatus>,
     navController: NavController,
@@ -244,34 +249,24 @@ private fun ImmichAccountPageImpl(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if ((userInfo() as? LoginState.LoggedIn)?.pfpUrl?.isNotBlank() == true) {
-                        val pfpPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                            setProfilePicture(uri)
-                        }
-
-                        UpdatableProfileImage(
-                            loggedIn = true,
-                            pfpUrl = (userInfo() as LoginState.LoggedIn).pfpUrl,
-                            modifier = Modifier
-                                .size(104.dp)
-                                .clip(CircleShape)
-                                .clickable {
-                                    pfpPicker.launch(
-                                        input = PickVisualMediaRequest(
-                                            mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
-                                        )
-                                    )
-                                }
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(id = R.drawable.account_circle),
-                            contentDescription = "User's Immich profile picture",
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .size(104.dp)
-                        )
+                    val pfpPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                        setProfilePicture(uri)
                     }
+
+                    UpdatableProfileImage(
+                        userInfo = userInfo,
+                        immichInfo = immichInfo,
+                        modifier = Modifier
+                            .size(104.dp)
+                            .clip(CircleShape)
+                            .clickable(enabled = userInfo() is LoginState.LoggedIn) {
+                                pfpPicker.launch(
+                                    input = PickVisualMediaRequest(
+                                        mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
+                            },
+                    )
                 }
             }
 
@@ -314,6 +309,7 @@ private fun ImmichAccountPageImpl(
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
+                    enabled = userInfo() is LoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
@@ -354,6 +350,7 @@ private fun ImmichAccountPageImpl(
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
+                    enabled = userInfo() is LoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
@@ -373,13 +370,14 @@ private fun ImmichAccountPageImpl(
                 }
 
                 PreferencesRow(
-                    title = stringResource(id = R.string.immich_auth_passowrd),
+                    title = stringResource(id = R.string.immich_auth_password),
                     iconResID = R.drawable.password,
                     position = RowPosition.Middle,
                     summary = "*".repeat(8),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
+                    enabled = userInfo() is LoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }

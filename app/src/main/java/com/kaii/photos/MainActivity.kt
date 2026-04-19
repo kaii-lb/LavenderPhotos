@@ -60,6 +60,7 @@ import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
 import com.kaii.photos.compose.immich.ImmichDashboardPage
+import com.kaii.photos.compose.immich.ImmichLoginPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
@@ -504,6 +505,16 @@ class MainActivity : ComponentActivity() {
                         )
 
                         ImmichAccountPage(viewModel = viewModel)
+                    }
+
+                    composable<Screens.Immich.Login> {
+                        val viewModel = it.sharedViewModel<ImmichInfoViewModel>(
+                            factory = ImmichInfoViewModelFactory(
+                                context = context
+                            )
+                        )
+
+                        ImmichLoginPage(viewModel = viewModel)
                     }
 
                     composable<Screens.Immich.GridView>(

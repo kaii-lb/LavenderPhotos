@@ -55,7 +55,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,9 +69,9 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.R
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.profilePicture
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 
 @Composable
@@ -337,8 +336,8 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AnimatedImmichBackupIcon(
-    state: LoginState,
-    alwaysShowInfo: Boolean,
+    state: () -> LoginState,
+    immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier
 ) {
     // TODO:
@@ -357,14 +356,13 @@ fun AnimatedImmichBackupIcon(
         //     )
         // )
 
-        val context = LocalContext.current
         UpdatableProfileImage(
-            loggedIn = alwaysShowInfo || state !is LoginState.LoggedOut,
-            pfpUrl = if (alwaysShowInfo && state is LoginState.LoggedOut) context.profilePicture else (state as? LoginState.LoggedIn)?.pfpUrl ?: "",
+            userInfo = state,
+            immichInfo = immichInfo,
             modifier = Modifier
                 .size(28.dp) // TODO
                 .clip(CircleShape)
-                .zIndex(2f)
+                .zIndex(2f),
         )
 
         AnimatedVisibility(
@@ -404,12 +402,12 @@ fun AnimatedImmichBackupIcon(
 
 @Composable
 fun AnimatedLoginIcon(
-    state: LoginState,
-    alwaysShowInfo: () -> Boolean,
+    state: () -> LoginState,
+    immichInfo: () -> ImmichBasicInfo,
     onClick: () -> Unit
 ) {
     AnimatedContent(
-        targetState = alwaysShowInfo() || (state is LoginState.LoggedIn && state.pfpUrl.isNotBlank()),
+        targetState = immichInfo().accessToken.isNotBlank() || state() is LoginState.LoggedIn,
         transitionSpec = {
             (scaleIn(
                 animationSpec = AnimationConstants.expressiveSpring()
@@ -426,7 +424,7 @@ fun AnimatedLoginIcon(
         if (visible) {
             AnimatedImmichBackupIcon(
                 state = state,
-                alwaysShowInfo = alwaysShowInfo(),
+                immichInfo = immichInfo,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(CircleShape)

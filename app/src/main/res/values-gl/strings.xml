@@ -432,11 +432,10 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">Retirar servidor?</string>
     <string name="immich_clear_endpoint_desc">Tes certeza de querer retirar este enderezo de servidor?</string>
-    <string name="immich_logout_question">Fechar sesión?</string>
     <string name="immich_logout_question_desc">Tes certeza de querer fechar a sesión desta conta?</string>
     <string name="immich_email">Correo:</string>
     <string name="immich_state_unknown">Descoñecido</string>
-    <string name="immich_auth_passowrd">Contrasinal</string>
+    <string name="immich_auth_password">Contrasinal</string>
     <string name="immich_auth_email">Correo electrónico</string>
     <string name="immich_uuid">UUID Immich:</string>
     <string name="immich_server_info_desc">Versión: %1$s. Build: %2$s</string>
@@ -461,8 +460,6 @@
         ]]></string>
     <string name="immich_server_url_invalid">URL non válido!</string>
     <string name="immich_misc">Varios</string>
-    <string name="immich_always_show_user_info">Mostrar sempre info da usuaria</string>
-    <string name="immich_always_show_user_info_desc">Mostra información da usuaria tanto se puido realizar a conexión ou non</string>
     <string name="exif_name">Nome:</string>
     <string name="exif_path">Ruta:</string>
     <string name="exif_date">Data:</string>

@@ -41,19 +41,13 @@ class ImmichInfoViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val alwaysShow = settings.immich.getAlwaysShowUserInfo().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
     private val serverState = ServerState(coroutineScope = viewModelScope)
     private val loginState = LoginStateManager(coroutineScope = viewModelScope)
 
     private val _serverInfo = MutableStateFlow<ServerInfoState>(ServerInfoState.Unavailable)
     val serverInfo = _serverInfo.asStateFlow()
 
-    private val _userInfo = MutableStateFlow<LoginState>(LoginState.LoggedOut)
+    private val _userInfo = MutableStateFlow<LoginState>(LoginState.ServerUnreachable)
     val userInfo = _userInfo.asStateFlow()
 
     // we use a channel here as to not double-fire events in case of recomposition
@@ -70,7 +64,7 @@ class ImmichInfoViewModel(
         viewModelScope.launch {
             info.collectLatest {
                 serverState.setBaseUrl(
-                    baseUrl = it.endpoint,
+                    baseUrl = it.endpoint.takeIf { endpoint -> endpoint.isNotBlank() } ?: "a", // stupidity because [setBaseUrl] checks for empty string (needs to be fixed)
                     apiClient = apiClient
                 )
 
@@ -93,9 +87,11 @@ class ImmichInfoViewModel(
 
     fun setInfo(info: ImmichBasicInfo) = settings.immich.setImmichBasicInfo(info)
 
-    fun setAlwaysShow(value: Boolean) = settings.immich.setAlwaysShowUserInfo(value)
-
     fun refresh() {
+        // don't cause broken UX and other issues because there isn't
+        // even a server to connect to
+        if (info.value.endpoint.isBlank()) return
+
         viewModelScope.launch {
             _refreshChannel.trySend(OperationStatus.Loading)
 
@@ -125,10 +121,11 @@ class ImmichInfoViewModel(
     fun login(
         email: String,
         password: String,
-        userAgent: String,
         context: Context
     ) {
         viewModelScope.launch {
+            _operationChannel.trySend(OperationStatus.Loading)
+            val userAgent = System.getProperty("http.agent") ?: ""
             val state = loginState.login(email, password, userAgent)
 
             val eventTitle =
@@ -146,7 +143,9 @@ class ImmichInfoViewModel(
             if (state is LoginState.LoggedIn) {
                 eventTitle.value = context.resources.getString(R.string.immich_login_successful)
                 isLoading.value = false
+                _operationChannel.trySend(OperationStatus.Successful)
             } else {
+                _operationChannel.trySend(OperationStatus.Failed)
                 eventTitle.value = context.resources.getString(R.string.immich_login_failed)
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
@@ -162,7 +161,8 @@ class ImmichInfoViewModel(
                     ImmichBasicInfo(
                         endpoint = info.value.endpoint,
                         accessToken = state.accessToken,
-                        username = state.name
+                        username = state.name,
+                        userId = state.userId
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)

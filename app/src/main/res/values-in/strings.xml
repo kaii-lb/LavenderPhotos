@@ -436,11 +436,10 @@
     <string name="immich_endpoint_base_placeholder">[https://my.immich.server.com/](https://my.immich.server.com/)</string>
     <string name="immich_clear_endpoint">Hapus Server?</string>
     <string name="immich_clear_endpoint_desc">Apakah Anda yakin ingin menghapus alamat server ini?</string>
-    <string name="immich_logout_question">Keluar?</string>
     <string name="immich_logout_question_desc">Apakah Anda yakin ingin keluar dari akun ini?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Tidak diketahui</string>
-    <string name="immich_auth_passowrd">Kata Sandi</string>
+    <string name="immich_auth_password">Kata Sandi</string>
     <string name="immich_auth_email">Email</string>
     <string name="immich_uuid">UUID Immich:</string>
     <string name="immich_server_info_desc">Versi: %1$s. Build: %2$s</string>
@@ -465,8 +464,6 @@
         ]]></string>
     <string name="immich_server_url_invalid">URL Tidak Valid!</string>
     <string name="immich_misc">Lain-lain</string>
-    <string name="immich_always_show_user_info">Selalu Tampilkan Info Pengguna</string>
-    <string name="immich_always_show_user_info_desc">Menampilkan info pengguna baik aplikasi dapat menjangkau server atau tidak</string>
     <string name="exif_name">Nama:</string>
     <string name="exif_path">Path:</string>
     <string name="exif_date">Tanggal:</string>

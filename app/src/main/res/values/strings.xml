@@ -1179,13 +1179,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">Remove Server?</string>
     <string name="immich_clear_endpoint_desc">Are you sure you want to remove this server address?</string>
-    <string name="immich_logout_question">Log out?</string>
     <string name="immich_logout">Log out</string>
     <string name="immich_logout_desc">Removes account from this device</string>
     <string name="immich_logout_question_desc">Are you sure you want to log out from this account?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Unknown</string>
-    <string name="immich_auth_passowrd">Password</string>
+    <string name="immich_auth_password">Password</string>
     <string name="immich_auth_email">Email</string>
     <string name="immich_auth_current_password">Current password</string>
     <string name="immich_auth_new_password">New password</string>
@@ -1196,6 +1195,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_auth_password_too_short">Password must be at least 8 characters long</string>
     <string name="immich_auth_password_current_blank">Current password cannot be blank</string>
     <string name="immich_auth_password_good_to_go">Ready to change password!</string>
+    <string name="immich_auth_hide_password">Show or hide password</string>
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
@@ -1223,8 +1223,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     </string>
     <string name="immich_server_url_invalid">Invalid Url!</string>
     <string name="immich_misc">Miscellaneous</string>
-    <string name="immich_always_show_user_info">Always Show User Info</string>
-    <string name="immich_always_show_user_info_desc">Displays user info whether the app is able to reach the server or not</string>
     <string name="immich_server_online">Online</string>
     <string name="immich_server_offline">Offline</string>
     <string name="immich_server_unreachable">Cannot ping server!</string>
@@ -1246,6 +1244,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_account_change_password_failed">Failed to change password</string>
     <string name="immich_account_change_pfp_succeeeded">Changed profile picture!</string>
     <string name="immich_account_change_pfp_failed">Couldn\'t change profile picture</string>
+    <string name="immich_account_create">Create account</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>

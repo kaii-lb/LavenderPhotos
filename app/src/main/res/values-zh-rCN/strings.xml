@@ -366,11 +366,10 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">删除服务器？</string>
     <string name="immich_clear_endpoint_desc">确定要删除该服务器地址吗？</string>
-    <string name="immich_logout_question">退出账户？</string>
     <string name="immich_logout_question_desc">确定要退出此账户吗？</string>
     <string name="immich_email">邮箱：</string>
     <string name="immich_state_unknown">未知</string>
-    <string name="immich_auth_passowrd">密码</string>
+    <string name="immich_auth_password">密码</string>
     <string name="immich_auth_email">邮箱</string>
     <string name="immich_uuid">Immich UUID</string>
     <string name="immich_server_info_desc">版本：%1$s，构建：%2$s</string>
@@ -397,8 +396,6 @@
     <string name="look_and_feel_rounded_corners">圆角缩略图</string>
     <string name="look_and_feel_rounded_corners_desc">网格缩略图使用圆角</string>
     <string name="immich_misc">其他</string>
-    <string name="immich_always_show_user_info">始终显示用户信息</string>
-    <string name="immich_always_show_user_info_desc">无论应用是否能够连接到服务器，均显示用户信息</string>
     <string name="video_open_externally">用外部播放器打开</string>
     <string name="video_open_externally_desc">点击网格视频时，选择打开方式</string>
     <string name="navigation_photos">照片</string>

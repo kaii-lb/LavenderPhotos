@@ -20,6 +20,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -51,6 +52,7 @@ fun ClearableTextField(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     contentType: ContentType? = null,
     shape: Shape = CircleShape,
+    enabled: Boolean = true,
     onConfirm: () -> Unit,
     onClear: () -> Unit
 ) {
@@ -68,6 +70,7 @@ fun ClearableTextField(
             },
             maxLines = 1,
             singleLine = true,
+            enabled = enabled,
             placeholder = {
                 Text(
                     text = placeholder,
@@ -129,6 +132,7 @@ fun ClearableTextField(
             visualTransformation = visualTransformation,
             shape = shape,
             modifier = Modifier
+                .clip(shape) // clip again for autofill highlight
                 .weight(1f)
                 .semantics {
                     if (contentType != null) this.contentType = contentType

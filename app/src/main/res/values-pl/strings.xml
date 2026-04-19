@@ -361,11 +361,10 @@
     <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
     <string name="immich_clear_endpoint">Usunąć serwer?</string>
     <string name="immich_clear_endpoint_desc">Czy na pewno chcesz usunąć ten adres serwera?</string>
-    <string name="immich_logout_question">Wylogować?</string>
     <string name="immich_logout_question_desc">Czy na pewno chcesz wylogować się z tego konta?</string>
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Nieznany</string>
-    <string name="immich_auth_passowrd">Hasło</string>
+    <string name="immich_auth_password">Hasło</string>
     <string name="immich_auth_email">Email</string>
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_desc">Wersja: %1$s. Kompilacja: %2$s</string>
@@ -392,8 +391,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
     <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
     <string name="immich_misc">Różne</string>
-    <string name="immich_always_show_user_info">Zawsze pokazuj informacje o użytkowniku</string>
-    <string name="immich_always_show_user_info_desc">Wyświetla informacje o użytkowniku, niezależnie od tego, czy aplikacja ma dostęp do serwera, czy nie</string>
     <string name="video_open_externally">Otwórz w zewnętrznym odtwarzaczu</string>
     <string name="video_open_externally_desc">Zapytaj, czym otworzyć filmy po dotknięciu siatki</string>
     <string name="navigation_photos">Zdjęcia</string>

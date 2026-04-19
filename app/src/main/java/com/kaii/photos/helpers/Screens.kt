@@ -78,6 +78,9 @@ interface Screens {
         object Account: Screens
 
         @Serializable
+        object Login: Screens
+
+        @Serializable
         data class GridView(
             val album: AlbumType.Cloud
         ) : Screens

@@ -21,10 +21,13 @@ import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.helpers.AnimationConstants
 
 fun Modifier.infiniteLoadingIndicator(
+    strokeWidth: Dp = 4.dp,
+    padding: Dp = 8.dp,
     loading: () -> Boolean
 ) = composed {
     val loadingIndicatorColor = MaterialTheme.colorScheme.primary
@@ -42,11 +45,11 @@ fun Modifier.infiniteLoadingIndicator(
     )
 
     val animatedPadding by animateDpAsState(
-        targetValue = if (loading()) 8.dp else 0.dp,
+        targetValue = if (loading()) padding else 0.dp,
         animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()
     )
     val animatedStrokeWidth by animateDpAsState(
-        targetValue = if (loading()) 4.dp else 0.dp,
+        targetValue = if (loading()) strokeWidth else 0.dp,
         animationSpec = AnimationConstants.expressiveSpring()
     )
 
@@ -96,6 +99,6 @@ fun Modifier.infiniteLoadingIndicator(
                     )
                 )
             }
-            .padding(horizontal = animatedPadding.coerceAtLeast(0.dp), vertical = 8.dp)
+            .padding(horizontal = animatedPadding.coerceAtLeast(0.dp), vertical = padding)
     )
 }

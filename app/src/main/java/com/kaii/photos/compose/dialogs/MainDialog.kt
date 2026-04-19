@@ -148,7 +148,6 @@ fun MainDialog(
     userInfo: () -> LoginState,
     coroutineScope: CoroutineScope,
     extraSecureFolderEntry: () -> Boolean,
-    alwaysShowImmichInfo: () -> Boolean,
     immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
     toggleSelectMode: () -> Unit,
@@ -192,11 +191,10 @@ fun MainDialog(
                     horizontalAlignment = Alignment.Start
                 ) {
                     item {
-                        if (userInfo() is LoginState.LoggedIn || alwaysShowImmichInfo()) {
+                        if (userInfo() is LoginState.LoggedIn || immichInfo().accessToken.isNotBlank()) {
                             MainDialogUserInfo(
                                 loginState = userInfo(),
                                 coroutineScope = coroutineScope,
-                                alwaysShowInfo = alwaysShowImmichInfo,
                                 immichInfo = immichInfo,
                                 dismiss = dismiss
                             )
