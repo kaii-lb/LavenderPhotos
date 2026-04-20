@@ -35,20 +35,20 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
+import androidx.media3.common.C
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
-import androidx.media3.common.audio.SonicAudioProcessor
+import androidx.media3.common.audio.SpeedProvider
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.Crop
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
-import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.DefaultEncoderFactory
 import androidx.media3.transformer.EditedMediaItem
@@ -169,15 +169,6 @@ suspend fun saveVideo(
 
     audioEffectList.add(audioProcessor)
 
-    if (videoEditingState.speed != 1f) {
-        modList.add(
-            SpeedChangeEffect(videoEditingState.speed)
-        )
-        audioEffectList.add(SonicAudioProcessor().apply {
-            setSpeed(videoEditingState.speed)
-        })
-    }
-
     val ratio =
         max(
             basicVideoData.width / containerDimens.width,
@@ -264,6 +255,13 @@ suspend fun saveVideo(
 
     val editedMediaItem = EditedMediaItem.Builder(mediaItem)
         .setEffects(Effects(audioEffectList, modList + videoEditingState.effectList + overlayEffectsList))
+        .setSpeed(
+            object : SpeedProvider {
+                override fun getSpeed(p0: Long) = videoEditingState.speed
+
+                override fun getNextSpeedChangeTimeUs(p0: Long) = C.TIME_UNSET
+            }
+        )
         .build()
 
     val file = File(absolutePath)
