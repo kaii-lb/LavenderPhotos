@@ -75,7 +75,10 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
+import io.github.kaii_lb.lavender.immichintegration.serialization.FullUserResponse
 import io.github.kaii_lb.lavender.immichintegration.serialization.UsageByUserDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.UserAvatarColor
+import io.github.kaii_lb.lavender.immichintegration.serialization.UserStatus
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
 import kotlinx.coroutines.flow.Flow
@@ -113,7 +116,7 @@ fun ImmichAccountPage(
             )
         },
         setProfilePicture = {
-            viewModel.uploadPfp(
+            viewModel.changeProfilePicture(
                 uri = it,
                 context = context
             )
@@ -136,12 +139,25 @@ private fun ImmichAccountPagePreview() {
     ImmichAccountPageImpl(
         userInfo = {
             LoginState.LoggedIn(
-                pfpUrl = "",
-                name = "example",
-                accessToken = "",
-                email = "example@test.dev",
-                userId = "",
-                isAdmin = false
+                user = FullUserResponse(
+                    avatarColor = UserAvatarColor.Blue,
+                    email = "example@test.dev",
+                    id = "",
+                    name = "example",
+                    profileChangedAt = "",
+                    profileImagePath = "",
+                    createdAt = "",
+                    updatedAt = "",
+                    deletedAt = null,
+                    isAdmin = true,
+                    license = null,
+                    oauthId = "",
+                    quotaSizeInBytes = null,
+                    quotaUsageInBytes = 42 * 1024 * 1024 * 1024,
+                    shouldChangePassword = false,
+                    status = UserStatus.Active,
+                    storageLabel = null
+                )
             )
         },
         serverInfo = {
@@ -201,7 +217,7 @@ private fun ImmichAccountPageImpl(
             val userInfo = userInfo()
 
             if (info is ServerInfoState.Available && userInfo is LoginState.LoggedIn) {
-                info.perUserStorage.first { it.userId == userInfo.userId }
+                info.perUserStorage.first { it.userId == userInfo.user.id }
             } else null
         }
     }
@@ -254,7 +270,6 @@ private fun ImmichAccountPageImpl(
                     }
 
                     UpdatableProfileImage(
-                        userInfo = userInfo,
                         immichInfo = immichInfo,
                         modifier = Modifier
                             .size(104.dp)
@@ -281,7 +296,7 @@ private fun ImmichAccountPageImpl(
                 if (showDialog) {
                     TextEntryDialog(
                         title = stringResource(id = R.string.immich_account_username),
-                        placeholder = (userInfo() as? LoginState.LoggedIn)?.name ?: "",
+                        placeholder = (userInfo() as? LoginState.LoggedIn)?.user?.name ?: "",
                         startValue = "",
                         type = KeyboardType.Text,
                         onConfirm = { username ->
@@ -305,7 +320,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_username),
                     iconResID = R.drawable.name,
                     position = RowPosition.Top,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.name ?: stringResource(id = R.string.immich_account_username),
+                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.name ?: stringResource(id = R.string.immich_account_username),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
@@ -321,7 +336,7 @@ private fun ImmichAccountPageImpl(
                 if (showDialog) {
                     TextEntryDialog(
                         title = stringResource(id = R.string.immich_auth_email),
-                        placeholder = (userInfo() as? LoginState.LoggedIn)?.email ?: "",
+                        placeholder = (userInfo() as? LoginState.LoggedIn)?.user?.email ?: "",
                         startValue = "",
                         errorMessage = stringResource(id = R.string.immich_account_change_email_invalid),
                         type = KeyboardType.Email,
@@ -346,7 +361,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_auth_email),
                     iconResID = R.drawable.mail,
                     position = RowPosition.Middle,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.email ?: stringResource(id = R.string.immich_auth_email),
+                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.email ?: stringResource(id = R.string.immich_auth_email),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
@@ -389,7 +404,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_role),
                     iconResID = R.drawable.supervisor_account,
                     position = RowPosition.Bottom,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.isAdmin?.let {
+                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.isAdmin?.let {
                         stringResource(
                             id =
                                 if (it) R.string.immich_account_is_admin

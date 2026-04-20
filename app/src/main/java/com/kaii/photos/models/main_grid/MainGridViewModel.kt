@@ -21,7 +21,6 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.repositories.HybridRepository
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
@@ -29,9 +28,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -226,17 +223,14 @@ class MainGridViewModel(
             )
         )
 
-    private val loginState = LoginStateManager(coroutineScope = viewModelScope)
+    private val loginState = LoginStateManager()
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    private val _userInfo = MutableStateFlow<LoginState>(LoginState.LoggedOut)
-    val userInfo = _userInfo.asStateFlow()
-
     init {
         val apiClient = context.appModule.apiClient
-        val pfpSavePath = context.profilePicture
+
         viewModelScope.launch {
             immichInfo.collectLatest {
                 loginState.setBaseUrl(
@@ -244,11 +238,11 @@ class MainGridViewModel(
                     apiClient = apiClient
                 )
 
-                _userInfo.value = loginState.refresh(
-                    accessToken = it.accessToken,
-                    pfpSavePath = pfpSavePath,
-                    previousPfpUrl = (userInfo.value as? LoginState.LoggedIn)?.pfpUrl ?: ""
-                )
+                val state = loginState.refresh(accessToken = it.accessToken)
+                if (state is LoginState.LoggedIn) {
+                    settings.immich.setUsername(state.user.name)
+                    settings.immich.setUpdatedAt(state.user.updatedAt)
+                }
             }
         }
     }

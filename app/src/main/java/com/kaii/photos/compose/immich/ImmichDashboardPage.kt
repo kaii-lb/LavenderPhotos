@@ -166,7 +166,8 @@ fun ImmichDashboardPage(
                                             endpoint = address.removeSuffix("/"),
                                             accessToken = loginInfo.accessToken,
                                             username = loginInfo.username,
-                                            userId = loginInfo.userId
+                                            userId = loginInfo.userId,
+                                            updatedAt = loginInfo.updatedAt
                                         )
                                     )
                                     showAddressDialog = false
@@ -236,7 +237,7 @@ fun ImmichDashboardPage(
                     derivedStateOf {
                         when (userInfo) {
                             is LoginState.LoggedIn -> {
-                                resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).name
+                                resources.getString(R.string.immich_login_found) + " " + (userInfo as LoginState.LoggedIn).user.name
                             }
 
                             is LoginState.LoggedOut -> {
@@ -254,7 +255,7 @@ fun ImmichDashboardPage(
                     derivedStateOf {
                         when (userInfo) {
                             is LoginState.LoggedIn -> {
-                                resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).email
+                                resources.getString(R.string.immich_email) + " " + (userInfo as LoginState.LoggedIn).user.email
                             }
 
                             is LoginState.LoggedOut -> {
@@ -283,7 +284,6 @@ fun ImmichDashboardPage(
                 ) {
                     UpdatableProfileImage(
                         immichInfo = { loginInfo },
-                        userInfo = { userInfo },
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)

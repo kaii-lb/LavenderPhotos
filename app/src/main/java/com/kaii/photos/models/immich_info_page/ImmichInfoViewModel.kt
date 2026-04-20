@@ -9,22 +9,14 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.profilePicture
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.models.OperationStatus
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import com.kaii.photos.repositories.ImmichInfoRepository
+import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
@@ -32,7 +24,6 @@ import kotlin.time.Duration.Companion.seconds
 class ImmichInfoViewModel(
     context: Context
 ) : ViewModel() {
-    private val pfpPath = context.profilePicture
     private val settings = context.applicationContext.appModule.settings
 
     val info = settings.immich.getImmichBasicInfo().stateIn(
@@ -41,42 +32,21 @@ class ImmichInfoViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    private val serverState = ServerState(coroutineScope = viewModelScope)
-    private val loginState = LoginStateManager(coroutineScope = viewModelScope)
+    val apiClient = context.appModule.apiClient
+    val repo = ImmichInfoRepository(
+        serverState = ServerState(coroutineScope = viewModelScope),
+        loginState = LoginStateManager(),
+        settings = settings.immich,
+        apiClient = apiClient,
+        scope = viewModelScope
+    )
 
-    private val _serverInfo = MutableStateFlow<ServerInfoState>(ServerInfoState.Unavailable)
-    val serverInfo = _serverInfo.asStateFlow()
-
-    private val _userInfo = MutableStateFlow<LoginState>(LoginState.ServerUnreachable)
-    val userInfo = _userInfo.asStateFlow()
-
-    // we use a channel here as to not double-fire events in case of recomposition
-    private val _operationChannel = Channel<OperationStatus>()
-    val operationStatus = _operationChannel.receiveAsFlow()
-
-    // separate from [_operationChannel] since the two can happen simultaneously
-    private val _refreshChannel = Channel<OperationStatus>()
-    val refreshStatus = _refreshChannel.receiveAsFlow()
+    val serverInfo = repo.serverInfo
+    val userInfo = repo.userInfo
+    val operationStatus = repo.operationStatus
+    val refreshStatus = repo.refreshStatus
 
     init {
-        val apiClient = context.appModule.apiClient
-
-        viewModelScope.launch {
-            info.collectLatest {
-                serverState.setBaseUrl(
-                    baseUrl = it.endpoint.takeIf { endpoint -> endpoint.isNotBlank() } ?: "a", // stupidity because [setBaseUrl] checks for empty string (needs to be fixed)
-                    apiClient = apiClient
-                )
-
-                loginState.setBaseUrl(
-                    baseUrl = it.endpoint,
-                    apiClient = apiClient
-                )
-
-                refresh()
-            }
-        }
-
         viewModelScope.launch {
             while (true) {
                 refresh()
@@ -88,33 +58,14 @@ class ImmichInfoViewModel(
     fun setInfo(info: ImmichBasicInfo) = settings.immich.setImmichBasicInfo(info)
 
     fun refresh() {
-        // don't cause broken UX and other issues because there isn't
-        // even a server to connect to
-        if (info.value.endpoint.isBlank()) return
-
         viewModelScope.launch {
-            _refreshChannel.trySend(OperationStatus.Loading)
-
-            _serverInfo.value = serverState.fetch(accessToken = info.value.accessToken)
-            _userInfo.value = loginState.refresh(
-                accessToken = info.value.accessToken,
-                pfpSavePath = pfpPath,
-                previousPfpUrl = (userInfo.value as? LoginState.LoggedIn)?.pfpUrl ?: ""
-            )
-
-            _refreshChannel.trySend(OperationStatus.Successful)
+            repo.refresh()
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            loginState.logout(info.value.accessToken).let { success ->
-                if (success) {
-                    _userInfo.value = LoginState.LoggedOut
-
-                    setInfo(ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint))
-                }
-            }
+            repo.logout()
         }
     }
 
@@ -124,9 +75,7 @@ class ImmichInfoViewModel(
         context: Context
     ) {
         viewModelScope.launch {
-            _operationChannel.trySend(OperationStatus.Loading)
-            val userAgent = System.getProperty("http.agent") ?: ""
-            val state = loginState.login(email, password, userAgent)
+            val state = repo.login(email, password)
 
             val eventTitle =
                 mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
@@ -140,12 +89,10 @@ class ImmichInfoViewModel(
                 )
             )
 
-            if (state is LoginState.LoggedIn) {
+            if (state is LoginStatus.LoggedIn) {
                 eventTitle.value = context.resources.getString(R.string.immich_login_successful)
                 isLoading.value = false
-                _operationChannel.trySend(OperationStatus.Successful)
             } else {
-                _operationChannel.trySend(OperationStatus.Failed)
                 eventTitle.value = context.resources.getString(R.string.immich_login_failed)
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
@@ -157,22 +104,25 @@ class ImmichInfoViewModel(
             }
 
             setInfo(
-                info = if (state is LoginState.LoggedIn) {
+                info = if (state is LoginStatus.LoggedIn) {
                     ImmichBasicInfo(
                         endpoint = info.value.endpoint,
                         accessToken = state.accessToken,
                         username = state.name,
-                        userId = state.userId
+                        userId = state.userId,
+                        updatedAt = ""
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)
                 }
             )
+
+            refresh()
         }
     }
 
-    suspend fun ping(address: String) = serverState.ping(address = address)
-    fun validateServerAddress(address: String) = serverState.validateServerAddress(address)
+    suspend fun ping(address: String) = repo.ping(address)
+    fun validateServerAddress(address: String) = repo.validateServerAddress(address)
 
     fun updateInfo(
         context: Context,
@@ -180,32 +130,17 @@ class ImmichInfoViewModel(
         username: String? = null
     ) {
         viewModelScope.launch {
-            _operationChannel.trySend(OperationStatus.Loading)
-
-            loginState.updateInfo(
-                accessToken = info.value.accessToken,
-                name = username,
-                email = email
-            ).let {
-                _operationChannel.trySend(
-                    if (it) OperationStatus.Successful
-                    else OperationStatus.Failed
-                )
-
-                if (it) {
-                    refresh()
-                } else {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvent.MessageEvent(
-                            message = context.resources.getString(
-                                if (email != null) R.string.immich_account_change_email_failed
-                                else R.string.immich_account_change_username_failed
-                            ),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.error_2
-                        )
+            if (!repo.updateInfo(email, username)) {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = context.resources.getString(
+                            if (email != null) R.string.immich_account_change_email_failed
+                            else R.string.immich_account_change_username_failed
+                        ),
+                        duration = SnackbarDuration.Short,
+                        icon = R.drawable.error_2
                     )
-                }
+                )
             }
         }
     }
@@ -216,56 +151,26 @@ class ImmichInfoViewModel(
         newPassword: String
     ) {
         viewModelScope.launch {
-            _operationChannel.trySend(OperationStatus.Loading)
-
-            loginState.changePassword(
-                accessToken = info.value.accessToken,
-                currentPassword = currentPassword,
-                newPassword = newPassword
-            ).let { success ->
-                _operationChannel.trySend(
-                    if (success) OperationStatus.Successful
-                    else OperationStatus.Failed
-                )
-
-                if (!success) {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvent.MessageEvent(
-                            message = context.resources.getString(R.string.immich_account_change_password_failed),
-                            duration = SnackbarDuration.Short,
-                            icon = R.drawable.error_2
-                        )
+            if (!repo.changePassword(currentPassword, newPassword)) {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = context.resources.getString(R.string.immich_account_change_password_failed),
+                        duration = SnackbarDuration.Short,
+                        icon = R.drawable.error_2
                     )
-                }
+                )
             }
-
-            refresh()
         }
     }
 
-    fun uploadPfp(
+    fun changeProfilePicture(
         uri: Uri?,
         context: Context
     ) {
         viewModelScope.launch {
-            if (uri == null) return@launch
+            val status = repo.changeProfilePicture(uri, context)
 
-            _operationChannel.trySend(OperationStatus.Loading)
-            val displayName = context.contentResolver.getMediaStoreDataFromUri(uri)?.displayName ?: return@launch
-            val bytes = context.contentResolver.openInputStream(uri)?.readBytes() ?: return@launch
-
-            val success = loginState.uploadPfp(
-                bytes = bytes,
-                filename = displayName,
-                accessToken = info.value.accessToken
-            ) != null
-
-            _operationChannel.trySend(
-                if (success) OperationStatus.Successful
-                else OperationStatus.Failed
-            )
-
-            if (success) {
+            if (status == true) {
                 refresh()
 
                 LavenderSnackbarController.pushEvent(
@@ -275,7 +180,7 @@ class ImmichInfoViewModel(
                         duration = SnackbarDuration.Short
                     )
                 )
-            } else {
+            } else if (status == false) {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
                         message = context.resources.getString(R.string.immich_account_change_pfp_failed),

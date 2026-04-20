@@ -233,14 +233,16 @@ data class ImmichBasicInfo(
     val endpoint: String,
     val accessToken: String,
     val username: String,
-    val userId: String
+    val userId: String,
+    val updatedAt: String
 ) {
     companion object {
         val Empty = ImmichBasicInfo(
             endpoint = "",
             accessToken = "",
             username = "",
-            userId = ""
+            userId = "",
+            updatedAt = ""
         )
     }
 }

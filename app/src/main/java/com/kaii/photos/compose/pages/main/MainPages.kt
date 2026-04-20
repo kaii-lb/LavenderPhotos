@@ -154,11 +154,9 @@ fun MainPages(
         topBar = {
             val groups by viewModel.groups.collectAsStateWithLifecycle()
             val extraSecureFolderEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
-            val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
 
             MainAppTopBar(
                 alternate = { isSelecting },
-                userInfo = { userInfo },
                 selectionManager = selectionManager,
                 immichInfo = { immichInfo },
                 showAddAlbumButton = {

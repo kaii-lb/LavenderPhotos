@@ -20,6 +20,7 @@ class SettingsImmichImpl(
     private val immichToken = byteArrayPreferencesKey("immich_token")
     private val username = stringPreferencesKey("immich_username")
     private val userId = stringPreferencesKey("immich_user_id")
+    private val updatedAt = stringPreferencesKey("immich_updated_at")
 
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty
@@ -27,6 +28,7 @@ class SettingsImmichImpl(
         val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo.Empty
         val username = data[username] ?: return@map ImmichBasicInfo.Empty
         val userId = data[userId] ?: return@map ImmichBasicInfo.Empty
+        val updatedAt = data[updatedAt] ?: return@map ImmichBasicInfo.Empty
 
         val decToken = EncryptionManager.decryptBytes(
             bytes = token,
@@ -37,7 +39,8 @@ class SettingsImmichImpl(
             endpoint = endpoint,
             accessToken = decToken.decodeToString(),
             username = username,
-            userId = userId
+            userId = userId,
+            updatedAt = updatedAt
         )
     }
 
@@ -50,6 +53,19 @@ class SettingsImmichImpl(
             data[immichToken] = enc
             data[immichEncryptionIV] = iv
             data[userId] = info.userId
+            data[updatedAt] = info.updatedAt
+        }
+    }
+
+    fun setUsername(name: String) = scope.launch {
+        context.datastore.edit { data ->
+            data[username] = name
+        }
+    }
+
+    fun setUpdatedAt(date: String) = scope.launch {
+        context.datastore.edit { data ->
+            data[updatedAt] = date
         }
     }
 }

@@ -55,7 +55,6 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -145,7 +144,6 @@ private enum class AboutLinkItems(
 @Composable
 fun MainDialog(
     sheetState: SheetState,
-    userInfo: () -> LoginState,
     coroutineScope: CoroutineScope,
     extraSecureFolderEntry: () -> Boolean,
     immichInfo: () -> ImmichBasicInfo,
@@ -191,9 +189,8 @@ fun MainDialog(
                     horizontalAlignment = Alignment.Start
                 ) {
                     item {
-                        if (userInfo() is LoginState.LoggedIn || immichInfo().accessToken.isNotBlank()) {
+                        if (immichInfo().accessToken.isNotBlank()) {
                             MainDialogUserInfo(
-                                loginState = userInfo(),
                                 coroutineScope = coroutineScope,
                                 immichInfo = immichInfo,
                                 dismiss = dismiss

@@ -3,9 +3,11 @@ package com.kaii.photos.compose.widgets
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -13,7 +15,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -32,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
@@ -45,6 +47,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -72,7 +76,7 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
+import kotlinx.coroutines.delay
 
 @Composable
 fun SplitButton(
@@ -336,94 +340,78 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AnimatedImmichBackupIcon(
-    state: () -> LoginState,
     immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier
 ) {
-    // TODO:
-    // val immichUploadCount by immichViewModel.immichUploadedMediaCount.collectAsStateWithLifecycle()
-    // val immichUploadTotal by immichViewModel.immichUploadedMediaTotal.collectAsStateWithLifecycle()
-
     Box(
         modifier = modifier
             .size(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        // val size by animateDpAsState(
-        //     targetValue = if (immichUploadTotal != 0) 22.dp else 28.dp,
-        //     animationSpec = tween(
-        //         durationMillis = 400
-        //     )
-        // )
-
         UpdatableProfileImage(
-            userInfo = state,
             immichInfo = immichInfo,
             modifier = Modifier
-                .size(28.dp) // TODO
-                .clip(CircleShape)
+                .size(28.dp)
                 .zIndex(2f),
         )
 
-        AnimatedVisibility(
-            visible = false, // immichUploadTotal != 0,
-            enter = scaleIn(
-                animationSpec = tween(
-                    durationMillis = 400
-                )
-            ),
-            exit = scaleOut(
-                animationSpec = tween(
-                    durationMillis = 400
-                )
-            ),
-            modifier = Modifier
-                .zIndex(1f)
-        ) {
-            // val percentage by animateFloatAsState(
-            //     targetValue = immichUploadCount.toFloat() / (if (immichUploadTotal == 0) 1 else immichUploadTotal),
-            //     animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-            // )
-
-            // CircularProgressIndicator(
-            //     progress = {
-            //         percentage
-            //     },
-            //     color = MaterialTheme.colorScheme.primary,
-            //     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            //     strokeCap = StrokeCap.Round,
-            //     strokeWidth = 3.dp,
-            //     modifier = Modifier
-            //         .size(32.dp)
-            // )
+        var showLoading by rememberSaveable { mutableStateOf(true) }
+        LaunchedEffect(immichInfo()) {
+            delay(AnimationConstants.DURATION_LONG.toLong())
+            showLoading = immichInfo().accessToken.isBlank()
         }
+
+        val percentage by animateFloatAsState(
+            targetValue = if (showLoading) 0f else 1f,
+            animationSpec = tween(
+                durationMillis = AnimationConstants.DURATION_EXTRA_LONG,
+                easing = FastOutSlowInEasing
+            )
+        )
+
+        val primaryColor = MaterialTheme.colorScheme.primary
+        val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        val animatedColor by animateColorAsState(
+            targetValue = if (showLoading) primaryColor else surfaceColor,
+            animationSpec = tween(
+                durationMillis = AnimationConstants.DURATION_EXTRA_LONG,
+                delayMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2
+            )
+        )
+
+        CircularProgressIndicator(
+            progress = {
+                percentage
+            },
+            color = animatedColor,
+            trackColor = surfaceColor,
+            strokeCap = StrokeCap.Round,
+            strokeWidth = 3.dp,
+            modifier = Modifier
+                .size(32.dp)
+        )
     }
 }
 
 @Composable
 fun AnimatedLoginIcon(
-    state: () -> LoginState,
     immichInfo: () -> ImmichBasicInfo,
     onClick: () -> Unit
 ) {
+    var info by remember { mutableStateOf(immichInfo()) }
+    LaunchedEffect(immichInfo()) {
+        delay(500)
+        info = immichInfo()
+    }
+
     AnimatedContent(
-        targetState = immichInfo().accessToken.isNotBlank() || state() is LoginState.LoggedIn,
-        transitionSpec = {
-            (scaleIn(
-                animationSpec = AnimationConstants.expressiveSpring()
-            ) + fadeIn()).togetherWith(
-                scaleOut(
-                    animationSpec = AnimationConstants.expressiveSpring()
-                ) + fadeOut()
-            ).using(SizeTransform(clip = false))
-        },
+        targetState = info.accessToken.isNotBlank(),
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(end = 4.dp)
     ) { visible ->
         if (visible) {
             AnimatedImmichBackupIcon(
-                state = state,
                 immichInfo = immichInfo,
                 modifier = Modifier
                     .padding(end = 8.dp)

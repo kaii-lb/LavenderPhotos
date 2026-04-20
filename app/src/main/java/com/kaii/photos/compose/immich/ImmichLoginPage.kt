@@ -57,7 +57,6 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -67,7 +66,6 @@ import kotlinx.coroutines.flow.emptyFlow
 @Composable
 private fun ImmichLoginPagePreview() {
     ImmichLoginPageImpl(
-        userInfo = { LoginState.LoggedOut },
         immichInfo = { ImmichBasicInfo.Empty },
         operationStatus = emptyFlow(),
         navController = rememberNavController(),
@@ -81,11 +79,9 @@ fun ImmichLoginPage(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
     val immichInfo by viewModel.info.collectAsStateWithLifecycle()
 
     ImmichLoginPageImpl(
-        userInfo = { userInfo },
         immichInfo = { immichInfo },
         operationStatus = viewModel.operationStatus,
         navController = LocalNavController.current,
@@ -102,7 +98,6 @@ fun ImmichLoginPage(
 
 @Composable
 private fun ImmichLoginPageImpl(
-    userInfo: () -> LoginState,
     immichInfo: () -> ImmichBasicInfo,
     operationStatus: Flow<OperationStatus>,
     navController: NavController,
@@ -166,7 +161,6 @@ private fun ImmichLoginPageImpl(
                         }
                 ) {
                     UpdatableProfileImage(
-                        userInfo = userInfo,
                         immichInfo = immichInfo,
                         modifier = Modifier
                             .size(128.dp),

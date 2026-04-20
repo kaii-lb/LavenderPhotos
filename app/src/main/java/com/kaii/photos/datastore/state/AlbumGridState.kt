@@ -16,7 +16,6 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.profilePicture
 import com.kaii.photos.mediastore.signature
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
@@ -179,7 +178,7 @@ class AlbumGridState(
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
         val immichInfo = info.first()
-        val loginManager = LoginStateManager(coroutineScope = scope)
+        val loginManager = LoginStateManager()
 
         loginManager.setBaseUrl(
             baseUrl = immichInfo.endpoint,
@@ -187,9 +186,7 @@ class AlbumGridState(
         )
 
         val state = loginManager.refresh(
-            accessToken = immichInfo.accessToken,
-            pfpSavePath = context.profilePicture,
-            previousPfpUrl = context.profilePicture
+            accessToken = immichInfo.accessToken
         )
 
         if (state !is LoginState.LoggedIn) return@withContext

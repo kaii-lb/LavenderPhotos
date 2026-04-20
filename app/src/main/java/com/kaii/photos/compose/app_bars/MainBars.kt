@@ -89,7 +89,6 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
@@ -98,7 +97,6 @@ import kotlin.reflect.KClass
 @Composable
 fun MainAppTopBar(
     alternate: () -> Boolean,
-    userInfo: () -> LoginState,
     selectionManager: SelectionManager,
     immichInfo: () -> ImmichBasicInfo,
     showAddAlbumButton: () -> Boolean,
@@ -118,7 +116,6 @@ fun MainAppTopBar(
     if (showMainDialog) {
         MainDialog(
             sheetState = sheetState,
-            userInfo = userInfo,
             coroutineScope = coroutineScope,
             extraSecureFolderEntry = extraSecureFolderEntry,
             immichInfo = immichInfo,
@@ -205,10 +202,7 @@ fun MainAppTopBar(
                 }
 
                 if (!isFromMediaPicker) {
-                    AnimatedLoginIcon(
-                        state = userInfo,
-                        immichInfo = immichInfo
-                    ) {
+                    AnimatedLoginIcon(immichInfo = immichInfo) {
                         coroutineScope.launch {
                             showMainDialog = true
                             delay(50)
