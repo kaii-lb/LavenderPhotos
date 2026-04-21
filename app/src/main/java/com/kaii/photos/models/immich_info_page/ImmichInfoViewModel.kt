@@ -46,12 +46,30 @@ class ImmichInfoViewModel(
     val operationStatus = repo.operationStatus
     val refreshStatus = repo.refreshStatus
 
+    private var canRefresh = true
+    private var isRefreshing = true
+
     init {
+        loopRefresh()
+    }
+
+    private fun loopRefresh() {
         viewModelScope.launch {
-            while (true) {
+            while (canRefresh) {
                 refresh()
                 delay(30.seconds)
             }
+        }
+    }
+
+    fun setCanRefresh(value: Boolean) {
+        canRefresh = value
+
+        if (value && !isRefreshing) {
+            isRefreshing = true
+            loopRefresh()
+        } else if (!value) {
+            isRefreshing = false
         }
     }
 

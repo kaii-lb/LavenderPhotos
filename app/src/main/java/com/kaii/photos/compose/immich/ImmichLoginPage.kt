@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -80,6 +81,14 @@ fun ImmichLoginPage(
 ) {
     val context = LocalContext.current
     val immichInfo by viewModel.info.collectAsStateWithLifecycle()
+
+    LifecycleStartEffect(Unit) {
+        viewModel.setCanRefresh(true)
+
+        onStopOrDispose {
+            viewModel.setCanRefresh(false)
+        }
+    }
 
     ImmichLoginPageImpl(
         immichInfo = { immichInfo },

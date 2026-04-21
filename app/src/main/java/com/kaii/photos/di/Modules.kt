@@ -1,6 +1,7 @@
 package com.kaii.photos.di
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.NoOpCacheEvictor
@@ -16,7 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 val Context.appModule: AppModule
     get() = (applicationContext as PhotosApplication).appModule
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 class AppModule(
     context: Context
 ) {

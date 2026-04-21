@@ -59,6 +59,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalNavController
@@ -87,6 +88,14 @@ import kotlinx.coroutines.launch
 fun ImmichDashboardPage(
     viewModel: ImmichInfoViewModel
 ) {
+    LifecycleStartEffect(Unit) {
+        viewModel.setCanRefresh(true)
+
+        onStopOrDispose {
+            viewModel.setCanRefresh(false)
+        }
+    }
+
     val loginInfo by viewModel.info.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     Scaffold(
