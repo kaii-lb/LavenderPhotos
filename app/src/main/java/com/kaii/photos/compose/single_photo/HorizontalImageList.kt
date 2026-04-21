@@ -368,10 +368,21 @@ fun GlideView(
             )
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .downsample(DownsampleStrategy.FIT_CENTER)
-            .error(if (isHidden) R.drawable.empty_image else R.drawable.broken_image)
+            .error(
+                when {
+                    isHidden -> R.drawable.empty_image
+
+                    model is ImmichInfo -> model.copy(useThumbnail = true)
+
+                    else -> R.drawable.broken_image
+                }
+            )
             .thumbnail(
                 Glide.with(context)
-                    .load(model)
+                    .load(
+                        if (model is ImmichInfo) model.copy(useThumbnail = true)
+                        else model
+                    )
                     .signature(item.signature())
                     .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                     .override(windowSize.width, windowSize.height)
