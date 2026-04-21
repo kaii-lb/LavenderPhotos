@@ -69,7 +69,7 @@ fun PreferencesRow(
     titleTextSize: Float = 18f,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    cornerRadius: Dp = 0.dp,
+    cornerRadius: Dp = 24.dp,
     innerCornerRadius: Dp = 0.dp,
     action: (() -> Unit)? = null
 ) {
