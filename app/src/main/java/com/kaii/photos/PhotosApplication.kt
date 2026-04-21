@@ -15,10 +15,15 @@ import com.kaii.photos.di.AppModule
 import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class PhotosApplication : Application() {
     lateinit var appModule: AppModule
@@ -40,46 +45,51 @@ class PhotosApplication : Application() {
         }
     }
 
+    @OptIn(FlowPreview::class)
     private suspend fun registerContentObserver() = withContext(Dispatchers.IO) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val syncManager = SyncManager(applicationContext)
 
-        var instanceCount = 0
+        val flow = callbackFlow {
+            val contentObserver =
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        super.onChange(selfChange)
 
-        val contentObserver =
-            object : ContentObserver(Handler(Looper.getMainLooper())) {
-                override fun onChange(selfChange: Boolean) {
-                    super.onChange(selfChange)
-
-                    if (instanceCount >= 10) return
-
-                    scope.launch(Dispatchers.IO) {
-                        runCatching {
-                            // if the generation is more than 0 then FirstTimeSyncWorker has already run,
-                            // and we can proceed to load media by deltas
-                            if (syncManager.getGeneration() > 0L) {
-                                instanceCount += 1
-                                WorkManager.getInstance(applicationContext)
-                                    .enqueueUniqueWork(
-                                        SyncWorker::class.java.name,
-                                        ExistingWorkPolicy.REPLACE,
-                                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                                    ).result.addListener(
-                                        {
-                                            instanceCount -= 1
-                                        },
-                                        mainExecutor
-                                    )
+                        scope.launch(Dispatchers.IO) {
+                            runCatching {
+                                // if the generation is more than 0 then FirstTimeSyncWorker has already run,
+                                // and we can proceed to load media by deltas
+                                if (syncManager.getGeneration() > 0L) {
+                                    send(Unit)
+                                }
                             }
                         }
                     }
                 }
-            }
 
-        applicationContext.contentResolver.registerContentObserver(
-            MEDIA_STORE_FILE_URI,
-            true,
-            contentObserver
-        )
+            applicationContext.contentResolver.registerContentObserver(
+                MEDIA_STORE_FILE_URI,
+                true,
+                contentObserver
+            )
+
+            awaitClose {
+                applicationContext.contentResolver.unregisterContentObserver(contentObserver)
+            }
+        }
+
+        launch {
+            flow.debounce(
+                timeout = 300.milliseconds
+            ).collect {
+                WorkManager.getInstance(applicationContext)
+                    .enqueueUniqueWork(
+                        SyncWorker::class.java.name,
+                        ExistingWorkPolicy.APPEND_OR_REPLACE,
+                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                    )
+            }
+        }
     }
 }

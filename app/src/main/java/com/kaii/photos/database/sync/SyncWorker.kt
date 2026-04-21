@@ -21,17 +21,21 @@ class SyncWorker(
 
         val db = MediaDatabase.getInstance(context)
         val dao = db.mediaDao()
+        val syncManager = SyncManager(context)
 
         val mediaStoreIds = getAllMediaStoreIds(context)
         val inAppIds = dao.getAllMediaIds().toSet()
 
         val removed = inAppIds - mediaStoreIds
-        val added = loadMediaDataDelta(context = context)
+        val (added, newGen) = loadMediaDataDelta(context = context)
+
         db.withTransaction {
             if (removed.isNotEmpty()) dao.deleteAll(removed)
 
             if (added.isNotEmpty()) dao.upsertAll(items = added)
         }
+
+        syncManager.setGeneration(gen = newGen)
 
         val endTime = Clock.System.now()
 

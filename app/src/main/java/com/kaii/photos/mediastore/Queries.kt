@@ -11,9 +11,9 @@ import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.parent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToLong
 
@@ -153,18 +153,19 @@ suspend fun chunkLoadMediaData(
     context: Context,
     onProgress: (itemCount: Int) -> Unit,
     onLoadChunk: suspend (chunk: Set<MediaStoreData>) -> Unit
-) = withContext(Dispatchers.IO) {
-    val syncManager = SyncManager(context)
+) = coroutineScope {
+    var maxGen = 0L
 
     // parse 5 chunks of 500 items at once
     ids.chunked(500).chunked(10).forEach { block ->
-        val jobs = mutableSetOf<Job>()
-
-        block.forEach { chunk ->
-            launch {
+        val maxes = block.map { chunk ->
+            async(Dispatchers.IO) {
                 onProgress(chunk.size)
                 val items = mutableSetOf<MediaStoreData>()
-                val selection = "${MediaColumns._ID} IN (${chunk.joinToString { "?" }}) AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
+                var localMaxGen = 0L
+
+                val selection =
+                    "${MediaColumns._ID} IN (${chunk.joinToString { "?" }}) AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
                 val selectionArgs = chunk.map { it.toString() }.toTypedArray()
 
                 val projection =
@@ -183,7 +184,6 @@ suspend fun chunkLoadMediaData(
                         MediaColumns.DURATION
                     )
 
-                var newGen = syncManager.getGeneration()
                 context.contentResolver.query(
                     MEDIA_STORE_FILE_URI,
                     projection,
@@ -208,7 +208,7 @@ suspend fun chunkLoadMediaData(
                         val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
 
                         val gen = cursor.getLong(genColNum)
-                        if (gen > newGen) newGen = gen
+                        if (gen > localMaxGen) localMaxGen = gen
 
                         val absolutePath = cursor.getString(absolutePathColNum)
                         val id = cursor.getLong(idColNum)
@@ -266,15 +266,24 @@ suspend fun chunkLoadMediaData(
                     }
                 }
 
-                syncManager.setGeneration(gen = newGen)
                 onLoadChunk(items)
-            }.apply { jobs.add(this) }
+                localMaxGen
+            }
         }
 
-        jobs.joinAll()
+
+        val localMaxes = maxes.awaitAll()
+        val maxInBlock = localMaxes.maxOrNull() ?: 0L
+
+        if (maxInBlock > maxGen) {
+            maxGen = maxInBlock
+        }
     }
+
+    return@coroutineScope maxGen
 }
 
+/** returns the items and the new mediastore generation */
 suspend fun loadMediaDataDelta(
     context: Context
 ) = withContext(Dispatchers.IO) {
@@ -386,7 +395,5 @@ suspend fun loadMediaDataDelta(
         }
     }
 
-    syncManager.setGeneration(gen = newGen)
-
-    return@withContext items
+    return@withContext Pair(items, newGen)
 }

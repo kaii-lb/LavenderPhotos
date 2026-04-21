@@ -9,6 +9,8 @@ import androidx.work.workDataOf
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.chunkLoadMediaData
 import com.kaii.photos.mediastore.getAllMediaStoreIds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
 private const val TAG = "com.kaii.photos.database.sync.FirstTimeSyncWorker"
@@ -39,12 +41,12 @@ class FirstTimeSyncWorker(
             )
         )
 
-        if (added.isNotEmpty()) {
-            chunkLoadMediaData(
+        if (added.isNotEmpty()) withContext(Dispatchers.IO) {
+            val newGen = chunkLoadMediaData(
                 ids = added,
                 context = context,
                 onProgress = { size ->
-                    progress.set(progress.get() + size)
+                    progress.addAndGet(size)
                 },
                 onLoadChunk = { chunk ->
                     setProgressAsync(
@@ -57,6 +59,8 @@ class FirstTimeSyncWorker(
                     dao.insertAll(chunk)
                 }
             )
+
+            SyncManager(context).setGeneration(gen = newGen)
         }
 
         val removed = inAppIds - mediaStoreIds
