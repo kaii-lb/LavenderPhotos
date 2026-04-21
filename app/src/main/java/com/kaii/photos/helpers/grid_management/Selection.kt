@@ -51,13 +51,6 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
         val originalPath =
             dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
-        val duration = if (type == MediaType.Video) {
-            // thanks to IvanCarapovic
-            // https://github.com/IvanCarapovic/LavenderPhotos/blob/22494d0684ce3dc6f7b6f01ee0a8f41f31787dcd/app/src/main/java/com/kaii/photos/compose/grids/PhotoGridView.kt#L517
-            metadataRetriever.setDataSource(file.absolutePath)
-            metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
-        } else null
-
         val item = MediaStoreData(
             type = type,
             id = file.hashCode() * file.length() * file.lastModified(),
@@ -76,7 +69,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
             immichUrl = null, // TODO
             hash = null,
             favourited = false,
-            duration = duration
+            duration = null
         )
 
         PhotoLibraryUIModel.SecuredMedia(
