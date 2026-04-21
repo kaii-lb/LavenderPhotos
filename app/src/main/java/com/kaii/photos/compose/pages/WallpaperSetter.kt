@@ -165,8 +165,24 @@ class WallpaperSetter : ComponentActivity() {
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .layout { measurable, constraints ->
-                            val widthOverride = constraints.maxHeight * aspectRatio
-                            val placeable = measurable.measure(constraints.copy(maxWidth = widthOverride.roundToInt()))
+                            val override =
+                                if (aspectRatio < 1f) {
+                                    constraints.maxWidth / aspectRatio
+                                } else {
+                                    constraints.maxHeight * aspectRatio
+                                }
+
+                            val placeable = measurable.measure(
+                                if (aspectRatio < 1f) {
+                                    constraints.copy(
+                                        maxHeight = override.roundToInt()
+                                    )
+                                } else {
+                                    constraints.copy(
+                                        maxWidth = override.roundToInt()
+                                    )
+                                }
+                            )
 
                             layout(placeable.width, placeable.height) {
                                 placeable.place(0, 0)

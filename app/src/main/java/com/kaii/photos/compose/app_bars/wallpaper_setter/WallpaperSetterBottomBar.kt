@@ -43,6 +43,7 @@ import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 private const val TAG = "com.kaii.photos.app_bars.wallpaper_setter.WallpaperSetterBottomBar"
 
@@ -86,8 +87,8 @@ fun WallpaperSetterBottomBar(
                             else deviceSize.width / bitmap.width
 
                         val wallpaperWidth = if (scrollable) {
-                            // deviceSize.width * 2f
-                            deviceSize.width * outerScale + offset.x * (1f / scale)
+                            val max = max(scale, outerScale)
+                            (deviceSize.width * max).coerceAtMost(bitmap.width * max)
                         } else {
                             deviceSize.width
                         }
