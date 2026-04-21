@@ -316,7 +316,7 @@ fun rememberSelectionManager(
 
     val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
-    return remember(sortMode, context) {
+    return remember(sortMode, context, paths()) {
         SelectionManager(
             sortMode = sortMode,
             scope = coroutineScope,
@@ -324,11 +324,11 @@ fun rememberSelectionManager(
             getMediaInDate = { timestamp ->
                 val dao = MediaDatabase.getInstance(context).mediaDao()
 
-                when {
+                if (paths().isEmpty()) {
                     // search
-                    paths().isEmpty() -> dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
-
-                    else -> dao.mediaInDateRange(timestamp = timestamp, paths = paths(), dateModified = sortMode.isDateModified)
+                    dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+                } else {
+                    dao.mediaInDateRange(timestamp = timestamp, paths = paths(), dateModified = sortMode.isDateModified)
                 }
             }
         )
