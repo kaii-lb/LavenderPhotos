@@ -824,6 +824,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="debugging_spawn_message_snackbar_desc">Like deprecate a feature and not add an equivalent :D</string>
     <string name="debugging_spawn_progress_snackbar">Spawn Progress Snackbar</string>
     <string name="debugging_spawn_progress_snackbar_desc">Shows an finite progress bar with progress updating every second for 5 seconds</string>
+    <string name="debugging_internals">Internals</string>
+    <string name="debugging_reset_scan_generation">Rescan Media</string>
+    <string name="debugging_reset_scan_generation_desc">Goes over all media on device and adds it to the app\'s database. Use this if some images are not showing up</string>
+    <string name="debugging_reset_scan_generation_loading">Scanning media…</string>
 
     <!-- Video -->
     <string name="video">Video</string>

@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -43,6 +48,8 @@ import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.database.sync.FirstTimeSyncWorker
+import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.LogManager
@@ -65,6 +72,7 @@ fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
 
     DebuggingSettingsPageImpl(
         shouldRecordLogs = { shouldRecordLogs },
+        navController = LocalNavController.current,
         modifier = modifier,
         setRecordLogs = settings.debugging::setRecordLogs,
         addAlbum = { settings.albums.add(listOf(it)) }
@@ -76,6 +84,7 @@ fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
 private fun DebuggingSettingsPagePreview() {
     DebuggingSettingsPageImpl(
         shouldRecordLogs = { false },
+        navController = rememberNavController(),
         modifier = Modifier,
         setRecordLogs = {},
         addAlbum = {}
@@ -86,13 +95,14 @@ private fun DebuggingSettingsPagePreview() {
 @Composable
 private fun DebuggingSettingsPageImpl(
     shouldRecordLogs: () -> Boolean,
+    navController: NavController,
     modifier: Modifier,
     setRecordLogs: (value: Boolean) -> Unit,
     addAlbum: (album: AlbumType) -> Unit
 ) {
     Scaffold(
         topBar = {
-            DebuggingSettingsTopBar()
+            DebuggingSettingsTopBar(navController = navController)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -345,15 +355,68 @@ private fun DebuggingSettingsPageImpl(
                     }
                 }
             }
+            
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.debugging_internals)
+                )
+            }
+
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+                val coroutineScope = rememberCoroutineScope()
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.debugging_reset_scan_generation),
+                    iconResID = R.drawable.reset,
+                    summary = stringResource(id = R.string.debugging_reset_scan_generation_desc),
+                    position = RowPosition.Single,
+                    showBackground = false
+                ) {
+                    coroutineScope.launch {
+                        val isLoading = mutableStateOf(true)
+
+                        LavenderSnackbarController.pushEvent(
+                            LavenderSnackbarEvent.LoadingEvent(
+                                message = resources.getString(R.string.debugging_reset_scan_generation_loading),
+                                icon = R.drawable.photogrid,
+                                isLoading = isLoading
+                            )
+                        )
+
+                        SyncManager(context).setGeneration(0)
+
+                        val request = OneTimeWorkRequest.Builder(FirstTimeSyncWorker::class.java).build()
+                        WorkManager.getInstance(context.applicationContext)
+                            .beginUniqueWork(
+                                FirstTimeSyncWorker::class.java.name,
+                                ExistingWorkPolicy.KEEP,
+                                request
+                            )
+                            .enqueue()
+
+                        WorkManager.getInstance(context.applicationContext)
+                            .getWorkInfoByIdFlow(request.id)
+                            .collect { workInfo ->
+                                workInfo?.progress?.getFloat(FirstTimeSyncWorker.PROGRESS, -1f)?.let {
+                                    if (it != -1f) {
+                                        isLoading.value = it <= 0.9f
+                                    }
+                                }
+                            }
+                    }
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DebuggingSettingsTopBar() {
-    val navController = LocalNavController.current
-
+private fun DebuggingSettingsTopBar(
+    navController: NavController
+) {
     TopAppBar(
         title = {
             Text(
