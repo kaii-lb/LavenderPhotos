@@ -10,6 +10,7 @@ import androidx.media3.common.Effect
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
@@ -24,6 +25,7 @@ import androidx.media3.ui.PlayerView
 import com.google.common.net.HttpHeaders
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.editing.applyEffects
+import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(UnstableApi::class)
@@ -31,8 +33,14 @@ class LavenderExoPlayer(
     context: Context,
     onDurationChanged: (duration: Float) -> Unit,
     onCurrentPositionChanged: (position: Float) -> Unit,
-    onPlaybackStateChanged: (state: Int) -> Unit
+    onPlaybackStateChanged: (state: Int) -> Unit,
+    onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit
 ) {
+    data class AudioTrack(
+        val language: String,
+        val label: String
+    )
+
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
             DefaultLoadControl.Builder().apply {
@@ -70,6 +78,12 @@ class LavenderExoPlayer(
         videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
         repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
+        trackSelector?.parameters?.let {
+            trackSelector?.parameters = it.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+                .build()
+        }
+
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 super.onPlaybackStateChanged(playbackState)
@@ -88,6 +102,10 @@ class LavenderExoPlayer(
             ) {
                 super.onPositionDiscontinuity(oldPosition, newPosition, reason)
                 onCurrentPositionChanged(newPosition.positionMs / 1000f)
+            }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                onAudioTracksChanged(getAudioTracks(tracks))
             }
         }
 
@@ -113,6 +131,31 @@ class LavenderExoPlayer(
 
     val audioFormat: Format?
         get() = exoPlayer.audioFormat
+
+    private fun getAudioTracks(tracks: Tracks): List<AudioTrack> {
+        val list = mutableListOf<AudioTrack>()
+
+        tracks.groups.forEach { group ->
+            for (i in 0..<group.length) {
+                val track = group.getTrackFormat(i)
+
+                if (track.sampleMimeType == null || track.language == null || track.label == null) continue
+
+                track.label
+
+                if (track.sampleMimeType!!.contains("audio")) {
+                    list.add(
+                        AudioTrack(
+                            language = track.language!!,
+                            label = Locale.forLanguageTag(track.language!!).displayName
+                        )
+                    )
+                }
+            }
+        }
+
+        return list
+    }
 
     fun pause() = exoPlayer.pause()
     fun play() = exoPlayer.play()
@@ -220,5 +263,23 @@ class LavenderExoPlayer(
 
     fun linkPlayerView(playerView: PlayerView) {
         playerView.player = exoPlayer
+    }
+
+    fun setAudioTrack(language: String): Boolean {
+        val trackSelector = exoPlayer.trackSelector ?: return false
+
+        if (!trackSelector.isSetParametersSupported) return false
+
+        trackSelector.parameters = trackSelector.parameters
+            .buildUpon()
+            .setPreferredAudioLanguage(language)
+            .build()
+
+        return true
+    }
+
+    fun getAudioTrack(): String? {
+        val trackSelector = exoPlayer.trackSelector ?: return null
+        return trackSelector.parameters.preferredAudioLanguages.firstOrNull()
     }
 }

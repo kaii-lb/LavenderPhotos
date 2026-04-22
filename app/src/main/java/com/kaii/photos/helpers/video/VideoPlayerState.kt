@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.RetainedEffect
@@ -52,7 +53,7 @@ class VideoPlayerState(
     onPlaybackStateChanged: (state: Int) -> Unit
 ) {
     companion object {
-        private const val TAG = "com.kaii.photos.helpers.video.VideoPlayerState"
+        private val TAG = VideoPlayerState::class.qualifiedName
     }
 
     private var playingJob: Job? = null
@@ -81,6 +82,11 @@ class VideoPlayerState(
     var videoTitle by mutableStateOf("")
         private set
 
+    var audioTracks = mutableStateListOf<LavenderExoPlayer.AudioTrack>()
+        private set
+    var selectedAudioTrack by mutableStateOf<LavenderExoPlayer.AudioTrack?>(null)
+        private set
+
     private val player: LavenderExoPlayer = LavenderExoPlayer(
         context = context,
         onDurationChanged = { new ->
@@ -100,7 +106,14 @@ class VideoPlayerState(
         onCurrentPositionChanged = { new ->
             currentPosition = new
         },
-        onPlaybackStateChanged = onPlaybackStateChanged
+        onPlaybackStateChanged = onPlaybackStateChanged,
+        onAudioTracksChanged = { tracks ->
+            audioTracks.clear()
+            audioTracks.addAll(tracks)
+
+            val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
+            current?.let { setAudioTrack(it) }
+        }
     )
 
     val playbackSpeed: Float
@@ -180,6 +193,7 @@ class VideoPlayerState(
     ) {
         this.loop = loop
         this.shouldPlay = shouldPlay
+        this.audioTracks.clear()
 
         var uri = item.immichUrl?.replace("original", "video/playback") ?: item.uri
         if (currentSource == uri) return
@@ -333,6 +347,12 @@ class VideoPlayerState(
     }
 
     fun linkPlayerView(playerView: PlayerView) = player.linkPlayerView(playerView)
+
+    fun setAudioTrack(language: String) {
+        if (player.setAudioTrack(language)) {
+            selectedAudioTrack = audioTracks.find { it.language == language }
+        }
+    }
 }
 
 @Composable

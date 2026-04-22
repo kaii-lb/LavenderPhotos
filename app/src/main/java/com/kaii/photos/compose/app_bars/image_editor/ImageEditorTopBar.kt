@@ -110,7 +110,9 @@ fun ImageEditorTopBar(
                     dismissOnBackPress = true
                 ),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                shadowElevation = 8.dp
+                shadowElevation = 8.dp,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
             ) {
                 SelectableDropDownMenuItem(
                     text = stringResource(id = R.string.editing_overwrite_desc),

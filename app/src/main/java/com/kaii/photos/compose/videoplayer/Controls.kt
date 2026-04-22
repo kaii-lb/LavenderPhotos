@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.helpers.video.LavenderExoPlayer
 
 @Composable
 fun VideoPlayerControls(
@@ -43,6 +44,8 @@ fun VideoPlayerControls(
     duration: () -> Float,
     title: () -> String,
     playbackSpeed: () -> Float,
+    audioTracks: () -> List<LavenderExoPlayer.AudioTrack>,
+    selectedAudioTrack: () -> LavenderExoPlayer.AudioTrack?,
     modifier: Modifier,
     onAnyTap: () -> Unit,
     togglePlayPause: () -> Unit,
@@ -51,7 +54,8 @@ fun VideoPlayerControls(
     seekTo: (position: Long) -> Unit,
     toggleMute: () -> Unit,
     toggleRepeatMode: () -> Unit,
-    setPlaybackSpeed: (speed: Float) -> Unit
+    setPlaybackSpeed: (speed: Float) -> Unit,
+    setAudioTrack: (language: String) -> Unit
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -96,11 +100,14 @@ fun VideoPlayerControls(
                 isMuted = isMuted,
                 isRepeatModeOn = isRepeatModeOn,
                 playbackSpeed = playbackSpeed,
+                audioTracks = audioTracks,
+                selectedAudioTrack = selectedAudioTrack,
                 onAnyTap = onAnyTap,
                 seekTo = seekTo,
                 toggleMute = toggleMute,
                 toggleRepeatMode = toggleRepeatMode,
-                setPlaybackSpeed = setPlaybackSpeed
+                setPlaybackSpeed = setPlaybackSpeed,
+                setAudioTrack = setAudioTrack
             )
         }
 

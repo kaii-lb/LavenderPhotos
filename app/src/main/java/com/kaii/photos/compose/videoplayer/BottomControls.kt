@@ -1,11 +1,17 @@
 package com.kaii.photos.compose.videoplayer
 
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,8 +44,10 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.formatLikeANormalPerson
+import com.kaii.photos.helpers.video.LavenderExoPlayer
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,11 +59,14 @@ fun VideoPlayerControllerBottomControls(
     isMuted: () -> Boolean,
     isRepeatModeOn: () -> Boolean,
     playbackSpeed: () -> Float,
+    audioTracks: () -> List<LavenderExoPlayer.AudioTrack>,
+    selectedAudioTrack: () -> LavenderExoPlayer.AudioTrack?,
     onAnyTap: () -> Unit,
     seekTo: (position: Long) -> Unit,
     toggleMute: () -> Unit,
     toggleRepeatMode: () -> Unit,
     setPlaybackSpeed: (speed: Float) -> Unit,
+    setAudioTrack: (language: String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -72,6 +84,52 @@ fun VideoPlayerControllerBottomControls(
                 alignment = Alignment.End
             )
         ) {
+            AnimatedVisibility(
+                visible = audioTracks().size > 1,
+                enter = fadeIn() + scaleIn(
+                    animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()
+                ),
+                exit = fadeOut() + scaleOut()
+            ) {
+                var showTrackSelector by remember { mutableStateOf(false) }
+
+                AudioSelectorMenu(
+                    expanded = { showTrackSelector },
+                    selectedTrack = selectedAudioTrack,
+                    tracks = audioTracks,
+                    setTrack = setAudioTrack,
+                    onDismiss = {
+                        showTrackSelector = false
+                    }
+                )
+
+                // track selector button
+                FilledTonalIconToggleButton(
+                    checked = showTrackSelector,
+                    onCheckedChange = {
+                        showTrackSelector = true
+
+                        onAnyTap()
+                    },
+                    modifier = Modifier
+                        .size(32.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.graphic_eq),
+                        contentDescription = stringResource(id = R.string.video_change_audio_track),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+            }
+
+            val isLandscape by rememberDeviceOrientation()
+            Spacer(
+                modifier =
+                    if (!isLandscape) Modifier.weight(1f)
+                    else Modifier
+            )
+
             // repeat mode button
             FilledTonalIconToggleButton(
                 checked = isRepeatModeOn(),

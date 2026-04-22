@@ -401,32 +401,17 @@ fun VideoPlayer(
                 .align(Alignment.Center)
         ) {
             VideoPlayerControls(
-                isPlaying = {
-                    state.isPlaying
-                },
-                isMuted = {
-                    state.isMuted
-                },
-                isRepeatModeOn = {
-                    state.isRepeatModeOn
-                },
-                currentVideoPosition = {
-                    state.currentPosition
-                },
-                duration = {
-                    state.duration
-                },
-                title = {
-                    state.videoTitle
-                },
-                playbackSpeed = {
-                    state.playbackSpeed
-                },
-                modifier = Modifier
-                    .fillMaxSize(1f),
-                onAnyTap = {
-                    state.delayHide()
-                },
+                isPlaying = { state.isPlaying },
+                isMuted = { state.isMuted },
+                isRepeatModeOn = { state.isRepeatModeOn },
+                currentVideoPosition = { state.currentPosition },
+                duration = { state.duration },
+                title = { state.videoTitle },
+                playbackSpeed = { state.playbackSpeed },
+                audioTracks = { state.audioTracks },
+                selectedAudioTrack = { state.selectedAudioTrack },
+                modifier = Modifier.fillMaxSize(),
+                onAnyTap = { state.delayHide() },
                 togglePlayPause = {
                     if (state.isPlaying) state.pause()
                     else state.play()
@@ -437,6 +422,7 @@ fun VideoPlayer(
                 toggleMute = state::toggleMute,
                 toggleRepeatMode = state::toggleRepeatMode,
                 setPlaybackSpeed = state::setPlaybackSpeed,
+                setAudioTrack = state::setAudioTrack
             )
         }
 

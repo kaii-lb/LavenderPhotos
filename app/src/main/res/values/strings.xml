@@ -841,6 +841,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="video_decrypting">Decrypting video, please wait</string>
     <string name="video_open_externally">Open In External Player</string>
     <string name="video_open_externally_desc">Ask what to open videos with on tap from a grid</string>
+    <string name="video_change_audio_track">Change the audio track of this video</string>
 
     <!-- Editing -->
     <string name="edit">Edit</string>

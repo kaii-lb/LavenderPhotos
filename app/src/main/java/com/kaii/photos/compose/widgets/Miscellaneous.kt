@@ -148,6 +148,8 @@ fun SelectableDropDownMenuItem(
             )
         },
         onClick = onClick,
+        modifier = Modifier
+            .clip(RoundedCornerShape(size = 16.dp)),
         trailingIcon = {
             if (isSelected) {
                 Icon(
