@@ -43,21 +43,22 @@ const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fil
 suspend fun ContentResolver.insertMedia(
     context: Context,
     media: MediaStoreData,
-    basePath: String,
     destination: String,
     currentVolumes: Set<String>,
     preserveDate: Boolean = false,
     overrideDisplayName: String? = null,
     onInsert: (origin: Uri, new: Uri) -> Unit
 ): Uri? = withContext(Dispatchers.IO) {
+    val basePath = destination.toBasePath()
+
     val volumeName =
-        if (basePath == baseInternalStorageDirectory) MediaStore.VOLUME_EXTERNAL
+        if (basePath.startsWith(baseInternalStorageDirectory)) MediaStore.VOLUME_EXTERNAL
         else currentVolumes.find {
             val possible = basePath.replace("/storage/", "").removeSuffix("/")
-            it == possible || it == possible.lowercase()
+            it.equals(possible, ignoreCase = true)
         }
 
-    val relativeDestination = destination.toRelativePath().removePrefix("/")
+    val relativeDestination = destination.toRelativePath(removePrefix = true)
     val storageContentUri = getStorageContentUri(
         absolutePath = destination,
         type = media.type,
@@ -312,18 +313,18 @@ private fun getStorageContentUri(
     type: MediaType,
     volumeName: String?
 ): Uri? {
-    val relative = absolutePath.toRelativePath().removePrefix("/")
+    val relative = absolutePath.toRelativePath(removePrefix = true)
 
     return when {
-        relative.startsWith(Environment.DIRECTORY_DCIM) || relative.startsWith(Environment.DIRECTORY_PICTURES) || absolutePath.startsWith(
-            Environment.DIRECTORY_MOVIES
-        ) -> {
+        relative.startsWith(Environment.DIRECTORY_DCIM) ||
+                relative.startsWith(Environment.DIRECTORY_PICTURES) ||
+                absolutePath.startsWith(Environment.DIRECTORY_MOVIES)
+        -> {
             if (type == MediaType.Image) MediaStore.Images.Media.getContentUri(volumeName) else MediaStore.Video.Media.getContentUri(volumeName)
         }
 
-        relative.startsWith(Environment.DIRECTORY_DOCUMENTS) || relative.startsWith(
-            Environment.DIRECTORY_DOWNLOADS
-        ) -> MediaStore.Files.getContentUri(volumeName)
+        relative.startsWith(Environment.DIRECTORY_DOCUMENTS) ||
+                relative.startsWith(Environment.DIRECTORY_DOWNLOADS) -> MediaStore.Files.getContentUri(volumeName)
 
         else -> null
     }

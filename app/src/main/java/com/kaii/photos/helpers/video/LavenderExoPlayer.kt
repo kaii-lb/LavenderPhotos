@@ -282,4 +282,26 @@ class LavenderExoPlayer(
         val trackSelector = exoPlayer.trackSelector ?: return null
         return trackSelector.parameters.preferredAudioLanguages.firstOrNull()
     }
+
+    fun getFrameRate(): Float? {
+        if (videoFormat?.frameRate != null &&
+            videoFormat?.frameRate!!.toInt() != Format.NO_VALUE
+        ) {
+            return videoFormat!!.frameRate
+        }
+
+        val groups = exoPlayer.currentTracks.groups
+
+        groups.forEach { group ->
+            for (i in 0..<group.length) {
+                val fps = group.getTrackFormat(i).frameRate
+
+                if (fps.toInt() != Format.NO_VALUE) {
+                    return fps
+                }
+            }
+        }
+
+        return null
+    }
 }

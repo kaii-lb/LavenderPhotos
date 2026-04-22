@@ -32,7 +32,6 @@ import com.kaii.photos.helpers.exif.exifDataToMediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toActivity
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
@@ -379,7 +378,6 @@ interface GenericFileManager {
                     context = context,
                     media = media,
                     destination = path,
-                    basePath = media.absolutePath.toBasePath(),
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     preserveDate = preserveDate,

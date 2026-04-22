@@ -356,7 +356,7 @@ private fun RightHandle(
 
 @Composable
 fun VideoEditorProcessingContent(
-    basicData: BasicVideoData,
+    basicData: () -> BasicVideoData,
     videoEditingState: VideoEditingState,
     modifier: Modifier = Modifier
 ) {
@@ -447,9 +447,9 @@ fun VideoEditorProcessingContent(
         var showFrameDropDialog by remember { mutableStateOf(false) }
         if (showFrameDropDialog) {
             SliderDialog(
-                steps = basicData.frameRate.roundToInt() - 2,
-                range = 1f..basicData.frameRate.roundToInt().toFloat(),
-                startsAt = if (videoEditingState.frameRate == 0f) basicData.frameRate else videoEditingState.frameRate,
+                steps = basicData().frameRate!!.roundToInt() - 2,
+                range = 1f..basicData().frameRate!!.roundToInt().toFloat(),
+                startsAt = if (videoEditingState.frameRate == 0f) basicData().frameRate!! else videoEditingState.frameRate,
                 title = {
                     resources.getString(R.string.editing_framerate_display, "${it.roundToInt()}")
                 },
@@ -465,8 +465,9 @@ fun VideoEditorProcessingContent(
         EditingViewBottomAppBarItem(
             text = stringResource(id = R.string.editing_fps),
             icon = R.drawable.fps_select_60,
+            enabled = basicData().frameRate != null,
             onClick = {
-                showFrameDropDialog = true
+                if (basicData().frameRate != null) showFrameDropDialog = true
             }
         )
 

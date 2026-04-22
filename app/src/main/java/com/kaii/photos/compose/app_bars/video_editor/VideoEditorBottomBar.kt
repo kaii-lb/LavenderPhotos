@@ -76,7 +76,7 @@ private const val TAG = "com.kaii.photos.app_bars.video_editor.VideoEditorBottom
 fun VideoEditorBottomBar(
     pagerState: PagerState,
     currentPosition: () -> Float,
-    basicData: BasicVideoData,
+    basicData: () -> BasicVideoData,
     videoEditingState: VideoEditingState,
     drawingPaintState: DrawingPaintState,
     modifications: SnapshotStateList<VideoModification>,
@@ -156,8 +156,10 @@ fun VideoEditorBottomBar(
             val thumbnails = remember { mutableStateListOf<Bitmap>() }
             val windowInfo = LocalWindowInfo.current
 
-            LaunchedEffect(basicData) {
-                Log.d(TAG, "Basic data updated $basicData")
+            LaunchedEffect(basicData()) {
+                Log.d(TAG, "Basic data updated $basicData()")
+
+                val basicData = basicData()
                 if (basicData.duration <= 0f) return@LaunchedEffect
 
                 coroutineScope.launch(Dispatchers.IO) {
@@ -196,14 +198,14 @@ fun VideoEditorBottomBar(
                                 videoEditingState = videoEditingState,
                                 thumbnails = thumbnails,
                                 onSeek = onSeek,
-                                basicData = basicData
+                                basicData = basicData()
                             )
                         }
                     }
 
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.Crop) -> {
                         SharedEditorCropContent(
-                            imageAspectRatio = basicData.aspectRatio,
+                            imageAspectRatio = basicData().aspectRatio,
                             croppingAspectRatio = videoEditingState.croppingAspectRatio,
                             rotation = videoEditingState.rotation,
                             setCroppingAspectRatio = videoEditingState::setCroppingAspectRatio,

@@ -423,8 +423,6 @@ private class ColorMatrixGLShaderProgram(
 
     override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {
         try {
-            checkNotNull(glProgram)
-
             glProgram.setSamplerTexIdUniform("uTexSampler", inputTexId, 0)
             glProgram.bindAttributesAndUniforms()
 
@@ -478,7 +476,7 @@ fun ExoPlayer.applyEffects(
 
 data class BasicVideoData(
     val duration: Float,
-    val frameRate: Float,
+    val frameRate: Float?,
     val absolutePath: String,
     val width: Int,
     val height: Int,

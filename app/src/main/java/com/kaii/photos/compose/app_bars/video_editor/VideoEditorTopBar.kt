@@ -112,10 +112,12 @@ fun VideoEditorTopBar(
 
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog.value = true
-                        } else if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
-                            navController.popBackStack()
                         } else if (isFromOpenWithView) {
                             (context as Activity).finish()
+                        } else {
+                            coroutineScope.launch(Dispatchers.Main) {
+                                navController.popBackStack()
+                            }
                         }
                     },
                     enabled = true,

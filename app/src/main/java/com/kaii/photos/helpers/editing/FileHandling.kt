@@ -163,7 +163,7 @@ suspend fun saveVideo(
     audioProcessor.putChannelMixingMatrix(
         ChannelMixingMatrix.createForConstantGain(
             basicVideoData.audioChannelCount,
-            2
+            basicVideoData.audioChannelCount
         ).scaleBy(linearGain)
     )
 
@@ -480,7 +480,6 @@ suspend fun saveVideo(
             favourited = false,
             duration = (videoEditingState.endTrimPosition - videoEditingState.startTrimPosition).toLong()
         ),
-        basePath = tempFileCrop.absolutePath.toBasePath(),
         destination = absolutePath.parent(),
         currentVolumes = MediaStore.getExternalVolumeNames(context),
         preserveDate = true,
@@ -751,7 +750,6 @@ suspend fun saveImage(
                 context = context,
                 media = media,
                 destination = absolutePath.parent(),
-                basePath = absolutePath.toBasePath(),
                 currentVolumes = MediaStore.getExternalVolumeNames(context),
                 overrideDisplayName = file.name.removeSuffix(file.extension) + "jpeg",
                 onInsert = { _, _ -> }

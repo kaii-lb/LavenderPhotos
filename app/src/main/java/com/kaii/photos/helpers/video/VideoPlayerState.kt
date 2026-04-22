@@ -353,6 +353,8 @@ class VideoPlayerState(
             selectedAudioTrack = audioTracks.find { it.language == language }
         }
     }
+
+    fun getFrameRate() = player.getFrameRate()
 }
 
 @Composable

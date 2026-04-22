@@ -3,7 +3,6 @@ package com.kaii.photos.helpers
 import android.os.Environment
 import androidx.compose.ui.util.fastJoinToString
 import androidx.compose.ui.util.fastMinByOrNull
-import java.io.File
 
 const val EXTERNAL_DOCUMENTS_AUTHORITY = "com.android.externalstorage.documents"
 
@@ -16,9 +15,6 @@ fun String.filename(): String = trim().split("/").takeLast(1).first()
 
 fun String.parent(): String =
     trim().split("/").dropLast(1).joinToString("/") { it }
-
-val File.relativePath: String
-    get() = this.absolutePath.toRelativePath()
 
 fun String.toRelativePath(removePrefix: Boolean = false) =
     (if (removePrefix) "" else "/") + trim().replace(toBasePath(), "")

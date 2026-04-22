@@ -17,7 +17,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
@@ -438,7 +437,6 @@ class CloudFileManager(
                     context = context,
                     media = media,
                     destination = path,
-                    basePath = path.toBasePath(),
                     overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     preserveDate = preserveDate,

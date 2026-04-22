@@ -246,7 +246,6 @@ suspend fun moveImageOutOfLockedFolder(
                 ).toString()
             ),
             destination = originalPath.parent(),
-            basePath = originalPath.toBasePath(),
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = true,
             onInsert = { original, new ->
@@ -313,7 +312,6 @@ suspend fun copyImageListToPath(
             context = context,
             media = media,
             destination = destination,
-            basePath = media.absolutePath.toBasePath(),
             overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
             currentVolumes = MediaStore.getExternalVolumeNames(context),
             preserveDate = overwriteDate,

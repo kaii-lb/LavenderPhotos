@@ -296,10 +296,12 @@ fun ImageEditor(
                         ?.savedStateHandle
                         ?.set("editId", navMediaId)
 
-                    if (!isFromOpenWithView && navMediaId != -1L) coroutineScope.launch(Dispatchers.Main) {
-                        navController.popBackStack()
-                    } else if (isFromOpenWithView) {
+                    if (isFromOpenWithView) {
                         (context as Activity).finish()
+                    } else {
+                        coroutineScope.launch(Dispatchers.Main) {
+                            navController.popBackStack()
+                        }
                     }
                 }
             )

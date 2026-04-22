@@ -264,10 +264,11 @@ fun VideoEditorImpl(
 
     Log.d(TAG, "basic video data $basicVideoData")
 
-    LaunchedEffect(videoPlayerState.duration) {
+    LaunchedEffect(videoPlayerState.duration, videoPlayerState.audioTracks.lastOrNull()) {
         val videoFormat = videoPlayerState.videoFormat
         var tries = 0
         val audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
+        val frameRate = videoPlayerState.getFrameRate()
 
         withContext(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
@@ -288,48 +289,32 @@ fun VideoEditorImpl(
                 VideoSize(frame.width, frame.height)
             }
 
-            while ((basicVideoData.duration <= 0f || basicVideoData.frameRate == 0f) && tries < 10) {
-                val frameRate = if (videoFormat?.frameRate == null || videoFormat.frameRate.toInt() == -1) {
-                    val possible = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)?.toFloat()
+            if (frameRate != null && frameRate.toInt() != -1 && !frameRate.isNaN()) videoEditingState.setFrameRate(frameRate) // important!!!
 
-                    if (possible == null) {
-                        val frameCount = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toFloat() ?: 0f
+            val bitrate = if (videoFormat?.bitrate == null || videoFormat.bitrate == -1) {
+                val possible = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toInt()
 
-                        frameCount / videoPlayerState.duration
-                    } else {
-                        possible
-                    }
-                } else {
-                    videoFormat.frameRate
-                }
-
-                videoEditingState.setFrameRate(frameRate) // important!!!
-
-                val bitrate = if (videoFormat?.bitrate == null || videoFormat.bitrate == -1) {
-                    val possible = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toInt()
-
-                    possible ?: -1 // -1 basically give up and go for highest
-                } else {
-                    videoFormat.bitrate
-                }
-
-                videoEditingState.setBitrate(bitrate * 2) // * 2 since with markup and effects and stuff the normal simply isn't enough
-
-                basicVideoData =
-                    BasicVideoData(
-                        duration = videoPlayerState.duration,
-                        frameRate = frameRate,
-                        absolutePath = absolutePath,
-                        bitrate = bitrate,
-                        width = size.width,
-                        height = size.height,
-                        audioChannelCount = audioChannelCount
-                    )
-                tries += 1
-
-                Log.d(TAG, "Video data $basicVideoData")
-                delay(100)
+                possible ?: -1 // -1 basically give up and go for highest
+            } else {
+                videoFormat.bitrate
             }
+
+            videoEditingState.setBitrate(bitrate * 2) // * 2 since with markup and effects and stuff the normal simply isn't enough
+
+            basicVideoData =
+                BasicVideoData(
+                    duration = videoPlayerState.duration,
+                    frameRate = frameRate,
+                    absolutePath = absolutePath,
+                    bitrate = bitrate,
+                    width = size.width,
+                    height = size.height,
+                    audioChannelCount = audioChannelCount
+                )
+            tries += 1
+
+            Log.d(TAG, "Video data $basicVideoData")
+            delay(100)
         }
     }
 
@@ -338,15 +323,17 @@ fun VideoEditorImpl(
     }
 
     LaunchedEffect(videoEditingState.frameRate) {
-        if (videoEditingState.frameRate == basicVideoData.frameRate || videoEditingState.frameRate <= 0f) {
+        Log.d(TAG, "Video frame-rates ${videoEditingState.frameRate} ${basicVideoData.frameRate}")
+
+        if (videoEditingState.frameRate == basicVideoData.frameRate || videoEditingState.frameRate <= 0f || basicVideoData.frameRate == null) {
             videoEditingState.removeAllEffects {
                 it is FrameDropEffect
             }
         } else {
             videoEditingState.addEffect(
                 FrameDropEffect.createSimpleFrameDropEffect(
-                    basicVideoData.frameRate,
-                    if (videoEditingState.frameRate >= basicVideoData.frameRate) basicVideoData.frameRate
+                    basicVideoData.frameRate!!,
+                    if (videoEditingState.frameRate >= basicVideoData.frameRate!!) basicVideoData.frameRate!!
                     else videoEditingState.frameRate
                 )
             )
@@ -408,7 +395,7 @@ fun VideoEditorImpl(
             VideoEditorBottomBar(
                 pagerState = pagerState,
                 currentPosition = { videoPlayerState.currentPosition },
-                basicData = basicVideoData,
+                basicData = { basicVideoData },
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
                 modifications = modifications,
