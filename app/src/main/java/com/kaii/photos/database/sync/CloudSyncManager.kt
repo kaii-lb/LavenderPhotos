@@ -6,8 +6,8 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
-import com.kaii.photos.file_management.CloudFileManager
-import com.kaii.photos.file_management.LocalFileManager
+import com.kaii.photos.file_management.managers.CloudFileManager
+import com.kaii.photos.file_management.managers.LocalFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext

@@ -1,4 +1,4 @@
-package com.kaii.photos.file_management
+package com.kaii.photos.file_management.managers
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent

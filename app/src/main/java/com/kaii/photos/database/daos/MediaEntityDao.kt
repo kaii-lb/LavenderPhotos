@@ -19,6 +19,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
+    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths)")
+    fun getMediaInPaths(paths: Set<String>): List<MediaStoreData>
+
     @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath IN (:paths)")
     fun countMediaInPaths(paths: Set<String>): Int
 
@@ -104,6 +107,9 @@ interface MediaDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)
+
+    @Query(value = "DELETE FROM media WHERE id = :id")
+    suspend fun delete(id: Long)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: Set<MediaStoreData>)

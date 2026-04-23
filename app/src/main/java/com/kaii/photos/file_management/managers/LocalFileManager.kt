@@ -1,9 +1,7 @@
-package com.kaii.photos.file_management
+package com.kaii.photos.file_management.managers
 
-import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
-import android.content.IntentSender
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.ui.util.fastMap
@@ -11,17 +9,19 @@ import androidx.core.net.toUri
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.getPathsFromUriList
+import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
-class CustomFileManager(
+class LocalFileManager(
     override val mediaDao: MediaDao,
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
@@ -30,7 +30,7 @@ class CustomFileManager(
     override val info: ImmichBasicInfo
 ) : GenericFileManager {
     companion object {
-        private val TAG = CustomFileManager::class.qualifiedName
+        private val TAG = LocalFileManager::class.qualifiedName
     }
 
     override suspend fun setTrashed(
@@ -43,50 +43,42 @@ class CustomFileManager(
     ) = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
 
-        if (!trashed) {
-            throw IllegalArgumentException("${CustomFileManager::class.simpleName} cannot restore an item! This should never happen!")
+        if (albumId != null) {
+            throw IllegalArgumentException("${LocalFileManager::class.simpleName} should not and does not handle per album media deletion!")
         }
 
-        customDao.deleteAll(
-            ids = list.fastMap { it.id }.toSet(),
-            album = albumId!!
-        )
-
-        onItemDone(list.size)
-
-        return@withContext true
-    }
-
-    /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
-    override fun renameItem(
-        context: Context,
-        uri: String,
-        newName: String
-    ): IntentSender? {
         val contentResolver = context.contentResolver
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, newName)
+        val currentTimeMillis = System.currentTimeMillis()
+        val trashedValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.IS_TRASHED, trashed)
+            put(MediaStore.MediaColumns.DATE_MODIFIED, currentTimeMillis)
         }
 
-        try {
-            contentResolver.update(uri.toUri(), contentValues, null)
-            contentResolver.notifyChange(uri.toUri(), null)
+        return@withContext try {
+            val list = list.fastMap { it.uri.toUri() }
+            val map =
+                if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
+                else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
 
-            return null
-        } catch (securityException: SecurityException) {
-            Log.e(TAG, securityException.toString())
-            securityException.printStackTrace()
+            list.forEachIndexed { index, uri ->
+                // order is very important!
+                // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
+                File(map[uri]!!).setLastModified(currentTimeMillis)
+                contentResolver.update(uri, trashedValues, null)
 
-            val recoverableSecurityException =
-                securityException as? RecoverableSecurityException ?: throw RuntimeException(securityException.message, securityException)
+                onItemDone(index + 1)
+            }
 
-            val intentSender = recoverableSecurityException.userAction.actionIntent.intentSender
-            return intentSender
+            true
+        } catch (e: Throwable) {
+            Log.e(TAG, "Setting trashed $trashed on photo list failed.")
+            e.printStackTrace()
+
+            false
         }
     }
 
-    /** @param destination id of the destination album */
     override suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
@@ -98,31 +90,41 @@ class CustomFileManager(
     ): Boolean = withContext(Dispatchers.IO) {
         if (list.isEmpty()) return@withContext true
 
-        if (origin == null) {
-            throw IllegalArgumentException("${CustomFileManager::class.simpleName} cannot move without a given origin! It should never be null.")
+        if (origin != null) {
+            throw IllegalArgumentException("${LocalFileManager::class.simpleName} cannot move with a given origin! It should always be null.")
         }
 
-        if (destination !is AlbumType.Custom) {
-            throw IllegalArgumentException("Cannot move items between ${AlbumType.Custom::class.simpleName} and ${destination::class.simpleName}")
+        if (destination !is AlbumType.Folder) {
+            throw IllegalArgumentException("Cannot move items between ${AlbumType.Folder::class.simpleName} and ${destination::class.simpleName}")
         }
 
-        customDao.upsertAll(
-            items = list.fastMap {
-                CustomItem(
-                    id = it.id,
-                    album = destination.id
-                )
+        var count = 0
+        val toBeDeleted = mutableListOf<SelectionManager.SelectedItem>()
+
+        copyItems(
+            context = context,
+            list = list,
+            destination = destination,
+            preserveDate = preserveDate,
+            overrideDisplayName = null,
+            taskId = taskId,
+            onItemDone = { uri ->
+                val item = list.first { it.uri == uri }
+                if (!toBeDeleted.contains(item)) {
+                    toBeDeleted.add(item)
+                }
+
+                count += 1
+                onItemDone(uri)
             }
         )
 
-        customDao.deleteAll(
-            ids = list.fastMap { it.id }.toSet(),
-            album = origin.id
+        permanentlyDelete(
+            context = context,
+            list = toBeDeleted
         )
 
-        list.forEach { onItemDone(it.uri) }
-
-        true
+        return@withContext count == list.size
     }
 
     /** @param overrideDisplayName should not contain file extension */
