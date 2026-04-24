@@ -75,7 +75,6 @@ class MotionPhoto(
         } catch (_: XmlParsingException) {}
         catch (e: FileNotFoundException) {
             Log.d(TAG, e.message.toString())
-            e.printStackTrace()
         }
 
         return null
