@@ -1,17 +1,14 @@
 package com.kaii.photos.mediastore
 
 import android.net.Uri
-import android.os.Parcelable
 import android.provider.MediaStore
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
-import kotlinx.parcelize.Parcelize
 
 val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
 
 @Immutable
-@Parcelize
 data class ImmichInfo(
     val thumbnail: String,
     val original: String,
@@ -19,7 +16,32 @@ data class ImmichInfo(
     val accessToken: String,
     val endpoint: String,
     val useThumbnail: Boolean
-) : Parcelable
+)
+
+@Immutable
+data class SecureInfo(
+    val iv: ByteArray,
+    val absolutePath: String,
+    val key: ObjectKey
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SecureInfo
+
+        if (!iv.contentEquals(other.iv)) return false
+        if (absolutePath != other.absolutePath) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = iv.contentHashCode()
+        result = 31 * result + absolutePath.hashCode()
+        return result
+    }
+}
 
 /** The type of data. */
 enum class MediaType {

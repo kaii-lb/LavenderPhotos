@@ -8,8 +8,8 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +42,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
             run {
                 val iv = dao.getIvFromSecuredPath(file.absolutePath)
                 val thumbnailIv = dao.getIvFromSecuredPath(
-                    securedPath = getSecuredCacheImageForFile(file = file, context = context).absolutePath
+                    securedPath = file.secureThumbnailImage(context).absolutePath
                 )
 
                 if (iv != null && thumbnailIv != null) iv + thumbnailIv else null

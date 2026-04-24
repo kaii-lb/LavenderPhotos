@@ -5,12 +5,14 @@ import android.os.Environment
 import java.io.File
 
 enum class AppDirectories(val path: String) {
-    MainDir("Lavender Photos"),
+    MainDir("LavenderPhotos"),
+    CloudDir("Lavender Photos"),
     SecureFolder("secure_folder"),
     RestoredFolder("Restored Files"),
     SecureVideoCacheDir("secure_video_cache_dir"),
     SecureThumbnailCacheDir("secure_thumbnail_cache_dir"),
-    OldSecureFolder("locked_folder")
+    OldSecureFolder("locked_folder"),
+    SecureFolderVideoThumbnails("secure_folder_video_thumbnails")
 }
 
 /** ends with a "/" */
@@ -69,9 +71,7 @@ val Context.appSecureVideoCacheDir: String
 /** doesn't end with a "/" */
 val Context.appSecureThumbnailCacheDir: String
     get() {
-        val path = cacheDir.absolutePath.removeSuffix("/") + "/" + AppDirectories.SecureThumbnailCacheDir.path
-
-        val dir = File(path)
+        val dir = File(cacheDir, AppDirectories.SecureThumbnailCacheDir.path)
         if (!dir.exists()) dir.mkdirs()
 
         return dir.absolutePath.removeSuffix("/")
@@ -83,8 +83,16 @@ val appCloudFolderDir: String
         val pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         if (!pictures.exists()) pictures.mkdirs()
 
-        val appDir = File(pictures, AppDirectories.MainDir.path)
+        val appDir = File(pictures, AppDirectories.CloudDir.path)
         if (!appDir.exists()) appDir.mkdirs()
 
         return appDir.absolutePath.removeSuffix("/")
+    }
+
+val Context.appSecureFolderVideoThumbnailDir: String
+    get() {
+        val dir = File(filesDir, AppDirectories.SecureFolderVideoThumbnails.path)
+        if (!dir.exists()) dir.mkdirs()
+
+        return dir.absolutePath.removeSuffix("/")
     }

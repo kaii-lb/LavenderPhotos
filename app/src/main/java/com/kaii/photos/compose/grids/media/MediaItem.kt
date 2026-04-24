@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.grids.media
 
-import android.util.Log
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -21,12 +20,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,28 +37,24 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ShowSelectedState
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.formatLikeANormalPerson
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.SecureInfo
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.isGIF
 import com.kaii.photos.mediastore.isRawImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
-
-private const val TAG = "com.kaii.photos.compose.grids.media.MediaItem"
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -120,40 +111,17 @@ fun MediaItem(
                 }
             }
     ) {
-        // TODO: possibly move to a less messy and horrible decrypting implementation
-        var model by remember { mutableStateOf<Any?>(null) }
         val context = LocalContext.current
-
-        LaunchedEffect(isSecureMedia) {
-            if (!isSecureMedia || model != null) return@LaunchedEffect
-
-            item as PhotoLibraryUIModel.SecuredMedia
-
-            model =
-                withContext(Dispatchers.IO) {
-                    try {
-                        val thumbnailIv =
-                            item.bytes!!.getThumbnailIv() // get thumbnail iv from video
-
-                        EncryptionManager.decryptBytes(
-                            bytes = getSecuredCacheImageForFile(
-                                fileName = item.item.displayName,
-                                context = context
-                            ).readBytes(),
-                            iv = thumbnailIv
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, e.toString())
-                        e.printStackTrace()
-
-                        item.item.uri.toUri().path
-                    }
-                }
-        }
 
         GlideImage(
             model = when {
-                isSecureMedia -> model
+                isSecureMedia -> (item as PhotoLibraryUIModel.SecuredMedia).bytes?.getThumbnailIv()?.let {
+                    SecureInfo(
+                        iv = it,
+                        absolutePath = File(item.item.absolutePath).secureThumbnailImage(context).absolutePath,
+                        key = item.signature()
+                    )
+                }
 
                 item.item.isCloud -> ImmichInfo(
                     thumbnail = item.item.immichThumbnail!!,

@@ -1,6 +1,7 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.FileObserver
 import android.util.Log
@@ -8,18 +9,23 @@ import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.bumptech.glide.Glide
 import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.paging.SecuredListPagingSource
 import com.kaii.photos.helpers.paging.mapToSecuredMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.helpers.secureThumbnailImage
+import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +39,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
@@ -47,6 +55,43 @@ class SecureRepository(
 ) {
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
+
+        suspend fun addEncryptedThumbnail(
+            context: Context,
+            thumbnail: Bitmap,
+            file: File,
+            dao: SecuredMediaItemEntityDao
+        ) {
+            val byteOutputStream = ByteArrayOutputStream()
+            thumbnail.compress(
+                Bitmap.CompressFormat.PNG,
+                100,
+                byteOutputStream
+            )
+
+            val (encrypted, thumbnailIv) = EncryptionManager.encryptBytes(byteOutputStream.toByteArray())
+
+            val secureThumbnail = file.secureThumbnailImage(context)
+            try {
+                secureThumbnail
+                    .outputStream()
+                    .let {
+                        if (encrypted.size <= 8 * 1024) it.write(encrypted)
+                        else it.buffered().write(encrypted)
+                    }
+            } catch (e: IOException) {
+                Log.d(TAG, e.toString())
+                e.printStackTrace()
+            }
+
+            dao.insertEntity(
+                SecuredItemEntity(
+                    originalPath = file.absolutePath,
+                    securedPath = secureThumbnail.absolutePath,
+                    iv = thumbnailIv
+                )
+            )
+        }
     }
 
     private data class Params(
@@ -97,8 +142,12 @@ class SecureRepository(
     )
 
     init {
-        scope.launch(Dispatchers.IO) {
-            load(context = context)
+        scope.launch {
+            load(context)
+        }
+
+        scope.launch {
+            verifyThumbnails(context)
         }
     }
 
@@ -153,15 +202,12 @@ class SecureRepository(
                 else if (mimeType.lowercase().contains("video")) MediaType.Video
                 else return@forEach
 
-            val decryptedBytes =
-                run {
-                    val iv = dao.getIvFromSecuredPath(file.absolutePath)
-                    val thumbnailIv = dao.getIvFromSecuredPath(
-                        securedPath = getSecuredCacheImageForFile(file = file, context = context).absolutePath
-                    )
+            val decryptedBytes = run {
+                val iv = dao.getIvFromSecuredPath(file.absolutePath)
+                val thumbnailIv = dao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
 
-                    if (iv != null && thumbnailIv != null) iv + thumbnailIv else null
-                }
+                iv?.plus(thumbnailIv ?: ByteArray(16))
+            }
 
             val originalPath =
                 dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
@@ -175,7 +221,6 @@ class SecureRepository(
                 } catch (e: RuntimeException) {
                     Log.e(TAG, e.toString())
                     Log.e(TAG, "The failing file was ${file.absolutePath}")
-                    e.printStackTrace()
                     null
                 }
             } else null
@@ -195,7 +240,7 @@ class SecureRepository(
                 absolutePath = file.absolutePath,
                 parentPath = originalPath,
                 size = 0L,
-                immichUrl = null, // TODO
+                immichUrl = null,
                 hash = null,
                 favourited = false,
                 duration = duration?.let { (it / 1000.0).roundToLong() }
@@ -221,5 +266,49 @@ class SecureRepository(
                 }.sortedByDescending {
                     it.item.dateModified
                 }
+    }
+
+    private suspend fun verifyThumbnails(context: Context) = withContext(Dispatchers.IO) {
+        val snapshot = _fileList.value ?: return@withContext
+
+        snapshot.forEach { file ->
+            val thumbnail = file.secureThumbnailImage(context)
+
+            if (dao.getIvFromSecuredPath(thumbnail.absolutePath) != null) return@forEach
+
+            val mimeType = Files.probeContentType(Path(file.absolutePath))
+            val type =
+                if (mimeType.lowercase().contains("image")) MediaType.Image
+                else if (mimeType.lowercase().contains("video")) MediaType.Video
+                else return@forEach
+
+            if (type == MediaType.Image) {
+                addImageThumbnail(file, context)
+            } else {
+                addImageThumbnail(file.secureVideoThumbnailImage(context), context)
+            }
+        }
+    }
+
+    private suspend fun addImageThumbnail(
+        file: File,
+        context: Context
+    ) = withContext(Dispatchers.IO) {
+        val iv = dao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+
+        val bytes = EncryptionManager.decryptBytes(
+            bytes = file.readBytes(),
+            iv = iv
+        )
+
+        val thumbnail = Glide
+            .with(context)
+            .asBitmap()
+            .load(bytes)
+            .override(512)
+            .submit()
+            .get()
+
+        addEncryptedThumbnail(context, thumbnail, file, dao)
     }
 }

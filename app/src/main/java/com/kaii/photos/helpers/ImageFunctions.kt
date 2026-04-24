@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import com.bumptech.glide.Glide
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
@@ -24,6 +25,7 @@ import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import com.kaii.photos.repositories.SecureRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -156,14 +158,6 @@ suspend fun moveMediaToSecureFolder(
                 overwriteLastModified = false
             )
 
-            addSecuredCachedMediaThumbnail(
-                context = context,
-                mediaItem = mediaItem,
-                file = fileToBeHidden,
-                metadataRetriever = metadataRetriever,
-                applicationDatabase = applicationDatabase
-            )
-
             // encrypt file data and write to secure folder path
             val iv =
                 EncryptionManager.encryptInputStream(
@@ -178,6 +172,39 @@ suspend fun moveMediaToSecureFolder(
                     iv = iv
                 )
             )
+
+            if (mediaItem.type == MediaType.Video) {
+                metadataRetriever.setDataSource(context, mediaItem.uri.toUri())
+
+                metadataRetriever.getScaledFrameAtTime(
+                    -1L,
+                    MediaMetadataRetriever.OPTION_CLOSEST,
+                    1024,
+                    1024
+                )?.let { bitmap ->
+                    SecureRepository.addEncryptedThumbnail(
+                        context = context,
+                        thumbnail = bitmap,
+                        file = destinationFile.secureVideoThumbnailImage(context),
+                        dao = applicationDatabase.securedItemEntityDao()
+                    )
+                }
+            } else {
+                val thumbnail = Glide
+                    .with(context)
+                    .asBitmap()
+                    .load(mediaItem.uri)
+                    .override(512)
+                    .submit()
+                    .get()
+
+                SecureRepository.addEncryptedThumbnail(
+                    context = context,
+                    thumbnail = thumbnail,
+                    file = destinationFile.secureVideoThumbnailImage(context),
+                    dao = applicationDatabase.securedItemEntityDao()
+                )
+            }
 
             // cleanup
             permanentlyDeletePhotoList(
@@ -234,7 +261,7 @@ suspend fun moveImageOutOfLockedFolder(
             e.printStackTrace()
         }
 
-        Log.d(TAG, "Base path ${originalPath.toBasePath()}")
+        Log.d(TAG, "Base path ${originalPath.toBasePath()} ${media.item.displayName}")
 
         contentResolver.insertMedia(
             context = context,
@@ -257,11 +284,13 @@ suspend fun moveImageOutOfLockedFolder(
                 tempFile.delete()
                 applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.item.absolutePath)
 
-                val thumbnailFile =
-                    getSecuredCacheImageForFile(file = fileToBeRestored, context = context)
+                val thumbnailFile = fileToBeRestored.secureThumbnailImage(context)
                 thumbnailFile.delete()
-                applicationDatabase.securedItemEntityDao()
-                    .deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
+
+                fileToBeRestored.secureVideoThumbnailImage(context).let {
+                    if (it.exists()) it.delete()
+                }
             } catch (e: Throwable) {
                 Log.e(TAG, e.toString())
                 e.printStackTrace()
@@ -280,8 +309,11 @@ suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: 
         list.forEach { path ->
             File(path).let { file ->
                 file.delete()
-                getSecuredCacheImageForFile(file = file, context = context).delete()
+                val thumbnail = file.secureThumbnailImage(context)
+                thumbnail.delete()
+
                 dao.deleteEntityBySecuredPath(securedPath = path)
+                dao.deleteEntityBySecuredPath(securedPath = thumbnail.absolutePath)
             }
         }
     } catch (e: Throwable) {

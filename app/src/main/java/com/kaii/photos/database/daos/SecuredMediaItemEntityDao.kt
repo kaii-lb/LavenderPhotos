@@ -18,8 +18,8 @@ interface SecuredMediaItemEntityDao {
     fun getSecuredPathFromOriginalPath(originalPath: String): String?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertEntity(vararg entity: SecuredItemEntity)
+    suspend fun insertEntity(vararg entity: SecuredItemEntity)
 
     @Query(value = "DELETE FROM secureditementity WHERE secured_path = :securedPath")
-    fun deleteEntityBySecuredPath(securedPath: String)
+    suspend fun deleteEntityBySecuredPath(securedPath: String)
 }

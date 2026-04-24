@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.single_photo
 
-import android.util.Log
 import android.view.Window
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -16,7 +15,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,29 +46,22 @@ import com.kaii.photos.compose.transformable
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SingleViewConstants
-import com.kaii.photos.helpers.getSecuredCacheImageForFile
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.SecureInfo
 import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
-import java.io.File
 import kotlin.time.Clock
-
-private const val TAG = "com.kaii.photos.compose.single_photo.HorizontalImageList"
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -185,45 +176,15 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
-                // TODO: possibly move to a less messy and horrible decrypting implementation
-                val context = LocalContext.current
-                var model by remember { mutableStateOf<Any?>(null) }
-
-                LaunchedEffect(isSecuredMedia) {
-                    if (!isSecuredMedia || model != null) return@LaunchedEffect
-
-                    withContext(Dispatchers.IO) {
-                        try {
-                            media as PhotoLibraryUIModel.SecuredMedia
-
-                            val iv = media.bytes!!.getIv()
-                            val thumbnailIv = media.bytes.getThumbnailIv()
-                            val thumbnailFile = getSecuredCacheImageForFile(
-                                fileName = media.item.displayName,
-                                context = context
-                            )
-
-                            if (thumbnailFile.length() > 1024 * 1024 * 10) { // don't decrypt thumbnail if file will load instantly anyway
-                                model = EncryptionManager.decryptBytes(
-                                    bytes = thumbnailFile.readBytes(),
-                                    iv = thumbnailIv
-                                )
-                            }
-
-                            model = EncryptionManager.decryptBytes(
-                                bytes = File(media.item.absolutePath).readBytes(),
-                                iv = iv
-                            )
-                        } catch (e: Throwable) {
-                            Log.d(TAG, e.toString())
-                            e.printStackTrace()
-                        }
-                    }
-                }
-
-                val glideModel = remember(model, media) {
+                val glideModel = remember(media) {
                     when {
-                        isSecuredMedia -> model
+                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let {
+                            SecureInfo(
+                                iv = it.getIv(),
+                                absolutePath = media.item.absolutePath,
+                                key = media.signature()
+                            )
+                        }
 
                         media.item.isCloud -> ImmichInfo(
                             thumbnail = media.item.immichThumbnail!!,

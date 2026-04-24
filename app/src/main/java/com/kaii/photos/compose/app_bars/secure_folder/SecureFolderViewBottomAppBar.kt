@@ -28,6 +28,7 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.grid_management.toSecureMedia
 import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.shareMultipleSecuredImages
 import com.kaii.photos.mediastore.MediaType
@@ -144,9 +145,8 @@ fun SecureFolderViewBottomAppBar(
             isGettingPermissions.value = true
 
             context.appModule.scope.launch(Dispatchers.IO) {
-                val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
                 val directories = selectedItemsList.fastMapNotNull {
-                    dao.getOriginalPathFromSecuredPath(securedPath = it.parentPath)
+                    it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
                 }.distinct().toSet()
 
                 restorePermissionState.start(directories = directories)
