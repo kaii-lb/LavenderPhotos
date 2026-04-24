@@ -17,6 +17,7 @@ data class ImmichInfo(
     val original: String,
     val hash: String,
     val accessToken: String,
+    val endpoint: String,
     val useThumbnail: Boolean
 ) : Parcelable
 

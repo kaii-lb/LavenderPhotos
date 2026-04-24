@@ -81,7 +81,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    accessToken: String,
+    accessToken: () -> String,
+    endpoint: () -> String,
     state: VideoPlayerState,
     appBarsVisible: MutableState<Boolean>,
     scrollState: SinglePhotoScrollState,
@@ -96,12 +97,13 @@ fun VideoPlayer(
 ) {
     val context = LocalContext.current
     var securedMediaProgress by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(shouldPlay()) {
+    LaunchedEffect(shouldPlay(), accessToken(), endpoint()) {
         if (shouldPlay()) {
             state.setSource(
                 context = context,
                 item = item,
-                accessToken = accessToken,
+                accessToken = accessToken(),
+                endpoint = endpoint(),
                 shouldPlay = shouldPlay,
                 progress = {
                     securedMediaProgress = it

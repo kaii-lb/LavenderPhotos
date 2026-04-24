@@ -88,7 +88,10 @@ class HybridRepository(
                 if (details.sortMode.isDateModified) mediaDao.getPagedMediaDateModified(paths = details.paths)
                 else mediaDao.getPagedMediaDateTaken(paths = details.paths)
             }
-        ).flow.mapToMedia(accessToken = details.info.accessToken)
+        ).flow.mapToMedia(
+            accessToken = details.info.accessToken,
+            endpoint = details.info.endpoint
+        )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

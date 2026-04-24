@@ -168,7 +168,10 @@ class SearchRepository(
                     }
                 }
             }
-        ).flow.mapToMedia(accessToken = details.info.accessToken)
+        ).flow.mapToMedia(
+            accessToken = details.info.accessToken,
+            endpoint = details.info.endpoint
+        )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

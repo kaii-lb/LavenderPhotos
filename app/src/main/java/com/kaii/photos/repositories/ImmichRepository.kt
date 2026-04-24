@@ -104,7 +104,10 @@ class ImmichRepository(
                 if (params.sortMode.isDateModified) customDao.getPagedMediaDateModified(album = album.id)
                 else customDao.getPagedMediaDateTaken(album = album.id)
             }
-        ).flow.mapToMedia(accessToken = params.info.accessToken)
+        ).flow.mapToMedia(
+            accessToken = params.info.accessToken,
+            endpoint = params.info.endpoint
+        )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -134,7 +137,7 @@ class ImmichRepository(
                 state.album.assets.fastMap { asset ->
                     MediaStoreData(
                         id = Uuid.parse(asset.id).toLongs { a, _ -> a },
-                        uri = "${snapshot.info.endpoint}/api/assets/${asset.id}/original",
+                        uri = "/api/assets/${asset.id}/original",
                         dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
                         dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
                         type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
@@ -142,7 +145,7 @@ class ImmichRepository(
                         parentPath = "",
                         displayName = asset.originalFileName,
                         mimeType = asset.originalMimeType,
-                        immichUrl = "${snapshot.info.endpoint}/api/assets/${asset.id}/original",
+                        immichUrl = "/api/assets/${asset.id}/original",
                         hash = asset.checksum,
                         size = asset.exifInfo?.fileSizeInByte ?: 0L,
                         favourited = asset.isFavorite,

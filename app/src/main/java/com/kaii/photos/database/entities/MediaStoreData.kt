@@ -2,6 +2,7 @@ package com.kaii.photos.database.entities
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kaii.photos.mediastore.MediaType
@@ -51,14 +52,21 @@ data class MediaStoreData(
         )
     }
 
+    @get:Ignore
     val immichThumbnail: String?
         get() = immichUrl?.replace("/original", "/thumbnail")
 
+    @get:Ignore
     val immichId: String?
         get() = immichUrl?.split("/")?.dropLast(1)?.last()
 
+    @get:Ignore
+    val immichVideoUrl: String?
+        get() = immichUrl?.replace("original", "video/playback")
+
+    @get:Ignore
     val isCloud: Boolean
-        get() = uri.startsWith("http")
+        get() = uri.startsWith("/api")
 
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** it is returned in unix epoch seconds*/

@@ -87,7 +87,7 @@ fun UpdatableProfileImage(
     ) { state ->
         if (state) {
             val actualPfpUrl =
-                immichInfo().endpoint + "/api/users/${immichInfo().userId}" +
+                "/api/users/${immichInfo().userId}" +
                         "/profile-image?updatedAt=${immichInfo().updatedAt}"
 
             GlideImage(
@@ -96,6 +96,7 @@ fun UpdatableProfileImage(
                     original = actualPfpUrl,
                     hash = "",
                     accessToken = immichInfo().accessToken,
+                    endpoint = immichInfo().endpoint,
                     useThumbnail = false
                 ),
                 contentDescription = "User profile picture",

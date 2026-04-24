@@ -143,7 +143,8 @@ fun OpenWithContent(
                     item = MediaStoreData.dummyItem.copy(
                         uri = uri.toString()
                     ),
-                    accessToken = "",
+                    accessToken = { "" },
+                    endpoint = { "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
                     scrollState = scrollState,
@@ -167,7 +168,8 @@ fun OpenWithContent(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = "",
+                        accessToken = { "" },
+                        endpoint = { "" },
                         shouldPlay = { true },
                         blurViews = blurViews,
                         useBlackBackground = useBlackBackground,

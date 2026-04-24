@@ -3,7 +3,6 @@ package com.kaii.photos.file_management.sync
 import android.content.Context
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
@@ -15,7 +14,6 @@ import kotlin.uuid.ExperimentalUuidApi
 class CustomSyncHandler(
     override val mediaDao: MediaDao,
     override val customDao: CustomEntityDao,
-    override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
     override val info: ImmichBasicInfo,

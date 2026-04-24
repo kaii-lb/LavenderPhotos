@@ -1,4 +1,4 @@
-package com.kaii.photos.models.multi_album
+package com.kaii.photos.models
 
 import android.content.Context
 import android.util.Log
@@ -50,9 +50,8 @@ class ImmichModelLoader(
     concreteLoader: ModelLoader<GlideUrl, InputStream>,
     modelCache: ModelCache<ImmichInfo, GlideUrl>?
 ) : BaseGlideUrlLoader<ImmichInfo>(concreteLoader, modelCache) {
-
     override fun getUrl(model: ImmichInfo, width: Int, height: Int, options: Options?): String {
-        return if (model.useThumbnail) model.thumbnail else model.original
+        return model.endpoint + if (model.useThumbnail) model.thumbnail else model.original
     }
 
     override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers {

@@ -39,7 +39,8 @@ fun MotionPhotoView(
     zoomableState: ZoomableState,
     appBarsVisible: MutableState<Boolean>,
     window: Window,
-    accessToken: String,
+    accessToken: () -> String,
+    endpoint: () -> String,
     shouldPlay: () -> Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
@@ -49,11 +50,12 @@ fun MotionPhotoView(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(item) {
+    LaunchedEffect(item, accessToken(), endpoint()) {
         state.setSource(
             context = context,
             item = item,
-            accessToken = accessToken,
+            accessToken = accessToken(),
+            endpoint = endpoint(),
             loop = true,
             shouldPlay = shouldPlay,
             progress = {}

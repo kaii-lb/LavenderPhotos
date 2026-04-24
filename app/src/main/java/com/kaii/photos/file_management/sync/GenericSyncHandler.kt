@@ -7,7 +7,6 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -35,7 +34,6 @@ import kotlin.uuid.Uuid
 interface GenericSyncHandler {
     val mediaDao: MediaDao
     val customDao: CustomEntityDao
-    val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
     val info: ImmichBasicInfo
@@ -162,7 +160,7 @@ interface GenericSyncHandler {
                 mediaDao.linkToImmich(
                     id = item.second.id,
                     hash = hashes[item.second.id]!!,
-                    immichUrl = "${info.endpoint}/api/assets/${resp.id}/original"
+                    immichUrl = "/api/assets/${resp.id}/original"
                 )
             }
 

@@ -116,7 +116,8 @@ fun VideoEditor(
     VideoEditorImpl(
         uri = uri,
         absolutePath = absolutePath,
-        accessToken = info.accessToken,
+        accessToken = { info.accessToken },
+        endpoint = { info.endpoint },
         album = album,
         window = window,
         isFromOpenWithView = isFromOpenWithView,
@@ -133,7 +134,8 @@ fun VideoEditor(
 fun VideoEditorImpl(
     uri: Uri,
     absolutePath: String,
-    accessToken: String,
+    accessToken: () -> String,
+    endpoint: () -> String,
     album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean,
@@ -154,14 +156,15 @@ fun VideoEditorImpl(
     )
 
     val context = LocalContext.current
-    LaunchedEffect(uri) {
+    LaunchedEffect(uri, accessToken(), endpoint()) {
         videoPlayerState.setSource(
             context = context,
             item = MediaStoreData.dummyItem.copy(
                 uri = uri.toString(),
                 absolutePath = absolutePath
             ),
-            accessToken = accessToken,
+            accessToken = accessToken(),
+            endpoint = endpoint(),
             shouldPlay = { true },
             progress = {}
         )

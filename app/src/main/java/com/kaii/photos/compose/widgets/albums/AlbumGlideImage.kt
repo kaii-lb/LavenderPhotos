@@ -67,6 +67,7 @@ fun AlbumGlideImage(
                         original = albumInfo.thumbnail.uri,
                         hash = "",
                         accessToken = info.accessToken,
+                        endpoint = info.endpoint,
                         useThumbnail = true
                     ) else albumInfo.thumbnail.uri,
                 contentDescription = albumInfo.album.name,

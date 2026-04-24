@@ -208,7 +208,11 @@ private fun DeviceMedia(
                     when (item) {
                         null -> {
                             LoadingItem(
-                                item = PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem),
+                                item = PhotoLibraryUIModel.Media(
+                                    item = MediaStoreData.dummyItem,
+                                    accessToken = null,
+                                    endpoint = null
+                                ),
                                 useRoundedCorners = useRoundedCorners()
                             )
                         }

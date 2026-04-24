@@ -105,6 +105,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE id IN (:ids)")
     suspend fun getMedia(ids: List<Long>): List<MediaStoreData>
 
+    @Query(value = "SELECT * FROM media WHERE hash IN (:hashes)")
+    suspend fun getMediaFromHashes(hashes: List<String>): List<MediaStoreData>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)
 

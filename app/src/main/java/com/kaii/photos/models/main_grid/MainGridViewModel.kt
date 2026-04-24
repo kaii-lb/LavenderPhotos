@@ -5,23 +5,18 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.util.fastMap
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
-import com.kaii.photos.file_management.managers.GenericFileManager
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.TopBarDetailsFormat
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -40,10 +35,9 @@ import kotlin.uuid.Uuid
 
 class MainGridViewModel(
     context: Context,
-    private val scope: CoroutineScope = context.appModule.scope
-) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
-
+    override val scope: CoroutineScope = context.appModule.scope,
+    override val apiClient: ApiClient = context.appModule.apiClient
+) : BaseViewModel(context) {
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
@@ -69,52 +63,16 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = 3
-    )
-
     val albumColumnSize = settings.lookAndFeel.getAlbumColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 3
     )
 
-    val immichInfo = settings.immich.getImmichBasicInfo().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = ImmichBasicInfo.Empty
-    )
-
     val albumSortMode = settings.albums.getSortMode().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = AlbumSortMode.LastModifiedDesc
-    )
-
-    val confirmToDelete = settings.permissions.getConfirmToDelete().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
-
-    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
-    val doNotTrash = settings.permissions.getDoNotTrash().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
-    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
     )
 
     val extraSecureFolderNavEntry = settings.lookAndFeel.getShowExtraSecureNav().stateIn(
@@ -141,70 +99,10 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
-    val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
-
-    val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = 256
-    )
-
-    val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false
-    )
-
-    val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = DisplayDateFormat.Default
-    )
-
-    val sortMode = settings.photoGrid.getSortMode().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = MediaItemSortMode.DateTaken
-    )
-
-    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
-
-    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = TopBarDetailsFormat.FileName
-    )
-
-    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
-    val useCache = settings.storage.getCacheThumbnails().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
     fun changeAlbum(album: AlbumType.Folder) = repo.changeAlbum(album)
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
-    private val repo =
+    override val repo =
         HybridRepository(
             mediaDao = db.mediaDao(),
             customDao = db.customDao(),
@@ -324,75 +222,7 @@ class MainGridViewModel(
             }
         }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = repo.getExifData(context, media)
-
-    fun allowedAlbumTypesFor(moving: Boolean) = repo.allowedAlbumTypesFor(moving)
-
-    fun runAction(
-        context: Context,
-        action: GenericFileManager.Action
-    ) = when (action) {
-        is GenericFileManager.Action.Copy -> {
-            copy(
-                context = context,
-                list = action.list,
-                destination = action.destination
-            )
-        }
-
-        is GenericFileManager.Action.Move -> {
-            move(
-                context = context,
-                list = action.list,
-                destination = action.destination
-            )
-        }
-
-        is GenericFileManager.Action.Trash -> {
-            setTrashed(
-                context = context,
-                list = action.list,
-                trashed = action.trashed
-            )
-        }
-
-        is GenericFileManager.Action.Delete -> {
-            delete(
-                context = context,
-                list = action.list
-            )
-        }
-
-        is GenericFileManager.Action.Favourite -> {
-            setFavourite(
-                context = context,
-                favourite = action.favourite,
-                list = action.list
-            )
-        }
-
-        is GenericFileManager.Action.RenameItem -> {
-            renameItem(
-                context = context,
-                uri = action.uri,
-                newName = action.newName
-            )
-        }
-
-        is GenericFileManager.Action.Share -> {
-            share(
-                context = context,
-                list = action.list
-            )
-        }
-
-        else -> null
-    }
-
-    private fun copy(
+    override fun copy(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType
@@ -436,9 +266,10 @@ class MainGridViewModel(
         }
     }
 
-    private fun move(
+    override fun move(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
+        origin: AlbumType,
         destination: AlbumType
     ) {
         scope.launch {
@@ -480,13 +311,13 @@ class MainGridViewModel(
         }
     }
 
-    private fun renameItem(
+    override fun renameItem(
         context: Context,
         uri: String,
         newName: String
     ) = repo.renameItem(context, uri, newName)
 
-    private fun setTrashed(
+    override fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean
@@ -530,7 +361,7 @@ class MainGridViewModel(
         }
     }
 
-    private fun delete(
+    override fun delete(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
@@ -539,10 +370,10 @@ class MainGridViewModel(
         }
     }
 
-    private fun setFavourite(
+    override fun setFavourite(
         context: Context,
-        favourite: Boolean,
-        list: List<SelectionManager.SelectedItem>
+        list: List<SelectionManager.SelectedItem>,
+        favourite: Boolean
     ) = if (list.first().isCloud) {
         scope.launch {
             repo.setFavourite(context, favourite, list)
@@ -555,7 +386,7 @@ class MainGridViewModel(
         }
     }
 
-    private fun share(
+    override fun share(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
@@ -575,5 +406,9 @@ class MainGridViewModel(
             repo.share(context, list)
             isLoading.value = false
         }
+    }
+
+    override fun renameAlbum(context: Context, newName: String) {
+        throw IllegalAccessError("Cannot rename album in a main view!")
     }
 }

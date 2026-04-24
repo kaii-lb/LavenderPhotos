@@ -80,7 +80,10 @@ class CustomRepository(
                 if (params.sortMode.isDateModified) customDao.getPagedMediaDateModified(album = album.id)
                 else customDao.getPagedMediaDateTaken(album = album.id)
             }
-        ).flow.mapToMedia(accessToken = params.info.accessToken)
+        ).flow.mapToMedia(
+            accessToken = params.info.accessToken,
+            endpoint = params.info.endpoint
+        )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

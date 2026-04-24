@@ -3,7 +3,6 @@ package com.kaii.photos.helpers.paging
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.mediastore.signature
 
 @Stable
@@ -14,21 +13,15 @@ sealed interface PhotoLibraryUIModel {
     interface MediaImpl : PhotoLibraryUIModel {
         val item: MediaStoreData
         val accessToken: String?
+        val endpoint: String?
     }
 
     @Stable
     @Immutable
     data class Media(
         override val item: MediaStoreData,
-        override val accessToken: String? = null
-    ) : MediaImpl
-
-    @Stable
-    @Immutable
-    data class MediaWithExifData(
-        override val item: MediaStoreData,
-        override val accessToken: String? = null,
-        val mediaData: Map<MediaData, String>
+        override val accessToken: String?,
+        override val endpoint: String?
     ) : MediaImpl
 
     @Stable
@@ -42,7 +35,8 @@ sealed interface PhotoLibraryUIModel {
     @Immutable
     data class SecuredMedia(
         override val item: MediaStoreData,
-        override val accessToken: String? = null,
+        override val accessToken: String?,
+        override val endpoint: String?,
         val bytes: ByteArray?
     ) : MediaImpl {
         override fun equals(other: Any?): Boolean {

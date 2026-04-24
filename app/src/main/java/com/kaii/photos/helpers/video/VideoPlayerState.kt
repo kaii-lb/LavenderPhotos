@@ -187,6 +187,7 @@ class VideoPlayerState(
         context: Context,
         item: MediaStoreData,
         accessToken: String,
+        endpoint: String,
         loop: Boolean = false,
         shouldPlay: () -> Boolean,
         progress: (Float) -> Unit
@@ -195,7 +196,8 @@ class VideoPlayerState(
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
 
-        var uri = item.immichUrl?.replace("original", "video/playback") ?: item.uri
+        val immichUrl = item.immichVideoUrl?.let { endpoint + it }
+        var uri = immichUrl ?: item.uri
         if (currentSource == uri) return
 
         // secure item, needs decoding

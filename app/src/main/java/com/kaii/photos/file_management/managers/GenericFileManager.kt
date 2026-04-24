@@ -516,7 +516,7 @@ interface GenericFileManager {
                 mediaDao.linkToImmich(
                     id = item.second.id,
                     hash = hashes[item.second.id]!!,
-                    immichUrl = "${info.endpoint}/api/assets/${resp.id}/original"
+                    immichUrl = "/api/assets/${resp.id}/original"
                 )
 
                 onItemDone(media.first { it.id == item.second.id }.uri)

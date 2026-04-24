@@ -76,7 +76,10 @@ class FavouritesRepository(
                 else mediaDao.getPagedFavouritesDateTaken()
             }
         ).flow
-            .mapToMedia(accessToken = params.info.accessToken)
+            .mapToMedia(
+                accessToken = params.info.accessToken,
+                endpoint = params.info.endpoint
+            )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

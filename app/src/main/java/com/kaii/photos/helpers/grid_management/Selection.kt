@@ -75,6 +75,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
         PhotoLibraryUIModel.SecuredMedia(
             item = item,
             accessToken = "",
+            endpoint = "",
             bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
         )
     } ?: emptyList()

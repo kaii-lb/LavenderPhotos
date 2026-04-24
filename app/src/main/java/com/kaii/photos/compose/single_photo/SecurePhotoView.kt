@@ -174,7 +174,9 @@ fun SecurePhotoView(
                     item = MediaStoreData.dummyItem.copy(
                         displayName = resources.getString(R.string.media_broken)
                     ),
-                    bytes = ByteArray(0)
+                    bytes = ByteArray(0),
+                    accessToken = null,
+                    endpoint = null
                 )
             }
         }

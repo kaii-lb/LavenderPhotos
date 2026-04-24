@@ -107,7 +107,10 @@ class TrashRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = { ListPagingSource(media = params.items) }
-        ).flow.mapToMedia(accessToken = params.info.accessToken)
+        ).flow.mapToMedia(
+            accessToken = params.info.accessToken,
+            endpoint = params.info.endpoint
+        )
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)

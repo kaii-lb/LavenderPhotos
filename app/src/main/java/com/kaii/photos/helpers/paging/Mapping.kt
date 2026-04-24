@@ -11,12 +11,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 fun Flow<PagingData<MediaStoreData>>.mapToMedia(
-    accessToken: String
+    accessToken: String,
+    endpoint: String
 ) = this.map { pagingData ->
     pagingData.map {
         PhotoLibraryUIModel.Media(
             item = it,
-            accessToken = accessToken
+            accessToken = accessToken,
+            endpoint = endpoint
         ) as PhotoLibraryUIModel
     }
 }
@@ -79,13 +81,15 @@ fun Flow<PagingData<PhotoLibraryUIModel>>.mapToSeparatedMedia(
 }
 
 fun Flow<PagingData<PhotoLibraryUIModel.SecuredMedia>>.mapToSecuredMedia(
-    accessToken: String
+    accessToken: String,
+    endpoint: String
 ) = this.map { pagingData ->
     pagingData.map {
         PhotoLibraryUIModel.SecuredMedia(
             item = it.item,
             bytes = it.bytes,
-            accessToken = accessToken
+            accessToken = accessToken,
+            endpoint = endpoint
         ) as PhotoLibraryUIModel
     }
 }

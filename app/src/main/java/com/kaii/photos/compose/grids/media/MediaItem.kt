@@ -155,11 +155,12 @@ fun MediaItem(
             model = when {
                 isSecureMedia -> model
 
-                item.item.immichUrl != null -> ImmichInfo(
+                item.item.isCloud -> ImmichInfo(
                     thumbnail = item.item.immichThumbnail!!,
                     original = item.item.immichUrl!!,
                     hash = item.item.hash!!,
                     accessToken = item.accessToken!!,
+                    endpoint = item.endpoint!!,
                     useThumbnail = true
                 )
 
