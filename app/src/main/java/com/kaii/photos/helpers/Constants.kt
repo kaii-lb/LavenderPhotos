@@ -4,48 +4,11 @@ import androidx.compose.animation.core.EaseInOutExpo
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 
 object PhotoGridConstants {
-    const val LOADING_TIME = 5000L
     const val LOADING_TIME_SHORT = 1000L
     const val UPDATE_TIME = 200L
-
-    val placeholderItems = listOf(
-        PhotoLibraryUIModel.Section(title = "", timestamp = 100),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 2L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 3L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 4L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 5L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 6L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 7L)),
-        PhotoLibraryUIModel.Section(title = "", timestamp = 200),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 9L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 10L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 11L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 12L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 13L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 14L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 15L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 16L)),
-        PhotoLibraryUIModel.Section(title = "", timestamp = 300),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 18L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 19L)),
-        PhotoLibraryUIModel.Section(title = "", timestamp = 400),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 21L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 22L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 23L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 24L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 25L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 26L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 27L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 28L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 29L)),
-        PhotoLibraryUIModel.Media(item = MediaStoreData.dummyItem.copy(id = 30L)),
-    )
 }
-
 
 object AnimationConstants {
     fun <T> expressiveSpring() = spring<T>(
@@ -70,7 +33,6 @@ object AnimationConstants {
     const val DURATION_EXTRA_EXTRA_LONG = 2000
 }
 
-
 object VideoPlayerConstants {
     const val CONTROLS_HIDE_TIMEOUT = 4000L
     const val TRIM_THUMBNAIL_COUNT = 8
@@ -86,6 +48,6 @@ object TextStylingConstants {
 }
 
 object SingleViewConstants {
-    const val MAX_ZOOM = 5f
+    const val MAX_ZOOM = 10f
     const val HALF_ZOOM = 2.5f
 }

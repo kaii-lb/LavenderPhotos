@@ -39,7 +39,6 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.signature.ObjectKey
@@ -367,7 +366,6 @@ fun GlideView(
                 else ObjectKey(Clock.System.now().toEpochMilliseconds())
             )
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-            .downsample(DownsampleStrategy.FIT_CENTER)
             .error(
                 when {
                     isHidden -> R.drawable.empty_image
@@ -389,8 +387,10 @@ fun GlideView(
             )
             .transition(withCrossFade(if (isHidden) 250 else 100))
 
-        // try to load GIFs, if it fails fallback to bitmaps
-        // this is fine performance wise
-        request.clone().decode(GifDrawable::class.java).error(request)
+        if (item.displayName.endsWith(".gif")) {
+            request.decode(GifDrawable::class.java)
+        } else {
+            request
+        }
     }
 }
