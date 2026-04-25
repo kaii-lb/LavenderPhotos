@@ -37,6 +37,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.signature.ObjectKey
@@ -329,6 +330,7 @@ fun GlideView(
                 if (useCache) item.signature()
                 else ObjectKey(Clock.System.now().toEpochMilliseconds())
             )
+            .downsample(DownsampleStrategy.FIT_CENTER)
             .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .error(
                 when {
