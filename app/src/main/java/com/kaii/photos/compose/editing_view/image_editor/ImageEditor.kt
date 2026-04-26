@@ -186,7 +186,7 @@ fun ImageEditor(
             val canvas = Canvas(bitmap)
             val drawScope = CanvasDrawScope()
 
-            val mods = modifications + drawingPaintState.modifications
+            val mods = modifications.toList() + drawingPaintState.modifications.toList()
             val sorted = mods.sortedBy { mod ->
                 if (mod is ImageModification.Adjustment) {
                     MediaAdjustments.entries.indexOf(mod.type)
