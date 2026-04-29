@@ -37,7 +37,7 @@
     <string name="albums_item_count">Objekte:</string>
     <string name="app_name_full">Lavender - Sinu fotod</string>
     <string name="support">Kasutajatugi ja toetused</string>
-    <string name="secure_folder">Turvaline kaust</string>
+    <string name="secure_folder">Turvakaust</string>
     <string name="more_info">Lisateave</string>
     <string name="direct_path_album">Kasuta albumi lisamiseks täpset asukohta</string>
     <string name="albums_main_list">Albumite põhiline vaade</string>
@@ -273,11 +273,12 @@
     <string name="secure_migrating_desc">Varundan ja krüptin sinu fotosid, palun oota…</string>
     <string name="secure_migrating_notice">Teade andmete kolimise kohta</string>
     <string name="secure_migrating_notice_desc">Turvaline kaust on nüüd krüptitud! Kõik sinu fotod on nüüd hoitud täiesti turvaliselt ja keegi teine ei saa neile ligi. Ettevaatusabinõuna on leidub turvatud fotode koopia ka sinu ekspordikaustas. Leiad ta albumite lehelt või asukohast „Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports“.</string>
-    <string name="secure_unlock">Ava turvalise kausta lukustus</string>
+    <string name="secure_unlock">Ava turvakausta lukustus</string>
     <string name="secure_unlock_desc">Lukustuse avamiseks kasuta biomeetrilist tuvastust</string>
     <string name="secure_unlock_short">Ava lukustus</string>
-    <string name="secure_move_out">Kas tõstad meediumi turvatud kaustast välja?</string>
+    <string name="secure_move_out">Kas tõstad meediumi turvakaustast välja?</string>
     <string name="secure_restore_failed">Meediumi taastamine ei õnnestunud</string>
     <string name="secure_share_media">Jaga turvatud meediumi</string>
     <string name="secure_unlock_failed">Autentimine ei õnnestunud :&lt;</string>
+    <string name="media_secure_confirm">Kas tõsta selle multimeediafaili turvakausta?</string>
 </resources>
