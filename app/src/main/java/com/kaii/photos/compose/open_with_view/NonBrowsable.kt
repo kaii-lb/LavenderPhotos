@@ -293,7 +293,7 @@ private fun BottomBar(
             actions = {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth(1f)
+                        .fillMaxWidth()
                         .padding(12.dp, 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement =

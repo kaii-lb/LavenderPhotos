@@ -20,13 +20,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -62,13 +59,13 @@ fun BottomAppBarItem(
     iconResId: Int,
     modifier: Modifier = Modifier,
     buttonHeight: Dp = 56.dp,
-    iconSize: Dp = 24.dp,
     textSize: Float = 14f,
     enabled: Boolean = true,
     showRipple: Boolean = true,
     cornerRadius: Dp = 1000.dp,
     color: Color = Color.Transparent,
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
+    iconBackgroundWidth: Dp? = null,
     action: (() -> Unit)? = null,
     dialogComposable: @Composable (() -> Unit)? = null
 ) {
@@ -85,31 +82,30 @@ fun BottomAppBarItem(
 
     if (dialogComposable != null) dialogComposable()
 
-    Box(
-        modifier = Modifier
-            .wrapContentWidth()
-            .padding(horizontal = 8.dp)
+    Column(
+        modifier = modifier
+            .widthIn(min = 56.dp)
             .height(buttonHeight)
             .clip(RoundedCornerShape(cornerRadius))
-            .then(clickModifier)
-            .then(modifier),
+            .then(clickModifier),
+        verticalArrangement = Arrangement.spacedBy(
+            space = 2.dp,
+            alignment = Alignment.CenterVertically
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .height(iconSize + 8.dp)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .widthIn(min = iconBackgroundWidth ?: 0.dp)
+                .padding(horizontal = 8.dp)
                 .clip(CircleShape)
-                .align(Alignment.TopCenter)
                 .background(if (enabled || color == Color.Transparent) color else color.copy(alpha = 0.6f)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = iconResId),
                 contentDescription = "button",
-                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
-                modifier = Modifier
-                    .size(iconSize)
+                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.6f)
             )
         }
 
@@ -118,10 +114,8 @@ fun BottomAppBarItem(
             fontSize = TextUnit(textSize, TextUnitType.Sp),
             color = if (enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
-                .wrapContentSize()
-                .align(Alignment.BottomCenter)
+                .padding(horizontal = 8.dp)
         )
     }
 }
