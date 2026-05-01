@@ -397,3 +397,47 @@ suspend fun loadMediaDataDelta(
 
     return@withContext Pair(items, newGen)
 }
+
+fun updateLatestGen(context: Context) {
+    val syncManager = SyncManager(context.applicationContext)
+    var newGen = syncManager.getGeneration()
+
+    val selectionArgs = arrayOf(newGen.toString())
+    val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
+            "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
+
+    val projection =
+        arrayOf(
+            MediaColumns._ID,
+            MediaColumns.DATA,
+            MediaColumns.DATE_TAKEN,
+            MediaColumns.DATE_ADDED,
+            MediaColumns.DATE_MODIFIED,
+            MediaColumns.MIME_TYPE,
+            MediaColumns.DISPLAY_NAME,
+            FileColumns.MEDIA_TYPE,
+            MediaColumns.SIZE,
+            MediaColumns.IS_FAVORITE,
+            MediaColumns.GENERATION_MODIFIED,
+            MediaColumns.DURATION
+        )
+
+
+    context.contentResolver.query(
+        MEDIA_STORE_FILE_URI,
+        projection,
+        selection,
+        selectionArgs,
+        null
+    )?.use { cursor ->
+        val genColNum = cursor.getColumnIndexOrThrow(MediaColumns.GENERATION_MODIFIED)
+
+        while (cursor.moveToNext()) {
+            val gen = cursor.getLong(genColNum)
+
+            if (gen > newGen) newGen = gen
+        }
+    }
+
+    syncManager.setGeneration(newGen)
+}

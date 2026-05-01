@@ -79,7 +79,6 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.exif.getDateTakenForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.moveMediaToSecureFolder
@@ -89,7 +88,6 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
@@ -501,24 +499,6 @@ private fun SinglePhotoViewCommon(
                 }
 
             setTagMediaId(mediaItem.id)
-
-            if (mediaItem.type == MediaType.Image
-                && mediaItem != MediaStoreData.dummyItem
-                && mediaItem.immichUrl == null
-            ) {
-                val date = getDateTakenForMedia(
-                    absolutePath = mediaItem.absolutePath,
-                    dateModified = mediaItem.dateModified
-                )
-
-                if (date != mediaItem.dateTaken) {
-                    context.contentResolver.setDateForMedia(
-                        uri = mediaItem.uri.toUri(),
-                        type = mediaItem.type,
-                        dateTaken = date
-                    )
-                }
-            }
         }
     }
 

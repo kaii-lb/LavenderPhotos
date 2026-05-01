@@ -135,14 +135,7 @@ class StartupManager(
         if (launchedFirstTimSyncWorker) return
         launchedFirstTimSyncWorker = true
 
-        val request = OneTimeWorkRequest.Builder(FirstTimeSyncWorker::class.java).build()
-        WorkManager.getInstance(context.applicationContext)
-            .beginUniqueWork(
-                FirstTimeSyncWorker::class.java.name,
-                ExistingWorkPolicy.REPLACE,
-                request
-            )
-            .enqueue()
+        val request = FirstTimeSyncWorker.start(context)
 
         var itemCount = -1
         var progress = 0f

@@ -25,9 +25,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -97,8 +97,8 @@ fun BottomAppBarItem(
         Row(
             modifier = Modifier
                 .height(iconSize + 8.dp)
-                .width(iconSize * 2.25f)
-                .clip(RoundedCornerShape(1000.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .clip(CircleShape)
                 .align(Alignment.TopCenter)
                 .background(if (enabled || color == Color.Transparent) color else color.copy(alpha = 0.6f)),
             verticalAlignment = Alignment.CenterVertically,

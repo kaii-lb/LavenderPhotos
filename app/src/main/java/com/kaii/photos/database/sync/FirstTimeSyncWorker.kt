@@ -2,13 +2,23 @@ package com.kaii.photos.database.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.room.concurrent.AtomicInt
 import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.chunkLoadMediaData
 import com.kaii.photos.mediastore.getAllMediaStoreIds
+import com.kaii.photos.mediastore.updateLatestGen
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -22,6 +32,40 @@ class FirstTimeSyncWorker(
     companion object {
         const val PROGRESS = "PROGRESS"
         const val COUNT = "COUNT"
+
+        fun start(context: Context): OneTimeWorkRequest {
+            val request = OneTimeWorkRequest.Builder(FirstTimeSyncWorker::class.java).build()
+
+            WorkManager.getInstance(context.applicationContext)
+                .beginUniqueWork(
+                    FirstTimeSyncWorker::class.java.name,
+                    ExistingWorkPolicy.KEEP,
+                    request
+                )
+                .enqueue()
+
+            return request
+        }
+
+        suspend fun startWithSnackbar(context: Context) {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.debugging_reset_scan_generation_loading),
+                    icon = R.drawable.photogrid,
+                    isLoading = isLoading
+                )
+            )
+
+            val request = start(context)
+
+            WorkManager.getInstance(context.applicationContext)
+                .getWorkInfoByIdLiveData(request.id)
+                .observeForever { workInfo ->
+                    isLoading.value = workInfo?.state == WorkInfo.State.SUCCEEDED || workInfo?.outputData != Data.EMPTY
+                }
+        }
     }
 
     override suspend fun doWork(): Result {
@@ -36,7 +80,7 @@ class FirstTimeSyncWorker(
 
         setProgress(
             workDataOf(
-            PROGRESS to 0f,
+                PROGRESS to 0f,
                 COUNT to added.size
             )
         )
@@ -49,7 +93,7 @@ class FirstTimeSyncWorker(
                     progress.addAndGet(size)
                 },
                 onLoadChunk = { chunk ->
-                    setProgressAsync(
+                    setProgress(
                         workDataOf(
                             PROGRESS to progress.get().toFloat() / added.size,
                             COUNT to added.size
@@ -66,6 +110,8 @@ class FirstTimeSyncWorker(
         val removed = inAppIds - mediaStoreIds
         if (removed.isNotEmpty()) dao.deleteAll(removed)
 
+        updateLatestGen(context)
+
         val endTime = Clock.System.now()
 
         Log.d(
@@ -73,14 +119,12 @@ class FirstTimeSyncWorker(
             "First Time Sync Worker has finished running. Out of ${mediaStoreIds.size} items there was ${added.size} inserted and ${removed.size} removed. Total time was ${endTime - startTime}"
         )
 
-        repeat(5) {
-            setProgress(
-                workDataOf(
-                    PROGRESS to 1f,
-                    COUNT to added.size
-                )
+        setProgress(
+            workDataOf(
+                PROGRESS to 1f,
+                COUNT to added.size
             )
-        }
+        )
 
         return Result.success(
             workDataOf(

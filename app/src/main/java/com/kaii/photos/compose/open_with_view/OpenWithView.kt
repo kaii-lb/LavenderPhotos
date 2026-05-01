@@ -47,10 +47,13 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.sync.FirstTimeSyncWorker
+import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
@@ -60,8 +63,6 @@ import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.open_with_view.OpenWithView"
@@ -273,13 +274,11 @@ private fun Content(uri: Uri, window: Window) {
     var incomingData by remember { mutableStateOf<MediaStoreData?>(null) }
 
     LaunchedEffect(uri) {
-        withContext(Dispatchers.IO) {
-            incomingData = try {
-                context.contentResolver.getMediaStoreDataFromUri(uri = uri) ?: MediaStoreData.dummyItem
-            } catch (e: Throwable) {
-                Log.d(TAG, "Couldn't decode incoming data!\n${e.message}")
-                MediaStoreData.dummyItem
-            }
+        incomingData = try {
+            context.contentResolver.getMediaStoreDataFromUri(uri = uri) ?: MediaStoreData.dummyItem
+        } catch (e: Throwable) {
+            Log.d(TAG, "Couldn't decode incoming data!\n${e.message}")
+            MediaStoreData.dummyItem
         }
     }
 
@@ -340,9 +339,9 @@ private fun InitSinglePhotoView(
             context = context,
             album = AlbumType.Folder(
                 id = "",
-                name = "",
+                name = incomingData.parentPath.filename(),
                 paths = setOf(
-                    incomingData.absolutePath.parent()
+                    incomingData.parentPath
                 ),
                 pinned = false,
                 immichId = null
@@ -356,6 +355,13 @@ private fun InitSinglePhotoView(
             val item = (items.peek(it) as? PhotoLibraryUIModel.MediaImpl)?.item
             item?.id == incomingData.id
         }
+    }
+
+    LaunchedEffect(index, items.loadState) {
+        if (index != null && !items.loadState.isIdle) return@LaunchedEffect
+
+        SyncManager(context).setGeneration(0)
+        FirstTimeSyncWorker.start(context)
     }
 
     if (index != null) {

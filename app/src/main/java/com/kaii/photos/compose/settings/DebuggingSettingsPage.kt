@@ -37,9 +37,6 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
@@ -355,7 +352,7 @@ private fun DebuggingSettingsPageImpl(
                     }
                 }
             }
-            
+
             item {
                 PreferencesSeparatorText(
                     text = stringResource(id = R.string.debugging_internals)
@@ -364,7 +361,6 @@ private fun DebuggingSettingsPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val coroutineScope = rememberCoroutineScope()
 
                 PreferencesRow(
@@ -375,36 +371,8 @@ private fun DebuggingSettingsPageImpl(
                     showBackground = false
                 ) {
                     coroutineScope.launch {
-                        val isLoading = mutableStateOf(true)
-
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvent.LoadingEvent(
-                                message = resources.getString(R.string.debugging_reset_scan_generation_loading),
-                                icon = R.drawable.photogrid,
-                                isLoading = isLoading
-                            )
-                        )
-
                         SyncManager(context).setGeneration(0)
-
-                        val request = OneTimeWorkRequest.Builder(FirstTimeSyncWorker::class.java).build()
-                        WorkManager.getInstance(context.applicationContext)
-                            .beginUniqueWork(
-                                FirstTimeSyncWorker::class.java.name,
-                                ExistingWorkPolicy.KEEP,
-                                request
-                            )
-                            .enqueue()
-
-                        WorkManager.getInstance(context.applicationContext)
-                            .getWorkInfoByIdFlow(request.id)
-                            .collect { workInfo ->
-                                workInfo?.progress?.getFloat(FirstTimeSyncWorker.PROGRESS, -1f)?.let {
-                                    if (it != -1f) {
-                                        isLoading.value = it <= 0.9f
-                                    }
-                                }
-                            }
+                        FirstTimeSyncWorker.startWithSnackbar(context)
                     }
                 }
             }
