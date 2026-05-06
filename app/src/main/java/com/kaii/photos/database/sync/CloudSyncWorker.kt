@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
+import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -28,7 +29,7 @@ class CloudSyncWorker(
             WorkManager.getInstance(context.applicationContext)
                 .enqueueUniquePeriodicWork(
                     CloudSyncWorker::class.java.name,
-                    ExistingPeriodicWorkPolicy.REPLACE,
+                    ExistingPeriodicWorkPolicy.KEEP,
                     PeriodicWorkRequest
                         .Builder(CloudSyncWorker::class, 1, TimeUnit.HOURS)
                         .setConstraints(
@@ -72,6 +73,14 @@ class CloudSyncWorker(
                 info = info
             ),
             localFileManager = LocalFileManager(
+                mediaDao = db.mediaDao(),
+                customDao = db.customDao(),
+                syncTaskDao = db.taskDao(),
+                assetClient = assetsClient,
+                albumsClient = albumsClient,
+                info = info
+            ),
+            customFileManager = CustomFileManager(
                 mediaDao = db.mediaDao(),
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),

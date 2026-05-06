@@ -100,11 +100,11 @@ class HybridFileManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         taskId: Int?
-    ) {
+    ): Boolean {
         val immich = list.filter { it.immichUrl != null }
 
         otherFileManager.permanentlyDelete(context, list, taskId)
-        cloudFileManager.permanentlyDelete(context, immich, taskId)
+        return cloudFileManager.permanentlyDelete(context, immich, taskId)
     }
 
     override fun renameItem(

@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalRippleConfiguration
@@ -153,11 +152,7 @@ fun MainDialog(
 ) {
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
-        LocalRippleConfiguration provides
-                RippleConfiguration(
-                    color = Color.Transparent,
-                    rippleAlpha = RippleAlpha(0f, 0f, 0f, 0f)
-                )
+        LocalRippleConfiguration provides null
     ) {
         val navController = LocalNavController.current
         val isLandscape by rememberDeviceOrientation()

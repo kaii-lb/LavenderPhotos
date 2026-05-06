@@ -9,6 +9,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
+import com.kaii.photos.file_management.sync.ProgressManager
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -43,5 +44,9 @@ class AppModule(
             NoOpCacheEvictor(),
             StandaloneDatabaseProvider(context.applicationContext)
         )
+    }
+
+    val progressManager by lazy {
+        ProgressManager()
     }
 }

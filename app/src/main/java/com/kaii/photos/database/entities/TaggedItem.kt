@@ -8,9 +8,11 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 
 @Immutable
 @Entity(tableName = "tags")
+@TypeConverters(ColorTypeConverter::class)
 data class Tag(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,

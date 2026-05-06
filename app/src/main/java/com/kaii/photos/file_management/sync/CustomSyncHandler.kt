@@ -1,48 +1,41 @@
 package com.kaii.photos.file_management.sync
 
 import android.content.Context
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import com.kaii.photos.file_management.managers.CustomFileManager
+import com.kaii.photos.helpers.appCloudFolderDir
 import kotlinx.coroutines.flow.first
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class CustomSyncHandler(
-    override val mediaDao: MediaDao,
-    override val customDao: CustomEntityDao,
-    override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo,
+    override val fileManager: CustomFileManager,
+    override val progressManager: ProgressManager,
     override val albums: SettingsAlbumsListImpl
 ) : GenericSyncHandler {
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun upload(
+    suspend fun sync(
         context: Context,
         id: String
-    ): Boolean {
-        val album = albums.get().first().find { it.id == id } as? AlbumType.Custom ?: return false
+    ) {
+        val album = albums.get().first().find { it.id == id } as? AlbumType.Custom ?: return
 
-        val immichId = getAlbumId(album) ?: return false
+        if (album.immichId == null) return
 
-        albums.edit(
-            id = id,
-            newInfo = album.copy(
-                immichId = immichId
-            )
-        )
+        val cloudMedia = fileManager.albumsClient.get(
+            id = Uuid.parse(id),
+            accessToken = fileManager.info.accessToken
+        )?.assets ?: return
 
-        return uploadMedia(
+        val localMedia = fileManager.customDao.getMediaInAlbum(album = album.id)
+
+        super.sync(
             context = context,
-            media = customDao.getMediaInAlbum(album = album.id),
-            albumImmichId = immichId
+            cloudMedia = cloudMedia,
+            localMedia = localMedia,
+            originId = album.immichId,
+            destinationPath = appCloudFolderDir
         )
-    }
-
-    override suspend fun download(context: Context, id: String) {
-        throw IllegalAccessError("Cannot download an already downloaded album.")
     }
 }

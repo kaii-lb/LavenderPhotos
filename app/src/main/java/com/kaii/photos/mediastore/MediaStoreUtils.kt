@@ -536,5 +536,5 @@ fun Uri.toContentId(contentResolver: ContentResolver, type: MediaType) =
         contentResolver.getUriFromAbsolutePath(
             absolutePath = path,
             type = type
-        )?.lastPathSegment?.toLong() ?: 0L
+        )?.lastPathSegment?.toLong()
     }

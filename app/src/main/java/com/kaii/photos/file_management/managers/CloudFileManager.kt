@@ -11,6 +11,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.SyncTask
+import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
@@ -96,9 +97,17 @@ class CloudFileManager(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Favourite,
-                destination = favourite.toString(),
-                items = list
+                destination = favourite.toString()
             )
+        ).toInt()
+
+        syncTaskDao.insert(
+            items = list.fastMap {
+                SyncTaskItem(
+                    mediaId = it.id,
+                    taskId = taskId
+                )
+            }
         )
 
         mediaDao.setFavouriteOnMedia(
@@ -114,7 +123,7 @@ class CloudFileManager(
             accessToken = info.accessToken
         ).let { success ->
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
@@ -157,9 +166,17 @@ class CloudFileManager(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Trash,
-                destination = albumId,
-                items = list
+                destination = albumId
             )
+        ).toInt()
+
+        syncTaskDao.insert(
+            items = list.fastMap {
+                SyncTaskItem(
+                    mediaId = it.id,
+                    taskId = taskId
+                )
+            }
         )
 
         customDao.deleteAll(
@@ -175,7 +192,7 @@ class CloudFileManager(
             onItemDone(if (success) list.size else -1)
 
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
@@ -193,16 +210,24 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         taskId: Int?
     ) = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext
+        if (list.isEmpty()) return@withContext false
 
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Delete,
-                destination = null,
-                items = list
+                destination = null
             )
+        ).toInt()
+
+        syncTaskDao.insert(
+            items = list.fastMap {
+                SyncTaskItem(
+                    mediaId = it.id,
+                    taskId = taskId
+                )
+            }
         )
 
         mediaDao.deleteAll(
@@ -215,11 +240,13 @@ class CloudFileManager(
             force = false
         ).let { success ->
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
             )
+
+            return@withContext success
         }
     }
 
@@ -244,15 +271,7 @@ class CloudFileManager(
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.RenameAlbum,
                 destination = album.id,
-                items = listOf(
-                    SelectionManager.SelectedItem(
-                        id = 0L,
-                        uri = newName,
-                        immichUrl = null,
-                        parentPath = "",
-                        isImage = false
-                    )
-                )
+                extraData = newName
             )
         ).toInt()
 
@@ -331,9 +350,17 @@ class CloudFileManager(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Copy,
-                destination = destination.id,
-                items = list
+                destination = destination.id
             )
+        ).toInt()
+
+        syncTaskDao.insert(
+            items = list.fastMap {
+                SyncTaskItem(
+                    mediaId = it.id,
+                    taskId = taskId
+                )
+            }
         )
 
         albumsClient.addAssets(
@@ -342,7 +369,7 @@ class CloudFileManager(
             accessToken = info.accessToken
         ).let { success ->
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
@@ -442,7 +469,9 @@ class CloudFileManager(
                     preserveDate = preserveDate,
                     onInsert = { _, _ -> }
                 )?.let { new ->
-                    newId = new.toContentId(contentResolver = contentResolver, type = media.type)
+                    new.toContentId(contentResolver = contentResolver, type = media.type)?.let {
+                        newId = it
+                    }
 
                     contentResolver.openOutputStream(new)?.use {
                         if (bytes.size <= 8 * 1024) it.write(bytes)

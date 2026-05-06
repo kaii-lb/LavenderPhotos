@@ -7,7 +7,6 @@ import androidx.room.DeleteColumn
 import androidx.room.DeleteTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.FavouritedItemEntityDao
@@ -17,7 +16,6 @@ import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TagDao
 import com.kaii.photos.database.daos.TaggedItemsDao
-import com.kaii.photos.database.entities.ColorTypeConverter
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.ExifData
 import com.kaii.photos.database.entities.ExifDataDao
@@ -25,6 +23,7 @@ import com.kaii.photos.database.entities.FavouritedItemEntity
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.database.entities.SyncTask
+import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.database.entities.TaggedItem
 
@@ -38,9 +37,10 @@ import com.kaii.photos.database.entities.TaggedItem
             SyncTask::class,
             Tag::class,
             TaggedItem::class,
-            ExifData::class
+            ExifData::class,
+            SyncTaskItem::class
         ],
-    version = 17,
+    version = 18,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -51,10 +51,11 @@ import com.kaii.photos.database.entities.TaggedItem
         AutoMigration(from = 11, to = 12),
         AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class),
         AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class),
-        AutoMigration(from = 15, to = 16, spec = DropTrashTableSpec::class)
+        AutoMigration(from = 15, to = 16, spec = DropTrashTableSpec::class),
+        AutoMigration(from = 17, to = 18, spec = UpdateSyncTaskTable::class)
     ]
 )
-@TypeConverters(ColorTypeConverter::class)
+
 abstract class MediaDatabase : RoomDatabase() {
     abstract fun mediaDao(): MediaDao
     abstract fun favouritesDao(): FavouritedItemEntityDao
@@ -121,3 +122,6 @@ class DropImmichThumbnailColumn : AutoMigrationSpec
 @DeleteTable(tableName = "TrashedItemEntity")
 @DeleteColumn(tableName = "sync_tasks", columnName = "itemIds")
 class DropTrashTableSpec : AutoMigrationSpec
+
+@DeleteColumn(tableName = "sync_tasks", columnName = "items")
+class UpdateSyncTaskTable : AutoMigrationSpec

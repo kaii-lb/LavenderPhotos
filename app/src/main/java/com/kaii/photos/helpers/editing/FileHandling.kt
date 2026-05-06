@@ -801,5 +801,5 @@ suspend fun saveImage(
 
     val newId = newUri.toContentId(contentResolver = context.contentResolver, type = media.type)
 
-    return newId
+    return newId ?: -1L
 }

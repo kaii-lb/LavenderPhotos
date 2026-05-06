@@ -21,6 +21,7 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTask
+import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
@@ -32,7 +33,6 @@ import com.kaii.photos.helpers.exif.exifDataToMediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toActivity
-import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
@@ -192,13 +192,13 @@ interface GenericFileManager {
         albumId: String?,
         taskId: Int? = null,
         onItemDone: (totaCount: Int) -> Unit
-    ) : Boolean
+    ): Boolean
 
     suspend fun permanentlyDelete(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         taskId: Int? = null
-    ) {
+    ) : Boolean {
         if (list.isNotEmpty()) {
             val deleteRequest = MediaStore.createDeleteRequest(
                 context.contentResolver,
@@ -214,6 +214,8 @@ interface GenericFileManager {
                 0
             )
         }
+
+        return true
     }
 
     /** returns null if the operation succeeded, otherwise lets the caller handle the [RecoverableSecurityException] */
@@ -384,12 +386,14 @@ interface GenericFileManager {
                     onInsert = { original, new ->
                         contentResolver.copyUriToUri(original, new)
 
-                        newItems.add(
-                            CopyResult(
-                                id = new.toContentId(contentResolver = contentResolver, type = media.type),
-                                immichId = media.immichId
+                        new.toContentId(contentResolver = contentResolver, type = media.type)?.let {
+                            newItems.add(
+                                CopyResult(
+                                    id = it,
+                                    immichId = media.immichId
+                                )
                             )
-                        )
+                        }
                     }
                 )
             }
@@ -479,17 +483,17 @@ interface GenericFileManager {
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Upload,
-                destination = destination.immichId,
-                items = missing.fastMap {
-                    SelectionManager.SelectedItem(
-                        id = it.second.id,
-                        uri = it.second.uri,
-                        immichUrl = it.second.immichUrl,
-                        parentPath = it.second.parentPath,
-                        isImage = it.second.type == MediaType.Image
-                    )
-                }
+                destination = destination.immichId
             )
+        ).toInt()
+
+        syncTaskDao.insert(
+            missing.fastMap {
+                SyncTaskItem(
+                    mediaId = it.second.id,
+                    taskId = taskId
+                )
+            }
         )
 
         // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
@@ -543,7 +547,7 @@ interface GenericFileManager {
             accessToken = info.accessToken
         ).let { success ->
             syncTaskDao.updateTaskStatus(
-                id = taskId.toInt(),
+                id = taskId,
                 status =
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting

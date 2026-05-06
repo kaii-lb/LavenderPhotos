@@ -5,6 +5,12 @@ import android.provider.MediaStore
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.helpers.immichDurationToSecondsOrNull
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
+import kotlin.time.Instant
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 val MEDIA_STORE_FILE_URI: Uri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
 
@@ -75,3 +81,22 @@ fun MediaStoreData.isRawImage(): Boolean {
 fun MediaStoreData.isGIF(): Boolean = this.mimeType.lowercase() == "image/gif"
 
 fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())
+
+@OptIn(ExperimentalUuidApi::class)
+fun AssetResponse.toMediaStoreData() =
+    MediaStoreData(
+        id = Uuid.parse(id).toLongs { a, _ -> a },
+        uri = "/api/assets/${id}/original",
+        dateTaken = Instant.parse(fileCreatedAt).epochSeconds,
+        dateModified = Instant.parse(fileModifiedAt).epochSeconds,
+        type = if (type == AssetType.Image) MediaType.Image else MediaType.Video,
+        absolutePath = "",
+        parentPath = "",
+        displayName = originalFileName,
+        mimeType = originalMimeType,
+        immichUrl = "/api/assets/${id}/original",
+        hash = checksum,
+        size = exifInfo?.fileSizeInByte ?: 0L,
+        favourited = isFavorite,
+        duration = duration.immichDurationToSecondsOrNull()
+    )

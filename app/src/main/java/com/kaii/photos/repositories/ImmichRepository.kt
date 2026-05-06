@@ -12,7 +12,6 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -20,15 +19,13 @@ import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.immichDurationToSecondsOrNull
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumGetState
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +38,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -135,22 +131,7 @@ class ImmichRepository(
         if (state is AlbumGetState.Retrieved) {
             val items =
                 state.album.assets.fastMap { asset ->
-                    MediaStoreData(
-                        id = Uuid.parse(asset.id).toLongs { a, _ -> a },
-                        uri = "/api/assets/${asset.id}/original",
-                        dateTaken = Instant.parse(asset.fileCreatedAt).epochSeconds,
-                        dateModified = Instant.parse(asset.fileModifiedAt).epochSeconds,
-                        type = if (asset.type == AssetType.Image) MediaType.Image else MediaType.Video,
-                        absolutePath = "",
-                        parentPath = "",
-                        displayName = asset.originalFileName,
-                        mimeType = asset.originalMimeType,
-                        immichUrl = "/api/assets/${asset.id}/original",
-                        hash = asset.checksum,
-                        size = asset.exifInfo?.fileSizeInByte ?: 0L,
-                        favourited = asset.isFavorite,
-                        duration = asset.duration.immichDurationToSecondsOrNull()
-                    )
+                    asset.toMediaStoreData()
                 }
 
             val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()

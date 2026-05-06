@@ -1,48 +1,40 @@
 package com.kaii.photos.file_management.sync
 
 import android.content.Context
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import com.kaii.photos.file_management.managers.LocalFileManager
 import kotlinx.coroutines.flow.first
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class LocalSyncHandler(
-    override val mediaDao: MediaDao,
-    override val customDao: CustomEntityDao,
-    override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo,
+    override val fileManager: LocalFileManager,
+    override val progressManager: ProgressManager,
     override val albums: SettingsAlbumsListImpl
 ) : GenericSyncHandler {
     @OptIn(ExperimentalUuidApi::class)
-    override suspend fun upload(
+    suspend fun sync(
         context: Context,
         id: String
-    ): Boolean {
-        val album = albums.get().first().find { it.id == id } as? AlbumType.Folder ?: return false
+    ) {
+        val album = albums.get().first().find { it.id == id } as? AlbumType.Folder ?: return
 
-        val immichId = getAlbumId(album) ?: return false
+        if (album.immichId == null) return
 
-        albums.edit(
-            id = id,
-            newInfo = album.copy(
-                immichId = immichId
-            )
-        )
+        val cloudMedia = fileManager.albumsClient.get(
+            id = Uuid.parse(id),
+            accessToken = fileManager.info.accessToken
+        )?.assets ?: return
 
-        return uploadMedia(
+        val localMedia = fileManager.mediaDao.getMediaInPaths(paths = album.paths)
+
+        super.sync(
             context = context,
-            media = mediaDao.getMediaInPaths(paths = album.paths),
-            albumImmichId = immichId
+            cloudMedia = cloudMedia,
+            localMedia = localMedia,
+            originId = album.immichId,
+            destinationPath = album.paths.first()
         )
-    }
-
-    override suspend fun download(context: Context, id: String) {
-        throw IllegalAccessError("Cannot download an already downloaded album.")
     }
 }
