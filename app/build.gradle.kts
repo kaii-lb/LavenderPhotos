@@ -22,12 +22,12 @@ kotlin {
 
 android {
     namespace = "com.kaii.photos"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.kaii.photos"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 200
         versionName = "v2.0.0"
 

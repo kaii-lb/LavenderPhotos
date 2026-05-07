@@ -13,7 +13,7 @@ kotlin{
 
 android {
     namespace = "com.kaii.lavender.baselineprofile"
-    compileSdk = 36
+    compileSdk = 37
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
