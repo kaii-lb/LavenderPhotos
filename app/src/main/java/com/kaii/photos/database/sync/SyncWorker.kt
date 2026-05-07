@@ -32,7 +32,7 @@ class SyncWorker(
         db.withTransaction {
             if (removed.isNotEmpty()) dao.deleteAll(removed)
 
-            if (added.isNotEmpty()) dao.upsertAll(items = added)
+            if (added.isNotEmpty()) dao.upsertIgnoringImmich(items = added)
         }
 
         syncManager.setGeneration(gen = newGen)

@@ -6,9 +6,11 @@ import androidx.room.Insert
 import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -119,6 +121,63 @@ interface MediaDao {
 
     @Upsert
     suspend fun upsertAll(items: List<MediaStoreData>)
+
+    @Query("""
+        UPDATE media 
+        SET uri = :uri,
+            absolutePath = :absolutePath,
+            parentPath = :parentPath,
+            displayName = :displayName,
+            dateTaken = :dateTaken,
+            dateModified = :dateModified,
+            mimeType = :mimeType,
+            type = :type,
+            size = :size,
+            favourited = :favourited,
+            duration = :duration
+        WHERE id = :id
+    """)
+    suspend fun upsertIgnoringImmich(
+        id: Long,
+        uri: String,
+        absolutePath: String,
+        parentPath: String,
+        displayName: String,
+        dateTaken: Long,
+        dateModified: Long,
+        mimeType: String,
+        type: MediaType,
+        size: Long,
+        favourited: Boolean,
+        duration: Long?
+    )
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnoring(items: List<MediaStoreData>): List<Long>
+
+    @Transaction
+    suspend fun upsertIgnoringImmich(items: List<MediaStoreData>) {
+        insertAllIgnoring(items).forEachIndexed { index, rowId ->
+            if (rowId == -1L) {
+                val item = items[index]
+
+                upsertIgnoringImmich(
+                    item.id,
+                    item.uri,
+                    item.absolutePath,
+                    item.parentPath,
+                    item.displayName,
+                    item.dateTaken,
+                    item.dateModified,
+                    item.mimeType,
+                    item.type,
+                    item.size,
+                    item.favourited,
+                    item.duration
+                )
+            }
+        }
+    }
 
     @Query(value = "DELETE FROM media WHERE id IN (:ids)")
     suspend fun deleteAll(ids: Set<Long>)

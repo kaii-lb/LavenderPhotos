@@ -23,7 +23,7 @@ class CloudSyncManager(
     private val localFileManager: LocalFileManager,
     customFileManager: CustomFileManager
 ) {
-    private val progressManager = context.appModule.progressManager
+    private val progressManager = context.appModule.cloudProgressManager
 
     private val localSyncHandler = LocalSyncHandler(
         fileManager = localFileManager,
@@ -62,19 +62,23 @@ class CloudSyncManager(
 
         val albums = localSyncHandler.fetchCloudAlbums()
 
+        if (albums.isNotEmpty()) progressManager.startTracking(totalItems = 0)
+
         albums.forEach { album ->
             when (album) {
                 is AlbumType.Custom -> {
-                    customSyncHandler.sync(context, album.id)
+                    customSyncHandler.sync(context, album)
                 }
 
                 is AlbumType.Folder -> {
-                    localSyncHandler.sync(context, album.id)
+                    localSyncHandler.sync(context, album)
                 }
 
                 else -> {}
             }
         }
+
+        progressManager.stopTracking()
     }
 
     private suspend fun uploadTask(

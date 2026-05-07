@@ -46,7 +46,7 @@ class AppModule(
         )
     }
 
-    val progressManager by lazy {
+    val cloudProgressManager by lazy {
         ProgressManager()
     }
 }

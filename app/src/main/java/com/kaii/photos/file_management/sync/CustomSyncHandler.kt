@@ -5,7 +5,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.helpers.appCloudFolderDir
-import kotlinx.coroutines.flow.first
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -17,14 +16,12 @@ class CustomSyncHandler(
     @OptIn(ExperimentalUuidApi::class)
     suspend fun sync(
         context: Context,
-        id: String
+        album: AlbumType.Custom
     ) {
-        val album = albums.get().first().find { it.id == id } as? AlbumType.Custom ?: return
-
         if (album.immichId == null) return
 
         val cloudMedia = fileManager.albumsClient.get(
-            id = Uuid.parse(id),
+            id = Uuid.parse(album.immichId),
             accessToken = fileManager.info.accessToken
         )?.assets ?: return
 

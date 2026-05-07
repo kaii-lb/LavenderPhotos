@@ -4,10 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.MediaStore
 import android.provider.Settings
-import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.calculateSha1Checksum
@@ -19,7 +18,6 @@ import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBu
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.UploadAssetRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -43,48 +41,70 @@ interface GenericSyncHandler {
         originId: String,
         destinationPath: String
     ) = withContext(Dispatchers.IO) {
-        val cloudMedia = cloudMedia.associateBy { it.id }
-        val localMedia = localMedia.associateBy { it.immichId }
+        val cloudById = cloudMedia.associateBy { it.id }
+        val cloudByHash = cloudMedia.associateBy { it.checksum }
 
-        val inner = cloudMedia.mapNotNull { (id, cloud) ->
-            localMedia[id]?.let { local ->
-                cloud.toMediaStoreData() to local
+        val toUpload = mutableListOf<MediaStoreData>()
+        val toDownload = mutableListOf<String>()
+
+        localMedia.forEach { local ->
+            if (local.immichId != null && cloudById.containsKey(local.immichId)) {
+                return@forEach
+            }
+
+            val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
+            val cloudMatch = cloudByHash[currentHash]
+
+            if (cloudMatch != null) {
+                fileManager.mediaDao.linkToImmich(
+                    id = local.id,
+                    hash = currentHash,
+                    immichUrl = "/api/assets/${cloudMatch.id}/original"
+                )
+            } else {
+                toUpload.add(local.copy(hash = currentHash))
             }
         }
 
-        val left = cloudMedia.filterKeys { key ->
-            localMedia[key] == null
-        }.keys.toMutableList()
+        val localHashes = localMedia.map {
+            val hash = it.hash ?: calculateSha1Checksum(File(it.absolutePath))
 
-        val right = localMedia.filterKeys { key ->
-            cloudMedia[key] == null
-        }.values.toMutableList()
+            hash to it.immichId
+        }.toSet()
 
-        inner.forEach { (cloud, local) ->
-            // very basic, perhaps should be less so
-            if (local.dateModified > cloud.dateModified) right.add(local)
-            else left.add(cloud.immichId!!)
+        cloudMedia.forEach { cloud ->
+            // check for id as well because setting media date might change checksum
+            val check = !localHashes.any { (hash, id) ->
+                hash == cloud.checksum || id == cloud.id
+            }
+
+            if (check) {
+                toDownload.add(cloud.id)
+            }
         }
 
-        uploadMedia(
-            context = context,
-            media = right,
-            albumImmichId = originId
-        )
+        if (toUpload.isNotEmpty()) {
+            uploadMedia(
+                context = context,
+                media = toUpload,
+                albumImmichId = originId
+            )
+        }
 
-        downloadMedia(
-            context = context,
-            ids = left,
-            origin = originId,
-            destination = destinationPath
-        )
+        if (toDownload.isNotEmpty()) {
+            downloadMedia(
+                context = context,
+                ids = toDownload,
+                destination = destinationPath
+            )
+        }
     }
 
     suspend fun fetchCloudAlbums() =
         albums.get()
             .first()
             .filter {
-                it.immichId != null
+                it.immichId?.isNotBlank() == true && (it is AlbumType.Folder || it is AlbumType.Custom)
             }
 
     suspend fun uploadMedia(
@@ -94,91 +114,81 @@ interface GenericSyncHandler {
     ): Boolean {
         progressManager.addToTotalItems(count = media.size)
 
-        val assets = media.map { item ->
-            Pair(
-                UploadAssetRequest(
-                    absolutePath = item.absolutePath,
-                    filename = item.displayName,
-                    id = item.immichId?.let { Uuid.parse(it) } ?: Uuid.NIL,
-                    size = item.size,
-                    dateTaken = item.dateTaken,
-                    dateModified = item.dateModified
-                ),
-                item
-            )
-        }
-
         val hashes = media.associate { item ->
             val hash = item.hash ?: calculateSha1Checksum(file = File(item.absolutePath))
 
             item.id to hash
         }
 
-        val exists = fileManager.assetClient.check(
+        val bulkCheck = fileManager.assetClient.check(
             assets = AssetBulkUploadRequest(
-                assets.map { item ->
+                media.map { item ->
                     AssetBulkUploadCheckItem(
-                        checksum = hashes[item.second.id]!!,
-                        id = item.first.id.toString()
+                        checksum = hashes[item.id]!!,
+                        id = item.id.toString()
                     )
                 }
             ),
             accessToken = fileManager.info.accessToken
-        )?.map {
-            it.id
-        } ?: emptyList()
+        )?.associateBy { it.id } ?: return false
 
-        media
-            .filter {
-                it.immichId in exists && it.immichId != null
-            }
-            .forEach { item ->
-                progressManager.increaseProgress()
-
-                fileManager.mediaDao.linkToImmich(
-                    id = item.id,
-                    hash = hashes[item.id]!!,
-                    immichUrl = item.immichUrl!!
-                )
-            }
-
-        val missing = assets.fastFilter { it.first.id.toString() !in exists }
+        val trashedItems = mutableListOf<Uuid>()
 
         // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
         @SuppressLint("HardwareIds")
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
-        val uploaded = missing.fastMap { item ->
-            val assetData = File(item.first.absolutePath).inputStream().buffered().readBytes()
+        val total = media.mapNotNull { mediaItem ->
+            val bulkResponse = bulkCheck[mediaItem.id.toString()]
 
-            val resp = fileManager.assetClient.upload(
-                AssetUploadRequest(
-                    assetData = assetData,
-                    deviceAssetId = "${item.first.filename}-${item.first.size}",
-                    deviceId = deviceId,
-                    fileCreatedAt = Instant.fromEpochSeconds(item.first.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
-                    fileModifiedAt = Instant.fromEpochSeconds(item.first.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
-                    metadata = emptyList(),
-                    filename = item.first.filename
-                ),
-                accessToken = fileManager.info.accessToken
-            )
-
-            if (resp != null) {
+            if (bulkResponse?.assetId != null) {
                 progressManager.increaseProgress()
-                fileManager.mediaDao.linkToImmich(
-                    id = item.second.id,
-                    hash = hashes[item.second.id]!!,
-                    immichUrl = "/api/assets/${resp.id}/original"
-                )
-            }
 
-            resp?.id
+                fileManager.mediaDao.linkToImmich(
+                    id = mediaItem.id,
+                    hash = hashes[mediaItem.id]!!,
+                    immichUrl = "/api/assets/${bulkResponse.assetId!!}/original"
+                )
+
+                if (bulkResponse.isTrashed) {
+                    trashedItems.add(Uuid.parse(bulkResponse.assetId!!))
+                }
+
+                bulkResponse.assetId
+            } else {
+                // TODO: stream this instead of uploading whole file
+                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
+
+                val resp = fileManager.assetClient.upload(
+                    AssetUploadRequest(
+                        assetData = assetData,
+                        deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
+                        deviceId = deviceId,
+                        fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
+                        fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
+                        metadata = emptyList(),
+                        filename = mediaItem.displayName
+                    ),
+                    accessToken = fileManager.info.accessToken
+                )
+
+                if (resp != null) {
+                    progressManager.increaseProgress()
+                    fileManager.mediaDao.linkToImmich(
+                        id = mediaItem.id,
+                        hash = hashes[mediaItem.id]!!,
+                        immichUrl = "/api/assets/${resp.id}/original"
+                    )
+                }
+
+                resp?.id
+            }
         }
 
-        val total = media.mapNotNull { item ->
-            item.immichId?.takeIf { it in exists }
-        } + uploaded.filterNotNull()
+        fileManager.assetClient.restore(
+            ids = trashedItems,
+            accessToken = fileManager.info.accessToken
+        )
 
         val success = fileManager.albumsClient.addAssets(
             albumId = Uuid.parse(albumImmichId),
@@ -192,7 +202,6 @@ interface GenericSyncHandler {
     suspend fun downloadMedia(
         context: Context,
         ids: List<String>,
-        origin: String,
         destination: String
     ): Boolean {
         var successes = 0
@@ -207,66 +216,51 @@ interface GenericSyncHandler {
                 hashes = listOf(cloudItem.checksum)
             ).firstOrNull()
 
-            // TODO: possibly check date modified too
-            if (localItem?.hash == cloudItem.checksum) return@forEach
-
-            val bytes = fileManager.assetClient.download(
-                id = Uuid.parse(cloudItem.id),
-                accessToken = fileManager.info.accessToken
-            )
-
-            if (bytes == null) return@forEach
-
-            if (localItem == null) {
-                val item = cloudItem.toMediaStoreData()
-                val new = context.contentResolver.insertMedia(
-                    context = context,
-                    media = cloudItem.toMediaStoreData(),
-                    destination = destination,
-                    overrideDisplayName = null,
-                    currentVolumes = MediaStore.getExternalVolumeNames(context),
-                    preserveDate = true,
-                    onInsert = { _, _ -> }
+            if (localItem != null) {
+                successes += 1
+                fileManager.mediaDao.linkToImmich(
+                    id = localItem.id,
+                    hash = cloudItem.checksum,
+                    immichUrl = "/api/assets/${cloudItem.id}/original"
                 )
 
-                if (new != null) {
-                    context.contentResolver.openOutputStream(new)?.use {
-                        if (bytes.size <= 8 * 1024) it.write(bytes)
-                        else it.buffered().write(bytes)
+                return@forEach
+            }
 
-                        it.flush()
-                        it.close()
-                    }
+            // Proceed with download only if content is truly missing
+            val bytes = fileManager.assetClient.download(Uuid.parse(cloudItem.id), fileManager.info.accessToken) ?: return@forEach
+            val item = cloudItem.toMediaStoreData()
 
-                    context.contentResolver.setDateForMedia(
-                        uri = new,
-                        type = item.type,
-                        dateTaken = item.dateTaken
-                    )
+            val newUri = context.contentResolver.insertMedia(
+                context = context,
+                media = item,
+                destination = destination,
+                currentVolumes = MediaStore.getExternalVolumeNames(context),
+                preserveDate = true,
+                onInsert = { _, _ -> }
+            )
 
-                    new.toContentId(
-                        contentResolver = context.contentResolver,
-                        type = item.type
-                    )?.let { newId ->
-                        fileManager.mediaDao.linkToImmich(
-                            id = newId,
-                            hash = item.hash!!,
-                            immichUrl = item.immichUrl!!
-                        )
-                    }
-
-                    successes += 1
-                }
-            } else {
-                context.contentResolver.openOutputStream(localItem.uri.toUri())?.use {
+            newUri?.let { uri ->
+                context.contentResolver.openOutputStream(uri)?.use {
                     if (bytes.size <= 8 * 1024) it.write(bytes)
                     else it.buffered().write(bytes)
 
                     it.flush()
                     it.close()
-
-                    successes += 1
                 }
+
+                context.contentResolver.setDateForMedia(uri, item.type, item.dateTaken)
+
+                uri.toContentId(context.contentResolver, item.type)?.let { newId ->
+                    fileManager.mediaDao.upsertAll(listOf(item.copy(
+                        id = newId,
+                        uri = uri.toString(),
+                        hash = cloudItem.checksum,
+                        immichUrl = "/api/assets/${cloudItem.id}/original"
+                    )))
+                }
+
+                successes += 1
             }
         }
 

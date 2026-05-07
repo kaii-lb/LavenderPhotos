@@ -23,20 +23,27 @@ class ProgressManager {
 
     fun addToTotalItems(count: Int) {
         totalItems += count
-        _progress.value = count.toFloat() / totalItems
+        updateProgress()
     }
 
     fun increaseProgress() {
         currentItems += 1
-        _progress.value = currentItems.toFloat() / totalItems
+        updateProgress()
     }
 
     fun increaseProgressBy(amount: Int) {
         currentItems += amount
-        _progress.value = currentItems.toFloat() / totalItems
+        updateProgress()
     }
 
     fun stopTracking() {
         _isTracking.value = false
     }
+
+    private fun updateProgress() {
+        _progress.value =
+            if (totalItems <= 0) 0f
+            else currentItems.toFloat() / totalItems
+    }
+
 }

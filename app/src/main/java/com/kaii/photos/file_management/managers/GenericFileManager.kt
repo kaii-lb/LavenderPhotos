@@ -12,7 +12,6 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.text.format.DateFormat
 import android.util.Log
-import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import com.kaii.photos.database.daos.CustomEntityDao
@@ -42,7 +41,6 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.UploadAssetRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
@@ -198,7 +196,7 @@ interface GenericFileManager {
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         taskId: Int? = null
-    ) : Boolean {
+    ): Boolean {
         if (list.isNotEmpty()) {
             val deleteRequest = MediaStore.createDeleteRequest(
                 context.contentResolver,
@@ -428,55 +426,23 @@ interface GenericFileManager {
             }
         )
 
-        val assets = media.map { item ->
-            Pair(
-                UploadAssetRequest(
-                    absolutePath = item.absolutePath,
-                    filename = item.displayName,
-                    id = item.immichId?.let { Uuid.parse(it) } ?: Uuid.NIL,
-                    size = item.size,
-                    dateTaken = item.dateTaken,
-                    dateModified = item.dateModified
-                ),
-                item
-            )
-        }
-
         val hashes = media.associate { item ->
             val hash = item.hash ?: calculateSha1Checksum(file = File(item.absolutePath))
 
             item.id to hash
         }
 
-        val exists = assetClient.check(
+        val bulkCheck = assetClient.check(
             assets = AssetBulkUploadRequest(
-                assets.map { item ->
+                media.map { item ->
                     AssetBulkUploadCheckItem(
-                        checksum = hashes[item.second.id]!!,
-                        id = item.first.id.toString()
+                        checksum = hashes[item.id]!!,
+                        id = item.id.toString()
                     )
                 }
             ),
             accessToken = info.accessToken
-        )?.map {
-            it.id
-        } ?: emptyList()
-
-        media
-            .filter {
-                it.immichId in exists && it.immichId != null
-            }
-            .forEach { item ->
-                mediaDao.linkToImmich(
-                    id = item.id,
-                    hash = hashes[item.id]!!,
-                    immichUrl = item.immichUrl!!
-                )
-
-                onItemDone(item.uri)
-            }
-
-        val missing = assets.fastFilter { it.first.id.toString() !in exists }
+        )?.associateBy { it.id } ?: return@withContext emptyList()
 
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
@@ -488,58 +454,77 @@ interface GenericFileManager {
         ).toInt()
 
         syncTaskDao.insert(
-            missing.fastMap {
+            media.map { item ->
                 SyncTaskItem(
-                    mediaId = it.second.id,
+                    mediaId = item.id,
                     taskId = taskId
                 )
             }
         )
 
+        val trashedItems = mutableListOf<Uuid>()
+
         // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
         @SuppressLint("HardwareIds")
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
-        val uploaded = missing.fastMap { item ->
-            val assetData = File(item.first.absolutePath).inputStream().buffered().readBytes()
+        val total = media.map { mediaItem ->
+            val bulkResponse = bulkCheck[mediaItem.id.toString()]
 
-            val resp = assetClient.upload(
-                AssetUploadRequest(
-                    assetData = assetData,
-                    deviceAssetId = "${item.first.filename}-${item.first.size}",
-                    deviceId = deviceId,
-                    fileCreatedAt = Instant.fromEpochSeconds(item.first.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
-                    fileModifiedAt = Instant.fromEpochSeconds(item.first.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
-                    metadata = emptyList(),
-                    filename = item.first.filename
-                ),
-                accessToken = info.accessToken
-            )
+            if (bulkResponse?.assetId != null) {
+                // TODO: progressManager.increaseProgress()
 
-            if (resp != null) {
                 mediaDao.linkToImmich(
-                    id = item.second.id,
-                    hash = hashes[item.second.id]!!,
-                    immichUrl = "/api/assets/${resp.id}/original"
+                    id = mediaItem.id,
+                    hash = hashes[mediaItem.id]!!,
+                    immichUrl = mediaItem.immichUrl!!
                 )
 
-                onItemDone(media.first { it.id == item.second.id }.uri)
-            }
+                if (bulkResponse.isTrashed) {
+                    trashedItems.add(Uuid.parse(bulkResponse.assetId!!))
+                }
 
-            CopyResult(
-                id = item.second.id,
-                immichId = resp?.id
-            )
+                CopyResult(
+                    id = mediaItem.id,
+                    immichId = mediaItem.immichId
+                )
+            } else {
+                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
+
+                val resp = assetClient.upload(
+                    AssetUploadRequest(
+                        assetData = assetData,
+                        deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
+                        deviceId = deviceId,
+                        fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
+                        fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
+                        metadata = emptyList(),
+                        filename = mediaItem.displayName
+                    ),
+                    accessToken = info.accessToken
+                )
+
+                if (resp != null) {
+                    // TODO: progressManager.increaseProgress()
+
+                    mediaDao.linkToImmich(
+                        id = mediaItem.id,
+                        hash = hashes[mediaItem.id]!!,
+                        immichUrl = "/api/assets/${resp.id}/original"
+                    )
+                }
+
+                CopyResult(
+                    id = mediaItem.id,
+                    immichId = resp?.id
+                )
+            }
         }
 
-        val total = media.mapNotNull { item ->
-            CopyResult(
-                id = item.id,
-                immichId = item.immichId
-            ).takeIf {
-                it.immichId in exists && it.immichId != null
-            }
-        } + uploaded.filter { it.immichId != null }
+        assetClient.restore(
+            ids = trashedItems,
+            accessToken = info.accessToken
+        )
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
