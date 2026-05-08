@@ -61,6 +61,7 @@ import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
 import com.kaii.photos.compose.immich.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
+import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
@@ -110,6 +111,7 @@ import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
+import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
@@ -515,6 +517,13 @@ class MainActivity : ComponentActivity() {
                         )
 
                         ImmichLoginPage(viewModel = viewModel)
+                    }
+
+                    composable<Screens.Immich.BackupOptions> {
+                        ImmichBackupOptionsPage(
+                            state = rememberImmichBackupOptionsState(),
+                            navController = navController
+                        )
                     }
 
                     composable<Screens.Immich.GridView>(

@@ -889,7 +889,7 @@
     <string name="permissions_manage_media_explanation">Это разрешение необязательно, но настоятельно рекомендуется. Разрешение «Управление медиафайлами» позволяет Lavender Photos использовать API Content Resolver Android для удаления/перемещения/копирования медиафайлов, что значительно упрощает этот процесс и обеспечивает лучшую совместимость с другими приложениями.</string>
     <string name="permissions_explanation">Пояснение к разрешению</string>
     <string name="media_restore_processing_desc">Пожалуйста, подождите, пока медиафайлы обрабатываются</string>
-    <string name="media_move_copy_list_search_bar">Поиск альбома</string>
+    <string name="albums_search_for">Поиск альбома</string>
     <string name="media_tools">Инструменты</string>
     <string name="media_information">Информация</string>
     <string name="wallpaper_homescreen">Главный экран</string>

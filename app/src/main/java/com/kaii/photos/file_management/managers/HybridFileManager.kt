@@ -6,6 +6,7 @@ import android.content.IntentSender
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -170,6 +171,10 @@ class HybridFileManager(
             }
         }
 
+        if (destination.immichId != null || origin?.immichId != null) {
+            CloudSyncWorker.immediateEnqueue(context)
+        }
+
         return otherSuccess && immichSuccess
     }
 
@@ -187,6 +192,10 @@ class HybridFileManager(
 
         val otherResult = otherFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
         val immichResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone)
+
+        if (destination.immichId != null) {
+            CloudSyncWorker.immediateEnqueue(context)
+        }
 
         return otherResult + immichResult
     }

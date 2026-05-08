@@ -47,13 +47,14 @@ class SettingsAlbumsListImpl(
 
             val presentPaths = present.fastMapNotNull { (it as? AlbumType.Folder)?.paths }
             val presentIds = present.fastMap { it.id }
+            val presentImmichIds = present.fastMapNotNull { it.immichId}
 
             present.toMutableList().apply {
                 addAll(
                     list.filter {
                         when (it) {
                             is AlbumType.Folder -> it.paths !in presentPaths && it.name.isNotBlank()
-                            else -> it.id !in presentIds && it.name.isNotBlank()
+                            else -> it.id !in presentIds && it.name.isNotBlank() && it.immichId !in presentImmichIds
                         }
                     }
                 )

@@ -63,7 +63,7 @@ import androidx.core.net.toUri
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
-import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.compose.pages.WallpaperSetter
 import com.kaii.photos.compose.widgets.date_time.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation

@@ -5,7 +5,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -35,13 +37,31 @@ class CloudSyncWorker(
                         .setConstraints(
                             Constraints(
                                 requiredNetworkType = NetworkType.UNMETERED,
-                                requiresBatteryNotLow = true
+                                requiresBatteryNotLow = true,
+                                requiresStorageNotLow = true
                             )
                         )
                         .setBackoffCriteria(
                             backoffDelay = 20,
                             backoffPolicy = BackoffPolicy.EXPONENTIAL,
                             timeUnit = TimeUnit.SECONDS
+                        )
+                        .build()
+                )
+        }
+
+        fun immediateEnqueue(context: Context) {
+            WorkManager.getInstance(context.applicationContext)
+                .enqueueUniqueWork(
+                    uniqueWorkName = CloudSyncWorker::class.java.name + "-immediate",
+                    existingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE,
+                    request = OneTimeWorkRequest.Builder(CloudSyncWorker::class)
+                        .setConstraints(
+                            Constraints(
+                                requiredNetworkType = NetworkType.UNMETERED,
+                                requiresBatteryNotLow = true,
+                                requiresStorageNotLow = true
+                            )
                         )
                         .build()
                 )

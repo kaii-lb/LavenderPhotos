@@ -110,6 +110,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE hash IN (:hashes)")
     suspend fun getMediaFromHashes(hashes: List<String>): List<MediaStoreData>
 
+    @Query(value = "SELECT COUNT(id) FROM media WHERE immichUrl IS NOT NULL")
+    fun immichMediaCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)
 

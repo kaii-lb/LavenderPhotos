@@ -16,6 +16,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.signature
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
@@ -64,6 +65,7 @@ class AlbumGridState(
             val info: Info,
             override val id: String,
             override val name: String,
+            val summary: String?,
             override val date: Long,
             override val pinned: Boolean
         ) : Album
@@ -286,6 +288,7 @@ class AlbumGridState(
                         info = info,
                         id = album.id,
                         name = album.name,
+                        summary = null,
                         date = thumbnail.date,
                         pinned = album.pinned
                     )
@@ -338,6 +341,7 @@ class AlbumGridState(
             val info = Album.Single(
                 id = album.id,
                 name = album.name,
+                summary = null,
                 date = thumbnail.date,
                 pinned = album.pinned,
                 info = Info(
@@ -384,7 +388,26 @@ class AlbumGridState(
             list
         }
 
-        _singleAlbums.value = when (params.albumSortMode) {
+        // annotate items with the same name using their parent path
+        val duplicateNames = singleAlbums
+            .groupBy {
+                it.name
+            }.filter {
+                it.value.size > 1
+            }.values.flatten()
+
+        singleAlbums.removeAll(duplicateNames)
+
+        singleAlbums.addAll(
+            duplicateNames.map {
+                it.copy(
+                    summary =
+                        (it.info.album as? AlbumType.Folder)?.paths?.first()?.parent()
+                )
+            }
+        )
+
+        val sortedSingleAlbums = when (params.albumSortMode) {
             AlbumSortMode.LastModified -> {
                 singleAlbums.sortedBy { it.date }
             }
@@ -406,6 +429,16 @@ class AlbumGridState(
 
                 params.order.mapNotNull { lut[it] } + singleAlbums.filter { it.id !in lut.keys }
             }
+        }
+
+        _singleAlbums.value = sortedSingleAlbums.toMutableList().let { list ->
+            if (params.albumSortMode != AlbumSortMode.Custom) {
+                val pinned = list.filter { it.pinned }
+                list.removeAll(pinned)
+                list.addAll(0, pinned)
+            }
+
+            list
         }
     }
 }

@@ -20,7 +20,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
-import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager

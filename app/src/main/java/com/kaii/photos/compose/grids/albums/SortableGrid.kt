@@ -58,19 +58,20 @@ import com.kaii.photos.reorderable_lists.rememberSortableGridState
 private fun SortableGridPreview() {
     SortableGrid(
         albumList = {
-            (0..10).map {
+            (0..10).map { index ->
                 AlbumGridState.Album.Single(
                     info = AlbumGridState.Info(
                         album = AlbumType.PlaceHolder,
                         thumbnail = AlbumGridState.Info.Thumbnail(
                             uri = "",
                             signature = ObjectKey(0),
-                            albumId = it.toString(),
+                            albumId = index.toString(),
                             date = 0L
                         )
                     ),
-                    id = it.toString(),
+                    id = index.toString(),
                     name = "Test",
+                    summary = null,
                     date = 0L,
                     pinned = false
                 )

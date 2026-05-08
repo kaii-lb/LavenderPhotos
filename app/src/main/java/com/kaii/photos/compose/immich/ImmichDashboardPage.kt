@@ -346,6 +346,20 @@ fun ImmichDashboardPage(
                     }
                 }
             }
+            
+            item {
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_backup_options),
+                    summary = stringResource(id = R.string.immich_backup_options_desc),
+                    iconResID = R.drawable.add_photo_alternate,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    enabled = userInfo is LoginState.LoggedIn,
+                    action = {
+                        navController.navigate(Screens.Immich.BackupOptions)
+                    }
+                )
+            }
 
             item {
                 PreferencesSeparatorText(

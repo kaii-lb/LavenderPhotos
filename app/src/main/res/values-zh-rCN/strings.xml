@@ -321,7 +321,7 @@
     <string name="trash_bin_short">回收站</string>
     <string name="permissions_do_not_trash">不使用回收站</string>
     <string name="permissions_do_not_trash_desc">直接永久删除，不经过回收站</string>
-    <string name="media_move_copy_list_search_bar">搜索相册</string>
+    <string name="albums_search_for">搜索相册</string>
     <string name="media_tools">工具</string>
     <string name="media_information">信息</string>
     <string name="wallpaper_homescreen">主屏幕</string>
