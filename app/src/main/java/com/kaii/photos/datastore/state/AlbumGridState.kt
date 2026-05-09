@@ -90,7 +90,8 @@ class AlbumGridState(
             val uri: String,
             val signature: ObjectKey,
             val albumId: String,
-            val date: Long
+            val date: Long,
+            val isGif: Boolean
         )
     }
 
@@ -249,34 +250,7 @@ class AlbumGridState(
             val info = albums.filter { it.id in group.albumIds }.map { album ->
                 albums.remove(album)
 
-                val thumbnail =
-                    if (album is AlbumType.Folder) {
-                        val media = if (params.sortMode.isDateModified) {
-                            mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
-                        } else {
-                            mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                        } ?: MediaStoreData.dummyItem
-
-                        Info.Thumbnail(
-                            uri = media.uri,
-                            date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                            signature = media.signature(),
-                            albumId = album.id
-                        )
-                    } else {
-                        val media = if (params.sortMode.isDateModified) {
-                            customDao.getThumbnailForAlbumDateModified(album = album.id)
-                        } else {
-                            customDao.getThumbnailForAlbumDateTaken(album = album.id)
-                        } ?: MediaStoreData.dummyItem
-
-                        Info.Thumbnail(
-                            uri = media.uri,
-                            date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                            signature = media.signature(),
-                            albumId = album.id
-                        )
-                    }
+                val thumbnail = getThumbnail(album)
 
                 val info = Info(
                     album = album,
@@ -309,34 +283,7 @@ class AlbumGridState(
         }
 
         albums.forEach { album ->
-            val thumbnail =
-                if (album is AlbumType.Folder) {
-                    val media = if (params.sortMode.isDateModified) {
-                        mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
-                    } else {
-                        mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                    } ?: MediaStoreData.dummyItem
-
-                    Info.Thumbnail(
-                        uri = media.uri,
-                        date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                        signature = media.signature(),
-                        albumId = album.id
-                    )
-                } else {
-                    val media = if (params.sortMode.isDateModified) {
-                        customDao.getThumbnailForAlbumDateModified(album = album.id)
-                    } else {
-                        customDao.getThumbnailForAlbumDateTaken(album = album.id)
-                    } ?: MediaStoreData.dummyItem
-
-                    Info.Thumbnail(
-                        uri = media.uri,
-                        date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                        signature = media.signature(),
-                        albumId = album.id
-                    )
-                }
+            val thumbnail = getThumbnail(album)
 
             val info = Album.Single(
                 id = album.id,
@@ -440,6 +387,32 @@ class AlbumGridState(
 
             list
         }
+    }
+
+    private suspend fun getThumbnail(album: AlbumType): Info.Thumbnail {
+        val media =
+            if (album is AlbumType.Folder) {
+                if (params.sortMode.isDateModified) {
+                    mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
+                } else {
+                    mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
+                } ?: MediaStoreData.dummyItem
+            } else {
+                if (params.sortMode.isDateModified) {
+                    customDao.getThumbnailForAlbumDateModified(album = album.id)
+                } else {
+                    customDao.getThumbnailForAlbumDateTaken(album = album.id)
+                } ?: MediaStoreData.dummyItem
+            }
+
+
+        return Info.Thumbnail(
+            uri = media.uri,
+            date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
+            signature = media.signature(),
+            albumId = album.id,
+            isGif = media.displayName.endsWith(".gif")
+        )
     }
 }
 

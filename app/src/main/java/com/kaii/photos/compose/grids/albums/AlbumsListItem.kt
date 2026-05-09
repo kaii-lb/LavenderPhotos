@@ -90,7 +90,8 @@ private fun AlbumListItemPreview() {
                     uri = "",
                     signature = ObjectKey(0),
                     albumId = "",
-                    date = 0L
+                    date = 0L,
+                    isGif = false
                 )
             ),
             id = "",

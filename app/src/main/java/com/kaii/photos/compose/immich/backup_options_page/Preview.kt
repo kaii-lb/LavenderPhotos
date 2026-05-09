@@ -41,7 +41,8 @@ private fun ImmichBackupOptionsPagePreview() {
                                             uri = "",
                                             signature = ObjectKey(0),
                                             albumId = "",
-                                            date = 0L
+                                            date = 0L,
+                                            isGif = false
                                         )
                                     ),
                                     id = index.toString(),

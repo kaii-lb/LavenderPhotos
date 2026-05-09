@@ -81,9 +81,11 @@ fun AlbumGlideImage(
                 val request = it.signature(albumInfo.thumbnail.signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
 
-                // try to load GIFs, if it fails fallback to bitmaps
-                // this is fine performance wise
-                request.clone().decode(GifDrawable::class.java).error(request)
+                if (albumInfo.thumbnail.isGif) {
+                    request.decode(GifDrawable::class.java)
+                } else {
+                    request
+                }
             }
         } else {
             var timedOut by remember { mutableStateOf(false) }

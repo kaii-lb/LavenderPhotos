@@ -66,7 +66,8 @@ private fun SortableGridPreview() {
                             uri = "",
                             signature = ObjectKey(0),
                             albumId = index.toString(),
-                            date = 0L
+                            date = 0L,
+                            isGif = false
                         )
                     ),
                     id = index.toString(),
