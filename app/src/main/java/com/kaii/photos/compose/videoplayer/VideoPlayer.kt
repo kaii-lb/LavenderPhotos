@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -20,7 +21,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +33,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,15 +49,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
@@ -71,6 +71,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
@@ -92,8 +93,7 @@ fun VideoPlayer(
     useBlackBackground: Boolean,
     useCache: Boolean,
     modifier: Modifier = Modifier,
-    isOpenWithView: Boolean = false,
-    isSecuredMedia: Boolean = false
+    isOpenWithView: Boolean = false
 ) {
     val context = LocalContext.current
     var securedMediaProgress by remember { mutableFloatStateOf(0f) }
@@ -105,52 +105,62 @@ fun VideoPlayer(
                 accessToken = accessToken(),
                 endpoint = endpoint(),
                 shouldPlay = shouldPlay,
-                progress = {
+                decryptProgress = {
                     securedMediaProgress = it
                 }
             )
         }
     }
 
-    if (isSecuredMedia) {
-        if (securedMediaProgress < 1f) {
-            Column(
-                modifier = modifier
-                    .fillMaxSize(1f),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(id = R.string.video_decrypting),
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
+    if (securedMediaProgress < 1f && item.absolutePath.startsWith(context.appSecureFolderDir)) {
+        val progress by animateFloatAsState(
+            targetValue = securedMediaProgress,
+            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = modifier
+                .fillMaxSize(1f),
+            verticalArrangement = Arrangement.spacedBy(
+                space = 16.dp,
+                alignment = Alignment.CenterVertically
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.unlock),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(80.dp)
+            )
 
-                Text(
-                    text = stringResource(id = R.string.media_progress),
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
+            Text(
+                text = stringResource(id = R.string.video_decrypting),
+                fontSize = 16.sp
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LinearProgressIndicator(
-                    progress = {
-                        securedMediaProgress
-                    },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainer,
-                    gapSize = 0.dp,
-                    strokeCap = StrokeCap.Round,
-                    drawStopIndicator = {},
-                    modifier = Modifier
-                        .height(14.dp)
-                        .fillMaxWidth(0.6f),
-                )
-            }
-
-            return
+            LinearWavyProgressIndicator(
+                progress = {
+                    progress
+                },
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainer,
+                gapSize = 0.dp,
+                stroke = Stroke(
+                    width = 20f,
+                    cap = StrokeCap.Round
+                ),
+                trackStroke = Stroke(
+                    width = 20f,
+                    cap = StrokeCap.Round
+                ),
+                modifier = Modifier
+                    .height(14.dp)
+                    .fillMaxWidth(0.6f),
+            )
         }
+
+        return
     }
 
     BackHandler(

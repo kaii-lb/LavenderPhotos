@@ -24,7 +24,6 @@ import androidx.media3.ui.PlayerView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -183,6 +182,7 @@ class VideoPlayerState(
         }
     }
 
+    @androidx.annotation.OptIn(UnstableApi::class)
     suspend fun setSource(
         context: Context,
         item: MediaStoreData,
@@ -190,47 +190,58 @@ class VideoPlayerState(
         endpoint: String,
         loop: Boolean = false,
         shouldPlay: () -> Boolean,
-        progress: (Float) -> Unit
+        decryptProgress: (progress: Float) -> Unit = {}
     ) {
         this.loop = loop
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
 
         val immichUrl = item.immichVideoUrl?.let { endpoint + it }
-        var uri = immichUrl ?: item.uri
+        val uri = immichUrl ?: item.uri
         if (currentSource == uri) return
-
-        // secure item, needs decoding
-        if (item.absolutePath.startsWith(context.appSecureFolderDir)) {
-            uri = withContext(Dispatchers.IO) {
-                val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
-                    .getIvFromSecuredPath(item.absolutePath)
-
-                if (iv == null) {
-                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
-                    return@withContext ""
-                }
-
-                val output =
-                    EncryptionManager.decryptVideo(
-                        absolutePath = item.absolutePath,
-                        iv = iv,
-                        context = context,
-                        progress = progress
-                    )
-
-                return@withContext output.toUri().toString()
-            }
-        }
 
         videoTitle = item.displayName
 
+        val input = when {
+            // secure item, needs decoding
+            item.absolutePath.startsWith(context.appSecureFolderDir) -> {
+                withContext(Dispatchers.IO) {
+                    val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
+                        .getIvFromSecuredPath(item.absolutePath)
+
+                    if (iv == null) {
+                        Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                        return@withContext null
+                    }
+
+                    LavenderExoPlayer.Input.Secure(
+                        absolutePath = item.absolutePath,
+                        iv = iv
+                    )
+                }
+            }
+
+            item.immichUrl != null -> {
+                LavenderExoPlayer.Input.Networked(
+                    uri = uri.toUri(),
+                    accessToken = accessToken
+                )
+            }
+
+            else -> {
+                LavenderExoPlayer.Input.Local(
+                    uri = uri.toUri()
+                )
+            }
+        }
+
+        if (input == null) return
+
         player.setSource(
             context = context,
-            uri = uri,
-            isNetworked = item.immichUrl != null,
-            accessToken = accessToken,
-            loop = loop
+            input = input,
+            loop = loop,
+            decryptProgress = decryptProgress
         )
 
         player.setPlayWhenReady(autoPlay && shouldPlay() && !loop)

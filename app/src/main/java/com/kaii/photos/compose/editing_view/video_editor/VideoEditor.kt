@@ -165,8 +165,7 @@ fun VideoEditorImpl(
             ),
             accessToken = accessToken(),
             endpoint = endpoint(),
-            shouldPlay = { true },
-            progress = {}
+            shouldPlay = { true }
         )
     }
 

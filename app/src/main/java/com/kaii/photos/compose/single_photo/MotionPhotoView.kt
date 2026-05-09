@@ -57,8 +57,7 @@ fun MotionPhotoView(
             accessToken = accessToken(),
             endpoint = endpoint(),
             loop = true,
-            shouldPlay = shouldPlay,
-            progress = {}
+            shouldPlay = shouldPlay
         )
     }
 

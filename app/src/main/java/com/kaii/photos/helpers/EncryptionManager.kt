@@ -27,7 +27,11 @@ object EncryptionManager {
 
     private const val TRANSFORMATION = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
 
+    private var secretKey: SecretKey? = null
+
     private fun getOrCreateSecretKey(): SecretKey {
+        if (secretKey != null) return secretKey!!
+
         val keystore = KeyStore.getInstance(KEYSTORE)
         keystore.load(null)
 
@@ -55,7 +59,8 @@ object EncryptionManager {
         )
         keyGenerator.init(keyGenParams)
 
-        return keyGenerator.generateKey()
+        secretKey = keyGenerator.generateKey()
+        return secretKey!!
     }
 
     private fun writeToOutputStream(
@@ -214,6 +219,8 @@ object EncryptionManager {
         ) {
             progress(it)
         }
+
+        progress(1f)
 
         return destination
     }
