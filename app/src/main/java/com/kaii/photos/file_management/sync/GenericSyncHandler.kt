@@ -5,6 +5,7 @@ import android.content.Context
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
@@ -17,6 +18,7 @@ import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
 import com.kaii.photos.mediastore.toMediaStoreData
+import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
@@ -183,12 +185,12 @@ interface GenericSyncHandler {
 
                 bulkResponse.assetId
             } else {
-                // TODO: stream this instead of uploading whole file
-                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
-
                 val resp = fileManager.assetClient.upload(
                     AssetUploadRequest(
-                        assetData = assetData,
+                        assetSource = UriAssetSource(
+                            context = context,
+                            uri = mediaItem.uri.toUri()
+                        ),
                         deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
                         deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),

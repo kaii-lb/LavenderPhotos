@@ -36,6 +36,7 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
+import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
@@ -489,11 +490,12 @@ interface GenericFileManager {
                     immichId = mediaItem.immichId
                 )
             } else {
-                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
-
                 val resp = assetClient.upload(
                     AssetUploadRequest(
-                        assetData = assetData,
+                        assetSource = UriAssetSource(
+                            context = context,
+                            uri = mediaItem.uri.toUri()
+                        ),
                         deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
                         deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
