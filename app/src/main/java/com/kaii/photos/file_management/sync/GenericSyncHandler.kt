@@ -8,8 +8,11 @@ import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
+import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.calculateSha1Checksum
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
@@ -46,30 +49,42 @@ interface GenericSyncHandler {
 
         val toUpload = mutableListOf<MediaStoreData>()
         val toDownload = mutableListOf<String>()
+        val toTrash = mutableListOf<MediaStoreData>()
 
         localMedia.forEach { local ->
-            if (local.immichId != null && cloudById.containsKey(local.immichId)) {
-                return@forEach
-            }
+            when {
+                // item was deleted in the cloud
+                local.immichId != null && !cloudById.containsKey(local.immichId) -> {
+                    toTrash.add(local)
+                }
 
-            val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
-            val cloudMatch = cloudByHash[currentHash]
+                // item was locally added
+                local.immichId == null -> {
+                    val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
+                    val cloudMatch = cloudByHash[currentHash]
 
-            if (cloudMatch != null) {
-                fileManager.mediaDao.linkToImmich(
-                    id = local.id,
-                    hash = currentHash,
-                    immichUrl = "/api/assets/${cloudMatch.id}/original"
-                )
-            } else {
-                toUpload.add(local.copy(hash = currentHash))
+                    if (cloudMatch != null) {
+                        fileManager.mediaDao.linkToImmich(
+                            id = local.id,
+                            hash = currentHash,
+                            immichUrl = "/api/assets/${cloudMatch.id}/original"
+                        )
+                    } else {
+                        toUpload.add(local.copy(hash = currentHash))
+                    }
+                }
             }
         }
 
-        val localHashes = localMedia.map {
-            val hash = it.hash ?: calculateSha1Checksum(File(it.absolutePath))
+        val localHashes = localMedia.map { local ->
+            val hash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
 
-            hash to it.immichId
+            fileManager.mediaDao.linkToHash(
+                id = local.id,
+                hash = hash
+            )
+
+            hash to local.immichId
         }.toSet()
 
         cloudMedia.forEach { cloud ->
@@ -98,6 +113,18 @@ interface GenericSyncHandler {
                 destination = destinationPath
             )
         }
+
+        if (toTrash.isNotEmpty()) {
+            albums.get().first().find { album ->
+                album.immichId == originId
+            }?.id?.let { albumId ->
+                trashMedia(
+                    context = context,
+                    media = toTrash,
+                    albumId = albumId
+                )
+            }
+        }
     }
 
     suspend fun fetchCloudAlbums() =
@@ -107,7 +134,7 @@ interface GenericSyncHandler {
                 it.immichId?.isNotBlank() == true && (it is AlbumType.Folder || it is AlbumType.Custom)
             }
 
-    suspend fun uploadMedia(
+    private suspend fun uploadMedia(
         context: Context,
         media: List<MediaStoreData>,
         albumImmichId: String
@@ -199,7 +226,7 @@ interface GenericSyncHandler {
         return total.size == media.size && success
     }
 
-    suspend fun downloadMedia(
+    private suspend fun downloadMedia(
         context: Context,
         ids: List<String>,
         destination: String
@@ -265,5 +292,29 @@ interface GenericSyncHandler {
         }
 
         return successes == ids.size
+    }
+
+    private suspend fun trashMedia(
+        context: Context,
+        media: List<MediaStoreData>,
+        albumId: String
+    ) {
+        fileManager.setTrashed(
+            context = context,
+            list = media.fastMap {
+                SelectionManager.SelectedItem(
+                    id = it.id,
+                    uri = it.uri,
+                    immichUrl = it.immichUrl,
+                    isImage = it.type == MediaType.Image,
+                    parentPath = it.parentPath
+                )
+            },
+            trashed = true,
+            albumId = albumId.takeIf {
+                fileManager is CustomFileManager
+            },
+            onItemDone = {}
+        )
     }
 }

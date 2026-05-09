@@ -20,6 +20,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class CloudSyncWorker(
@@ -50,21 +51,25 @@ class CloudSyncWorker(
                 )
         }
 
-        fun immediateEnqueue(context: Context) {
+        fun immediateEnqueue(context: Context): UUID {
+            val request = OneTimeWorkRequest.Builder(CloudSyncWorker::class)
+                .setConstraints(
+                    Constraints(
+                        requiredNetworkType = NetworkType.UNMETERED,
+                        requiresBatteryNotLow = true,
+                        requiresStorageNotLow = true
+                    )
+                )
+                .build()
+
             WorkManager.getInstance(context.applicationContext)
                 .enqueueUniqueWork(
                     uniqueWorkName = CloudSyncWorker::class.java.name + "-immediate",
                     existingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    request = OneTimeWorkRequest.Builder(CloudSyncWorker::class)
-                        .setConstraints(
-                            Constraints(
-                                requiredNetworkType = NetworkType.UNMETERED,
-                                requiresBatteryNotLow = true,
-                                requiresStorageNotLow = true
-                            )
-                        )
-                        .build()
+                    request = request
                 )
+
+            return request.id
         }
     }
 

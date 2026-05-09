@@ -101,6 +101,9 @@ interface MediaDao {
     @Query(value = "UPDATE media SET immichUrl = :immichUrl, hash = :hash WHERE id = :id")
     suspend fun linkToImmich(id: Long, hash: String, immichUrl: String)
 
+    @Query(value = "UPDATE media SET hash = :hash WHERE id = :id")
+    suspend fun linkToHash(id: Long, hash: String)
+
     @Query(value = "SELECT EXISTS(SELECT 1 FROM media WHERE id = :id)")
     suspend fun exists(id: Long): Boolean
 
