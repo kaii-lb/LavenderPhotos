@@ -182,8 +182,8 @@ fun MoveCopyAlbumListView(
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,
                             modifier = Modifier
-                                .fillParentMaxWidth(1f)
-                                .padding(8.dp, 0.dp)
+                                .fillParentMaxWidth()
+                                .padding(horizontal = 8.dp)
                                 .animateItem(),
                             onClick = {
                                 onClick(albumsList[index].info.album)

@@ -1112,6 +1112,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="management">Management</string>
     <string name="next">Next</string>
     <string name="error">Error!</string>
+    <string name="refresh">Refresh</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -1257,6 +1258,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_backup_option_cloud_synced_albums">Cloud synced albums: %d</string>
     <string name="immich_backup_option_total_uploaded_count">Total uploaded count: %d</string>
     <string name="immich_backup_option_changes_synced">Changes synced!</string>
+    <string name="immich_backup_option_changes_unsaved">Unsaved changes</string>
+    <string name="immich_backup_option_changes_unsaved_desc">Refreshing will undo all your changes</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>

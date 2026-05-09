@@ -1,8 +1,13 @@
 package com.kaii.photos.compose.immich.backup_options_page
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -14,11 +19,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -32,10 +34,12 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TopBar(
     query: () -> String,
+    isRefreshing: () -> Boolean,
+    pullDistance: () -> Float,
     navController: NavController,
     onQueryChange: (query: String) -> Unit,
     confirm: suspend () -> Boolean
@@ -87,36 +91,45 @@ fun TopBar(
         },
         actions = {
             val resources = LocalResources.current
-            var loading by remember { mutableStateOf(false) }
 
-            FilledTonalIconButton(
-                onClick = {
-                    coroutineScope.launch {
-                        loading = true
-
-                        val success = confirm()
-                        LavenderSnackbarController.pushEvent(
-                            event = LavenderSnackbarEvent.MessageEvent(
-                                message =
-                                    if (success) resources.getString(R.string.immich_backup_option_changes_synced)
-                                    else resources.getString(R.string.immich_login_unreachable),
-                                icon =
-                                    if (success) R.drawable.image_arrow_up
-                                    else R.drawable.error_2,
-                                duration = SnackbarDuration.Short
-                            )
+            AnimatedContent(
+                targetState = pullDistance() > 0 || isRefreshing(),
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+            ) { state ->
+                if (state) {
+                    ContainedLoadingIndicator(
+                        modifier = Modifier
+                            .size(48.dp * pullDistance().coerceAtMost(1.25f))
+                            .sizeIn(minWidth = 16.dp, maxWidth = 56.dp)
+                    )
+                } else {
+                    FilledTonalIconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val success = confirm()
+                                LavenderSnackbarController.pushEvent(
+                                    event = LavenderSnackbarEvent.MessageEvent(
+                                        message =
+                                            if (success) resources.getString(R.string.immich_backup_option_changes_synced)
+                                            else resources.getString(R.string.immich_login_unreachable),
+                                        icon =
+                                            if (success) R.drawable.image_arrow_up
+                                            else R.drawable.error_2,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                )
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.checkmark_thin),
+                            contentDescription = stringResource(id = R.string.apply),
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
-
-                        loading = false
                     }
-                },
-                enabled = !loading
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.checkmark_thin),
-                    contentDescription = stringResource(id = R.string.apply),
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

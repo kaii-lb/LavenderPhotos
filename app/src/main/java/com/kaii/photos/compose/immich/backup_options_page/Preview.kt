@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
@@ -11,17 +12,22 @@ import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.screens.ImmichBackupOptionsStateImpl
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 
 @Preview
 @Composable
 private fun ImmichBackupOptionsPagePreview() {
+    val scope = rememberCoroutineScope()
+
     ImmichBackupOptionsPage(
         state = remember {
-            object : ImmichBackupOptionsStateImpl {
+            object : ImmichBackupOptionsStateImpl() {
                 private val selectedAlbumIds = mutableStateListOf<String>()
                 private val queryFlow = MutableStateFlow("")
                 private val albumsFlow = flowOf(
@@ -50,12 +56,22 @@ private fun ImmichBackupOptionsPagePreview() {
                 )
 
                 override val query = queryFlow.asStateFlow()
-                override val assetCount = flowOf(1234)
+
+                override val assetCount = flowOf(1234).stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = 0
+                )
+
                 override val albums = albumsFlow.combine(query) { list, query ->
                     list.filter { album ->
                         album.name.contains(query)
                     }
-                }
+                }.stateIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = emptyList()
+                )
 
                 override fun selectedCount() = selectedAlbumIds.size
                 override fun selected(id: String) = selectedAlbumIds.contains(id)
@@ -70,6 +86,11 @@ private fun ImmichBackupOptionsPagePreview() {
                 }
 
                 override suspend fun confirm(context: Context) = false
+                override suspend fun refresh() {
+                    isLoading = true
+                    delay(3000)
+                    isLoading = false
+                }
             }
         },
         navController = rememberNavController(),

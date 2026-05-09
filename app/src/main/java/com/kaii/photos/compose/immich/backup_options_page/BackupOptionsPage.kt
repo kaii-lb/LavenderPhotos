@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.immich.backup_options_page
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,8 +14,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,8 +32,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.screens.ImmichBackupOptionsStateImpl
+import kotlinx.coroutines.launch
 
 @Composable
 fun ImmichBackupOptionsPage(
@@ -35,7 +44,8 @@ fun ImmichBackupOptionsPage(
     modifier: Modifier = Modifier,
     navController: NavController = LocalNavController.current
 ) {
-    val albums by state.albums.collectAsStateWithLifecycle(initialValue = emptyList())
+    val pullToRefreshState = rememberPullToRefreshState()
+    val albums by state.albums.collectAsStateWithLifecycle()
     val searchQuery by state.query.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -44,6 +54,8 @@ fun ImmichBackupOptionsPage(
 
             TopBar(
                 query = { searchQuery },
+                isRefreshing = { state.isLoading },
+                pullDistance = { pullToRefreshState.distanceFraction },
                 navController = navController,
                 onQueryChange = state::search,
                 confirm = {
@@ -53,10 +65,37 @@ fun ImmichBackupOptionsPage(
         },
         modifier = modifier
     ) { innerPadding ->
+        val coroutineScope = rememberCoroutineScope()
+
+        val showDialog = remember { mutableStateOf(false) }
+        ConfirmationDialogWithBody(
+            showDialog = showDialog,
+            dialogTitle = stringResource(id = R.string.immich_backup_option_changes_unsaved),
+            dialogBody = stringResource(id = R.string.immich_backup_option_changes_unsaved_desc),
+            confirmButtonLabel = stringResource(id = R.string.refresh)
+        ) {
+            coroutineScope.launch {
+                state.refresh()
+            }
+        }
+
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(all = 16.dp),
+                .padding(all = 16.dp)
+                .pullToRefresh(
+                    isRefreshing = state.isLoading,
+                    state = pullToRefreshState,
+                    onRefresh = {
+                        if (state.hasUnsavedChanges) {
+                            showDialog.value = true
+                        } else {
+                            coroutineScope.launch {
+                                state.refresh()
+                            }
+                        }
+                    }
+                ),
             verticalArrangement = Arrangement.spacedBy(
                 space = 16.dp,
                 alignment = Alignment.CenterVertically
@@ -78,7 +117,10 @@ fun ImmichBackupOptionsPage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 itemsIndexed(
-                    items = albums
+                    items = albums,
+                    key = { _, item ->
+                        item.id
+                    }
                 ) { index, album ->
                     ImmichAlbumListItem(
                         album = album,
@@ -94,14 +136,24 @@ fun ImmichBackupOptionsPage(
                             },
                         onToggle = {
                             state.toggle(id = album.id)
-                        }
+                        },
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .animateItem()
                     )
                 }
 
                 if (albums.isEmpty()) {
-                    item {
+                    item(
+                        key = "nothing_shown_card"
+                    ) {
                         Column(
                             modifier = Modifier
+                                .animateItem(
+                                    fadeInSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT),
+                                    fadeOutSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT),
+                                    placementSpec = tween(durationMillis = AnimationConstants.DURATION_SHORT)
+                                )
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(32.dp))
                                 .background(MaterialTheme.colorScheme.primaryContainer)
