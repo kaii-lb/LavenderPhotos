@@ -176,75 +176,39 @@ suspend fun saveVideo(
         )
 
     val overlayEffects = mutableListOf<BitmapOverlay>()
-    val textOverlays =
-        modifications.mapNotNull {
-            it as? VideoModification.DrawingText
-        }
-    if (textOverlays.isNotEmpty()) {
-        textOverlays.forEach { overlay ->
-            overlayEffects.add(
-                overlay.type.toEffect(
-                    value = overlay,
-                    timespan = overlay.timespan,
-                    ratio = ratio,
-                    context = context,
-                    externalCanvasSize = canvasSize,
-                    textMeasurer = textMeasurer
-                )
+
+    modifications.forEach { overlay ->
+        val effect = when(overlay) {
+            is VideoModification.DrawingText -> overlay.type.toEffect(
+                value = overlay,
+                timespan = overlay.timespan,
+                ratio = ratio,
+                context = context,
+                externalCanvasSize = canvasSize,
+                textMeasurer = textMeasurer
             )
-        }
-    }
 
-    val pathOverlays =
-        modifications.mapNotNull {
-            it as? VideoModification.DrawingPath
-        }
-    if (pathOverlays.isNotEmpty()) {
-        pathOverlays.forEach { overlay ->
-            val effect =
-                if (overlay.type == DrawingItems.Pencil) {
-                    overlay.type.toEffect(
-                        value = overlay.path,
-                        timespan = overlay.timespan,
-                        ratio = ratio,
-                        context = context,
-                        externalCanvasSize = canvasSize,
-                        textMeasurer = textMeasurer
-                    )
-                } else {
-                    overlay.type.toEffect(
-                        value = overlay.path,
-                        timespan = overlay.timespan,
-                        ratio = ratio,
-                        context = context,
-                        externalCanvasSize = canvasSize,
-                        textMeasurer = textMeasurer
-                    )
-                }
+            is VideoModification.DrawingPath -> overlay.type.toEffect(
+                value = overlay.path,
+                timespan = overlay.timespan,
+                ratio = ratio,
+                context = context,
+                externalCanvasSize = canvasSize,
+                textMeasurer = textMeasurer
+            )
 
-            overlayEffects.add(effect)
-        }
-    }
+            is VideoModification.DrawingImage -> overlay.type.toEffect(
+                value = overlay,
+                timespan = overlay.timespan,
+                ratio = ratio,
+                context = context,
+                externalCanvasSize = canvasSize,
+                textMeasurer = textMeasurer
+            )
 
-    val bitmapOverlays =
-        modifications.mapNotNull {
-            it as? VideoModification.DrawingImage
+            else -> null
         }
-
-    if (bitmapOverlays.isNotEmpty()) {
-        bitmapOverlays.forEach { overlay ->
-            val effect =
-                overlay.type.toEffect(
-                    value = overlay,
-                    timespan = overlay.timespan,
-                    ratio = ratio,
-                    context = context,
-                    externalCanvasSize = canvasSize,
-                    textMeasurer = textMeasurer
-                )
-
-            overlayEffects.add(effect)
-        }
+        effect?.let { overlayEffects.add(it) }
     }
 
     val overlayEffectsList = listOf(
@@ -344,7 +308,7 @@ suspend fun saveVideo(
                 .setRequestedVideoEncoderSettings(
                     VideoEncoderSettings.Builder()
                         .setBitrate(
-                            if (videoEditingState.bitrate == 0) 1_200_000
+                            if (videoEditingState.bitrate == 0) basicVideoData.bitrate
                             else videoEditingState.bitrate
                         )
                         .build()
