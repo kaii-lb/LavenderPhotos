@@ -46,6 +46,8 @@ interface GenericSyncHandler {
         originId: String,
         destinationPath: String
     ) = withContext(Dispatchers.IO) {
+        if (cloudMedia.isEmpty() && localMedia.isEmpty()) return@withContext
+
         val cloudById = cloudMedia.associateBy { it.id }
         val cloudByHash = cloudMedia.associateBy { it.checksum }
 

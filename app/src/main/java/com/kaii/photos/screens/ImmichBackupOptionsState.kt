@@ -231,7 +231,7 @@ class ImmichBackupOptionsState(
             )
         }
 
-        CloudSyncWorker.immediateEnqueue(context)
+        CloudSyncWorker.immediateEnqueue(context = context, albumId = null)
 
         delay(1000) // eye candy
 

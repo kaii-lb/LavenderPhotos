@@ -65,17 +65,29 @@ class CloudSyncManager(
         if (albums.isNotEmpty()) progressManager.startTracking(totalItems = 0)
 
         albums.forEach { album ->
-            when (album) {
-                is AlbumType.Custom -> {
-                    customSyncHandler.sync(context, album)
-                }
-
-                is AlbumType.Folder -> {
-                    localSyncHandler.sync(context, album)
-                }
-
-                else -> {}
+            if (album is AlbumType.Custom) {
+                customSyncHandler.sync(context, album)
+            } else if (album is AlbumType.Folder ){
+                localSyncHandler.sync(context, album)
             }
+        }
+
+        progressManager.stopTracking()
+    }
+
+    suspend fun syncFor(
+        albumId: String
+    ) {
+        val albums = localSyncHandler.fetchCloudAlbums()
+
+        val album = albums.find { it.id == albumId } ?: return
+
+        progressManager.startTracking(totalItems = 0)
+
+        if (album is AlbumType.Custom) {
+            customSyncHandler.sync(context, album)
+        } else if (album is AlbumType.Folder ){
+            localSyncHandler.sync(context, album)
         }
 
         progressManager.stopTracking()

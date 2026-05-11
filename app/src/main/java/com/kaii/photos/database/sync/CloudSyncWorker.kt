@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -25,9 +26,11 @@ import java.util.concurrent.TimeUnit
 
 class CloudSyncWorker(
     private val context: Context,
-    params: WorkerParameters
+    private val params: WorkerParameters
 ) : CoroutineWorker(appContext = context, params = params) {
     companion object {
+        const val ALBUM_ID = "ALBUM_ID"
+
         fun enqueue(context: Context) {
             WorkManager.getInstance(context.applicationContext)
                 .enqueueUniquePeriodicWork(
@@ -51,7 +54,8 @@ class CloudSyncWorker(
                 )
         }
 
-        fun immediateEnqueue(context: Context): UUID {
+        /** @param albumId if null syncs everything otherwise syncs that album only */
+        fun immediateEnqueue(context: Context, albumId: String?): UUID {
             val request = OneTimeWorkRequest.Builder(CloudSyncWorker::class)
                 .setConstraints(
                     Constraints(
@@ -60,6 +64,13 @@ class CloudSyncWorker(
                         requiresStorageNotLow = true
                     )
                 )
+                .apply {
+                    setInputData(
+                        Data.Builder()
+                            .putString(ALBUM_ID, albumId)
+                            .build()
+                    )
+                }
                 .build()
 
             WorkManager.getInstance(context.applicationContext)
@@ -117,7 +128,12 @@ class CloudSyncWorker(
 
         delay(1000)
 
-        manager.syncUploads()
+        val albumId = params.inputData.getString(ALBUM_ID)
+        if (albumId != null) {
+            manager.syncFor(albumId = albumId)
+        } else {
+            manager.syncUploads()
+        }
 
         return Result.success()
     }

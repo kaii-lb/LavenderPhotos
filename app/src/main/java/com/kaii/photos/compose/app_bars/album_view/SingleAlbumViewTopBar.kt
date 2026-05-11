@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +41,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,23 +107,28 @@ fun SingleAlbumViewTopBar(
                     if (info.immichId != null) {
                         val context = LocalContext.current
                         val coroutineScope = rememberCoroutineScope()
-                        var loading by remember { mutableStateOf(false) }
+                        var id by retain { mutableStateOf<UUID?>(null) }
+                        var loading by retain { mutableStateOf(false) }
+
+                        LaunchedEffect(id) {
+                            if (id != null) {
+                                WorkManager.getInstance(context)
+                                    .getWorkInfoByIdFlow(id!!)
+                                    .collect {
+                                        if (it?.state != WorkInfo.State.RUNNING
+                                            && it?.state != WorkInfo.State.ENQUEUED
+                                        ) {
+                                            loading = false
+                                        }
+                                    }
+                            }
+                        }
 
                         IconButton(
                             onClick = {
                                 coroutineScope.launch {
                                     loading = true
-                                    val id = CloudSyncWorker.immediateEnqueue(context)
-
-                                    WorkManager.getInstance(context)
-                                        .getWorkInfoByIdFlow(id)
-                                        .collect {
-                                            if (it?.state != WorkInfo.State.RUNNING
-                                                && it?.state != WorkInfo.State.ENQUEUED
-                                            ) {
-                                                loading = false
-                                            }
-                                        }
+                                    id = CloudSyncWorker.immediateEnqueue(context = context, albumId = albumInfo().id)
                                 }
                             },
                             enabled = !loading
