@@ -1,5 +1,6 @@
 package com.kaii.photos.file_management.managers
 
+import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
 import android.provider.MediaStore
@@ -69,6 +70,11 @@ class LocalFileManager(
 
                 onItemDone(index + 1)
             }
+
+            true
+        } catch (securityException: RecoverableSecurityException) {
+            val intentSender = securityException.userAction.actionIntent.intentSender
+            context.startIntentSender(intentSender, null, 0, 0, 0)
 
             true
         } catch (e: Throwable) {

@@ -54,27 +54,29 @@ interface GenericSyncHandler {
         val toTrash = mutableListOf<MediaStoreData>()
 
         localMedia.forEach { local ->
-            when {
-                // item was deleted in the cloud
-                local.immichId != null && !cloudById.containsKey(local.immichId) -> {
+            if (local.immichId != null) {
+                val cloudItem = cloudById[local.immichId] ?: fileManager.assetClient.get(
+                    id = Uuid.parse(local.immichId!!),
+                    accessToken = fileManager.info.accessToken
+                )
+
+                if (cloudItem?.isTrashed == true) {
                     toTrash.add(local)
+                    return@forEach
                 }
+            }
 
-                // item was locally added
-                local.immichId == null -> {
-                    val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
-                    val cloudMatch = cloudByHash[currentHash]
+            val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
+            val cloudMatch = cloudByHash[currentHash]
 
-                    if (cloudMatch != null) {
-                        fileManager.mediaDao.linkToImmich(
-                            id = local.id,
-                            hash = currentHash,
-                            immichUrl = "/api/assets/${cloudMatch.id}/original"
-                        )
-                    } else {
-                        toUpload.add(local.copy(hash = currentHash))
-                    }
-                }
+            if (cloudMatch != null) {
+                fileManager.mediaDao.linkToImmich(
+                    id = local.id,
+                    hash = currentHash,
+                    immichUrl = "/api/assets/${cloudMatch.id}/original"
+                )
+            } else {
+                toUpload.add(local.copy(hash = currentHash))
             }
         }
 

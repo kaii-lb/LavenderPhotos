@@ -337,7 +337,7 @@ fun ContentResolver.setDateForMedia(
     dateTaken: Long,
     overwriteLastModified: Boolean = true
 ) {
-    if (uri.toString().startsWith("http")) return
+    if (uri.toString().startsWith("/api")) return
 
     try {
         if (type == MediaType.Image) {
