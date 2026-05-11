@@ -87,6 +87,11 @@ class ImmichInfoViewModel(
         }
     }
 
+    fun removeServer() {
+        logout()
+        setInfo(info = ImmichBasicInfo.Empty)
+    }
+
     fun login(
         email: String,
         password: String,

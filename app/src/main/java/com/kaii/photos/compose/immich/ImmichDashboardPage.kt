@@ -219,7 +219,7 @@ fun ImmichDashboardPage(
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
                     ) {
                         coroutineScope.launch {
-                            viewModel.logout()
+                            viewModel.removeServer()
                         }
 
                         showClearEndpointDialog.value = false
