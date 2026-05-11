@@ -66,46 +66,54 @@ object EncryptionManager {
     private fun writeToOutputStream(
         inputStream: InputStream,
         outputStream: OutputStream,
+        fileSize: Long,
         cipher: Cipher,
         progress: (progress: Float) -> Unit
     ) {
-        val totalLength = if (inputStream.available() != 0) inputStream.available().toFloat() else 1f
-        var currentProgress = 0f
+        val inputStream = inputStream.buffered()
 
-        val buffer = ByteArray(cipher.blockSize * 1024 * 32)
+        val bufferSize = 1024 * 32
+        val inputBuffer = ByteArray(bufferSize)
+        val outputBuffer = ByteArray(cipher.getOutputSize(bufferSize))
 
-        var read = 0
-        while (inputStream.read(buffer).also { read = it } != -1) {
-            val processedBytes = cipher.update(buffer, 0, read)
-            processedBytes?.let {
-                outputStream.write(it)
+        var totalBytesRead = 0L
 
-                currentProgress += it.size / totalLength
-                progress(currentProgress)
-                Log.d(TAG, "Progress: $currentProgress, writing data of size $read bytes >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        inputStream.use { input ->
+            outputStream.use { output ->
+                var read = -1
+                while (input.read(inputBuffer).also { read = it } != -1) {
+                    val processedByteCount = cipher.update(inputBuffer, 0, read, outputBuffer, 0)
+
+                    if (processedByteCount > 0) {
+                        output.write(outputBuffer, 0, processedByteCount)
+                    }
+
+                    totalBytesRead += read
+                    if (fileSize > 0) {
+                        val progress = totalBytesRead.toFloat() / fileSize
+                        progress(progress)
+                    }
+                }
+
+                try {
+                    val finalBytes = cipher.doFinal()
+                    if (finalBytes != null) {
+                        output.write(finalBytes)
+                    }
+
+                    progress(1f)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Cipher finalization failed", e)
+                    e.printStackTrace()
+                }
             }
         }
-
-        try {
-            val finalBytes = cipher.doFinal()
-            finalBytes?.let {
-                outputStream.write(it)
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, e.toString())
-            e.printStackTrace()
-        } finally {
-            inputStream.close()
-            outputStream.close()
-        }
-
-        outputStream.close()
-        inputStream.close()
     }
 
     fun encryptInputStream(
         inputStream: InputStream,
-        outputStream: OutputStream
+        outputStream: OutputStream,
+        fileSize: Long
     ): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
@@ -113,6 +121,7 @@ object EncryptionManager {
         writeToOutputStream(
             inputStream = inputStream,
             outputStream = outputStream,
+            fileSize = fileSize,
             cipher = cipher
         ) {}
 
@@ -122,6 +131,7 @@ object EncryptionManager {
     fun decryptInputStream(
         inputStream: InputStream,
         outputStream: OutputStream,
+        fileSize: Long,
         iv: ByteArray
     ) {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -130,6 +140,7 @@ object EncryptionManager {
         writeToOutputStream(
             inputStream = inputStream,
             outputStream = outputStream,
+            fileSize = fileSize,
             cipher = cipher
         ) {}
     }
@@ -215,6 +226,7 @@ object EncryptionManager {
         writeToOutputStream(
             inputStream = inputStream,
             outputStream = outputStream,
+            fileSize = original.length(),
             cipher = cipher
         ) {
             progress(it)

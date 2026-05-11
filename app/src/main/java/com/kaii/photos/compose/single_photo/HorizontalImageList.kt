@@ -190,7 +190,7 @@ fun HorizontalImageList(
                     },
                     useCache = useCache,
                     modifier = Modifier
-                        .fillMaxSize(1f)
+                        .fillMaxSize()
                         .transformable(),
                 )
             }

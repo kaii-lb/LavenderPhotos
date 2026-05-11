@@ -161,8 +161,9 @@ suspend fun moveMediaToSecureFolder(
             // encrypt file data and write to secure folder path
             val iv =
                 EncryptionManager.encryptInputStream(
-                    fileToBeHidden.inputStream(),
-                    destinationFile.outputStream()
+                    inputStream = fileToBeHidden.inputStream(),
+                    outputStream = destinationFile.outputStream(),
+                    fileSize = fileToBeHidden.length()
                 )
 
             applicationDatabase.securedItemEntityDao().insertEntity(
@@ -249,9 +250,10 @@ suspend fun moveImageOutOfLockedFolder(
         try {
             if (iv != null) {
                 EncryptionManager.decryptInputStream(
-                    fileToBeRestored.inputStream(),
-                    tempFile.outputStream(),
-                    iv
+                    inputStream = fileToBeRestored.inputStream(),
+                    outputStream = tempFile.outputStream(),
+                    fileSize = fileToBeRestored.length(),
+                    iv = iv
                 )
             } else {
                 fileToBeRestored.inputStream().copyTo(tempFile.outputStream())

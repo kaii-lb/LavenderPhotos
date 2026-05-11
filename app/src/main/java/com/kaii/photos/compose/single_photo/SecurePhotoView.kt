@@ -401,6 +401,7 @@ private fun BottomBar(
                                         EncryptionManager.decryptInputStream(
                                             inputStream = originalFile.inputStream(),
                                             outputStream = cachedFile.outputStream(),
+                                            fileSize = originalFile.length(),
                                             iv = iv
                                         )
                                     }

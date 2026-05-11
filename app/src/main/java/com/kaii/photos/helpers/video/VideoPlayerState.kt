@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.Effect
 import androidx.media3.common.Format
+import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -86,6 +87,9 @@ class VideoPlayerState(
     var selectedAudioTrack by mutableStateOf<LavenderExoPlayer.AudioTrack?>(null)
         private set
 
+    var fadeInPlayer by mutableStateOf(false)
+        private set
+
     private val player: LavenderExoPlayer = LavenderExoPlayer(
         context = context,
         onDurationChanged = { new ->
@@ -105,7 +109,11 @@ class VideoPlayerState(
         onCurrentPositionChanged = { new ->
             currentPosition = new
         },
-        onPlaybackStateChanged = onPlaybackStateChanged,
+        onPlaybackStateChanged = { state ->
+            onPlaybackStateChanged(state)
+
+            fadeInPlayer = state == Player.STATE_READY
+        },
         onAudioTracksChanged = { tracks ->
             audioTracks.clear()
             audioTracks.addAll(tracks)

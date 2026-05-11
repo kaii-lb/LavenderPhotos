@@ -105,6 +105,7 @@ class DataAndBackupHelper(
                 EncryptionManager.decryptInputStream(
                     inputStream = secureFile.inputStream(),
                     outputStream = decryptedFile.outputStream(),
+                    fileSize = secureFile.length(),
                     iv = iv
                 )
             } catch (e: Throwable) {
@@ -235,8 +236,11 @@ class DataAndBackupHelper(
             }
 
         if (items.isEmpty()) {
-            zipOutputStream.close()
-            fileOutputStream.close()
+            withContext(Dispatchers.IO) {
+                zipOutputStream.close()
+                fileOutputStream.close()
+            }
+
             progress(1f)
             return null
         }
