@@ -127,7 +127,7 @@ fun MediaItem(
                     thumbnail = item.item.immichThumbnail!!,
                     original = item.item.immichUrl!!,
                     hash = item.item.hash!!,
-                    accessToken = item.accessToken!!,
+                    auth = item.auth,
                     endpoint = item.endpoint!!,
                     useThumbnail = true
                 )

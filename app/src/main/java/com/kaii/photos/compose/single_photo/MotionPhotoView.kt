@@ -25,6 +25,7 @@ import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.video.VideoPlayerState
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.ZoomableState
@@ -39,7 +40,7 @@ fun MotionPhotoView(
     zoomableState: ZoomableState,
     appBarsVisible: MutableState<Boolean>,
     window: Window,
-    accessToken: () -> String,
+    auth: () -> Auth,
     endpoint: () -> String,
     shouldPlay: () -> Boolean,
     blurViews: Boolean,
@@ -50,11 +51,11 @@ fun MotionPhotoView(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(item, accessToken(), endpoint()) {
+    LaunchedEffect(item, auth(), endpoint()) {
         state.setSource(
             context = context,
             item = item,
-            accessToken = accessToken(),
+            auth = auth(),
             endpoint = endpoint(),
             loop = true,
             shouldPlay = shouldPlay

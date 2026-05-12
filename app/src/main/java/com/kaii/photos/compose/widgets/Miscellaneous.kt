@@ -360,7 +360,7 @@ fun AnimatedImmichBackupIcon(
         var showLoading by rememberSaveable { mutableStateOf(true) }
         LaunchedEffect(immichInfo()) {
             delay(AnimationConstants.DURATION_LONG.toLong())
-            showLoading = immichInfo().accessToken.isBlank()
+            showLoading = immichInfo().username.isBlank()
         }
 
         val percentage by animateFloatAsState(
@@ -407,7 +407,7 @@ fun AnimatedLoginIcon(
     }
 
     AnimatedContent(
-        targetState = info.accessToken.isNotBlank(),
+        targetState = info.username.isNotBlank(),
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(end = 4.dp)

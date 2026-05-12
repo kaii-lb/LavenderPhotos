@@ -101,6 +101,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -175,7 +176,7 @@ fun SecurePhotoView(
                         displayName = resources.getString(R.string.media_broken)
                     ),
                     bytes = ByteArray(0),
-                    accessToken = null,
+                    auth = Auth.None,
                     endpoint = null
                 )
             }

@@ -68,8 +68,11 @@ class ImmichModelLoader(
     }
 
     override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers {
+        val headerName = model.auth.headers.keys.first()
+        val headerValue = model.auth.headers[headerName]!!
+
         return LazyHeaders.Builder()
-            .addHeader("Authorization", "Bearer ${model.accessToken}")
+            .addHeader(headerName, headerValue)
             .build()
     }
 

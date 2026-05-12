@@ -69,12 +69,13 @@ import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay
 
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    accessToken: () -> String,
+    auth: () -> Auth,
     endpoint: () -> String,
     state: VideoPlayerState,
     appBarsVisible: MutableState<Boolean>,
@@ -89,12 +90,12 @@ fun VideoPlayer(
 ) {
     val context = LocalContext.current
     var securedMediaProgress by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(shouldPlay(), accessToken(), endpoint()) {
+    LaunchedEffect(shouldPlay(), auth(), endpoint()) {
         if (shouldPlay()) {
             state.setSource(
                 context = context,
                 item = item,
-                accessToken = accessToken(),
+                auth = auth(),
                 endpoint = endpoint(),
                 shouldPlay = shouldPlay,
                 decryptProgress = {

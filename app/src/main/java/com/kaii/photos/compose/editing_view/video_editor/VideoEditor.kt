@@ -86,6 +86,7 @@ import com.kaii.photos.helpers.editing.rememberVideoEditingState
 import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -116,7 +117,7 @@ fun VideoEditor(
     VideoEditorImpl(
         uri = uri,
         absolutePath = absolutePath,
-        accessToken = { info.accessToken },
+        auth = { info.auth },
         endpoint = { info.endpoint },
         album = album,
         window = window,
@@ -134,7 +135,7 @@ fun VideoEditor(
 fun VideoEditorImpl(
     uri: Uri,
     absolutePath: String,
-    accessToken: () -> String,
+    auth: () -> Auth,
     endpoint: () -> String,
     album: AlbumType?,
     window: Window,
@@ -156,14 +157,14 @@ fun VideoEditorImpl(
     )
 
     val context = LocalContext.current
-    LaunchedEffect(uri, accessToken(), endpoint()) {
+    LaunchedEffect(uri, auth(), endpoint()) {
         videoPlayerState.setSource(
             context = context,
             item = MediaStoreData.dummyItem.copy(
                 uri = uri.toString(),
                 absolutePath = absolutePath
             ),
-            accessToken = accessToken(),
+            auth = auth(),
             endpoint = endpoint(),
             shouldPlay = { true }
         )

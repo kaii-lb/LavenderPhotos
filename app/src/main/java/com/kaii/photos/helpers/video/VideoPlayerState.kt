@@ -28,6 +28,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -194,7 +195,7 @@ class VideoPlayerState(
     suspend fun setSource(
         context: Context,
         item: MediaStoreData,
-        accessToken: String,
+        auth: Auth,
         endpoint: String,
         loop: Boolean = false,
         shouldPlay: () -> Boolean,
@@ -232,7 +233,7 @@ class VideoPlayerState(
             item.immichUrl != null -> {
                 LavenderExoPlayer.Input.Networked(
                     uri = uri.toUri(),
-                    accessToken = accessToken
+                    auth = auth
                 )
             }
 

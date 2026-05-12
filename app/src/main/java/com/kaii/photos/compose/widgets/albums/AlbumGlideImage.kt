@@ -38,7 +38,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun AlbumGlideImage(
     albumInfo: AlbumGridState.Info,
-    info: ImmichBasicInfo
+    info: () -> ImmichBasicInfo
 ) {
     AnimatedContent(
         targetState = albumInfo.thumbnail.uri.isNotBlank(),
@@ -66,8 +66,8 @@ fun AlbumGlideImage(
                         thumbnail = albumInfo.thumbnail.uri,
                         original = albumInfo.thumbnail.uri,
                         hash = "",
-                        accessToken = info.accessToken,
-                        endpoint = info.endpoint,
+                        auth = info().auth,
+                        endpoint = info().endpoint,
                         useThumbnail = true
                     ) else albumInfo.thumbnail.uri,
                 contentDescription = albumInfo.album.name,

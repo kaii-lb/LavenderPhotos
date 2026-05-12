@@ -112,7 +112,7 @@ fun AlbumFolder(
                 topItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo()
+                        info = immichInfo
                     )
                 }
             }
@@ -139,7 +139,7 @@ fun AlbumFolder(
                 bottomItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo()
+                        info = immichInfo
                     )
                 }
             }

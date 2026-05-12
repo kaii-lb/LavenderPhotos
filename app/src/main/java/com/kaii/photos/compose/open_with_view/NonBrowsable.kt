@@ -74,6 +74,7 @@ import com.kaii.photos.helpers.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +144,7 @@ fun OpenWithContent(
                     item = MediaStoreData.dummyItem.copy(
                         uri = uri.toString()
                     ),
-                    accessToken = { "" },
+                    auth = { Auth.None },
                     endpoint = { "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
@@ -168,7 +169,7 @@ fun OpenWithContent(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = { "" },
+                        auth = { Auth.None },
                         endpoint = { "" },
                         shouldPlay = { true },
                         blurViews = blurViews,

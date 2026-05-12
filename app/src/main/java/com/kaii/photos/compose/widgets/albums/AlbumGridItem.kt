@@ -70,7 +70,7 @@ fun AlbumGridItem(
         ) {
             AlbumGlideImage(
                 albumInfo = album.info,
-                info = info()
+                info = info
             )
 
             Row(

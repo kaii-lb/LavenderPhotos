@@ -22,10 +22,10 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import com.google.common.net.HttpHeaders
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.editing.applyEffects
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -74,7 +74,7 @@ class LavenderExoPlayer(
 
         data class Networked(
             val uri: Uri,
-            val accessToken: String
+            val auth: Auth
         ) : Input
     }
 
@@ -274,11 +274,7 @@ class LavenderExoPlayer(
                 val upstream = DefaultHttpDataSource.Factory()
                     .setAllowCrossProtocolRedirects(true)
                     .setConnectTimeoutMs(10.seconds.inWholeMilliseconds.toInt())
-                    .setDefaultRequestProperties(
-                        mapOf(
-                            HttpHeaders.AUTHORIZATION to "bearer ${input.accessToken}"
-                        )
-                    )
+                    .setDefaultRequestProperties(input.auth.headers)
 
                 val factory = CacheDataSource.Factory()
                     .setCache(context.appModule.cache)

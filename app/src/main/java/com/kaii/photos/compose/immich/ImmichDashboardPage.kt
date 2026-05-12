@@ -173,7 +173,7 @@ fun ImmichDashboardPage(
                                     viewModel.setInfo(
                                         ImmichBasicInfo(
                                             endpoint = address.removeSuffix("/"),
-                                            accessToken = loginInfo.accessToken,
+                                            auth = loginInfo.auth,
                                             username = loginInfo.username,
                                             userId = loginInfo.userId,
                                             updatedAt = loginInfo.updatedAt

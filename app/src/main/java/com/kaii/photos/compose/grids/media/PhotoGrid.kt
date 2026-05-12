@@ -53,6 +53,7 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateLong
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
+import io.github.kaii_lb.lavender.immichintegration.Auth
 
 @Composable
 fun PhotoGrid(
@@ -210,7 +211,7 @@ private fun DeviceMedia(
                             LoadingItem(
                                 item = PhotoLibraryUIModel.Media(
                                     item = MediaStoreData.dummyItem,
-                                    accessToken = null,
+                                    auth = Auth.None,
                                     endpoint = null
                                 ),
                                 useRoundedCorners = useRoundedCorners()

@@ -184,7 +184,7 @@ fun MainDialog(
                     horizontalAlignment = Alignment.Start
                 ) {
                     item {
-                        if (immichInfo().accessToken.isNotBlank()) {
+                        if (immichInfo().username.isNotBlank()) {
                             MainDialogUserInfo(
                                 coroutineScope = coroutineScope,
                                 immichInfo = immichInfo,

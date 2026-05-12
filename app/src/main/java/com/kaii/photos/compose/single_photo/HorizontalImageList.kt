@@ -154,7 +154,7 @@ fun HorizontalImageList(
                                 thumbnail = media.item.immichThumbnail!!,
                                 original = media.item.immichUrl!!,
                                 hash = media.item.hash!!,
-                                accessToken = media.accessToken!!,
+                                auth = media.auth,
                                 endpoint = media.endpoint!!,
                                 useThumbnail = false
                             )
@@ -177,7 +177,7 @@ fun HorizontalImageList(
 
                 VideoPlayer(
                     item = media.item,
-                    accessToken = { media.accessToken ?: "" },
+                    auth = { media.auth },
                     endpoint = { media.endpoint ?: "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
@@ -213,7 +213,7 @@ fun HorizontalImageList(
                             thumbnail = media.item.immichThumbnail!!,
                             original = media.item.immichUrl!!,
                             hash = media.item.hash!!,
-                            accessToken = media.accessToken!!,
+                            auth = media.auth,
                             endpoint = media.endpoint!!,
                             useThumbnail = false
                         )
@@ -257,7 +257,7 @@ fun HorizontalImageList(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = { media.accessToken ?: "" },
+                        auth = { media.auth },
                         endpoint = { media.endpoint ?: "" },
                         shouldPlay = { state.currentPage == index },
                         blurViews = blurViews,
