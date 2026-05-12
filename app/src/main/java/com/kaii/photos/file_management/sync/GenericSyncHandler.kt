@@ -58,8 +58,7 @@ interface GenericSyncHandler {
         localMedia.forEach { local ->
             if (local.immichId != null) {
                 val cloudItem = cloudById[local.immichId] ?: fileManager.assetClient.get(
-                    id = Uuid.parse(local.immichId!!),
-                    accessToken = fileManager.info.accessToken
+                    id = Uuid.parse(local.immichId!!)
                 )
 
                 if (cloudItem?.isTrashed == true) {
@@ -161,8 +160,7 @@ interface GenericSyncHandler {
                         id = item.id.toString()
                     )
                 }
-            ),
-            accessToken = fileManager.info.accessToken
+            )
         )?.associateBy { it.id } ?: return false
 
         val trashedItems = mutableListOf<Uuid>()
@@ -201,8 +199,7 @@ interface GenericSyncHandler {
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
                         filename = mediaItem.displayName
-                    ),
-                    accessToken = fileManager.info.accessToken
+                    )
                 )
 
                 if (resp != null) {
@@ -218,15 +215,11 @@ interface GenericSyncHandler {
             }
         }
 
-        fileManager.assetClient.restore(
-            ids = trashedItems,
-            accessToken = fileManager.info.accessToken
-        )
+        fileManager.assetClient.restore(ids = trashedItems)
 
         val success = fileManager.albumsClient.addAssets(
             albumId = Uuid.parse(albumImmichId),
-            assetIds = total.fastMap { Uuid.parse(it) },
-            accessToken = fileManager.info.accessToken
+            assetIds = total.fastMap { Uuid.parse(it) }
         )
 
         return total.size == media.size && success
@@ -241,8 +234,7 @@ interface GenericSyncHandler {
 
         ids.forEach { id ->
             val cloudItem = fileManager.assetClient.get(
-                id = Uuid.parse(id),
-                accessToken = fileManager.info.accessToken
+                id = Uuid.parse(id)
             ) ?: return@forEach
 
             val localItem = fileManager.mediaDao.getMediaFromHashes(
@@ -261,7 +253,7 @@ interface GenericSyncHandler {
             }
 
             // Proceed with download only if content is truly missing
-            val bytes = fileManager.assetClient.download(Uuid.parse(cloudItem.id), fileManager.info.accessToken) ?: return@forEach
+            val bytes = fileManager.assetClient.download(Uuid.parse(cloudItem.id)) ?: return@forEach
             val item = cloudItem.toMediaStoreData()
 
             val newUri = context.contentResolver.insertMedia(

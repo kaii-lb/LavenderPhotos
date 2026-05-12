@@ -13,7 +13,6 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -26,8 +25,7 @@ class CustomFileManager(
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo
+    override val albumsClient: AlbumsClient
 ) : GenericFileManager {
     companion object {
         private val TAG = CustomFileManager::class.qualifiedName

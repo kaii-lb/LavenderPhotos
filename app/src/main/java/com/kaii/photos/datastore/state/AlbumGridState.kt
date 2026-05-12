@@ -181,26 +181,23 @@ class AlbumGridState(
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
         val immichInfo = info.first()
-        val loginManager = LoginStateManager()
+        val loginManager = LoginStateManager(apiClient)
 
-        loginManager.setBaseUrl(
-            baseUrl = immichInfo.endpoint,
-            apiClient = apiClient
-        )
+        loginManager.setEndpoint(immichInfo.endpoint)
+        loginManager.setAuth(immichInfo.auth)
 
-        val state = loginManager.refresh(
-            accessToken = immichInfo.accessToken
-        )
+        val state = loginManager.refresh()
 
         if (state !is LoginState.LoggedIn) return@withContext
 
         val albumState = AllAlbumsState(
-            baseUrl = immichInfo.endpoint,
+            endpoint = immichInfo.endpoint,
+            auth = immichInfo.auth,
             apiClient = apiClient,
             coroutineScope = scope
         )
 
-        albumState.load(immichInfo.accessToken).join()
+        albumState.load().join()
 
         albumState.state.value.let { state ->
             if (state is AlbumsGetAllState.Retrieved) {
