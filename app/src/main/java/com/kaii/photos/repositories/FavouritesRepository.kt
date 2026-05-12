@@ -14,6 +14,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -46,20 +47,21 @@ class FavouritesRepository(
         )
     }
 
-    override var fileManager = HybridFileManager(
+    override val fileManager = HybridFileManager(
         isCustom = false,
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
-        ),
-        info = ImmichBasicInfo.Empty
+        )
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,7 +79,7 @@ class FavouritesRepository(
             }
         ).flow
             .mapToMedia(
-                accessToken = params.info.accessToken,
+                auth = params.info.auth,
                 endpoint = params.info.endpoint
             )
     }.cachedIn(scope)
@@ -95,21 +97,8 @@ class FavouritesRepository(
             params.mapLatest { it.info }
                 .distinctUntilChanged()
                 .collectLatest { info ->
-                    fileManager = HybridFileManager(
-                        isCustom = false,
-                        mediaDao = mediaDao,
-                        customDao = customDao,
-                        syncTaskDao = syncTaskDao,
-                        assetClient = AssetsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        albumsClient = AlbumsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        info = info
-                    )
+                    fileManager.setEndpoint(info.endpoint)
+                    fileManager.setAuth(info.auth)
                 }
         }
     }

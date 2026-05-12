@@ -15,7 +15,6 @@ import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
@@ -37,8 +36,7 @@ class CloudFileManager(
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo
+    override val albumsClient: AlbumsClient
 ) : GenericFileManager {
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun getShareItems(
@@ -54,8 +52,7 @@ class CloudFileManager(
 
             val checksumOriginal = calculateSha1Checksum(file = file)
             val checksumCloud = assetClient.get(
-                id = Uuid.parse(item.immichId!!),
-                accessToken = info.accessToken
+                id = Uuid.parse(item.immichId!!)
             )?.checksum
 
             val checksumMatch = checksumCloud == checksumOriginal
@@ -70,8 +67,7 @@ class CloudFileManager(
                 item.copy(uri = uri)
             } else {
                 assetClient.download(
-                    id = Uuid.parse(item.immichId!!),
-                    accessToken = info.accessToken
+                    id = Uuid.parse(item.immichId!!)
                 )?.let { bytes ->
                     if (!file.exists()) file.createNewFile()
 
@@ -119,8 +115,7 @@ class CloudFileManager(
             request = AssetFavouriteRequest(
                 ids = list.fastMap { Uuid.parse(it.immichId!!) },
                 isFavorite = favourite
-            ),
-            accessToken = info.accessToken
+            )
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -186,8 +181,7 @@ class CloudFileManager(
 
         albumsClient.removeAssets(
             albumId = Uuid.parse(albumId),
-            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             onItemDone(if (success) list.size else -1)
 
@@ -236,7 +230,6 @@ class CloudFileManager(
 
         assetClient.delete(
             ids = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken,
             force = false
         ).let { success ->
             syncTaskDao.updateTaskStatus(
@@ -281,8 +274,7 @@ class CloudFileManager(
             id = Uuid.parse(
                 uuidString = (album as AlbumType.Cloud).immichId
             ),
-            newName = newName,
-            accessToken = info.accessToken
+            newName = newName
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -365,8 +357,7 @@ class CloudFileManager(
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
-            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -450,8 +441,7 @@ class CloudFileManager(
         return@withContext list.mapNotNull { item ->
             val media = mediaItems[item.id]!!
             val bytes = assetClient.download(
-                id = Uuid.parse(item.immichId!!),
-                accessToken = info.accessToken
+                id = Uuid.parse(item.immichId!!)
             )
 
             if (bytes == null) return@mapNotNull null

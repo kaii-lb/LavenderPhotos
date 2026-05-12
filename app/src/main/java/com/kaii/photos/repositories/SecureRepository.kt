@@ -162,7 +162,7 @@ class SecureRepository(
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
         ).flow.mapToSecuredMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -248,7 +248,7 @@ class SecureRepository(
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
                 item = item,
-                accessToken = params.value.info.accessToken,
+                auth = params.value.info.auth,
                 endpoint = params.value.info.endpoint,
                 bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
             )

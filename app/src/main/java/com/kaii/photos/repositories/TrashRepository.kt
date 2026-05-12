@@ -21,6 +21,7 @@ import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.TrashDataSource
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -61,19 +62,20 @@ class TrashRepository(
             cancellationSignal = cancellationSignal
         )
 
-    override var fileManager = LocalFileManager(
+    override val fileManager = LocalFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
-        ),
-        info = ImmichBasicInfo.Empty
+        )
     )
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
@@ -108,7 +110,7 @@ class TrashRepository(
             ),
             pagingSourceFactory = { ListPagingSource(media = params.items) }
         ).flow.mapToMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)

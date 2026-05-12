@@ -7,6 +7,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.kaii.photos.R
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
@@ -231,7 +232,7 @@ data class AlbumInfo(
 @Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
-    val accessToken: String,
+    val auth: Auth,
     val username: String,
     val userId: String,
     val updatedAt: String
@@ -239,7 +240,7 @@ data class ImmichBasicInfo(
     companion object {
         val Empty = ImmichBasicInfo(
             endpoint = "",
-            accessToken = "",
+            auth = Auth.None,
             username = "",
             userId = "",
             updatedAt = ""

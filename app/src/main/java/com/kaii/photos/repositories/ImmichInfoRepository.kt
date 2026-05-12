@@ -2,11 +2,12 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import android.net.Uri
+import android.util.Patterns
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.OperationStatus
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
@@ -24,7 +25,6 @@ class ImmichInfoRepository(
     private val serverState: ServerState,
     private val loginState: LoginStateManager,
     private val settings: SettingsImmichImpl,
-    apiClient: ApiClient,
     scope: CoroutineScope
 ) {
     private val _serverInfo = MutableStateFlow<ServerInfoState>(ServerInfoState.Unavailable)
@@ -45,18 +45,14 @@ class ImmichInfoRepository(
 
     init {
         scope.launch {
-            settings.getImmichBasicInfo().collectLatest {
-                info = it
+            settings.getImmichBasicInfo().collectLatest { info ->
+                this@ImmichInfoRepository.info = info
 
-                serverState.setBaseUrl(
-                    baseUrl = it.endpoint,
-                    apiClient = apiClient
-                )
+                serverState.setAuth(info.auth)
+                loginState.setAuth(info.auth)
 
-                loginState.setBaseUrl(
-                    baseUrl = it.endpoint,
-                    apiClient = apiClient
-                )
+                serverState.setEndpoint(info.endpoint)
+                loginState.setEndpoint(info.endpoint)
 
                 refresh()
             }
@@ -68,15 +64,15 @@ class ImmichInfoRepository(
         // even a server to connect to
         if (info.endpoint.isBlank()) return
 
-        if (info.accessToken.isBlank()) {
+        if (info.auth is Auth.None) {
             _userInfo.value = LoginState.LoggedOut
             return
         }
 
         _refreshChannel.trySend(OperationStatus.Loading)
 
-        _serverInfo.value = serverState.fetch(accessToken = info.accessToken)
-        _userInfo.value = loginState.refresh(accessToken = info.accessToken)
+        _serverInfo.value = serverState.fetch()
+        _userInfo.value = loginState.refresh()
 
         if (_userInfo.value is LoginState.LoggedIn) {
             val info = (_userInfo.value as LoginState.LoggedIn).user
@@ -106,7 +102,7 @@ class ImmichInfoRepository(
     }
 
     suspend fun logout() {
-        loginState.logout(info.accessToken).let { success ->
+        loginState.logout().let { success ->
             if (success) {
                 _userInfo.value = LoginState.LoggedOut
 
@@ -116,7 +112,7 @@ class ImmichInfoRepository(
     }
 
     suspend fun ping(address: String) = serverState.ping(address = address)
-    fun validateServerAddress(address: String) = serverState.validateServerAddress(address)
+    fun validateServerAddress(address: String) = Patterns.WEB_URL.matcher(address).matches()
 
     suspend fun updateInfo(
         email: String?,
@@ -125,7 +121,6 @@ class ImmichInfoRepository(
         _operationChannel.trySend(OperationStatus.Loading)
 
         loginState.updateInfo(
-            accessToken = info.accessToken,
             name = username,
             email = email
         ).let {
@@ -149,7 +144,6 @@ class ImmichInfoRepository(
         _operationChannel.trySend(OperationStatus.Loading)
 
         loginState.changePassword(
-            accessToken = info.accessToken,
             currentPassword = currentPassword,
             newPassword = newPassword
         ).let { success ->
@@ -173,8 +167,7 @@ class ImmichInfoRepository(
 
         val success = loginState.uploadPfp(
             bytes = bytes,
-            filename = displayName,
-            accessToken = info.accessToken
+            filename = displayName
         ) != null
 
         _operationChannel.trySend(

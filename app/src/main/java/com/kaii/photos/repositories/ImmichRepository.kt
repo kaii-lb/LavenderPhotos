@@ -22,6 +22,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.toMediaStoreData
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -56,19 +57,20 @@ class ImmichRepository(
 ) : BaseRepo {
     private val db = MediaDatabase.getInstance(context.applicationContext)
 
-    override var fileManager = CloudFileManager(
+    override val fileManager = CloudFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
         syncTaskDao = syncTaskDao,
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
-        ),
-        info = ImmichBasicInfo.Empty
+        )
     )
 
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
@@ -101,7 +103,7 @@ class ImmichRepository(
                 else customDao.getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -118,11 +120,8 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun refetch() {
-        val snapshot = params.value
-
         val info = fileManager.albumsClient.get(
             id = Uuid.parse(album.immichId!!),
-            accessToken = snapshot.info.accessToken,
             withoutAssets = false
         )
 
@@ -160,20 +159,8 @@ class ImmichRepository(
             info
                 .distinctUntilChanged()
                 .collectLatest { info ->
-                    fileManager = CloudFileManager(
-                        mediaDao = mediaDao,
-                        customDao = customDao,
-                        syncTaskDao = syncTaskDao,
-                        assetClient = AssetsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        albumsClient = AlbumsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        info = info
-                    )
+                    fileManager.setEndpoint(info.endpoint)
+                    fileManager.setAuth(info.auth)
                 }
 
             refresh()

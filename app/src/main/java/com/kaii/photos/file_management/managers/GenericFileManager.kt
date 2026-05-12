@@ -24,7 +24,6 @@ import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.exif.MediaData
@@ -36,6 +35,7 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -112,7 +112,16 @@ interface GenericFileManager {
     val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
-    val info: ImmichBasicInfo
+
+    fun setEndpoint(endpoint: String) {
+        albumsClient.setEndpoint(endpoint)
+        assetClient.setEndpoint(endpoint)
+    }
+
+    fun setAuth(auth: Auth) {
+        albumsClient.setAuth(auth)
+        assetClient.setAuth(auth)
+    }
 
     fun allowedAlbumTypesFor(
         moving: Boolean,
@@ -441,8 +450,7 @@ interface GenericFileManager {
                         id = item.id.toString()
                     )
                 }
-            ),
-            accessToken = info.accessToken
+            )
         )?.associateBy { it.id } ?: return@withContext emptyList()
 
         val taskId = taskId ?: syncTaskDao.insert(
@@ -502,8 +510,7 @@ interface GenericFileManager {
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
                         filename = mediaItem.displayName
-                    ),
-                    accessToken = info.accessToken
+                    )
                 )
 
                 if (resp != null) {
@@ -523,15 +530,11 @@ interface GenericFileManager {
             }
         }
 
-        assetClient.restore(
-            ids = trashedItems,
-            accessToken = info.accessToken
-        )
+        assetClient.restore(ids = trashedItems)
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
-            assetIds = total.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = total.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,

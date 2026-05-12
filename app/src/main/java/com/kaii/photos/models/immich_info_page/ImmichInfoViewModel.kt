@@ -10,6 +10,7 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.repositories.ImmichInfoRepository
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerState
@@ -34,10 +35,9 @@ class ImmichInfoViewModel(
 
     val apiClient = context.appModule.apiClient
     val repo = ImmichInfoRepository(
-        serverState = ServerState(coroutineScope = viewModelScope),
-        loginState = LoginStateManager(),
+        serverState = ServerState(apiClient),
+        loginState = LoginStateManager(apiClient),
         settings = settings.immich,
-        apiClient = apiClient,
         scope = viewModelScope
     )
 
@@ -130,7 +130,7 @@ class ImmichInfoViewModel(
                 info = if (state is LoginStatus.LoggedIn) {
                     ImmichBasicInfo(
                         endpoint = info.value.endpoint,
-                        accessToken = state.accessToken,
+                        auth = Auth.AccessToken(accessToken = state.accessToken),
                         username = state.name,
                         userId = state.userId,
                         updatedAt = ""
