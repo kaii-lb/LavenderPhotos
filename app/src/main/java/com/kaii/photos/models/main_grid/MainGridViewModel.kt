@@ -121,22 +121,18 @@ class MainGridViewModel(
             )
         )
 
-    private val loginState = LoginStateManager()
+    private val loginState = LoginStateManager(context.appModule.apiClient)
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
     init {
-        val apiClient = context.appModule.apiClient
-
         viewModelScope.launch {
             immichInfo.collectLatest {
-                loginState.setBaseUrl(
-                    baseUrl = it.endpoint,
-                    apiClient = apiClient
-                )
+                loginState.setEndpoint(it.endpoint)
+                loginState.setAuth(it.auth)
 
-                val state = loginState.refresh(accessToken = it.accessToken)
+                val state = loginState.refresh()
                 if (state is LoginState.LoggedIn) {
                     settings.immich.setUsername(state.user.name)
                     settings.immich.setUpdatedAt(state.user.updatedAt)

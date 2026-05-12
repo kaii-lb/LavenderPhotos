@@ -89,11 +89,13 @@ class CloudSyncWorker(
         val info = context.appModule.settings.immich.getImmichBasicInfo().first()
 
         val assetsClient = AssetsClient(
-            baseUrl = info.endpoint,
+            endpoint = info.endpoint,
+            auth = info.auth,
             client = context.appModule.apiClient
         )
         val albumsClient = AlbumsClient(
-            baseUrl = info.endpoint,
+            endpoint = info.endpoint,
+            auth = info.auth,
             client = context.appModule.apiClient
         )
 
@@ -105,24 +107,21 @@ class CloudSyncWorker(
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),
                 assetClient = assetsClient,
-                albumsClient = albumsClient,
-                info = info
+                albumsClient = albumsClient
             ),
             localFileManager = LocalFileManager(
                 mediaDao = db.mediaDao(),
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),
                 assetClient = assetsClient,
-                albumsClient = albumsClient,
-                info = info
+                albumsClient = albumsClient
             ),
             customFileManager = CustomFileManager(
                 mediaDao = db.mediaDao(),
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),
                 assetClient = assetsClient,
-                albumsClient = albumsClient,
-                info = info
+                albumsClient = albumsClient
             )
         )
 

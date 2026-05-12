@@ -97,12 +97,13 @@ class ImmichBackupOptionsState(
 
         val info = info.first()
         val albumsClient = AlbumsClient(
-            baseUrl = info.endpoint,
+            endpoint = info.endpoint,
+            auth = info.auth,
             client = apiClient
         )
 
         val albums = settings.get().first().filter { it !is AlbumType.Cloud }
-        val cloud = albumsClient.getAll(accessToken = info.accessToken).let { result ->
+        val cloud = albumsClient.getAll().let { result ->
             (result as? AlbumsGetAllState.Retrieved)?.albums?.map { album ->
                 album.id
             }
@@ -159,13 +160,14 @@ class ImmichBackupOptionsState(
 
         val info = info.first()
         val albumsClient = AlbumsClient(
-            baseUrl = info.endpoint,
+            endpoint = info.endpoint,
+            auth = info.auth,
             client = apiClient
         )
 
         val albums = settings.get().first().filter { it !is AlbumType.Cloud }
         val local = albums.filter { it.id in selectedAlbumIds }
-        val cloud = albumsClient.getAll(accessToken = info.accessToken).let {
+        val cloud = albumsClient.getAll().let {
             (it as? AlbumsGetAllState.Retrieved)?.albums
         }
 
@@ -192,8 +194,7 @@ class ImmichBackupOptionsState(
                         albumUsers = emptyList(),
                         assetIds = emptyList(),
                         description = ""
-                    ),
-                    accessToken = info.accessToken
+                    )
                 )
 
                 immichId = (response as? AlbumCreationState.Created)?.album?.id ?: return@forEach
@@ -217,8 +218,7 @@ class ImmichBackupOptionsState(
             if (album == null || album.id in selectedAlbumIds) return@forEach
 
             albumsClient.delete(
-                id = Uuid.parse(cloudAlbum.id),
-                accessToken = info.accessToken
+                id = Uuid.parse(cloudAlbum.id)
             )
 
             settings.edit(
