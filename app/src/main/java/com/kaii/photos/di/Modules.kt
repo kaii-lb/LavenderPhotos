@@ -6,6 +6,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
+import com.kaii.photos.BuildConfig
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
@@ -25,7 +26,9 @@ class AppModule(
     val settings = Settings(context.applicationContext, MainScope())
 
     val apiClient by lazy {
-        ApiClient()
+        ApiClient(
+            debugMode = BuildConfig.DEBUG
+        )
     }
 
     val scope = CoroutineScope(SupervisorJob())

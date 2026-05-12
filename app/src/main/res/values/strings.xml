@@ -1192,6 +1192,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_auth_password">Password</string>
     <string name="immich_auth_email">Email</string>
+    <string name="immich_auth_api_key">Api Key</string>
     <string name="immich_auth_current_password">Current password</string>
     <string name="immich_auth_new_password">New password</string>
     <string name="immich_auth_repeat_new_password">Repeat password</string>
@@ -1202,6 +1203,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_auth_password_current_blank">Current password cannot be blank</string>
     <string name="immich_auth_password_good_to_go">Ready to change password!</string>
     <string name="immich_auth_hide_password">Show or hide password</string>
+    <string name="immich_auth_login_with_api_key">Login with api key</string>
+    <string name="immich_auth_login_with_account">Login with account</string>
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>

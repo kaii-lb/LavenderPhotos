@@ -12,6 +12,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.repositories.ImmichInfoRepository
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
+import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
 import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -98,8 +99,6 @@ class ImmichInfoViewModel(
         context: Context
     ) {
         viewModelScope.launch {
-            val state = repo.login(email, password)
-
             val eventTitle =
                 mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
             val isLoading = mutableStateOf(true)
@@ -111,6 +110,8 @@ class ImmichInfoViewModel(
                     isLoading = isLoading
                 )
             )
+
+            val state = repo.login(email, password)
 
             if (state is LoginStatus.LoggedIn) {
                 eventTitle.value = context.resources.getString(R.string.immich_login_successful)
@@ -133,6 +134,57 @@ class ImmichInfoViewModel(
                         auth = Auth.AccessToken(accessToken = state.accessToken),
                         username = state.name,
                         userId = state.userId,
+                        updatedAt = ""
+                    )
+                } else {
+                    ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)
+                }
+            )
+
+            refresh()
+        }
+    }
+
+    fun authenticate(
+        apiKey: String,
+        context: Context
+    ) {
+        viewModelScope.launch {
+            val eventTitle =
+                mutableStateOf(context.resources.getString(R.string.immich_login_ongoing))
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = eventTitle.value,
+                    icon = R.drawable.account_circle,
+                    isLoading = isLoading
+                )
+            )
+
+            val state = repo.authenticate(apiKey)
+
+            if (state is LoginState.LoggedIn) {
+                eventTitle.value = context.resources.getString(R.string.immich_login_successful)
+                isLoading.value = false
+            } else {
+                eventTitle.value = context.resources.getString(R.string.immich_login_failed)
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = context.resources.getString(R.string.immich_login_failed),
+                        duration = SnackbarDuration.Short,
+                        icon = R.drawable.error_2
+                    )
+                )
+            }
+
+            setInfo(
+                info = if (state is LoginState.LoggedIn) {
+                    ImmichBasicInfo(
+                        endpoint = info.value.endpoint,
+                        auth = Auth.ApiKey(apiKey = apiKey),
+                        username = state.user.name,
+                        userId = state.user.id,
                         updatedAt = ""
                     )
                 } else {

@@ -18,6 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -41,12 +42,14 @@ class ImmichInfoRepository(
     private val _refreshChannel = Channel<OperationStatus>()
     val refreshStatus = _refreshChannel.receiveAsFlow()
 
-    private var info = ImmichBasicInfo.Empty
+    private var auth: Auth = Auth.None
+    private var endpoint = ""
 
     init {
         scope.launch {
             settings.getImmichBasicInfo().collectLatest { info ->
-                this@ImmichInfoRepository.info = info
+                auth = info.auth
+                endpoint = info.endpoint
 
                 serverState.setAuth(info.auth)
                 loginState.setAuth(info.auth)
@@ -62,9 +65,7 @@ class ImmichInfoRepository(
     suspend fun refresh() {
         // don't cause broken UX and other issues because there isn't
         // even a server to connect to
-        if (info.endpoint.isBlank()) return
-
-        if (info.auth is Auth.None) {
+        if (endpoint.isBlank() || auth.asString().isBlank()) {
             _userInfo.value = LoginState.LoggedOut
             return
         }
@@ -81,7 +82,7 @@ class ImmichInfoRepository(
             _refreshChannel.trySend(OperationStatus.Successful)
         } else if (_userInfo.value is LoginState.LoggedOut) {
             _refreshChannel.trySend(OperationStatus.Failed)
-            settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = info.endpoint))
+            settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
         }
     }
 
@@ -101,11 +102,30 @@ class ImmichInfoRepository(
         return state
     }
 
+    suspend fun authenticate(
+        apiKey: String
+    ): LoginState {
+        auth = Auth.ApiKey(apiKey)
+        serverState.setAuth(auth)
+        loginState.setAuth(auth)
+
+        _operationChannel.trySend(OperationStatus.Loading)
+        val state = loginState.refresh()
+
+        _operationChannel.trySend(
+            if (state is LoginState.LoggedIn) OperationStatus.Successful
+            else OperationStatus.Failed
+        )
+
+        return state
+    }
+
     suspend fun logout() {
         loginState.logout().let { success ->
             if (success) {
                 _userInfo.value = LoginState.LoggedOut
 
+                val info = settings.getImmichBasicInfo().first()
                 settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = info.endpoint))
             }
         }
