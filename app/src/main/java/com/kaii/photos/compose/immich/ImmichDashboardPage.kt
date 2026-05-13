@@ -41,11 +41,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -61,6 +63,8 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
@@ -71,6 +75,7 @@ import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
@@ -82,6 +87,7 @@ import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoSta
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -481,6 +487,54 @@ fun ImmichDashboardPage(
 
             item {
                 PreferencesSeparatorText(text = stringResource(id = R.string.immich_misc))
+            }
+
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+                val coroutineScope = rememberCoroutineScope()
+
+                var id by retain { mutableStateOf<UUID?>(null) }
+                var loading by retain { mutableStateOf(false) }
+
+                LaunchedEffect(id) {
+                    if (id != null) {
+                        WorkManager.getInstance(context)
+                            .getWorkInfoByIdFlow(id!!)
+                            .collect {
+                                if (it?.state != WorkInfo.State.RUNNING
+                                    && it?.state != WorkInfo.State.ENQUEUED
+                                ) {
+                                    loading = false
+                                }
+                            }
+                    }
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.immich_backup_sync),
+                    summary = stringResource(id = R.string.immich_backup_sync_desc),
+                    iconResID = R.drawable.cloud_sync,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    enabled = !loading && userInfo is LoginState.LoggedIn
+                ) {
+                    loading = true
+                    id = CloudSyncWorker.immediateEnqueue(
+                        context = context,
+                        albumId = null
+                    )
+
+                    coroutineScope.launch {
+                        LavenderSnackbarController.pushEvent(
+                            event = LavenderSnackbarEvent.MessageEvent(
+                                message = resources.getString(R.string.immich_backup_sync_running),
+                                icon = R.drawable.cloud_sync,
+                                duration = SnackbarDuration.Short
+                            )
+                        )
+                    }
+                }
             }
 
             item {

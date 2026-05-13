@@ -5,13 +5,16 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.helpers.AnimationConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ProgressManager(
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    settings: SettingsImmichImpl
 ) {
     enum class State {
         StartingUp,
@@ -20,7 +23,7 @@ class ProgressManager(
         Idle
     }
 
-    var state by mutableStateOf(State.StartingUp)
+    var state by mutableStateOf(State.Idle)
         private set
 
     var progress by mutableFloatStateOf(0f)
@@ -35,6 +38,12 @@ class ProgressManager(
     init {
         // startup gauge check
         scope.launch {
+            val connected = settings.getImmichBasicInfo().first().auth.asString().isNotBlank()
+
+            if (!connected) return@launch
+
+            state = State.StartingUp
+
             delay(AnimationConstants.DURATION_SHORT.toLong())
 
             progress = 1f
@@ -70,8 +79,12 @@ class ProgressManager(
     fun stopTracking() {
         scope.launch {
             delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG.toLong())
-            state = if (progress == 1f) State.Idle else State.Error
+            state = if (progress == 1f || totalItems == 0) State.Idle else State.Error
         }
+    }
+
+    fun dismiss() {
+        if (state == State.Error) state = State.Idle
     }
 
     private fun updateProgress() {

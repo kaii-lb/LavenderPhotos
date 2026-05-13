@@ -66,6 +66,7 @@ class ImmichInfoRepository(
         // don't cause broken UX and other issues because there isn't
         // even a server to connect to
         if (endpoint.isBlank() || auth.asString().isBlank()) {
+            _refreshChannel.trySend(OperationStatus.Failed)
             _userInfo.value = LoginState.LoggedOut
             return
         }
@@ -75,14 +76,22 @@ class ImmichInfoRepository(
         _serverInfo.value = serverState.fetch()
         _userInfo.value = loginState.refresh()
 
-        if (_userInfo.value is LoginState.LoggedIn) {
-            val info = (_userInfo.value as LoginState.LoggedIn).user
-            settings.setUpdatedAt(date = info.updatedAt)
-            settings.setUsername(name = info.name)
-            _refreshChannel.trySend(OperationStatus.Successful)
-        } else if (_userInfo.value is LoginState.LoggedOut) {
-            _refreshChannel.trySend(OperationStatus.Failed)
-            settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
+        when (_userInfo.value) {
+            is LoginState.LoggedIn -> {
+                val info = (_userInfo.value as LoginState.LoggedIn).user
+                settings.setUpdatedAt(date = info.updatedAt)
+                settings.setUsername(name = info.name)
+                _refreshChannel.trySend(OperationStatus.Successful)
+            }
+
+            is LoginState.LoggedOut -> {
+                _refreshChannel.trySend(OperationStatus.Failed)
+                settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
+            }
+
+            else -> {
+                _refreshChannel.trySend(OperationStatus.Failed)
+            }
         }
     }
 

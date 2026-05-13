@@ -2,6 +2,12 @@ package com.kaii.photos.compose.dialogs
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +55,8 @@ import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
+import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
@@ -154,6 +162,7 @@ fun MainDialog(
     CompositionLocalProvider(
         LocalRippleConfiguration provides null
     ) {
+        val progressManager = LocalContext.current.appModule.cloudProgressManager
         val navController = LocalNavController.current
         val isLandscape by rememberDeviceOrientation()
 
@@ -245,6 +254,9 @@ fun MainDialog(
                             title = stringResource(id = R.string.data_and_backup),
                             icon = painterResource(id = R.drawable.data),
                             actionIcon = painterResource(id = R.drawable.cloud_upload),
+                            position =
+                                if (progressManager.state != ProgressManager.State.Idle) RowPosition.Top
+                                else RowPosition.Single,
                             onClick = {
                                 coroutineScope.launch {
                                     dismiss()
@@ -260,6 +272,34 @@ fun MainDialog(
                                 }
                             }
                         )
+                    }
+
+                    item {
+                        AnimatedVisibility(
+                            visible = progressManager.state != ProgressManager.State.Idle,
+                            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+                        ) {
+                            val errorColor = MaterialTheme.colorScheme.errorContainer
+                            val containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            val color by animateColorAsState(
+                                targetValue =
+                                    if (progressManager.state == ProgressManager.State.Error) errorColor
+                                    else containerColor
+                            )
+
+                            ExpressiveDialogRow(
+                                title = stringResource(id = R.string.immich_backup_sync_count, progressManager.currentItems, progressManager.totalItems),
+                                icon = painterResource(id = R.drawable.cloud_sync),
+                                position = RowPosition.Bottom,
+                                containerColor = color,
+                                onClick = {
+                                    progressManager.dismiss()
+                                }.takeIf {
+                                    progressManager.state == ProgressManager.State.Error
+                                }
+                            )
+                        }
                     }
 
                     settingsColumnItems(

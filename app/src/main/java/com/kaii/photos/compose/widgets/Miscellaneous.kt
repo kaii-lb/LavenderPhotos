@@ -372,7 +372,7 @@ fun AnimatedImmichBackupIcon(
 
         val primaryColor = MaterialTheme.colorScheme.primary
         val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHighest
-        val errorColor = MaterialTheme.colorScheme.error
+        val errorColor = MaterialTheme.colorScheme.errorContainer
 
         val animatedColor by animateColorAsState(
             targetValue = when (progressManager.state) {
