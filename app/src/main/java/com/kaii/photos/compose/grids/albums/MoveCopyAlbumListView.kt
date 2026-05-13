@@ -186,7 +186,9 @@ fun MoveCopyAlbumListView(
                                 .padding(horizontal = 8.dp)
                                 .animateItem(),
                             onClick = {
-                                onClick(albumsList[index].info.album)
+                                albumsList.getOrNull(index)?.info?.album?.let {
+                                    onClick(it)
+                                }
                             }
                         )
                     }

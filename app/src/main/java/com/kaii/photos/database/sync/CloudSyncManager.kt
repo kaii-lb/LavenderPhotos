@@ -11,6 +11,7 @@ import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
 import com.kaii.photos.file_management.sync.CustomSyncHandler
 import com.kaii.photos.file_management.sync.LocalSyncHandler
+import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -58,11 +59,11 @@ class CloudSyncManager(
             }
         }
 
-        progressManager.stopTracking()
-
         val albums = localSyncHandler.fetchCloudAlbums()
 
-        if (albums.isNotEmpty()) progressManager.startTracking(totalItems = 0)
+        if (progressManager.state == ProgressManager.State.Idle) {
+            progressManager.startTracking(totalItems = 0)
+        }
 
         albums.forEach { album ->
             if (album is AlbumType.Custom) {
@@ -82,7 +83,9 @@ class CloudSyncManager(
 
         val album = albums.find { it.id == albumId } ?: return
 
-        progressManager.startTracking(totalItems = 0)
+        if (progressManager.state == ProgressManager.State.Idle) {
+            progressManager.startTracking(totalItems = 0)
+        }
 
         if (album is AlbumType.Custom) {
             customSyncHandler.sync(context, album)

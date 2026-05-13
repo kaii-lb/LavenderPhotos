@@ -35,10 +35,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +49,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,6 +76,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
+import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.delay
@@ -339,7 +343,7 @@ fun rememberDeviceOrientation(): MutableState<Boolean> {
     return isLandscape
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedImmichBackupIcon(
     immichInfo: () -> ImmichBasicInfo,
@@ -357,14 +361,9 @@ fun AnimatedImmichBackupIcon(
                 .zIndex(2f),
         )
 
-        var showLoading by rememberSaveable { mutableStateOf(true) }
-        LaunchedEffect(immichInfo()) {
-            delay(AnimationConstants.DURATION_LONG.toLong())
-            showLoading = immichInfo().username.isBlank()
-        }
-
+        val progressManager = LocalContext.current.appModule.cloudProgressManager
         val percentage by animateFloatAsState(
-            targetValue = if (showLoading) 0f else 1f,
+            targetValue = progressManager.progress,
             animationSpec = tween(
                 durationMillis = AnimationConstants.DURATION_EXTRA_LONG,
                 easing = FastOutSlowInEasing
@@ -373,11 +372,16 @@ fun AnimatedImmichBackupIcon(
 
         val primaryColor = MaterialTheme.colorScheme.primary
         val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        val errorColor = MaterialTheme.colorScheme.error
+
         val animatedColor by animateColorAsState(
-            targetValue = if (showLoading) primaryColor else surfaceColor,
+            targetValue = when (progressManager.state) {
+                ProgressManager.State.Error -> errorColor
+                ProgressManager.State.Idle -> surfaceColor
+                else -> primaryColor
+            },
             animationSpec = tween(
-                durationMillis = AnimationConstants.DURATION_EXTRA_LONG,
-                delayMillis = AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2
+                durationMillis = AnimationConstants.DURATION_EXTRA_LONG
             )
         )
 
@@ -386,6 +390,9 @@ fun AnimatedImmichBackupIcon(
                 percentage
             },
             color = animatedColor,
+            gapSize =
+                if (progressManager.state != ProgressManager.State.Idle) ProgressIndicatorDefaults.CircularIndicatorTrackGapSize
+                else 0.dp,
             trackColor = surfaceColor,
             strokeCap = StrokeCap.Round,
             strokeWidth = 3.dp,

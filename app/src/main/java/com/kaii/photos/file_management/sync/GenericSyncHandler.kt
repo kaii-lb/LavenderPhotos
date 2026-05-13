@@ -103,6 +103,8 @@ interface GenericSyncHandler {
             }
         }
 
+        progressManager.addToTotalItems(count = toUpload.size + toDownload.size + toTrash.size)
+
         if (toUpload.isNotEmpty()) {
             uploadMedia(
                 context = context,
@@ -144,8 +146,6 @@ interface GenericSyncHandler {
         media: List<MediaStoreData>,
         albumImmichId: String
     ): Boolean {
-        progressManager.addToTotalItems(count = media.size)
-
         val hashes = media.associate { item ->
             val hash = item.hash ?: calculateSha1Checksum(file = File(item.absolutePath))
 
@@ -243,6 +243,8 @@ interface GenericSyncHandler {
 
             if (localItem != null) {
                 successes += 1
+                progressManager.increaseProgress()
+
                 fileManager.mediaDao.linkToImmich(
                     id = localItem.id,
                     hash = cloudItem.checksum,
@@ -285,6 +287,7 @@ interface GenericSyncHandler {
                     )))
                 }
 
+                progressManager.increaseProgress()
                 successes += 1
             }
         }
@@ -312,7 +315,9 @@ interface GenericSyncHandler {
             albumId = albumId.takeIf {
                 fileManager is CustomFileManager
             },
-            onItemDone = {}
+            onItemDone = {
+                progressManager.increaseProgress()
+            }
         )
     }
 }
