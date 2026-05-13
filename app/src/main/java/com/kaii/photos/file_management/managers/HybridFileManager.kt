@@ -188,10 +188,6 @@ class HybridFileManager(
         val otherResult = otherFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
         val immichResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone)
 
-        if (destination.immichId != null) {
-            CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.immichId!!)
-        }
-
         return otherResult + immichResult
     }
 }

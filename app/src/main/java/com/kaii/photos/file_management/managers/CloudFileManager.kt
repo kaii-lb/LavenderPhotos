@@ -14,6 +14,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -25,6 +26,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.time.Clock
@@ -420,6 +422,10 @@ class CloudFileManager(
             }
         )
 
+        if (destination.immichId != null) {
+            CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+        }
+
         return@withContext ids
     }
 
@@ -438,7 +444,7 @@ class CloudFileManager(
             mediaDao.getMedia(ids = chunk.fastMap { it.id })
         }.associateBy { it.id }
 
-        return@withContext list.mapNotNull { item ->
+        val result = list.mapNotNull { item ->
             val media = mediaItems[item.id]!!
             val bytes = assetClient.download(
                 id = Uuid.parse(item.immichId!!)
@@ -478,5 +484,14 @@ class CloudFileManager(
                 immichId = item.immichId
             )
         }
+
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
+        }
+
+        return@withContext result
     }
 }

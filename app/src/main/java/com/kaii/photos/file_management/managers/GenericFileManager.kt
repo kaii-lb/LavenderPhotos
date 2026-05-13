@@ -23,6 +23,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.calculateSha1Checksum
@@ -43,6 +44,8 @@ import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBu
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -357,6 +360,13 @@ interface GenericFileManager {
 
         mediaItems.forEach { onItemDone(it.uri) }
 
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
+        }
+
         return@withContext mediaItems.fastMap {
             CopyResult(
                 id = it.id,
@@ -407,6 +417,13 @@ interface GenericFileManager {
             }
 
             onItemDone(media.uri)
+        }
+
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
         }
 
         return@withContext newItems.toList()
