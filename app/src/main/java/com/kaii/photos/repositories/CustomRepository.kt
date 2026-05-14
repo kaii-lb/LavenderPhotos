@@ -4,13 +4,12 @@ import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.HybridFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -34,16 +33,16 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CustomRepository(
-    private val customDao: CustomEntityDao,
     private val album: AlbumType,
-    mediaDao: MediaDao,
-    syncTaskDao: SyncTaskDao,
+    db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
 ) : BaseRepo {
+    private val customDao = db.customDao()
+
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -54,9 +53,9 @@ class CustomRepository(
 
     override var fileManager = HybridFileManager(
         isCustom = true,
-        mediaDao = mediaDao,
+        mediaDao = db.mediaDao(),
         customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,
@@ -66,6 +65,9 @@ class CustomRepository(
             endpoint = "",
             auth = Auth.None,
             client = client
+        ),
+        localSecureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
         )
     )
 

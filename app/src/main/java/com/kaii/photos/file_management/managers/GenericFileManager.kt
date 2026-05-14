@@ -103,6 +103,14 @@ interface GenericFileManager {
         data class Share(
             val list: List<SelectionManager.SelectedItem>
         ) : Action
+
+        data class Secure(
+            val list: List<SelectionManager.SelectedItem>
+        ) : Action
+
+        data class Restore(
+            val list: List<SelectionManager.SelectedItem>
+        ) : Action
     }
 
     data class CopyResult(
@@ -316,6 +324,16 @@ interface GenericFileManager {
                 fallback = media.dateTaken
             )
         }
+
+    suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean
+
+    suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean
 
     suspend fun moveItems(
         context: Context,

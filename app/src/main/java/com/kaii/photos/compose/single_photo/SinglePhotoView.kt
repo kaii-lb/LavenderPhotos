@@ -64,15 +64,12 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -81,7 +78,6 @@ import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -685,19 +681,10 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
-    var showLoadingDialog by remember { mutableStateOf(false) }
-
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.secure_encrypting),
-            body = stringResource(id = R.string.secure_processing)
-        )
-    }
-
     val context = LocalContext.current
 
     AnimatedVisibility(
-        visible = visible || showLoadingDialog,
+        visible = visible,
         enter = scaleIn(
             animationSpec = AnimationConstants.expressiveSpring(),
             initialScale = 0.2f
@@ -814,10 +801,10 @@ private fun BottomBar(
 
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        context.appModule.scope.launch {
-                            val item = currentItem()
-
-                            moveMediaToSecureFolder(
+                        val item = currentItem()
+                        process(
+                            context,
+                            GenericFileManager.Action.Secure(
                                 list = listOf(
                                     SelectionManager.SelectedItem(
                                         id = item.id,
@@ -826,19 +813,14 @@ private fun BottomBar(
                                         isImage = item.type == MediaType.Image,
                                         parentPath = item.parentPath
                                     )
-                                ),
-                                context = context,
-                                applicationDatabase = MediaDatabase.getInstance(context)
-                            ) {
-                                showLoadingDialog = false
-                            }
-                        }
+                                )
+                            )
+                        )
                     }
                 )
 
                 val dirPermissionManager = rememberDirectoryPermissionManager(
                     onGranted = {
-                        showLoadingDialog = true
                         filePermissionManager.get(
                             uris = listOf(currentItem().uri.toUri())
                         )

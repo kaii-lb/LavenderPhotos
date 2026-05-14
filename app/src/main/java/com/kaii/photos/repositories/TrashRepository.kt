@@ -6,13 +6,12 @@ import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.LocalFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -38,9 +37,7 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class TrashRepository(
-    mediaDao: MediaDao,
-    customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao,
+    db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
     context: Context,
@@ -63,9 +60,9 @@ class TrashRepository(
         )
 
     override val fileManager = LocalFileManager(
-        mediaDao = mediaDao,
-        customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        mediaDao = db.mediaDao(),
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,
@@ -75,6 +72,9 @@ class TrashRepository(
             endpoint = "",
             auth = Auth.None,
             client = client
+        ),
+        secureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
         )
     )
 

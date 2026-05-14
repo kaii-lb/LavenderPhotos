@@ -8,6 +8,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -18,7 +19,8 @@ class HybridFileManager(
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient
+    override val albumsClient: AlbumsClient,
+    localSecureManager: LocalSecureManager
 ) : GenericFileManager {
     private val cloudFileManager = CloudFileManager(
         mediaDao = mediaDao,
@@ -35,7 +37,8 @@ class HybridFileManager(
                 customDao = customDao,
                 syncTaskDao = syncTaskDao,
                 assetClient = assetClient,
-                albumsClient = albumsClient
+                albumsClient = albumsClient,
+                secureManager = localSecureManager
             )
         } else {
             LocalFileManager(
@@ -43,7 +46,8 @@ class HybridFileManager(
                 customDao = customDao,
                 syncTaskDao = syncTaskDao,
                 assetClient = assetClient,
-                albumsClient = albumsClient
+                albumsClient = albumsClient,
+                secureManager = localSecureManager
             )
         }
 
@@ -136,6 +140,20 @@ class HybridFileManager(
                 taskId = taskId
             )
         }
+    }
+
+    override suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        return otherFileManager.secure(context, list)
+    }
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot restore items outside secure folder")
     }
 
     override suspend fun moveItems(

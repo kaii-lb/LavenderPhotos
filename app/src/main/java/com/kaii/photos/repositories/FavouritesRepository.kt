@@ -4,12 +4,11 @@ import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.HybridFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
@@ -30,15 +29,15 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavouritesRepository(
-    mediaDao: MediaDao,
-    customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao,
+    db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
 ) : BaseRepo {
+    private val mediaDao = db.mediaDao()
+
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -50,8 +49,8 @@ class FavouritesRepository(
     override val fileManager = HybridFileManager(
         isCustom = false,
         mediaDao = mediaDao,
-        customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,
@@ -61,6 +60,9 @@ class FavouritesRepository(
             endpoint = "",
             auth = Auth.None,
             client = client
+        ),
+        localSecureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
         )
     )
 

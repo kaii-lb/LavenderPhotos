@@ -8,21 +8,15 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.ui.util.fastMap
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bumptech.glide.Glide
-import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
-import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.repositories.SecureRepository
@@ -63,74 +57,6 @@ fun shareImage(uri: Uri, context: Context, mimeType: String? = null) {
     context.startActivity(chooserIntent)
 }
 
-fun shareSecuredImage(absolutePath: String, context: Context) {
-    val uri =
-        FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(absolutePath))
-
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND
-        type = context.contentResolver.getType(uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        putExtra(Intent.EXTRA_STREAM, uri)
-    }
-
-    context.startActivity(
-        Intent.createChooser(
-            intent,
-            context.resources.getString(R.string.secure_share_media)
-        )
-    )
-}
-
-/** @param paths is a list of absolute paths and [MediaType]s of items */
-fun shareMultipleSecuredImages(
-    paths: List<Pair<String, MediaType>>,
-    context: Context
-) {
-    val hasVideos = paths.any {
-        it.second == MediaType.Video
-    }
-
-    val fileUris = ArrayList(
-        paths.map {
-            FileProvider.getUriForFile(context, LAVENDER_FILE_PROVIDER_AUTHORITY, File(it.first))
-        }
-    )
-
-    val intent = Intent().apply {
-        action = Intent.ACTION_SEND_MULTIPLE
-        type = if (hasVideos) "video/*" else "image/*"
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        putExtra(Intent.EXTRA_STREAM, fileUris)
-    }
-
-    context.startActivity(
-        Intent.createChooser(
-            intent,
-            context.resources.getString(R.string.secure_share_media)
-        )
-    )
-}
-
-@JvmName("moveSelectedItemsToSecureFolder")
-suspend fun moveMediaToSecureFolder(
-    list: List<SelectionManager.SelectedItem>,
-    context: Context,
-    applicationDatabase: MediaDatabase,
-    onDone: () -> Unit
-) = withContext(Dispatchers.IO) {
-    val media = getMediaStoreDataForIds(
-        ids = list.fastMap { it.id }.toSet(),
-        context = context
-    )
-
-    moveMediaToSecureFolder(
-        list = media.toList(),
-        context = context,
-        applicationDatabase = applicationDatabase,
-        onDone = onDone
-    )
-}
 
 @JvmName("moveMediaToSecureFolder")
 suspend fun moveMediaToSecureFolder(
@@ -227,100 +153,6 @@ suspend fun moveMediaToSecureFolder(
     }
 
     onDone()
-}
-
-suspend fun moveImageOutOfLockedFolder(
-    list: List<PhotoLibraryUIModel.SecuredMedia>,
-    context: Context,
-    applicationDatabase: MediaDatabase,
-    onDone: () -> Unit
-) {
-    val contentResolver = context.contentResolver
-    val restoredFilesDir = context.appRestoredFilesDir
-
-    list.forEach { media ->
-        val fileToBeRestored = File(media.item.absolutePath)
-        val originalPath = media.bytes?.getOriginalPath() ?: restoredFilesDir
-
-        Log.d(TAG, "ORIGINAL PATH $originalPath")
-
-        val tempFile = File(context.cacheDir, fileToBeRestored.name)
-
-        val iv = media.bytes?.getIv()
-        try {
-            if (iv != null) {
-                EncryptionManager.decryptInputStream(
-                    inputStream = fileToBeRestored.inputStream(),
-                    outputStream = tempFile.outputStream(),
-                    fileSize = fileToBeRestored.length(),
-                    iv = iv
-                )
-            } else {
-                fileToBeRestored.inputStream().copyTo(tempFile.outputStream())
-            }
-        } catch (e: Throwable) {
-            Log.e(TAG, e.toString())
-            e.printStackTrace()
-        }
-
-        Log.d(TAG, "Base path ${originalPath.toBasePath()} ${media.item.displayName}")
-
-        contentResolver.insertMedia(
-            context = context,
-            media = media.item.copy(
-                uri = FileProvider.getUriForFile(
-                    context,
-                    LAVENDER_FILE_PROVIDER_AUTHORITY,
-                    tempFile
-                ).toString()
-            ),
-            destination = originalPath.parent(),
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            preserveDate = true,
-            onInsert = { original, new ->
-                contentResolver.copyUriToUri(original, new)
-            }
-        )?.let {
-            try {
-                fileToBeRestored.delete()
-                tempFile.delete()
-                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(media.item.absolutePath)
-
-                val thumbnailFile = fileToBeRestored.secureThumbnailImage(context)
-                thumbnailFile.delete()
-                applicationDatabase.securedItemEntityDao().deleteEntityBySecuredPath(thumbnailFile.absolutePath)
-
-                fileToBeRestored.secureVideoThumbnailImage(context).let {
-                    if (it.exists()) it.delete()
-                }
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-                e.printStackTrace()
-            }
-        }
-    }
-
-    onDone()
-}
-
-/** @param list is a list of the absolute path of every image to be deleted */
-suspend fun permanentlyDeleteSecureFolderImageList(list: List<String>, context: Context) = withContext(Dispatchers.IO) {
-    val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
-
-    try {
-        list.forEach { path ->
-            File(path).let { file ->
-                file.delete()
-                val thumbnail = file.secureThumbnailImage(context)
-                thumbnail.delete()
-
-                dao.deleteEntityBySecuredPath(securedPath = path)
-                dao.deleteEntityBySecuredPath(securedPath = thumbnail.absolutePath)
-            }
-        }
-    } catch (e: Throwable) {
-        Log.e(TAG, e.toString())
-    }
 }
 
 /** @param destination where to copy said files to, should be relative

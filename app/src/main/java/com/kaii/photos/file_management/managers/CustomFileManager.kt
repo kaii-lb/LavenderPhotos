@@ -13,6 +13,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -25,7 +26,8 @@ class CustomFileManager(
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient
+    override val albumsClient: AlbumsClient,
+    private val secureManager: LocalSecureManager
 ) : GenericFileManager {
     companion object {
         private val TAG = CustomFileManager::class.qualifiedName
@@ -153,5 +155,20 @@ class CustomFileManager(
                 emptyList()
             }
         }
+    }
+
+    override suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = permanentlyDelete(
+        context = context,
+        list = secureManager.secure(context, list)
+    )
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot restore items outside secure folder")
     }
 }

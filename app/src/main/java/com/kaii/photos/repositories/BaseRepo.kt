@@ -96,4 +96,14 @@ interface BaseRepo {
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) = fileManager.share(context, list)
+
+    suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.secure(context, list)
+
+    suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.restore(context, list)
 }

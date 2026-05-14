@@ -3,7 +3,6 @@ package com.kaii.photos.helpers.search
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
-import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -91,11 +90,6 @@ class SearchManager(
         tagRepo.deleteTag(tag)
     }
 
-    suspend fun getExifData(
-        context: Context,
-        media: MediaStoreData
-    ) = searchRepo.getExifData(context, media)
-
     fun allowedAlbumTypesFor(
         moving: Boolean
     ) = searchRepo.allowedAlbumTypesFor(moving)
@@ -145,4 +139,14 @@ class SearchManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) = searchRepo.share(context, list)
+
+    suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = searchRepo.secure(context, list)
+
+    suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = searchRepo.restore(context, list)
 }

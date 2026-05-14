@@ -9,16 +9,14 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.cachedIn
 import com.kaii.photos.R
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SearchDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.HybridFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
@@ -65,16 +63,13 @@ enum class SearchMode(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
-    private val searchDao: SearchDao,
     private val taggedItemsDao: TaggedItemsDao,
+    db: MediaDatabase,
     scope: CoroutineScope,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat,
-    client: ApiClient,
-    mediaDao: MediaDao,
-    customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao
+    client: ApiClient
 ) : BaseRepo {
     private data class RoomQueryParams(
         val query: String,
@@ -96,11 +91,13 @@ class SearchRepository(
         )
     )
 
+    private val searchDao = db.searchDao()
+
     override val fileManager = HybridFileManager(
         isCustom = false,
-        mediaDao = mediaDao,
-        customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        mediaDao = db.mediaDao(),
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,
@@ -110,6 +107,9 @@ class SearchRepository(
             endpoint = "",
             auth = Auth.None,
             client = client
+        ),
+        localSecureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
         )
     )
 

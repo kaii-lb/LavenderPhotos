@@ -37,17 +37,13 @@ import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -276,33 +272,19 @@ fun SelectingBottomBarItems(
         )
     }
 
-    var showLoadingDialog by remember { mutableStateOf(false) }
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.secure_encrypting),
-            body = stringResource(id = R.string.secure_processing)
-        )
-    }
-
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
-            // TODO
-            context.appModule.scope.launch(Dispatchers.IO) {
-                moveMediaToSecureFolder(
-                    list = selectedItemsList,
-                    context = context,
-                    applicationDatabase = MediaDatabase.getInstance(context)
-                ) {
-                    selectionManager.clear()
-                    showLoadingDialog = false
-                }
-            }
+            process(
+                GenericFileManager.Action.Secure(
+                    list = selectedItemsList
+                )
+            )
+            selectionManager.clear()
         }
     )
 
     val dirPermissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            showLoadingDialog = true
             filePermissionState.get(
                 uris = selectedItemsList.map { it.uri.toUri() }
             )
@@ -315,7 +297,6 @@ fun SelectingBottomBarItems(
             title = stringResource(id = R.string.media_secure_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_secure),
             action = {
-                // TODO: move to file manager
                 if (selectedItemsList.isNotEmpty()) {
                     dirPermissionManager.start(
                         directories = selectedItemsList.fastMapNotNull {

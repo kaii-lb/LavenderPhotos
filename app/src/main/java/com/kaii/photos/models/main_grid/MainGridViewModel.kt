@@ -34,10 +34,11 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainGridViewModel(
-    context: Context,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    context: Context
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
@@ -104,9 +105,7 @@ class MainGridViewModel(
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo =
         HybridRepository(
-            mediaDao = db.mediaDao(),
-            customDao = db.customDao(),
-            syncTaskDao = db.taskDao(),
+            db = db,
             client = context.applicationContext.appModule.apiClient,
             scope = viewModelScope,
             info = immichInfo,
@@ -406,5 +405,47 @@ class MainGridViewModel(
 
     override fun renameAlbum(context: Context, newName: String) {
         throw IllegalAccessError("Cannot rename album in a main view!")
+    }
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_encrypting),
+                    icon = R.drawable.secure_folder,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.secure(context, list)
+
+            isLoading.value = false
+        }
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_decrypting),
+                    icon = R.drawable.unlock,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.restore(context, list)
+
+            isLoading.value = false
+        }
     }
 }

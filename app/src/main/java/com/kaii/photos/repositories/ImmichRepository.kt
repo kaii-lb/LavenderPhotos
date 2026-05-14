@@ -8,9 +8,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.room.withTransaction
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
@@ -46,21 +43,19 @@ import kotlin.uuid.Uuid
 class ImmichRepository(
     private val album: AlbumType,
     private val scope: CoroutineScope,
-    private val mediaDao: MediaDao,
-    private val customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao,
+    private val db: MediaDatabase,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>,
-    client: ApiClient,
-    context: Context
+    client: ApiClient
 ) : BaseRepo {
-    private val db = MediaDatabase.getInstance(context.applicationContext)
+    private val mediaDao = db.mediaDao()
+    private val customDao = db.customDao()
 
     override val fileManager = CloudFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,

@@ -287,6 +287,21 @@ class CloudFileManager(
         }
     }
 
+    // TODO: implement cloud backup for secure items
+    override suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot access secure folder functionality in an immich context!")
+    }
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot restore items outside secure folder")
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun moveItems(
         context: Context,

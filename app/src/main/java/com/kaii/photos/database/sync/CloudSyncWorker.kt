@@ -17,6 +17,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.delay
@@ -114,14 +115,20 @@ class CloudSyncWorker(
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),
                 assetClient = assetsClient,
-                albumsClient = albumsClient
+                albumsClient = albumsClient,
+                secureManager = LocalSecureManager(
+                    secureDao = db.securedItemEntityDao()
+                )
             ),
             customFileManager = CustomFileManager(
                 mediaDao = db.mediaDao(),
                 customDao = db.customDao(),
                 syncTaskDao = db.taskDao(),
                 assetClient = assetsClient,
-                albumsClient = albumsClient
+                albumsClient = albumsClient,
+                secureManager = LocalSecureManager(
+                    secureDao = db.securedItemEntityDao()
+                )
             )
         )
 

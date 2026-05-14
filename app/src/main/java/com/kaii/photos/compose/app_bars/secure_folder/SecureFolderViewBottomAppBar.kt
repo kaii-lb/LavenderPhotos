@@ -10,11 +10,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
@@ -22,32 +20,21 @@ import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.grid_management.toSecureMedia
-import com.kaii.photos.helpers.moveImageOutOfLockedFolder
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
-import com.kaii.photos.helpers.shareMultipleSecuredImages
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 fun SecureFolderViewBottomAppBar(
     selectionManager: SelectionManager,
-    isGettingPermissions: MutableState<Boolean>
+    isGettingPermissions: MutableState<Boolean>,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
     IsSelectingBottomAppBar {
-        val context = LocalContext.current
         val resources = LocalResources.current
         val coroutineScope = rememberCoroutineScope()
 
@@ -65,36 +52,11 @@ fun SecureFolderViewBottomAppBar(
 
         IconButton(
             onClick = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    async {
-                        loadingDialogTitle = resources.getString(R.string.secure_decrypting)
-                        showLoadingDialog = true
-
-                        val cachedPaths = emptyList<Pair<String, MediaType>>().toMutableList()
-                        val items = selectedItemsList.toSecureMedia(context = context)
-
-                        items.forEach { item ->
-                            val iv = item.bytes?.getIv() ?: return@async
-
-                            val originalFile = File(item.item.absolutePath)
-                            val cachedFile = File(context.cacheDir, item.item.displayName)
-
-                            EncryptionManager.decryptInputStream(
-                                inputStream = originalFile.inputStream(),
-                                outputStream = cachedFile.outputStream(),
-                                fileSize = originalFile.length(),
-                                iv = iv
-                            )
-
-                            cachedFile.deleteOnExit()
-                            cachedPaths.add(Pair(cachedFile.absolutePath, item.item.type))
-                        }
-
-                        showLoadingDialog = false
-
-                        shareMultipleSecuredImages(paths = cachedPaths, context = context)
-                    }.await()
-                }
+                process(
+                    GenericFileManager.Action.Share(
+                        list = selectedItemsList
+                    )
+                )
             },
             enabled = selectedItemsList.isNotEmpty()
         ) {
@@ -107,21 +69,16 @@ fun SecureFolderViewBottomAppBar(
         var showRestoreDialog by remember { mutableStateOf(false) }
         val restorePermissionState = rememberDirectoryPermissionManager(
             onGranted = {
-                context.appModule.scope.launch(Dispatchers.IO) {
-                    moveImageOutOfLockedFolder(
-                        list = selectedItemsList.toSecureMedia(context = context),
-                        context = context,
-                        applicationDatabase = MediaDatabase.getInstance(context)
-                    ) {
-                        selectionManager.clear()
-                        showLoadingDialog = false
-                        isGettingPermissions.value = false
-                    }
-                }
+                process(
+                    GenericFileManager.Action.Restore(
+                        list = selectedItemsList
+                    )
+                )
+                selectionManager.clear()
+                isGettingPermissions.value = false
             },
             onRejected = {
                 isGettingPermissions.value = false
-                showLoadingDialog = false
 
                 coroutineScope.launch {
                     LavenderSnackbarController.pushEvent(
@@ -141,17 +98,14 @@ fun SecureFolderViewBottomAppBar(
                 confirmButtonLabel = stringResource(id = R.string.media_restore),
                 action = {
                     loadingDialogTitle = resources.getString(R.string.media_restore_processing)
-                    showLoadingDialog = true
 
                     isGettingPermissions.value = true
 
-                    context.appModule.scope.launch(Dispatchers.IO) {
-                        val directories = selectedItemsList.fastMapNotNull {
-                            it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
-                        }.distinct().toSet()
+                    val directories = selectedItemsList.fastMapNotNull {
+                        it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
+                    }.distinct().toSet()
 
-                        restorePermissionState.start(directories = directories)
-                    }
+                    restorePermissionState.start(directories = directories)
                 },
                 onDismiss = {
                     showRestoreDialog = false
@@ -179,16 +133,12 @@ fun SecureFolderViewBottomAppBar(
                 body = stringResource(id = R.string.action_cannot_be_undone),
                 confirmButtonLabel = stringResource(id = R.string.media_delete),
                 action = {
-                    context.appModule.scope.launch(Dispatchers.IO) {
-                        permanentlyDeleteSecureFolderImageList(
-                            list = selectedItemsList.toSecureMedia(context = context).fastMap {
-                                it.item.absolutePath
-                            },
-                            context = context
+                    process(
+                        GenericFileManager.Action.Delete(
+                            list = selectedItemsList
                         )
-
-                        selectionManager.clear()
-                    }
+                    )
+                    selectionManager.clear()
                 },
                 onDismiss = {
                     showPermaDeleteDialog = false

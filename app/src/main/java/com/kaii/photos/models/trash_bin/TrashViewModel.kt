@@ -93,9 +93,7 @@ class TrashViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo = TrashRepository(
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
+        db = db,
         client = context.appModule.apiClient,
         scope = viewModelScope,
         context = context,
