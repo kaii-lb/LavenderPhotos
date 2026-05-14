@@ -389,45 +389,50 @@ private fun IconContentImpl(
     }
 
     val navController = LocalNavController.current
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    ConfirmationDialog(
-        showDialog = showDeleteDialog,
-        dialogTitle = stringResource(id = R.string.albums_remove_desc),
-        confirmButtonLabel = stringResource(id = R.string.albums_remove)
-    ) {
-        val album = albumInfo()
-        removeAlbum(album.id)
+    if (showDeleteDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.albums_remove_desc),
+            confirmButtonLabel = stringResource(id = R.string.albums_remove),
+            action = {
+                val album = albumInfo()
+                removeAlbum(album.id)
 
-        if (album is AlbumType.Folder) {
-            try {
-                context.contentResolver.releasePersistableUriPermission(
-                    context.getExternalStorageContentUriFromAbsolutePath(
-                        album.paths.first(),
-                        true
-                    ),
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-            } catch (e: Throwable) {
-                Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
-                e.printStackTrace()
+                if (album is AlbumType.Folder) {
+                    try {
+                        context.contentResolver.releasePersistableUriPermission(
+                            context.getExternalStorageContentUriFromAbsolutePath(
+                                album.paths.first(),
+                                true
+                            ),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } catch (e: Throwable) {
+                        Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
+                        e.printStackTrace()
+                    }
+                } else if (album is AlbumType.Custom) {
+                    // TODO: possible make less messy
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        MediaDatabase.getInstance(context)
+                            .customDao()
+                            .deleteAlbum(album = album.id)
+                    }
+                }
+
+                navController.popBackStack()
+            },
+            onDismiss = {
+                showDeleteDialog = false
             }
-        } else if (album is AlbumType.Custom) {
-            // TODO: possible make less messy
-            context.appModule.scope.launch(Dispatchers.IO) {
-                MediaDatabase.getInstance(context)
-                    .customDao()
-                    .deleteAlbum(album = album.id)
-            }
-        }
-
-        navController.popBackStack()
+        )
     }
 
     if (!autoDetectAlbums() || (albumInfo() is AlbumType.Custom && albumInfo().immichId == null)) {
         IconButton(
             onClick = {
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             },
             modifier = modifier
                 .height(48.dp)

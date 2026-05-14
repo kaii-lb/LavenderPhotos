@@ -276,8 +276,8 @@ private fun BottomBar(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val showRestoreDialog = remember { mutableStateOf(false) }
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     var showLoadingDialog by remember { mutableStateOf(false) }
     if (showLoadingDialog) {
@@ -311,34 +311,44 @@ private fun BottomBar(
         }
     )
 
-    ConfirmationDialog(
-        showDialog = showRestoreDialog,
-        dialogTitle = stringResource(id = R.string.secure_move_out),
-        confirmButtonLabel = stringResource(id = R.string.media_move)
-    ) {
-        isGettingPermissions.value = true
+    if (showRestoreDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.secure_move_out),
+            confirmButtonLabel = stringResource(id = R.string.media_move),
+            action = {
+                isGettingPermissions.value = true
 
-        permissionManager.start(
-            directories = setOf(
-                securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
-            )
+                permissionManager.start(
+                    directories = setOf(
+                        securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
+                    )
+                )
+
+                showLoadingDialog = true
+            },
+            onDismiss = {
+                showRestoreDialog = false
+            }
         )
-
-        showLoadingDialog = true
     }
 
-    ConfirmationDialogWithBody(
-        showDialog = showDeleteDialog,
-        dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-        confirmButtonLabel = stringResource(id = R.string.media_delete)
-    ) {
-        context.appModule.scope.launch(Dispatchers.IO) {
-            permanentlyDeleteSecureFolderImageList(
-                list = listOf(securedMedia.item.absolutePath),
-                context = context
-            )
-        }
+    if (showDeleteDialog) {
+        ConfirmationDialogWithBody(
+            title = stringResource(id = R.string.media_delete_permanently_confirm),
+            body = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_delete),
+            action = {
+                context.appModule.scope.launch(Dispatchers.IO) {
+                    permanentlyDeleteSecureFolderImageList(
+                        list = listOf(securedMedia.item.absolutePath),
+                        context = context
+                    )
+                }
+            },
+            onDismiss = {
+                showDeleteDialog = false
+            }
+        )
     }
 
     Box(
@@ -443,7 +453,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            showRestoreDialog.value = true
+                            showRestoreDialog = true
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -491,7 +501,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            showDeleteDialog.value = true
+                            showDeleteDialog = true
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

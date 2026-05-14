@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -76,7 +77,7 @@ fun TrashPhotoGridBottomBarItems(
         )
     }
 
-    val showRestoreDialog = remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             process(
@@ -90,19 +91,24 @@ fun TrashPhotoGridBottomBarItems(
         }
     )
 
-    ConfirmationDialog(
-        showDialog = showRestoreDialog,
-        dialogTitle = stringResource(id = R.string.media_restore_confirm),
-        confirmButtonLabel = stringResource(id = R.string.media_restore)
-    ) {
-        permissionState.get(
-            uris = selectedItemsList.map { it.uri.toUri() }
+    if (showRestoreDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.media_restore_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_restore),
+            action = {
+                permissionState.get(
+                    uris = selectedItemsList.map { it.uri.toUri() }
+                )
+            },
+            onDismiss = {
+                showRestoreDialog = false
+            }
         )
     }
 
     IconButton(
         onClick = {
-            showRestoreDialog.value = true
+            showRestoreDialog = true
         },
         enabled = selectedItemsList.isNotEmpty()
     ) {
@@ -112,26 +118,32 @@ fun TrashPhotoGridBottomBarItems(
         )
     }
 
-    val showPermaDeleteDialog = remember { mutableStateOf(false) }
-    ConfirmationDialogWithBody(
-        showDialog = showPermaDeleteDialog,
-        dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-        confirmButtonLabel = stringResource(id = R.string.media_delete)
-    ) {
-        process(
-            GenericFileManager.Action.Delete(
-                list = selectedItemsList
-            )
-        )
+    var showPermaDeleteDialog by remember { mutableStateOf(false) }
 
-        selectionManager.clear()
+    if (showPermaDeleteDialog) {
+        ConfirmationDialogWithBody(
+            title = stringResource(id = R.string.media_delete_permanently_confirm),
+            body = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_delete),
+            action = {
+                process(
+                    GenericFileManager.Action.Delete(
+                        list = selectedItemsList
+                    )
+                )
+
+                selectionManager.clear()
+            },
+            onDismiss = {
+                showPermaDeleteDialog = false
+            }
+        )
     }
 
     IconButton(
         onClick = {
             if (selectedItemsList.isNotEmpty()) {
-                showPermaDeleteDialog.value = true
+                showPermaDeleteDialog = true
             }
         },
         enabled = selectedItemsList.isNotEmpty()

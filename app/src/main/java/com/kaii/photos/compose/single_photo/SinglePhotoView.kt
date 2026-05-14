@@ -845,21 +845,26 @@ private fun BottomBar(
                     }
                 )
 
-                val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
-                ConfirmationDialog(
-                    showDialog = showMoveToSecureFolderDialog,
-                    dialogTitle = stringResource(id = R.string.media_secure_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_secure)
-                ) {
-                    dirPermissionManager.start(
-                        directories = setOf(currentItem().absolutePath.parent())
+                var showMoveToSecureFolderDialog by remember { mutableStateOf(false) }
+                if (showMoveToSecureFolderDialog) {
+                    ConfirmationDialog(
+                        title = stringResource(id = R.string.media_secure_confirm),
+                        confirmButtonLabel = stringResource(id = R.string.media_secure),
+                        action = {
+                            dirPermissionManager.start(
+                                directories = setOf(currentItem().absolutePath.parent())
+                            )
+                        },
+                        onDismiss = {
+                            showMoveToSecureFolderDialog = false
+                        }
                     )
                 }
 
                 val motionPhoto = rememberMotionPhoto(uri = currentItem().uri.toUri())
                 IconButton(
                     onClick = {
-                        showMoveToSecureFolderDialog.value = true
+                        showMoveToSecureFolderDialog = true
                     },
                     enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !currentItem().isCloud
                 ) {
@@ -948,11 +953,10 @@ private fun BottomBar(
                     }
                 )
 
-                val showDeleteDialog = remember { mutableStateOf(false) }
-                if (showDeleteDialog.value) {
+                var showDeleteDialog by remember { mutableStateOf(false) }
+                if (showDeleteDialog) {
                     ConfirmationDialog(
-                        showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(
+                        title = stringResource(
                             id =
                                 when {
                                     isCustom -> R.string.custom_album_remove_media_desc
@@ -969,39 +973,43 @@ private fun BottomBar(
 
                                     else -> R.string.media_delete
                                 }
-                        )
-                    ) {
-                        val item = currentItem()
-                        val list = listOf(
-                            SelectionManager.SelectedItem(
-                                id = item.id,
-                                uri = item.uri,
-                                immichUrl = item.immichUrl,
-                                isImage = item.type == MediaType.Image,
-                                parentPath = item.parentPath
-                            )
-                        )
-
-                        if (item.isCloud) {
-                            process(
-                                context,
-                                GenericFileManager.Action.Trash(
-                                    list = list,
-                                    trashed = true
+                        ),
+                        action = {
+                            val item = currentItem()
+                            val list = listOf(
+                                SelectionManager.SelectedItem(
+                                    id = item.id,
+                                    uri = item.uri,
+                                    immichUrl = item.immichUrl,
+                                    isImage = item.type == MediaType.Image,
+                                    parentPath = item.parentPath
                                 )
                             )
-                        } else {
-                            trashFilePermissionManager.get(
-                                uris = listOf(currentItem().uri.toUri())
-                            )
+
+                            if (item.isCloud) {
+                                process(
+                                    context,
+                                    GenericFileManager.Action.Trash(
+                                        list = list,
+                                        trashed = true
+                                    )
+                                )
+                            } else {
+                                trashFilePermissionManager.get(
+                                    uris = listOf(currentItem().uri.toUri())
+                                )
+                            }
+                        },
+                        onDismiss = {
+                            showDeleteDialog = false
                         }
-                    }
+                    )
                 }
 
                 IconButton(
                     onClick = {
                         if (confirmToDelete) {
-                            showDeleteDialog.value = true
+                            showDeleteDialog = true
                         } else {
                             val item = currentItem()
                             val list = listOf(

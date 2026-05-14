@@ -104,7 +104,7 @@ fun SecureFolderViewBottomAppBar(
             )
         }
 
-        val showRestoreDialog = remember { mutableStateOf(false) }
+        var showRestoreDialog by remember { mutableStateOf(false) }
         val restorePermissionState = rememberDirectoryPermissionManager(
             onGranted = {
                 context.appModule.scope.launch(Dispatchers.IO) {
@@ -135,28 +135,33 @@ fun SecureFolderViewBottomAppBar(
             }
         )
 
-        ConfirmationDialog(
-            showDialog = showRestoreDialog,
-            dialogTitle = stringResource(id = R.string.media_restore_confirm),
-            confirmButtonLabel = stringResource(id = R.string.media_restore)
-        ) {
-            loadingDialogTitle = resources.getString(R.string.media_restore_processing)
-            showLoadingDialog = true
+        if (showRestoreDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.media_restore_confirm),
+                confirmButtonLabel = stringResource(id = R.string.media_restore),
+                action = {
+                    loadingDialogTitle = resources.getString(R.string.media_restore_processing)
+                    showLoadingDialog = true
 
-            isGettingPermissions.value = true
+                    isGettingPermissions.value = true
 
-            context.appModule.scope.launch(Dispatchers.IO) {
-                val directories = selectedItemsList.fastMapNotNull {
-                    it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
-                }.distinct().toSet()
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        val directories = selectedItemsList.fastMapNotNull {
+                            it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
+                        }.distinct().toSet()
 
-                restorePermissionState.start(directories = directories)
-            }
+                        restorePermissionState.start(directories = directories)
+                    }
+                },
+                onDismiss = {
+                    showRestoreDialog = false
+                }
+            )
         }
 
         IconButton(
             onClick = {
-                showRestoreDialog.value = true
+                showRestoreDialog = true
             },
             enabled = selectedItemsList.isNotEmpty()
         ) {
@@ -167,28 +172,33 @@ fun SecureFolderViewBottomAppBar(
         }
 
 
-        val showPermaDeleteDialog = remember { mutableStateOf(false) }
-        ConfirmationDialogWithBody(
-            showDialog = showPermaDeleteDialog,
-            dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                permanentlyDeleteSecureFolderImageList(
-                    list = selectedItemsList.toSecureMedia(context = context).fastMap {
-                        it.item.absolutePath
-                    },
-                    context = context
-                )
+        var showPermaDeleteDialog by remember { mutableStateOf(false) }
+        if (showPermaDeleteDialog) {
+            ConfirmationDialogWithBody(
+                title = stringResource(id = R.string.media_delete_permanently_confirm),
+                body = stringResource(id = R.string.action_cannot_be_undone),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    context.appModule.scope.launch(Dispatchers.IO) {
+                        permanentlyDeleteSecureFolderImageList(
+                            list = selectedItemsList.toSecureMedia(context = context).fastMap {
+                                it.item.absolutePath
+                            },
+                            context = context
+                        )
 
-                selectionManager.clear()
-            }
+                        selectionManager.clear()
+                    }
+                },
+                onDismiss = {
+                    showPermaDeleteDialog = false
+                }
+            )
         }
 
         IconButton(
             onClick = {
-                showPermaDeleteDialog.value = true
+                showPermaDeleteDialog = true
             },
             enabled = selectedItemsList.isNotEmpty()
         ) {

@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -123,25 +124,31 @@ fun FavouritesBottomAppBarItems(
     }
 
 
-    val showUnFavDialog = remember { mutableStateOf(false) }
-    ConfirmationDialog(
-        showDialog = showUnFavDialog,
-        dialogTitle = stringResource(id = R.string.favourites_remove_this),
-        confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-    ) {
-        process(
-            GenericFileManager.Action.Favourite(
-                list = selectedItemsList,
-                favourite = false
-            )
-        )
+    var showUnFavDialog by remember { mutableStateOf(false) }
 
-        selectionManager.clear()
+    if (showUnFavDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.favourites_remove_this),
+            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media),
+            action = {
+                process(
+                    GenericFileManager.Action.Favourite(
+                        list = selectedItemsList,
+                        favourite = false
+                    )
+                )
+
+                selectionManager.clear()
+            },
+            onDismiss = {
+                showUnFavDialog = false
+            }
+        )
     }
 
     IconButton(
         onClick = {
-            showUnFavDialog.value = true
+            showUnFavDialog = true
         },
         enabled = selectedItemsList.isNotEmpty()
     ) {
@@ -151,7 +158,7 @@ fun FavouritesBottomAppBarItems(
         )
     }
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             if (doNotTrash()) {
@@ -169,20 +176,25 @@ fun FavouritesBottomAppBarItems(
         }
     )
 
-    ConfirmationDialog(
-        showDialog = showDeleteDialog,
-        dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
-        confirmButtonLabel = stringResource(id = R.string.media_delete)
-    ) {
-        permissionState.get(
-            uris = selectedItemsList.fastMap { it.uri.toUri() }
+    if (showDeleteDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_delete),
+            action = {
+                permissionState.get(
+                    uris = selectedItemsList.fastMap { it.uri.toUri() }
+                )
+            },
+            onDismiss = {
+                showDeleteDialog = false
+            }
         )
     }
 
     IconButton(
         onClick = {
             if (confirmToDelete()) {
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             } else {
                 permissionState.get(
                     uris = selectedItemsList.fastMap { it.uri.toUri() }

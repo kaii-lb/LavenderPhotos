@@ -90,16 +90,19 @@ fun VideoEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                val showDialog = remember { mutableStateOf(false) }
+                var showDialog by remember { mutableStateOf(false) }
 
-                if (showDialog.value) {
+                if (showDialog) {
                     ConfirmationDialog(
-                        showDialog = showDialog,
-                        dialogTitle = stringResource(id = R.string.editing_discard_desc),
-                        confirmButtonLabel = stringResource(id = R.string.editing_discard)
-                    ) {
-                        navController.popBackStack()
-                    }
+                        title = stringResource(id = R.string.editing_discard_desc),
+                        confirmButtonLabel = stringResource(id = R.string.editing_discard),
+                        action = {
+                            navController.popBackStack()
+                        },
+                        onDismiss = {
+                            showDialog = false
+                        }
+                    )
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -111,7 +114,7 @@ fun VideoEditorTopBar(
                             ?.set("editId", navMediaId)
 
                         if (lastSavedModCount.intValue < modifications.size) {
-                            showDialog.value = true
+                            showDialog = true
                         } else if (isFromOpenWithView) {
                             (context as Activity).finish()
                         } else {

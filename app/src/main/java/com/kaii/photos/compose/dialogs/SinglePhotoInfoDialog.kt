@@ -306,7 +306,7 @@ private fun Content(
                 }
         )
 
-        val showConfirmEraseDialog = remember { mutableStateOf(false) }
+        var showConfirmEraseDialog by remember { mutableStateOf(false) }
         var showDateTimePicker by remember { mutableStateOf(false) }
 
         if (showDateTimePicker) {
@@ -407,7 +407,7 @@ private fun Content(
                         contentColor = MaterialTheme.colorScheme.onError,
                         enabled = !privacyMode()
                     ) {
-                        showConfirmEraseDialog.value = true
+                        showConfirmEraseDialog = true
                     }
                 }
             }
@@ -459,13 +459,18 @@ private fun Content(
             }
         )
 
-        ConfirmationDialogWithBody(
-            showDialog = showConfirmEraseDialog,
-            dialogTitle = stringResource(id = R.string.media_exif_erase),
-            dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-            confirmButtonLabel = stringResource(id = R.string.media_erase)
-        ) {
-            permissionState.get(uris = listOf(mediaItem().uri.toUri()))
+        if (showConfirmEraseDialog) {
+            ConfirmationDialogWithBody(
+                title = stringResource(id = R.string.media_exif_erase),
+                body = stringResource(id = R.string.action_cannot_be_undone),
+                confirmButtonLabel = stringResource(id = R.string.media_erase),
+                action = {
+                    permissionState.get(uris = listOf(mediaItem().uri.toUri()))
+                },
+                onDismiss = {
+                    showConfirmEraseDialog = false
+                }
+            )
         }
 
         if (!isLandscape) {
@@ -487,7 +492,7 @@ private fun Content(
                 contentColor = MaterialTheme.colorScheme.onError,
                 enabled = !privacyMode()
             ) {
-                showConfirmEraseDialog.value = true
+                showConfirmEraseDialog = true
             }
         }
     }

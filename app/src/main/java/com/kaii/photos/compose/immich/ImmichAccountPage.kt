@@ -541,13 +541,18 @@ private fun ImmichAccountPageImpl(
             }
 
             item {
-                val showDialog = remember { mutableStateOf(false) }
-                ConfirmationDialog(
-                    showDialog = showDialog,
-                    dialogTitle = stringResource(id = R.string.immich_logout_question_desc),
-                    confirmButtonLabel = stringResource(id = R.string.immich_logout)
-                ) {
-                    logout()
+                var showDialog by remember { mutableStateOf(false) }
+                if (showDialog) {
+                    ConfirmationDialog(
+                        title = stringResource(id = R.string.immich_logout_question_desc),
+                        confirmButtonLabel = stringResource(id = R.string.immich_logout),
+                        action = {
+                            logout()
+                        },
+                        onDismiss = {
+                            showDialog = false
+                        }
+                    )
                 }
 
                 PreferencesRow(
@@ -561,7 +566,7 @@ private fun ImmichAccountPageImpl(
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
                     action = {
-                        showDialog.value = true
+                        showDialog = true
                     }
                 )
             }

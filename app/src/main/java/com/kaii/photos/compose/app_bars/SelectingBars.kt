@@ -211,38 +211,48 @@ fun SelectingBottomBarItems(
         }
     )
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     if (albumInfo is AlbumType.Folder) {
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            permissionState.get(
-                uris = selectedItemsList.fastMap { it.uri.toUri() }
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    permissionState.get(
+                        uris = selectedItemsList.fastMap { it.uri.toUri() }
+                    )
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
             )
         }
     } else {
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-        ) {
-            process(
-                GenericFileManager.Action.Trash(
-                    list = selectedItemsList,
-                    trashed = true
-                )
-            )
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.custom_album_remove_media_desc),
+                confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media),
+                action = {
+                    process(
+                        GenericFileManager.Action.Trash(
+                            list = selectedItemsList,
+                            trashed = true
+                        )
+                    )
 
-            selectionManager.clear()
+                    selectionManager.clear()
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
+            )
         }
     }
 
     IconButton(
         onClick = {
             if (confirmToDelete()) {
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             } else if (albumInfo is AlbumType.Folder) {
                 permissionState.get(
                     uris = selectedItemsList.fastMap { it.uri.toUri() }

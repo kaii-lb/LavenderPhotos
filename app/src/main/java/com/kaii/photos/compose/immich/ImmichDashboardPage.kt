@@ -216,20 +216,21 @@ fun ImmichDashboardPage(
                     )
                 }
 
-                val showClearEndpointDialog = remember { mutableStateOf(false) }
-                if (showClearEndpointDialog.value) {
+                var showClearEndpointDialog by remember { mutableStateOf(false) }
+                if (showClearEndpointDialog) {
                     ConfirmationDialogWithBody(
-                        showDialog = showClearEndpointDialog,
-                        dialogTitle = stringResource(id = R.string.immich_clear_endpoint),
-                        dialogBody = stringResource(id = R.string.immich_clear_endpoint_desc),
+                        title = stringResource(id = R.string.immich_clear_endpoint),
+                        body = stringResource(id = R.string.immich_clear_endpoint_desc),
                         confirmButtonLabel = stringResource(id = R.string.media_confirm),
-                    ) {
-                        coroutineScope.launch {
-                            viewModel.removeServer()
+                        action = {
+                            coroutineScope.launch {
+                                viewModel.removeServer()
+                            }
+                        },
+                        onDismiss = {
+                            showClearEndpointDialog = false
                         }
-
-                        showClearEndpointDialog.value = false
-                    }
+                    )
                 }
 
                 PreferencesRow(
@@ -242,7 +243,7 @@ fun ImmichDashboardPage(
                     showBackground = false
                 ) {
                     if (loginInfo.endpoint.isEmpty()) showAddressDialog = true
-                    else showClearEndpointDialog.value = true
+                    else showClearEndpointDialog = true
                 }
             }
 

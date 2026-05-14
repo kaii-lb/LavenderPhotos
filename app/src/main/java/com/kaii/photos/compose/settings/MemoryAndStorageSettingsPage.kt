@@ -199,7 +199,7 @@ private fun MemoryAndStorageSettingsPageImpl(
             }
 
             item {
-                val showConfirmationDialog = remember { mutableStateOf(false) }
+                var showConfirmationDialog by remember { mutableStateOf(false) }
 
                 PreferencesRow(
                     title = stringResource(id = R.string.settings_storage_thumbnails_clear_cache),
@@ -208,16 +208,20 @@ private fun MemoryAndStorageSettingsPageImpl(
                     showBackground = false,
                     summary = stringResource(id = R.string.settings_storage_thumbnails_clear_cache_desc)
                 ) {
-                    showConfirmationDialog.value = true
+                    showConfirmationDialog = true
                 }
 
-                ConfirmationDialogWithBody(
-                    showDialog = showConfirmationDialog,
-                    confirmButtonLabel = stringResource(id = R.string.settings_clear),
-                    dialogTitle = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
-                    dialogBody = stringResource(id = R.string.settings_clear_cache_desc),
-                    action = clearThumbnailCache
-                )
+                if (showConfirmationDialog) {
+                    ConfirmationDialogWithBody(
+                        confirmButtonLabel = stringResource(id = R.string.settings_clear),
+                        title = stringResource(id = R.string.settings_storage_thumbnails_clear_cache) + "?",
+                        body = stringResource(id = R.string.settings_clear_cache_desc),
+                        action = clearThumbnailCache,
+                        onDismiss = {
+                            showConfirmationDialog = false
+                        }
+                    )
+                }
             }
 
             item {

@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,16 +68,21 @@ fun ImmichBackupOptionsPage(
     ) { innerPadding ->
         val coroutineScope = rememberCoroutineScope()
 
-        val showDialog = remember { mutableStateOf(false) }
-        ConfirmationDialogWithBody(
-            showDialog = showDialog,
-            dialogTitle = stringResource(id = R.string.immich_backup_option_changes_unsaved),
-            dialogBody = stringResource(id = R.string.immich_backup_option_changes_unsaved_desc),
-            confirmButtonLabel = stringResource(id = R.string.refresh)
-        ) {
-            coroutineScope.launch {
-                state.refresh()
-            }
+        var showDialog by remember { mutableStateOf(false) }
+        if (showDialog) {
+            ConfirmationDialogWithBody(
+                title = stringResource(id = R.string.immich_backup_option_changes_unsaved),
+                body = stringResource(id = R.string.immich_backup_option_changes_unsaved_desc),
+                confirmButtonLabel = stringResource(id = R.string.refresh),
+                action = {
+                    coroutineScope.launch {
+                        state.refresh()
+                    }
+                },
+                onDismiss = {
+                    showDialog = false
+                }
+            )
         }
 
         Column(
@@ -88,7 +94,7 @@ fun ImmichBackupOptionsPage(
                     state = pullToRefreshState,
                     onRefresh = {
                         if (state.hasUnsavedChanges) {
-                            showDialog.value = true
+                            showDialog = true
                         } else {
                             coroutineScope.launch {
                                 state.refresh()
