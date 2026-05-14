@@ -113,7 +113,9 @@ class VideoPlayerState(
         onPlaybackStateChanged = { state ->
             onPlaybackStateChanged(state)
 
-            fadeInPlayer = state == Player.STATE_READY
+            if (!fadeInPlayer) {
+                fadeInPlayer = state == Player.STATE_READY
+            }
         },
         onAudioTracksChanged = { tracks ->
             audioTracks.clear()
@@ -204,6 +206,7 @@ class VideoPlayerState(
         this.loop = loop
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
+        this.fadeInPlayer = false
 
         val immichUrl = item.immichVideoUrl?.let { endpoint + it }
         val uri = immichUrl ?: item.uri
