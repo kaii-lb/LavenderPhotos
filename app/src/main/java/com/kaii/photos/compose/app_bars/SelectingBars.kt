@@ -309,18 +309,32 @@ fun SelectingBottomBarItems(
         }
     )
 
+    var showMoveToSecureFolderDialog by remember { mutableStateOf(false) }
+    if (showMoveToSecureFolderDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.media_secure_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_secure),
+            action = {
+                // TODO: move to file manager
+                if (selectedItemsList.isNotEmpty()) {
+                    dirPermissionManager.start(
+                        directories = selectedItemsList.fastMapNotNull {
+                            context.contentResolver.getAbsolutePathFromUri(it.uri.toUri())?.parent()
+                        }.fastDistinctBy {
+                            it
+                        }.toSet()
+                    )
+                }
+            },
+            onDismiss = {
+                showMoveToSecureFolderDialog = false
+            }
+        )
+    }
+
     IconButton(
         onClick = {
-            // TODO: move to file manager
-            if (selectedItemsList.isNotEmpty()) {
-                dirPermissionManager.start(
-                    directories = selectedItemsList.fastMapNotNull {
-                        context.contentResolver.getAbsolutePathFromUri(it.uri.toUri())?.parent()
-                    }.fastDistinctBy {
-                        it
-                    }.toSet()
-                )
-            }
+            showMoveToSecureFolderDialog = true
         },
         enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.Cloud
     ) {
