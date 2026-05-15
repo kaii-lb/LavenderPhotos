@@ -95,7 +95,9 @@ class ImmichInfoRepository(
     }
 
     private suspend fun getServerState() = withContext(Dispatchers.IO) {
-        val online = async { serverClient.ping() }
+        val online = serverClient.ping()
+        if (!online) return@withContext null
+
         val storage = async { serverClient.getStorage() }
         val info = async { serverClient.getVersionInfo() }
         val perUserStorage = async { serverClient.getUsagePerUser() }
@@ -114,7 +116,7 @@ class ImmichInfoRepository(
         return@withContext ServerInfo(
             version = serverInfo.version,
             build = serverInfo.build,
-            online = online.await(),
+            online = true,
             diskSize = storageInfo.diskSize,
             diskUsed = storageInfo.diskUse,
             diskUsedPercentage = storageInfo.diskUsagePercentage / 100f,
@@ -134,8 +136,8 @@ class ImmichInfoRepository(
 
         _refreshChannel.trySend(OperationStatus.Loading)
 
-        _serverInfo.value = getServerState()
         _userInfo.value = getLoginState()
+        _serverInfo.value = getServerState()
 
         when (_userInfo.value) {
             is LoginState.LoggedIn -> {
