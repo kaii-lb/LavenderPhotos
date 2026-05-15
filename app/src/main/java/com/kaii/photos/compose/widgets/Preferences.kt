@@ -86,7 +86,18 @@ fun PreferencesRow(
         iconResID = iconResID,
         position = position,
         modifier = modifier,
-        summary = summary,
+        summary = if (summary != null) {
+            {
+                Text(
+                    text = summary,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    textAlign = TextAlign.Start,
+                    color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        } else null,
         goesToOtherPage = goesToOtherPage,
         showBackground = showBackground,
         enabled = enabled,
@@ -104,7 +115,7 @@ fun PreferencesRow(
     iconResID: Int,
     position: RowPosition,
     modifier: Modifier = Modifier,
-    summary: String? = null,
+    summary: AnnotatedString? = null,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     enabled: Boolean = true,
@@ -127,7 +138,19 @@ fun PreferencesRow(
         iconResID = iconResID,
         position = position,
         modifier = modifier,
-        summary = summary,
+        summary =
+            if (summary != null) {
+                {
+                    Text(
+                        text = summary,
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        textAlign = TextAlign.Start,
+                        color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else null,
         goesToOtherPage = goesToOtherPage,
         showBackground = showBackground,
         enabled = enabled,
@@ -145,7 +168,7 @@ private fun PreferencesRowBase(
     iconResID: Int,
     position: RowPosition,
     modifier: Modifier = Modifier,
-    summary: String? = null,
+    summary: (@Composable () -> Unit)?,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     enabled: Boolean = true,
@@ -213,14 +236,7 @@ private fun PreferencesRowBase(
             title()
 
             if (summary != null) {
-                Text(
-                    text = summary,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    textAlign = TextAlign.Start,
-                    color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
+                summary()
             }
         }
 
@@ -785,10 +801,12 @@ fun ExpressiveDialogRowWithAction(
             modifier = modifier
                 .weight(1f)
                 .height(56.dp)
-                .clip(RoundedCornerShape(
-                    topStart = shape.topStart, topEnd = CornerSize(8.dp),
-                    bottomStart = shape.bottomStart, bottomEnd = CornerSize(8.dp)
-                ))
+                .clip(
+                    RoundedCornerShape(
+                        topStart = shape.topStart, topEnd = CornerSize(8.dp),
+                        bottomStart = shape.bottomStart, bottomEnd = CornerSize(8.dp)
+                    )
+                )
                 .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
                 .clickable(onClick = onClick, enabled = enabled)
                 .padding(12.dp),
@@ -821,9 +839,11 @@ fun ExpressiveDialogRowWithAction(
             modifier = Modifier
                 .width(60.dp)
                 .height(56.dp)
-                .clip(RoundedCornerShape(
-                    topStart = CornerSize(8.dp), topEnd = shape.topEnd,
-                    bottomStart = CornerSize(8.dp), bottomEnd = shape.bottomEnd)
+                .clip(
+                    RoundedCornerShape(
+                        topStart = CornerSize(8.dp), topEnd = shape.topEnd,
+                        bottomStart = CornerSize(8.dp), bottomEnd = shape.bottomEnd
+                    )
                 )
                 .background(actionContainerColor)
                 .clickable(onClick = onActionClick, enabled = enabled)

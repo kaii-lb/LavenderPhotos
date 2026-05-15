@@ -1208,6 +1208,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
+    <string name="immich_server_info_new_version_available">New version available: %1$s</string>
     <string name="immich_server_storage">Server Storage</string>
     <string name="immich_server_storage_desc">%1$s of %2$s used</string>
     <string name="immich_server_storage_desc_detailed">%1$s GB of %2$s GB used</string>
