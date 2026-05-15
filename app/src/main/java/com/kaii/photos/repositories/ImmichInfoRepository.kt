@@ -8,12 +8,15 @@ import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.OperationStatus
 import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerState
+import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.FullUserResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.LoginResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.UsageByUserDto
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,14 +24,34 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+interface LoginState {
+    data class LoggedIn(val user: FullUserResponse) : LoginState
+
+    object ServerUnreachable : LoginState
+
+    object LoggedOut : LoginState
+}
+
+data class ServerInfo(
+    val version: String,
+    val build: String?,
+    val online: Boolean,
+    val diskSize: String,
+    val diskUsed: String,
+    val diskUsedPercentage: Float,
+    val perUserStorage: List<UsageByUserDto>,
+    val newVersion: String?
+)
 
 class ImmichInfoRepository(
-    private val serverState: ServerState,
-    private val loginState: LoginStateManager,
+    private val serverClient: ServerClient,
+    private val loginClient: LoginClient,
     private val settings: SettingsImmichImpl,
     scope: CoroutineScope
 ) {
-    private val _serverInfo = MutableStateFlow<ServerInfoState>(ServerInfoState.Unavailable)
+    private val _serverInfo = MutableStateFlow<ServerInfo?>(null)
     val serverInfo = _serverInfo.asStateFlow()
 
     private val _userInfo = MutableStateFlow<LoginState>(LoginState.ServerUnreachable)
@@ -51,15 +74,53 @@ class ImmichInfoRepository(
                 auth = info.auth
                 endpoint = info.endpoint
 
-                serverState.setAuth(info.auth)
-                loginState.setAuth(info.auth)
+                serverClient.setAuth(info.auth)
+                loginClient.setAuth(info.auth)
 
-                serverState.setEndpoint(info.endpoint)
-                loginState.setEndpoint(info.endpoint)
+                serverClient.setEndpoint(info.endpoint)
+                loginClient.setEndpoint(info.endpoint)
 
                 refresh()
             }
         }
+    }
+
+    private suspend fun getLoginState() = withContext(Dispatchers.IO) {
+        if (!loginClient.ping()) return@withContext LoginState.ServerUnreachable
+        if (!loginClient.validate()) return@withContext LoginState.LoggedOut
+
+        loginClient.getMe()?.let {
+            LoginState.LoggedIn(user = it)
+        } ?: LoginState.LoggedOut
+    }
+
+    private suspend fun getServerState() = withContext(Dispatchers.IO) {
+        val online = async { serverClient.ping() }
+        val storage = async { serverClient.getStorage() }
+        val info = async { serverClient.getVersionInfo() }
+        val perUserStorage = async { serverClient.getUsagePerUser() }
+        val versionCheck = async { serverClient.checkVersion() }
+
+        // fetch in parallel
+        val serverInfo = info.await()
+        val storageInfo = storage.await()
+        val perUserInfo = perUserStorage.await()
+
+        if (serverInfo == null || storageInfo == null || perUserInfo == null) {
+            cancel("Could not fetch all required data")
+            return@withContext null
+        }
+
+        return@withContext ServerInfo(
+            version = serverInfo.version,
+            build = serverInfo.build,
+            online = online.await(),
+            diskSize = storageInfo.diskSize,
+            diskUsed = storageInfo.diskUse,
+            diskUsedPercentage = storageInfo.diskUsagePercentage / 100f,
+            perUserStorage = perUserInfo.usageByUser,
+            newVersion = versionCheck.await()?.releaseVersion
+        )
     }
 
     suspend fun refresh() {
@@ -73,8 +134,8 @@ class ImmichInfoRepository(
 
         _refreshChannel.trySend(OperationStatus.Loading)
 
-        _serverInfo.value = serverState.fetch()
-        _userInfo.value = loginState.refresh()
+        _serverInfo.value = getServerState()
+        _userInfo.value = getLoginState()
 
         when (_userInfo.value) {
             is LoginState.LoggedIn -> {
@@ -98,13 +159,13 @@ class ImmichInfoRepository(
     suspend fun login(
         email: String,
         password: String
-    ): LoginStatus {
+    ): LoginResponse? {
         _operationChannel.trySend(OperationStatus.Loading)
         val userAgent = System.getProperty("http.agent") ?: ""
-        val state = loginState.login(email, password, userAgent)
+        val state = loginClient.login(email, password, userAgent)
 
         _operationChannel.trySend(
-            if (state is LoginStatus.LoggedIn) OperationStatus.Successful
+            if (state != null) OperationStatus.Successful
             else OperationStatus.Failed
         )
 
@@ -115,11 +176,11 @@ class ImmichInfoRepository(
         apiKey: String
     ): LoginState {
         auth = Auth.ApiKey(apiKey)
-        serverState.setAuth(auth)
-        loginState.setAuth(auth)
+        serverClient.setAuth(auth)
+        loginClient.setAuth(auth)
 
         _operationChannel.trySend(OperationStatus.Loading)
-        val state = loginState.refresh()
+        val state = getLoginState()
 
         _operationChannel.trySend(
             if (state is LoginState.LoggedIn) OperationStatus.Successful
@@ -130,7 +191,7 @@ class ImmichInfoRepository(
     }
 
     suspend fun logout() {
-        loginState.logout().let { success ->
+        loginClient.logout().let { success ->
             if (success) {
                 _userInfo.value = LoginState.LoggedOut
 
@@ -140,7 +201,7 @@ class ImmichInfoRepository(
         }
     }
 
-    suspend fun ping(address: String) = serverState.ping(address = address)
+    suspend fun ping(address: String) = serverClient.ping(address = address)
     fun validateServerAddress(address: String) = Patterns.WEB_URL.matcher(address).matches()
 
     suspend fun updateInfo(
@@ -149,7 +210,7 @@ class ImmichInfoRepository(
     ): Boolean {
         _operationChannel.trySend(OperationStatus.Loading)
 
-        loginState.updateInfo(
+        loginClient.updateInfo(
             name = username,
             email = email
         ).let {
@@ -172,7 +233,7 @@ class ImmichInfoRepository(
     ): Boolean {
         _operationChannel.trySend(OperationStatus.Loading)
 
-        loginState.changePassword(
+        loginClient.changePassword(
             currentPassword = currentPassword,
             newPassword = newPassword
         ).let { success ->
@@ -194,7 +255,7 @@ class ImmichInfoRepository(
         val displayName = context.contentResolver.getMediaStoreDataFromUri(uri)?.displayName ?: return null
         val bytes = context.contentResolver.openInputStream(uri)?.readBytes() ?: return null
 
-        val success = loginState.uploadPfp(
+        val success = loginClient.uploadPfp(
             bytes = bytes,
             filename = displayName
         ) != null

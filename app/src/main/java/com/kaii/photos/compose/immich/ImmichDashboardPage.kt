@@ -82,8 +82,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
+import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
@@ -353,7 +352,7 @@ fun ImmichDashboardPage(
                     }
                 }
             }
-            
+
             item {
                 PreferencesRow(
                     title = stringResource(id = R.string.immich_backup_options),
@@ -381,10 +380,10 @@ fun ImmichDashboardPage(
 
                 val info by remember {
                     derivedStateOf {
-                        if (serverInfo is ServerInfoState.Available) {
+                        if (serverInfo != null) {
                             Pair(
-                                (serverInfo as ServerInfoState.Available).version,
-                                (serverInfo as ServerInfoState.Available).build ?: resources.getString(R.string.immich_state_unknown)
+                                serverInfo!!.version,
+                                serverInfo!!.build ?: resources.getString(R.string.immich_state_unknown)
                             )
                         } else {
                             Pair(
@@ -397,10 +396,10 @@ fun ImmichDashboardPage(
 
                 val storage by remember {
                     derivedStateOf {
-                        if (serverInfo is ServerInfoState.Available) {
+                        if (serverInfo != null) {
                             Pair(
-                                (serverInfo as ServerInfoState.Available).diskUsed,
-                                (serverInfo as ServerInfoState.Available).diskSize
+                                serverInfo!!.diskUsed,
+                                serverInfo!!.diskSize
                             )
                         } else {
                             Pair(
@@ -416,7 +415,7 @@ fun ImmichDashboardPage(
                         append(resources.getString(R.string.immich_server_info_with_status))
                         append(" ")
 
-                        val online = (serverInfo as? ServerInfoState.Available)?.online == true
+                        val online = serverInfo?.online == true
 
                         withStyle(
                             style = SpanStyle(
@@ -444,11 +443,7 @@ fun ImmichDashboardPage(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val animated by animateFloatAsState(
-                        targetValue = if (serverInfo is ServerInfoState.Available) {
-                            (serverInfo as ServerInfoState.Available).diskUsedPercentage
-                        } else {
-                            1f
-                        }
+                        targetValue = serverInfo?.diskUsedPercentage ?: 1f
                     )
 
                     LinearProgressIndicator(
@@ -456,7 +451,7 @@ fun ImmichDashboardPage(
                             animated
                         },
                         color =
-                            if (serverInfo is ServerInfoState.Available) {
+                            if (serverInfo != null) {
                                 ProgressIndicatorDefaults.linearColor
                             } else {
                                 MaterialTheme.colorScheme.error
@@ -470,14 +465,14 @@ fun ImmichDashboardPage(
 
                     Text(
                         text =
-                            if (serverInfo is ServerInfoState.Available) {
+                            if (serverInfo != null) {
                                 stringResource(id = R.string.immich_server_storage_desc, storage.first, storage.second)
                             } else {
                                 stringResource(id = R.string.immich_server_info_failed)
                             },
                         fontSize = TextUnit(14f, TextUnitType.Sp),
                         textAlign = TextAlign.Start,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo is ServerInfoState.Available) 1f else 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo != null) 1f else 0.6f),
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier

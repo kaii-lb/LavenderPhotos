@@ -76,12 +76,12 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
+import com.kaii.photos.repositories.LoginState
+import com.kaii.photos.repositories.ServerInfo
 import io.github.kaii_lb.lavender.immichintegration.serialization.FullUserResponse
 import io.github.kaii_lb.lavender.immichintegration.serialization.UsageByUserDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.UserAvatarColor
 import io.github.kaii_lb.lavender.immichintegration.serialization.UserStatus
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerInfoState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -170,7 +170,7 @@ private fun ImmichAccountPagePreview() {
             )
         },
         serverInfo = {
-            ServerInfoState.Available(
+            ServerInfo(
                 version = "v2.7.5",
                 build = "24350167851",
                 online = true,
@@ -187,7 +187,8 @@ private fun ImmichAccountPagePreview() {
                         userId = "",
                         userName = "example"
                     )
-                )
+                ),
+                newVersion = "v2.7.5"
             )
         },
         immichInfo = { ImmichBasicInfo.Empty },
@@ -207,7 +208,7 @@ private fun ImmichAccountPagePreview() {
 @Composable
 private fun ImmichAccountPageImpl(
     userInfo: () -> LoginState,
-    serverInfo: () -> ServerInfoState,
+    serverInfo: () -> ServerInfo?,
     immichInfo: () -> ImmichBasicInfo,
     operationStatus: Flow<OperationStatus>,
     refreshStatus: Flow<OperationStatus>,
@@ -225,7 +226,7 @@ private fun ImmichAccountPageImpl(
             val info = serverInfo()
             val userInfo = userInfo()
 
-            if (info is ServerInfoState.Available && userInfo is LoginState.LoggedIn) {
+            if (info != null && userInfo is LoginState.LoggedIn) {
                 info.perUserStorage.first { it.userId == userInfo.user.id }
             } else null
         }
@@ -498,7 +499,7 @@ private fun ImmichAccountPageImpl(
                             },
                         fontSize = 14.sp,
                         textAlign = TextAlign.Start,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo() is ServerInfoState.Available) 1f else 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (serverInfo() != null) 1f else 0.6f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier

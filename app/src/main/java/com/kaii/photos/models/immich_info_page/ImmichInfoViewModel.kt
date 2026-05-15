@@ -10,11 +10,10 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.repositories.ImmichInfoRepository
+import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.serialization.LoginStatus
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
-import io.github.kaii_lb.lavender.immichintegration.state_managers.ServerState
+import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
@@ -36,8 +35,16 @@ class ImmichInfoViewModel(
 
     val apiClient = context.appModule.apiClient
     val repo = ImmichInfoRepository(
-        serverState = ServerState(apiClient),
-        loginState = LoginStateManager(apiClient),
+        serverClient = ServerClient(
+            client = apiClient,
+            endpoint = "",
+            auth = Auth.None
+        ),
+        loginClient = LoginClient(
+            client = apiClient,
+            endpoint = "",
+            auth = Auth.None
+        ),
         settings = settings.immich,
         scope = viewModelScope
     )
@@ -113,7 +120,7 @@ class ImmichInfoViewModel(
 
             val state = repo.login(email, password)
 
-            if (state is LoginStatus.LoggedIn) {
+            if (state != null) {
                 eventTitle.value = context.resources.getString(R.string.immich_login_successful)
                 isLoading.value = false
             } else {
@@ -128,7 +135,7 @@ class ImmichInfoViewModel(
             }
 
             setInfo(
-                info = if (state is LoginStatus.LoggedIn) {
+                info = if (state != null) {
                     ImmichBasicInfo(
                         endpoint = info.value.endpoint,
                         auth = Auth.AccessToken(accessToken = state.accessToken),

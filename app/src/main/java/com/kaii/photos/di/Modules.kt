@@ -11,7 +11,7 @@ import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
 import com.kaii.photos.file_management.sync.ProgressManager
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.clients.buildApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
@@ -26,9 +26,7 @@ class AppModule(
     val settings = Settings(context.applicationContext, MainScope())
 
     val apiClient by lazy {
-        ApiClient(
-            debugMode = BuildConfig.DEBUG
-        )
+        buildApiClient(debugMode = BuildConfig.DEBUG)
     }
 
     val scope = CoroutineScope(SupervisorJob())

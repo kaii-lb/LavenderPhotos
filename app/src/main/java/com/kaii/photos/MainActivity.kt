@@ -113,7 +113,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
@@ -162,8 +161,7 @@ class MainActivity : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
                     SetContentForActivity(
                         startupManager = startupManager,

@@ -23,7 +23,6 @@ import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumGetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -115,16 +114,14 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun refetch() {
-        val info = fileManager.albumsClient.get(
+        val cloudAlbum = fileManager.albumsClient.get(
             id = Uuid.parse(album.immichId!!),
             withoutAssets = false
         )
 
-        val state = info?.let { AlbumGetState.Retrieved(it) } ?: AlbumGetState.Failed
-
-        if (state is AlbumGetState.Retrieved) {
+        if (cloudAlbum != null) {
             val items =
-                state.album.assets.fastMap { asset ->
+                cloudAlbum.assets.fastMap { asset ->
                     asset.toMediaStoreData()
                 }
 
@@ -139,7 +136,7 @@ class ImmichRepository(
                 customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
 
                 db.exifDataDao().upsertAll(
-                    items = state.album.assets.fastMapNotNull {
+                    items = cloudAlbum.assets.fastMapNotNull {
                         it.exifInfo?.toExifData(
                             mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
                         )

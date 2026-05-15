@@ -16,12 +16,14 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
+import com.kaii.photos.repositories.LoginState
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
+import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -120,7 +123,11 @@ class MainGridViewModel(
             )
         )
 
-    private val loginState = LoginStateManager(context.appModule.apiClient)
+    private val loginClient = LoginClient(
+        client = context.appModule.apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
@@ -128,16 +135,32 @@ class MainGridViewModel(
     init {
         viewModelScope.launch {
             immichInfo.collectLatest {
-                loginState.setEndpoint(it.endpoint)
-                loginState.setAuth(it.auth)
+                loginClient.setEndpoint(it.endpoint)
+                loginClient.setAuth(it.auth)
 
-                val state = loginState.refresh()
+                val state = getLoginState()
                 if (state is LoginState.LoggedIn) {
                     settings.immich.setUsername(state.user.name)
                     settings.immich.setUpdatedAt(state.user.updatedAt)
                 }
             }
         }
+    }
+
+    private suspend fun getLoginState() = withContext(Dispatchers.IO) {
+        if (!loginClient.ping()) {
+            return@withContext LoginState.ServerUnreachable
+        }
+
+        val validated = loginClient.validate()
+
+        if (!validated) {
+            return@withContext LoginState.LoggedOut
+        }
+
+        loginClient.getMe()?.let {
+            LoginState.LoggedIn(user = it)
+        } ?: LoginState.LoggedOut
     }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)

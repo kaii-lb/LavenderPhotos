@@ -19,9 +19,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumCreationInfo
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumCreationState
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumCreateRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -103,11 +101,7 @@ class ImmichBackupOptionsState(
         )
 
         val albums = settings.get().first().filter { it !is AlbumType.Cloud }
-        val cloud = albumsClient.getAll().let { result ->
-            (result as? AlbumsGetAllState.Retrieved)?.albums?.map { album ->
-                album.id
-            }
-        }
+        val cloud = albumsClient.getAll()?.map { it.id }
 
         if (cloud == null) return@withContext
 
@@ -167,9 +161,7 @@ class ImmichBackupOptionsState(
 
         val albums = settings.get().first().filter { it !is AlbumType.Cloud }
         val local = albums.filter { it.id in selectedAlbumIds }
-        val cloud = albumsClient.getAll().let {
-            (it as? AlbumsGetAllState.Retrieved)?.albums
-        }
+        val cloud = albumsClient.getAll()
 
         if (cloud == null) {
             isLoading = false
@@ -189,7 +181,7 @@ class ImmichBackupOptionsState(
 
             if (immichId == null) {
                 val response = albumsClient.createAlbum(
-                    info = AlbumCreationInfo(
+                    info = AlbumCreateRequest(
                         albumName = album.name,
                         albumUsers = emptyList(),
                         assetIds = emptyList(),
@@ -197,7 +189,7 @@ class ImmichBackupOptionsState(
                     )
                 )
 
-                immichId = (response as? AlbumCreationState.Created)?.album?.id ?: return@forEach
+                immichId = response?.id ?: return@forEach
             }
 
             settings.edit(

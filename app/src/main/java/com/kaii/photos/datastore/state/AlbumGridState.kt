@@ -18,11 +18,8 @@ import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.signature
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.AllAlbumsState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
@@ -181,61 +178,47 @@ class AlbumGridState(
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
         val immichInfo = info.first()
-        val loginManager = LoginStateManager(apiClient)
-
-        loginManager.setEndpoint(immichInfo.endpoint)
-        loginManager.setAuth(immichInfo.auth)
-
-        val state = loginManager.refresh()
-
-        if (state !is LoginState.LoggedIn) return@withContext
-
-        val albumState = AllAlbumsState(
+        val albumsClient = AlbumsClient(
+            client = apiClient,
             endpoint = immichInfo.endpoint,
-            auth = immichInfo.auth,
-            apiClient = apiClient,
-            coroutineScope = scope
+            auth = immichInfo.auth
         )
 
-        albumState.load().join()
+        val allAlbums = albumsClient.getAll() ?: return@withContext
 
-        albumState.state.value.let { state ->
-            if (state is AlbumsGetAllState.Retrieved) {
-                val albumIds = state.albums.fastMap { it.id }
-                val removedOrImmichIdChanged = _albums.value
-                    .flatMap { album ->
-                        if (album is Album.Single) listOf(album.info)
-                        else (album as Album.Group).info
-                    }
-                    .fastMapNotNull { album ->
-                        album.album.id.takeIf {
-                            album.album is AlbumType.Cloud && album.album.immichId !in albumIds
-                        }
-                    }
-
-                val updated = _albums.value
-                    .filterIsInstance<Album.Single>()
-                    .fastMapNotNull { album ->
-                        val match = state.albums.find { it.id == album.id }
-
-                        val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
-
-                        match?.albumName?.let { changed?.copy(name = it) }
-                    }
-
-                updateAlbums(
-                    state.albums.fastMapNotNull { album ->
-                        AlbumType.Cloud(
-                            id = album.id,
-                            name = album.albumName,
-                            pinned = false
-                        )
-                    },
-                    updated,
-                    removedOrImmichIdChanged
-                )
+        val albumIds = allAlbums.fastMap { it.id }
+        val removedOrImmichIdChanged = _albums.value
+            .flatMap { album ->
+                if (album is Album.Single) listOf(album.info)
+                else (album as Album.Group).info
             }
-        }
+            .fastMapNotNull { album ->
+                album.album.id.takeIf {
+                    album.album is AlbumType.Cloud && album.album.immichId !in albumIds
+                }
+            }
+
+        val updated = _albums.value
+            .filterIsInstance<Album.Single>()
+            .fastMapNotNull { album ->
+                val match = allAlbums.find { it.id == album.id }
+
+                val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
+
+                match?.albumName?.let { changed?.copy(name = it) }
+            }
+
+        updateAlbums(
+            allAlbums.fastMapNotNull { album ->
+                AlbumType.Cloud(
+                    id = album.id,
+                    name = album.albumName,
+                    pinned = false
+                )
+            },
+            updated,
+            removedOrImmichIdChanged
+        )
     }
 
     private suspend fun update() = withContext(Dispatchers.IO) {
