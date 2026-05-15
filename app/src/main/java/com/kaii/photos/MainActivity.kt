@@ -62,6 +62,7 @@ import com.kaii.photos.compose.immich.ImmichAccountPage
 import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
 import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
+import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
@@ -98,6 +99,8 @@ import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -521,6 +524,23 @@ class MainActivity : ComponentActivity() {
                         ImmichBackupOptionsPage(
                             state = rememberImmichBackupOptionsState(),
                             navController = navController
+                        )
+                    }
+
+                    composable<Screens.Immich.ShareAlbumPage> {
+                        val screen = it.toRoute<Screens.Immich.ShareAlbumPage>()
+                        val viewModel = it.sharedViewModel<ImmichShareAlbumViewModel>(
+                            factory = ImmichShareAlbumViewModelFactory(
+                                context = context,
+                                albumImmichId = screen.albumImmichId
+                            )
+                        )
+
+                        ImmichShareLinkPage(
+                            latestImage = screen.latestImage,
+                            albumTitle = screen.albumTitle,
+                            itemCount = screen.itemCount,
+                            viewModel = viewModel
                         )
                     }
 

@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,11 +59,16 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.getExternalStorageContentUriFromAbsolutePath
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.compose.dialogs.AlbumInfoDialog"
 
@@ -132,6 +139,7 @@ fun AlbumInfoDialog(
                                 albumInfo = albumInfo,
                                 albums = albums,
                                 autoDetectAlbums = autoDetectAlbums,
+                                itemCount = itemCount,
                                 toggleSelectionMode = toggleSelectionMode,
                                 editAlbum = editAlbum,
                                 renameAlbum = renameAlbum,
@@ -183,6 +191,7 @@ fun AlbumInfoDialog(
                             albumInfo = albumInfo,
                             albums = albums,
                             autoDetectAlbums = autoDetectAlbums,
+                            itemCount = itemCount,
                             toggleSelectionMode = toggleSelectionMode,
                             editAlbum = editAlbum,
                             removeAlbum = removeAlbum,
@@ -215,6 +224,7 @@ private fun IconContentHorizontal(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
+    itemCount: suspend () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -238,6 +248,7 @@ private fun IconContentHorizontal(
             albumInfo = albumInfo,
             albums = albums,
             autoDetectAlbums = autoDetectAlbums,
+            itemCount = itemCount,
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
             editAlbum = editAlbum,
@@ -253,6 +264,7 @@ private fun IconContentVertical(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
+    itemCount: suspend () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -275,6 +287,7 @@ private fun IconContentVertical(
             albumInfo = albumInfo,
             albums = albums,
             autoDetectAlbums = autoDetectAlbums,
+            itemCount = itemCount,
             modifier = Modifier.weight(1f),
             toggleSelectionMode = toggleSelectionMode,
             editAlbum = editAlbum,
@@ -290,6 +303,7 @@ private fun IconContentImpl(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
+    itemCount: suspend () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -298,6 +312,60 @@ private fun IconContentImpl(
     dismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
+    val navController = LocalNavController.current
+
+    IconButton(
+        onClick = {
+            // so it doesn't die when the dialog dismisses
+            context.appModule.scope.launch {
+                if (albumInfo().immichId != null) {
+                    val itemCount = itemCount()
+
+                    if (itemCount == 0) {
+                        LavenderSnackbarController.pushEvent(
+                            event = LavenderSnackbarEvent.MessageEvent(
+                                message = resources.getString(R.string.immich_share_album_empty),
+                                icon = R.drawable.error_2,
+                                duration = SnackbarDuration.Short
+                            )
+                        )
+
+                        return@launch
+                    }
+
+                    val albums = context.appModule.albumGridState.singleAlbums.value
+
+                    albums.find {
+                        it.id == albumInfo().id
+                    }?.let { album ->
+                        dismiss()
+                        delay(500.milliseconds)
+
+                        launch(Dispatchers.Main) {
+                            navController.navigate(
+                                Screens.Immich.ShareAlbumPage(
+                                    albumImmichId = albumInfo().immichId!!,
+                                    albumTitle = albumInfo().name,
+                                    itemCount = itemCount,
+                                    latestImage = album.info.thumbnail.uri
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        enabled = albumInfo().immichId != null,
+        modifier = modifier
+            .height(48.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.share),
+            contentDescription = stringResource(id = R.string.media_share)
+        )
+    }
+
     var fileName by remember { mutableStateOf(albumInfo().name) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
@@ -388,7 +456,6 @@ private fun IconContentImpl(
         )
     }
 
-    val navController = LocalNavController.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {

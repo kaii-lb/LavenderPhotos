@@ -84,6 +84,14 @@ interface Screens {
         object BackupOptions: Screens
 
         @Serializable
+        data class ShareAlbumPage(
+            val albumImmichId: String,
+            val albumTitle: String,
+            val itemCount: Int,
+            val latestImage: String
+        ) : Screens
+
+        @Serializable
         data class GridView(
             val album: AlbumType.Cloud
         ) : Screens

@@ -41,6 +41,7 @@ fun ClearableTextField(
     placeholder: String,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    maxLines: Int = 1,
     keyboardOptions: KeyboardOptions =
         KeyboardOptions(
             autoCorrectEnabled = false,
@@ -66,7 +67,7 @@ fun ClearableTextField(
         TextField(
             value = value,
             onValueChange = onValueChange,
-            maxLines = 1,
+            maxLines = maxLines,
             singleLine = true,
             enabled = enabled,
             placeholder = {

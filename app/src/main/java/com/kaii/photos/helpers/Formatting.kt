@@ -5,6 +5,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.kaii.photos.R
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalDateTime
@@ -164,3 +165,33 @@ fun String.immichDurationToSecondsOrNull(): Long? {
 
 /** @param n is the precision of the output */
 fun Long.bytesToGB(n: Int = 2) = ((this.toDouble() / (1024 * 1024 * 1024)) * 10f.pow(n)).roundToLong() / 10f.pow(n)
+
+fun SharedLinkResponse.expiryDate(context: Context): String? {
+    if (expiresAt == null) return null
+
+    val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
+
+    return Instant.parse(expiresAt!!)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .toJavaLocalDateTime()
+        .format(
+            DateTimeFormatter.ofPattern(
+                if (is24Hr) "MMM dd, yyyy - HH:mm"
+                else "MMM dd yyyy - h:mm a"
+            )
+        )
+}
+
+fun SharedLinkResponse.creationDate(context: Context): String? {
+    val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
+
+    return Instant.parse(createdAt)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .toJavaLocalDateTime()
+        .format(
+            DateTimeFormatter.ofPattern(
+                if (is24Hr) "MMM dd, yyyy - HH:mm"
+                else "MMM dd yyyy - h:mm a"
+            )
+        )
+}

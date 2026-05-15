@@ -1113,6 +1113,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="next">Next</string>
     <string name="error">Error!</string>
     <string name="refresh">Refresh</string>
+    <string name="copy_link">Copy link</string>
+    <string name="download">Download</string>
+    <string name="upload">Upload</string>
+    <string name="metadata">Metadata</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -1270,6 +1274,23 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_backup_sync_count">Syncing %1$d out of %2$d items</string>
     <string name="immich_share_album">Share Album</string>
     <string name="immich_share_album_item_count">%d items</string>
+    <string name="immich_share_album_use_expiry_date">Expires At</string>
+    <string name="immich_share_album_allow_uploads">Allow Uploads</string>
+    <string name="immich_share_album_allow_downloads">Allow Downloads</string>
+    <string name="immich_share_album_require_password">Require Password</string>
+    <string name="immich_share_album_custom_url">Custom URL</string>
+    <string name="immich_share_album_use_custom_url">Use Custom URL</string>
+    <string name="immich_share_album_description">Description</string>
+    <string name="immich_share_album_loading">Creating link…</string>
+    <string name="immich_share_album_loading_failed">Failed to create link</string>
+    <string name="immich_share_album_clip_title">Immich album share link</string>
+    <string name="immich_share_album_empty">Album is empty!</string>
+    <string name="immich_share_album_customize_link">Customize link properties</string>
+    <string name="immich_share_album_create_link">Create Link</string>
+    <string name="immich_share_album_qr_code">QR Code representation of the share link</string>
+    <string name="immich_share_album_other_links">Other links from this album</string>
+    <string name="immich_share_album_delete_link">Delete this immich share link</string>
+    <string name="immich_share_album_expires_at">Expires at: %s</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>
