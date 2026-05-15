@@ -586,7 +586,7 @@ private fun ImmichAccountPageTopBar(
         title = {
             Text(
                 text = stringResource(id = R.string.immich_account),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         },
         navigationIcon = {

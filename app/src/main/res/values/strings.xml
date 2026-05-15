@@ -1244,7 +1244,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_account_usage">Account Usage</string>
     <string name="immich_account_usage_images">Image Count</string>
     <string name="immich_account_usage_videos">Video Count</string>
-    <string name="immich_account_unlimited">%s used - Unlimited Storage</string>
+    <string name="immich_account_unlimited">%s GB used - Unlimited Storage</string>
     <string name="immich_account_change_password">Change Password</string>
     <string name="immich_account_change_password_confirm">Change</string>
     <string name="immich_account_storage">User Storage</string>
