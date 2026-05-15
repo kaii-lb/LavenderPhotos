@@ -59,7 +59,7 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
-import com.kaii.photos.compose.immich.ImmichDashboardPage
+import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
 import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
