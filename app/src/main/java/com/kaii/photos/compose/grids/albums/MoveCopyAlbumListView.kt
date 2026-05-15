@@ -69,15 +69,15 @@ fun MoveCopyAlbumListView(
 
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
 
-    val searchedForText = remember { mutableStateOf("") }
+    var searchedForText by remember { mutableStateOf("") }
 
     val state = rememberLazyListState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(searchedForText.value, originalAlbumsList, selectedItemsList.lastOrNull(), allowedAlbumsFor(), isMoving()) {
+    LaunchedEffect(searchedForText, originalAlbumsList, selectedItemsList.lastOrNull(), allowedAlbumsFor(), isMoving()) {
         albumsList = originalAlbumsList.filter { album ->
-            album.name.contains(searchedForText.value, true)
+            album.name.contains(searchedForText, true)
                     && album.info.album::class in allowedAlbumsFor()
                     && if (isMoving()) album.id != currentAlbum().id else true
         }
@@ -86,7 +86,7 @@ fun MoveCopyAlbumListView(
     }
 
     LaunchedEffect(show.value) {
-        searchedForText.value = ""
+        searchedForText = ""
     }
 
     if (show.value) {
@@ -125,7 +125,8 @@ fun MoveCopyAlbumListView(
                     .fillMaxWidth(1f)
             ) {
                 ClearableTextField(
-                    text = searchedForText,
+                    value = searchedForText,
+                    onValueChange = { searchedForText = it },
                     placeholder = stringResource(id = R.string.albums_search_for),
                     icon = R.drawable.search,
                     modifier = Modifier
@@ -133,7 +134,7 @@ fun MoveCopyAlbumListView(
                         .height(56.dp)
                         .padding(16.dp, 0.dp),
                     onClear = {
-                        searchedForText.value = ""
+                        searchedForText = ""
                     },
                     onConfirm = {}
                 )

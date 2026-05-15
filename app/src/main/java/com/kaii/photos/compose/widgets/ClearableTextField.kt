@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
@@ -37,7 +36,8 @@ import com.kaii.photos.R
 
 @Composable
 fun ClearableTextField(
-    text: MutableState<String>,
+    value: String,
+    onValueChange: (new: String) -> Unit,
     placeholder: String,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
@@ -64,10 +64,8 @@ fun ClearableTextField(
         val keyboardController = LocalSoftwareKeyboardController.current
 
         TextField(
-            value = text.value,
-            onValueChange = {
-                text.value = it
-            },
+            value = value,
+            onValueChange = onValueChange,
             maxLines = 1,
             singleLine = true,
             enabled = enabled,
@@ -90,7 +88,7 @@ fun ClearableTextField(
                 }
             },
             suffix = {
-                if (text.value.isNotEmpty()) {
+                if (value.isNotEmpty()) {
                     Icon(
                         painter = painterResource(id = R.drawable.close),
                         contentDescription = "Clear search query",

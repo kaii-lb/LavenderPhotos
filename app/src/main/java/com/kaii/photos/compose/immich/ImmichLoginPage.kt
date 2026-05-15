@@ -149,8 +149,8 @@ private fun ImmichLoginPageImpl(
         }
     }
 
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var isApiKey by remember { mutableStateOf(false) }
 
@@ -228,7 +228,8 @@ private fun ImmichLoginPageImpl(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             ClearableTextField(
-                                text = email,
+                                value = email,
+                                onValueChange = { email = it },
                                 placeholder = stringResource(id = R.string.immich_auth_email),
                                 icon = R.drawable.mail,
                                 enabled = !loading,
@@ -241,12 +242,13 @@ private fun ImmichLoginPageImpl(
                                     focusManager.moveFocus(FocusDirection.Down)
                                 },
                                 onClear = {
-                                    email.value = ""
+                                    email = ""
                                 }
                             )
 
                             ClearableTextField(
-                                text = password,
+                                value = password,
+                                onValueChange = { password = it },
                                 placeholder = stringResource(id = R.string.immich_auth_password),
                                 icon = R.drawable.password,
                                 enabled = !loading,
@@ -264,13 +266,14 @@ private fun ImmichLoginPageImpl(
                                     keyboardController?.hide()
                                 },
                                 onClear = {
-                                    password.value = ""
+                                    password = ""
                                 }
                             )
                         }
                     } else {
                         ClearableTextField(
-                            text = password,
+                            value = password,
+                            onValueChange = { password = it },
                             placeholder = stringResource(id = R.string.immich_auth_api_key),
                             icon = R.drawable.key,
                             enabled = !loading,
@@ -285,7 +288,7 @@ private fun ImmichLoginPageImpl(
                                 keyboardController?.hide()
                             },
                             onClear = {
-                                password.value = ""
+                                password = ""
                             }
                         )
                     }
@@ -365,7 +368,7 @@ private fun ImmichLoginPageImpl(
             item {
                 Button(
                     onClick = {
-                        login(email.value, password.value, isApiKey)
+                        login(email, password, isApiKey)
                     },
                     enabled = !loading
                 ) {
