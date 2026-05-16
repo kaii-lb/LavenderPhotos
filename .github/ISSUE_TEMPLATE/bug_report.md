@@ -19,3 +19,6 @@ What did you expect the proper behavior to be?
 **Android Version:**
  - Device: [e.g. Samsung S23 FE]
  - Version: [Android 14]
+
+**App Version:**
+ - v1.4.0
