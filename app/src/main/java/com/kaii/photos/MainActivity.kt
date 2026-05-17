@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -59,9 +58,9 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
-import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
 import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
+import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
@@ -749,21 +748,22 @@ class MainActivity : ComponentActivity() {
 
                     val screen: Screens.ImageEditor = it.toRoute()
                     val viewModel = viewModel<EditorViewModel>(
-                        factory = EditorViewModelFactory(context = context)
+                        factory = EditorViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
                     )
 
-                    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
                     val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
 
                     ImageEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
                         isFromOpenWithView = false,
-                        album = screen.album,
                         exportQuality = { exportQuality },
-                        exitOnSave = { exitOnSave },
-                        overwriteByDefault = { overwriteByDefault }
+                        overwriteByDefault = { overwriteByDefault },
+                        editImage = viewModel::editImage,
+                        setNavProps = viewModel::setNavProps
                     )
                 }
 
@@ -813,8 +813,7 @@ class MainActivity : ComponentActivity() {
                     val screen = it.toRoute<Screens.VideoEditor>()
 
                     VideoEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
                         album = screen.album,
                         window = window,
                         isFromOpenWithView = false

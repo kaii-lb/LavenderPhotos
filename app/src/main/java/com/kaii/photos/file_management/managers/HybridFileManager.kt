@@ -112,7 +112,7 @@ class HybridFileManager(
         uri: String,
         newName: String
     ): IntentSender? {
-        if (uri.startsWith("http")) {
+        if (uri.startsWith("/api")) {
             throw IllegalArgumentException("Cannot rename immich media!")
         }
 

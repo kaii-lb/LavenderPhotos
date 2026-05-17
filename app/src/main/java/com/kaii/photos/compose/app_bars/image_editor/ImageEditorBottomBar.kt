@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.app_bars.image_editor
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +59,7 @@ fun ImageEditorBottomBar(
     imageEditingState: ImageEditingState,
     drawingPaintState: DrawingPaintState,
     pagerState: PagerState,
-    uri: Uri,
+    uri: String,
     modifier: Modifier = Modifier,
     increaseModCount: () -> Unit,
     saveEffect: (MediaColorFilters) -> Unit

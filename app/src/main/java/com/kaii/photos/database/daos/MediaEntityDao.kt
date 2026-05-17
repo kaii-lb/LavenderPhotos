@@ -116,6 +116,9 @@ interface MediaDao {
     @Query(value = "SELECT COUNT(id) FROM media WHERE immichUrl IS NOT NULL")
     fun immichMediaCount(): Flow<Int>
 
+    @Query(value = "SELECT * FROM media WHERE uri = :uri")
+    suspend fun getMediaFromUri(uri: String): MediaStoreData?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)
 

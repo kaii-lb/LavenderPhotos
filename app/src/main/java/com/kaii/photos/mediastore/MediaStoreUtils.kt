@@ -47,7 +47,7 @@ suspend fun ContentResolver.insertMedia(
     currentVolumes: Set<String>,
     preserveDate: Boolean = false,
     overrideDisplayName: String? = null,
-    onInsert: (origin: Uri, new: Uri) -> Unit
+    onInsert: (origin: Uri, new: Uri) -> Unit // TODO: remove
 ): Uri? = withContext(Dispatchers.IO) {
     val basePath = destination.toBasePath()
 

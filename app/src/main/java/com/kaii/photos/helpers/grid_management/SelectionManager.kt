@@ -50,7 +50,7 @@ class SelectionManager(
             get() = immichUrl?.split("/")?.dropLast(1)?.last()
 
         val isCloud: Boolean
-            get() = uri.startsWith("http")
+            get() = uri.startsWith("/api")
     }
 
     private var _selection by mutableStateOf<Map<Long, List<SelectedItem>>>(emptyMap())

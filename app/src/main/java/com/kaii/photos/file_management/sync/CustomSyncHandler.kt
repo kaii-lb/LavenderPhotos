@@ -31,7 +31,7 @@ class CustomSyncHandler(
             cloudMedia = cloudMedia,
             localMedia = localMedia,
             originId = album.immichId,
-            destinationPath = appCloudFolderDir
+            destinationPath = appCloudFolderDir.absolutePath.removeSuffix("/")
         )
     }
 }

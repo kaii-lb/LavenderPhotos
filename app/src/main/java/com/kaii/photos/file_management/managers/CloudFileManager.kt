@@ -2,7 +2,6 @@ package com.kaii.photos.file_management.managers
 
 import android.content.Context
 import android.content.IntentSender
-import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
@@ -16,6 +15,7 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.helpers.appCloudFolderDir
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
@@ -401,18 +401,14 @@ class CloudFileManager(
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
     ) = withContext(Dispatchers.IO) {
-        val pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        if (!pictures.exists()) pictures.mkdirs()
-
-        val download = File(pictures, "Lavender Photos")
-        if (!download.exists()) download.mkdirs()
+        val folder = appCloudFolderDir
 
         val album = AlbumType.Folder(
             id = Uuid.random().toString(),
-            name = "Lavender Photos",
+            name = folder.name,
             pinned = false,
             immichId = null,
-            paths = setOf(download.absolutePath)
+            paths = setOf(folder.absolutePath)
         )
 
         val ids = copyToLocal(
@@ -424,8 +420,12 @@ class CloudFileManager(
             onItemDone = onItemDone
         )
 
-        while (!mediaDao.exists(ids.last().id)) {
+        if (ids.isEmpty()) return@withContext emptyList()
+
+        var tries = 0
+        while (!mediaDao.exists(ids.last().id) && tries < 100) {
             delay(500)
+            tries += 1
         }
 
         customDao.upsertAll(

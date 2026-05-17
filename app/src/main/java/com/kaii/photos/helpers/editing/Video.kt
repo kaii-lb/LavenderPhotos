@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.net.Uri
 import android.opengl.GLES20
 import androidx.annotation.OptIn
 import androidx.annotation.StringRes
@@ -461,7 +460,7 @@ class ColorMatrixEffect(
 
 @OptIn(UnstableApi::class)
 fun ExoPlayer.applyEffects(
-    uri: Uri,
+    uri: String,
     effectList: List<Effect>
 ) {
     stop()
@@ -477,7 +476,7 @@ fun ExoPlayer.applyEffects(
 data class BasicVideoData(
     val duration: Float,
     val frameRate: Float?,
-    val absolutePath: String,
+    val uri: String,
     val width: Int,
     val height: Int,
     val bitrate: Int,

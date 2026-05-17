@@ -569,7 +569,6 @@ private fun SinglePhotoViewCommon(
                         if (mediaItem.type == MediaType.Image) {
                             navController.navigate(
                                 Screens.ImageEditor(
-                                    absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri,
                                     dateTaken = mediaItem.dateTaken,
                                     album = album
@@ -579,7 +578,6 @@ private fun SinglePhotoViewCommon(
                             navController.navigate(
                                 Screens.VideoEditor(
                                     uri = mediaItem.uri,
-                                    absolutePath = mediaItem.absolutePath,
                                     album = album
                                 )
                             )

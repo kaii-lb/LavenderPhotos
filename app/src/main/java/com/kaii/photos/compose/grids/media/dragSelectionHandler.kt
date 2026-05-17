@@ -102,7 +102,7 @@ fun Modifier.dragSelectionHandler(
                             coroutineScope.launch(Dispatchers.IO) {
                                 val items = selectionManager.selection.first().fastMapNotNull { item ->
                                     item.uri.takeIf { uri ->
-                                        !uri.startsWith("http")
+                                        !uri.startsWith("/api")
                                     }?.toUri()
                                 }
 

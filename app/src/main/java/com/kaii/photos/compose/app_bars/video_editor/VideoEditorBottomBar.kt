@@ -2,7 +2,6 @@ package com.kaii.photos.compose.app_bars.video_editor
 
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
-import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
@@ -44,6 +43,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.compose.editing_view.EditorApp
 import com.kaii.photos.compose.editing_view.SharedEditorCropContent
@@ -64,6 +64,7 @@ import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.mediastore.MediaType
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -77,10 +78,10 @@ fun VideoEditorBottomBar(
     pagerState: PagerState,
     currentPosition: () -> Float,
     basicData: () -> BasicVideoData,
+    auth: () -> Auth,
     videoEditingState: VideoEditingState,
     drawingPaintState: DrawingPaintState,
     modifications: SnapshotStateList<VideoModification>,
-    uri: Uri,
     increaseModCount: () -> Unit,
     onSeek: (Float) -> Unit,
     saveEffect: (MediaColorFilters) -> Unit
@@ -163,7 +164,17 @@ fun VideoEditorBottomBar(
                 if (basicData.duration <= 0f) return@LaunchedEffect
 
                 coroutineScope.launch(Dispatchers.IO) {
-                    metadata.setDataSource(basicData.absolutePath)
+                    if (basicData.uri.startsWith("/api")) {
+                        metadata.setDataSource(
+                            basicData.uri,
+                            auth().headers
+                        )
+                    } else {
+                        metadata.setDataSource(
+                            context,
+                            basicData.uri.toUri()
+                        )
+                    }
 
                     val stepSize = basicData.duration.roundToInt().seconds.inWholeMicroseconds / 6
 
@@ -249,7 +260,7 @@ fun VideoEditorBottomBar(
                     VideoEditorTabs.entries.indexOf(VideoEditorTabs.More) -> {
                         SharedEditorMoreContent(
                             apps = availableEditors,
-                            uri = uri,
+                            uri = basicData().uri,
                             mediaType = MediaType.Video
                         )
                     }

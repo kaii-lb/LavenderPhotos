@@ -1,7 +1,6 @@
 package com.kaii.photos.helpers.video
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -367,7 +366,7 @@ class VideoPlayerState(
     fun setVolume(volume: Float) = player.setVolume(volume)
 
     @androidx.annotation.OptIn(UnstableApi::class)
-    fun applyEffects(uri: Uri, effectList: List<Effect>) {
+    fun applyEffects(uri: String, effectList: List<Effect>) {
         player.applyEffects(uri, effectList)
     }
 

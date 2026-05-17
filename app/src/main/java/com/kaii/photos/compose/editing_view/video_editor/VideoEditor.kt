@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.editing_view.video_editor
 
 import android.media.MediaMetadataRetriever
-import android.net.Uri
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
@@ -55,12 +54,14 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.navigation.NavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.video_editor.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.video_editor.VideoEditorTopBar
@@ -73,6 +74,7 @@ import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
@@ -98,34 +100,34 @@ private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
 @Composable
 fun VideoEditor(
-    uri: Uri,
-    absolutePath: String,
+    uri: String,
     album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean
 ) {
     val viewModel = viewModel<EditorViewModel>(
-        factory = EditorViewModelFactory(context = LocalContext.current)
+        factory = EditorViewModelFactory(
+            context = LocalContext.current,
+            album = album ?: AlbumType.PlaceHolder
+        )
     )
 
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
-    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
     val info by viewModel.immichInfo.collectAsStateWithLifecycle()
 
     VideoEditorImpl(
         uri = uri,
-        absolutePath = absolutePath,
         auth = { info.auth },
         endpoint = { info.endpoint },
-        album = album,
         window = window,
         isFromOpenWithView = isFromOpenWithView,
         blurViews = blurViews,
         useBlackBackground = useBlackBackground,
-        exitOnSave = { exitOnSave },
-        overwriteByDefault = { overwriteByDefault }
+        overwriteByDefault = { overwriteByDefault },
+        editVideo = viewModel::editVideo,
+        setNavProps = viewModel::setNavProps
     )
 }
 
@@ -133,17 +135,16 @@ fun VideoEditor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoEditorImpl(
-    uri: Uri,
-    absolutePath: String,
+    uri: String,
     auth: () -> Auth,
     endpoint: () -> String,
-    album: AlbumType?,
     window: Window,
     isFromOpenWithView: Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
-    exitOnSave: () -> Boolean,
-    overwriteByDefault: () -> Boolean
+    overwriteByDefault: () -> Boolean,
+    editVideo: (NavController, GenericFileEditor.EditParameters.Video) -> Unit,
+    setNavProps: (NavController) -> Unit
 ) {
     var exoPlayerLoading by remember { mutableStateOf(true) }
     val videoPlayerState = retainVideoPlayerState(
@@ -161,8 +162,7 @@ fun VideoEditorImpl(
         videoPlayerState.setSource(
             context = context,
             item = MediaStoreData.dummyItem.copy(
-                uri = uri.toString(),
-                absolutePath = absolutePath
+                uri = uri
             ),
             auth = auth(),
             endpoint = endpoint(),
@@ -255,7 +255,7 @@ fun VideoEditorImpl(
                 duration = videoPlayerState.duration / 1000f,
                 width = videoPlayerState.videoSize.width,
                 height = videoPlayerState.videoSize.height,
-                absolutePath = absolutePath,
+                uri = uri,
                 bitrate = videoPlayerState.videoFormat?.bitrate ?: 0,
                 frameRate =
                     if (videoPlayerState.videoFormat?.frameRate?.toInt() == -1 || videoPlayerState.videoFormat?.frameRate == null) 0f
@@ -275,7 +275,17 @@ fun VideoEditorImpl(
 
         withContext(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
-            metadata.setDataSource(absolutePath)
+            if (uri.startsWith("/api")) {
+                metadata.setDataSource(
+                    uri,
+                    auth().headers
+                )
+            } else {
+                metadata.setDataSource(
+                    context,
+                    uri.toUri()
+                )
+            }
 
             // this mess is because exoplayer doesn't really know what res the video is all the time
             val frame = metadata.frameAtTime
@@ -308,7 +318,7 @@ fun VideoEditorImpl(
                 BasicVideoData(
                     duration = videoPlayerState.duration,
                     frameRate = frameRate,
-                    absolutePath = absolutePath,
+                    uri = uri,
                     bitrate = bitrate,
                     width = size.width,
                     height = size.height,
@@ -380,7 +390,6 @@ fun VideoEditorImpl(
         topBar = {
             VideoEditorTopBar(
                 uri = uri,
-                absolutePath = absolutePath,
                 modifications = modifications,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
@@ -389,9 +398,9 @@ fun VideoEditorImpl(
                 containerDimens = containerDimens,
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
-                customAlbumId = album?.id.takeIf { album !is AlbumType.Folder },
-                exitOnSave = exitOnSave,
-                overwriteByDefault = overwriteByDefault
+                overwriteByDefault = overwriteByDefault,
+                editVideo = editVideo,
+                setNavProps = setNavProps
             )
         },
         bottomBar = {
@@ -399,10 +408,10 @@ fun VideoEditorImpl(
                 pagerState = pagerState,
                 currentPosition = { videoPlayerState.currentPosition },
                 basicData = { basicVideoData },
+                auth = auth,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
                 modifications = modifications,
-                uri = uri,
                 onSeek = { pos ->
                     videoPlayerState.seekTo(
                         (pos * 1000f).coerceAtMost(videoEditingState.endTrimPosition * 1000f).toLong()
@@ -693,7 +702,8 @@ fun VideoEditorImpl(
                     pagerState = filterPagerState,
                     drawingPaintState = drawingPaintState,
                     currentVideoPosition = videoPlayerState.currentPosition,
-                    absolutePath = absolutePath,
+                    uri = uri,
+                    auth = auth,
                     allowedToRefresh = videoPlayerState.isPlaying || isSeeking
                 )
             }
