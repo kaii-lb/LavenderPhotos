@@ -9,6 +9,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
+import com.kaii.photos.file_management.sync.CloudCleanupHandler
 import com.kaii.photos.file_management.sync.CustomSyncHandler
 import com.kaii.photos.file_management.sync.LocalSyncHandler
 import com.kaii.photos.file_management.sync.ProgressManager
@@ -35,6 +36,10 @@ class CloudSyncManager(
         fileManager = customFileManager,
         progressManager = progressManager,
         albums = context.appModule.settings.albums
+    )
+    private val cloudCleanupHandler = CloudCleanupHandler(
+        mediaDao = cloudFileManager.mediaDao,
+        assetsClient = cloudFileManager.assetClient
     )
 
     suspend fun syncUploads() {
@@ -74,6 +79,8 @@ class CloudSyncManager(
         }
 
         progressManager.stopTracking()
+
+        cloudCleanupHandler.cleanUp(context)
     }
 
     suspend fun syncFor(

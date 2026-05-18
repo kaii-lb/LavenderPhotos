@@ -539,7 +539,7 @@ interface GenericFileManager {
                             context = context,
                             uri = mediaItem.uri.toUri()
                         ),
-                        deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
+                        deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
                         deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
