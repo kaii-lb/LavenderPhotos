@@ -166,6 +166,9 @@ fun String.immichDurationToSecondsOrNull(): Long? {
 /** @param n is the precision of the output */
 fun Long.bytesToGB(n: Int = 2) = ((this.toDouble() / (1024 * 1024 * 1024)) * 10f.pow(n)).roundToLong() / 10f.pow(n)
 
+fun Double.round(n: Int = 2) = (this * 10f.pow(n)).roundToLong() / 10f.pow(n)
+fun Float.round(n: Int = 2) = (this * 10f.pow(n)).roundToLong() / 10f.pow(n)
+
 fun SharedLinkResponse.expiryDate(context: Context): String? {
     if (expiresAt == null) return null
 
