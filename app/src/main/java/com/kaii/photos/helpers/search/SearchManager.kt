@@ -122,7 +122,7 @@ class SearchManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         onItemDone: (totaCount: Int) -> Unit
-    ) = searchRepo.setTrashed(context, list, trashed, onItemDone)
+    ) = searchRepo.setTrashed(context, list, trashed, null, onItemDone)
 
     suspend fun delete(
         context: Context,

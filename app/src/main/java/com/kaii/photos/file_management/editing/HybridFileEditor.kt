@@ -11,12 +11,22 @@ import com.kaii.photos.helpers.editing.ImageEditingState
 import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 
 class HybridFileEditor(
-    override val mediaDao: MediaDao
+    override val mediaDao: MediaDao,
+    assetsClient: AssetsClient,
+    albumsClient: AlbumsClient,
+    albumImmichId: String?
 ) : GenericFileEditor {
     private val localFileEditor = LocalFileEditor(mediaDao)
-    private val cloudFileEditor = CloudFileEditor(mediaDao)
+    private val cloudFileEditor = CloudFileEditor(
+        mediaDao = mediaDao,
+        assetsClient = assetsClient,
+        albumsClient = albumsClient,
+        albumImmichId = albumImmichId
+    )
 
     override suspend fun editVideo(
         context: Context,

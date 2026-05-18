@@ -181,7 +181,7 @@ class MultiAlbumViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,

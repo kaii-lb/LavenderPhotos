@@ -125,13 +125,6 @@ class TrashRepository(
 
     fun cancel() = cancellationSignal.cancel()
 
-    override suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
-
     override suspend fun delete(
         context: Context,
         list: List<SelectionManager.SelectedItem>

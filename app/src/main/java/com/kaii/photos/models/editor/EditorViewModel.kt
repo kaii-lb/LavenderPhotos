@@ -13,6 +13,9 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.editing.CustomFileEditor
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.file_management.editing.HybridFileEditor
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +69,17 @@ class EditorViewModel(
     var newId: Long? = null
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
+    private val assetsClient = AssetsClient(
+        client = context.appModule.apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
+    private val albumsClient = AlbumsClient(
+        client = context.appModule.apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
+
     private val editor =
         when (album) {
             is AlbumType.Custom -> {
@@ -79,9 +93,24 @@ class EditorViewModel(
             else -> {
                 HybridFileEditor(
                     mediaDao = db.mediaDao(),
+                    assetsClient = assetsClient,
+                    albumsClient = albumsClient,
+                    albumImmichId = album.immichId.takeIf { album !is AlbumType.PlaceHolder }
                 )
             }
         }
+
+    init {
+        viewModelScope.launch {
+            settings.immich.getImmichBasicInfo().collect { info ->
+                assetsClient.setEndpoint(info.endpoint)
+                assetsClient.setAuth(info.auth)
+
+                albumsClient.setEndpoint(info.endpoint)
+                albumsClient.setAuth(info.auth)
+            }
+        }
+    }
 
     fun editImage(
         navController: NavController,

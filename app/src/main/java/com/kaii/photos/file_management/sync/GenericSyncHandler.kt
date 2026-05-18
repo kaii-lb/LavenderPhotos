@@ -19,6 +19,7 @@ import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
 import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
+import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
@@ -237,25 +238,26 @@ interface GenericSyncHandler {
                 id = Uuid.parse(id)
             ) ?: return@forEach
 
-            val localItem = fileManager.mediaDao.getMediaFromHashes(
+            val localItems = fileManager.mediaDao.getMediaFromHashes(
                 hashes = listOf(cloudItem.checksum)
-            ).firstOrNull()
+            ).filter { it.parentPath == destination }
 
-            if (localItem != null) {
-                successes += 1
-                progressManager.increaseProgress()
+            if (localItems.isNotEmpty()) {
+                localItems.forEach { localItem ->
+                    successes += 1
+                    progressManager.increaseProgress()
 
-                fileManager.mediaDao.linkToImmich(
-                    id = localItem.id,
-                    hash = cloudItem.checksum,
-                    immichUrl = "/api/assets/${cloudItem.id}/original"
-                )
+                    fileManager.mediaDao.linkToImmich(
+                        id = localItem.id,
+                        hash = cloudItem.checksum,
+                        immichUrl = "/api/assets/${cloudItem.id}/original"
+                    )
+                }
 
                 return@forEach
             }
 
             // Proceed with download only if content is truly missing
-            val bytes = fileManager.assetClient.download(Uuid.parse(cloudItem.id)) ?: return@forEach
             val item = cloudItem.toMediaStoreData()
 
             val newUri = context.contentResolver.insertMedia(
@@ -268,12 +270,17 @@ interface GenericSyncHandler {
             )
 
             newUri?.let { uri ->
-                context.contentResolver.openOutputStream(uri)?.use {
-                    if (bytes.size <= 8 * 1024) it.write(bytes)
-                    else it.buffered().write(bytes)
+                val downloaded = fileManager.assetClient.download(
+                    id = Uuid.parse(cloudItem.id),
+                    channel = UriWriteChannel(
+                        uri = uri,
+                        context = context
+                    )
+                )
 
-                    it.flush()
-                    it.close()
+                if (!downloaded) {
+                    context.contentResolver.delete(uri, null)
+                    return@let
                 }
 
                 context.contentResolver.setDateForMedia(uri, item.type, item.dateTaken)

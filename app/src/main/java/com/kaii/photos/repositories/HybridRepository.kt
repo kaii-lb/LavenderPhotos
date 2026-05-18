@@ -11,6 +11,7 @@ import com.kaii.photos.file_management.managers.HybridFileManager
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import io.github.kaii_lb.lavender.immichintegration.Auth
@@ -140,4 +141,14 @@ class HybridRepository(
         context: Context,
         newName: String
     ) = fileManager.renameAlbum(context, album.value, newName)
+
+    override suspend fun setTrashed(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>,
+        trashed: Boolean,
+        albumId: String?,
+        onItemDone: (totaCount: Int) -> Unit
+    ): Boolean {
+        return super.setTrashed(context, list, trashed, albumId ?: album.value.immichId, onItemDone)
+    }
 }

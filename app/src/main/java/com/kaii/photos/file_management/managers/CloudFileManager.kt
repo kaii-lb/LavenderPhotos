@@ -21,6 +21,8 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
+import io.github.kaii_lb.lavender.immichintegration.FileWriteChannel
+import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
@@ -69,13 +71,15 @@ class CloudFileManager(
                 item.copy(uri = uri)
             } else {
                 assetClient.download(
-                    id = Uuid.parse(item.immichId!!)
-                )?.let { bytes ->
-                    if (!file.exists()) file.createNewFile()
-
-                    file.outputStream().buffered().write(bytes)
-
-                    item.copy(uri = uri)
+                    id = Uuid.parse(item.immichId!!),
+                    channel = FileWriteChannel(file = file)
+                ).let { success ->
+                    if (success) {
+                        item.copy(uri = uri)
+                    } else {
+                        file.delete()
+                        null
+                    }
                 }
             }
         }
@@ -193,8 +197,6 @@ class CloudFileManager(
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
             )
-
-            onItemDone(list.size)
 
             return@withContext success
         }
@@ -461,13 +463,6 @@ class CloudFileManager(
 
         val result = list.mapNotNull { item ->
             val media = mediaItems[item.id]!!
-            val bytes = assetClient.download(
-                id = Uuid.parse(item.immichId!!)
-            )
-
-            if (bytes == null) return@mapNotNull null
-
-            onItemDone(item.uri)
 
             var newId = 0L
             destination.paths.forEach { path ->
@@ -484,13 +479,20 @@ class CloudFileManager(
                         newId = it
                     }
 
-                    contentResolver.openOutputStream(new)?.use {
-                        if (bytes.size <= 8 * 1024) it.write(bytes)
-                        else it.buffered().write(bytes)
+                    val downloaded = assetClient.download(
+                        id = Uuid.parse(item.immichId!!),
+                        channel = UriWriteChannel(
+                            uri = new,
+                            context = context
+                        )
+                    )
 
-                        it.flush()
-                        it.close()
+                    if (!downloaded) {
+                        context.contentResolver.delete(new, null)
+                        return@mapNotNull null
                     }
+
+                    onItemDone(item.uri)
                 }
             }
 

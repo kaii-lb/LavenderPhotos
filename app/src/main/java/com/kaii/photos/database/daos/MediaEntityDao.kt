@@ -110,7 +110,7 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE id IN (:ids)")
     suspend fun getMedia(ids: List<Long>): List<MediaStoreData>
 
-    @Query(value = "SELECT * FROM media WHERE hash IN (:hashes)")
+    @Query(value = "SELECT * FROM media WHERE hash IN (:hashes) AND uri NOT LIKE '/api%'")
     suspend fun getMediaFromHashes(hashes: List<String>): List<MediaStoreData>
 
     @Query(value = "SELECT COUNT(id) FROM media WHERE immichUrl IS NOT NULL")
