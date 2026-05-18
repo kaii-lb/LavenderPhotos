@@ -52,7 +52,7 @@ import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.secureThumbnailImage
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo

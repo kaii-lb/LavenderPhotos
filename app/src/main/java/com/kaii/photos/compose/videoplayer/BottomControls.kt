@@ -47,7 +47,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.formatLikeANormalPerson
-import com.kaii.photos.helpers.video.LavenderExoPlayer
+import com.kaii.photos.screens.video.LavenderExoPlayer
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 

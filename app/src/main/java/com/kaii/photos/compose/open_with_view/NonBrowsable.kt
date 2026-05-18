@@ -70,7 +70,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import io.github.kaii_lb.lavender.immichintegration.Auth

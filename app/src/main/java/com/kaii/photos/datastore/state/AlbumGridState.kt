@@ -39,12 +39,12 @@ import kotlin.uuid.Uuid
 
 class AlbumGridState(
     private val scope: CoroutineScope,
-    private val albumsFlow: Flow<List<AlbumType>>,
-    private val albumGroupsFlow: Flow<List<AlbumGroup>>,
-    private val albumsOrderFlow: Flow<List<String>>,
     private val apiClient: ApiClient,
-    private val info: Flow<ImmichBasicInfo>,
     private val context: Context,
+    albumsFlow: Flow<List<AlbumType>>,
+    albumGroupsFlow: Flow<List<AlbumGroup>>,
+    albumsOrderFlow: Flow<List<String>>,
+    info: Flow<ImmichBasicInfo>,
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
@@ -100,6 +100,8 @@ class AlbumGridState(
         val order: List<String>
     )
 
+    private var immichInfo = ImmichBasicInfo.Empty
+
     private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
     private val customDao = MediaDatabase.getInstance(context).customDao()
 
@@ -120,49 +122,57 @@ class AlbumGridState(
 
     init {
         scope.launch(Dispatchers.IO) {
-            combine(
-                flow = sortModeFlow,
-                flow2 = albumSortModeFlow,
-                flow3 = albumsFlow,
-                flow4 = albumGroupsFlow,
-                flow5 = albumsOrderFlow
-            ) { sortMode, albumSortMode, albums, groups, order ->
-                Params(sortMode, albumSortMode, albums, groups, order)
-            }.collectLatest {
-                params = it
-                refresh()
+            launch {
+                info.collect {
+                    immichInfo = it
+                }
             }
-        }
 
-        scope.launch(Dispatchers.IO) {
-            allAlbumsFlow.distinctUntilChanged().collectLatest {
-                if (it) {
-                    val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+            launch {
+                combine(
+                    flow = sortModeFlow,
+                    flow2 = albumSortModeFlow,
+                    flow3 = albumsFlow,
+                    flow4 = albumGroupsFlow,
+                    flow5 = albumsOrderFlow
+                ) { sortMode, albumSortMode, albums, groups, order ->
+                    Params(sortMode, albumSortMode, albums, groups, order)
+                }.collectLatest {
+                    params = it
+                    refresh()
+                }
+            }
 
-                    mediaDao
-                        .getAllAlbums()
-                        .distinctUntilChanged()
-                        .collectLatest { list ->
-                            updateAlbums(
-                                list.fastMapNotNull { album ->
-                                    AlbumType.Folder(
-                                        id = Uuid.random().toString(),
-                                        name = album.filename(),
-                                        paths = setOf(album),
-                                        pinned = false,
-                                        immichId = ""
-                                    )
-                                },
-                                emptyList(),
-                                albumsFlow.first().fastMapNotNull { album ->
-                                    album.id.takeIf {
-                                        val empty = album is AlbumType.Folder && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+            launch(Dispatchers.IO) {
+                allAlbumsFlow.distinctUntilChanged().collectLatest {
+                    if (it) {
+                        val mediaDao = MediaDatabase.getInstance(context).mediaDao()
 
-                                        empty || album.name.isBlank()
+                        mediaDao
+                            .getAllAlbums()
+                            .distinctUntilChanged()
+                            .collectLatest { list ->
+                                updateAlbums(
+                                    list.fastMapNotNull { album ->
+                                        AlbumType.Folder(
+                                            id = Uuid.random().toString(),
+                                            name = album.filename(),
+                                            paths = setOf(album),
+                                            pinned = false,
+                                            immichId = ""
+                                        )
+                                    },
+                                    emptyList(),
+                                    albumsFlow.first().fastMapNotNull { album ->
+                                        album.id.takeIf {
+                                            val empty = album is AlbumType.Folder && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+
+                                            empty || album.name.isBlank()
+                                        }
                                     }
-                                }
-                            )
-                        }
+                                )
+                            }
+                    }
                 }
             }
         }
@@ -177,7 +187,6 @@ class AlbumGridState(
     }
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
-        val immichInfo = info.first()
         val albumsClient = AlbumsClient(
             client = apiClient,
             endpoint = immichInfo.endpoint,

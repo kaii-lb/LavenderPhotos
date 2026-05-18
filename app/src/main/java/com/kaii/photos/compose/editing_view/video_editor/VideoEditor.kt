@@ -85,7 +85,7 @@ import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
 import io.github.kaii_lb.lavender.immichintegration.Auth

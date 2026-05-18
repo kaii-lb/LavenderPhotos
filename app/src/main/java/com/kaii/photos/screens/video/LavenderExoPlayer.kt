@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.video
+package com.kaii.photos.screens.video
 
 import android.content.Context
 import android.net.Uri

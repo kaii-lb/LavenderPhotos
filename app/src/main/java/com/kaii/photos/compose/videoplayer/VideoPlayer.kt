@@ -67,7 +67,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.helpers.video.VideoPlayerState
+import com.kaii.photos.screens.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay

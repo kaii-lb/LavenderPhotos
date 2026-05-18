@@ -59,12 +59,13 @@ class ImmichBackupOptionsState(
     mediaDao: MediaDao,
     scope: CoroutineScope,
     albumsFlow: StateFlow<List<AlbumGridState.Album.Single>>,
+    info: Flow<ImmichBasicInfo>,
     private val settings: SettingsAlbumsListImpl,
-    private val apiClient: ApiClient,
-    private val info: Flow<ImmichBasicInfo>
+    private val apiClient: ApiClient
 ) : ImmichBackupOptionsStateImpl() {
     private val selectedAlbumIds = mutableStateListOf<String>()
     private val _query = MutableStateFlow("")
+    private var immichInfo = ImmichBasicInfo.Empty
 
     override val query = _query.asStateFlow()
     override val assetCount = mediaDao.immichMediaCount().stateIn(
@@ -85,7 +86,15 @@ class ImmichBackupOptionsState(
 
     init {
         scope.launch {
-            refresh()
+            launch {
+                refresh()
+            }
+
+            launch {
+                info.collect {
+                    immichInfo = it
+                }
+            }
         }
     }
 
@@ -93,10 +102,9 @@ class ImmichBackupOptionsState(
         hasUnsavedChanges = false
         isLoading = true
 
-        val info = info.first()
         val albumsClient = AlbumsClient(
-            endpoint = info.endpoint,
-            auth = info.auth,
+            endpoint = immichInfo.endpoint,
+            auth = immichInfo.auth,
             client = apiClient
         )
 
@@ -152,10 +160,9 @@ class ImmichBackupOptionsState(
     override suspend fun confirm(context: Context) = withContext(Dispatchers.IO) {
         isLoading = true
 
-        val info = info.first()
         val albumsClient = AlbumsClient(
-            endpoint = info.endpoint,
-            auth = info.auth,
+            endpoint = immichInfo.endpoint,
+            auth = immichInfo.auth,
             client = apiClient
         )
 

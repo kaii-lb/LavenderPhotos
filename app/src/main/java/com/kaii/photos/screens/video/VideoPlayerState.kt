@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.video
+package com.kaii.photos.screens.video
 
 import android.content.Context
 import android.util.Log
@@ -35,7 +35,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -45,9 +44,9 @@ import kotlin.math.ceil
 class VideoPlayerState(
     context: Context,
     autoPlayFlow: Flow<Boolean>,
+    muteOnStartFlow: Flow<Boolean>,
+    loopFlow: Flow<Int>,
     private val coroutineScope: CoroutineScope,
-    private val muteOnStartFlow: Flow<Boolean>,
-    private val loopFlow: Flow<Int>,
     private val isOpenWithView: Boolean,
     private val onControlsTimeout: () -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
@@ -62,6 +61,8 @@ class VideoPlayerState(
     private var autoPlay = false
     private var loop = true // default to true to avoid autoplaying when we don't mean it (motion-photo)
     private var hideTimeout = 0L
+    private var loopMode = 0
+    private var muteOnStart = true
 
     /** In Seconds */
     var currentPosition by mutableFloatStateOf(0f)
@@ -95,16 +96,7 @@ class VideoPlayerState(
         onDurationChanged = { new ->
             duration = new
 
-            coroutineScope.launch {
-                isRepeatModeOn =
-                    when (loopFlow.last()) {
-                        0 -> false
-                        1 -> new <= 30f
-                        else -> true
-                    }
-
-                player.setRepeatMode(isRepeatModeOn)
-            }
+            setRepeatMode(duration)
         },
         onCurrentPositionChanged = { new ->
             currentPosition = new
@@ -139,33 +131,41 @@ class VideoPlayerState(
 
     init {
         coroutineScope.launch {
-            muteOnStartFlow.collectLatest {
-                isMuted = it && !isOpenWithView
-                player.setMute(isMuted)
+            launch {
+                muteOnStartFlow.collectLatest {
+                    muteOnStart = it
+                    isMuted = it && !isOpenWithView
+                    player.setMute(isMuted)
+                }
             }
-        }
 
-        coroutineScope.launch {
-            autoPlayFlow.collectLatest {
-                autoPlay = it || isOpenWithView
-                if (shouldPlay() && autoPlay && !loop) {
-                    play()
+            launch {
+                autoPlayFlow.collectLatest {
+                    autoPlay = it || isOpenWithView
+                    if (shouldPlay() && autoPlay && !loop) {
+                        play()
+                    }
+                }
+            }
+
+            launch {
+                loopFlow.collectLatest {
+                    loopMode = it
+                    setRepeatMode(player.duration)
                 }
             }
         }
+    }
 
-        coroutineScope.launch {
-            loopFlow.collectLatest {
-                isRepeatModeOn =
-                    when (it) {
-                        0 -> false
-                        1 -> player.duration <= 30f
-                        else -> true
-                    }
-
-                player.setRepeatMode(isRepeatModeOn)
+    private fun setRepeatMode(duration: Float) {
+        isRepeatModeOn =
+            when (loopMode) {
+                0 -> false
+                1 -> duration <= 30f
+                else -> true
             }
-        }
+
+        player.setRepeatMode(isRepeatModeOn)
     }
 
     fun toggleMute() {
@@ -174,7 +174,7 @@ class VideoPlayerState(
     }
 
     fun resetMute() = coroutineScope.launch {
-        isMuted = muteOnStartFlow.last() && !isOpenWithView
+        isMuted = muteOnStart && !isOpenWithView
     }
 
     fun toggleRepeatMode() {
@@ -260,14 +260,7 @@ class VideoPlayerState(
             play()
         }
 
-        isRepeatModeOn =
-            when (loopFlow.last()) {
-                0 -> false
-                1 -> player.duration <= 30f
-                else -> true
-            }
-
-        player.setRepeatMode(isRepeatModeOn)
+        setRepeatMode(player.duration)
     }
 
     private suspend fun startTimeout() {
