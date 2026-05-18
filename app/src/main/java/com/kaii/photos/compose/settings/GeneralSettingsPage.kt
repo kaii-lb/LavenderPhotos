@@ -2,8 +2,6 @@ package com.kaii.photos.compose.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,14 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.SortModeSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
-import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.popup_album_chooser.PopUpAlbumChooser
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -158,16 +155,9 @@ private fun GeneralSettingsPageImpl(
             }
 
             item {
+                val coroutineScope = rememberCoroutineScope()
                 val selectedAlbums = remember { mutableStateListOf<String>() }
-                val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
-
-                val singles = remember(allAlbums()) {
-                    allAlbums()
-                        .filterIsInstance<AlbumType.Folder>()
-                        .filter {
-                            it.paths.size == 1
-                        }
-                }
+                var showAlbumsSelectionDialog by remember { mutableStateOf(false) }
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
@@ -179,77 +169,67 @@ private fun GeneralSettingsPageImpl(
                         if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = {
-                        selectedAlbums.clear()
-                        selectedAlbums.addAll(
-                            if (shouldShowEverything()) {
-                                val flat = singles.flatMap { it.paths }
+                        coroutineScope.launch {
+                            val singles = allAlbums()
+                                .filterIsInstance<AlbumType.Folder>()
+                                .filter {
+                                    it.paths.size == 1
+                                }
 
-                                flat - mainPhotosPaths().toSet()
-                            } else {
-                                mainPhotosPaths()
-                            }
-                        )
+                            selectedAlbums.clear()
+                            selectedAlbums.addAll(
+                                if (shouldShowEverything()) {
+                                    val flat = singles.flatMap { it.paths }
 
-                        showAlbumsSelectionDialog.value = true
+                                    flat - mainPhotosPaths().toSet()
+                                } else {
+                                    mainPhotosPaths()
+                                }
+                            )
+                        }
+
+                        showAlbumsSelectionDialog = true
                     },
                     onSwitchClick = { checked ->
                         setShowEverything(checked)
 
-                        selectedAlbums.clear()
-                        selectedAlbums.addAll(
-                            if (!checked) {
-                                val flat = singles.flatMap { it.paths }
+                        coroutineScope.launch {
+                            val singles = allAlbums()
+                                .filterIsInstance<AlbumType.Folder>()
+                                .filter {
+                                    it.paths.size == 1
+                                }
 
-                                flat - mainPhotosPaths().toSet()
-                            } else {
-                                mainPhotosPaths()
+                            selectedAlbums.clear()
+                            selectedAlbums.addAll(
+                                if (!checked) {
+                                    val flat = singles.flatMap { it.paths }
+
+                                    flat - mainPhotosPaths().toSet()
+                                } else {
+                                    mainPhotosPaths()
+                                }
+                            )
+
+                            clearMainPhotosAlbums()
+                            selectedAlbums.distinct().forEach { album ->
+                                addMainPhotosAlbum(album)
                             }
-                        )
-
-                        clearMainPhotosAlbums()
-                        selectedAlbums.distinct().forEach { album ->
-                            addMainPhotosAlbum(album)
                         }
                     }
                 )
 
-                if (showAlbumsSelectionDialog.value) {
-                    SelectableButtonListDialog(
-                        title = stringResource(id = R.string.albums_selected),
-                        body =
-                            if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_selected)
-                            else stringResource(id = R.string.albums_main_list_selected_inverse),
-                        showDialog = showAlbumsSelectionDialog,
-                        onConfirm = {
+                if (showAlbumsSelectionDialog) {
+                    PopUpAlbumChooser(
+                        selectedAlbums = selectedAlbums,
+                        onDismiss = {
                             clearMainPhotosAlbums()
 
                             selectedAlbums.distinct().forEach { album ->
                                 addMainPhotosAlbum(album)
                             }
-                        },
-                        buttons = {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth(1f)
-                                    .height(384.dp)
-                            ) {
-                                items(
-                                    count = singles.size
-                                ) { index ->
-                                    val associatedAlbum = singles[index]
 
-                                    CheckBoxButtonRow(
-                                        text = associatedAlbum.name,
-                                        checked = associatedAlbum.paths.first() in selectedAlbums
-                                    ) {
-                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything())) {
-                                            selectedAlbums.remove(associatedAlbum.paths.first())
-                                        } else {
-                                            selectedAlbums.add(associatedAlbum.paths.first())
-                                        }
-                                    }
-                                }
-                            }
+                            showAlbumsSelectionDialog = false
                         }
                     )
                 }

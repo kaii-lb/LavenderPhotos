@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.screens.ImmichBackupOptionsStateImpl
 import kotlinx.coroutines.delay
@@ -28,6 +29,7 @@ private fun ImmichBackupOptionsPagePreview() {
     ImmichBackupOptionsPage(
         state = remember {
             object : ImmichBackupOptionsStateImpl() {
+                override var immichInfo = ImmichBasicInfo.Empty
                 private val selectedAlbumIds = mutableStateListOf<String>()
                 private val queryFlow = MutableStateFlow("")
                 private val albumsFlow = flowOf(

@@ -1,0 +1,175 @@
+package com.kaii.photos.compose.widgets.popup_album_chooser
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.R
+import com.kaii.photos.compose.FolderIsEmpty
+import com.kaii.photos.compose.widgets.ClearableTextField
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.RowPosition
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun PopUpAlbumChooser(
+    albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
+    selectedAlbums: SnapshotStateList<String>,
+    onDismiss: () -> Unit
+) {
+    val state = rememberLazyListState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
+    var albumsList by remember { mutableStateOf(originalAlbumsList) }
+    var searchedForText by remember { mutableStateOf("") }
+
+    LaunchedEffect(searchedForText, originalAlbumsList) {
+        albumsList = originalAlbumsList.filter { album ->
+            album.name.contains(searchedForText, true)
+                    && album.info.album is AlbumType.Folder
+                    && album.info.album.paths.size == 1
+        }
+
+        if (albumsList.isNotEmpty()) state.scrollToItem(0)
+    }
+
+    ModalBottomSheet(
+        sheetState = sheetState,
+        tonalElevation = 16.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        properties = ModalBottomSheetProperties(
+            shouldDismissOnBackPress = false
+        ),
+        containerColor = MaterialTheme.colorScheme.background,
+        onDismissRequest = onDismiss,
+        modifier = Modifier
+            .safeContentPadding()
+    ) {
+        val coroutineScope = rememberCoroutineScope()
+        BackHandler(
+            enabled = !WindowInsets.isImeVisible
+        ) {
+            coroutineScope.launch {
+                sheetState.hide()
+                onDismiss()
+            }
+        }
+
+        AnimatedVisibility(
+            visible = sheetState.currentValue == SheetValue.Expanded,
+            enter = expandVertically(
+                expandFrom = Alignment.Top
+            ) + fadeIn(),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(),
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ClearableTextField(
+                value = searchedForText,
+                onValueChange = { searchedForText = it },
+                placeholder = stringResource(id = R.string.albums_search_for),
+                icon = R.drawable.search,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp),
+                onClear = {
+                    searchedForText = ""
+                },
+                onConfirm = {}
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (albumsList.isEmpty()) {
+            FolderIsEmpty(
+                emptyText = stringResource(id = R.string.albums_non_existent),
+                emptyIconResId = R.drawable.error,
+                backgroundColor = Color.Transparent
+            )
+        } else {
+            LazyColumn(
+                state = state,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp, 8.dp, 8.dp, 0.dp),
+                verticalArrangement = Arrangement.spacedBy(
+                    space = 2.dp,
+                    alignment = Alignment.Top
+                ),
+                horizontalAlignment = Alignment.Start
+            ) {
+                items(
+                    count = albumsList.size,
+                    key = {
+                        albumsList[it].id
+                    }
+                ) { index ->
+                    val album = (albumsList[index].info.album as? AlbumType.Folder)?.paths?.first()
+
+                    CheckableAlbumItem(
+                        album = albumsList[index],
+                        selected = { selectedAlbums.contains(album) },
+                        position =
+                            when {
+                                albumsList.size == 1 -> RowPosition.Single
+                                index == 0 -> RowPosition.Top
+                                index == albumsList.size - 1 -> RowPosition.Bottom
+                                else -> RowPosition.Middle
+                            },
+                        onCheckedChange = {
+                            if (selectedAlbums.contains(album)) {
+                                selectedAlbums.remove(album)
+                            } else {
+                                selectedAlbums.add(album!!)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}

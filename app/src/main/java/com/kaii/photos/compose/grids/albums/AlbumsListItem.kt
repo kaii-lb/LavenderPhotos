@@ -106,16 +106,14 @@ private fun AlbumListItemPreview() {
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumsListItemImpl(
     album: AlbumGridState.Album.Single,
     position: RowPosition,
     info: () -> ImmichBasicInfo,
     modifier: Modifier,
-    onDirPermissionGranted: () -> Unit,
     suffix: (@Composable () -> Unit)? = null,
-    dirPermissionManager: DirectoryPermissionManager = rememberDirectoryPermissionManager(onGranted = onDirPermissionGranted)
+    onClick: () -> Unit
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(position, 24.dp)
 
@@ -124,15 +122,7 @@ fun AlbumsListItemImpl(
             .height(88.dp)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable {
-                if (album.info.album is AlbumType.Folder) {
-                    dirPermissionManager.start(
-                        directories = album.info.album.paths
-                    )
-                } else {
-                    onDirPermissionGranted()
-                }
-            }
+            .clickable(onClick = onClick)
             .padding(start = 12.dp, end = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(
@@ -194,4 +184,33 @@ fun AlbumsListItemImpl(
 
         suffix?.invoke()
     }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AlbumsListItemImpl(
+    album: AlbumGridState.Album.Single,
+    position: RowPosition,
+    info: () -> ImmichBasicInfo,
+    modifier: Modifier,
+    onDirPermissionGranted: () -> Unit,
+    suffix: (@Composable () -> Unit)? = null,
+    dirPermissionManager: DirectoryPermissionManager = rememberDirectoryPermissionManager(onGranted = onDirPermissionGranted)
+) {
+    AlbumsListItemImpl(
+        album = album,
+        position = position,
+        info = info,
+        modifier = modifier,
+        suffix = suffix,
+        onClick = {
+            if (album.info.album is AlbumType.Folder) {
+                dirPermissionManager.start(
+                    directories = album.info.album.paths
+                )
+            } else {
+                onDirPermissionGranted()
+            }
+        }
+    )
 }
