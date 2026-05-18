@@ -178,6 +178,8 @@ class AlbumGridState(
         }
     }
 
+    fun getImmichInfo() = immichInfo
+
     fun refresh() {
         job?.cancel()
         job = scope.launch {

@@ -140,6 +140,7 @@ fun ImmichBackupOptionsPage(
                                 index == albums.size - 1 -> RowPosition.Bottom
                                 else -> RowPosition.Middle
                             },
+                        info = { state.immichInfo },
                         onToggle = {
                             state.toggle(id = album.id)
                         },

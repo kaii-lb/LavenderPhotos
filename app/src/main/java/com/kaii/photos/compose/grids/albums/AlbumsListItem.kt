@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,7 +16,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -27,13 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
+import com.kaii.photos.compose.widgets.albums.AlbumGlideImage
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -45,6 +42,7 @@ import com.kaii.photos.permissions.files.rememberFilePermissionManager
 fun MoveCopyAlbumsListItem(
     album: AlbumGridState.Album.Single,
     position: RowPosition,
+    info: () -> ImmichBasicInfo,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     show: MutableState<Boolean>,
     modifier: Modifier,
@@ -66,6 +64,7 @@ fun MoveCopyAlbumsListItem(
     AlbumsListItemImpl(
         album = album,
         position = position,
+        info = info,
         modifier = modifier,
         onDirPermissionGranted = {
             filePermissionManager.get(
@@ -101,6 +100,7 @@ private fun AlbumListItemPreview() {
             pinned = false,
         ),
         position = RowPosition.Single,
+        info = { ImmichBasicInfo.Empty },
         modifier = Modifier,
         onDirPermissionGranted = {}
     )
@@ -111,6 +111,7 @@ private fun AlbumListItemPreview() {
 fun AlbumsListItemImpl(
     album: AlbumGridState.Album.Single,
     position: RowPosition,
+    info: () -> ImmichBasicInfo,
     modifier: Modifier,
     onDirPermissionGranted: () -> Unit,
     suffix: (@Composable () -> Unit)? = null,
@@ -139,19 +140,12 @@ fun AlbumsListItemImpl(
             alignment = Alignment.Start
         )
     ) {
-        GlideImage(
-            model = album.info.thumbnail.uri,
-            contentDescription = album.name,
-            contentScale = ContentScale.Crop,
-            failure = placeholder(R.drawable.broken_image),
+        AlbumGlideImage(
+            albumInfo = album.info,
+            info = info,
             modifier = Modifier
                 .size(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            it.signature(album.info.thumbnail.signature)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-        }
+        )
 
         Column(
             modifier = Modifier

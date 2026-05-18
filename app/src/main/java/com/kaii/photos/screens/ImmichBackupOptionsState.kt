@@ -40,7 +40,8 @@ abstract class ImmichBackupOptionsStateImpl {
     abstract val query: StateFlow<String>
     abstract val assetCount: StateFlow<Int>
     abstract val albums: StateFlow<List<AlbumGridState.Album.Single>>
-
+    abstract var immichInfo: ImmichBasicInfo
+        protected set
 
     var isLoading by mutableStateOf(false)
         protected set
@@ -65,7 +66,8 @@ class ImmichBackupOptionsState(
 ) : ImmichBackupOptionsStateImpl() {
     private val selectedAlbumIds = mutableStateListOf<String>()
     private val _query = MutableStateFlow("")
-    private var immichInfo = ImmichBasicInfo.Empty
+
+    override var immichInfo by mutableStateOf(ImmichBasicInfo.Empty)
 
     override val query = _query.asStateFlow()
     override val assetCount = mediaDao.immichMediaCount().stateIn(

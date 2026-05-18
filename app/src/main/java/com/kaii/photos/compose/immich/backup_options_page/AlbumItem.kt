@@ -9,6 +9,7 @@ import androidx.compose.ui.res.stringResource
 import com.kaii.photos.R
 import com.kaii.photos.compose.grids.albums.AlbumsListItemImpl
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -18,6 +19,7 @@ fun ImmichAlbumListItem(
     album: AlbumGridState.Album.Single,
     selected: () -> Boolean,
     position: RowPosition,
+    info: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
     onToggle: () -> Unit
 ) {
@@ -26,6 +28,7 @@ fun ImmichAlbumListItem(
     AlbumsListItemImpl(
         album = album,
         position = position,
+        info = info,
         modifier = modifier,
         onDirPermissionGranted = onToggle,
         suffix = {

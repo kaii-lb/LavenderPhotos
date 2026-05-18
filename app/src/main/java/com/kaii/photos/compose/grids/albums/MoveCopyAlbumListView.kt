@@ -178,6 +178,7 @@ fun MoveCopyAlbumListView(
 
                                     else -> RowPosition.Middle
                                 },
+                            info = albumGridState::getImmichInfo,
                             selectedItemsList = selectedItemsList,
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,

@@ -38,7 +38,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun AlbumGlideImage(
     albumInfo: AlbumGridState.Info,
-    info: () -> ImmichBasicInfo
+    info: () -> ImmichBasicInfo,
+    modifier: Modifier = Modifier
 ) {
     AnimatedContent(
         targetState = albumInfo.thumbnail.uri.isNotBlank(),
@@ -55,7 +56,7 @@ fun AlbumGlideImage(
                 )
             )
         },
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(16.dp))
     ) { state ->
