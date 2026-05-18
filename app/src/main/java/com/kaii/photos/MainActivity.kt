@@ -305,9 +305,9 @@ class MainActivity : ComponentActivity() {
                             viewModel.changeAlbum(screen.album)
                         }
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -321,9 +321,9 @@ class MainActivity : ComponentActivity() {
 
                     composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
@@ -378,9 +378,9 @@ class MainActivity : ComponentActivity() {
                         )
                         multiAlbumViewModel.changeAlbum(album = screen.album)
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -412,9 +412,9 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -578,9 +578,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -630,9 +630,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(

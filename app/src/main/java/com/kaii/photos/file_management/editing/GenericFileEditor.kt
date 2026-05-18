@@ -42,16 +42,22 @@ import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SpeedProvider
+import androidx.media3.common.util.Clock
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.Crop
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.ScaleAndRotateTransformation
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.transformer.Composition
+import androidx.media3.transformer.DefaultDecoderFactory
 import androidx.media3.transformer.DefaultEncoderFactory
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.Effects
+import androidx.media3.transformer.ExoPlayerAssetLoader
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
@@ -60,6 +66,7 @@ import androidx.media3.transformer.VideoEncoderSettings
 import com.kaii.photos.R
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.DrawingPaintState
@@ -114,6 +121,7 @@ interface GenericFileEditor {
             val videoEditingState: VideoEditingState,
             val basicVideoData: BasicVideoData,
             val uri: String,
+            val info: ImmichBasicInfo,
             val overwrite: Boolean,
             val containerDimens: Size,
             val canvasSize: Size,
@@ -130,6 +138,7 @@ interface GenericFileEditor {
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         uri: String,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
@@ -144,6 +153,7 @@ interface GenericFileEditor {
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         media: MediaStoreData,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
@@ -183,7 +193,13 @@ interface GenericFileEditor {
         }
 
         val mediaItem = MediaItem.Builder()
-            .setUri(media.uri)
+            .setUri(
+                if (media.isCloud) {
+                    info.endpoint + media.immichVideoUrl!!
+                } else {
+                    media.uri
+                }
+            )
             .setClippingConfiguration(clippingConfiguration)
             .build()
 
@@ -324,6 +340,23 @@ interface GenericFileEditor {
                     )
                     .build()
             )
+            .apply {
+                if (media.isCloud) {
+                    val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+                        .setDefaultRequestProperties(info.auth.headers)
+
+                    val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+                    val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+                    val assetLoaderFactory = ExoPlayerAssetLoader.Factory(
+                        context,
+                        DefaultDecoderFactory.Builder(context).build(),
+                        Clock.DEFAULT,
+                        mediaSourceFactory
+                    )
+
+                    setAssetLoaderFactory(assetLoaderFactory)
+                }
+            }
             .build()
 
 

@@ -112,7 +112,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: CustomAlbumViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -164,7 +164,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MultiAlbumViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -217,7 +217,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MainGridViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -270,7 +270,7 @@ fun SinglePhotoView(
     viewModel: SearchViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long
+    editId: () -> Long?
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -321,7 +321,7 @@ fun SinglePhotoView(
     viewModel: FavouritesViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long
+    editId: () -> Long?
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -371,7 +371,7 @@ fun SinglePhotoView(
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Cloud
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -423,7 +423,7 @@ fun SinglePhotoView(
 private fun SinglePhotoViewCommon(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType,
     navController: NavHostController,
     window: Window,

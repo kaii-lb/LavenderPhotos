@@ -176,6 +176,7 @@ class EditorViewModel(
                 videoEditingState = params.videoEditingState,
                 basicVideoData = params.basicVideoData,
                 uri = params.uri,
+                info = params.info,
                 overwrite = params.overwrite,
                 containerDimens = params.containerDimens,
                 canvasSize = params.canvasSize,

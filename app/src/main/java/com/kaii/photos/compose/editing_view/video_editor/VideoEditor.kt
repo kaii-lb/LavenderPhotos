@@ -74,6 +74,7 @@ import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
@@ -85,10 +86,9 @@ import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
-import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
-import io.github.kaii_lb.lavender.immichintegration.Auth
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -119,8 +119,7 @@ fun VideoEditor(
 
     VideoEditorImpl(
         uri = uri,
-        auth = { info.auth },
-        endpoint = { info.endpoint },
+        info = { info },
         window = window,
         isFromOpenWithView = isFromOpenWithView,
         blurViews = blurViews,
@@ -136,8 +135,7 @@ fun VideoEditor(
 @Composable
 fun VideoEditorImpl(
     uri: String,
-    auth: () -> Auth,
-    endpoint: () -> String,
+    info: () -> ImmichBasicInfo,
     window: Window,
     isFromOpenWithView: Boolean,
     blurViews: Boolean,
@@ -158,14 +156,17 @@ fun VideoEditorImpl(
     )
 
     val context = LocalContext.current
-    LaunchedEffect(uri, auth(), endpoint()) {
+    LaunchedEffect(uri, info()) {
+        if (uri.startsWith("/api") && (info().auth.asString().isBlank() || info().endpoint.isBlank())) return@LaunchedEffect
+
         videoPlayerState.setSource(
             context = context,
             item = MediaStoreData.dummyItem.copy(
-                uri = uri
+                uri = uri,
+                immichUrl = uri.takeIf { it.startsWith("/api") }
             ),
-            auth = auth(),
-            endpoint = endpoint(),
+            auth = info().auth,
+            endpoint = info().endpoint,
             shouldPlay = { true }
         )
     }
@@ -255,7 +256,11 @@ fun VideoEditorImpl(
                 duration = videoPlayerState.duration / 1000f,
                 width = videoPlayerState.videoSize.width,
                 height = videoPlayerState.videoSize.height,
-                uri = uri,
+                uri = if (uri.startsWith("/api")) {
+                    info().endpoint + uri.replace("original", "video/playback")
+                } else {
+                    uri
+                },
                 bitrate = videoPlayerState.videoFormat?.bitrate ?: 0,
                 frameRate =
                     if (videoPlayerState.videoFormat?.frameRate?.toInt() == -1 || videoPlayerState.videoFormat?.frameRate == null) 0f
@@ -267,23 +272,31 @@ fun VideoEditorImpl(
 
     Log.d(TAG, "basic video data $basicVideoData")
 
-    LaunchedEffect(videoPlayerState.duration, videoPlayerState.audioTracks.lastOrNull()) {
+    LaunchedEffect(videoPlayerState.duration, videoPlayerState.audioTracks.lastOrNull(), info()) {
+        if (uri.startsWith("/api") && info().auth.asString().isBlank()) return@LaunchedEffect
+
         val videoFormat = videoPlayerState.videoFormat
         var tries = 0
         val audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
         val frameRate = videoPlayerState.getFrameRate()
 
         withContext(Dispatchers.IO) {
+            val mediaUri = if (uri.startsWith("/api")) {
+                info().endpoint + uri.replace("original", "video/playback")
+            } else {
+                uri
+            }
+
             val metadata = MediaMetadataRetriever()
             if (uri.startsWith("/api")) {
                 metadata.setDataSource(
-                    uri,
-                    auth().headers
+                    mediaUri,
+                    info().auth.headers
                 )
             } else {
                 metadata.setDataSource(
                     context,
-                    uri.toUri()
+                    mediaUri.toUri()
                 )
             }
 
@@ -318,7 +331,7 @@ fun VideoEditorImpl(
                 BasicVideoData(
                     duration = videoPlayerState.duration,
                     frameRate = frameRate,
-                    uri = uri,
+                    uri = mediaUri,
                     bitrate = bitrate,
                     width = size.width,
                     height = size.height,
@@ -353,7 +366,6 @@ fun VideoEditorImpl(
         }
 
         videoPlayerState.applyEffects(
-            uri = uri,
             effectList = videoEditingState.effectList
         )
     }
@@ -370,7 +382,6 @@ fun VideoEditorImpl(
         }
 
         videoPlayerState.applyEffects(
-            uri = uri,
             effectList = videoEditingState.effectList
         )
     }
@@ -399,6 +410,7 @@ fun VideoEditorImpl(
                 canvasSize = canvasSize,
                 isFromOpenWithView = isFromOpenWithView,
                 overwriteByDefault = overwriteByDefault,
+                info = info,
                 editVideo = editVideo,
                 setNavProps = setNavProps
             )
@@ -408,7 +420,7 @@ fun VideoEditorImpl(
                 pagerState = pagerState,
                 currentPosition = { videoPlayerState.currentPosition },
                 basicData = { basicVideoData },
-                auth = auth,
+                auth = { info().auth },
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
                 modifications = modifications,
@@ -702,8 +714,9 @@ fun VideoEditorImpl(
                     pagerState = filterPagerState,
                     drawingPaintState = drawingPaintState,
                     currentVideoPosition = videoPlayerState.currentPosition,
-                    uri = uri,
-                    auth = auth,
+                    uri = basicVideoData.uri,
+                    endpoint = { info().endpoint },
+                    auth = { info().auth },
                     allowedToRefresh = videoPlayerState.isPlaying || isSeeking
                 )
             }

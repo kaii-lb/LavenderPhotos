@@ -161,6 +161,7 @@ fun VideoFilterPage(
     drawingPaintState: DrawingPaintState,
     currentVideoPosition: Float,
     uri: String,
+    endpoint: () -> String,
     auth: () -> Auth,
     allowedToRefresh: Boolean,
     pagerState: PagerState,
@@ -172,12 +173,13 @@ fun VideoFilterPage(
     val context = LocalContext.current
     LaunchedEffect(currentVideoPosition, allowedToRefresh) {
         if (allowedToRefresh) return@LaunchedEffect
+        if (uri.startsWith("/api") && auth().asString().isBlank()) return@LaunchedEffect
 
         coroutineScope.launch(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
             if (uri.startsWith("/api")) {
                 metadata.setDataSource(
-                    uri,
+                    endpoint() + uri.replace("original", "video/playback"),
                     auth().headers
                 )
             } else {

@@ -359,8 +359,8 @@ class VideoPlayerState(
     fun setVolume(volume: Float) = player.setVolume(volume)
 
     @androidx.annotation.OptIn(UnstableApi::class)
-    fun applyEffects(uri: String, effectList: List<Effect>) {
-        player.applyEffects(uri, effectList)
+    fun applyEffects(effectList: List<Effect>) {
+        player.applyEffects(effectList)
     }
 
     fun linkPlayerView(playerView: PlayerView) = player.linkPlayerView(playerView)

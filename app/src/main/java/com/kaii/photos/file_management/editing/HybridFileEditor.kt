@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.TextMeasurer
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
@@ -34,6 +35,7 @@ class HybridFileEditor(
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         uri: String,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
@@ -46,6 +48,7 @@ class HybridFileEditor(
             videoEditingState = videoEditingState,
             basicVideoData = basicVideoData,
             uri = uri,
+            info = info,
             overwrite = overwrite,
             containerDimens = containerDimens,
             canvasSize = canvasSize,
@@ -57,6 +60,7 @@ class HybridFileEditor(
             videoEditingState = videoEditingState,
             basicVideoData = basicVideoData,
             uri = uri,
+            info = info,
             overwrite = overwrite,
             containerDimens = containerDimens,
             canvasSize = canvasSize,

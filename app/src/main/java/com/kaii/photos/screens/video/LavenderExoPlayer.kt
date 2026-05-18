@@ -303,7 +303,7 @@ class LavenderExoPlayer(
         exoPlayer.volume = volume
     }
 
-    fun applyEffects(uri: String, effectList: List<Effect>) = exoPlayer.applyEffects(uri, effectList)
+    fun applyEffects(effectList: List<Effect>) = exoPlayer.applyEffects(effectList)
 
     fun linkPlayerView(playerView: PlayerView) {
         playerView.player = exoPlayer

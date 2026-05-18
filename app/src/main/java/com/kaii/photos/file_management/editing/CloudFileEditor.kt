@@ -3,10 +3,18 @@ package com.kaii.photos.file_management.editing
 import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.TextMeasurer
+import androidx.core.net.toFile
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.transformer.ProgressHolder
+import com.kaii.photos.R
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
@@ -14,11 +22,17 @@ import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.mediastore.toMediaStoreData
+import io.github.kaii_lb.lavender.immichintegration.AssetSource
 import io.github.kaii_lb.lavender.immichintegration.BitmapAssetSource
+import io.github.kaii_lb.lavender.immichintegration.FileAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.CopyAssetRequest
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import kotlin.time.Instant
@@ -31,19 +45,72 @@ class CloudFileEditor(
     private val albumsClient: AlbumsClient,
     private val albumImmichId: String?
 ) : GenericFileEditor {
+    @androidx.annotation.OptIn(UnstableApi::class)
     override suspend fun editVideo(
         context: Context,
         modifications: List<VideoModification>,
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         uri: String,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
         textMeasurer: TextMeasurer,
         isFromOpenWithView: Boolean
-    ): Long? {
-        TODO("Not yet implemented")
+    ): Long? = withContext(Dispatchers.IO) {
+        val mediaItem = mediaDao.getMediaFromUri(uri) ?: return@withContext null
+
+        // 100 * 2 for each of the transformer.start's, and 40 for the copying
+        val totalPercentage = 120f * 2
+        val percentage = mutableFloatStateOf(0f)
+        val progressHolder = ProgressHolder()
+        val body = mutableStateOf(context.resources.getString(R.string.editing_export_video_loading_body, 0, 3))
+
+        LavenderSnackbarController.pushEvent(
+            LavenderSnackbarEvent.ProgressEvent(
+                message = context.resources.getString(R.string.editing_export_video_loading),
+                body = body,
+                icon = R.drawable.videocam_filled,
+                percentage = percentage
+            )
+        )
+
+        val result = super.editVideoImpl(
+            context, modifications,
+            videoEditingState, basicVideoData,
+            mediaItem, info, overwrite,
+            containerDimens, canvasSize,
+            textMeasurer, percentage, body,
+            totalPercentage, progressHolder
+        ) ?: return@withContext null
+
+        percentage.floatValue = 1f
+
+        val isLoading = mutableStateOf(true)
+        LavenderSnackbarController.pushEvent(
+            LavenderSnackbarEvent.LoadingEvent(
+                message = context.resources.getString(R.string.editing_export_video_uploading),
+                icon = R.drawable.cloud_upload,
+                isLoading = isLoading
+            )
+        )
+
+        val id = upload(
+            context = context,
+            mediaItem = mediaItem,
+            assetSource = FileAssetSource(
+                file = result.newUri.toFile()
+            ),
+            overwrite = overwrite
+        )
+
+        isLoading.value = false
+
+        if (id == null) return@withContext null
+
+        // TODO: figure something out for this
+        return@withContext 0L
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -61,23 +128,40 @@ class CloudFileEditor(
         actualTop: Float,
         overwrite: Boolean,
         isFromOpenWithView: Boolean
-    ): Long? {
-        val mediaItem = mediaDao.getMediaFromUri(uri) ?: return null
+    ): Long? = withContext(Dispatchers.IO) {
+        val mediaItem = mediaDao.getMediaFromUri(uri) ?: return@withContext null
 
         val result = super.editImageImpl(
             context, image, containerDimens,
             drawingPaintState, imageEditingState,
             modifications, textMeasurer,
             actualLeft, actualTop
-        ) ?: return null
+        ) ?: return@withContext null
 
+        val id = upload(
+            context = context,
+            mediaItem = mediaItem,
+            assetSource = BitmapAssetSource(bitmap = result),
+            overwrite = overwrite
+        ) ?: return@withContext null
+
+        return@withContext Uuid.parse(id).toLongs { a, _ -> a }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun upload(
+        context: Context,
+        mediaItem: MediaStoreData,
+        assetSource: AssetSource,
+        overwrite: Boolean
+    ): String? {
         // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
         @SuppressLint("HardwareIds")
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
         val response = assetsClient.upload(
             asset = AssetUploadRequest(
-                assetSource = BitmapAssetSource(bitmap = result),
+                assetSource = assetSource,
                 deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
                 deviceId = deviceId,
                 fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
@@ -127,6 +211,6 @@ class CloudFileEditor(
             mediaDao.insert(newAsset.toMediaStoreData())
         }
 
-        return Uuid.parse(response.id).toLongs { a, _ -> a }
+        return response.id
     }
 }

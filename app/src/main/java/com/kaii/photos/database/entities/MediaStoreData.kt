@@ -62,7 +62,7 @@ data class MediaStoreData(
 
     @get:Ignore
     val immichVideoUrl: String?
-        get() = immichUrl?.replace("original", "video/playback")
+        get() = immichUrl?.replace("/original", "/video/playback")
 
     @get:Ignore
     val isCloud: Boolean

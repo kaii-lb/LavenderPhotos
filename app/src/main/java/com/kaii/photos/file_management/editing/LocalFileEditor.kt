@@ -15,6 +15,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.ProgressHolder
 import com.kaii.photos.R
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
@@ -43,6 +44,7 @@ open class LocalFileEditor(
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         uri: String,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
@@ -50,7 +52,6 @@ open class LocalFileEditor(
         isFromOpenWithView: Boolean
     ): Long? = withContext(Dispatchers.IO) {
         val media = mediaDao.getMediaFromUri(uri) ?: return@withContext null
-
 
         // 100 * 2 for each of the transformer.start's, and 40 for the copying
         val totalPercentage = 120f * 2
@@ -73,6 +74,7 @@ open class LocalFileEditor(
             videoEditingState,
             basicVideoData,
             media,
+            info,
             overwrite,
             containerDimens,
             canvasSize,

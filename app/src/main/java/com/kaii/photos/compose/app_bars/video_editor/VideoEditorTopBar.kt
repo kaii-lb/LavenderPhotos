@@ -43,6 +43,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
@@ -65,6 +66,7 @@ fun VideoEditorTopBar(
     canvasSize: Size,
     isFromOpenWithView: Boolean,
     overwriteByDefault: () -> Boolean,
+    info: () -> ImmichBasicInfo,
     editVideo: (NavController, GenericFileEditor.EditParameters.Video) -> Unit,
     setNavProps: (NavController) -> Unit
 ) {
@@ -181,6 +183,7 @@ fun VideoEditorTopBar(
                                     videoEditingState = videoEditingState,
                                     basicVideoData = basicVideoData,
                                     uri = uri,
+                                    info = info(),
                                     overwrite = overwrite,
                                     containerDimens = containerDimens,
                                     canvasSize = canvasSize,

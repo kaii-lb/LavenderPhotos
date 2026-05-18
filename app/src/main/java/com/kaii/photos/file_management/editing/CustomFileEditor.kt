@@ -7,13 +7,16 @@ import androidx.compose.ui.text.TextMeasurer
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
 import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 class CustomFileEditor(
     private val customDao: CustomEntityDao,
@@ -34,7 +37,7 @@ class CustomFileEditor(
         actualTop: Float,
         overwrite: Boolean,
         isFromOpenWithView: Boolean
-    ): Long? {
+    ): Long? = withContext(Dispatchers.IO) {
         val id = super.editImage(
             context,
             image,
@@ -49,7 +52,7 @@ class CustomFileEditor(
             actualTop,
             overwrite,
             isFromOpenWithView
-        ) ?: return null
+        ) ?: return@withContext null
 
         if (!overwrite) {
             var tries = 0
@@ -68,7 +71,7 @@ class CustomFileEditor(
             )
         }
 
-        return id
+        return@withContext id
     }
 
     override suspend fun editVideo(
@@ -77,24 +80,26 @@ class CustomFileEditor(
         videoEditingState: VideoEditingState,
         basicVideoData: BasicVideoData,
         uri: String,
+        info: ImmichBasicInfo,
         overwrite: Boolean,
         containerDimens: Size,
         canvasSize: Size,
         textMeasurer: TextMeasurer,
         isFromOpenWithView: Boolean
-    ): Long? {
+    ): Long? = withContext(Dispatchers.IO) {
         val id = super.editVideo(
             context,
             modifications,
             videoEditingState,
             basicVideoData,
             uri,
+            info,
             overwrite,
             containerDimens,
             canvasSize,
             textMeasurer,
             isFromOpenWithView
-        ) ?: return null
+        ) ?: return@withContext null
 
         if (!overwrite) {
             var tries = 0
@@ -113,6 +118,6 @@ class CustomFileEditor(
             )
         }
 
-        return id
+        return@withContext id
     }
 }

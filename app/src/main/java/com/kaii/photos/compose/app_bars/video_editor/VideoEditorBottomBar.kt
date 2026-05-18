@@ -163,8 +163,10 @@ fun VideoEditorBottomBar(
                 val basicData = basicData()
                 if (basicData.duration <= 0f) return@LaunchedEffect
 
+                if (basicData.uri.startsWith("/api")) return@LaunchedEffect
+
                 coroutineScope.launch(Dispatchers.IO) {
-                    if (basicData.uri.startsWith("/api")) {
+                    if (basicData.uri.startsWith("http")) {
                         metadata.setDataSource(
                             basicData.uri,
                             auth().headers
