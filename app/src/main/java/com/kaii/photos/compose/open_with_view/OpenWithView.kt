@@ -204,8 +204,10 @@ class OpenWithView : ComponentActivity() {
                                     )
                                 )
 
+                                val info by viewModel.immichInfo.collectAsStateWithLifecycle()
                                 ImageEditor(
                                     uri = screen.uri,
+                                    info = { info },
                                     isFromOpenWithView = true,
                                     exportQuality = { 8 },
                                     overwriteByDefault = { false },

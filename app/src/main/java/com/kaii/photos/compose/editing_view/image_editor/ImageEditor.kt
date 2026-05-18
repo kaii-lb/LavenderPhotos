@@ -88,6 +88,7 @@ import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawableText
@@ -97,6 +98,7 @@ import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
+import com.kaii.photos.mediastore.ImmichInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -108,6 +110,7 @@ import kotlin.time.Clock
 @Composable
 fun ImageEditor(
     uri: String,
+    info: () -> ImmichBasicInfo,
     isFromOpenWithView: Boolean,
     exportQuality: () -> Int,
     overwriteByDefault: () -> Boolean,
@@ -137,11 +140,24 @@ fun ImageEditor(
 
     val windowInfo = LocalWindowInfo.current
     val context = LocalContext.current
-    LaunchedEffect(uri) {
+    LaunchedEffect(uri, info()) {
+        if (uri.startsWith("/api") && info().auth.asString().isBlank()) return@LaunchedEffect
+
         withContext(Dispatchers.IO) {
             val drawable =
                 Glide.with(context)
-                    .load(uri)
+                    .load(
+                        if (uri.startsWith("/api")) {
+                            ImmichInfo(
+                                thumbnail = uri,
+                                original = uri,
+                                hash = "",
+                                auth = info().auth,
+                                endpoint = info().endpoint,
+                                useThumbnail = false
+                            )
+                        } else uri
+                    )
                     .override(Target.SIZE_ORIGINAL)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
@@ -244,7 +260,18 @@ fun ImageEditor(
                             image =
                                 Glide.with(context)
                                     .asBitmap()
-                                    .load(uri)
+                                    .load(
+                                        if (uri.startsWith("/api")) {
+                                            ImmichInfo(
+                                                thumbnail = uri,
+                                                original = uri,
+                                                hash = "",
+                                                auth = info().auth,
+                                                endpoint = info().endpoint,
+                                                useThumbnail = false
+                                            )
+                                        } else uri
+                                    )
                                     .skipMemoryCache(true)
                                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                                     .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))

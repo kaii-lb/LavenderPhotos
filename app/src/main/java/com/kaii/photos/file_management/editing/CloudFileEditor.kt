@@ -100,7 +100,8 @@ class CloudFileEditor(
             val success = assetsClient.delete(
                 ids = listOf(
                     Uuid.parse(mediaItem.immichId!!)
-                )
+                ),
+                force = true
             )
 
             if (success) {

@@ -756,9 +756,11 @@ class MainActivity : ComponentActivity() {
 
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
                     val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
+                    val info by viewModel.immichInfo.collectAsStateWithLifecycle()
 
                     ImageEditor(
                         uri = screen.uri,
+                        info = { info },
                         isFromOpenWithView = false,
                         exportQuality = { exportQuality },
                         overwriteByDefault = { overwriteByDefault },

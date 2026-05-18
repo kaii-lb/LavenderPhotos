@@ -155,16 +155,6 @@ open class LocalFileEditor(
     ): Long? = withContext(Dispatchers.IO) {
         val media = mediaDao.getMediaFromUri(uri) ?: return@withContext null
 
-        val isLoading = mutableStateOf(true)
-
-        LavenderSnackbarController.pushEvent(
-            LavenderSnackbarEvent.LoadingEvent(
-                message = context.resources.getString(R.string.editing_saving),
-                icon = R.drawable.image_arrow_up,
-                isLoading = isLoading
-            )
-        )
-
         val bitmap = super.editImageImpl(
             context,
             image,
@@ -177,19 +167,7 @@ open class LocalFileEditor(
             actualTop
         )
 
-        if (bitmap == null) {
-            isLoading.value = false
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.MessageEvent(
-                    message = context.resources.getString(R.string.editing_failed),
-                    icon = R.drawable.broken_image,
-                    duration = SnackbarDuration.Short
-                )
-            )
-
-            return@withContext null
-        }
+        if (bitmap == null) return@withContext null
 
         val newUri =
             if (!overwrite && !isFromOpenWithView) {
@@ -205,19 +183,7 @@ open class LocalFileEditor(
                 media.uri.toUri()
             }
 
-        if (newUri == null) {
-            isLoading.value = false
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.MessageEvent(
-                    message = context.resources.getString(R.string.editing_failed),
-                    icon = R.drawable.broken_image,
-                    duration = SnackbarDuration.Short
-                )
-            )
-
-            return@withContext null
-        }
+        if (newUri == null) return@withContext null
 
         val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
             bitmap.compress(
@@ -234,16 +200,9 @@ open class LocalFileEditor(
             overwriteLastModified = true
         )
 
-        if (wroteData) {
-            isLoading.value = false
-        } else {
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.MessageEvent(
-                    message = context.resources.getString(R.string.editing_failed),
-                    icon = R.drawable.broken_image,
-                    duration = SnackbarDuration.Short
-                )
-            )
+        if (!wroteData) {
+            context.contentResolver.delete(newUri, null)
+            return@withContext null
         }
 
         return@withContext newUri.toContentId(

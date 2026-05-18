@@ -2,6 +2,7 @@ package com.kaii.photos.models.editor
 
 import android.content.Context
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -117,6 +118,16 @@ class EditorViewModel(
         params: GenericFileEditor.EditParameters.Image
     ) {
         params.context.appModule.scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = params.context.resources.getString(R.string.editing_saving),
+                    icon = R.drawable.image_arrow_up,
+                    isLoading = isLoading
+                )
+            )
+
             val result = editor.editImage(
                 context = params.context,
                 image = params.image,
@@ -132,6 +143,8 @@ class EditorViewModel(
                 overwrite = params.overwrite,
                 isFromOpenWithView = params.isFromOpenWithView
             )
+
+            isLoading.value = false
 
             if (result == null) {
                 LavenderSnackbarController.pushEvent(

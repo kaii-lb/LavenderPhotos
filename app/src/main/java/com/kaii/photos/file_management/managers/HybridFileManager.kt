@@ -89,8 +89,9 @@ class HybridFileManager(
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean {
         val immich = list.filter { it.immichUrl != null }
+        val local = list.filter { !it.isCloud }
 
-        val otherSuccess = otherFileManager.setTrashed(context, list, trashed, albumId.takeIf { isCustom }, taskId, onItemDone)
+        val otherSuccess = otherFileManager.setTrashed(context, local, trashed, albumId.takeIf { isCustom }, taskId, onItemDone)
         val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone)
 
         return otherSuccess && cloudSuccess
@@ -102,8 +103,9 @@ class HybridFileManager(
         taskId: Int?
     ): Boolean {
         val immich = list.filter { it.immichUrl != null }
+        val local = list.filter { !it.isCloud }
 
-        otherFileManager.permanentlyDelete(context, list, taskId)
+        otherFileManager.permanentlyDelete(context, local, taskId)
         return cloudFileManager.permanentlyDelete(context, immich, taskId)
     }
 
@@ -165,7 +167,8 @@ class HybridFileManager(
         origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
     ): Boolean {
-        val otherSuccess = otherFileManager.moveItems(context, list, destination, preserveDate, taskId, origin.takeIf { isCustom }, onItemDone)
+        val local = list.filter { !it.isCloud }
+        val otherSuccess = otherFileManager.moveItems(context, local, destination, preserveDate, taskId, origin.takeIf { isCustom }, onItemDone)
 
         var immichSuccess = true
         if (destination.immichId != null) {
