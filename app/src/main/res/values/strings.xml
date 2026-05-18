@@ -1077,6 +1077,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_information">Information</string>
     <string name="media_is_raw">This is a RAW image</string>
     <string name="media_is_gif">This is a GIF</string>
+    <string name="media_is_cloud">This is a cloud only item</string>
     <string name="media_select_limit_reached">Selection limit reached!</string>
     <string name="media_sharing">Sharing…</string>
 

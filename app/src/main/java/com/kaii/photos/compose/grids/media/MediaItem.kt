@@ -232,6 +232,23 @@ fun MediaItem(
             }
         }
 
+        if (item.item.isCloud) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(2.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.cloud),
+                    contentDescription = stringResource(id = R.string.media_is_cloud),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
         ShowSelectedState(
             isSelected = selected,
             showIcon = isSelecting(),
