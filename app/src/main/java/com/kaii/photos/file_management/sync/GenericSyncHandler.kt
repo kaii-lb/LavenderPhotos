@@ -54,21 +54,29 @@ interface GenericSyncHandler {
 
         val toUpload = mutableListOf<MediaStoreData>()
         val toDownload = mutableListOf<String>()
-        val toTrash = mutableListOf<MediaStoreData>()
+        val toTrashLocal = mutableListOf<MediaStoreData>()
+        val toTrashCloud = mutableListOf<String>()
 
         localMedia.forEach { local ->
+            var currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
+
             if (local.immichId != null) {
                 val cloudItem = cloudById[local.immichId] ?: fileManager.assetClient.get(
                     id = Uuid.parse(local.immichId!!)
                 )
 
                 if (cloudItem?.isTrashed == true) {
-                    toTrash.add(local)
+                    toTrashLocal.add(local)
                     return@forEach
+                }
+
+                // recalculate hash in case there has been modifications
+                if (cloudItem != null && local.dateModified != cloudItem.toMediaStoreData().dateModified) {
+                    toTrashCloud.add(cloudItem.id)
+                    currentHash = calculateSha1Checksum(File(local.absolutePath))
                 }
             }
 
-            val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
             val cloudMatch = cloudByHash[currentHash]
 
             if (cloudMatch != null) {
@@ -104,7 +112,7 @@ interface GenericSyncHandler {
             }
         }
 
-        progressManager.addToTotalItems(count = toUpload.size + toDownload.size + toTrash.size)
+        progressManager.addToTotalItems(count = toUpload.size + toDownload.size + toTrashLocal.size)
 
         if (toUpload.isNotEmpty()) {
             uploadMedia(
@@ -122,16 +130,24 @@ interface GenericSyncHandler {
             )
         }
 
-        if (toTrash.isNotEmpty()) {
+        if (toTrashLocal.isNotEmpty()) {
             albums.get().first().find { album ->
                 album.immichId == originId
             }?.id?.let { albumId ->
                 trashMedia(
                     context = context,
-                    media = toTrash,
+                    media = toTrashLocal,
                     albumId = albumId
                 )
             }
+        }
+
+        if (toTrashCloud.isNotEmpty()) {
+            fileManager.assetClient.delete(
+                ids = toTrashCloud.map {
+                    Uuid.parse(it)
+                }
+            )
         }
     }
 
