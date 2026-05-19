@@ -67,6 +67,6 @@ sealed interface PhotoLibraryUIModel {
         }
 
     fun itemKey() =
-        if (this is MediaImpl) item.absolutePath + item.displayName + item.id
+        if (this is MediaImpl) item.absolutePath + item.uri + item.id
         else (this as Section).timestamp.toString()
 }

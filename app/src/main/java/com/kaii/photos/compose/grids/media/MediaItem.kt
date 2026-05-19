@@ -138,10 +138,10 @@ fun MediaItem(
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
-                .fillMaxSize(1f)
+                .fillMaxSize()
                 .align(Alignment.Center)
                 .scale(animatedItemScale)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(animatedItemCornerRadius))
+                .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
             if (isSecureMedia) {
                 it.signature(item.signature())

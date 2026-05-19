@@ -264,9 +264,9 @@ private fun DeviceMedia(
                                                 .filterIsInstance<PhotoLibraryUIModel.MediaImpl>()
                                                 .indexOf(item)
 
-                                        if (openVideosExternally() && item.item.type == MediaType.Video) {
+                                        if (openVideosExternally() && item.item.type == MediaType.Video && !item.item.isCloud) {
                                             val intent = Intent().apply {
-                                                data = item.item.uri.toUri() // TODO: immich handling
+                                                data = item.item.uri.toUri()
                                                 action = Intent.ACTION_VIEW
                                             }
 
