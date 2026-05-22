@@ -2,13 +2,18 @@ package com.kaii.photos.database.daos
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
+import androidx.room.MapColumn
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.ExifData
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.signature
 
 @Dao
 interface CustomEntityDao {
@@ -23,12 +28,6 @@ interface CustomEntityDao {
 
     @Query(value = "SELECT SUM(media.size) FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album")
     fun mediaSize(album: String): Long
-
-    @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateTaken DESC LIMIT 1")
-    suspend fun getThumbnailForAlbumDateTaken(album: String): MediaStoreData?
-
-    @Query(value = "SELECT media.* FROM media JOIN custom_items ON custom_items.id = media.id WHERE album = :album ORDER BY dateModified DESC LIMIT 1")
-    suspend fun getThumbnailForAlbumDateModified(album: String): MediaStoreData?
 
     @Query(
         value = "SELECT media.id, media.uri, media.immichUrl, media.parentPath, " +
@@ -50,6 +49,64 @@ interface CustomEntityDao {
     @Transaction
     @Query(value = "SELECT * FROM media_exif_data WHERE mediaId = :id")
     suspend fun getExifData(id: Long): ExifData?
+
+    @Query(
+        value = """
+        SELECT custom_items.album AS albumId, media.* FROM custom_items 
+        JOIN media ON media.id = custom_items.id 
+        WHERE albumId IN (:albumIds) 
+        GROUP BY albumId 
+        HAVING dateTaken = MAX(dateTaken)
+        """
+    )
+    suspend fun getThumbnailsDateTaken(albumIds: List<String>): Map<@MapColumn("albumId") String, MediaStoreData>
+
+    @Query(
+        value = """
+        SELECT custom_items.album AS albumId, media.* FROM custom_items 
+        JOIN media ON media.id = custom_items.id 
+        WHERE albumId IN (:albumIds) 
+        GROUP BY albumId 
+        HAVING dateModified = MAX(dateModified)
+        """
+    )
+    suspend fun getThumbnailsDateModified(albumIds: List<String>): Map<@MapColumn("albumId") String, MediaStoreData>
+
+    suspend fun getThumbnails(
+        albumIds: List<String>,
+        sortMode: MediaItemSortMode,
+        albumSortMode: AlbumSortMode
+    ): Map<String, AlbumGridState.Info.Thumbnail> {
+        val customThumbnails =
+            if (albumSortMode == AlbumSortMode.LastModified) {
+                getThumbnailsDateModified(albumIds = albumIds)
+            } else {
+                getThumbnailsDateTaken(albumIds = albumIds)
+            }
+
+        val emptyMedia = MediaStoreData.dummyItem
+        val missing = albumIds.filter { id ->
+            id !in customThumbnails
+        }.associateWith { id ->
+            AlbumGridState.Info.Thumbnail(
+                uri = emptyMedia.uri,
+                date = emptyMedia.dateTaken,
+                signature = emptyMedia.signature(),
+                albumId = id,
+                isGif = false
+            )
+        }
+
+        return missing + customThumbnails.mapValues { (id, media) ->
+            AlbumGridState.Info.Thumbnail(
+                uri = media.uri,
+                date = if (sortMode.isDateModified) media.dateModified else media.dateTaken,
+                signature = media.signature(),
+                albumId = id,
+                isGif = media.displayName.endsWith(".gif")
+            )
+        }
+    }
 
     @Upsert
     suspend fun upsertAll(items: List<CustomItem>)

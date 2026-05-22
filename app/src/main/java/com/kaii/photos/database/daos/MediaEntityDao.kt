@@ -9,8 +9,13 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumSortMode
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.signature
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -48,12 +53,6 @@ interface MediaDao {
 
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
     fun getAllFavourites(): List<MediaStoreData>
-
-    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC LIMIT 1")
-    suspend fun getThumbnailForAlbumDateTaken(paths: Set<String>): MediaStoreData?
-
-    @Query(value = "SELECT * from media WHERE parentPath IN (:paths) ORDER BY dateModified DESC LIMIT 1")
-    suspend fun getThumbnailForAlbumDateModified(paths: Set<String>): MediaStoreData?
 
     @Query(
         value = "SELECT id, uri, immichUrl, parentPath, " +
@@ -122,6 +121,75 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE uri LIKE '/api%'")
     suspend fun getCloudMedia(): List<MediaStoreData>
 
+    @Query(
+        value = """
+        SELECT parentPath AS albumPath, media.* FROM media 
+        WHERE parentPath IN (:paths) 
+        GROUP BY parentPath 
+        HAVING dateModified = MAX(dateModified)
+        """
+    )
+    suspend fun getBatchFolderThumbnailsDateModified(paths: List<String>): Map<@MapColumn("albumPath") String, MediaStoreData>
+
+    @Query(
+        value = """
+        SELECT parentPath AS albumPath, media.* FROM media 
+        WHERE parentPath IN (:paths) 
+        GROUP BY parentPath 
+        HAVING dateTaken = MAX(dateTaken)
+        """
+    )
+    suspend fun getBatchFolderThumbnailsDateTaken(paths: List<String>): Map<@MapColumn("albumPath") String, MediaStoreData>
+
+    suspend fun getFolderThumbnails(
+        folders: List<AlbumType.Folder>,
+        sortMode: MediaItemSortMode,
+        albumSortMode: AlbumSortMode
+    ): Map<String, AlbumGridState.Info.Thumbnail> {
+        val allPaths = folders.flatMap { it.paths }.distinct()
+        if (allPaths.isEmpty()) return emptyMap()
+
+        val pathThumbnails = if (albumSortMode == AlbumSortMode.LastModified) {
+            getBatchFolderThumbnailsDateModified(paths = allPaths)
+        } else {
+            getBatchFolderThumbnailsDateTaken(paths = allPaths)
+        }
+
+        val result = mutableMapOf<String, AlbumGridState.Info.Thumbnail>()
+
+        folders.forEach { folder ->
+            val thumbnail = folder.paths
+                .mapNotNull { pathThumbnails[it] }
+                .maxByOrNull { media ->
+                    if (sortMode.isDateModified) media.dateModified
+                    else media.dateTaken
+                } ?: MediaStoreData.dummyItem
+
+            result[folder.id] = AlbumGridState.Info.Thumbnail(
+                uri = thumbnail.uri,
+                date = if (sortMode.isDateModified) thumbnail.dateModified else thumbnail.dateTaken,
+                signature = thumbnail.signature(),
+                albumId = folder.id,
+                isGif = thumbnail.displayName.endsWith(".gif")
+            )
+        }
+
+        val emptyMedia = MediaStoreData.dummyItem
+        val missing = folders.filter {
+            it.id !in result
+        }.associate { album ->
+            album.id to AlbumGridState.Info.Thumbnail(
+                uri = emptyMedia.uri,
+                date = emptyMedia.dateTaken,
+                signature = emptyMedia.signature(),
+                albumId = album.id,
+                isGif = false
+            )
+        }
+
+        return result + missing
+    }
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg items: MediaStoreData)
 
@@ -134,7 +202,8 @@ interface MediaDao {
     @Upsert
     suspend fun upsertAll(items: List<MediaStoreData>)
 
-    @Query("""
+    @Query(
+        """
         UPDATE media 
         SET uri = :uri,
             absolutePath = :absolutePath,
@@ -148,7 +217,8 @@ interface MediaDao {
             favourited = :favourited,
             duration = :duration
         WHERE id = :id
-    """)
+    """
+    )
     suspend fun upsertIgnoringImmich(
         id: Long,
         uri: String,
