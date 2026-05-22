@@ -698,8 +698,7 @@ class MainActivity : ComponentActivity() {
 
                     AlbumGroup(
                         id = screen.id,
-                        name = screen.name,
-                        albumGridState = appModule.albumGridState
+                        name = screen.name
                     )
                 }
 

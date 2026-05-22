@@ -132,29 +132,31 @@ fun SortableGrid(
 
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
-        val headerHeight by remember {
-            derivedStateOf {
-                with(density) {
-                    pullToRefreshState.distanceFraction * 56.dp.toPx()
+
+        if (!isAlbumGroup) {
+            val headerHeight by remember {
+                derivedStateOf {
+                    with(density) {
+                        pullToRefreshState.distanceFraction * 56.dp.toPx()
+                    }
                 }
             }
-        }
 
-        SortModeHeader(
-            sortMode = sortMode,
-            showHiddenSecureEntry = {
-                !tabList().contains(DefaultTabs.TabTypes.secure)
-            },
-            progress = {
-                pullToRefreshState.distanceFraction.coerceAtMost(1f)
-            },
-            isAlbumGroup = isAlbumGroup,
-            modifier = Modifier
-                .height(with(density) { headerHeight.toDp() })
-                .zIndex(1f),
-            setAlbumSortMode = setAlbumSortMode,
-            authenticateSecureFolder = authenticateSecureFolder
-        )
+            SortModeHeader(
+                sortMode = sortMode,
+                showHiddenSecureEntry = {
+                    !tabList().contains(DefaultTabs.TabTypes.secure)
+                },
+                progress = {
+                    pullToRefreshState.distanceFraction.coerceAtMost(1f)
+                },
+                modifier = Modifier
+                    .height(with(density) { headerHeight.toDp() })
+                    .zIndex(1f),
+                setAlbumSortMode = setAlbumSortMode,
+                authenticateSecureFolder = authenticateSecureFolder
+            )
+        }
 
         val lazyGridState = rememberLazyGridState()
         LaunchedEffect(lazyGridState.isScrollInProgress) {
@@ -202,7 +204,8 @@ fun SortableGrid(
                     state = pullToRefreshState,
                     onRefresh = {
                         lockHeader = true
-                    }
+                    },
+                    enabled = !isAlbumGroup
                 )
                 .pointerInput(Unit) {
                     detectDragGesturesAfterLongPress(
