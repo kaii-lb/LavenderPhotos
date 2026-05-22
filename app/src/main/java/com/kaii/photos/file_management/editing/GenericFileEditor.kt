@@ -375,7 +375,10 @@ interface GenericFileEditor {
             delay(1000)
         }
 
-        if (error) return@withContext null
+        if (error) {
+            Log.d(TAG, "Video export step 1 failed")
+            return@withContext null
+        }
 
         progressHolder.progress = 0 // reset for second operation
         delay(1000)
@@ -418,6 +421,8 @@ interface GenericFileEditor {
         }
 
         if (!tempFile.exists() && tempFile.length() <= 0) {
+            Log.d(TAG, "Video export step 2 failed - temp file does not exist")
+
             percentage.floatValue = 1f
             return@withContext null
         }
@@ -456,6 +461,8 @@ interface GenericFileEditor {
         delay(1000)
 
         if (!tempFileCrop.exists() || tempFileCrop.length() <= 0) {
+            Log.d(TAG, "Video export step 2 failed - temp file crop failed")
+
             percentage.floatValue = 1f
             return@withContext null
         }

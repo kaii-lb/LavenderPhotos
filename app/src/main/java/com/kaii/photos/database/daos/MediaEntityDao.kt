@@ -118,6 +118,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE uri = :uri")
     suspend fun getMediaFromUri(uri: String): MediaStoreData?
 
+    @Query(value = "SELECT * FROM media WHERE id = :id")
+    suspend fun getMediaFromId(id: Long): MediaStoreData?
+
     @Query(value = "SELECT * FROM media WHERE uri LIKE '/api%'")
     suspend fun getCloudMedia(): List<MediaStoreData>
 

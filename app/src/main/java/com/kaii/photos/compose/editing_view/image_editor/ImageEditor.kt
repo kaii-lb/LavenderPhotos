@@ -162,6 +162,7 @@ fun ImageEditor(
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
                     .submit()
+
                     .get()
 
             val res = IntSize(drawable.intrinsicWidth, drawable.intrinsicHeight)

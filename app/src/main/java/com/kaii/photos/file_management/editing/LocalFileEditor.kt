@@ -3,6 +3,7 @@ package com.kaii.photos.file_management.editing
 import android.content.Context
 import android.graphics.Bitmap
 import android.provider.MediaStore
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
@@ -15,15 +16,20 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.transformer.ProgressHolder
 import com.kaii.photos.R
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.helpers.appCloudFolderDir
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
 import com.kaii.photos.helpers.editing.ImageModification
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.getAbsolutePathFromUri
+import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
@@ -37,6 +43,10 @@ import kotlin.time.Clock
 open class LocalFileEditor(
     override val mediaDao: MediaDao
 ) : GenericFileEditor {
+    companion object {
+        private val TAG = LocalFileEditor::class.qualifiedName
+    }
+
     @OptIn(UnstableApi::class)
     override suspend fun editVideo(
         context: Context,
@@ -51,7 +61,16 @@ open class LocalFileEditor(
         textMeasurer: TextMeasurer,
         isFromOpenWithView: Boolean
     ): Long? = withContext(Dispatchers.IO) {
-        val media = mediaDao.getMediaFromUri(uri) ?: return@withContext null
+        val media = mediaDao.getMediaFromUri(uri)
+            ?: context.contentResolver.getMediaStoreDataFromUri(uri.toUri())
+            ?: context.contentResolver.getAbsolutePathFromUri(uri.toUri()).let { absolutePath ->
+                MediaStoreData.dummyItem.copy(
+                    uri = uri,
+                    absolutePath = absolutePath ?: "",
+                    parentPath = absolutePath?.parent() ?: "",
+                    type = MediaType.Video
+                )
+            }
 
         // 100 * 2 for each of the transformer.start's, and 40 for the copying
         val totalPercentage = 120f * 2
@@ -117,6 +136,8 @@ open class LocalFileEditor(
         )
 
         if (newUri == null) {
+            Log.d(TAG, "Video export failed, could not insert new media")
+
             LavenderSnackbarController.pushEvent(
                 event = LavenderSnackbarEvent.MessageEvent(
                     message = context.resources.getString(R.string.editing_export_video_failed),
@@ -155,7 +176,15 @@ open class LocalFileEditor(
         overwrite: Boolean,
         isFromOpenWithView: Boolean
     ): Long? = withContext(Dispatchers.IO) {
-        val media = mediaDao.getMediaFromUri(uri) ?: return@withContext null
+        val media = mediaDao.getMediaFromUri(uri)
+            ?: context.contentResolver.getMediaStoreDataFromUri(uri.toUri())
+            ?: context.contentResolver.getAbsolutePathFromUri(uri.toUri()).let { absolutePath ->
+                MediaStoreData.dummyItem.copy(
+                    uri = uri,
+                    absolutePath = absolutePath ?: "",
+                    parentPath = absolutePath?.parent() ?: ""
+                )
+            }
 
         val bitmap = super.editImageImpl(
             context,
@@ -169,14 +198,20 @@ open class LocalFileEditor(
             actualTop
         )
 
-        if (bitmap == null) return@withContext null
+        if (bitmap == null) {
+            Log.d(TAG, "Image export failed, bitmap was null")
+
+            return@withContext null
+        }
 
         val newUri =
-            if (!overwrite && !isFromOpenWithView) {
+            if (!overwrite || isFromOpenWithView) {
                 context.contentResolver.insertMedia(
                     context = context,
                     media = media,
-                    destination = media.parentPath,
+                    destination = media.parentPath.ifBlank {
+                        appCloudFolderDir.absolutePath
+                    },
                     currentVolumes = MediaStore.getExternalVolumeNames(context),
                     overrideDisplayName = media.displayName.replaceAfterLast(".", "jpeg"),
                     onInsert = { _, _ -> }
@@ -185,7 +220,11 @@ open class LocalFileEditor(
                 media.uri.toUri()
             }
 
-        if (newUri == null) return@withContext null
+        if (newUri == null) {
+            Log.d(TAG, "Image export failed, could not insert new media")
+
+            return@withContext null
+        }
 
         val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
             bitmap.compress(
@@ -203,6 +242,7 @@ open class LocalFileEditor(
         )
 
         if (!wroteData) {
+            Log.d(TAG, "Image export failed, did not write data")
             context.contentResolver.delete(newUri, null)
             return@withContext null
         }
