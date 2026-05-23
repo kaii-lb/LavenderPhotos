@@ -106,4 +106,16 @@ class AlbumGroupViewModel(
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
     fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
+
+    fun setGroupAlbums(
+        id: String,
+        albumIds: List<String>
+    ) {
+        viewModelScope.launch {
+            settings.albums.editGroup(
+                id = id,
+                albumIds = albumIds
+            )
+        }
+    }
 }

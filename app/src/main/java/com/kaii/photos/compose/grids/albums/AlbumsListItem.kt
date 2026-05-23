@@ -146,6 +146,8 @@ fun AlbumsListItemImpl(
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Start,
                 color = MaterialTheme.colorScheme.onSurface,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 2
             )
 
             if (album.summary != null) {

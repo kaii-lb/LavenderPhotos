@@ -301,8 +301,7 @@ class MediaPicker : ComponentActivity() {
                 val screen = it.toRoute<Screens.AlbumGroup>()
 
                 AlbumGroup(
-                    id = screen.id,
-                    name = screen.name
+                    id = screen.id
                 )
             }
         }

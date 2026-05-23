@@ -115,6 +115,7 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsPageImpl(
     allAlbums: () -> List<AlbumType>,
@@ -222,6 +223,14 @@ private fun GeneralSettingsPageImpl(
                 if (showAlbumsSelectionDialog) {
                     PopUpAlbumChooser(
                         selectedAlbums = selectedAlbums,
+                        key = { (it as AlbumType.Folder).paths.first() },
+                        filter = { searchedForText, albums ->
+                            albums.filter { album ->
+                                album.name.contains(searchedForText, true)
+                                        && album.info.album is AlbumType.Folder
+                                        && album.info.album.paths.size == 1
+                            }
+                        },
                         onDismiss = {
                             clearMainPhotosAlbums()
 

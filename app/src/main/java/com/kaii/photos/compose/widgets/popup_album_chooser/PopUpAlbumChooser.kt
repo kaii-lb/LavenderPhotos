@@ -8,14 +8,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -52,23 +55,21 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PopUpAlbumChooser(
-    albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
     selectedAlbums: SnapshotStateList<String>,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
+    key: (album: AlbumType) -> String,
+    filter: (searchedForText: String, list: List<AlbumGridState.Album.Single>) -> List<AlbumGridState.Album.Single>,
     onDismiss: () -> Unit
 ) {
     val state = rememberLazyListState()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
     var albumsList by remember { mutableStateOf(originalAlbumsList) }
     var searchedForText by remember { mutableStateOf("") }
 
     LaunchedEffect(searchedForText, originalAlbumsList) {
-        albumsList = originalAlbumsList.filter { album ->
-            album.name.contains(searchedForText, true)
-                    && album.info.album is AlbumType.Folder
-                    && album.info.album.paths.size == 1
-        }
+        albumsList = filter(searchedForText, originalAlbumsList)
 
         if (albumsList.isNotEmpty()) state.scrollToItem(0)
     }
@@ -82,8 +83,11 @@ fun PopUpAlbumChooser(
         ),
         containerColor = MaterialTheme.colorScheme.background,
         onDismissRequest = onDismiss,
+        contentWindowInsets = {
+            WindowInsets.safeContent.add(WindowInsets(bottom = 8.dp))
+        },
         modifier = Modifier
-            .safeContentPadding()
+            .statusBarsPadding()
     ) {
         val coroutineScope = rememberCoroutineScope()
         BackHandler(
@@ -120,8 +124,6 @@ fun PopUpAlbumChooser(
                 },
                 onConfirm = {}
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (albumsList.isEmpty()) {
@@ -135,7 +137,8 @@ fun PopUpAlbumChooser(
                 state = state,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp, 8.dp, 8.dp, 0.dp),
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+                    .clip(RoundedCornerShape(size = 24.dp)),
                 verticalArrangement = Arrangement.spacedBy(
                     space = 2.dp,
                     alignment = Alignment.Top
@@ -148,7 +151,7 @@ fun PopUpAlbumChooser(
                         albumsList[it].id
                     }
                 ) { index ->
-                    val album = (albumsList[index].info.album as? AlbumType.Folder)?.paths?.first()
+                    val album = key(albumsList[index].info.album)
 
                     CheckableAlbumItem(
                         album = albumsList[index],
@@ -164,7 +167,7 @@ fun PopUpAlbumChooser(
                             if (selectedAlbums.contains(album)) {
                                 selectedAlbums.remove(album)
                             } else {
-                                selectedAlbums.add(album!!)
+                                selectedAlbums.add(album)
                             }
                         }
                     )

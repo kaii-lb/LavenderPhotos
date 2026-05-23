@@ -1348,4 +1348,5 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="album_group_delete">Delete this group?</string>
     <string name="album_group_item_count">Sub-albums:</string>
     <string name="album_group_info">Album group info</string>
+    <string name="album_group_show_add_dialog">Add albums to this group</string>
 </resources>

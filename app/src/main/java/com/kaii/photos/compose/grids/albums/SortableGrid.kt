@@ -127,13 +127,11 @@ fun SortableGrid(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val density = LocalDensity.current
-        val isLandscape by rememberDeviceOrientation()
-
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
 
         if (!isAlbumGroup) {
+            val density = LocalDensity.current
             val headerHeight by remember {
                 derivedStateOf {
                     with(density) {
@@ -185,6 +183,7 @@ fun SortableGrid(
             animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
         )
 
+        val isLandscape by rememberDeviceOrientation()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Fixed(
@@ -203,7 +202,7 @@ fun SortableGrid(
                     isRefreshing = lockHeader,
                     state = pullToRefreshState,
                     onRefresh = {
-                        lockHeader = true
+                        if (!isAlbumGroup) lockHeader = true
                     },
                     enabled = !isAlbumGroup
                 )
@@ -225,10 +224,12 @@ fun SortableGrid(
                 prefix()
             }
 
-            pinDeleteHeader(
-                sortableGridState = sortableGridState,
-                removeAlbumIcon = removeAlbumIcon
-            )
+            if (!isAlbumGroup) {
+                pinDeleteHeader(
+                    sortableGridState = sortableGridState,
+                    removeAlbumIcon = removeAlbumIcon
+                )
+            }
 
             items(
                 count = albums.size,
@@ -322,17 +323,17 @@ fun SortableGrid(
                     ) {
                         navController.navigate(
                             route =
-                                when {
-                                    album.info.album is AlbumType.Cloud -> {
-                                        Screens.Immich.GridView(album = album.info.album)
+                                when (val album = album.info.album) {
+                                    is AlbumType.Cloud -> {
+                                        Screens.Immich.GridView(album = album)
                                     }
 
-                                    album.info.album is AlbumType.Custom -> {
-                                        Screens.CustomAlbum.GridView(album = album.info.album)
+                                    is AlbumType.Custom -> {
+                                        Screens.CustomAlbum.GridView(album = album)
                                     }
 
                                     else -> {
-                                        Screens.Album.GridView(album = album.info.album as AlbumType.Folder)
+                                        Screens.Album.GridView(album = album as AlbumType.Folder)
                                     }
                                 }
                         )
