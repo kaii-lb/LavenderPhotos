@@ -224,12 +224,10 @@ fun SortableGrid(
                 prefix()
             }
 
-            if (!isAlbumGroup) {
-                pinDeleteHeader(
-                    sortableGridState = sortableGridState,
-                    removeAlbumIcon = removeAlbumIcon
-                )
-            }
+            pinDeleteHeader(
+                sortableGridState = sortableGridState,
+                removeAlbumIcon = removeAlbumIcon
+            )
 
             items(
                 count = albums.size,
