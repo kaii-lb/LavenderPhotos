@@ -95,6 +95,7 @@ class ImmichBackupOptionsState(
             launch {
                 info.collect {
                     immichInfo = it
+                    refresh()
                 }
             }
         }
@@ -113,7 +114,10 @@ class ImmichBackupOptionsState(
         val albums = settings.get().first().filter { it !is AlbumType.Cloud }
         val cloud = albumsClient.getAll()?.map { it.id }
 
-        if (cloud == null) return@withContext
+        if (cloud == null) {
+            isLoading = false
+            return@withContext
+        }
 
         albums
             .filter { album ->

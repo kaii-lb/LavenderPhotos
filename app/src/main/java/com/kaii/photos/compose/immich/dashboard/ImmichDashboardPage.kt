@@ -184,7 +184,7 @@ fun ImmichDashboardPage(
                     iconResID = R.drawable.add_photo_alternate,
                     position = RowPosition.Single,
                     showBackground = false,
-                    enabled = userInfo is LoginState.LoggedIn,
+                    enabled = userInfo is LoginState.LoggedIn && !isLoadingInfo,
                     action = {
                         navController.navigate(Screens.Immich.BackupOptions)
                     }
