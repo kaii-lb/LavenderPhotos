@@ -115,11 +115,7 @@ fun SingleAlbumViewTopBar(
                                 WorkManager.getInstance(context)
                                     .getWorkInfoByIdFlow(id!!)
                                     .collect {
-                                        if (it?.state != WorkInfo.State.RUNNING
-                                            && it?.state != WorkInfo.State.ENQUEUED
-                                        ) {
-                                            loading = false
-                                        }
+                                        loading = it?.state == WorkInfo.State.SUCCEEDED
                                     }
                             }
                         }
