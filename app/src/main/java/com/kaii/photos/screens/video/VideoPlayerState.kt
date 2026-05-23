@@ -63,6 +63,7 @@ class VideoPlayerState(
     private var hideTimeout = 0L
     private var loopMode = 0
     private var muteOnStart = true
+    private var isReleased = false
 
     /** In Seconds */
     var currentPosition by mutableFloatStateOf(0f)
@@ -114,6 +115,10 @@ class VideoPlayerState(
 
             val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
             current?.let { setAudioTrack(it) }
+        },
+        onPlayingChanged = { playing ->
+            if (playing) play()
+            else pause()
         }
     )
 
@@ -169,20 +174,28 @@ class VideoPlayerState(
     }
 
     fun toggleMute() {
+        if (isReleased) return
+
         isMuted = !isMuted
         player.setMute(isMuted)
     }
 
     fun resetMute() = coroutineScope.launch {
+        if (isReleased) return@launch
+
         isMuted = muteOnStart && !isOpenWithView
     }
 
     fun toggleRepeatMode() {
+        if (isReleased) return
+
         isRepeatModeOn = !isRepeatModeOn
         player.setRepeatMode(isRepeatModeOn)
     }
 
     fun release(context: Context) {
+        isReleased = true
+
         player.release()
 
         context.appModule.scope.launch(Dispatchers.IO) {
@@ -202,6 +215,8 @@ class VideoPlayerState(
         shouldPlay: () -> Boolean,
         decryptProgress: (progress: Float) -> Unit = {}
     ) {
+        if (isReleased) return
+
         this.loop = loop
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
@@ -284,7 +299,7 @@ class VideoPlayerState(
     }
 
     fun play() {
-        if (!shouldPlay()) return
+        if (!shouldPlay() || isReleased) return
 
         isPlaying = true
 
@@ -319,6 +334,8 @@ class VideoPlayerState(
     }
 
     fun pause() {
+        if (isReleased) return
+
         isPlaying = false
         controlsVisible = true
         playingJob?.cancel()
@@ -331,12 +348,16 @@ class VideoPlayerState(
     }
 
     fun seekBack() {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekBack()
         isPlaying = prev
     }
 
     fun seekForward() {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekForward()
         isPlaying = prev
@@ -344,6 +365,8 @@ class VideoPlayerState(
 
     /** @param position in millisecond */
     fun seekTo(position: Long) {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekTo(position)
         currentPosition = player.currentPosition
@@ -351,27 +374,45 @@ class VideoPlayerState(
     }
 
     fun setPlaybackSpeed(speed: Float) {
+        if (isReleased) return
+
         if (speed !in 0.5f..4f) return
 
         player.setPlaybackSpeed(speed)
     }
 
-    fun setVolume(volume: Float) = player.setVolume(volume)
+    fun setVolume(volume: Float) {
+        if (isReleased) return
+
+        player.setVolume(volume)
+    }
 
     @androidx.annotation.OptIn(UnstableApi::class)
     fun applyEffects(effectList: List<Effect>) {
+        if (isReleased) return
+
         player.applyEffects(effectList)
     }
 
-    fun linkPlayerView(playerView: PlayerView) = player.linkPlayerView(playerView)
+    fun linkPlayerView(playerView: PlayerView) {
+        if (isReleased) return
+
+        player.linkPlayerView(playerView)
+    }
 
     fun setAudioTrack(language: String) {
+        if (isReleased) return
+
         if (player.setAudioTrack(language)) {
             selectedAudioTrack = audioTracks.find { it.language == language }
         }
     }
 
-    fun getFrameRate() = player.getFrameRate()
+    fun getFrameRate(): Float? {
+        if (isReleased) return null
+
+        return player.getFrameRate()
+    }
 }
 
 @Composable

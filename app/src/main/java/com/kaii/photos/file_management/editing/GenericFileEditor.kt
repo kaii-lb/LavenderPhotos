@@ -338,6 +338,7 @@ interface GenericFileEditor {
                             )
                             .build()
                     )
+                    .setEnableFallback(true)
                     .build()
             )
             .apply {
@@ -415,8 +416,15 @@ interface GenericFileEditor {
             val newWidth = (basicVideoData.width * widthPercent).toInt()
             val newHeight = (basicVideoData.height * heightPercent).toInt()
 
+            val safeWidth = newWidth - (newWidth % 2)
+            val safeHeight = newHeight - (newHeight % 2)
+
             modList.add(
-                Presentation.createForShortSide(if (newWidth > newHeight) newWidth else newHeight)
+                Presentation.createForWidthAndHeight(
+                    safeWidth,
+                    safeHeight,
+                    Presentation.LAYOUT_SCALE_TO_FIT
+                )
             )
         }
 
