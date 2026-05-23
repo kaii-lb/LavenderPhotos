@@ -52,6 +52,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import nl.adaptivity.xmlutil.core.impl.multiplatform.name
 import java.io.File
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
@@ -276,7 +277,12 @@ interface GenericFileManager {
 
         settings.edit(
             id = album.id,
-            newInfo = (album as AlbumType.Custom).copy(name = newName)
+            newInfo = when (album) {
+                is AlbumType.Cloud -> album.copy(name = newName)
+                is AlbumType.Custom -> album.copy(name = newName)
+                is AlbumType.Folder -> album.copy(name = newName)
+                AlbumType.PlaceHolder -> throw IllegalArgumentException("Physically cannot rename ${AlbumType.PlaceHolder::class.name}")
+            }
         )
     }
 
