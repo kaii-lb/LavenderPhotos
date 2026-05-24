@@ -157,6 +157,7 @@ class CustomRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, albumId ?: album.id, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, albumId ?: album.id, immichId ?: album.immichId, null, onItemDone)
 }

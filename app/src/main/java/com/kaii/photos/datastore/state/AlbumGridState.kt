@@ -149,7 +149,7 @@ class AlbumGridState(
                         mediaDao
                             .getAllAlbums()
                             .distinctUntilChanged()
-                            .collectLatest { list ->
+                            .collect { list ->
                                 updateAlbums(
                                     list.fastMapNotNull { album ->
                                         AlbumType.Folder(
@@ -157,14 +157,15 @@ class AlbumGridState(
                                             name = album.filename(),
                                             paths = setOf(album),
                                             pinned = false,
-                                            immichId = ""
+                                            immichId = null
                                         )
                                     },
                                     emptyList(),
                                     albumsFlow.first().fastMapNotNull { album ->
                                         album.id.takeIf {
                                             val empty = album is AlbumType.Folder
-                                                    && mediaDao.getBatchFolderThumbnailsDateModified(paths = album.paths.toList()).values.isEmpty()
+                                                    && album.immichId == null
+                                                    && mediaDao.countInFolder(paths = album.paths.toList()) == 0
 
                                             empty || album.name.isBlank()
                                         }
@@ -359,8 +360,8 @@ fun createAlbumGridState(
     apiClient = apiClient,
     updateAlbums = { added, updated, removed ->
         val settings = context.appModule.settings.albums
+        settings.removeAll(removed) // order is important here
         settings.add(added)
-        settings.removeAll(removed)
 
         updated.forEach { album ->
             settings.edit(

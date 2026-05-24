@@ -264,7 +264,8 @@ sealed interface AlbumType : Parcelable {
         override val name: String,
         override val pinned: Boolean,
         override val immichId: String?,
-        val paths: Set<String>
+        val paths: Set<String>,
+        val wasCloud: Boolean = false
     ) : AlbumType {
         class NavType : androidx.navigation.NavType<Folder>(isNullableAllowed = false) {
             override fun get(bundle: Bundle, key: String): Folder? {

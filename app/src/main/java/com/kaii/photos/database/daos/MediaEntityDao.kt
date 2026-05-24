@@ -124,6 +124,9 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE uri LIKE '/api%'")
     suspend fun getCloudMedia(): List<MediaStoreData>
 
+    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath in (:paths)")
+    suspend fun countInFolder(paths: List<String>): Int
+
     @Query(
         value = """
         SELECT parentPath AS albumPath, media.* FROM media 

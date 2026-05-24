@@ -132,6 +132,7 @@ class CloudSyncManager(
             list = items,
             trashed = true,
             albumId = task.destination,
+            immichId = task.destination,
             taskId = task.id,
             onItemDone = {
                 progressManager.increaseProgress()

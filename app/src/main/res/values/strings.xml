@@ -666,6 +666,7 @@
     <string name="albums_media_sorting_desc">Sets the sorting of photos and videos in grids</string>
     <string name="albums_is_custom">This is a custom album</string>
     <string name="albums_is_cloud">This is a cloud-only album</string>
+    <string name="albums_is_cloud_linked">This is a cloud-linked album</string>
     <string name="albums_custom">Custom Album</string>
     <string name="albums_custom_desc">Add any media from anywhere</string>
     <string name="albums_folder_desc">Load media from a folder</string>
@@ -1294,6 +1295,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_share_album_other_links">Other links from this album</string>
     <string name="immich_share_album_delete_link">Delete this immich share link</string>
     <string name="immich_share_album_expires_at">Expires at: %s</string>
+    <string name="immich_unlink">Unlink</string>
+    <string name="immich_unlink_album">Unlink album from immich?</string>
+    <string name="immich_unlink_album_desc">This stops syncing between cloud and local albums, however it does not delete either, or unlink media inside this album</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>

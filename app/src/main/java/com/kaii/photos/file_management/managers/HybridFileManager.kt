@@ -85,14 +85,15 @@ class HybridFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean {
         val immich = list.filter { it.immichUrl != null }
         val local = list.filter { !it.isCloud }
 
-        val otherSuccess = otherFileManager.setTrashed(context, local, trashed, albumId.takeIf { isCustom }, taskId, onItemDone)
-        val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, taskId, onItemDone)
+        val otherSuccess = otherFileManager.setTrashed(context, local, trashed, albumId.takeIf { isCustom }, immichId, taskId, onItemDone)
+        val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, immichId, taskId, onItemDone)
 
         return otherSuccess && cloudSuccess
     }
@@ -180,7 +181,8 @@ class HybridFileManager(
                     context = context,
                     list = immich,
                     trashed = true,
-                    albumId = origin.immichId,
+                    albumId = origin.id,
+                    immichId = origin.immichId,
                     taskId = null,
                     onItemDone = {}
                 )

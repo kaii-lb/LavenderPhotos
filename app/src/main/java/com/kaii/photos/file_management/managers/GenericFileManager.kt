@@ -210,6 +210,7 @@ interface GenericFileManager {
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         taskId: Int? = null,
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean

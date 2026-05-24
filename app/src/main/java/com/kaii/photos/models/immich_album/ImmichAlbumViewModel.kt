@@ -25,7 +25,7 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
     context: Context,
-    private val album: AlbumType
+    private val album: AlbumType.Cloud
 ) : BaseViewModel(context) {
     override val scope: CoroutineScope = context.appModule.scope
     override val apiClient: ApiClient = context.appModule.apiClient
@@ -139,7 +139,7 @@ class ImmichAlbumViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed, null) {
+            repo.setTrashed(context, list, trashed, null, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,

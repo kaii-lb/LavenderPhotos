@@ -38,6 +38,7 @@ class CustomFileManager(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {

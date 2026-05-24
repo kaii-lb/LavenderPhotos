@@ -45,22 +45,34 @@ class SettingsAlbumsListImpl(
             val jsonString = data[albumsKey]
             val present = jsonString?.let { json.decodeFromString<List<AlbumType>>(jsonString) } ?: defaultAlbumsList
 
-            val presentPaths = present.fastMapNotNull { (it as? AlbumType.Folder)?.paths }
-            val presentIds = present.fastMap { it.id }
-            val presentImmichIds = present.fastMapNotNull { it.immichId}
+            val presentPaths = HashMap(
+                present
+                    .filterIsInstance<AlbumType.Folder>()
+                    .associateBy { it.paths }
+            )
 
-            present.toMutableList().apply {
-                addAll(
-                    list.filter {
-                        when (it) {
-                            is AlbumType.Folder -> it.paths !in presentPaths && it.name.isNotBlank()
-                            else -> it.id !in presentIds && it.name.isNotBlank() && it.immichId !in presentImmichIds
-                        }
+            val presentIds = present.fastMap { it.id }.toHashSet()
+            val presentImmichIds = present.fastMapNotNull { it.immichId }.toHashSet()
+
+            val newAlbums = list.filter { album ->
+                when (album) {
+                    is AlbumType.Cloud -> {
+                        album.immichId !in presentImmichIds
                     }
-                )
-            }.let { new ->
-                data[albumsKey] = json.encodeToString(new)
+
+                    is AlbumType.Custom -> {
+                        album.id !in presentIds
+                    }
+
+                    is AlbumType.Folder -> {
+                        !presentPaths.containsKey(album.paths)
+                    }
+
+                    AlbumType.PlaceHolder -> false
+                }
             }
+
+            data[albumsKey] = json.encodeToString(present + newAlbums)
         }
     }
 
@@ -180,6 +192,8 @@ class SettingsAlbumsListImpl(
     }
 
     fun removeAll(albumIds: List<String>) = scope.launch {
+        if (albumIds.isEmpty()) return@launch
+
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
             val present = json.decodeFromString<List<AlbumType>>(list).toMutableList()
@@ -194,7 +208,8 @@ class SettingsAlbumsListImpl(
 
     fun edit(
         id: String,
-        newInfo: AlbumType
+        newInfo: AlbumType,
+        overwriteId: Boolean = false
     ) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
@@ -204,9 +219,21 @@ class SettingsAlbumsListImpl(
 
             present[index] =
                 when (newInfo) {
-                    is AlbumType.Folder -> newInfo.copy(id = id)
-                    is AlbumType.Custom -> newInfo.copy(id = id)
-                    is AlbumType.Cloud -> newInfo.copy(id = id)
+                    is AlbumType.Folder -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
+                    is AlbumType.Custom -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
+                    is AlbumType.Cloud -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
                     else -> AlbumType.PlaceHolder
                 }
 

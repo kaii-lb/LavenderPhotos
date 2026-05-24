@@ -17,8 +17,10 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.appCloudFolderDir
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.Album
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumCreateRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +31,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -66,6 +68,7 @@ class ImmichBackupOptionsState(
 ) : ImmichBackupOptionsStateImpl() {
     private val selectedAlbumIds = mutableStateListOf<String>()
     private val _query = MutableStateFlow("")
+    private var albumTypes = emptyList<AlbumType>()
 
     override var immichInfo by mutableStateOf(ImmichBasicInfo.Empty)
 
@@ -78,7 +81,7 @@ class ImmichBackupOptionsState(
 
     override val albums = albumsFlow.combine(_query) { list, query ->
         list.filter { album ->
-            album.name.contains(query, true) && album.info.album !is AlbumType.Cloud
+            album.name.contains(query, true)
         }
     }.stateIn(
         scope = scope,
@@ -98,6 +101,12 @@ class ImmichBackupOptionsState(
                     refresh()
                 }
             }
+
+            launch {
+                settings.get().collect {
+                    albumTypes = it
+                }
+            }
         }
     }
 
@@ -111,7 +120,6 @@ class ImmichBackupOptionsState(
             client = apiClient
         )
 
-        val albums = settings.get().first().filter { it !is AlbumType.Cloud }
         val cloud = albumsClient.getAll()?.map { it.id }
 
         if (cloud == null) {
@@ -119,7 +127,7 @@ class ImmichBackupOptionsState(
             return@withContext
         }
 
-        albums
+        albumTypes
             .filter { album ->
                 album !is AlbumType.Cloud
             }
@@ -172,8 +180,7 @@ class ImmichBackupOptionsState(
             client = apiClient
         )
 
-        val albums = settings.get().first().filter { it !is AlbumType.Cloud }
-        val local = albums.filter { it.id in selectedAlbumIds }
+        val local = albumTypes.filter { it.id in selectedAlbumIds }
         val cloud = albumsClient.getAll()
 
         if (cloud == null) {
@@ -182,58 +189,50 @@ class ImmichBackupOptionsState(
         }
 
         local.forEach { album ->
-            val exists = cloud.any {
-                it.id == album.immichId
-            }
-
-            if (exists) return@forEach
-
-            var immichId = cloud.find {
-                it.albumName == album.name
-            }?.id
-
-            if (immichId == null) {
-                val response = albumsClient.createAlbum(
-                    info = AlbumCreateRequest(
-                        albumName = album.name,
-                        albumUsers = emptyList(),
-                        assetIds = emptyList(),
-                        description = ""
-                    )
-                )
-
-                immichId = response?.id ?: return@forEach
-            }
-
-            settings.edit(
-                id = album.id,
-                newInfo = when (album) {
-                    is AlbumType.Folder -> album.copy(immichId = immichId)
-                    is AlbumType.Custom -> album.copy(immichId = immichId)
-                    else -> throw IllegalStateException("Cannot operate on a cloud album!")
+            if (album !is AlbumType.Cloud) {
+                val exists = cloud.any {
+                    it.id == album.immichId
                 }
-            )
+
+                if (exists) return@forEach
+
+                linkToCloud(
+                    album = album,
+                    cloud = cloud,
+                    client = albumsClient
+                )
+            } else {
+                makeLocal(album = album)
+            }
         }
 
+        val nonCloud = albumTypes.filter { it !is AlbumType.Cloud }
         cloud.forEach { cloudAlbum ->
-            val album = albums.find {
+            val album = nonCloud.find {
                 it.immichId == cloudAlbum.id
             }
 
             if (album == null || album.id in selectedAlbumIds) return@forEach
 
-            albumsClient.delete(
-                id = Uuid.parse(cloudAlbum.id)
-            )
+            if (album !is AlbumType.Folder || !album.wasCloud) {
+                albumsClient.delete(
+                    id = Uuid.parse(cloudAlbum.id)
+                )
+            }
 
-            settings.edit(
-                id = album.id,
-                newInfo = when (album) {
-                    is AlbumType.Folder -> album.copy(immichId = null)
-                    is AlbumType.Custom -> album.copy(immichId = null)
-                    else -> throw IllegalStateException("Cannot operate on a cloud album!")
-                }
-            )
+            if (album is AlbumType.Folder && album.wasCloud) {
+                File(album.paths.first()).deleteRecursively()
+                settings.remove(album.id)
+            } else {
+                settings.edit(
+                    id = album.id,
+                    newInfo = when (album) {
+                        is AlbumType.Folder -> album.copy(immichId = null)
+                        is AlbumType.Custom -> album.copy(immichId = null)
+                        else -> throw IllegalStateException("Cannot operate on a cloud album!")
+                    }
+                )
+            }
         }
 
         CloudSyncWorker.immediateEnqueue(context = context, albumId = null)
@@ -244,6 +243,75 @@ class ImmichBackupOptionsState(
         isLoading = false
 
         return@withContext true
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun linkToCloud(
+        album: AlbumType,
+        cloud: List<Album>,
+        client: AlbumsClient
+    ) {
+        var immichId = cloud.find {
+            it.albumName == album.name
+        }?.id
+
+        if (immichId == null) {
+            val response = client.createAlbum(
+                info = AlbumCreateRequest(
+                    albumName = album.name,
+                    albumUsers = emptyList(),
+                    assetIds = emptyList(),
+                    description = ""
+                )
+            )
+
+            immichId = response?.id ?: return
+        }
+
+        settings.edit(
+            id = album.id,
+            newInfo = when (album) {
+                is AlbumType.Folder -> album.copy(immichId = immichId)
+                is AlbumType.Custom -> album.copy(immichId = immichId)
+                else -> throw IllegalStateException("Cannot operate on a cloud album!")
+            }
+        )
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun makeLocal(
+        album: AlbumType.Cloud
+    ) {
+        val dir = File(appCloudFolderDir, album.name + "-" + album.immichId.take(5))
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        val newAlbum = AlbumType.Folder(
+            id = Uuid.random().toString(),
+            name = album.name,
+            pinned = album.pinned,
+            immichId = album.immichId,
+            paths = setOf(dir.absolutePath),
+            wasCloud = true
+        )
+
+        albumTypes.filter { album ->
+            album is AlbumType.Folder && album.paths == setOf(dir.absolutePath)
+        }.let { matches ->
+            settings.removeAll(
+                albumIds = matches.map { it.id }
+            )
+        }.join()
+
+        settings.edit(
+            id = album.id,
+            newInfo = newAlbum,
+            overwriteId = true
+        ).join()
+
+        selectedAlbumIds.remove(album.id)
+        selectedAlbumIds.add(newAlbum.id)
     }
 }
 

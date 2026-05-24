@@ -45,7 +45,6 @@ fun AlbumGroupTopBar(
     if (showAddAlbumsDialog) {
         val selectedAlbums = remember { mutableStateListOf<String>() }
         LaunchedEffect(group()) {
-            println("GROUP ${group()?.albumIds}")
             if (group()?.albumIds != null) selectedAlbums.addAll(group()!!.albumIds)
         }
 

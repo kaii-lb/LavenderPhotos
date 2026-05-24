@@ -134,13 +134,13 @@ class CloudFileManager(
         null
     }
 
-    /** @param albumId should be immich id of this album */
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun setTrashed(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
     ) = withContext(Dispatchers.IO) {
@@ -150,7 +150,7 @@ class CloudFileManager(
             throw IllegalArgumentException("Cannot restore files to albums!")
         }
 
-        if (albumId == null) {
+        if (immichId == null) {
             permanentlyDelete(
                 context = context,
                 list = list,
@@ -167,7 +167,7 @@ class CloudFileManager(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Trash,
-                destination = albumId
+                destination = immichId
             )
         ).toInt()
 
@@ -182,11 +182,11 @@ class CloudFileManager(
 
         customDao.deleteAll(
             ids = list.fastMap { it.id }.toSet(),
-            album = albumId
+            album = immichId
         )
 
         albumsClient.removeAssets(
-            albumId = Uuid.parse(albumId),
+            albumId = Uuid.parse(immichId),
             assetIds = list.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             onItemDone(if (success) list.size else -1)

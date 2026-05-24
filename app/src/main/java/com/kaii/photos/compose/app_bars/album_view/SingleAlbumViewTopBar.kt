@@ -104,7 +104,7 @@ fun SingleAlbumViewTopBar(
                 actions = {
                     val info = albumInfo()
 
-                    if (info.immichId != null) {
+                    if (info.immichId != null && info !is AlbumType.Cloud) {
                         val context = LocalContext.current
                         val coroutineScope = rememberCoroutineScope()
                         var id by retain { mutableStateOf<UUID?>(null) }
@@ -115,7 +115,7 @@ fun SingleAlbumViewTopBar(
                                 WorkManager.getInstance(context)
                                     .getWorkInfoByIdFlow(id!!)
                                     .collect {
-                                        loading = it?.state == WorkInfo.State.SUCCEEDED
+                                        loading = it?.state != WorkInfo.State.SUCCEEDED
                                     }
                             }
                         }
@@ -136,7 +136,7 @@ fun SingleAlbumViewTopBar(
                         }
                     }
 
-                    if (!isMediaPicker && info is AlbumType.Folder) {
+                    if (!isMediaPicker && info is AlbumType.Folder && !info.wasCloud) {
                         var showPathsDialog by remember { mutableStateOf(false) }
                         val context = LocalContext.current
 

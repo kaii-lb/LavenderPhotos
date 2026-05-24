@@ -338,6 +338,7 @@ interface GenericSyncHandler {
             albumId = albumId.takeIf {
                 fileManager is CustomFileManager
             },
+            immichId = null,
             onItemDone = {
                 progressManager.increaseProgress()
             }

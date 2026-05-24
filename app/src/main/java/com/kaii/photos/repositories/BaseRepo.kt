@@ -79,8 +79,9 @@ interface BaseRepo {
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, albumId, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, albumId, immichId, null, onItemDone)
 
     suspend fun delete(
         context: Context,

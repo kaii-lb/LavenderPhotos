@@ -85,7 +85,7 @@ fun AlbumInfoDialog(
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
     renameAlbum: (newName: String) -> Unit,
     removeAlbum: (id: String) -> Unit,
-    dismiss: () -> Unit,
+    dismiss: () -> Unit
 ) {
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
@@ -456,47 +456,47 @@ private fun IconContentImpl(
         )
     }
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
-    if (showDeleteDialog) {
-        ConfirmationDialog(
-            title = stringResource(id = R.string.albums_remove_desc),
-            confirmButtonLabel = stringResource(id = R.string.albums_remove),
-            action = {
-                val album = albumInfo()
-                removeAlbum(album.id)
-
-                if (album is AlbumType.Folder) {
-                    try {
-                        context.contentResolver.releasePersistableUriPermission(
-                            context.getExternalStorageContentUriFromAbsolutePath(
-                                album.paths.first(),
-                                true
-                            ),
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (e: Throwable) {
-                        Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
-                        e.printStackTrace()
-                    }
-                } else if (album is AlbumType.Custom) {
-                    // TODO: possible make less messy
-                    context.appModule.scope.launch(Dispatchers.IO) {
-                        MediaDatabase.getInstance(context)
-                            .customDao()
-                            .deleteAlbum(album = album.id)
-                    }
-                }
-
-                navController.popBackStack()
-            },
-            onDismiss = {
-                showDeleteDialog = false
-            }
-        )
-    }
-
     if (!autoDetectAlbums() || (albumInfo() is AlbumType.Custom && albumInfo().immichId == null)) {
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.albums_remove_desc),
+                confirmButtonLabel = stringResource(id = R.string.albums_remove),
+                action = {
+                    val album = albumInfo()
+                    removeAlbum(album.id)
+
+                    if (album is AlbumType.Folder) {
+                        try {
+                            context.contentResolver.releasePersistableUriPermission(
+                                context.getExternalStorageContentUriFromAbsolutePath(
+                                    album.paths.first(),
+                                    true
+                                ),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            )
+                        } catch (e: Throwable) {
+                            Log.d(TAG, "Couldn't release permission for ${album.paths.first()}")
+                            e.printStackTrace()
+                        }
+                    } else if (album is AlbumType.Custom) {
+                        // TODO: possible make less messy
+                        context.appModule.scope.launch(Dispatchers.IO) {
+                            MediaDatabase.getInstance(context)
+                                .customDao()
+                                .deleteAlbum(album = album.id)
+                        }
+                    }
+
+                    navController.popBackStack()
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
+            )
+        }
+
         IconButton(
             onClick = {
                 showDeleteDialog = true

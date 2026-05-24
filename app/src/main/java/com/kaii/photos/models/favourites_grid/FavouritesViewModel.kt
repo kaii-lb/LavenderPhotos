@@ -112,7 +112,7 @@ class FavouritesViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed, null) {
+            repo.setTrashed(context, list, trashed, null, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,

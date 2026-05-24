@@ -8,7 +8,7 @@ import com.kaii.photos.datastore.AlbumType
 @Suppress("UNCHECKED_CAST")
 class ImmichAlbumViewModelFactory(
     private val context: Context,
-    private val album: AlbumType
+    private val album: AlbumType.Cloud
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == ImmichAlbumViewModel::class.java) {

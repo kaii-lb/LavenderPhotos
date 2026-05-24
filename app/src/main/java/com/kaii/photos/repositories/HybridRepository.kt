@@ -147,8 +147,9 @@ class HybridRepository(
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean {
-        return super.setTrashed(context, list, trashed, albumId ?: album.value.immichId, onItemDone)
+        return super.setTrashed(context, list, trashed, albumId ?: album.value.id, immichId ?: album.value.immichId, onItemDone)
     }
 }
