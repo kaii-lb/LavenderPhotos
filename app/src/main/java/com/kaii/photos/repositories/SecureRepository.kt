@@ -73,12 +73,9 @@ class SecureRepository(
 
             val secureThumbnail = file.secureThumbnailImage(context)
             try {
-                secureThumbnail
-                    .outputStream()
-                    .let {
-                        if (encrypted.size <= 8 * 1024) it.write(encrypted)
-                        else it.buffered().write(encrypted)
-                    }
+                // use{} flushes and closes the stream; the old .let{} leaked the fd and a
+                // never-flushed buffered stream could drop the trailing bytes
+                secureThumbnail.outputStream().use { it.write(encrypted) }
             } catch (e: IOException) {
                 Log.d(TAG, e.toString())
                 e.printStackTrace()
