@@ -27,35 +27,47 @@ object EncryptionManager {
 
     private const val TRANSFORMATION = "$ENCRYPTION_ALGORITHM/$ENCRYPTION_BLOCK_MODE/$ENCRYPTION_PADDING"
 
+    // the keystore key never changes once made, so cache it instead of a keystore round-trip per decrypt
+    @Volatile
+    private var cachedKey: SecretKey? = null
+
     private fun getOrCreateSecretKey(): SecretKey {
-        val keystore = KeyStore.getInstance(KEYSTORE)
-        keystore.load(null)
+        cachedKey?.let { return it }
 
-        // if key already exists just return it
-        keystore.getKey(KEY_NAME, null)?.let { possiblePreviousKey ->
-            return possiblePreviousKey as SecretKey
+        return synchronized(this) {
+            // double-checked: another thread may have populated the cache while we waited on the lock
+            cachedKey?.let { return@synchronized it }
+
+            val keystore = KeyStore.getInstance(KEYSTORE)
+            keystore.load(null)
+
+            // if key already exists just reuse it, otherwise create it once
+            val key = (keystore.getKey(KEY_NAME, null) as? SecretKey) ?: run {
+                val keyGenParams =
+                    KeyGenParameterSpec.Builder(
+                        KEY_NAME,
+                        KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
+                    )
+                        .setBlockModes(ENCRYPTION_BLOCK_MODE)
+                        .setEncryptionPaddings(ENCRYPTION_PADDING)
+                        .setUserAuthenticationRequired(false)
+                        .setKeySize(KEY_SIZE)
+                        .setInvalidatedByBiometricEnrollment(false)
+                        .setRandomizedEncryptionRequired(true)
+                        .build()
+
+                val keyGenerator = KeyGenerator.getInstance(
+                    ENCRYPTION_ALGORITHM,
+                    KEYSTORE
+                )
+                keyGenerator.init(keyGenParams)
+
+                keyGenerator.generateKey()
+            }
+
+            cachedKey = key
+            key
         }
-
-        val keyGenParams =
-            KeyGenParameterSpec.Builder(
-                KEY_NAME,
-                KeyProperties.PURPOSE_DECRYPT or KeyProperties.PURPOSE_ENCRYPT
-            )
-                .setBlockModes(ENCRYPTION_BLOCK_MODE)
-                .setEncryptionPaddings(ENCRYPTION_PADDING)
-                .setUserAuthenticationRequired(false)
-                .setKeySize(KEY_SIZE)
-                .setInvalidatedByBiometricEnrollment(false)
-                .setRandomizedEncryptionRequired(true)
-                .build()
-
-        val keyGenerator = KeyGenerator.getInstance(
-            ENCRYPTION_ALGORITHM,
-            KEYSTORE
-        )
-        keyGenerator.init(keyGenParams)
-
-        return keyGenerator.generateKey()
     }
 
     private fun writeToOutputStream(
