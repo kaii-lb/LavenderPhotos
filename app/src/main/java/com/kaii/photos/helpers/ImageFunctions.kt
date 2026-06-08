@@ -139,16 +139,26 @@ suspend fun moveMediaToSecureFolder(
     applicationDatabase: MediaDatabase,
     onDone: () -> Unit
 ) = withContext(Dispatchers.IO) {
-    val lastModified = System.currentTimeMillis()
+    // sort the batch newest-first; the incoming set is unordered so don't trust iteration order.
+    // videos can report dateTaken == 0, so fall back to dateModified then absolutePath
+    val ordered = list.sortedWith(
+        compareByDescending<MediaStoreData> { it.dateTaken }
+            .thenByDescending { it.dateModified }
+            .thenByDescending { it.absolutePath }
+    )
+
+    // the secure grid sorts by each encrypted file's lastModified (truncated to whole seconds via /1000),
+    // so stamp destinations 1000ms apart, all above the highest existing mtime, to keep the batch order
+    // and float the most recently secured items to the top
+    val existingMaxMtime = File(context.appSecureFolderDir).listFiles()?.maxOfOrNull { it.lastModified() } ?: 0L
+    val baseModified = maxOf(System.currentTimeMillis(), existingMaxMtime + ordered.size * 1000L)
+
     val metadataRetriever = MediaMetadataRetriever()
 
-    list.forEach { mediaItem ->
+    ordered.forEachIndexed { index, mediaItem ->
         val fileToBeHidden = File(mediaItem.absolutePath)
         val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
         try {
-            // set last modified so item shows up in correct place in locked folder
-            fileToBeHidden.setLastModified(lastModified)
-
             val destinationFile = File(copyToPath)
 
             context.contentResolver.setDateForMedia(
@@ -164,6 +174,10 @@ suspend fun moveMediaToSecureFolder(
                     fileToBeHidden.inputStream(),
                     destinationFile.outputStream()
                 )
+
+            // stamp the encrypted file (what the grid sorts by) with this item's slot, newest = highest.
+            // must run after the encrypt above sets its own write-time mtime, else it gets overwritten
+            destinationFile.setLastModified(baseModified - index * 1000L)
 
             applicationDatabase.securedItemEntityDao().insertEntity(
                 SecuredItemEntity(
@@ -198,6 +212,9 @@ suspend fun moveMediaToSecureFolder(
                     .submit()
                     .get()
 
+                // passing secureVideoThumbnailImage for an image is intentional: addEncryptedThumbnail
+                // re-applies secureThumbnailImage() and both collapse to the same secure_thumbnail_cache
+                // png the grid reads. don't "simplify" to destinationFile without also changing that
                 SecureRepository.addEncryptedThumbnail(
                     context = context,
                     thumbnail = thumbnail,
