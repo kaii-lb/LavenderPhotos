@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
@@ -51,7 +50,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -77,37 +75,30 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import com.kaii.photos.helpers.moveImageOutOfLockedFolder
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
-import com.kaii.photos.helpers.permanentlyDeleteSecureFolderImageList
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
-import com.kaii.photos.helpers.shareSecuredImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-
-private const val TAG = "com.kaii.photos.compose.single_photo.SingleHiddenPhotoView"
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RestrictedApi")
 @Composable
@@ -175,7 +166,7 @@ fun SecurePhotoView(
                         displayName = resources.getString(R.string.media_broken)
                     ),
                     bytes = ByteArray(0),
-                    accessToken = null,
+                    auth = Auth.None,
                     endpoint = null
                 )
             }
@@ -219,6 +210,12 @@ fun SecurePhotoView(
                 isGettingPermissions = isGettingPermissions,
                 getMediaCount = {
                     items.itemCount
+                },
+                process = { action ->
+                    viewModel.runAction(
+                        context = context,
+                        action = action
+                    )
                 }
             )
         },
@@ -270,21 +267,13 @@ private fun BottomBar(
     securedMedia: PhotoLibraryUIModel.SecuredMedia,
     privacyMode: Boolean,
     isGettingPermissions: MutableState<Boolean>,
-    getMediaCount: () -> Int
+    getMediaCount: () -> Int,
+    process: (action: GenericFileManager.Action) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val showRestoreDialog = remember { mutableStateOf(false) }
-    val showDeleteDialog = remember { mutableStateOf(false) }
-
-    var showLoadingDialog by remember { mutableStateOf(false) }
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.media_restore_processing),
-            body = stringResource(id = R.string.media_restore_processing_desc)
-        )
-    }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val navController = LocalNavController.current
     if (getMediaCount() == 0) {
@@ -293,51 +282,68 @@ private fun BottomBar(
 
     val permissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            context.appModule.scope.launch(Dispatchers.IO) {
-                moveImageOutOfLockedFolder(
-                    list = listOf(securedMedia),
-                    context = context,
-                    applicationDatabase = MediaDatabase.getInstance(context)
-                ) {
-                    isGettingPermissions.value = false
-                    showLoadingDialog = false
-                }
-            }
+            process(
+                GenericFileManager.Action.Restore(
+                    list = listOf(
+                        SelectionManager.SelectedItem(
+                            id = securedMedia.item.id,
+                            uri = securedMedia.item.uri,
+                            immichUrl = securedMedia.item.immichUrl,
+                            isImage = securedMedia.item.type == MediaType.Image,
+                            parentPath = securedMedia.item.parentPath
+                        )
+                    )
+                )
+            )
         },
         onRejected = {
             isGettingPermissions.value = false
-            showLoadingDialog = false
         }
     )
 
-    ConfirmationDialog(
-        showDialog = showRestoreDialog,
-        dialogTitle = stringResource(id = R.string.secure_move_out),
-        confirmButtonLabel = stringResource(id = R.string.media_move)
-    ) {
-        isGettingPermissions.value = true
+    if (showRestoreDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.secure_move_out),
+            confirmButtonLabel = stringResource(id = R.string.media_move),
+            action = {
+                isGettingPermissions.value = true
 
-        permissionManager.start(
-            directories = setOf(
-                securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
-            )
+                permissionManager.start(
+                    directories = setOf(
+                        securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
+                    )
+                )
+            },
+            onDismiss = {
+                showRestoreDialog = false
+            }
         )
-
-        showLoadingDialog = true
     }
 
-    ConfirmationDialogWithBody(
-        showDialog = showDeleteDialog,
-        dialogTitle = stringResource(id = R.string.media_delete_permanently_confirm),
-        dialogBody = stringResource(id = R.string.action_cannot_be_undone),
-        confirmButtonLabel = stringResource(id = R.string.media_delete)
-    ) {
-        context.appModule.scope.launch(Dispatchers.IO) {
-            permanentlyDeleteSecureFolderImageList(
-                list = listOf(securedMedia.item.absolutePath),
-                context = context
-            )
-        }
+    if (showDeleteDialog) {
+        ConfirmationDialogWithBody(
+            title = stringResource(id = R.string.media_delete_permanently_confirm),
+            body = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_delete),
+            action = {
+                process(
+                    GenericFileManager.Action.Delete(
+                        list = listOf(
+                            SelectionManager.SelectedItem(
+                                id = securedMedia.item.id,
+                                uri = securedMedia.item.uri,
+                                immichUrl = securedMedia.item.immichUrl,
+                                isImage = securedMedia.item.type == MediaType.Image,
+                                parentPath = securedMedia.item.parentPath,
+                            )
+                        )
+                    )
+                )
+            },
+            onDismiss = {
+                showDeleteDialog = false
+            }
+        )
     }
 
     Box(
@@ -349,7 +355,7 @@ private fun BottomBar(
         contentAlignment = Alignment.Center
     ) {
         AnimatedVisibility(
-            visible = visible || showLoadingDialog,
+            visible = visible,
             enter = scaleIn(
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -370,49 +376,19 @@ private fun BottomBar(
                 floatingActionButton = {
                     FilledIconButton(
                         onClick = {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                val item = securedMedia.item
-                                showLoadingDialog = true
-
-                                val iv = MediaDatabase.getInstance(context).securedItemEntityDao().getIvFromSecuredPath(item.absolutePath)
-                                if (iv == null) {
-                                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
-                                    return@launch
-                                }
-
-                                val originalFile = File(item.absolutePath)
-
-                                val cachedFile =
-                                    if (item.type == MediaType.Video) {
-                                        getSecureDecryptedVideoFile(originalFile.name, context)
-                                    } else {
-                                        getDecryptCacheForFile(originalFile, context)
-                                    }
-
-                                if (!cachedFile.exists()) {
-                                    if (item.type == MediaType.Video) {
-                                        EncryptionManager.decryptVideo(
-                                            absolutePath = originalFile.absolutePath,
-                                            context = context,
-                                            iv = iv,
-                                            progress = {}
+                            process(
+                                GenericFileManager.Action.Share(
+                                    list = listOf(
+                                        SelectionManager.SelectedItem(
+                                            id = securedMedia.item.id,
+                                            uri = securedMedia.item.uri,
+                                            immichUrl = securedMedia.item.immichUrl,
+                                            isImage = securedMedia.item.type == MediaType.Image,
+                                            parentPath = securedMedia.item.parentPath
                                         )
-                                    } else {
-                                        EncryptionManager.decryptInputStream(
-                                            inputStream = originalFile.inputStream(),
-                                            outputStream = cachedFile.outputStream(),
-                                            iv = iv
-                                        )
-                                    }
-                                }
-
-                                showLoadingDialog = false
-
-                                shareSecuredImage(
-                                    absolutePath = cachedFile.absolutePath,
-                                    context = context
+                                    )
                                 )
-                            }
+                            )
                         },
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = vibrantFloatingToolbarColors().fabContentColor,
@@ -441,7 +417,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            showRestoreDialog.value = true
+                            showRestoreDialog = true
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -489,7 +465,7 @@ private fun BottomBar(
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            showDeleteDialog.value = true
+                            showDeleteDialog = true
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

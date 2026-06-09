@@ -1,9 +1,16 @@
 package com.kaii.photos.compose.immich
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +25,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,6 +64,7 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.compose.widgets.infiniteLoadingIndicator
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
@@ -70,7 +80,7 @@ private fun ImmichLoginPagePreview() {
         immichInfo = { ImmichBasicInfo.Empty },
         operationStatus = emptyFlow(),
         navController = rememberNavController(),
-        login = { _, _ -> }
+        login = { _, _, _ -> }
     )
 }
 
@@ -95,12 +105,19 @@ fun ImmichLoginPage(
         operationStatus = viewModel.operationStatus,
         navController = LocalNavController.current,
         modifier = modifier,
-        login = { email, password ->
-            viewModel.login(
-                email = email,
-                password = password,
-                context = context
-            )
+        login = { email, password, isApiKey ->
+            if (isApiKey) {
+                viewModel.authenticate(
+                    apiKey = password,
+                    context = context
+                )
+            } else {
+                viewModel.login(
+                    email = email,
+                    password = password,
+                    context = context
+                )
+            }
         }
     )
 }
@@ -111,7 +128,7 @@ private fun ImmichLoginPageImpl(
     operationStatus: Flow<OperationStatus>,
     navController: NavController,
     modifier: Modifier = Modifier,
-    login: (email: String, password: String) -> Unit
+    login: (email: String, password: String, isApiKey: Boolean) -> Unit
 ) {
     var loading by remember { mutableStateOf(false) }
     LaunchedEffect(operationStatus) {
@@ -132,9 +149,10 @@ private fun ImmichLoginPageImpl(
         }
     }
 
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var isApiKey by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -182,48 +200,99 @@ private fun ImmichLoginPageImpl(
             }
 
             item {
-                ClearableTextField(
-                    text = email,
-                    placeholder = stringResource(id = R.string.immich_auth_email),
-                    icon = R.drawable.mail,
-                    enabled = !loading,
-                    contentType = ContentType.EmailAddress,
-                    shape = RoundedCornerShape(
-                        topStart = 32.dp, topEnd = 32.dp,
-                        bottomStart = 8.dp, bottomEnd = 8.dp
-                    ),
-                    onConfirm = {
-                        focusManager.moveFocus(FocusDirection.Down)
-                    },
-                    onClear = {
-                        email.value = ""
-                    }
-                )
-            }
+                AnimatedContent(
+                    targetState = isApiKey,
+                    transitionSpec = {
+                        val enter = fadeIn(
+                            animationSpec = AnimationConstants.expressiveTween()
+                        ) + expandVertically(clip = false)
 
-            item {
-                ClearableTextField(
-                    text = password,
-                    placeholder = stringResource(id = R.string.immich_auth_password),
-                    icon = R.drawable.password,
-                    enabled = !loading,
-                    contentType = ContentType.Password,
-                    visualTransformation =
-                        if (showPassword) VisualTransformation.None
-                        else PasswordVisualTransformation(mask = '\u2B24'),
-                    shape = RoundedCornerShape(
-                        topStart = 8.dp, topEnd = 8.dp,
-                        bottomStart = 32.dp, bottomEnd = 32.dp
-                    ),
-                    onConfirm = {
-                        focusManager.moveFocus(FocusDirection.Down)
-                        focusManager.moveFocus(FocusDirection.Down)
-                        keyboardController?.hide()
+                        val exit = fadeOut(
+                            animationSpec = AnimationConstants.expressiveTween(),
+                        ) + shrinkVertically(clip = false) { it / 4 }
+
+                        enter.togetherWith(exit)
                     },
-                    onClear = {
-                        password.value = ""
+                    contentAlignment = Alignment.BottomCenter,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) { visible ->
+                    if (!visible) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(
+                                space = 4.dp,
+                                alignment = Alignment.CenterVertically
+                            ),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            ClearableTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                placeholder = stringResource(id = R.string.immich_auth_email),
+                                icon = R.drawable.mail,
+                                enabled = !loading,
+                                contentType = ContentType.EmailAddress,
+                                shape = RoundedCornerShape(
+                                    topStart = 32.dp, topEnd = 32.dp,
+                                    bottomStart = 8.dp, bottomEnd = 8.dp
+                                ),
+                                onConfirm = {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                },
+                                onClear = {
+                                    email = ""
+                                }
+                            )
+
+                            ClearableTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                placeholder = stringResource(id = R.string.immich_auth_password),
+                                icon = R.drawable.password,
+                                enabled = !loading,
+                                contentType = ContentType.Password,
+                                visualTransformation =
+                                    if (showPassword) VisualTransformation.None
+                                    else PasswordVisualTransformation(mask = '\u2B24'),
+                                shape = RoundedCornerShape(
+                                    topStart = 8.dp, topEnd = 8.dp,
+                                    bottomStart = 32.dp, bottomEnd = 32.dp
+                                ),
+                                onConfirm = {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                    keyboardController?.hide()
+                                },
+                                onClear = {
+                                    password = ""
+                                }
+                            )
+                        }
+                    } else {
+                        ClearableTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            placeholder = stringResource(id = R.string.immich_auth_api_key),
+                            icon = R.drawable.key,
+                            enabled = !loading,
+                            contentType = ContentType.Password,
+                            visualTransformation =
+                                if (showPassword) VisualTransformation.None
+                                else PasswordVisualTransformation(mask = '\u2B24'),
+                            shape = RoundedCornerShape(size = 32.dp),
+                            onConfirm = {
+                                focusManager.moveFocus(FocusDirection.Down)
+                                focusManager.moveFocus(FocusDirection.Down)
+                                keyboardController?.hide()
+                            },
+                            onClear = {
+                                password = ""
+                            }
+                        )
                     }
-                )
+                }
             }
 
             item {
@@ -256,6 +325,29 @@ private fun ImmichLoginPageImpl(
                     )
 
                     IconToggleButton(
+                        checked = isApiKey,
+                        onCheckedChange = {
+                            isApiKey = it
+                        },
+                        colors = IconButtonDefaults.iconToggleButtonColors(
+                            checkedContentColor = LocalContentColor.current
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id =
+                                    if (isApiKey) R.drawable.mail
+                                    else R.drawable.key
+                            ),
+                            contentDescription = stringResource(
+                                id =
+                                    if (isApiKey) R.string.immich_auth_login_with_api_key
+                                    else R.string.immich_auth_login_with_account
+                            )
+                        )
+                    }
+
+                    IconToggleButton(
                         checked = showPassword,
                         onCheckedChange = {
                             showPassword = it
@@ -264,8 +356,8 @@ private fun ImmichLoginPageImpl(
                         Icon(
                             painter = painterResource(
                                 id =
-                                    if (showPassword) R.drawable.key_remove
-                                    else R.drawable.key
+                                    if (showPassword) R.drawable.visibility_off
+                                    else R.drawable.visibility
                             ),
                             contentDescription = stringResource(id = R.string.immich_auth_hide_password)
                         )
@@ -276,7 +368,7 @@ private fun ImmichLoginPageImpl(
             item {
                 Button(
                     onClick = {
-                        login(email.value, password.value)
+                        login(email, password, isApiKey)
                     },
                     enabled = !loading
                 ) {

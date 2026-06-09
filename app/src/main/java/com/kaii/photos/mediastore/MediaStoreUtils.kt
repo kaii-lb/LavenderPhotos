@@ -47,7 +47,7 @@ suspend fun ContentResolver.insertMedia(
     currentVolumes: Set<String>,
     preserveDate: Boolean = false,
     overrideDisplayName: String? = null,
-    onInsert: (origin: Uri, new: Uri) -> Unit
+    onInsert: (origin: Uri, new: Uri) -> Unit // TODO: remove
 ): Uri? = withContext(Dispatchers.IO) {
     val basePath = destination.toBasePath()
 
@@ -337,7 +337,7 @@ fun ContentResolver.setDateForMedia(
     dateTaken: Long,
     overwriteLastModified: Boolean = true
 ) {
-    if (uri.toString().startsWith("http")) return
+    if (uri.toString().startsWith("/api")) return
 
     try {
         if (type == MediaType.Image) {
@@ -409,13 +409,12 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
     )
 
     val mediaCursor = query(
-        MEDIA_STORE_FILE_URI,
+        uri,
         arrayOf(
-            MediaColumns._ID,
             MediaColumns.DATA
         ),
-        "${MediaColumns._ID} = ? AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
-        arrayOf(id.toString()),
+        null,
+        null,
         null
     )
 
@@ -425,6 +424,7 @@ fun ContentResolver.getAbsolutePathFromUri(uri: Uri): String? {
         while (cursor.moveToNext()) {
             val absolutePath = cursor.getString(absolutePathColumn)
 
+            Log.d(TAG, "Read path $absolutePath for content id $id")
             return absolutePath
         }
     }
@@ -523,7 +523,7 @@ fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, St
 }
 
 fun Uri.toContentId(contentResolver: ContentResolver, type: MediaType) =
-    if (toString().startsWith("content://media")) {
+    if (toString().startsWith("content://")) {
         lastPathSegment!!.toLong()
     } else {
         val docPath = path!!.substringAfter("/document/")

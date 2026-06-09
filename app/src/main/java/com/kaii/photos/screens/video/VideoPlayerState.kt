@@ -1,7 +1,6 @@
-package com.kaii.photos.helpers.video
+package com.kaii.photos.screens.video
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,16 +17,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.Effect
 import androidx.media3.common.Format
+import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,7 +35,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -45,9 +44,9 @@ import kotlin.math.ceil
 class VideoPlayerState(
     context: Context,
     autoPlayFlow: Flow<Boolean>,
+    muteOnStartFlow: Flow<Boolean>,
+    loopFlow: Flow<Int>,
     private val coroutineScope: CoroutineScope,
-    private val muteOnStartFlow: Flow<Boolean>,
-    private val loopFlow: Flow<Int>,
     private val isOpenWithView: Boolean,
     private val onControlsTimeout: () -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit
@@ -62,6 +61,9 @@ class VideoPlayerState(
     private var autoPlay = false
     private var loop = true // default to true to avoid autoplaying when we don't mean it (motion-photo)
     private var hideTimeout = 0L
+    private var loopMode = 0
+    private var muteOnStart = true
+    private var isReleased = false
 
     /** In Seconds */
     var currentPosition by mutableFloatStateOf(0f)
@@ -87,32 +89,36 @@ class VideoPlayerState(
     var selectedAudioTrack by mutableStateOf<LavenderExoPlayer.AudioTrack?>(null)
         private set
 
+    var fadeInPlayer by mutableStateOf(false)
+        private set
+
     private val player: LavenderExoPlayer = LavenderExoPlayer(
         context = context,
         onDurationChanged = { new ->
             duration = new
 
-            coroutineScope.launch {
-                isRepeatModeOn =
-                    when (loopFlow.last()) {
-                        0 -> false
-                        1 -> new <= 30f
-                        else -> true
-                    }
-
-                player.setRepeatMode(isRepeatModeOn)
-            }
+            setRepeatMode(duration)
         },
         onCurrentPositionChanged = { new ->
             currentPosition = new
         },
-        onPlaybackStateChanged = onPlaybackStateChanged,
+        onPlaybackStateChanged = { state ->
+            onPlaybackStateChanged(state)
+
+            if (!fadeInPlayer) {
+                fadeInPlayer = state == Player.STATE_READY
+            }
+        },
         onAudioTracksChanged = { tracks ->
             audioTracks.clear()
             audioTracks.addAll(tracks)
 
             val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
             current?.let { setAudioTrack(it) }
+        },
+        onPlayingChanged = { playing ->
+            if (playing) play()
+            else pause()
         }
     )
 
@@ -130,50 +136,66 @@ class VideoPlayerState(
 
     init {
         coroutineScope.launch {
-            muteOnStartFlow.collectLatest {
-                isMuted = it && !isOpenWithView
-                player.setMute(isMuted)
-            }
-        }
-
-        coroutineScope.launch {
-            autoPlayFlow.collectLatest {
-                autoPlay = it || isOpenWithView
-                if (shouldPlay() && autoPlay && !loop) {
-                    play()
+            launch {
+                muteOnStartFlow.collectLatest {
+                    muteOnStart = it
+                    isMuted = it && !isOpenWithView
+                    player.setMute(isMuted)
                 }
             }
-        }
 
-        coroutineScope.launch {
-            loopFlow.collectLatest {
-                isRepeatModeOn =
-                    when (it) {
-                        0 -> false
-                        1 -> player.duration <= 30f
-                        else -> true
+            launch {
+                autoPlayFlow.collectLatest {
+                    autoPlay = it || isOpenWithView
+                    if (shouldPlay() && autoPlay && !loop) {
+                        play()
                     }
+                }
+            }
 
-                player.setRepeatMode(isRepeatModeOn)
+            launch {
+                loopFlow.collectLatest {
+                    loopMode = it
+                    setRepeatMode(player.duration)
+                }
             }
         }
     }
 
+    private fun setRepeatMode(duration: Float) {
+        isRepeatModeOn =
+            when (loopMode) {
+                0 -> false
+                1 -> duration <= 30f
+                else -> true
+            }
+
+        player.setRepeatMode(isRepeatModeOn)
+    }
+
     fun toggleMute() {
+        if (isReleased) return
+
         isMuted = !isMuted
         player.setMute(isMuted)
     }
 
     fun resetMute() = coroutineScope.launch {
-        isMuted = muteOnStartFlow.last() && !isOpenWithView
+        if (isReleased) return@launch
+
+        isMuted = muteOnStart && !isOpenWithView
     }
 
     fun toggleRepeatMode() {
+        if (isReleased) return
+
         isRepeatModeOn = !isRepeatModeOn
         player.setRepeatMode(isRepeatModeOn)
     }
 
     fun release(context: Context) {
+        isReleased = true
+
         player.release()
 
         context.appModule.scope.launch(Dispatchers.IO) {
@@ -183,54 +205,69 @@ class VideoPlayerState(
         }
     }
 
+    @androidx.annotation.OptIn(UnstableApi::class)
     suspend fun setSource(
         context: Context,
         item: MediaStoreData,
-        accessToken: String,
+        auth: Auth,
         endpoint: String,
         loop: Boolean = false,
         shouldPlay: () -> Boolean,
-        progress: (Float) -> Unit
+        decryptProgress: (progress: Float) -> Unit = {}
     ) {
+        if (isReleased) return
+
         this.loop = loop
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
+        this.fadeInPlayer = false
 
         val immichUrl = item.immichVideoUrl?.let { endpoint + it }
-        var uri = immichUrl ?: item.uri
+        val uri = immichUrl ?: item.uri
         if (currentSource == uri) return
-
-        // secure item, needs decoding
-        if (item.absolutePath.startsWith(context.appSecureFolderDir)) {
-            uri = withContext(Dispatchers.IO) {
-                val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
-                    .getIvFromSecuredPath(item.absolutePath)
-
-                if (iv == null) {
-                    Log.e(TAG, "IV for ${item.displayName} was null, aborting")
-                    return@withContext ""
-                }
-
-                val output =
-                    EncryptionManager.decryptVideo(
-                        absolutePath = item.absolutePath,
-                        iv = iv,
-                        context = context,
-                        progress = progress
-                    )
-
-                return@withContext output.toUri().toString()
-            }
-        }
 
         videoTitle = item.displayName
 
+        val input = when {
+            // secure item, needs decoding
+            item.absolutePath.startsWith(context.appSecureFolderDir) -> {
+                withContext(Dispatchers.IO) {
+                    val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
+                        .getIvFromSecuredPath(item.absolutePath)
+
+                    if (iv == null) {
+                        Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                        return@withContext null
+                    }
+
+                    LavenderExoPlayer.Input.Secure(
+                        absolutePath = item.absolutePath,
+                        iv = iv
+                    )
+                }
+            }
+
+            item.immichUrl != null -> {
+                LavenderExoPlayer.Input.Networked(
+                    uri = uri.toUri(),
+                    auth = auth
+                )
+            }
+
+            else -> {
+                LavenderExoPlayer.Input.Local(
+                    uri = uri.toUri()
+                )
+            }
+        }
+
+        if (input == null) return
+
         player.setSource(
             context = context,
-            uri = uri,
-            isNetworked = item.immichUrl != null,
-            accessToken = accessToken,
-            loop = loop
+            input = input,
+            loop = loop,
+            decryptProgress = decryptProgress
         )
 
         player.setPlayWhenReady(autoPlay && shouldPlay() && !loop)
@@ -238,14 +275,7 @@ class VideoPlayerState(
             play()
         }
 
-        isRepeatModeOn =
-            when (loopFlow.last()) {
-                0 -> false
-                1 -> player.duration <= 30f
-                else -> true
-            }
-
-        player.setRepeatMode(isRepeatModeOn)
+        setRepeatMode(player.duration)
     }
 
     private suspend fun startTimeout() {
@@ -269,7 +299,7 @@ class VideoPlayerState(
     }
 
     fun play() {
-        if (!shouldPlay()) return
+        if (!shouldPlay() || isReleased) return
 
         isPlaying = true
 
@@ -304,6 +334,8 @@ class VideoPlayerState(
     }
 
     fun pause() {
+        if (isReleased) return
+
         isPlaying = false
         controlsVisible = true
         playingJob?.cancel()
@@ -316,12 +348,16 @@ class VideoPlayerState(
     }
 
     fun seekBack() {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekBack()
         isPlaying = prev
     }
 
     fun seekForward() {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekForward()
         isPlaying = prev
@@ -329,6 +365,8 @@ class VideoPlayerState(
 
     /** @param position in millisecond */
     fun seekTo(position: Long) {
+        if (isReleased) return
+
         val prev = isPlaying
         player.seekTo(position)
         currentPosition = player.currentPosition
@@ -336,27 +374,45 @@ class VideoPlayerState(
     }
 
     fun setPlaybackSpeed(speed: Float) {
+        if (isReleased) return
+
         if (speed !in 0.5f..4f) return
 
         player.setPlaybackSpeed(speed)
     }
 
-    fun setVolume(volume: Float) = player.setVolume(volume)
+    fun setVolume(volume: Float) {
+        if (isReleased) return
 
-    @androidx.annotation.OptIn(UnstableApi::class)
-    fun applyEffects(uri: Uri, effectList: List<Effect>) {
-        player.applyEffects(uri, effectList)
+        player.setVolume(volume)
     }
 
-    fun linkPlayerView(playerView: PlayerView) = player.linkPlayerView(playerView)
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun applyEffects(effectList: List<Effect>) {
+        if (isReleased) return
+
+        player.applyEffects(effectList)
+    }
+
+    fun linkPlayerView(playerView: PlayerView) {
+        if (isReleased) return
+
+        player.linkPlayerView(playerView)
+    }
 
     fun setAudioTrack(language: String) {
+        if (isReleased) return
+
         if (player.setAudioTrack(language)) {
             selectedAudioTrack = audioTracks.find { it.language == language }
         }
     }
 
-    fun getFrameRate() = player.getFrameRate()
+    fun getFrameRate(): Float? {
+        if (isReleased) return null
+
+        return player.getFrameRate()
+    }
 }
 
 @Composable

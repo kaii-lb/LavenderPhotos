@@ -43,7 +43,7 @@ data class MediaStoreData(
             dateTaken = 0L,
             dateModified = 0L,
             mimeType = "",
-            type = MediaType.Section,
+            type = MediaType.Image,
             immichUrl = null,
             hash = null,
             size = 0L,
@@ -62,7 +62,7 @@ data class MediaStoreData(
 
     @get:Ignore
     val immichVideoUrl: String?
-        get() = immichUrl?.replace("original", "video/playback")
+        get() = immichUrl?.replace("/original", "/video/playback")
 
     @get:Ignore
     val isCloud: Boolean

@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.app_bars.video_editor
 
 import android.app.Activity
-import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
@@ -15,7 +14,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
@@ -24,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,38 +32,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.media3.common.util.UnstableApi
+import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.di.appModule
-import com.kaii.photos.helpers.PhotoGridConstants
+import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
-import com.kaii.photos.helpers.editing.saveVideo
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoEditorTopBar(
-    uri: Uri,
-    absolutePath: String,
+    uri: String,
     modifications: SnapshotStateList<VideoModification>,
     basicVideoData: BasicVideoData,
     videoEditingState: VideoEditingState,
@@ -75,12 +65,12 @@ fun VideoEditorTopBar(
     containerDimens: Size,
     canvasSize: Size,
     isFromOpenWithView: Boolean,
-    customAlbumId: String?,
-    exitOnSave: () -> Boolean,
-    overwriteByDefault: () -> Boolean
+    overwriteByDefault: () -> Boolean,
+    info: () -> ImmichBasicInfo,
+    editVideo: (NavController, GenericFileEditor.EditParameters.Video) -> Unit,
+    setNavProps: (NavController) -> Unit
 ) {
     val navController = LocalNavController.current
-    var navMediaId by remember { mutableLongStateOf(-1L) }
     var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
 
     TopAppBar(
@@ -90,28 +80,29 @@ fun VideoEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                val showDialog = remember { mutableStateOf(false) }
+                var showDialog by remember { mutableStateOf(false) }
 
-                if (showDialog.value) {
+                if (showDialog) {
                     ConfirmationDialog(
-                        showDialog = showDialog,
-                        dialogTitle = stringResource(id = R.string.editing_discard_desc),
-                        confirmButtonLabel = stringResource(id = R.string.editing_discard)
-                    ) {
-                        navController.popBackStack()
-                    }
+                        title = stringResource(id = R.string.editing_discard_desc),
+                        confirmButtonLabel = stringResource(id = R.string.editing_discard),
+                        action = {
+                            navController.popBackStack()
+                        },
+                        onDismiss = {
+                            showDialog = false
+                        }
+                    )
                 }
 
                 val coroutineScope = rememberCoroutineScope()
                 val context = LocalContext.current
                 FilledTonalIconButton(
                     onClick = {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("editId", navMediaId)
+                        setNavProps(navController)
 
                         if (lastSavedModCount.intValue < modifications.size) {
-                            showDialog.value = true
+                            showDialog = true
                         } else if (isFromOpenWithView) {
                             (context as Activity).finish()
                         } else {
@@ -176,18 +167,15 @@ fun VideoEditorTopBar(
             SplitButtonLayout(
                 leadingButton = {
                     val context = LocalContext.current
-                    val resources = LocalResources.current
-                    val coroutineScope = rememberCoroutineScope()
                     val textMeasurer = rememberTextMeasurer()
 
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
-                            // mainViewModel so it doesn't die if user exits before video is saved
-                            // not using Dispatchers.IO since transformer needs to be on main thread
-                            context.appModule.scope.launch {
-                                navMediaId = saveVideo(
+                            editVideo(
+                                navController,
+                                GenericFileEditor.EditParameters.Video(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
                                         it as VideoModification
@@ -195,47 +183,14 @@ fun VideoEditorTopBar(
                                     videoEditingState = videoEditingState,
                                     basicVideoData = basicVideoData,
                                     uri = uri,
-                                    absolutePath = absolutePath,
+                                    info = info(),
                                     overwrite = overwrite,
                                     containerDimens = containerDimens,
                                     canvasSize = canvasSize,
                                     textMeasurer = textMeasurer,
                                     isFromOpenWithView = isFromOpenWithView
-                                ) {
-                                    coroutineScope.launch {
-                                        LavenderSnackbarController.pushEvent(
-                                            event = LavenderSnackbarEvent.MessageEvent(
-                                                message = resources.getString(R.string.editing_export_video_failed),
-                                                icon = R.drawable.error_2,
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        )
-                                    }
-                                }
-
-                                delay(PhotoGridConstants.UPDATE_TIME * 2)
-
-                                navController.previousBackStackEntry
-                                    ?.savedStateHandle
-                                    ?.set("editId", navMediaId)
-
-                                if (customAlbumId != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
-                                    MediaDatabase.getInstance(context)
-                                        .customDao()
-                                        .upsertAll(
-                                            listOf(
-                                                CustomItem(
-                                                    id = navMediaId,
-                                                    album = customAlbumId
-                                                )
-                                            )
-                                        )
-                                }
-
-                                if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) {
-                                    navController.popBackStack()
-                                }
-                            }
+                                )
+                            )
                         }
                     ) {
                         Text(

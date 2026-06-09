@@ -77,6 +77,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import com.bumptech.glide.Glide
 import com.kaii.photos.R
 import com.kaii.photos.compose.CroppingRatioBottomSheet
@@ -688,7 +689,7 @@ fun SharedEditorCropContent(
 @Composable
 fun SharedEditorMoreContent(
     apps: List<EditorApp>,
-    uri: Uri,
+    uri: String,
     mediaType: MediaType,
     modifier: Modifier = Modifier
 ) {
@@ -711,7 +712,7 @@ fun SharedEditorMoreContent(
                     .clickable {
                         val intent = Intent(Intent.ACTION_EDIT).apply {
                             setDataAndType(
-                                uri,
+                                uri.toUri(),
                                 if (mediaType == MediaType.Image) "image/*"
                                 else "video/*"
                             )

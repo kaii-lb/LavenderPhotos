@@ -55,7 +55,7 @@ fun MainDialogUserInfo(
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
-                .clickable(enabled = immichInfo().accessToken.isNotBlank()) {
+                .clickable(enabled = immichInfo().username.isNotBlank()) {
                     coroutineScope.launch {
                         dismiss()
                         delay(AnimationConstants.DURATION_SHORT.toLong())
@@ -81,7 +81,7 @@ fun UpdatableProfileImage(
     modifier: Modifier = Modifier
 ) {
     AnimatedContent(
-        targetState = immichInfo().accessToken.isNotBlank(),
+        targetState = immichInfo().username.isNotBlank(),
         modifier = modifier
             .clip(CircleShape)
     ) { state ->
@@ -95,7 +95,7 @@ fun UpdatableProfileImage(
                     thumbnail = actualPfpUrl,
                     original = actualPfpUrl,
                     hash = "",
-                    accessToken = immichInfo().accessToken,
+                    auth = immichInfo().auth,
                     endpoint = immichInfo().endpoint,
                     useThumbnail = false
                 ),

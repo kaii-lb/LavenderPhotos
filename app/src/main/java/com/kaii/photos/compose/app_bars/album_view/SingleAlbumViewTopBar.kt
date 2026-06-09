@@ -15,25 +15,33 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.IsSelectingTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.dialogs.user_action.AlbumPathsDialog
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +103,43 @@ fun SingleAlbumViewTopBar(
                 },
                 actions = {
                     val info = albumInfo()
+
+                    if (info.immichId != null) {
+                        val context = LocalContext.current
+                        val coroutineScope = rememberCoroutineScope()
+                        var id by retain { mutableStateOf<UUID?>(null) }
+                        var loading by retain { mutableStateOf(false) }
+
+                        LaunchedEffect(id) {
+                            if (id != null) {
+                                WorkManager.getInstance(context)
+                                    .getWorkInfoByIdFlow(id!!)
+                                    .collect {
+                                        if (it?.state != WorkInfo.State.RUNNING
+                                            && it?.state != WorkInfo.State.ENQUEUED
+                                        ) {
+                                            loading = false
+                                        }
+                                    }
+                            }
+                        }
+
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    loading = true
+                                    id = CloudSyncWorker.immediateEnqueue(context = context, albumId = albumInfo().id)
+                                }
+                            },
+                            enabled = !loading
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.cloud_sync),
+                                contentDescription = stringResource(id = R.string.refresh)
+                            )
+                        }
+                    }
+
                     if (!isMediaPicker && info is AlbumType.Folder) {
                         var showPathsDialog by remember { mutableStateOf(false) }
                         val context = LocalContext.current

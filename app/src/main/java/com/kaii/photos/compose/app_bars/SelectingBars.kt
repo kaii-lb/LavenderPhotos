@@ -37,17 +37,13 @@ import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
-import com.kaii.photos.compose.grids.MoveCopyAlbumListView
+import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -211,38 +207,48 @@ fun SelectingBottomBarItems(
         }
     )
 
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     if (albumInfo is AlbumType.Folder) {
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            permissionState.get(
-                uris = selectedItemsList.fastMap { it.uri.toUri() }
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    permissionState.get(
+                        uris = selectedItemsList.fastMap { it.uri.toUri() }
+                    )
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
             )
         }
     } else {
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = R.string.custom_album_remove_media_desc),
-            confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media)
-        ) {
-            process(
-                GenericFileManager.Action.Trash(
-                    list = selectedItemsList,
-                    trashed = true
-                )
-            )
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.custom_album_remove_media_desc),
+                confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media),
+                action = {
+                    process(
+                        GenericFileManager.Action.Trash(
+                            list = selectedItemsList,
+                            trashed = true
+                        )
+                    )
 
-            selectionManager.clear()
+                    selectionManager.clear()
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
+            )
         }
     }
 
     IconButton(
         onClick = {
             if (confirmToDelete()) {
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             } else if (albumInfo is AlbumType.Folder) {
                 permissionState.get(
                     uris = selectedItemsList.fastMap { it.uri.toUri() }
@@ -266,51 +272,50 @@ fun SelectingBottomBarItems(
         )
     }
 
-    var showLoadingDialog by remember { mutableStateOf(false) }
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.secure_encrypting),
-            body = stringResource(id = R.string.secure_processing)
-        )
-    }
-
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
-            // TODO
-            context.appModule.scope.launch(Dispatchers.IO) {
-                moveMediaToSecureFolder(
-                    list = selectedItemsList,
-                    context = context,
-                    applicationDatabase = MediaDatabase.getInstance(context)
-                ) {
-                    selectionManager.clear()
-                    showLoadingDialog = false
-                }
-            }
+            process(
+                GenericFileManager.Action.Secure(
+                    list = selectedItemsList
+                )
+            )
+            selectionManager.clear()
         }
     )
 
     val dirPermissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            showLoadingDialog = true
             filePermissionState.get(
                 uris = selectedItemsList.map { it.uri.toUri() }
             )
         }
     )
 
+    var showMoveToSecureFolderDialog by remember { mutableStateOf(false) }
+    if (showMoveToSecureFolderDialog) {
+        ConfirmationDialog(
+            title = stringResource(id = R.string.media_secure_confirm),
+            confirmButtonLabel = stringResource(id = R.string.media_secure),
+            action = {
+                if (selectedItemsList.isNotEmpty()) {
+                    dirPermissionManager.start(
+                        directories = selectedItemsList.fastMapNotNull {
+                            context.contentResolver.getAbsolutePathFromUri(it.uri.toUri())?.parent()
+                        }.fastDistinctBy {
+                            it
+                        }.toSet()
+                    )
+                }
+            },
+            onDismiss = {
+                showMoveToSecureFolderDialog = false
+            }
+        )
+    }
+
     IconButton(
         onClick = {
-            // TODO: move to file manager
-            if (selectedItemsList.isNotEmpty()) {
-                dirPermissionManager.start(
-                    directories = selectedItemsList.fastMapNotNull {
-                        context.contentResolver.getAbsolutePathFromUri(it.uri.toUri())?.parent()
-                    }.fastDistinctBy {
-                        it
-                    }.toSet()
-                )
-            }
+            showMoveToSecureFolderDialog = true
         },
         enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.Cloud
     ) {

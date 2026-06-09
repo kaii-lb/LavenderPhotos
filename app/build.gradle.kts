@@ -112,6 +112,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.google.material)
+    implementation(libs.google.zxing)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)

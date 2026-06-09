@@ -79,7 +79,6 @@ import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -115,8 +114,7 @@ class MediaPicker : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
                     window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
@@ -303,9 +301,7 @@ class MediaPicker : ComponentActivity() {
                 val screen = it.toRoute<Screens.AlbumGroup>()
 
                 AlbumGroup(
-                    id = screen.id,
-                    name = screen.name,
-                    albumGridState = appModule.albumGridState
+                    id = screen.id
                 )
             }
         }

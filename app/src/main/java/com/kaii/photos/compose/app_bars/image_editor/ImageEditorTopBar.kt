@@ -32,7 +32,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
@@ -52,8 +51,6 @@ fun ImageEditorTopBar(
     saveImage: suspend () -> Unit,
     navigateBack: () -> Unit
 ) {
-    val navController = LocalNavController.current
-
     TopAppBar(
         title = {},
         navigationIcon = {
@@ -61,21 +58,22 @@ fun ImageEditorTopBar(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 0.dp, 0.dp)
             ) {
-                val showDialog = remember { mutableStateOf(false) }
+                var showDialog by remember { mutableStateOf(false) }
 
-                if (showDialog.value) {
+                if (showDialog) {
                     ConfirmationDialog(
-                        showDialog = showDialog,
-                        dialogTitle = stringResource(id = R.string.editing_discard_desc),
-                        confirmButtonLabel = stringResource(id = R.string.editing_discard)
-                    ) {
-                        navController.popBackStack()
-                    }
+                        title = stringResource(id = R.string.editing_discard_desc),
+                        confirmButtonLabel = stringResource(id = R.string.editing_discard),
+                        action = navigateBack,
+                        onDismiss = {
+                            showDialog = false
+                        }
+                    )
                 }
                 FilledTonalIconButton(
                     onClick = {
                         if (lastSavedModCount.intValue < modifications.size) {
-                            showDialog.value = true
+                            showDialog = true
                         } else {
                             navigateBack()
                         }

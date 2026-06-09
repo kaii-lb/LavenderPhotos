@@ -7,17 +7,18 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 fun Flow<PagingData<MediaStoreData>>.mapToMedia(
-    accessToken: String,
+    auth: Auth,
     endpoint: String
 ) = this.map { pagingData ->
     pagingData.map {
         PhotoLibraryUIModel.Media(
             item = it,
-            accessToken = accessToken,
+            auth = auth,
             endpoint = endpoint
         ) as PhotoLibraryUIModel
     }
@@ -81,14 +82,14 @@ fun Flow<PagingData<PhotoLibraryUIModel>>.mapToSeparatedMedia(
 }
 
 fun Flow<PagingData<PhotoLibraryUIModel.SecuredMedia>>.mapToSecuredMedia(
-    accessToken: String,
+    auth: Auth,
     endpoint: String
 ) = this.map { pagingData ->
     pagingData.map {
         PhotoLibraryUIModel.SecuredMedia(
             item = it.item,
             bytes = it.bytes,
-            accessToken = accessToken,
+            auth = auth,
             endpoint = endpoint
         ) as PhotoLibraryUIModel
     }

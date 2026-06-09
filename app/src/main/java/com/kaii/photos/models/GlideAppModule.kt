@@ -67,11 +67,16 @@ class ImmichModelLoader(
         return model.endpoint + if (model.useThumbnail) model.thumbnail else model.original
     }
 
-    override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers {
-        return LazyHeaders.Builder()
-            .addHeader("Authorization", "Bearer ${model.accessToken}")
+    override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers =
+        LazyHeaders.Builder()
+            .apply {
+                model.auth.headers.keys.firstOrNull()?.let { headerName ->
+                    val headerValue = model.auth.headers[headerName]!!
+                    addHeader(headerName, headerValue)
+                }
+            }
             .build()
-    }
+
 
     override fun handles(model: ImmichInfo): Boolean = true
 

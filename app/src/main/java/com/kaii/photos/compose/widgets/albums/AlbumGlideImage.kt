@@ -38,7 +38,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun AlbumGlideImage(
     albumInfo: AlbumGridState.Info,
-    info: ImmichBasicInfo
+    info: () -> ImmichBasicInfo,
+    modifier: Modifier = Modifier
 ) {
     AnimatedContent(
         targetState = albumInfo.thumbnail.uri.isNotBlank(),
@@ -55,7 +56,7 @@ fun AlbumGlideImage(
                 )
             )
         },
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(16.dp))
     ) { state ->
@@ -66,8 +67,8 @@ fun AlbumGlideImage(
                         thumbnail = albumInfo.thumbnail.uri,
                         original = albumInfo.thumbnail.uri,
                         hash = "",
-                        accessToken = info.accessToken,
-                        endpoint = info.endpoint,
+                        auth = info().auth,
+                        endpoint = info().endpoint,
                         useThumbnail = true
                     ) else albumInfo.thumbnail.uri,
                 contentDescription = albumInfo.album.name,
@@ -81,9 +82,11 @@ fun AlbumGlideImage(
                 val request = it.signature(albumInfo.thumbnail.signature)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
 
-                // try to load GIFs, if it fails fallback to bitmaps
-                // this is fine performance wise
-                request.clone().decode(GifDrawable::class.java).error(request)
+                if (albumInfo.thumbnail.isGif) {
+                    request.decode(GifDrawable::class.java)
+                } else {
+                    request
+                }
             }
         } else {
             var timedOut by remember { mutableStateOf(false) }

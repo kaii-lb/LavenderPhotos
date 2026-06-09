@@ -9,8 +9,10 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
+import com.kaii.photos.file_management.sync.CloudCleanupHandler
 import com.kaii.photos.file_management.sync.CustomSyncHandler
 import com.kaii.photos.file_management.sync.LocalSyncHandler
+import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -35,6 +37,10 @@ class CloudSyncManager(
         progressManager = progressManager,
         albums = context.appModule.settings.albums
     )
+    private val cloudCleanupHandler = CloudCleanupHandler(
+        mediaDao = cloudFileManager.mediaDao,
+        assetsClient = cloudFileManager.assetClient
+    )
 
     suspend fun syncUploads() {
         val unsynced = taskDao.getUnsyncedTasks()
@@ -58,24 +64,40 @@ class CloudSyncManager(
             }
         }
 
-        progressManager.stopTracking()
-
         val albums = localSyncHandler.fetchCloudAlbums()
 
-        if (albums.isNotEmpty()) progressManager.startTracking(totalItems = 0)
+        if (progressManager.state == ProgressManager.State.Idle) {
+            progressManager.startTracking(totalItems = 0)
+        }
 
         albums.forEach { album ->
-            when (album) {
-                is AlbumType.Custom -> {
-                    customSyncHandler.sync(context, album)
-                }
-
-                is AlbumType.Folder -> {
-                    localSyncHandler.sync(context, album)
-                }
-
-                else -> {}
+            if (album is AlbumType.Custom) {
+                customSyncHandler.sync(context, album)
+            } else if (album is AlbumType.Folder ){
+                localSyncHandler.sync(context, album)
             }
+        }
+
+        progressManager.stopTracking()
+
+        cloudCleanupHandler.cleanUp(context)
+    }
+
+    suspend fun syncFor(
+        albumId: String
+    ) {
+        val albums = localSyncHandler.fetchCloudAlbums()
+
+        val album = albums.find { it.id == albumId } ?: return
+
+        if (progressManager.state == ProgressManager.State.Idle) {
+            progressManager.startTracking(totalItems = 0)
+        }
+
+        if (album is AlbumType.Custom) {
+            customSyncHandler.sync(context, album)
+        } else if (album is AlbumType.Folder ){
+            localSyncHandler.sync(context, album)
         }
 
         progressManager.stopTracking()

@@ -6,11 +6,12 @@ import androidx.lifecycle.ViewModelProvider
 
 @Suppress("UNCHECKED_CAST")
 class AlbumGroupViewModelFactory(
-    private val context: Context
+    private val context: Context,
+    private val id: String
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == AlbumGroupViewModel::class.java) {
-            return AlbumGroupViewModel(context) as T
+            return AlbumGroupViewModel(context, id) as T
         }
         throw IllegalArgumentException("${AlbumGroupViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${AlbumGroupViewModel::class.simpleName}!! This should never happen!!")
     }

@@ -8,9 +8,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.room.withTransaction
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.toExifData
 import com.kaii.photos.datastore.AlbumType
@@ -22,10 +19,10 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.toMediaStoreData
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumGetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,30 +42,29 @@ import kotlin.uuid.Uuid
 class ImmichRepository(
     private val album: AlbumType,
     private val scope: CoroutineScope,
-    private val mediaDao: MediaDao,
-    private val customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao,
+    private val db: MediaDatabase,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>,
-    client: ApiClient,
-    context: Context
+    client: ApiClient
 ) : BaseRepo {
-    private val db = MediaDatabase.getInstance(context.applicationContext)
+    private val mediaDao = db.mediaDao()
+    private val customDao = db.customDao()
 
-    override var fileManager = CloudFileManager(
+    override val fileManager = CloudFileManager(
         mediaDao = mediaDao,
         customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
-        ),
-        info = ImmichBasicInfo.Empty
+        )
     )
 
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
@@ -101,7 +97,7 @@ class ImmichRepository(
                 else customDao.getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -118,19 +114,14 @@ class ImmichRepository(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun refetch() {
-        val snapshot = params.value
-
-        val info = fileManager.albumsClient.get(
+        val cloudAlbum = fileManager.albumsClient.get(
             id = Uuid.parse(album.immichId!!),
-            accessToken = snapshot.info.accessToken,
             withoutAssets = false
         )
 
-        val state = info?.let { AlbumGetState.Retrieved(it) } ?: AlbumGetState.Failed
-
-        if (state is AlbumGetState.Retrieved) {
+        if (cloudAlbum != null) {
             val items =
-                state.album.assets.fastMap { asset ->
+                cloudAlbum.assets.fastMap { asset ->
                     asset.toMediaStoreData()
                 }
 
@@ -145,7 +136,7 @@ class ImmichRepository(
                 customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
 
                 db.exifDataDao().upsertAll(
-                    items = state.album.assets.fastMapNotNull {
+                    items = cloudAlbum.assets.fastMapNotNull {
                         it.exifInfo?.toExifData(
                             mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
                         )
@@ -160,20 +151,8 @@ class ImmichRepository(
             info
                 .distinctUntilChanged()
                 .collectLatest { info ->
-                    fileManager = CloudFileManager(
-                        mediaDao = mediaDao,
-                        customDao = customDao,
-                        syncTaskDao = syncTaskDao,
-                        assetClient = AssetsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        albumsClient = AlbumsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        info = info
-                    )
+                    fileManager.setEndpoint(info.endpoint)
+                    fileManager.setAuth(info.auth)
                 }
 
             refresh()
@@ -199,8 +178,9 @@ class ImmichRepository(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
+        albumId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, album.id, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, albumId ?: album.id, null, onItemDone)
 
     override suspend fun renameAlbum(
         context: Context,

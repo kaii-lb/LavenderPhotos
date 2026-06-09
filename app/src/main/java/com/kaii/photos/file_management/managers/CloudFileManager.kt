@@ -2,7 +2,6 @@ package com.kaii.photos.file_management.managers
 
 import android.content.Context
 import android.content.IntentSender
-import android.os.Environment
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
@@ -14,18 +13,22 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.helpers.appCloudFolderDir
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
+import io.github.kaii_lb.lavender.immichintegration.FileWriteChannel
+import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.time.Clock
@@ -37,8 +40,7 @@ class CloudFileManager(
     override val customDao: CustomEntityDao,
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
-    override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo
+    override val albumsClient: AlbumsClient
 ) : GenericFileManager {
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun getShareItems(
@@ -54,8 +56,7 @@ class CloudFileManager(
 
             val checksumOriginal = calculateSha1Checksum(file = file)
             val checksumCloud = assetClient.get(
-                id = Uuid.parse(item.immichId!!),
-                accessToken = info.accessToken
+                id = Uuid.parse(item.immichId!!)
             )?.checksum
 
             val checksumMatch = checksumCloud == checksumOriginal
@@ -71,13 +72,14 @@ class CloudFileManager(
             } else {
                 assetClient.download(
                     id = Uuid.parse(item.immichId!!),
-                    accessToken = info.accessToken
-                )?.let { bytes ->
-                    if (!file.exists()) file.createNewFile()
-
-                    file.outputStream().buffered().write(bytes)
-
-                    item.copy(uri = uri)
+                    channel = FileWriteChannel(file = file)
+                ).let { success ->
+                    if (success) {
+                        item.copy(uri = uri)
+                    } else {
+                        file.delete()
+                        null
+                    }
                 }
             }
         }
@@ -119,8 +121,7 @@ class CloudFileManager(
             request = AssetFavouriteRequest(
                 ids = list.fastMap { Uuid.parse(it.immichId!!) },
                 isFavorite = favourite
-            ),
-            accessToken = info.accessToken
+            )
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -186,8 +187,7 @@ class CloudFileManager(
 
         albumsClient.removeAssets(
             albumId = Uuid.parse(albumId),
-            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             onItemDone(if (success) list.size else -1)
 
@@ -197,8 +197,6 @@ class CloudFileManager(
                     if (success) SyncTaskStatus.Synced
                     else SyncTaskStatus.Waiting
             )
-
-            onItemDone(list.size)
 
             return@withContext success
         }
@@ -236,7 +234,6 @@ class CloudFileManager(
 
         assetClient.delete(
             ids = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken,
             force = false
         ).let { success ->
             syncTaskDao.updateTaskStatus(
@@ -281,8 +278,7 @@ class CloudFileManager(
             id = Uuid.parse(
                 uuidString = (album as AlbumType.Cloud).immichId
             ),
-            newName = newName,
-            accessToken = info.accessToken
+            newName = newName
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -291,6 +287,21 @@ class CloudFileManager(
                     else SyncTaskStatus.Waiting
             )
         }
+    }
+
+    // TODO: implement cloud backup for secure items
+    override suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot access secure folder functionality in an immich context!")
+    }
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot restore items outside secure folder")
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -365,8 +376,7 @@ class CloudFileManager(
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
-            assetIds = list.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = list.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -393,18 +403,14 @@ class CloudFileManager(
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
     ) = withContext(Dispatchers.IO) {
-        val pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        if (!pictures.exists()) pictures.mkdirs()
-
-        val download = File(pictures, "Lavender Photos")
-        if (!download.exists()) download.mkdirs()
+        val folder = appCloudFolderDir
 
         val album = AlbumType.Folder(
             id = Uuid.random().toString(),
-            name = "Lavender Photos",
+            name = folder.name,
             pinned = false,
             immichId = null,
-            paths = setOf(download.absolutePath)
+            paths = setOf(folder.absolutePath)
         )
 
         val ids = copyToLocal(
@@ -416,8 +422,12 @@ class CloudFileManager(
             onItemDone = onItemDone
         )
 
-        while (!mediaDao.exists(ids.last().id)) {
+        if (ids.isEmpty()) return@withContext emptyList()
+
+        var tries = 0
+        while (!mediaDao.exists(ids.last().id) && tries < 100) {
             delay(500)
+            tries += 1
         }
 
         customDao.upsertAll(
@@ -428,6 +438,10 @@ class CloudFileManager(
                 )
             }
         )
+
+        if (destination.immichId != null) {
+            CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+        }
 
         return@withContext ids
     }
@@ -447,16 +461,8 @@ class CloudFileManager(
             mediaDao.getMedia(ids = chunk.fastMap { it.id })
         }.associateBy { it.id }
 
-        return@withContext list.mapNotNull { item ->
+        val result = list.mapNotNull { item ->
             val media = mediaItems[item.id]!!
-            val bytes = assetClient.download(
-                id = Uuid.parse(item.immichId!!),
-                accessToken = info.accessToken
-            )
-
-            if (bytes == null) return@mapNotNull null
-
-            onItemDone(item.uri)
 
             var newId = 0L
             destination.paths.forEach { path ->
@@ -473,13 +479,20 @@ class CloudFileManager(
                         newId = it
                     }
 
-                    contentResolver.openOutputStream(new)?.use {
-                        if (bytes.size <= 8 * 1024) it.write(bytes)
-                        else it.buffered().write(bytes)
+                    val downloaded = assetClient.download(
+                        id = Uuid.parse(item.immichId!!),
+                        channel = UriWriteChannel(
+                            uri = new,
+                            context = context
+                        )
+                    )
 
-                        it.flush()
-                        it.close()
+                    if (!downloaded) {
+                        context.contentResolver.delete(new, null)
+                        return@mapNotNull null
                     }
+
+                    onItemDone(item.uri)
                 }
             }
 
@@ -488,5 +501,14 @@ class CloudFileManager(
                 immichId = item.immichId
             )
         }
+
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
+        }
+
+        return@withContext result
     }
 }

@@ -25,22 +25,20 @@ import kotlin.uuid.ExperimentalUuidApi
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
     context: Context,
-    private val album: AlbumType,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    private val album: AlbumType
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo = ImmichRepository(
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
+        db = db,
         album = album,
         scope = viewModelScope,
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat(),
         info = settings.immich.getImmichBasicInfo(),
-        client = apiClient,
-        context = context
+        client = apiClient
     )
 
     init {
@@ -141,7 +139,7 @@ class ImmichAlbumViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,
@@ -220,5 +218,19 @@ class ImmichAlbumViewModel(
         newName: String
     ): IntentSender? {
         throw IllegalAccessError("Cannot rename items in an immich album!")
+    }
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        throw NotImplementedError("Secure folder functionality is not implemented in immich contexts")
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        throw NotImplementedError("Secure folder functionality is not implemented in immich contexts")
     }
 }

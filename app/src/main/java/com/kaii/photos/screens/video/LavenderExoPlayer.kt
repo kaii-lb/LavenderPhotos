@@ -1,4 +1,4 @@
-package com.kaii.photos.helpers.video
+package com.kaii.photos.screens.video
 
 import android.content.Context
 import android.net.Uri
@@ -22,9 +22,12 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import com.google.common.net.HttpHeaders
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.editing.applyEffects
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
@@ -34,12 +37,47 @@ class LavenderExoPlayer(
     onDurationChanged: (duration: Float) -> Unit,
     onCurrentPositionChanged: (position: Float) -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit,
-    onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit
+    onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit,
+    onPlayingChanged: (playing: Boolean) -> Unit
 ) {
     data class AudioTrack(
         val language: String,
         val label: String
     )
+
+    sealed interface Input {
+        data class Local(
+            val uri: Uri
+        ) : Input
+
+        data class Secure(
+            val absolutePath: String,
+            val iv: ByteArray
+        ) : Input {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Secure
+
+                if (absolutePath != other.absolutePath) return false
+                if (!iv.contentEquals(other.iv)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = absolutePath.hashCode()
+                result = 31 * result + iv.contentHashCode()
+                return result
+            }
+        }
+
+        data class Networked(
+            val uri: Uri,
+            val auth: Auth
+        ) : Input
+    }
 
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).apply {
         setLoadControl(
@@ -105,7 +143,13 @@ class LavenderExoPlayer(
             }
 
             override fun onTracksChanged(tracks: Tracks) {
+                super.onTracksChanged(tracks)
                 onAudioTracksChanged(getAudioTracks(tracks))
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                super.onIsPlayingChanged(isPlaying)
+                onPlayingChanged(isPlaying)
             }
         }
 
@@ -194,15 +238,11 @@ class LavenderExoPlayer(
         }
     }
 
-    /** @param uri either the content uri of a local media item or the link to the **original** cloud media
-     * @param isNetworked whether this is a cloud media item or not
-     * @param accessToken self-explanatory, should not be null if [isNetworked] is true*/
-    fun setSource(
-        uri: String,
+    suspend fun setSource(
+        input: Input,
         context: Context,
-        isNetworked: Boolean,
-        accessToken: String?,
-        loop: Boolean
+        loop: Boolean,
+        decryptProgress: (progress: Float) -> Unit
     ) {
         if (exoPlayer.isReleased) return
 
@@ -211,37 +251,48 @@ class LavenderExoPlayer(
 
         setRepeatMode(loop)
 
-        val source = if (!isNetworked) {
-            val factory = DefaultDataSource.Factory(context)
-            ProgressiveMediaSource.Factory(factory)
-                .createMediaSource(MediaItem.fromUri(uri.toUri()))
-        } else {
-            val cacheSink = CacheDataSink.Factory()
-                .setCache(context.appModule.cache)
-
-            val downstream = FileDataSource.Factory()
-            val upstream = DefaultHttpDataSource.Factory()
-                .setAllowCrossProtocolRedirects(true)
-                .setConnectTimeoutMs(10.seconds.inWholeMilliseconds.toInt())
-                .setDefaultRequestProperties(
-                    mapOf(
-                        HttpHeaders.AUTHORIZATION to "bearer ${accessToken!!}"
+        val source = when (input) {
+            is Input.Secure -> {
+                val output = withContext(Dispatchers.IO) {
+                    EncryptionManager.decryptVideo(
+                        absolutePath = input.absolutePath,
+                        iv = input.iv,
+                        context = context,
+                        progress = decryptProgress
                     )
-                )
+                }
 
-            val factory = CacheDataSource.Factory()
-                .setCache(context.appModule.cache)
-                .setCacheWriteDataSinkFactory(cacheSink)
-                .setCacheReadDataSourceFactory(downstream)
-                .setUpstreamDataSourceFactory(upstream)
-                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                val factory = DefaultDataSource.Factory(context)
+                ProgressiveMediaSource.Factory(factory)
+                    .createMediaSource(MediaItem.fromUri(output.toUri()))
+            }
 
-            ProgressiveMediaSource.Factory(factory)
-                .createMediaSource(
-                    MediaItem.fromUri(
-                        uri.replace("original", "video/playback")
-                    )
-                )
+            is Input.Local -> {
+                val factory = DefaultDataSource.Factory(context)
+                ProgressiveMediaSource.Factory(factory)
+                    .createMediaSource(MediaItem.fromUri(input.uri))
+            }
+
+            is Input.Networked -> {
+                val cacheSink = CacheDataSink.Factory()
+                    .setCache(context.appModule.cache)
+
+                val downstream = FileDataSource.Factory()
+                val upstream = DefaultHttpDataSource.Factory()
+                    .setAllowCrossProtocolRedirects(true)
+                    .setConnectTimeoutMs(10.seconds.inWholeMilliseconds.toInt())
+                    .setDefaultRequestProperties(input.auth.headers)
+
+                val factory = CacheDataSource.Factory()
+                    .setCache(context.appModule.cache)
+                    .setCacheWriteDataSinkFactory(cacheSink)
+                    .setCacheReadDataSourceFactory(downstream)
+                    .setUpstreamDataSourceFactory(upstream)
+                    .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+
+                ProgressiveMediaSource.Factory(factory)
+                    .createMediaSource(MediaItem.fromUri(input.uri))
+            }
         }
 
         exoPlayer.setMediaSource(source)
@@ -259,7 +310,7 @@ class LavenderExoPlayer(
         exoPlayer.volume = volume
     }
 
-    fun applyEffects(uri: Uri, effectList: List<Effect>) = exoPlayer.applyEffects(uri, effectList)
+    fun applyEffects(effectList: List<Effect>) = exoPlayer.applyEffects(effectList)
 
     fun linkPlayerView(playerView: PlayerView) {
         playerView.player = exoPlayer

@@ -212,18 +212,24 @@ private fun IconContent(
             )
         }
 
-        val showDeleteDialog = remember { mutableStateOf(false) }
-        ConfirmationDialog(
-            showDialog = showDeleteDialog,
-            dialogTitle = stringResource(id = R.string.album_group_delete),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            deleteGroup(group().id)
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.album_group_delete),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    deleteGroup(group().id)
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
+            )
         }
 
         IconButton(
             onClick = {
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             },
             modifier = modifier
                 .height(48.dp)

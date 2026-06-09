@@ -56,7 +56,6 @@ interface Screens {
 
     @Serializable
     data class ImageEditor(
-        val absolutePath: String,
         val uri: String,
         val dateTaken: Long,
         val album: AlbumType
@@ -65,7 +64,6 @@ interface Screens {
     @Serializable
     data class VideoEditor(
         val uri: String,
-        val absolutePath: String,
         val album: AlbumType
     ) : Screens
 
@@ -79,6 +77,17 @@ interface Screens {
 
         @Serializable
         object Login: Screens
+
+        @Serializable
+        object BackupOptions: Screens
+
+        @Serializable
+        data class ShareAlbumPage(
+            val albumImmichId: String,
+            val albumTitle: String,
+            val itemCount: Int,
+            val latestImage: String
+        ) : Screens
 
         @Serializable
         data class GridView(

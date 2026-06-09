@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -59,8 +58,10 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
-import com.kaii.photos.compose.immich.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
+import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
+import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
+import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.StartupLoadingPage
@@ -97,6 +98,8 @@ import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -110,8 +113,8 @@ import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
+import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
@@ -160,8 +163,7 @@ class MainActivity : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
                     SetContentForActivity(
                         startupManager = startupManager,
@@ -303,9 +305,9 @@ class MainActivity : ComponentActivity() {
                             viewModel.changeAlbum(screen.album)
                         }
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -319,9 +321,9 @@ class MainActivity : ComponentActivity() {
 
                     composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
@@ -376,9 +378,9 @@ class MainActivity : ComponentActivity() {
                         )
                         multiAlbumViewModel.changeAlbum(album = screen.album)
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -410,9 +412,9 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -517,6 +519,30 @@ class MainActivity : ComponentActivity() {
                         ImmichLoginPage(viewModel = viewModel)
                     }
 
+                    composable<Screens.Immich.BackupOptions> {
+                        ImmichBackupOptionsPage(
+                            state = rememberImmichBackupOptionsState(),
+                            navController = navController
+                        )
+                    }
+
+                    composable<Screens.Immich.ShareAlbumPage> {
+                        val screen = it.toRoute<Screens.Immich.ShareAlbumPage>()
+                        val viewModel = it.sharedViewModel<ImmichShareAlbumViewModel>(
+                            factory = ImmichShareAlbumViewModelFactory(
+                                context = context,
+                                albumImmichId = screen.albumImmichId
+                            )
+                        )
+
+                        ImmichShareLinkPage(
+                            latestImage = screen.latestImage,
+                            albumTitle = screen.albumTitle,
+                            itemCount = screen.itemCount,
+                            viewModel = viewModel
+                        )
+                    }
+
                     composable<Screens.Immich.GridView>(
                         typeMap = mapOf(
                             typeOf<AlbumType.Cloud>() to AlbumType.Cloud.NavType()
@@ -552,9 +578,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -604,9 +630,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -671,9 +697,7 @@ class MainActivity : ComponentActivity() {
                     val screen = it.toRoute<Screens.AlbumGroup>()
 
                     AlbumGroup(
-                        id = screen.id,
-                        name = screen.name,
-                        albumGridState = appModule.albumGridState
+                        id = screen.id
                     )
                 }
 
@@ -722,21 +746,24 @@ class MainActivity : ComponentActivity() {
 
                     val screen: Screens.ImageEditor = it.toRoute()
                     val viewModel = viewModel<EditorViewModel>(
-                        factory = EditorViewModelFactory(context = context)
+                        factory = EditorViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
                     )
 
-                    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
                     val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
+                    val info by viewModel.immichInfo.collectAsStateWithLifecycle()
 
                     ImageEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
+                        info = { info },
                         isFromOpenWithView = false,
-                        album = screen.album,
                         exportQuality = { exportQuality },
-                        exitOnSave = { exitOnSave },
-                        overwriteByDefault = { overwriteByDefault }
+                        overwriteByDefault = { overwriteByDefault },
+                        editImage = viewModel::editImage,
+                        setNavProps = viewModel::setNavProps
                     )
                 }
 
@@ -786,8 +813,7 @@ class MainActivity : ComponentActivity() {
                     val screen = it.toRoute<Screens.VideoEditor>()
 
                     VideoEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
                         album = screen.album,
                         window = window,
                         isFromOpenWithView = false

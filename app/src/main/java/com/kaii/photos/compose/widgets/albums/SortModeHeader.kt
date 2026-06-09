@@ -30,7 +30,6 @@ fun SortModeHeader(
     sortMode: () -> AlbumSortMode,
     showHiddenSecureEntry: () -> Boolean,
     @FloatRange(0.0, 1.0) progress: () -> Float,
-    isAlbumGroup: Boolean,
     modifier: Modifier = Modifier,
     setAlbumSortMode: (sortMode: AlbumSortMode) -> Unit,
     authenticateSecureFolder: () -> Unit,
@@ -104,26 +103,24 @@ fun SortModeHeader(
             }
         }
 
-        if (!isAlbumGroup) {
-            item {
-                OutlinedButton(
-                    onClick = {
-                        setAlbumSortMode(AlbumSortMode.Custom)
-                    },
-                    colors =
-                        if (sortMode() == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
-                        else ButtonDefaults.outlinedButtonColors()
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.sort_custom),
-                        modifier = Modifier
-                            .scale(progress())
-                    )
-                }
+        item {
+            OutlinedButton(
+                onClick = {
+                    setAlbumSortMode(AlbumSortMode.Custom)
+                },
+                colors =
+                    if (sortMode() == AlbumSortMode.Custom) ButtonDefaults.buttonColors()
+                    else ButtonDefaults.outlinedButtonColors()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.sort_custom),
+                    modifier = Modifier
+                        .scale(progress())
+                )
             }
         }
 
-        if (showHiddenSecureEntry() && !isAlbumGroup) {
+        if (showHiddenSecureEntry()) {
             item {
                 OutlinedButton(
                     onClick = authenticateSecureFolder,

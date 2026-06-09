@@ -58,19 +58,21 @@ import com.kaii.photos.reorderable_lists.rememberSortableGridState
 private fun SortableGridPreview() {
     SortableGrid(
         albumList = {
-            (0..10).map {
+            (0..10).map { index ->
                 AlbumGridState.Album.Single(
                     info = AlbumGridState.Info(
                         album = AlbumType.PlaceHolder,
                         thumbnail = AlbumGridState.Info.Thumbnail(
                             uri = "",
                             signature = ObjectKey(0),
-                            albumId = it.toString(),
-                            date = 0L
+                            albumId = index.toString(),
+                            date = 0L,
+                            isGif = false
                         )
                     ),
-                    id = it.toString(),
+                    id = index.toString(),
                     name = "Test",
+                    summary = null,
                     date = 0L,
                     pinned = false
                 )
@@ -125,34 +127,34 @@ fun SortableGrid(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val density = LocalDensity.current
-        val isLandscape by rememberDeviceOrientation()
-
         val pullToRefreshState = rememberPullToRefreshState()
         var lockHeader by remember { mutableStateOf(false) }
-        val headerHeight by remember {
-            derivedStateOf {
-                with(density) {
-                    pullToRefreshState.distanceFraction * 56.dp.toPx()
+
+        if (!isAlbumGroup) {
+            val density = LocalDensity.current
+            val headerHeight by remember {
+                derivedStateOf {
+                    with(density) {
+                        pullToRefreshState.distanceFraction * 56.dp.toPx()
+                    }
                 }
             }
-        }
 
-        SortModeHeader(
-            sortMode = sortMode,
-            showHiddenSecureEntry = {
-                !tabList().contains(DefaultTabs.TabTypes.secure)
-            },
-            progress = {
-                pullToRefreshState.distanceFraction.coerceAtMost(1f)
-            },
-            isAlbumGroup = isAlbumGroup,
-            modifier = Modifier
-                .height(with(density) { headerHeight.toDp() })
-                .zIndex(1f),
-            setAlbumSortMode = setAlbumSortMode,
-            authenticateSecureFolder = authenticateSecureFolder
-        )
+            SortModeHeader(
+                sortMode = sortMode,
+                showHiddenSecureEntry = {
+                    !tabList().contains(DefaultTabs.TabTypes.secure)
+                },
+                progress = {
+                    pullToRefreshState.distanceFraction.coerceAtMost(1f)
+                },
+                modifier = Modifier
+                    .height(with(density) { headerHeight.toDp() })
+                    .zIndex(1f),
+                setAlbumSortMode = setAlbumSortMode,
+                authenticateSecureFolder = authenticateSecureFolder
+            )
+        }
 
         val lazyGridState = rememberLazyGridState()
         LaunchedEffect(lazyGridState.isScrollInProgress) {
@@ -181,6 +183,7 @@ fun SortableGrid(
             animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
         )
 
+        val isLandscape by rememberDeviceOrientation()
         LazyVerticalGrid(
             state = lazyGridState,
             columns = GridCells.Fixed(
@@ -199,8 +202,9 @@ fun SortableGrid(
                     isRefreshing = lockHeader,
                     state = pullToRefreshState,
                     onRefresh = {
-                        lockHeader = true
-                    }
+                        if (!isAlbumGroup) lockHeader = true
+                    },
+                    enabled = !isAlbumGroup
                 )
                 .pointerInput(Unit) {
                     detectDragGesturesAfterLongPress(
@@ -317,17 +321,17 @@ fun SortableGrid(
                     ) {
                         navController.navigate(
                             route =
-                                when {
-                                    album.info.album is AlbumType.Cloud -> {
-                                        Screens.Immich.GridView(album = album.info.album)
+                                when (val album = album.info.album) {
+                                    is AlbumType.Cloud -> {
+                                        Screens.Immich.GridView(album = album)
                                     }
 
-                                    album.info.album is AlbumType.Custom -> {
-                                        Screens.CustomAlbum.GridView(album = album.info.album)
+                                    is AlbumType.Custom -> {
+                                        Screens.CustomAlbum.GridView(album = album)
                                     }
 
                                     else -> {
-                                        Screens.Album.GridView(album = album.info.album as AlbumType.Folder)
+                                        Screens.Album.GridView(album = album as AlbumType.Folder)
                                     }
                                 }
                         )

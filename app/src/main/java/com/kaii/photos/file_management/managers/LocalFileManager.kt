@@ -1,5 +1,6 @@
 package com.kaii.photos.file_management.managers
 
+import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
 import android.provider.MediaStore
@@ -10,7 +11,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.getPathsFromUriList
 import com.kaii.photos.mediastore.getTrashPathsFromUriList
@@ -27,7 +28,7 @@ class LocalFileManager(
     override val syncTaskDao: SyncTaskDao,
     override val assetClient: AssetsClient,
     override val albumsClient: AlbumsClient,
-    override val info: ImmichBasicInfo
+    private val secureManager: LocalSecureManager
 ) : GenericFileManager {
     companion object {
         private val TAG = LocalFileManager::class.qualifiedName
@@ -69,6 +70,11 @@ class LocalFileManager(
 
                 onItemDone(index + 1)
             }
+
+            true
+        } catch (securityException: RecoverableSecurityException) {
+            val intentSender = securityException.userAction.actionIntent.intentSender
+            context.startIntentSender(intentSender, null, 0, 0, 0)
 
             true
         } catch (e: Throwable) {
@@ -157,5 +163,20 @@ class LocalFileManager(
                 emptyList()
             }
         }
+    }
+
+    override suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = permanentlyDelete(
+        context = context,
+        list = secureManager.secure(context, list)
+    )
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean {
+        throw NotImplementedError("Cannot restore items outside secure folder")
     }
 }

@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.video.LavenderExoPlayer
+import com.kaii.photos.screens.video.LavenderExoPlayer
 
 @Composable
 fun VideoPlayerControls(

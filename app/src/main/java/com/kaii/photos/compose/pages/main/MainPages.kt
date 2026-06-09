@@ -83,7 +83,7 @@ fun MainPages(
     deviceAlbums: () -> List<AlbumGridState.Album>,
     window: Window,
     incomingIntent: Intent?,
-    refreshAlbums: () -> Unit
+    refreshAlbums: suspend () -> Unit
 ) {
     val defaultTab by viewModel.defaultTab.collectAsStateWithLifecycle()
     val tabList by viewModel.tabList.collectAsStateWithLifecycle()

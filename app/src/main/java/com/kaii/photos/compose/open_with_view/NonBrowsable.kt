@@ -70,10 +70,10 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +143,7 @@ fun OpenWithContent(
                     item = MediaStoreData.dummyItem.copy(
                         uri = uri.toString()
                     ),
-                    accessToken = { "" },
+                    auth = { Auth.None },
                     endpoint = { "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
@@ -168,7 +168,7 @@ fun OpenWithContent(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = { "" },
+                        auth = { Auth.None },
                         endpoint = { "" },
                         shouldPlay = { true },
                         blurViews = blurViews,
@@ -359,39 +359,35 @@ private fun BottomBar(
                                 )
 
                                 contentUri?.let {
-                                    context.contentResolver.getMediaStoreDataFromUri(uri = contentUri)?.absolutePath?.let { absolutePath ->
-                                        context.contentResolver.copyUriToUri(
-                                            from = uri,
-                                            to = contentUri
+                                    context.contentResolver.copyUriToUri(
+                                        from = uri,
+                                        to = contentUri
+                                    )
+
+                                    setBarVisibility(
+                                        visible = true,
+                                        window = window
+                                    ) {
+                                        appBarsVisible.value = it
+                                    }
+
+                                    isLoading.value = false
+
+                                    context.appModule.scope.launch(Dispatchers.Main) {
+                                        navController.navigate(
+                                            if (mediaType == MediaType.Image) {
+                                                Screens.ImageEditor(
+                                                    uri = contentUri.toString(),
+                                                    dateTaken = currentTime / 1000,
+                                                    album = AlbumType.PlaceHolder
+                                                )
+                                            } else {
+                                                Screens.VideoEditor(
+                                                    uri = contentUri.toString(),
+                                                    album = AlbumType.PlaceHolder
+                                                )
+                                            }
                                         )
-
-                                        setBarVisibility(
-                                            visible = true,
-                                            window = window
-                                        ) {
-                                            appBarsVisible.value = it
-                                        }
-
-                                        isLoading.value = false
-
-                                        context.appModule.scope.launch(Dispatchers.Main) {
-                                            navController.navigate(
-                                                if (mediaType == MediaType.Image) {
-                                                    Screens.ImageEditor(
-                                                        absolutePath = absolutePath,
-                                                        uri = contentUri.toString(),
-                                                        dateTaken = currentTime / 1000,
-                                                        album = AlbumType.PlaceHolder
-                                                    )
-                                                } else {
-                                                    Screens.VideoEditor(
-                                                        uri = contentUri.toString(),
-                                                        absolutePath = absolutePath,
-                                                        album = AlbumType.PlaceHolder
-                                                    )
-                                                }
-                                            )
-                                        }
                                     }
                                 }
                             }

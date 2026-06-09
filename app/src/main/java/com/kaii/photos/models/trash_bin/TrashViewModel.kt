@@ -93,9 +93,7 @@ class TrashViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo = TrashRepository(
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
+        db = db,
         client = context.appModule.apiClient,
         scope = viewModelScope,
         context = context,
@@ -170,7 +168,7 @@ class TrashViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     if (trashed) R.string.media_delete_snackbar_body

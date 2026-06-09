@@ -844,7 +844,7 @@
     <string name="trash_bin_short">Basura</string>
     <string name="permissions_do_not_trash">No usar la Papelera</string>
     <string name="permissions_do_not_trash_desc">Elimine elementos de forma inmediata y permanente sin moverse primero a la Papelera</string>
-    <string name="media_move_copy_list_search_bar">Buscar un álbum</string>
+    <string name="albums_search_for">Buscar un álbum</string>
     <string name="media_tools">Herramientas</string>
     <string name="media_information">Información</string>
     <string name="wallpaper_homescreen">Pantalla de Inicio</string>

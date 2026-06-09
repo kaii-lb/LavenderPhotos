@@ -14,12 +14,16 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
+import com.kaii.photos.file_management.managers.SecureFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.paging.SecuredListPagingSource
 import com.kaii.photos.helpers.paging.mapToSecuredMedia
@@ -29,6 +33,9 @@ import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +54,7 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
+import kotlin.reflect.KClass
 
 class SecureRepository(
     scope: CoroutineScope,
@@ -54,7 +62,7 @@ class SecureRepository(
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
-) {
+) : BaseRepo {
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
 
@@ -101,7 +109,25 @@ class SecureRepository(
     ) : RoomQueryParams(sortMode, format, info)
 
     private val appContext = context.applicationContext
-    private val dao = MediaDatabase.getInstance(appContext).securedItemEntityDao()
+    private val db = MediaDatabase.getInstance(appContext)
+    private val secureDao = db.securedItemEntityDao()
+
+    override val fileManager = SecureFileManager(
+        secureDao = secureDao,
+        mediaDao = db.mediaDao(),
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
+        assetClient = AssetsClient(
+            endpoint = "",
+            auth = Auth.None,
+            client = context.appModule.apiClient
+        ),
+        albumsClient = AlbumsClient(
+            endpoint = "",
+            auth = Auth.None,
+            client = context.appModule.apiClient
+        )
+    )
 
     private val secureFolder = File(appContext.appSecureFolderDir)
 
@@ -185,7 +211,7 @@ class SecureRepository(
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
         ).flow.mapToSecuredMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -219,7 +245,7 @@ class SecureRepository(
             // unconditionally skipped, freezing a broken thumbnail until app restart
             val existingIndex = mediaStoreData.indexOfFirst { it.item.absolutePath == file.absolutePath }
             if (existingIndex != -1) {
-                val dbThumbnailIv = dao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
+                val dbThumbnailIv = secureDao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
                 val cachedThumbnailIv = mediaStoreData[existingIndex].bytes
                     ?.takeIf { it.size >= 32 }
                     ?.getThumbnailIv()
@@ -246,14 +272,14 @@ class SecureRepository(
                 else return@forEach
 
             val decryptedBytes = run {
-                val iv = dao.getIvFromSecuredPath(file.absolutePath)
-                val thumbnailIv = dao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
+                val iv = secureDao.getIvFromSecuredPath(file.absolutePath)
+                val thumbnailIv = secureDao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
 
                 iv?.plus(thumbnailIv ?: ByteArray(16))
             }
 
             val originalPath =
-                dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
+                secureDao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
             val duration = if (type == MediaType.Video) {
                 // thanks to IvanCarapovic
@@ -291,7 +317,7 @@ class SecureRepository(
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
                 item = item,
-                accessToken = params.value.info.accessToken,
+                auth = params.value.info.auth,
                 endpoint = params.value.info.endpoint,
                 bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
             )
@@ -322,7 +348,7 @@ class SecureRepository(
             // regenerate if the iv row is missing OR the cached png is gone. the thumbnail cache lives
             // in cacheDir, which the OS can purge under storage pressure, leaving a dangling iv row that
             // would otherwise never be rebuilt
-            if (dao.getIvFromSecuredPath(thumbnail.absolutePath) != null && thumbnail.exists()) return@forEach
+            if (secureDao.getIvFromSecuredPath(thumbnail.absolutePath) != null && thumbnail.exists()) return@forEach
 
             val mimeType = Files.probeContentType(Path(file.absolutePath))
             val type =
@@ -347,7 +373,7 @@ class SecureRepository(
         file: File,
         context: Context
     ) = withContext(Dispatchers.IO) {
-        val iv = dao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+        val iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
 
         val bytes = EncryptionManager.decryptBytes(
             bytes = file.readBytes(),
@@ -362,6 +388,37 @@ class SecureRepository(
             .submit()
             .get()
 
-        addEncryptedThumbnail(context, thumbnail, file, dao)
+        addEncryptedThumbnail(context, thumbnail, file, secureDao)
     }
+
+    override suspend fun getMediaCount(): Int {
+        throw NotImplementedError("Cannot get media count in secure folder")
+    }
+
+    override suspend fun getMediaSize(): Long {
+        throw NotImplementedError("Cannot get media size in secure folder")
+    }
+
+    override fun allowedAlbumTypesFor(moving: Boolean): List<KClass<out AlbumType>> {
+        throw NotImplementedError("Cannot use this in secure folder")
+    }
+
+    override suspend fun renameAlbum(context: Context, newName: String) {
+        throw NotImplementedError("Cannot rename the secure folder")
+    }
+
+    override suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list)
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean = fileManager.restore(context, list)
+
+    override suspend fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.share(context, list)
 }

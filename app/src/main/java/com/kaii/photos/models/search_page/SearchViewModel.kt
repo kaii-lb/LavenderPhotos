@@ -30,21 +30,19 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SearchViewModel(
-    context: Context,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    context: Context
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo = SearchRepository(
-        searchDao = db.searchDao(),
+        db = db,
         taggedItemsDao = db.taggedItemsDao(),
         scope = viewModelScope,
         info = ImmichBasicInfo.Empty,
         sortMode = MediaItemSortMode.DateTaken,
         format = DisplayDateFormat.Default,
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
         client = context.appModule.apiClient
     )
 
@@ -219,6 +217,48 @@ class SearchViewModel(
         uri: String,
         newName: String
     ) = searchManager.renameItem(context, uri, newName)
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_encrypting),
+                    icon = R.drawable.secure_folder,
+                    isLoading = isLoading
+                )
+            )
+
+            searchManager.secure(context, list)
+
+            isLoading.value = false
+        }
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_decrypting),
+                    icon = R.drawable.unlock,
+                    isLoading = isLoading
+                )
+            )
+
+            searchManager.restore(context, list)
+
+            isLoading.value = false
+        }
+    }
 
     override fun setTrashed(
         context: Context,

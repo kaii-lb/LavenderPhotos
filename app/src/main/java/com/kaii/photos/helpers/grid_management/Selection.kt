@@ -12,6 +12,7 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -74,7 +75,7 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
 
         PhotoLibraryUIModel.SecuredMedia(
             item = item,
-            accessToken = "",
+            auth = Auth.None,
             endpoint = "",
             bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
         )

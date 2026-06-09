@@ -684,6 +684,7 @@
     <string name="albums_add_failed">Failed to add albums :&lt;</string>
     <string name="albums_immich_not_backed_up">Not backed up</string>
     <string name="albums_rename_failure">Invalid album name</string>
+    <string name="albums_search_for">Search for an album</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
@@ -890,6 +891,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_open_with_copying_video">Processing video…</string>
     <string name="editing_open_with_copying_image">Processing image…</string>
     <string name="editing_resolution_scale">Scale</string>
+    <string name="editing_export_image_failed">Couldn\'t export photo</string>
 
     <!-- Editing Filters -->
     <string name="filter">Filter</string>
@@ -943,6 +945,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_export_video_loading">Exporting Video…</string>
     <string name="editing_export_video_loading_body">Step %1$d of %2$d</string>
     <string name="editing_export_video_failed">Couldn\'t export video</string>
+    <string name="editing_export_video_uploading">Uploading video…</string>
     <string name="editing_volume_display">Volume: %s</string>
     <string name="editing_speed_display">Playback Speed: %s</string>
     <string name="editing_framerate_display">Frame rate: %s</string>
@@ -1062,7 +1065,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_erase">Erase</string>
     <string name="media_confirm">Confirm</string>
     <string name="media_okay">Okay</string>
-    <string name="media_move_copy_list_search_bar">Search for an album</string>
     <string name="media_snackbar_operation_failed">Sync Failed!</string>
     <string name="media_copy_snackbar_title">Copying items…</string>
     <string name="media_move_snackbar_title">Moving items…</string>
@@ -1076,6 +1078,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_information">Information</string>
     <string name="media_is_raw">This is a RAW image</string>
     <string name="media_is_gif">This is a GIF</string>
+    <string name="media_is_cloud">This is a cloud only item</string>
     <string name="media_select_limit_reached">Selection limit reached!</string>
     <string name="media_sharing">Sharing…</string>
 
@@ -1112,6 +1115,11 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="management">Management</string>
     <string name="next">Next</string>
     <string name="error">Error!</string>
+    <string name="refresh">Refresh</string>
+    <string name="copy_link">Copy link</string>
+    <string name="download">Download</string>
+    <string name="upload">Upload</string>
+    <string name="metadata">Metadata</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
@@ -1191,6 +1199,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_auth_password">Password</string>
     <string name="immich_auth_email">Email</string>
+    <string name="immich_auth_api_key">Api Key</string>
     <string name="immich_auth_current_password">Current password</string>
     <string name="immich_auth_new_password">New password</string>
     <string name="immich_auth_repeat_new_password">Repeat password</string>
@@ -1201,9 +1210,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_auth_password_current_blank">Current password cannot be blank</string>
     <string name="immich_auth_password_good_to_go">Ready to change password!</string>
     <string name="immich_auth_hide_password">Show or hide password</string>
+    <string name="immich_auth_login_with_api_key">Login with api key</string>
+    <string name="immich_auth_login_with_account">Login with account</string>
     <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_with_status">Server:</string>
     <string name="immich_server_info_desc">Version: %1$s. Build: %2$s</string>
+    <string name="immich_server_info_new_version_available">New version available: %1$s</string>
     <string name="immich_server_storage">Server Storage</string>
     <string name="immich_server_storage_desc">%1$s of %2$s used</string>
     <string name="immich_server_storage_desc_detailed">%1$s GB of %2$s GB used</string>
@@ -1239,7 +1251,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_account_usage">Account Usage</string>
     <string name="immich_account_usage_images">Image Count</string>
     <string name="immich_account_usage_videos">Video Count</string>
-    <string name="immich_account_unlimited">%s used - Unlimited Storage</string>
+    <string name="immich_account_unlimited">%s GB used - Unlimited Storage</string>
     <string name="immich_account_change_password">Change Password</string>
     <string name="immich_account_change_password_confirm">Change</string>
     <string name="immich_account_storage">User Storage</string>
@@ -1250,6 +1262,38 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_account_change_pfp_succeeeded">Changed profile picture!</string>
     <string name="immich_account_change_pfp_failed">Couldn\'t change profile picture</string>
     <string name="immich_account_create">Create account</string>
+    <string name="immich_album_item_description">Add or remove this item from cloud backup</string>
+    <string name="immich_backup_options">Backup Options</string>
+    <string name="immich_backup_options_desc">Choose which albums to sync with the cloud</string>
+    <string name="immich_backup_options_empty">Nothing to show…</string>
+    <string name="immich_backup_option_cloud_synced_albums">Cloud synced albums: %d</string>
+    <string name="immich_backup_option_total_uploaded_count">Total uploaded count: %d</string>
+    <string name="immich_backup_option_changes_synced">Changes synced!</string>
+    <string name="immich_backup_option_changes_unsaved">Unsaved changes</string>
+    <string name="immich_backup_option_changes_unsaved_desc">Refreshing will undo all your changes</string>
+    <string name="immich_backup_sync">Sync Items</string>
+    <string name="immich_backup_sync_desc">Reconcile changes between Lavender Photos and the Immich server</string>
+    <string name="immich_backup_sync_running">Syncing items…</string>
+    <string name="immich_backup_sync_count">Syncing %1$d out of %2$d items</string>
+    <string name="immich_share_album">Share Album</string>
+    <string name="immich_share_album_item_count">%d items</string>
+    <string name="immich_share_album_use_expiry_date">Expires At</string>
+    <string name="immich_share_album_allow_uploads">Allow Uploads</string>
+    <string name="immich_share_album_allow_downloads">Allow Downloads</string>
+    <string name="immich_share_album_require_password">Require Password</string>
+    <string name="immich_share_album_custom_url">Custom URL</string>
+    <string name="immich_share_album_use_custom_url">Use Custom URL</string>
+    <string name="immich_share_album_description">Description</string>
+    <string name="immich_share_album_loading">Creating link…</string>
+    <string name="immich_share_album_loading_failed">Failed to create link</string>
+    <string name="immich_share_album_clip_title">Immich album share link</string>
+    <string name="immich_share_album_empty">Album is empty!</string>
+    <string name="immich_share_album_customize_link">Customize link properties</string>
+    <string name="immich_share_album_create_link">Create Link</string>
+    <string name="immich_share_album_qr_code">QR Code representation of the share link</string>
+    <string name="immich_share_album_other_links">Other links from this album</string>
+    <string name="immich_share_album_delete_link">Delete this immich share link</string>
+    <string name="immich_share_album_expires_at">Expires at: %s</string>
 
     <!--  Exif  -->
     <string name="exif_name">Name:</string>
@@ -1304,4 +1348,5 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="album_group_delete">Delete this group?</string>
     <string name="album_group_item_count">Sub-albums:</string>
     <string name="album_group_info">Album group info</string>
+    <string name="album_group_show_add_dialog">Add albums to this group</string>
 </resources>

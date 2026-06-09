@@ -22,16 +22,15 @@ import kotlinx.coroutines.runBlocking
 
 class MultiAlbumViewModel(
     album: AlbumType.Folder,
-    context: Context,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    context: Context
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo =
         HybridRepository(
-            mediaDao = db.mediaDao(),
-            customDao = db.customDao(),
-            syncTaskDao = db.taskDao(),
+            db = db,
             client = context.appModule.apiClient,
             initialAlbum = album,
             scope = viewModelScope,
@@ -182,7 +181,7 @@ class MultiAlbumViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,
@@ -224,6 +223,48 @@ class MultiAlbumViewModel(
     ) {
         scope.launch {
             repo.share(context, list)
+        }
+    }
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_encrypting),
+                    icon = R.drawable.secure_folder,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.secure(context, list)
+
+            isLoading.value = false
+        }
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_decrypting),
+                    icon = R.drawable.unlock,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.restore(context, list)
+
+            isLoading.value = false
         }
     }
 }

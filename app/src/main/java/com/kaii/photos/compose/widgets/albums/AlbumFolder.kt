@@ -28,6 +28,18 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.TextStylingConstants
 
+private val dummyInfo =
+    AlbumGridState.Info(
+        album = AlbumType.PlaceHolder,
+        thumbnail = AlbumGridState.Info.Thumbnail(
+            uri = "",
+            signature = ObjectKey(0),
+            albumId = "",
+            date = 0L,
+            isGif = false
+        )
+    )
+
 @Preview
 @Composable
 private fun AlbumFolderPreview() {
@@ -35,15 +47,7 @@ private fun AlbumFolderPreview() {
         name = "Pets",
         info =
             (0..10).map {
-                AlbumGridState.Info(
-                    album = AlbumType.PlaceHolder,
-                    thumbnail = AlbumGridState.Info.Thumbnail(
-                        uri = "1",
-                        signature = ObjectKey(0),
-                        albumId = "",
-                        date = 0L
-                    )
-                )
+                dummyInfo
             },
         isSelected = { false },
         immichInfo = { ImmichBasicInfo.Empty },
@@ -101,22 +105,14 @@ fun AlbumFolder(
             ) {
                 val topItems = if (info.size < 2) {
                     info.take(2 - info.size) + (0..1 - info.size).map {
-                        AlbumGridState.Info(
-                            album = AlbumType.PlaceHolder,
-                            thumbnail = AlbumGridState.Info.Thumbnail(
-                                uri = "",
-                                signature = ObjectKey(0),
-                                albumId = "",
-                                date = 0L
-                            )
-                        )
+                        dummyInfo
                     }
                 } else info.take(2)
 
                 topItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo()
+                        info = immichInfo
                     )
                 }
             }
@@ -134,32 +130,16 @@ fun AlbumFolder(
                 val bottomItems = if (info.size > 2) {
                     val size = info.size.coerceIn(0, 4)
                     info.take(4).takeLast(size - 2) + (0..3 - size).map {
-                        AlbumGridState.Info(
-                            album = AlbumType.PlaceHolder,
-                            thumbnail = AlbumGridState.Info.Thumbnail(
-                                uri = "",
-                                signature = ObjectKey(0),
-                                albumId = "",
-                                date = 0L
-                            )
-                        )
+                        dummyInfo
                     }
                 } else (0..1).map {
-                    AlbumGridState.Info(
-                        album = AlbumType.PlaceHolder,
-                        thumbnail = AlbumGridState.Info.Thumbnail(
-                            uri = "",
-                            signature = ObjectKey(0),
-                            albumId = "",
-                            date = 0L
-                        )
-                    )
+                    dummyInfo
                 }
 
                 bottomItems.forEach { album ->
                     AlbumGlideImage(
                         albumInfo = album,
-                        info = immichInfo()
+                        info = immichInfo
                     )
                 }
             }

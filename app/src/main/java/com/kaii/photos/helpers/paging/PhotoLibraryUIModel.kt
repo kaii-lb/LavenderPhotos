@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.mediastore.signature
+import io.github.kaii_lb.lavender.immichintegration.Auth
 
 @Stable
 @Immutable
@@ -12,7 +13,7 @@ sealed interface PhotoLibraryUIModel {
     @Immutable
     interface MediaImpl : PhotoLibraryUIModel {
         val item: MediaStoreData
-        val accessToken: String?
+        val auth: Auth
         val endpoint: String?
     }
 
@@ -20,7 +21,7 @@ sealed interface PhotoLibraryUIModel {
     @Immutable
     data class Media(
         override val item: MediaStoreData,
-        override val accessToken: String?,
+        override val auth: Auth,
         override val endpoint: String?
     ) : MediaImpl
 
@@ -35,7 +36,7 @@ sealed interface PhotoLibraryUIModel {
     @Immutable
     data class SecuredMedia(
         override val item: MediaStoreData,
-        override val accessToken: String?,
+        override val auth: Auth,
         override val endpoint: String?,
         val bytes: ByteArray?
     ) : MediaImpl {
@@ -66,6 +67,6 @@ sealed interface PhotoLibraryUIModel {
         }
 
     fun itemKey() =
-        if (this is MediaImpl) item.absolutePath + item.displayName + item.id
+        if (this is MediaImpl) item.absolutePath + item.uri + item.id
         else (this as Section).timestamp.toString()
 }

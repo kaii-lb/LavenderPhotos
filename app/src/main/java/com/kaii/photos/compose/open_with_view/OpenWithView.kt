@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -57,10 +56,11 @@ import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.models.editor.EditorViewModel
+import com.kaii.photos.models.editor.EditorViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
 import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlin.reflect.typeOf
@@ -106,8 +106,7 @@ class OpenWithView : ComponentActivity() {
                 )
 
                 CompositionLocalProvider(
-                    LocalNavController provides navController,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navController
                 ) {
                     val snackbarHostState = remember {
                         LavenderSnackbarHostState()
@@ -196,16 +195,24 @@ class OpenWithView : ComponentActivity() {
                                     )
                                 }
                             ) {
+                                val context = LocalContext.current
                                 val screen: Screens.ImageEditor = it.toRoute()
+                                val viewModel = viewModel<EditorViewModel>(
+                                    factory = EditorViewModelFactory(
+                                        context = context,
+                                        album = screen.album
+                                    )
+                                )
 
+                                val info by viewModel.immichInfo.collectAsStateWithLifecycle()
                                 ImageEditor(
-                                    uri = screen.uri.toUri(),
-                                    absolutePath = screen.absolutePath,
+                                    uri = screen.uri,
+                                    info = { info },
                                     isFromOpenWithView = true,
-                                    album = null,
                                     exportQuality = { 8 },
-                                    exitOnSave = { false },
-                                    overwriteByDefault = { false }
+                                    overwriteByDefault = { false },
+                                    editImage = viewModel::editImage,
+                                    setNavProps = viewModel::setNavProps
                                 )
                             }
 
@@ -253,8 +260,7 @@ class OpenWithView : ComponentActivity() {
                                 val screen = it.toRoute<Screens.VideoEditor>()
 
                                 VideoEditor(
-                                    uri = screen.uri.toUri(),
-                                    absolutePath = screen.absolutePath,
+                                    uri = screen.uri,
                                     window = window,
                                     isFromOpenWithView = true,
                                     album = null

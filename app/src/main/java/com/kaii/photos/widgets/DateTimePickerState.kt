@@ -1,54 +1,54 @@
 package com.kaii.photos.widgets
 
-import android.content.Context
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
-import androidx.core.net.toUri
-import com.kaii.photos.R
-import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.di.appModule
-import com.kaii.photos.mediastore.setDateForMedia
-import com.kaii.photos.permissions.files.FilePermissionsState
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
-import kotlin.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
-class DateTimePickerState(
-    private val mediaItem: MediaStoreData,
-    private val context: Context
+open class DateTimePickerState(
+    val initialDateTime: LocalDateTime,
+    private val scope: CoroutineScope
 ) {
-    internal var permissionManager: FilePermissionsState? = null
-
-    val initialDateTime =
-        Instant.fromEpochSeconds(mediaItem.dateTaken)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-
     var date by mutableStateOf(initialDateTime.date)
         private set
 
     var time by mutableStateOf(initialDateTime.time)
         private set
+
+    var isError by mutableStateOf(false)
+        private set
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+    fun setIsLoading(loading: Boolean) {
+        isLoading = loading
+    }
+
+    fun setIsError(error: Boolean) {
+        isError = error
+
+        if (isError) scope.launch {
+            delay(1.seconds)
+            isError = false
+            isLoading = false
+        }
+    }
 
     fun setDay(day: Int) {
         val days = date.yearMonth.numberOfDays
@@ -83,67 +83,19 @@ class DateTimePickerState(
         time = LocalTime(hour, time.minute, time.second)
     }
 
-    fun writeDate() {
-        permissionManager?.get(listOf(mediaItem.uri.toUri()))
-    }
-
-    internal suspend fun save() = withContext(Dispatchers.IO) {
-        val dateTime = date.atTime(time).toInstant(timeZone = TimeZone.currentSystemDefault()).epochSeconds
-
-        context.contentResolver.setDateForMedia(
-            uri = mediaItem.uri.toUri(),
-            type = mediaItem.type,
-            dateTaken = dateTime,
-            overwriteLastModified = false
-        )
-    }
+    fun getDateTime() = date.atTime(time).toInstant(timeZone = TimeZone.currentSystemDefault())
 }
 
 @Composable
 fun rememberDateTimePickerState(
-    mediaItem: MediaStoreData,
-    onDone: () -> Unit = {},
-    onFailed: () -> Unit = {}
+    initialDateTime: LocalDateTime
 ): DateTimePickerState {
-    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    val state = remember(mediaItem) {
+    return remember(initialDateTime) {
         DateTimePickerState(
-            mediaItem = mediaItem,
-            context = context
+            initialDateTime = initialDateTime,
+            scope = coroutineScope
         )
     }
-
-    val resources = LocalResources.current
-    val coroutineScope = rememberCoroutineScope()
-    val permissionManager = rememberFilePermissionManager(
-        onGranted = {
-            context.appModule.scope.launch {
-                state.save()
-                onDone()
-            }
-        },
-        onRejected = {
-            coroutineScope.launch {
-                onFailed()
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvent.MessageEvent(
-                        message = resources.getString(R.string.exif_date_changed_failed),
-                        icon = R.drawable.event_busy,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            }
-        }
-    )
-
-    DisposableEffect(permissionManager, state) {
-        state.permissionManager = permissionManager
-
-        onDispose {
-            state.permissionManager = null
-        }
-    }
-
-    return state
 }

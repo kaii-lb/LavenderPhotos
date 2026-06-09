@@ -51,7 +51,8 @@ import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.helpers.secureThumbnailImage
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo
@@ -89,6 +90,7 @@ fun HorizontalImageList(
         }
     )
 
+    val context = LocalContext.current
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
@@ -141,7 +143,26 @@ fun HorizontalImageList(
                     }
 
                     GlideImage(
-                        model = media.item.uri.toUri(),
+                        model = when {
+                            isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
+                                SecureInfo(
+                                    iv = bytes.getThumbnailIv(),
+                                    absolutePath = File(media.item.absolutePath).secureThumbnailImage(context).absolutePath,
+                                    key = media.signature()
+                                )
+                            }
+
+                            media.item.isCloud -> ImmichInfo(
+                                thumbnail = media.item.immichThumbnail!!,
+                                original = media.item.immichUrl!!,
+                                hash = media.item.hash!!,
+                                auth = media.auth,
+                                endpoint = media.endpoint!!,
+                                useThumbnail = false
+                            )
+
+                            else -> media.item.uri
+                        },
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         loading = placeholder(R.drawable.broken_image),
@@ -158,7 +179,7 @@ fun HorizontalImageList(
 
                 VideoPlayer(
                     item = media.item,
-                    accessToken = { media.accessToken ?: "" },
+                    auth = { media.auth },
                     endpoint = { media.endpoint ?: "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
@@ -171,7 +192,7 @@ fun HorizontalImageList(
                     },
                     useCache = useCache,
                     modifier = Modifier
-                        .fillMaxSize(1f)
+                        .fillMaxSize()
                         .transformable(),
                 )
             }
@@ -180,11 +201,11 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
-                val glideModel = remember(media) {
+                val glideModel = remember(media.item.uri) {
                     when {
-                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let {
+                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
                             SecureInfo(
-                                iv = it.getIv(),
+                                iv = bytes.getIv(),
                                 absolutePath = media.item.absolutePath,
                                 key = media.signature()
                             )
@@ -194,7 +215,7 @@ fun HorizontalImageList(
                             thumbnail = media.item.immichThumbnail!!,
                             original = media.item.immichUrl!!,
                             hash = media.item.hash!!,
-                            accessToken = media.accessToken!!,
+                            auth = media.auth,
                             endpoint = media.endpoint!!,
                             useThumbnail = false
                         )
@@ -263,7 +284,7 @@ fun HorizontalImageList(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = { media.accessToken ?: "" },
+                        auth = { media.auth },
                         endpoint = { media.endpoint ?: "" },
                         shouldPlay = { state.currentPage == index },
                         blurViews = blurViews,

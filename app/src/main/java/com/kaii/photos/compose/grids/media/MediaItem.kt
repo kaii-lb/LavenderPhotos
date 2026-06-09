@@ -132,7 +132,7 @@ fun MediaItem(
                     thumbnail = item.item.immichThumbnail!!,
                     original = item.item.immichUrl!!,
                     hash = item.item.hash!!,
-                    accessToken = item.accessToken!!,
+                    auth = item.auth,
                     endpoint = item.endpoint!!,
                     useThumbnail = true
                 )
@@ -143,10 +143,10 @@ fun MediaItem(
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
-                .fillMaxSize(1f)
+                .fillMaxSize()
                 .align(Alignment.Center)
                 .scale(animatedItemScale)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(animatedItemCornerRadius))
+                .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
             if (isSecureMedia) {
                 // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode to
@@ -233,6 +233,23 @@ fun MediaItem(
                 Icon(
                     painter = painterResource(id = R.drawable.gif_2),
                     contentDescription = stringResource(id = R.string.media_is_gif),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
+        if (item.item.isCloud) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(2.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.cloud),
+                    contentDescription = stringResource(id = R.string.media_is_cloud),
                     tint = Color.White,
                     modifier = Modifier
                         .size(24.dp)

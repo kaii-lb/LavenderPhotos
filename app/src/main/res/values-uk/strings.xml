@@ -379,7 +379,7 @@
     <string name="permissions_manage_media_explanation">Цей дозвіл необов’язковий, але дуже рекомендований. Дозвіл на керування медіафайлами дозволяє Lavender Photos використовувати API розв’язання контенту Android для переміщення/видалення/переміщення/копіювання медіафайлів, що значно спрощує процес.</string>
     <string name="permissions_explanation">Пояснення дозволу</string>
     <string name="media_restore_processing_desc">Будь ласка, зачекайте, поки обробляється медіафайл</string>
-    <string name="media_move_copy_list_search_bar">Пошук альбому</string>
+    <string name="albums_search_for">Пошук альбому</string>
     <string name="media_tools">Інструменти</string>
     <string name="media_information">Інформація</string>
 </resources>

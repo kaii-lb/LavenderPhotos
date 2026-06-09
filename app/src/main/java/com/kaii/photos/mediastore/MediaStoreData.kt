@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.immichDurationToSecondsOrNull
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
 import kotlin.time.Instant
@@ -19,7 +20,7 @@ data class ImmichInfo(
     val thumbnail: String,
     val original: String,
     val hash: String,
-    val accessToken: String,
+    val auth: Auth,
     val endpoint: String,
     val useThumbnail: Boolean
 )

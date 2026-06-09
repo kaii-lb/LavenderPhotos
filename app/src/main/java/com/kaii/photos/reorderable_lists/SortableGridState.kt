@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import kotlinx.coroutines.isActive
 
 class SortableGridState(
     private val gridState: LazyGridState,
+    private val density: Density,
     private val albums: () -> List<AlbumGridState.Album>,
     private val hasPrefix: () -> Boolean,
     private val isAlbumGroup: Boolean,
@@ -88,14 +90,27 @@ class SortableGridState(
                 ).contains(offset.round())
                         && !item.key.toString().startsWith("FavAndTrash")
                         && !item.key.toString().startsWith("DeleteThisAlbum")
+                        && !item.key.toString().startsWith("PinDeleteRow")
             }?.let { item ->
                 val indexOffset = if (hasPrefix()) 2 else 1
 
                 val index = item.index - indexOffset
 
-                if (index in 0..<albums().size) {
+                if (index in 0 until albums().size) {
                     selectedItem = albums()[index]
                     itemScale = selectedScale
+
+                    var itemCenter = item.offset.toOffset() + item.size.center.toOffset()
+
+                    gridState.layoutInfo.visibleItemsInfo.find {
+                        it.key == "PinDeleteRow" && it.row != -1
+                    }?.let {
+                        with(density) {
+                            itemCenter += Offset(x = 0f, y = 104.dp.toPx())
+                        }
+                    }
+
+                    itemOffset = offset - itemCenter
                 }
             } ?: run { selectedItem = null }
     }
@@ -181,8 +196,10 @@ class SortableGridState(
                 newList.removeAll { it.id == selectedItem?.id }
                 newList.add(targetItemIndex!!, selectedItem!!)
 
-                itemOffset =
-                    change.position - (targetItem.offset + targetItem.size.center).toOffset()
+                val oldOffset = currentLazyItem.offset.toOffset()
+                val newOffset = targetItem.offset.toOffset()
+
+                itemOffset += oldOffset - newOffset
 
                 setAlbums(newList)
             }
@@ -237,6 +254,10 @@ class SortableGridState(
 
         onDragCancel() // all failed case
     }
+
+    fun scrollBy(scrolledBy: Float) {
+        itemOffset += Offset(x = 0f, y = scrolledBy)
+    }
 }
 
 @Composable
@@ -259,6 +280,7 @@ fun rememberSortableGridState(
     val state = retain(gridState) {
         SortableGridState(
             gridState = gridState,
+            density = density,
             albums = albums,
             hasPrefix = hasPrefix,
             isAlbumGroup = isAlbumGroup,
@@ -278,8 +300,11 @@ fun rememberSortableGridState(
         snapshotFlow { state.scrollSpeed }.collectLatest { scrollSpeed ->
             if (scrollSpeed != 0f) {
                 while (isActive) {
-                    gridState.scrollBy(scrollSpeed)
-                    delay(10)
+                    val scrolledBy = gridState.scrollBy(scrollSpeed)
+
+                    state.scrollBy(scrolledBy)
+
+                    delay(16)
                 }
             }
         }
