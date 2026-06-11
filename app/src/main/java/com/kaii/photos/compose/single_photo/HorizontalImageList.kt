@@ -224,8 +224,6 @@ fun HorizontalImageList(
                     }
                 }
 
-                val context = LocalContext.current
-
                 // cheap base layer for the secure viewer: the small pre-stored encrypted thumbnail (same
                 // model the grid uses, so it's likely already in glide's memory cache). gated on a ready
                 // (non-zero) iv and an existing file; null -> the full-file model is used as the base
