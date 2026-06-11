@@ -9,6 +9,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
@@ -46,7 +47,17 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
                     securedPath = file.secureThumbnailImage(context).absolutePath
                 )
 
-                if (iv != null && thumbnailIv != null) iv + thumbnailIv else null
+                // recover a corrupted file iv (ByteArray(0) from a failed-secure catch block) so a
+                // restore/share of this item decrypts real bytes instead of being dropped as null.
+                // the thumbnail iv is display-only here, so pad it to keep the [fileIv][thumbIv][path]
+                // layout intact; a null fileIv means "no db row" (legacy unencrypted) -> leave null
+                val fileIv = when {
+                    iv == null -> null
+                    iv.size == 16 -> iv
+                    else -> SecureIvRecovery.recoverAndPersist(context, file, mimeType, dao)
+                }
+
+                fileIv?.plus(thumbnailIv?.takeIf { it.size == 16 } ?: ByteArray(16))
             }
 
         val originalPath =

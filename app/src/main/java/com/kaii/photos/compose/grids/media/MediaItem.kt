@@ -115,13 +115,18 @@ fun MediaItem(
 
         GlideImage(
             model = when {
-                isSecureMedia -> (item as PhotoLibraryUIModel.SecuredMedia).bytes?.getThumbnailIv()?.let {
-                    SecureInfo(
-                        iv = it,
-                        absolutePath = File(item.item.absolutePath).secureThumbnailImage(context).absolutePath,
-                        key = item.signature()
-                    )
-                }
+                isSecureMedia -> (item as PhotoLibraryUIModel.SecuredMedia).bytes
+                    ?.takeIf { it.size >= 32 }
+                    ?.getThumbnailIv()
+                    // all-zero iv means the thumbnail isn't ready; fall through to a null model -> placeholder
+                    ?.takeIf { iv -> iv.any { it.toInt() != 0 } }
+                    ?.let {
+                        SecureInfo(
+                            iv = it,
+                            absolutePath = File(item.item.absolutePath).secureThumbnailImage(context).absolutePath,
+                            key = item.signature()
+                        )
+                    }
 
                 item.item.isCloud -> ImmichInfo(
                     thumbnail = item.item.immichThumbnail!!,
@@ -144,8 +149,12 @@ fun MediaItem(
                 .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
             if (isSecureMedia) {
-                it.signature(item.signature())
+                // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode to
+                // the requested size like the non-secure branch
+                val secureRequest = it.signature(item.signature())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
+                if (thumbnailSettings().second != 0) secureRequest.override(thumbnailSettings().second)
+                else secureRequest
             } else if (thumbnailSettings().second == 0) {
                 it.signature(item.signature())
                     .diskCacheStrategy(

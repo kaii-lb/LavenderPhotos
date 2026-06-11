@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.MediaDatabase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -13,6 +14,7 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.nio.file.Files
+import kotlin.io.path.Path
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -100,7 +102,17 @@ class DataAndBackupHelper(
             try {
                 val decryptedFile = File(exportDir, secureFile.name)
                 decryptedFile.createNewFile()
-                val iv = database.getIvFromSecuredPath(secureFile.absolutePath) ?: throw Exception("IV for ${secureFile.name} was null, cannot decrypt.")
+                val storedIv = database.getIvFromSecuredPath(secureFile.absolutePath)
+                    ?: throw Exception("IV for ${secureFile.name} was null, cannot decrypt.")
+
+                // recover a corrupted iv (ByteArray(0) from a failed-secure catch block) before decrypt
+                val iv = if (storedIv.size == 16) storedIv else runBlocking {
+                    val mimeType = Files.probeContentType(Path(secureFile.absolutePath))
+                    SecureIvRecovery.recoverAndPersist(context, secureFile, mimeType, database)
+                } ?: run {
+                    Log.e(TAG, "Could not recover IV for ${secureFile.name}")
+                    return@forEach
+                }
 
                 EncryptionManager.decryptInputStream(
                     inputStream = secureFile.inputStream(),
@@ -171,15 +183,21 @@ class DataAndBackupHelper(
 
                 val iv = database.getIvFromSecuredPath(secureFile.absolutePath)
 
-                val bytes =
-                    if (iv != null) {
-                        EncryptionManager.decryptBytes(
-                            bytes = secureFile.readBytes(),
-                            iv = iv
-                        )
-                    } else {
-                        secureFile.readBytes()
+                val bytes = when {
+                    iv != null && iv.size == 16 -> EncryptionManager.decryptBytes(secureFile.readBytes(), iv)
+                    iv != null -> {
+                        // recover a corrupted iv (ByteArray(0) from a failed-secure catch block)
+                        val recoveredIv = runBlocking {
+                            val mimeType = Files.probeContentType(Path(secureFile.absolutePath))
+                            SecureIvRecovery.recoverAndPersist(context, secureFile, mimeType, database)
+                        } ?: run {
+                            Log.e(TAG, "Cannot decrypt ${secureFile.name}: iv unrecoverable")
+                            return@forEach
+                        }
+                        EncryptionManager.decryptBytes(secureFile.readBytes(), recoveredIv)
                     }
+                    else -> secureFile.readBytes() // iv is null — file might be unencrypted
+                }
 
                 val entry = ZipEntry(secureFile.name)
                 zipOutputStream.putNextEntry(entry)

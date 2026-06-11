@@ -24,6 +24,7 @@ import androidx.media3.ui.PlayerView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -38,6 +39,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.Path
 import kotlin.math.ceil
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -232,11 +235,32 @@ class VideoPlayerState(
             // secure item, needs decoding
             item.absolutePath.startsWith(context.appSecureFolderDir) -> {
                 withContext(Dispatchers.IO) {
-                    val iv = MediaDatabase.getInstance(context).securedItemEntityDao()
+                    var iv = MediaDatabase.getInstance(context).securedItemEntityDao()
                         .getIvFromSecuredPath(item.absolutePath)
 
                     if (iv == null) {
                         Log.e(TAG, "IV for ${item.displayName} was null, aborting")
+                        decryptProgress(1f) // dismiss the decrypting spinner
+                        return@withContext null
+                    }
+
+                    // recover a corrupted iv (ByteArray(0) from a failed-secure catch block); it
+                    // passes the null check above but would crash Cipher.init("Invalid IV")
+                    if (iv.size != 16) {
+                        val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
+                        val mimeType = Files.probeContentType(Path(item.absolutePath))
+                        iv = SecureIvRecovery.recoverAndPersist(context, File(item.absolutePath), mimeType, dao) ?: run {
+                            Log.e(TAG, "IV for ${item.displayName} unrecoverable, aborting")
+                            decryptProgress(1f) // dismiss the decrypting spinner
+                            return@withContext null
+                        }
+                    }
+
+                    // also reject all-zero IVs: it's the not-ready/corrupt sentinel and would decode
+                    // to garbage; if recovery above couldn't fix it, abort rather than play noise
+                    if (iv.all { it.toInt() == 0 }) {
+                        Log.e(TAG, "IV for ${item.displayName} is all zeros, aborting")
+                        decryptProgress(1f) // dismiss the decrypting spinner
                         return@withContext null
                     }
 
