@@ -46,7 +46,10 @@ suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
                     securedPath = file.secureThumbnailImage(context).absolutePath
                 )
 
-                if (iv != null && thumbnailIv != null) iv + thumbnailIv else null
+                if (iv != null && iv.size == 16 && thumbnailIv != null && thumbnailIv.size == 16)
+                    iv + thumbnailIv
+                else
+                    null
             }
 
         val originalPath =

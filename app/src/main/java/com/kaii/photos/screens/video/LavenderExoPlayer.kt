@@ -2,6 +2,7 @@ package com.kaii.photos.screens.video
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
@@ -40,6 +41,10 @@ class LavenderExoPlayer(
     onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit,
     onPlayingChanged: (playing: Boolean) -> Unit
 ) {
+    companion object {
+        private val TAG = LavenderExoPlayer::class.qualifiedName
+    }
+
     data class AudioTrack(
         val language: String,
         val label: String
@@ -254,13 +259,19 @@ class LavenderExoPlayer(
         val source = when (input) {
             is Input.Secure -> {
                 val output = withContext(Dispatchers.IO) {
-                    EncryptionManager.decryptVideo(
-                        absolutePath = input.absolutePath,
-                        iv = input.iv,
-                        context = context,
-                        progress = decryptProgress
-                    )
-                }
+                    try {
+                        EncryptionManager.decryptVideo(
+                            absolutePath = input.absolutePath,
+                            iv = input.iv,
+                            context = context,
+                            progress = decryptProgress
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to decrypt secure video ${input.absolutePath}", e)
+                        decryptProgress(1f) // dismiss the decrypting spinner on failure
+                        null
+                    }
+                } ?: return
 
                 val factory = DefaultDataSource.Factory(context)
                 ProgressiveMediaSource.Factory(factory)

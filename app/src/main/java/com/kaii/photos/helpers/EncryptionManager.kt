@@ -197,6 +197,38 @@ object EncryptionManager {
         return decrypted
     }
 
+    /**
+     * Decrypt only the first 16-byte plaintext block of a CBC stream, without running doFinal
+     * (so no padding handling / full-file read). Used by IV recovery to cheaply sample the
+     * first plaintext block of a known-good sibling file.
+     *
+     * @return the first 16 plaintext bytes, or null if there isn't enough ciphertext.
+     */
+    fun decryptFirstBlock(cipherBytes: ByteArray, iv: ByteArray): ByteArray? {
+        if (cipherBytes.size < 32 || iv.size != 16) return null
+
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))
+
+        // feed two blocks: CBC.update buffers a trailing block for padding, so 32 bytes in
+        // yields at least the first decrypted block out
+        val out = cipher.update(cipherBytes.copyOfRange(0, 32))
+        return if (out != null && out.size >= 16) out.copyOfRange(0, 16) else null
+    }
+
+    /**
+     * Known first 16 plaintext bytes of every PNG file: signature + IHDR chunk header.
+     * Used by [SecureIvRecovery] as a candidate first-block when recovering a lost IV.
+     *
+     *     89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52
+     * (8-byte signature + 4-byte IHDR length=13 + "IHDR")
+     */
+    val KNOWN_PNG_FIRST_BLOCK = byteArrayOf(
+        0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+        0x00, 0x00, 0x00, 0x0D,                                     // IHDR chunk length (13)
+        0x49, 0x48, 0x44, 0x52                                      // "IHDR"
+    )
+
     /** return the encrypted byte array and an iv as the second param */
     fun encryptBytes(bytes: ByteArray): Pair<ByteArray, ByteArray> {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -223,6 +255,13 @@ object EncryptionManager {
             name = original.name,
             context = context
         )
+
+        // refuse invalid IVs early: the Android Keystore rejects short / all-zero IVs with
+        // InvalidAlgorithmParameterException on Cipher.init(), which is a hard crash.
+        // this is the last defence line — callers should validate before reaching here.
+        if (iv.size != 16 || iv.all { it.toInt() == 0 }) {
+            throw IllegalArgumentException("IV for $absolutePath is invalid (size=${iv.size}, allZero=${iv.all { it == 0.toByte() }})")
+        }
 
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), IvParameterSpec(iv))

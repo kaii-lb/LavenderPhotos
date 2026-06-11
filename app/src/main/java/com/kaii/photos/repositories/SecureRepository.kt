@@ -20,6 +20,7 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.SecureFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -275,7 +276,13 @@ class SecureRepository(
                 val iv = secureDao.getIvFromSecuredPath(file.absolutePath)
                 val thumbnailIv = secureDao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
 
-                iv?.plus(thumbnailIv ?: ByteArray(16))
+                // pad corrupted/short ivs to 16 zero bytes so the [fileIv(16)][thumbnailIv(16)][path]
+                // layout holds and getThumbnailIv() doesn't read into the path bytes; recover first
+                val fileIv =
+                    if (iv != null && iv.size == 16) iv
+                    else if (iv != null) SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: ByteArray(16)
+                    else ByteArray(16)
+                fileIv + (thumbnailIv ?: ByteArray(16))
             }
 
             val originalPath =
@@ -319,7 +326,7 @@ class SecureRepository(
                 item = item,
                 auth = params.value.info.auth,
                 endpoint = params.value.info.endpoint,
-                bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
+                bytes = decryptedBytes.plus(originalPath.encodeToByteArray())
             )
 
             mediaStoreData.add(securedItem)
@@ -373,7 +380,16 @@ class SecureRepository(
         file: File,
         context: Context
     ) = withContext(Dispatchers.IO) {
-        val iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+        var iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+
+        // recover a corrupted iv (ByteArray(0) from a failed-secure catch block) before decoding
+        if (iv.size != 16) {
+            val mimeType = Files.probeContentType(Path(file.absolutePath))
+            iv = SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: run {
+                Log.e(TAG, "Cannot generate thumbnail for ${file.name}: iv unrecoverable")
+                return@withContext
+            }
+        }
 
         val bytes = EncryptionManager.decryptBytes(
             bytes = file.readBytes(),

@@ -62,6 +62,9 @@ class LocalSecureManager(
         list.forEach { mediaItem ->
             val fileToBeHidden = File(mediaItem.absolutePath)
             val copyToPath = context.appSecureFolderDir + "/" + fileToBeHidden.name
+            // only set to ByteArray(0) if the encryption itself failed; keep null initially so we
+            // don't overwrite a valid iv when a later step (thumbnail generation) throws
+            var iv: ByteArray? = null
             try {
                 // set last modified so item shows up in correct place in locked folder
                 fileToBeHidden.setLastModified(lastModified)
@@ -76,7 +79,7 @@ class LocalSecureManager(
                 )
 
                 // encrypt file data and write to secure folder path
-                val iv =
+                iv =
                     EncryptionManager.encryptInputStream(
                         inputStream = fileToBeHidden.inputStream(),
                         outputStream = destinationFile.outputStream(),
@@ -138,11 +141,13 @@ class LocalSecureManager(
                 Log.e(TAG, e.toString())
                 e.printStackTrace()
 
+                // only store an empty iv if encryption itself produced nothing; don't overwrite a
+                // valid iv already persisted above when a later step (thumbnail generation) fails
                 secureDao.insertEntity(
                     SecuredItemEntity(
                         originalPath = mediaItem.absolutePath,
                         securedPath = copyToPath,
-                        iv = ByteArray(0)
+                        iv = iv ?: ByteArray(0)
                     )
                 )
             }
