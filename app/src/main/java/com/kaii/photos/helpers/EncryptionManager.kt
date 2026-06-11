@@ -256,9 +256,9 @@ object EncryptionManager {
             context = context
         )
 
-        // refuse invalid IVs early: the Android Keystore rejects short / all-zero IVs with
-        // InvalidAlgorithmParameterException on Cipher.init(), which is a hard crash.
-        // this is the last defence line — callers should validate before reaching here.
+        // reject unusable IVs early: a wrong-length IV throws InvalidAlgorithmParameterException at
+        // Cipher.init(), and an all-zero IV is this app's not-ready/corrupt sentinel (it would decode
+        // to garbage). last line of defence — callers should validate/recover before reaching here.
         if (iv.size != 16 || iv.all { it.toInt() == 0 }) {
             throw IllegalArgumentException("IV for $absolutePath is invalid (size=${iv.size}, allZero=${iv.all { it == 0.toByte() }})")
         }

@@ -84,12 +84,19 @@ class SecureRepository(
 
             val secureThumbnail = file.secureThumbnailImage(context)
             try {
-                // use{} flushes and closes the stream; the old .let{} leaked the fd and a
-                // never-flushed buffered stream could drop the trailing bytes
-                secureThumbnail.outputStream().use { it.write(encrypted) }
+                // use{} flushes and closes the stream; the old bare .let{} leaked the fd and a
+                // never-flushed buffered stream could drop the trailing bytes. keep the size split:
+                // some devices wouldn't write images under 8kb when going through a buffered stream
+                secureThumbnail.outputStream().use { raw ->
+                    if (encrypted.size <= 8 * 1024) raw.write(encrypted)
+                    else raw.buffered().use { it.write(encrypted) }
+                }
             } catch (e: IOException) {
+                // bail before inserting the row: a row pointing at a missing/truncated thumbnail
+                // passes verifyThumbnails' (row != null && file.exists()) check and decodes to garbage
                 Log.d(TAG, e.toString())
                 e.printStackTrace()
+                return
             }
 
             dao.insertEntity(
@@ -366,7 +373,7 @@ class SecureRepository(
             if (type == MediaType.Image) {
                 addImageThumbnail(file, context)
             } else {
-                addImageThumbnail(file.secureVideoThumbnailImage(context), context)
+                addVideoThumbnail(file, context)
             }
             generatedAny = true
         }
@@ -405,6 +412,47 @@ class SecureRepository(
             .get()
 
         addEncryptedThumbnail(context, thumbnail, file, secureDao)
+    }
+
+    /**
+     * Regenerate a secure video's thumbnail. The original source is already deleted by securing time,
+     * so the frame must come from the encrypted copy: decrypt it to the video cache, grab a frame,
+     * re-encrypt the thumbnail. Mirrors the create path in [LocalSecureManager.secure].
+     */
+    private suspend fun addVideoThumbnail(
+        file: File,
+        context: Context
+    ) = withContext(Dispatchers.IO) {
+        var iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+
+        if (iv.size != 16) {
+            val mimeType = Files.probeContentType(Path(file.absolutePath))
+            iv = SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: run {
+                Log.e(TAG, "Cannot generate video thumbnail for ${file.name}: iv unrecoverable")
+                return@withContext
+            }
+        }
+
+        val decrypted = try {
+            EncryptionManager.decryptVideo(file.absolutePath, iv, context) {}
+        } catch (e: Throwable) {
+            Log.e(TAG, "Cannot decrypt ${file.name} for thumbnail", e)
+            return@withContext
+        }
+
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(decrypted.absolutePath)
+            retriever.getScaledFrameAtTime(-1L, MediaMetadataRetriever.OPTION_CLOSEST, 1024, 1024)
+                ?.let { bitmap ->
+                    addEncryptedThumbnail(context, bitmap, file.secureVideoThumbnailImage(context), secureDao)
+                }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Cannot extract frame from ${file.name}", e)
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+            decrypted.delete()
+        }
     }
 
     override suspend fun getMediaCount(): Int {

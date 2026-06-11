@@ -7,6 +7,8 @@ import android.util.Log
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.SecuredItemEntity
 import java.io.File
+import java.io.RandomAccessFile
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Recovers AES-CBC IVs lost to the failed-secure catch bug (db stored ByteArray(0)).
@@ -16,7 +18,9 @@ import java.io.File
  * then `D_K(C0) xor P0`, where D_K(C0) is the zero-IV first block and P0 the true first 16 plaintext
  * bytes. We try candidate P0 values (format constants + the real first block of good siblings) and
  * validate each by actually decoding the reconstructed file, so a wrong guess is rejected rather than
- * persisted. Worst case is "no recovery", never corruption.
+ * persisted. For PNG the first 16 bytes are invariant so recovery is exact; for JPEG/WebM bytes 0..15
+ * are format metadata, so a validating-but-imperfect candidate can leave those few bytes slightly off
+ * while the media still decodes — never silent file corruption, but not a bit-exact guarantee either.
  *
  * Extend by adding a [Kind] and its constants in [constantsFor].
  */
@@ -25,6 +29,9 @@ object SecureIvRecovery {
 
     /** Cap on good siblings sampled as P0 candidates, to bound cost on large folders. */
     private const val MAX_SIBLING_CANDIDATES = 24
+
+    /** securedPaths that failed recovery this session, so we don't re-probe them on every load/open. */
+    private val unrecoverable = ConcurrentHashMap.newKeySet<String>()
 
     /** [recover] then persist the result so future operations skip recovery. Off-main-thread only. */
     suspend fun recoverAndPersist(
@@ -48,6 +55,9 @@ object SecureIvRecovery {
     /**
      * Recover a validated 16-byte IV for [securedFile], or null if the format isn't recoverable or
      * no candidate produced a decodable file. Does file IO + crypto + decode; off-main-thread only.
+     *
+     * Memory is bounded regardless of file size: the zero-IV plaintext is streamed to a temp file
+     * once, then each candidate only patches its first 16 bytes (bytes 16+ are identical).
      */
     fun recover(
         context: Context,
@@ -55,13 +65,7 @@ object SecureIvRecovery {
         mimeType: String?,
         dao: SecuredMediaItemEntityDao
     ): ByteArray? {
-        val encryptedBytes = try {
-            securedFile.readBytes()
-        } catch (e: Exception) {
-            Log.e(TAG, "recover: failed to read ${securedFile.name}", e)
-            return null
-        }
-        if (encryptedBytes.size < 32) return null
+        if (securedFile.absolutePath in unrecoverable) return null
 
         val kind = mimeType?.lowercase()?.let {
             when {
@@ -73,62 +77,92 @@ object SecureIvRecovery {
             }
         } ?: return null
 
-        // zero-IV decrypt: correct everywhere except bytes 0..15
-        val zeroDecrypted = try {
-            EncryptionManager.decryptBytes(encryptedBytes, ByteArray(16))
-        } catch (e: Exception) {
-            Log.e(TAG, "recover: zero-iv decrypt failed for ${securedFile.name}", e)
+        if (securedFile.length() < 32) return null
+
+        // D_K(C0): zero-IV decrypt of just the first block (only 32 cipher bytes read)
+        val zeroFirstBlock = try {
+            securedFile.inputStream().use { s -> ByteArray(32).takeIf { s.read(it) >= 32 } }
+                ?.let { EncryptionManager.decryptFirstBlock(it, ByteArray(16)) }
+        } catch (e: Throwable) {
+            Log.e(TAG, "recover: first-block decrypt failed for ${securedFile.name}", e)
+            null
+        } ?: return markUnrecoverable(securedFile)
+
+        // stream the full zero-IV decrypt to a temp file once; it's byte-correct from offset 16 on,
+        // so each candidate just patches the first 16 bytes in place and re-validates. don't cache a
+        // temp-creation failure as unrecoverable — it's transient (e.g. low disk) and may work later
+        val tempPlain = try {
+            File.createTempFile("iv_recovery_", ".tmp", context.cacheDir)
+        } catch (e: Throwable) {
+            Log.e(TAG, "recover: could not create temp file for ${securedFile.name}", e)
             return null
         }
-        if (zeroDecrypted.size < 16) return null
-        val zeroFirstBlock = zeroDecrypted.copyOfRange(0, 16) // == D_K(C0)
+        try {
+            try {
+                EncryptionManager.decryptInputStream(
+                    inputStream = securedFile.inputStream(),
+                    outputStream = tempPlain.outputStream(),
+                    fileSize = securedFile.length(),
+                    iv = ByteArray(16)
+                )
+            } catch (e: Throwable) {
+                Log.e(TAG, "recover: zero-iv decrypt failed for ${securedFile.name}", e)
+                return markUnrecoverable(securedFile)
+            }
 
-        // constants first, then siblings; de-duplicated to avoid re-validating the same guess
-        val candidates = LinkedHashSet<List<Byte>>()
-        constantsFor(kind).forEach { candidates.add(it.toList()) }
-        siblingFirstBlocks(securedFile, dao).forEach { candidates.add(it.toList()) }
+            // constants first, then siblings; de-duplicated to avoid re-validating the same guess
+            val candidates = LinkedHashSet<List<Byte>>()
+            constantsFor(kind).forEach { candidates.add(it.toList()) }
+            siblingFirstBlocks(securedFile, dao).forEach { candidates.add(it.toList()) }
 
-        for (candidate in candidates) {
-            val p0 = candidate.toByteArray()
-            val reconstructed = zeroDecrypted.copyOf().also { System.arraycopy(p0, 0, it, 0, 16) }
+            for (candidate in candidates) {
+                val p0 = candidate.toByteArray()
+                RandomAccessFile(tempPlain, "rw").use { it.seek(0); it.write(p0) }
 
-            if (!validates(context, reconstructed, kind)) continue
+                if (!validates(context, tempPlain, kind)) continue
 
-            val iv = ByteArray(16) { i -> (zeroFirstBlock[i].toInt() xor p0[i].toInt()).toByte() }
-            if (iv.all { it.toInt() == 0 }) continue // keystore rejects all-zero ivs; also a bad guess
+                val iv = ByteArray(16) { i -> (zeroFirstBlock[i].toInt() xor p0[i].toInt()).toByte() }
+                // all-zero is this app's not-ready/corrupt sentinel and also signals a bad guess
+                if (iv.all { it.toInt() == 0 }) continue
 
-            Log.d(TAG, "recover: validated IV for ${securedFile.name} ($kind)")
-            return iv
+                Log.d(TAG, "recover: validated IV for ${securedFile.name} ($kind)")
+                return iv
+            }
+        } finally {
+            tempPlain.delete()
         }
 
         Log.e(TAG, "recover: no candidate validated for ${securedFile.name} ($kind)")
+        return markUnrecoverable(securedFile)
+    }
+
+    private fun markUnrecoverable(securedFile: File): ByteArray? {
+        unrecoverable.add(securedFile.absolutePath)
         return null
     }
 
     private enum class Kind { PNG, JPEG, VIDEO, IMAGE_OTHER }
 
-    /** Decode-validate the reconstructed plaintext (cheap bounds/metadata check, no full render). */
-    private fun validates(context: Context, plaintext: ByteArray, kind: Kind): Boolean = when (kind) {
-        Kind.VIDEO -> validatesVideo(context, plaintext)
+    /** Decode-validate the reconstructed plaintext file (cheap bounds/metadata check, no full render). */
+    private fun validates(context: Context, plaintext: File, kind: Kind): Boolean = when (kind) {
+        Kind.VIDEO -> validatesVideo(plaintext)
         else -> validatesImage(plaintext)
     }
 
-    private fun validatesImage(plaintext: ByteArray): Boolean {
+    private fun validatesImage(plaintext: File): Boolean {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         return try {
-            BitmapFactory.decodeByteArray(plaintext, 0, plaintext.size, opts)
+            BitmapFactory.decodeFile(plaintext.absolutePath, opts)
             opts.outWidth > 0 && opts.outHeight > 0
         } catch (e: Exception) {
             false
         }
     }
 
-    private fun validatesVideo(context: Context, plaintext: ByteArray): Boolean {
-        val temp = File.createTempFile("iv_recovery_", ".tmp", context.cacheDir)
+    private fun validatesVideo(plaintext: File): Boolean {
         val retriever = MediaMetadataRetriever()
         return try {
-            temp.writeBytes(plaintext)
-            retriever.setDataSource(temp.absolutePath)
+            retriever.setDataSource(plaintext.absolutePath)
             val hasVideo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO)
             val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             hasVideo == "yes" || (width?.toIntOrNull() ?: 0) > 0
@@ -136,7 +170,6 @@ object SecureIvRecovery {
             false
         } finally {
             try { retriever.release() } catch (_: Exception) {}
-            temp.delete()
         }
     }
 

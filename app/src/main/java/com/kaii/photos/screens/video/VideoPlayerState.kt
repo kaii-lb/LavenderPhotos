@@ -256,8 +256,8 @@ class VideoPlayerState(
                         }
                     }
 
-                    // also reject all-zero IVs: the keystore rejects them and they
-                    // indicate a corrupted entry that couldn't be recovered above
+                    // also reject all-zero IVs: it's the not-ready/corrupt sentinel and would decode
+                    // to garbage; if recovery above couldn't fix it, abort rather than play noise
                     if (iv.all { it.toInt() == 0 }) {
                         Log.e(TAG, "IV for ${item.displayName} is all zeros, aborting")
                         decryptProgress(1f) // dismiss the decrypting spinner
