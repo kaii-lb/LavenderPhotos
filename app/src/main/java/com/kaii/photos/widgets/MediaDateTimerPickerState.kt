@@ -47,6 +47,8 @@ class MediaDateTimerPickerState(
             dateTaken = getDateTime().epochSeconds,
             overwriteLastModified = false
         )
+
+        setIsLoading(false)
     }
 }
 

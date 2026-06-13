@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +48,9 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.widgets.DateTimePickerState
 import com.kaii.photos.widgets.rememberDateTimePickerState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @Preview
@@ -182,6 +186,7 @@ fun DateTimePicker(
                         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
                     )
 
+                    val coroutineScope = rememberCoroutineScope()
                     FullWidthDialogButton(
                         text = stringResource(
                             id = when {
@@ -200,7 +205,16 @@ fun DateTimePicker(
                         if (showTimePicker) {
                             state.setIsLoading(loading = true)
                             onConfirm(state.getDateTime())
-                            onDismiss()
+
+                            coroutineScope.launch {
+                                var counter = 0
+                                while (state.isLoading && counter < 60) {
+                                    delay(1.seconds)
+                                    counter += 1
+                                }
+
+                                onDismiss()
+                            }
                         } else {
                             showTimePicker = true
                         }

@@ -337,7 +337,10 @@ fun ContentResolver.setDateForMedia(
     dateTaken: Long,
     overwriteLastModified: Boolean = true
 ) {
-    if (uri.toString().startsWith("/api")) return
+    if (uri.toString().startsWith("/api")) {
+        Log.e(TAG, "Cannot operate on a cloud item!\nUri was $uri")
+        return
+    }
 
     try {
         if (type == MediaType.Image) {
@@ -361,7 +364,7 @@ fun ContentResolver.setDateForMedia(
                 put(MediaColumns.DATE_ADDED, dateTaken)
                 put(MediaColumns.DATE_TAKEN, dateTaken * 1000)
 
-                if (overwriteLastModified) put(MediaColumns.DATE_MODIFIED, dateTaken)
+                if (overwriteLastModified) put(MediaColumns.DATE_MODIFIED, dateTaken * 1000)
             },
             null
         )

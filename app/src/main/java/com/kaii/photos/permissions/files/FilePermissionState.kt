@@ -30,7 +30,7 @@ class FilePermissionsState(
             uris
         )
 
-        return IntentSenderRequest.Builder(writeRequestIntent).build()
+        return IntentSenderRequest.Builder(writeRequestIntent.intentSender).build()
     }
 
     private fun checkGranted(uris: List<Uri>) = uris.all {
