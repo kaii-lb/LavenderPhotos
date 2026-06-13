@@ -198,7 +198,7 @@ class MediaPicker : ComponentActivity() {
             }
 
             navigation<Screens.Album>(
-                startDestination = Screens.Favourites.GridView::class
+                startDestination = Screens.Album.GridView::class
             ) {
                 composable<Screens.Album.GridView>(
                     typeMap = mapOf(

@@ -99,8 +99,6 @@ fun MediaItem(
                 enabled = !isDragSelecting.value
             ) {
                 if (isMediaPicker) {
-                    isDragSelecting.value = true
-
                     toggleSelection()
                 } else {
                     if (isSelecting()) {

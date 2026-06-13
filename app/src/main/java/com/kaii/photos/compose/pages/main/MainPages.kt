@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberFloatingToolbarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,8 +54,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDestination.Companion.hasRoute
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
@@ -64,7 +63,6 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
@@ -86,7 +84,14 @@ fun MainPages(
     refreshAlbums: suspend () -> Unit
 ) {
     val defaultTab by viewModel.defaultTab.collectAsStateWithLifecycle()
-    val tabList by viewModel.tabList.collectAsStateWithLifecycle()
+
+    val originalTabList by viewModel.tabList.collectAsStateWithLifecycle()
+    val tabList by remember {
+        derivedStateOf {
+            originalTabList.fastFilter { it != DefaultTabs.TabTypes.secure }
+        }
+    }
+
     val immichInfo by viewModel.immichInfo.collectAsStateWithLifecycle()
     val exitImmediately by viewModel.exitImmediately.collectAsStateWithLifecycle()
     val mainPhotosPaths by viewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
@@ -419,13 +424,11 @@ fun MainPages(
 
             if (incomingIntent != null) {
                 val context = LocalContext.current
-                val navController = LocalNavController.current
-
                 val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
                 val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
                 AnimatedContent(
-                    targetState = isSelecting && navController.currentBackStackEntry?.destination?.hasRoute(Screens.MainPages::class) == true,
+                    targetState = isSelecting,
                     transitionSpec = {
                         getAppBarContentTransition(isSelecting)
                     },
@@ -433,22 +436,28 @@ fun MainPages(
                         .align(Alignment.BottomCenter)
                 ) { state ->
                     if (!state) {
-                        MainAppBottomBar(
-                            pagerState = pagerState,
-                            tabs = tabList.fastFilter { it != DefaultTabs.TabTypes.secure },
-                            defaultTab = { defaultTab },
-                            scrollBehaviour = scrollBehaviour,
-                            selectionManager = selectionManager,
-                            confirmToDelete = { confirmToDelete },
-                            doNotTrash = { doNotTrash },
-                            allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-                            process = { action ->
-                                viewModel.runAction(
-                                    context = context,
-                                    action = action
-                                )
-                            }
-                        )
+                        AnimatedVisibility(
+                            visible = tabList.isNotEmpty(),
+                            enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it },
+                            exit = fadeOut() + slideOutVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it }
+                        ) {
+                            MainAppBottomBar(
+                                pagerState = pagerState,
+                                tabs = tabList,
+                                defaultTab = { defaultTab },
+                                scrollBehaviour = scrollBehaviour,
+                                selectionManager = selectionManager,
+                                confirmToDelete = { confirmToDelete },
+                                doNotTrash = { doNotTrash },
+                                allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
+                                process = { action ->
+                                    viewModel.runAction(
+                                        context = context,
+                                        action = action
+                                    )
+                                }
+                            )
+                        }
                     } else {
                         MediaPickerConfirmButton(
                             incomingIntent = incomingIntent,
