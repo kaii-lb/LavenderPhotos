@@ -118,10 +118,6 @@ class VideoPlayerState(
 
             val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
             current?.let { setAudioTrack(it) }
-        },
-        onPlayingChanged = { playing ->
-            if (playing) play()
-            else pause()
         }
     )
 

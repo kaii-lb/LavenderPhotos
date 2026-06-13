@@ -38,8 +38,7 @@ class LavenderExoPlayer(
     onDurationChanged: (duration: Float) -> Unit,
     onCurrentPositionChanged: (position: Float) -> Unit,
     onPlaybackStateChanged: (state: Int) -> Unit,
-    onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit,
-    onPlayingChanged: (playing: Boolean) -> Unit
+    onAudioTracksChanged: (audioTrack: List<AudioTrack>) -> Unit
 ) {
     companion object {
         private val TAG = LavenderExoPlayer::class.qualifiedName
@@ -150,11 +149,6 @@ class LavenderExoPlayer(
             override fun onTracksChanged(tracks: Tracks) {
                 super.onTracksChanged(tracks)
                 onAudioTracksChanged(getAudioTracks(tracks))
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                super.onIsPlayingChanged(isPlaying)
-                onPlayingChanged(isPlaying)
             }
         }
 
