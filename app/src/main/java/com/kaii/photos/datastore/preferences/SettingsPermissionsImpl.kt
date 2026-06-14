@@ -17,6 +17,7 @@ class SettingsPermissionsImpl(
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
     private val preserveDateOnMoveKey = booleanPreferencesKey("permissions_preserve_date_on_move_key")
     private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
+    private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
@@ -59,6 +60,20 @@ class SettingsPermissionsImpl(
     fun setDoNotTrash(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[doNotTrashKey] = value
+        }
+    }
+
+    /** When true, [android.view.WindowManager.LayoutParams.FLAG_SECURE] is not applied
+     * while the secure folder is open, allowing screenshots, screen recording and screen
+     * sharing of secure content. Defaults to false so secure content stays protected. */
+    fun getAllowSecureFolderScreenCapture(): Flow<Boolean> =
+        context.datastore.data.map {
+            it[allowSecureFolderScreenCaptureKey] == true
+        }
+
+    fun setAllowSecureFolderScreenCapture(value: Boolean) = scope.launch {
+        context.datastore.edit {
+            it[allowSecureFolderScreenCaptureKey] = value
         }
     }
 }

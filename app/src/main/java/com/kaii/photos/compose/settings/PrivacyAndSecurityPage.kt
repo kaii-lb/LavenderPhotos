@@ -52,17 +52,20 @@ fun PrivacyAndSecurityPage(
     val confirmToDelete by settings.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
     val preserveDate by settings.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val allowSecureFolderScreenCapture by settings.getAllowSecureFolderScreenCapture().collectAsStateWithLifecycle(initialValue = false)
 
     PrivacyAndSecurityPageImpl(
         isMediaManager = { isMediaManager },
         confirmToDelete = { confirmToDelete },
         preserveDate = { preserveDate },
         doNotTrash = { doNotTrash },
+        allowSecureFolderScreenCapture = { allowSecureFolderScreenCapture },
         modifier = modifier,
         setIsMediaManager = settings::setIsMediaManager,
         setConfirmToDelete = settings::setConfirmToDelete,
         setPreserveDate = settings::setPreserveDateOnMove,
         setDoNotTrash = settings::setDoNotTrash,
+        setAllowSecureFolderScreenCapture = settings::setAllowSecureFolderScreenCapture,
         onPermissionResult = {
             startupManager.onPermissionResult(
                 permission = Manifest.permission.MANAGE_MEDIA,
@@ -80,11 +83,13 @@ fun PrivacyAndSecurityPagePreview() {
         confirmToDelete = { false },
         preserveDate = { false },
         doNotTrash = { false },
+        allowSecureFolderScreenCapture = { false },
         modifier = Modifier,
         setIsMediaManager = {},
         setConfirmToDelete = {},
         setPreserveDate = {},
         setDoNotTrash = {},
+        setAllowSecureFolderScreenCapture = {},
         onPermissionResult = {}
     )
 }
@@ -95,11 +100,13 @@ private fun PrivacyAndSecurityPageImpl(
     confirmToDelete: () -> Boolean,
     preserveDate: () -> Boolean,
     doNotTrash: () -> Boolean,
+    allowSecureFolderScreenCapture: () -> Boolean,
     modifier: Modifier,
     setIsMediaManager: (value: Boolean) -> Unit,
     setConfirmToDelete: (value: Boolean) -> Unit,
     setPreserveDate: (value: Boolean) -> Unit,
     setDoNotTrash: (value: Boolean) -> Unit,
+    setAllowSecureFolderScreenCapture: (value: Boolean) -> Unit,
     onPermissionResult: (granted: Boolean) -> Unit
 ) {
     Scaffold(
@@ -186,6 +193,24 @@ private fun PrivacyAndSecurityPageImpl(
                     showBackground = false,
                     checked = doNotTrash(),
                     onSwitchClick = setDoNotTrash
+                )
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.secure_folder)
+                )
+            }
+
+            item {
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.permissions_allow_secure_folder_screen_capture),
+                    summary = stringResource(id = R.string.permissions_allow_secure_folder_screen_capture_desc),
+                    iconResID = R.drawable.visibility,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = allowSecureFolderScreenCapture(),
+                    onSwitchClick = setAllowSecureFolderScreenCapture
                 )
             }
         }
