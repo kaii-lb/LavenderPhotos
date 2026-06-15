@@ -88,7 +88,11 @@ fun MainPages(
     val originalTabList by viewModel.tabList.collectAsStateWithLifecycle()
     val tabList by remember {
         derivedStateOf {
-            originalTabList.fastFilter { it != DefaultTabs.TabTypes.secure }
+            originalTabList.let {
+                if (incomingIntent != null) {
+                    it.fastFilter { it != DefaultTabs.TabTypes.secure }
+                } else it
+            }
         }
     }
 
