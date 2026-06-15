@@ -113,6 +113,20 @@ fun SecurePhotoView(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
 
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
+
+    val allowScreenCapture by context.appModule.settings.permissions
+        .getAllowSecureFolderScreenCapture()
+        .collectAsStateWithLifecycle(initialValue = false)
+
+    // apply/clear FLAG_SECURE reactively so toggling the setting takes effect immediately
+    LaunchedEffect(allowScreenCapture) {
+        if (allowScreenCapture) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
     DisposableEffect(lifecycleState) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
@@ -134,7 +148,9 @@ fun SecurePhotoView(
                     }
 
                     else -> {
-                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        if (!allowScreenCapture) {
+                            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        }
                     }
                 }
             }

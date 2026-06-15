@@ -1013,6 +1013,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="permissions_grant_long">Grant Permission</string>
     <string name="permissions_do_not_trash">Don\'t use Trash Bin</string>
     <string name="permissions_do_not_trash_desc">Immediately and permanently delete items without moving to Trash Bin first</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Allow screen capture in Secure Folder</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">Allow screenshots, screen recording and screen sharing while the Secure Folder is open. Secure content may also appear in the recent apps preview. Leave off to keep it protected</string>
     <string name="permissions_read_images">Read Images</string>
     <string name="permissions_read_images_desc">Allow Lavender Photos to discover photos on the device</string>
     <string name="permissions_read_videos">Read Videos</string>
