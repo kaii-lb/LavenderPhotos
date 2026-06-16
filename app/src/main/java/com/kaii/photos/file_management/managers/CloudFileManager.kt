@@ -276,7 +276,7 @@ class CloudFileManager(
 
         albumsClient.rename(
             id = Uuid.parse(
-                uuidString = (album as AlbumType.Cloud).immichId
+                uuidString = album.immichId!!
             ),
             newName = newName
         ).let { success ->
