@@ -526,7 +526,7 @@ fun ContentResolver.getTrashPathsFromUriList(list: List<Uri>): List<Pair<Uri, St
 }
 
 fun Uri.toContentId(contentResolver: ContentResolver, type: MediaType) =
-    if (toString().startsWith("content://")) {
+    if (toString().startsWith("content://") && lastPathSegment!!.toLongOrNull() != null) {
         lastPathSegment!!.toLong()
     } else {
         val docPath = path!!.substringAfter("/document/")
