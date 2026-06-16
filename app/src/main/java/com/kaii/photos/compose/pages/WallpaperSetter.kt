@@ -15,33 +15,33 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.round
 import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -52,6 +52,10 @@ import com.kaii.photos.compose.app_bars.wallpaper_setter.WallpaperSetterTopBar
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.ui.theme.PhotosTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class WallpaperSetter : ComponentActivity() {
@@ -101,10 +105,16 @@ class WallpaperSetter : ComponentActivity() {
         var offset by remember { mutableStateOf(Offset.Zero) }
         var scale by remember { mutableFloatStateOf(1f) }
 
-        val bitmap = remember {
-            contentResolver.openInputStream(intent.data!!)?.use {
-                BitmapFactory.decodeStream(it)
-            } ?: createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+        var bitmap by remember {
+            mutableStateOf(createBitmap(512, 512, Bitmap.Config.ARGB_8888))
+        }
+
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                bitmap = contentResolver.openInputStream(intent.data!!)?.use {
+                    BitmapFactory.decodeStream(it)
+                } ?: createBitmap(512, 512, Bitmap.Config.ARGB_8888)
+            }
         }
 
         Scaffold(
@@ -125,8 +135,9 @@ class WallpaperSetter : ComponentActivity() {
             }
         ) { innerPadding ->
             val layoutDirection = LocalLayoutDirection.current
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
+                    .fillMaxSize()
                     .padding(
                         start = innerPadding.calculateStartPadding(layoutDirection),
                         top = 0.dp,
@@ -134,8 +145,8 @@ class WallpaperSetter : ComponentActivity() {
                         bottom = 0.dp
                     )
             ) {
-                val windowInfo = LocalWindowInfo.current
-                val aspectRatio = bitmap.width.toFloat() / bitmap.height
+                val containerWidth = constraints.maxWidth.toFloat()
+                val containerHeight = constraints.maxHeight.toFloat()
 
                 var imageSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -159,51 +170,51 @@ class WallpaperSetter : ComponentActivity() {
                     }
                 )
 
+                val windowInfo = LocalWindowInfo.current
+
                 GlideImage(
                     model = intent.data,
                     contentDescription = "Wallpaper",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillBounds,
                     modifier = Modifier
                         .layout { measurable, constraints ->
-                            val override =
-                                if (aspectRatio < 1f) {
-                                    constraints.maxWidth / aspectRatio
-                                } else {
-                                    constraints.maxHeight * aspectRatio
-                                }
+                            val scaleX = windowInfo.containerSize.width.toFloat() / bitmap.width
+                            val scaleY = windowInfo.containerSize.height.toFloat() / bitmap.height
+                            val scaleToFit = max(scaleX, scaleY)
+
+                            val targetWidth = (bitmap.width * scaleToFit).roundToInt()
+                            val targetHeight = (bitmap.height * scaleToFit).roundToInt()
+
+                            imageSize = IntSize(targetWidth, targetHeight)
 
                             val placeable = measurable.measure(
-                                if (aspectRatio < 1f) {
-                                    constraints.copy(
-                                        maxHeight = override.roundToInt()
-                                    )
-                                } else {
-                                    constraints.copy(
-                                        maxWidth = override.roundToInt()
-                                    )
-                                }
+                                Constraints.fixed(targetWidth, targetHeight)
                             )
 
-                            layout(placeable.width, placeable.height) {
-                                placeable.place(0, 0)
+                            layout(constraints.maxWidth, constraints.maxHeight) {
+                                placeable.place(
+                                    (constraints.maxWidth - targetWidth) / 2,
+                                    (constraints.maxHeight - targetHeight) / 2
+                                )
                             }
                         }
-                        .onGloballyPositioned {
-                            imageSize = it.size
+                        .graphicsLayer {
+                            scaleX = animatedScale
+                            scaleY = animatedScale
+                            translationX = animatedOffset.x
+                            translationY = animatedOffset.y
                         }
-                        .offset {
-                            animatedOffset.round()
-                        }
-                        .scale(animatedScale)
                         .pointerInput(Unit) {
                             detectTransformGestures { _, pan, zoom, _ ->
                                 scale = (scale * zoom).coerceIn(1f, 5f)
 
-                                val minX = (windowInfo.containerSize.width - imageSize.width * scale) / 2
-                                val maxX = -minX
+                                val centerX = (containerWidth - imageSize.width * scale) / 2
+                                val maxX = max(centerX, -centerX)
+                                val minX = min(centerX, -centerX)
 
-                                val minY = (windowInfo.containerSize.height - imageSize.height * scale) / 2
-                                val maxY = -minY
+                                val centerY = (containerHeight - imageSize.height * scale) / 2
+                                val maxY = max(centerY, -centerY)
+                                val minY = min(centerY, -centerY)
 
                                 offset = Offset(
                                     x = (offset.x + pan.x * scale).coerceIn(minX, maxX),
