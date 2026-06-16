@@ -30,13 +30,15 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 class SelectionManager(
     private val sortMode: MediaItemSortMode,
     private val scope: CoroutineScope,
     private val context: Context,
-    private val getMediaInDate: (Long) -> List<SelectedItem>
+    private val getMediaInDate: (Long) -> Map<Long, SelectedItem>
 ) {
     @Serializable
     data class SelectedItem(
@@ -53,13 +55,13 @@ class SelectionManager(
             get() = uri.startsWith("/api")
     }
 
-    private var _selection by mutableStateOf<Map<Long, List<SelectedItem>>>(emptyMap())
-    val selection = snapshotFlow { _selection.values.flatten() }
+    private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
+    val selection = snapshotFlow { _selection.values.flatMap { it.values } }
 
     private var _sections by mutableStateOf<List<Long>>(emptyList())
 
     private var manualEnable by mutableStateOf(false)
-    val enabled = snapshotFlow { _selection.values.flatten().isNotEmpty() || manualEnable }
+    val enabled = snapshotFlow { _selection.values.any { it.values.isNotEmpty() } || manualEnable }
 
     @OptIn(FlowPreview::class)
     val count = selection.map { it.size }.debounce(25.milliseconds)
@@ -74,7 +76,7 @@ class SelectionManager(
 
     fun isSelected(item: PhotoLibraryUIModel) =
         if (item is PhotoLibraryUIModel.MediaImpl) {
-            _selection[getKey(item)]?.any { it.id == item.item.id } == true
+            _selection[getKey(item)]?.containsKey(item.item.id) == true
         } else {
             _sections.contains(getKey(item))
         }
@@ -93,7 +95,7 @@ class SelectionManager(
         items: List<PhotoLibraryUIModel?>
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
-        if (_selection.values.flatten().size >= 2000) {
+        if (_selection.values.sumOf { it.values.size } >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
@@ -112,18 +114,19 @@ class SelectionManager(
         val grouped = items.fastMapNotNull { it as? PhotoLibraryUIModel.MediaImpl }.groupBy { getKey(it) }
 
         grouped.forEach { (key, list) ->
-            snapshot[key] = (snapshot[key] ?: emptyList()).toMutableList().apply {
-                val media = list.fastMap {
-                    SelectedItem(
-                        id = it.item.id,
-                        uri = it.item.uri,
-                        immichUrl = it.item.immichUrl,
-                        isImage = it.item.type == MediaType.Image,
-                        parentPath = it.item.parentPath
-                    )
+            snapshot[key] = (snapshot[key] ?: emptyMap()).toMutableMap().apply {
+                val media = list.associate {
+                    it.item.id to
+                            SelectedItem(
+                                id = it.item.id,
+                                uri = it.item.uri,
+                                immichUrl = it.item.immichUrl,
+                                isImage = it.item.type == MediaType.Image,
+                                parentPath = it.item.parentPath
+                            )
                 }
 
-                snapshot[key] = ((snapshot[key] ?: emptyList()) + media).distinct()
+                snapshot[key] = ((snapshot[key] ?: emptyMap()) + media)
 
                 val maxCount = getMediaInDate(epochToDayStart(key)).size
 
@@ -152,20 +155,28 @@ class SelectionManager(
 
         removed.groupBy { getMediaKey(it) }.forEach { (key, list) ->
             sections.remove(key)
-            snapshot[key] = snapshot[key]?.toMutableList()?.apply { removeAll { item -> item.id in list.fastMap { it.id } } } ?: emptyList()
+
+            val concurrentMap = ConcurrentHashMap(snapshot[key] ?: emptyMap())
+            snapshot[key] = concurrentMap.apply {
+                val ids = list.fastMap { it.id }
+                values.forEach {
+                    if (it.id in ids) remove(it.id)
+                }
+            }
         }
 
         added.groupBy { getMediaKey(it) }.forEach { (key, list) ->
-            snapshot[key] = (snapshot[key] ?: emptyList()) + list.map {
-                SelectedItem(
-                    id = it.id,
-                    uri = it.uri,
-                    immichUrl = it.immichUrl,
-                    isImage = it.type == MediaType.Image,
-                    parentPath = it.parentPath
-                )
+            snapshot[key] = (snapshot[key] ?: emptyMap()) + list.associate {
+                it.id to
+                        SelectedItem(
+                            id = it.id,
+                            uri = it.uri,
+                            immichUrl = it.immichUrl,
+                            isImage = it.type == MediaType.Image,
+                            parentPath = it.parentPath
+                        )
             }
-            snapshot[key] = snapshot[key]!!.distinct()
+            snapshot[key] = snapshot[key]!!
 
             val maxCount = getMediaInDate(epochToDayStart(key)).size
 
@@ -177,7 +188,7 @@ class SelectionManager(
         }
 
         // hardcoded android limit for handling uris
-        if (snapshot.values.flatten().size >= 2000) {
+        if (snapshot.values.sumOf { it.values.size } >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
@@ -215,7 +226,7 @@ class SelectionManager(
     private fun toggleMedia(item: MediaStoreData) {
         val key = getMediaKey(item)
 
-        if (_selection[key]?.any { it.id == item.id } == true) {
+        if (_selection[key]?.containsKey(item.id) == true) {
             remove(item, key)
         } else {
             add(item, key)
@@ -227,7 +238,7 @@ class SelectionManager(
         val sections = _sections.toMutableList()
 
         if (timestamp in sections) {
-            snapshot[timestamp] = emptyList()
+            snapshot[timestamp] = emptyMap()
             sections.removeAll { it == timestamp }
         } else {
             snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp))
@@ -257,7 +268,7 @@ class SelectionManager(
         key: Long
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
-        if (_selection.values.flatten().size >= 2000) {
+        if (_selection.values.sumOf { it.values.size } >= 2000) {
             scope.launch {
                 LavenderSnackbarController.pushEvent(
                     LavenderSnackbarEvent.MessageEvent(
@@ -274,20 +285,21 @@ class SelectionManager(
         val snapshot = _selection.toMutableMap()
         val sections = _sections.toMutableList()
 
-        val list = (snapshot[key] ?: emptyList()) + listOf(
-            SelectedItem(
-                id = item.id,
-                uri = item.uri,
-                immichUrl = item.immichUrl,
-                isImage = item.type == MediaType.Image,
-                parentPath = item.parentPath
-            )
+        val list = (snapshot[key] ?: emptyMap()) + mapOf(
+            item.id to
+                    SelectedItem(
+                        id = item.id,
+                        uri = item.uri,
+                        immichUrl = item.immichUrl,
+                        isImage = item.type == MediaType.Image,
+                        parentPath = item.parentPath
+                    )
         )
-        snapshot[key] = list.distinct()
+        snapshot[key] = list
 
         val maxCount = getMediaInDate(epochToDayStart(key)).size
 
-        if (list.distinct().size == maxCount) {
+        if (list.size == maxCount) {
             sections.add(key)
         }
 
@@ -299,7 +311,9 @@ class SelectionManager(
         val snapshot = _selection.toMutableMap()
         val sections = _sections.toMutableList()
 
-        snapshot[key] = snapshot[key]!!.toMutableList().apply { removeIf { it.id == item.id } }
+        snapshot[key] = (snapshot[key] ?: emptyMap()).toMutableMap().apply {
+            remove(item.id)
+        }
         sections.remove(key)
 
         _selection = snapshot
@@ -393,7 +407,7 @@ fun rememberSelectionManager(
             scope = coroutineScope,
             context = context,
             getMediaInDate = { timestamp ->
-                (0..<pagingItems.itemCount).mapNotNull {
+                (0..<min(pagingItems.itemCount, 2000)).mapNotNull {
                     val item = (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
 
                     if (item != null) {
@@ -408,7 +422,7 @@ fun rememberSelectionManager(
                         }
 
                         if (key in timestamp..timestamp + 86400) {
-                            SelectionManager.SelectedItem(
+                            item.id to SelectionManager.SelectedItem(
                                 id = item.id,
                                 uri = item.uri,
                                 immichUrl = item.immichUrl,
@@ -417,7 +431,7 @@ fun rememberSelectionManager(
                             )
                         } else null
                     } else null
-                }.take(2000)
+                }.toMap()
             }
         )
     }

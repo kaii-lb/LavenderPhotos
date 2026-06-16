@@ -55,31 +55,37 @@ interface MediaDao {
     fun getAllFavourites(): List<MediaStoreData>
 
     @Query(
-        value = "SELECT id, uri, immichUrl, parentPath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths) LIMIT 2000"
     )
-    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): Map<
+            @MapColumn(columnName = "keyId") Long,
+            SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id, uri, immichUrl, parentPath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND favourited = 1 LIMIT 2000"
     )
-    fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun favMediaInDateRange(timestamp: Long, dateModified: Boolean): Map<
+            @MapColumn(columnName = "keyId") Long,
+            SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id, uri, immichUrl, parentPath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 LIMIT 2000"
     )
-    fun mediaInDateRange(timestamp: Long, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, dateModified: Boolean): Map<
+            @MapColumn(columnName = "keyId") Long,
+            SelectionManager.SelectedItem>
 
     @Query(value = "UPDATE media SET favourited = :favourite WHERE id IN (:ids)")
     fun setFavouriteOnMedia(ids: Set<Long>, favourite: Boolean)

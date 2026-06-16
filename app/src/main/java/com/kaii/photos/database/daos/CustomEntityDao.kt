@@ -30,7 +30,7 @@ interface CustomEntityDao {
     fun mediaSize(album: String): Long
 
     @Query(
-        value = "SELECT media.id, media.uri, media.immichUrl, media.parentPath, " +
+        value = "SELECT media.id as keyId, media.id, media.uri, media.immichUrl, media.parentPath, " +
                 "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN custom_items ON media.id = custom_items.id " +
@@ -38,7 +38,9 @@ interface CustomEntityDao {
                 "CASE WHEN :dateModified = 1 THEN media.dateModified ELSE media.dateTaken END " +
                 "BETWEEN :timestamp AND :timestamp+86400 AND custom_items.album = :album LIMIT 2000"
     )
-    fun mediaInDateRange(timestamp: Long, album: String, dateModified: Boolean): List<SelectionManager.SelectedItem>
+    fun mediaInDateRange(timestamp: Long, album: String, dateModified: Boolean): Map<
+            @MapColumn(columnName = "keyId") Long,
+            SelectionManager.SelectedItem>
 
     @Query(value = "SELECT id FROM custom_items WHERE album = :album")
     suspend fun getAllIdsIn(album: String): List<Long>
