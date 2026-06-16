@@ -70,6 +70,11 @@ class SettingsAlbumsListImpl(
 
                     AlbumType.PlaceHolder -> false
                 }
+            }.fastMap { album ->
+                when (album) {
+                    is AlbumType.Folder -> album.copy(paths = album.paths.map { it.trim() }.toSet())
+                    else -> album
+                }
             }
 
             data[albumsKey] = json.encodeToString(present + newAlbums)
@@ -130,8 +135,8 @@ class SettingsAlbumsListImpl(
                     pinned = it.isPinned,
                     immichId = null,
                     paths = it.paths.map { path ->
-                        if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
-                        else path
+                        if (!path.startsWith("/storage/")) (baseInternalStorageDirectory + path.removePrefix("/")).trim()
+                        else path.trim()
                     }.toSet()
                 )
             }
@@ -219,9 +224,9 @@ class SettingsAlbumsListImpl(
 
             present[index] =
                 when (newInfo) {
-                    is AlbumType.Folder -> newInfo.let {
-                        if (!overwriteId) it.copy(id = id)
-                        else it
+                    is AlbumType.Folder -> newInfo.let { album ->
+                        if (!overwriteId) album.copy(id = id, paths = album.paths.map { it.trim() }.toSet())
+                        else album.copy(paths = album.paths.map { it.trim() }.toSet())
                     }
 
                     is AlbumType.Custom -> newInfo.let {
