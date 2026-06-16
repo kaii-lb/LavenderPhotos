@@ -24,7 +24,9 @@ import androidx.media3.ui.PlayerView
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.JobDebouncer
 import com.kaii.photos.helpers.SecureIvRecovery
+import com.kaii.photos.helpers.SingleJobRunner
 import com.kaii.photos.helpers.VideoPlayerConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -32,7 +34,6 @@ import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -41,7 +42,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
-import kotlin.math.ceil
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VideoPlayerState(
@@ -58,12 +58,13 @@ class VideoPlayerState(
         private val TAG = VideoPlayerState::class.qualifiedName
     }
 
-    private var playingJob: Job? = null
-    private var timeoutJob: Job? = null
+    private val playingRunner = SingleJobRunner(coroutineScope)
+    private val timeoutDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT)
+    private val endOfVideoDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.END_OF_VIDEO_TIMEOUT)
+
     private var currentSource = ""
     private var autoPlay = false
     private var loop = true // default to true to avoid autoplaying when we don't mean it (motion-photo)
-    private var hideTimeout = 0L
     private var loopMode = 0
     private var muteOnStart = true
     private var isReleased = false
@@ -298,36 +299,37 @@ class VideoPlayerState(
         setRepeatMode(player.duration)
     }
 
-    private suspend fun startTimeout() {
-        while (hideTimeout > 0) {
-            delay(1000)
-            hideTimeout -= 1000
-        }
-
-        if (!isPlaying) return
-
-        controlsVisible = false
-        onControlsTimeout()
-    }
-
     fun delayHide() {
-        timeoutJob?.cancel()
-        timeoutJob = coroutineScope.launch {
-            hideTimeout = VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT
-            startTimeout()
+        timeoutDebouncer.run {
+            if (!isPlaying) return@run
+
+            controlsVisible = false
+            onControlsTimeout()
         }
     }
+
+    private fun endOfVideo() =
+        currentPosition >= duration &&
+            duration != 0f &&
+            isPlaying &&
+            !loop &&
+            !isRepeatModeOn
 
     fun play() {
         if (!shouldPlay() || isReleased) return
 
         isPlaying = true
 
+        if (endOfVideo()) {
+            playingRunner.cancel()
+            endOfVideoDebouncer.cancel()
+            seekTo(0)
+        }
+
         player.setScrubbingModeEnabled(false)
         player.play()
 
-        playingJob?.cancel()
-        playingJob = coroutineScope.launch {
+        playingRunner.run {
             delayHide()
 
             while (isPlaying && shouldPlay()) {
@@ -335,19 +337,15 @@ class VideoPlayerState(
 
                 delay(250)
 
-                if (ceil(currentPosition) >= ceil(duration) &&
-                    duration != 0f &&
-                    isPlaying &&
-                    !loop &&
-                    !isRepeatModeOn
-                ) launch {
+
+                if (endOfVideo()) {
                     controlsVisible = true
                     isPlaying = false
-                    delay(2000)
-                    delayHide()
-                    player.pause()
-                    player.seekTo(0)
-                    currentPosition = 0f
+
+                    endOfVideoDebouncer.run {
+                        delayHide()
+                        seekTo(0)
+                    }
                 }
             }
         }
@@ -358,8 +356,8 @@ class VideoPlayerState(
 
         isPlaying = false
         controlsVisible = true
-        playingJob?.cancel()
-        playingJob = null
+
+        playingRunner.cancel()
 
         delayHide()
         player.pause()
