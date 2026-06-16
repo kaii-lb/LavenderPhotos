@@ -286,7 +286,12 @@ class SecureRepository(
                 // pad corrupted/short ivs to 16 zero bytes so the [fileIv(16)][thumbnailIv(16)][path]
                 // layout holds and getThumbnailIv() doesn't read into the path bytes; recover first
                 val fileIv =
-                    if (iv != null && iv.size == 16) iv
+                    if (iv != null && iv.size == 16) {
+                        // a 16-byte iv can still be wrong (decrypts to garbage); re-check it against the
+                        // format magic and re-recover if bad rather than trusting size==16 forever
+                        if (SecureIvRecovery.ivProducesValidHeader(file, iv, mimeType)) iv
+                        else SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: iv
+                    }
                     else if (iv != null) SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: ByteArray(16)
                     else ByteArray(16)
                 fileIv + (thumbnailIv ?: ByteArray(16))

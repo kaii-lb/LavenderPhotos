@@ -141,22 +141,83 @@ object SecureIvRecovery {
         return null
     }
 
+    /**
+     * Cheap trust check for a stored 16-byte IV: decrypt the first ciphertext block and compare it to
+     * the format's magic bytes. In CBC a wrong IV corrupts only those leading bytes, so this catches a
+     * valid-length-but-wrong IV without a full-file decrypt. Returns true (trust it) for formats with no
+     * magic we gate on, a non-16-byte IV, or an unreadable file; false means the caller should re-recover.
+     */
+    fun ivProducesValidHeader(securedFile: File, iv: ByteArray, mimeType: String?): Boolean {
+        if (iv.size != 16) return true
+        val magic = magicFor(mimeType) ?: return true
+
+        val head = try {
+            securedFile.inputStream().use { s -> ByteArray(32).takeIf { s.read(it) >= 32 } }
+        } catch (e: Throwable) {
+            Log.e(TAG, "ivProducesValidHeader: read failed for ${securedFile.name}", e)
+            null
+        } ?: return true
+
+        val firstBlock = EncryptionManager.decryptFirstBlock(head, iv) ?: return true
+        return headerMatchesMagic(firstBlock, magic)
+    }
+
+    /** Pure: does [firstBlock] begin with every byte of [magic]? Exposed for unit testing. */
+    fun headerMatchesMagic(firstBlock: ByteArray, magic: ByteArray): Boolean {
+        if (firstBlock.size < magic.size) return false
+        for (i in magic.indices) if (firstBlock[i] != magic[i]) return false
+        return true
+    }
+
+    /** Invariant leading bytes per gated format, or null when we don't gate the format. */
+    fun magicFor(mimeType: String?): ByteArray? {
+        val m = mimeType?.lowercase() ?: return null
+        return when {
+            m.contains("png") -> PNG_MAGIC
+            m.contains("jpeg") || m.contains("jpg") -> JPEG_MAGIC
+            else -> null
+        }
+    }
+
+    private val JPEG_MAGIC = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
+
+    private val PNG_MAGIC = byteArrayOf(
+        0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+    )
+
     private enum class Kind { PNG, JPEG, VIDEO, IMAGE_OTHER }
 
-    /** Decode-validate the reconstructed plaintext file (cheap bounds/metadata check, no full render). */
+    /** Validate the reconstructed plaintext file: full (downsampled) image decode, or video metadata. */
     private fun validates(context: Context, plaintext: File, kind: Kind): Boolean = when (kind) {
         Kind.VIDEO -> validatesVideo(plaintext)
         else -> validatesImage(plaintext)
     }
 
     private fun validatesImage(plaintext: File): Boolean {
+        // header-only bounds (inJustDecodeBounds) can pass on a wrong-IV candidate whose leading bytes
+        // still parse; force an actual downsampled decode so only real pixels are accepted.
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         return try {
             BitmapFactory.decodeFile(plaintext.absolutePath, opts)
-            opts.outWidth > 0 && opts.outHeight > 0
-        } catch (e: Exception) {
+            if (opts.outWidth <= 0 || opts.outHeight <= 0) return false
+
+            val decodeOpts = BitmapFactory.Options().apply {
+                inSampleSize = computeInSampleSize(opts.outWidth, opts.outHeight, 64)
+            }
+            val bitmap = BitmapFactory.decodeFile(plaintext.absolutePath, decodeOpts)
+            (bitmap != null).also { bitmap?.recycle() }
+        } catch (e: Throwable) {
             false
         }
+    }
+
+    /** Smallest power-of-two sample size that brings both dimensions at/below [target]. */
+    private fun computeInSampleSize(width: Int, height: Int, target: Int): Int {
+        var sample = 1
+        while (width / (sample * 2) >= target && height / (sample * 2) >= target) {
+            sample *= 2
+        }
+        return sample
     }
 
     private fun validatesVideo(plaintext: File): Boolean {
