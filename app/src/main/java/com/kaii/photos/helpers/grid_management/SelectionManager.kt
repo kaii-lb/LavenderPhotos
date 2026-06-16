@@ -207,7 +207,7 @@ class SelectionManager(
 
         sortMode.isDateModified -> item.getDateModifiedDay()
 
-        sortMode.isDisabled -> 0
+        // sortMode.isDisabled -> 0 // seems to cause animation state issues
 
         else -> item.getDateTakenDay()
     }

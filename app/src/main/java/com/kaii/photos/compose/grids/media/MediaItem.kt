@@ -169,90 +169,96 @@ fun MediaItem(
             }
         }
 
-        if (item.item.type == MediaType.Video) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = 2.dp, y = (-2).dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .padding(start = 4.dp, top = 0.dp, end = 6.dp, bottom = 0.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = 4.dp,
-                    alignment = Alignment.Start
-                )
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.movie_filled),
-                    contentDescription = stringResource(id = R.string.file_is_a_video),
-                    tint = Color.White,
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 2.dp,
+                alignment = Alignment.Start
+            )
+        ) {
+            if (item.item.type == MediaType.Video) {
+                Row(
                     modifier = Modifier
-                        .size(20.dp)
-                )
-
-                if (item.item.duration != null) {
-                    // show video duration text on the thumbnail
-                    Text(
-                        text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
-                        color = Color.White,
-                        fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
-                        fontWeight = FontWeight.Bold,
+                        .offset(x = 2.dp, y = (-2).dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .padding(start = 4.dp, top = 0.dp, end = 6.dp, bottom = 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 4.dp,
+                        alignment = Alignment.Start
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.movie_filled),
+                        contentDescription = stringResource(id = R.string.file_is_a_video),
+                        tint = Color.White,
                         modifier = Modifier
-                            .offset(y = 1.dp)
+                            .size(20.dp)
+                    )
+
+                    if (item.item.duration != null) {
+                        // show video duration text on the thumbnail
+                        Text(
+                            text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
+                            color = Color.White,
+                            fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .offset(y = 1.dp)
+                        )
+                    }
+                }
+            }
+
+            if (item.item.isRawImage()) {
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.raw_on),
+                        contentDescription = stringResource(id = R.string.media_is_raw),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .align(Alignment.Center)
                     )
                 }
             }
-        }
 
-        if (item.item.isRawImage()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(2.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.raw_on),
-                    contentDescription = stringResource(id = R.string.media_is_raw),
-                    tint = Color.White,
+            if (item.item.isGIF()) {
+                Box(
                     modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.Center)
-                )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.gif_2),
+                        contentDescription = stringResource(id = R.string.media_is_gif),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                    )
+                }
             }
-        }
 
-        if (item.item.isGIF()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(2.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.gif_2),
-                    contentDescription = stringResource(id = R.string.media_is_gif),
-                    tint = Color.White,
+            if (item.item.isCloud) {
+                Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center)
-                )
-            }
-        }
-
-        if (item.item.isCloud) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(2.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.cloud),
-                    contentDescription = stringResource(id = R.string.media_is_cloud),
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center)
-                )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.cloud),
+                        contentDescription = stringResource(id = R.string.media_is_cloud),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                    )
+                }
             }
         }
 
