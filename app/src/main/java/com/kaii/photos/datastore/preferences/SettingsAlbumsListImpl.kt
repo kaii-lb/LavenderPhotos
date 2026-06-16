@@ -2,6 +2,7 @@ package com.kaii.photos.datastore.preferences
 
 import android.content.Context
 import android.os.Environment
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -247,8 +248,18 @@ class SettingsAlbumsListImpl(
     }
 
     fun reset() = scope.launch {
-        context.datastore.edit {
-            it[albumsKey] = jsonDefaultAlbumsList
+        context.datastore.edit { data ->
+            val currentList = data[albumsKey] ?: return@edit
+            val filtered = json.decodeFromString<List<AlbumType>>(currentList).fastFilter {
+                it !is AlbumType.Folder
+            }
+
+            val string = data[albumGroupsKey] ?: "[]"
+            json.decodeFromString<List<AlbumGroup>>(string).forEach {
+                removeGroup(it.id)
+            }
+
+            data[albumsKey] = json.encodeToString(filtered)
         }
     }
 
