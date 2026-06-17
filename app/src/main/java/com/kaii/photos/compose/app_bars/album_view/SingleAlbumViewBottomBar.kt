@@ -3,9 +3,6 @@ package com.kaii.photos.compose.app_bars.album_view
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
@@ -37,13 +34,11 @@ fun SingleAlbumViewBottomBar(
             )
         }
     } else {
-        val context = LocalContext.current
         val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.uri.toUri() }, // TODO: move to file manager
-            contentResolver = context.contentResolver
+            items = { selectedItemsList }
         )
     }
 }

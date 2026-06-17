@@ -1,5 +1,8 @@
 package com.kaii.photos.helpers
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,5 +32,13 @@ class JobDebouncer(
             delay(delayMs)
             block()
         }
+    }
+}
+
+@Composable
+fun rememberSingleJobRunner(): SingleJobRunner {
+    val coroutineScope = rememberCoroutineScope()
+    return remember {
+        SingleJobRunner(coroutineScope)
     }
 }

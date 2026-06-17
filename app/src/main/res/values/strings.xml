@@ -1123,6 +1123,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="download">Download</string>
     <string name="upload">Upload</string>
     <string name="metadata">Metadata</string>
+    <string name="media_picker_processing_items">Processing items…</string>
+    <string name="media_picker_processing_items_body">Processing %1$d out of %2$d</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

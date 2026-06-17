@@ -11,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.util.fastMap
@@ -49,14 +48,11 @@ fun FavouritesViewBottomAppBar(
             )
         }
     } else {
-        val context = LocalContext.current
         val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
-        // TODO: move to file manager
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            uris = selectedItemsList.fastMap { it.uri.toUri() },
-            contentResolver = context.contentResolver
+            items = { selectedItemsList }
         )
     }
 }
