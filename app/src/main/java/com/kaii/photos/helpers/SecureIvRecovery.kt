@@ -33,6 +33,13 @@ object SecureIvRecovery {
     /** securedPaths that failed recovery this session, so we don't re-probe them on every load/open. */
     private val unrecoverable = ConcurrentHashMap.newKeySet<String>()
 
+    /**
+     * securedPaths whose stored 16-byte iv already passed [ivProducesValidHeader] this session. A secure
+     * file's content and iv are immutable once written, so a pass stays valid - cache it so reprocessing
+     * the same item (e.g. after a thumbnail rebuild) doesn't re-read 32 bytes and re-init a Cipher.
+     */
+    private val verifiedIvs = ConcurrentHashMap.newKeySet<String>()
+
     /** [recover] then persist the result so future operations skip recovery. Off-main-thread only. */
     suspend fun recoverAndPersist(
         context: Context,
@@ -149,6 +156,7 @@ object SecureIvRecovery {
      */
     fun ivProducesValidHeader(securedFile: File, iv: ByteArray, mimeType: String?): Boolean {
         if (iv.size != 16) return true
+        if (securedFile.absolutePath in verifiedIvs) return true
         val magic = magicFor(mimeType) ?: return true
 
         val head = try {
@@ -159,7 +167,11 @@ object SecureIvRecovery {
         } ?: return true
 
         val firstBlock = EncryptionManager.decryptFirstBlock(head, iv) ?: return true
-        return headerMatchesMagic(firstBlock, magic)
+        // only cache a genuine magic match; the early `return true`s above are "can't check, trust it"
+        // (transient read/decrypt failures included) and must stay retryable
+        return headerMatchesMagic(firstBlock, magic).also {
+            if (it) verifiedIvs.add(securedFile.absolutePath)
+        }
     }
 
     /** Pure: does [firstBlock] begin with every byte of [magic]? Exposed for unit testing. */
@@ -169,14 +181,23 @@ object SecureIvRecovery {
         return true
     }
 
-    /** Invariant leading bytes per gated format, or null when we don't gate the format. */
+    /**
+     * Invariant leading bytes per gated format, or null when we don't gate the format. Returns a fresh
+     * copy each call so the shared constant instances can't be mutated through this public accessor.
+     *
+     * mp4/mov are deliberately ungated: their first bytes are a box size, not a magic, so there's nothing
+     * cheap to check at offset 0.
+     */
     fun magicFor(mimeType: String?): ByteArray? {
         val m = mimeType?.lowercase() ?: return null
         return when {
             m.contains("png") -> PNG_MAGIC
             m.contains("jpeg") || m.contains("jpg") -> JPEG_MAGIC
+            m.contains("webp") -> WEBP_MAGIC
+            m.contains("gif") -> GIF_MAGIC
+            m.contains("webm") -> WEBM_MAGIC
             else -> null
-        }
+        }?.copyOf()
     }
 
     private val JPEG_MAGIC = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
@@ -184,6 +205,15 @@ object SecureIvRecovery {
     private val PNG_MAGIC = byteArrayOf(
         0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
     )
+
+    /** "RIFF" container tag; bytes 4-7 are a varying size, so we only gate the invariant prefix. */
+    private val WEBP_MAGIC = byteArrayOf(0x52, 0x49, 0x46, 0x46)
+
+    /** "GIF8", invariant across the 87a/89a versions. */
+    private val GIF_MAGIC = byteArrayOf(0x47, 0x49, 0x46, 0x38)
+
+    /** EBML magic that opens every Matroska/WebM stream. */
+    private val WEBM_MAGIC = byteArrayOf(0x1A, 0x45, 0xDF.toByte(), 0xA3.toByte())
 
     private enum class Kind { PNG, JPEG, VIDEO, IMAGE_OTHER }
 
@@ -211,8 +241,11 @@ object SecureIvRecovery {
         }
     }
 
-    /** Smallest power-of-two sample size that brings both dimensions at/below [target]. */
-    private fun computeInSampleSize(width: Int, height: Int, target: Int): Int {
+    /**
+     * Smallest power-of-two sample size that brings both dimensions at/below [target]. `internal`
+     * (not private) so unit tests in this module can exercise the arithmetic directly.
+     */
+    internal fun computeInSampleSize(width: Int, height: Int, target: Int): Int {
         var sample = 1
         while (width / (sample * 2) >= target && height / (sample * 2) >= target) {
             sample *= 2
