@@ -387,7 +387,9 @@ fun GlideView(
             .diskCacheStrategy(if (useCache && !isSecure) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .error(
                 when {
-                    isHidden -> R.drawable.empty_image
+                    // secure full-image decode failed: fall back to the working thumbnail rather than
+                    // the blank empty_image; broken_image only when there's no thumbnail
+                    isHidden -> thumbnailModel ?: R.drawable.broken_image
 
                     model is ImmichInfo -> model.copy(useThumbnail = true)
 
