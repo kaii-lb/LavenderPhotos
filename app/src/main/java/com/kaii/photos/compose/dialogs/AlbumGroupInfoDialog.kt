@@ -26,8 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -58,7 +59,10 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AlbumGroupInfoDialogPreview() {
-    val state = rememberModalBottomSheetState()
+    val state = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden
+    )
+
     runBlocking { state.expand() }
 
     AlbumGroupInfoDialog(

@@ -26,7 +26,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +56,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun PopUpAlbumChooser(
     selectedAlbums: SnapshotStateList<String>,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    sheetState: SheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+    ),
     albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
     key: (album: AlbumType) -> String,
     filter: (searchedForText: String, list: List<AlbumGridState.Album.Single>) -> List<AlbumGridState.Album.Single>,
