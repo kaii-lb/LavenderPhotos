@@ -2,6 +2,7 @@ package com.kaii.photos.datastore.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.kaii.photos.datastore.datastore
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,8 @@ class SettingsPermissionsImpl(
     private val preserveDateOnMoveKey = booleanPreferencesKey("permissions_preserve_date_on_move_key")
     private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
     private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
+    private val passwordKey = byteArrayPreferencesKey("permissions_password")
+    private val saltKey = byteArrayPreferencesKey("permissions_key")
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
@@ -74,6 +77,26 @@ class SettingsPermissionsImpl(
     fun setAllowSecureFolderScreenCapture(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[allowSecureFolderScreenCaptureKey] = value
+        }
+    }
+
+    fun getPassword() = context.datastore.data.map { data ->
+        data[passwordKey]?.takeIf { it.isNotEmpty() }
+    }
+
+    fun setPassword(password: ByteArray?) = scope.launch {
+        context.datastore.edit {
+            it[passwordKey] = password ?: ByteArray(0)
+        }
+    }
+
+    fun getSalt() = context.datastore.data.map { data ->
+        data[saltKey]?.takeIf { it.isNotEmpty() }
+    }
+
+    fun setSalt(salt: ByteArray?) = scope.launch {
+        context.datastore.edit {
+            it[saltKey] = salt ?: ByteArray(0)
         }
     }
 }

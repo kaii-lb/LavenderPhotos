@@ -64,6 +64,7 @@ import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
+import com.kaii.photos.compose.pages.ScreenLock
 import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
@@ -115,6 +116,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
+import com.kaii.photos.widgets.ExpressivePasswordFieldState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
@@ -129,10 +131,17 @@ val LocalNavController = compositionLocalOf<NavHostController> {
 }
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+    private lateinit var navController: NavHostController
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        var isCheckingCredentials = true
+        var isAppLocked = false
+
+        splashScreen.setKeepOnScreenCondition { isCheckingCredentials }
+
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val settings = applicationContext.appModule.settings
@@ -140,6 +149,10 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             startupManager.checkState()
+
+            val password = settings.permissions.getPassword().first()
+            isAppLocked = password != null
+            isCheckingCredentials = false
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 appModule.settings.permissions.setIsMediaManager(
@@ -150,7 +163,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
-
             PhotosTheme(
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -174,6 +186,8 @@ class MainActivity : ComponentActivity() {
 
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
 
+                                else if (isAppLocked) -> Screens.Startup.ScreenLock
+
                                 else -> Screens.MainPages
                             }
                     )
@@ -192,7 +206,7 @@ class MainActivity : ComponentActivity() {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val context = LocalContext.current
-        val navController = LocalNavController.current
+        navController = LocalNavController.current
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
@@ -252,6 +266,12 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.Startup.ProcessingPage> {
                     StartupLoadingPage(startupManager = startupManager)
+                }
+
+                composable<Screens.Startup.ScreenLock> {
+                    ScreenLock(
+                        action = ExpressivePasswordFieldState.Action.Unlock
+                    )
                 }
 
                 navigation<Screens.MainPages>(
@@ -671,6 +691,12 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Settings.MainPage.Debugging> {
                         DebuggingSettingsPage()
                     }
+
+                    composable<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock> {
+                        val screen = it.toRoute<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>()
+
+                        ScreenLock(action = screen.action)
+                    }
                 }
 
                 navigation<Screens.Settings.Misc>(
@@ -839,6 +865,19 @@ class MainActivity : ComponentActivity() {
                         ExistingWorkPolicy.REPLACE,
                         OneTimeWorkRequest.Builder(SyncWorker::class).build()
                     )
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val password = applicationContext.appModule.settings.permissions.getPassword().first()
+
+            if (password != null) launch(Dispatchers.Main) {
+                navController.popBackStack(Screens.MainPages, true)
+                navController.navigate(Screens.Startup.ScreenLock)
             }
         }
     }

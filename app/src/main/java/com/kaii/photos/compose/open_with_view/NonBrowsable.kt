@@ -57,7 +57,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
-import com.kaii.photos.compose.transformable
+import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData

@@ -126,3 +126,32 @@ fun rememberExportAuthManager(
         )
     }
 }
+
+@Composable
+fun rememberPasswordAuthManager(
+    onSuccess: () -> Unit
+): AuthManager {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val coroutineScope = rememberCoroutineScope()
+
+    return remember {
+        AuthManager(
+            context = context,
+            title = resources.getString(R.string.app_lock),
+            subtitle = resources.getString(R.string.app_lock_password),
+            onSuccess = onSuccess,
+            onFailure = {
+                coroutineScope.launch {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = resources.getString(R.string.secure_unlock_failed),
+                            duration = SnackbarDuration.Short,
+                            icon = R.drawable.secure_folder
+                        )
+                    )
+                }
+            }
+        )
+    }
+}
