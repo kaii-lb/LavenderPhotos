@@ -489,7 +489,7 @@ interface GenericFileManager {
                 media.map { item ->
                     AssetBulkUploadCheckItem(
                         checksum = hashes[item.id]!!,
-                        id = item.id.toString()
+                        id = item.immichId ?: item.id.toString()
                     )
                 }
             )
