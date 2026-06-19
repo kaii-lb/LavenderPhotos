@@ -39,7 +39,6 @@ class SecureFolderViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
         repo.detachFileObserver()
     }
 

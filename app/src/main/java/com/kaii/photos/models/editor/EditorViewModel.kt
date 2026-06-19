@@ -29,6 +29,7 @@ class EditorViewModel(
     album: AlbumType
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
+    private var exitOnSave = false
 
     val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
         scope = viewModelScope,
@@ -37,12 +38,6 @@ class EditorViewModel(
     )
 
     val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
-    val exitOnSave = settings.editing.getExitOnSave().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
@@ -103,12 +98,20 @@ class EditorViewModel(
 
     init {
         viewModelScope.launch {
-            settings.immich.getImmichBasicInfo().collect { info ->
-                assetsClient.setEndpoint(info.endpoint)
-                assetsClient.setAuth(info.auth)
+            launch {
+                settings.immich.getImmichBasicInfo().collect { info ->
+                    assetsClient.setEndpoint(info.endpoint)
+                    assetsClient.setAuth(info.auth)
 
-                albumsClient.setEndpoint(info.endpoint)
-                albumsClient.setAuth(info.auth)
+                    albumsClient.setEndpoint(info.endpoint)
+                    albumsClient.setAuth(info.auth)
+                }
+            }
+
+            launch {
+                settings.editing.getExitOnSave().collect {
+                    exitOnSave = it
+                }
             }
         }
     }
@@ -159,7 +162,7 @@ class EditorViewModel(
             newId = result
             setNavProps(navController)
 
-            if (exitOnSave.value && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
+            if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
                 navController.popBackStack()
             }
         }
@@ -197,7 +200,7 @@ class EditorViewModel(
             newId = result
             setNavProps(navController)
 
-            if (exitOnSave.value && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
+            if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
                 navController.popBackStack()
             }
         }

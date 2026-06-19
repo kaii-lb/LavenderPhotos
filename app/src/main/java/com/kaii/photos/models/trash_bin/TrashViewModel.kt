@@ -106,7 +106,6 @@ class TrashViewModel(
     val gridMediaFlow = repo.gridMediaFlow
 
     override fun onCleared() {
-        super.onCleared()
         repo.cancel()
     }
 

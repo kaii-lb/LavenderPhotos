@@ -29,7 +29,7 @@ class ImmichInfoViewModel(
 
     val info = settings.immich.getImmichBasicInfo().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        started = SharingStarted.Eagerly,
         initialValue = ImmichBasicInfo.Empty
     )
 
