@@ -223,7 +223,7 @@ private fun GeneralSettingsPageImpl(
                 if (showAlbumsSelectionDialog) {
                     PopUpAlbumChooser(
                         selectedAlbums = selectedAlbums,
-                        key = { (it as AlbumType.Folder).paths.first() },
+                        key = { (it as? AlbumType.Folder)?.paths?.first() ?: it.id },
                         filter = { searchedForText, albums ->
                             albums.filter { album ->
                                 album.name.contains(searchedForText, true)

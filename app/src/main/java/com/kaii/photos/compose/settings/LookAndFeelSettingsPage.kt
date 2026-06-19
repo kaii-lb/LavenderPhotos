@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.settings
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -52,11 +53,13 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
+import com.kaii.photos.compose.widgets.popup_choosers.language.LanguagePickerPopup
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.widgets.LanguagePickerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
@@ -210,6 +213,37 @@ private fun LookAndFeelSettingsPageImpl(
                     enabled = followDarkMode() == 3 || followDarkMode() == 1 || (followDarkMode() == 0 && isSystemInDarkTheme())
                 ) { checked ->
                     setFollowDarkMode(if (checked) 3 else 1)
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                item {
+                    PreferencesSeparatorText(stringResource(id = R.string.look_and_feel_language))
+                }
+
+                item {
+                    val context = LocalContext.current
+                    val state = remember { LanguagePickerState(context) }
+                    var showList by remember { mutableStateOf(false) }
+
+                    if (showList) {
+                        LanguagePickerPopup(
+                            state = state
+                        ) {
+                            showList = false
+                        }
+                    }
+
+                    PreferencesRow(
+                        title = stringResource(id = R.string.look_and_feel_app_language),
+                        summary = stringResource(id = R.string.look_and_feel_app_language_desc, state.currentLanguage.localName),
+                        iconResID = R.drawable.translate,
+                        position = RowPosition.Single,
+                        showBackground = false,
+                        goesToOtherPage = true
+                    ) {
+                        showList = true
+                    }
                 }
             }
 

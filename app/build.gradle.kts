@@ -83,6 +83,21 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    androidResources {
+        generateLocaleConfig = true
+
+        localeFilters.addAll(
+            listOf(
+                "en", "ar", "ca", "cs", "da",
+                "de", "el", "es", "et", "fr",
+                "gl", "hy", "in", "it", "ja",
+                "kn", "pl", "pt", "pt-rBR", "ru",
+                "sv", "tr", "uk", "vl", "zh",
+                "zh-rCN", "zh-rTW"
+            )
+        )
+    }
 }
 
 baselineProfile {

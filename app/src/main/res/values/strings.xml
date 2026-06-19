@@ -1092,6 +1092,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="search_by_date">Date</string>
     <string name="search_by_tag">Tag</string>
     <string name="search_no_tags_found">No tags added yet…</string>
+    <string name="search">Search</string>
+    <string name="search_nothing_found">Nothing found</string>
 
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
@@ -1178,6 +1180,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_views_blur_desc">Fill the background with a blurred version of the current image</string>
     <string name="look_and_feel_vibrate_on_media_click">Vibrate on Click</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Whether tapping on a media item issues a short vibration.</string>
+    <string name="look_and_feel_language">Language</string>
+    <string name="look_and_feel_language_selected">This language is selected</string>
+    <string name="look_and_feel_app_language">App Language</string>
+    <string name="look_and_feel_app_language_desc">Change the app\'s display language. May require app restart. Current: %1$s</string>
 
     <!-- Immich -->
     <string name="immich_title">Immich Backup</string>

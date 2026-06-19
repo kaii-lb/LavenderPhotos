@@ -58,13 +58,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Photos.Splashscreen"
-        android:windowSoftInputMode="adjustResize">
+        android:windowSoftInputMode="adjustResize"
+        tools:targetApi="33">
 
         <profileable android:shell="true" />
 
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -75,7 +76,7 @@
 
         <activity
             android:name=".compose.open_with_view.OpenWithView"
-            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:theme="@style/Theme.Photos">
             <intent-filter>
@@ -109,7 +110,7 @@
 
         <activity
             android:name=".compose.MediaPicker"
-            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:label="Lavender Photos"
             android:theme="@style/Theme.Photos">
@@ -138,7 +139,7 @@
 
         <activity
             android:name=".compose.pages.WallpaperSetter"
-            android:configChanges="orientation|screenSize|density|screenLayout"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:label="Lavender Photos"
             android:theme="@style/Theme.Photos">
