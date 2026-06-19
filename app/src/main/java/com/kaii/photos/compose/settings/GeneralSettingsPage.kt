@@ -50,6 +50,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,7 +58,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val settings = LocalContext.current.appModule.settings
     val navController = LocalNavController.current
 
-    val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
     val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptySet())
     val shouldShowEverything by settings.mainPhotosView.getShowEverything().collectAsStateWithLifecycle(initialValue = false)
     val autoDetectAlbums by settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
@@ -67,7 +67,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
     GeneralSettingsPageImpl(
-        allAlbums = { allAlbums },
         mainPhotosPaths = { mainPhotosPaths },
         shouldShowEverything = { shouldShowEverything },
         autoDetectAlbums = { autoDetectAlbums },
@@ -93,7 +92,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
     GeneralSettingsPageImpl(
-        allAlbums = { emptyList() },
         mainPhotosPaths = { emptySet() },
         shouldShowEverything = { false },
         autoDetectAlbums = { false },
@@ -118,7 +116,6 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsPageImpl(
-    allAlbums: () -> List<AlbumType>,
     mainPhotosPaths: () -> Set<String>,
     shouldShowEverything: () -> Boolean,
     autoDetectAlbums: () -> Boolean,
@@ -170,53 +167,16 @@ private fun GeneralSettingsPageImpl(
                         if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = {
-                        coroutineScope.launch {
-                            val singles = allAlbums()
-                                .filterIsInstance<AlbumType.Folder>()
-                                .filter {
-                                    it.paths.size == 1
-                                }
-
-                            selectedAlbums.clear()
-                            selectedAlbums.addAll(
-                                if (shouldShowEverything()) {
-                                    val flat = singles.flatMap { it.paths }
-
-                                    flat - mainPhotosPaths().toSet()
-                                } else {
-                                    mainPhotosPaths()
-                                }
-                            )
-                        }
+                        selectedAlbums.clear()
+                        selectedAlbums.addAll(mainPhotosPaths())
 
                         showAlbumsSelectionDialog = true
                     },
                     onSwitchClick = { checked ->
                         setShowEverything(checked)
 
-                        coroutineScope.launch {
-                            val singles = allAlbums()
-                                .filterIsInstance<AlbumType.Folder>()
-                                .filter {
-                                    it.paths.size == 1
-                                }
-
-                            selectedAlbums.clear()
-                            selectedAlbums.addAll(
-                                if (!checked) {
-                                    val flat = singles.flatMap { it.paths }
-
-                                    flat - mainPhotosPaths().toSet()
-                                } else {
-                                    mainPhotosPaths()
-                                }
-                            )
-
-                            clearMainPhotosAlbums()
-                            selectedAlbums.distinct().forEach { album ->
-                                addMainPhotosAlbum(album)
-                            }
-                        }
+                        selectedAlbums.clear()
+                        clearMainPhotosAlbums()
                     }
                 )
 
@@ -232,13 +192,18 @@ private fun GeneralSettingsPageImpl(
                             }
                         },
                         onDismiss = {
-                            clearMainPhotosAlbums()
+                            coroutineScope.launch(Dispatchers.Default) {
+                                clearMainPhotosAlbums()
 
-                            selectedAlbums.distinct().forEach { album ->
-                                addMainPhotosAlbum(album)
+                                selectedAlbums.distinct().forEach { album ->
+                                    addMainPhotosAlbum(album)
+                                }
+
+                                // hack as hell but fsr it's the only thing that works
+                                delay(200)
+
+                                showAlbumsSelectionDialog = false
                             }
-
-                            showAlbumsSelectionDialog = false
                         }
                     )
                 }
