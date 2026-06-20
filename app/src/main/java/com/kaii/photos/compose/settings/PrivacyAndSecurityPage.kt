@@ -45,7 +45,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.permissions.auth.rememberPasswordAuthManager
-import com.kaii.photos.widgets.ExpressivePasswordFieldState
+import com.kaii.photos.widgets.ExpressivePINFieldState
 
 @Composable
 fun PrivacyAndSecurityPage(
@@ -236,7 +236,9 @@ private fun PrivacyAndSecurityPageImpl(
             item {
                 val authManager = rememberPasswordAuthManager {
                     navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
-                        action = ExpressivePasswordFieldState.Action.Set
+                        action = ExpressivePINFieldState.Action.Set,
+                        password = null,
+                        salt = null
                     ))
                 }
 
@@ -251,7 +253,9 @@ private fun PrivacyAndSecurityPageImpl(
                             authManager.authenticate()
                         } else {
                             navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
-                                action = ExpressivePasswordFieldState.Action.Verify
+                                action = ExpressivePINFieldState.Action.Verify,
+                                password = null,
+                                salt = null
                             ))
                         }
                     }

@@ -1,7 +1,7 @@
 package com.kaii.photos.helpers
 
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.widgets.ExpressivePasswordFieldState
+import com.kaii.photos.widgets.ExpressivePINFieldState
 import kotlinx.serialization.Serializable
 
 interface Screens {
@@ -159,8 +159,30 @@ interface Screens {
             object PrivacyAndSecurity : Screens {
                 @Serializable
                 data class ScreenLock(
-                    val action: ExpressivePasswordFieldState.Action
-                ) : Screens
+                    val action: ExpressivePINFieldState.Action,
+                    val password: ByteArray?,
+                    val salt: ByteArray?
+                ) : Screens {
+                    override fun equals(other: Any?): Boolean {
+                        if (this === other) return true
+                        if (javaClass != other?.javaClass) return false
+
+                        other as ScreenLock
+
+                        if (action != other.action) return false
+                        if (!password.contentEquals(other.password)) return false
+                        if (!salt.contentEquals(other.salt)) return false
+
+                        return true
+                    }
+
+                    override fun hashCode(): Int {
+                        var result = action.hashCode()
+                        result = 31 * result + (password?.contentHashCode() ?: 0)
+                        result = 31 * result + (salt?.contentHashCode() ?: 0)
+                        return result
+                    }
+                }
             }
 
             @Serializable

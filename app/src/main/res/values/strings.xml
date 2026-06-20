@@ -1131,13 +1131,14 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <!--  App Lock  -->
     <string name="app_lock">App Lock</string>
     <string name="app_lock_password">Set PIN</string>
-    <string name="app_lock_password_desc">Required a PIN when the app starts up. Empty PIN removes the lock</string>
+    <string name="app_lock_password_desc">Requires a PIN when the app starts up. Empty PIN removes the lock</string>
     <string name="app_lock_password_set">Updated PIN</string>
     <string name="app_lock_password_cleared">PIN cleared</string>
     <string name="app_lock_unlock">App lock activated</string>
     <string name="app_lock_enter_pin">Enter your PIN</string>
     <string name="app_lock_set">Set app lock</string>
     <string name="app_lock_verify">Verify your PIN</string>
+    <string name="app_lock_confirm">Confirm your PIN</string>
     <string name="app_lock_submit">Submit PIN for checking</string>
     <string name="app_lock_backspace">Delete last input character</string>
 

@@ -22,14 +22,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.compose.modifiers.wiggle
-import com.kaii.photos.widgets.ExpressivePasswordFieldState
+import com.kaii.photos.widgets.ExpressivePINFieldState
 
 @Preview
 @Composable
-private fun ExpressivePasswordFieldPreview() {
-    ExpressivePasswordField(
+private fun ExpressivePINFieldPreview() {
+    ExpressivePINField(
         code = { emptyList() },
-        status = { ExpressivePasswordFieldState.Status.Idle },
+        status = { ExpressivePINFieldState.Status.Idle },
         modifier = Modifier
             .size(300.dp, 40.dp)
     )
@@ -37,15 +37,15 @@ private fun ExpressivePasswordFieldPreview() {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ExpressivePasswordField(
-    code: () -> List<ExpressivePasswordFieldState.Code>,
-    status: () -> ExpressivePasswordFieldState.Status,
+fun ExpressivePINField(
+    code: () -> List<ExpressivePINFieldState.Code>,
+    status: () -> ExpressivePINFieldState.Status,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .wiggle(
-                start = status() == ExpressivePasswordFieldState.Status.Error,
+                start = status() == ExpressivePINFieldState.Status.Error,
                 ratio = 0.025f,
                 durationMillis = 200
             ),
@@ -60,12 +60,12 @@ fun ExpressivePasswordField(
                 alignment = Alignment.CenterHorizontally
             )
         ) {
-            repeat(ExpressivePasswordFieldState.MAX_CODE_LENGTH) {
+            repeat(ExpressivePINFieldState.MAX_CODE_LENGTH) {
                 val color by animateColorAsState(
                     targetValue = when (status()) {
-                        ExpressivePasswordFieldState.Status.Successful -> Color(0xFFA2CB8B) // TODO: move to app theme
-                        ExpressivePasswordFieldState.Status.Error -> MaterialTheme.colorScheme.error
-                        ExpressivePasswordFieldState.Status.Idle -> MaterialTheme.colorScheme.primary
+                        ExpressivePINFieldState.Status.Successful -> Color(0xFFA2CB8B) // TODO: move to app theme
+                        ExpressivePINFieldState.Status.Error -> MaterialTheme.colorScheme.error
+                        ExpressivePINFieldState.Status.Idle -> MaterialTheme.colorScheme.primary
                     }
                 )
 

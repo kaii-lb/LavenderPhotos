@@ -7,35 +7,57 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.platform.LocalContext
 import androidx.graphics.shapes.RoundedPolygon
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.PinHasher
 import com.kaii.photos.helpers.SingleJobRunner
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-class ExpressivePasswordFieldState(
+class ExpressivePINFieldState(
     private val action: Action,
     passwordBytes: Flow<ByteArray?>,
     saltBytes: Flow<ByteArray?>,
     coroutineScope: CoroutineScope,
-    private val vibrator: Vibrator,
-    private val onSuccess: (password: ByteArray?, salt: ByteArray?) -> Unit
+    private val vibrator: Vibrator
 ) {
     data class Code(
         val data: Int,
         val shape: RoundedPolygon
     )
+
+    sealed interface Event {
+        object Failure : Event
+
+        data class Success(val password: ByteArray?, val salt: ByteArray?) : Event {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Success
+
+                if (!password.contentEquals(other.password)) return false
+                if (!salt.contentEquals(other.salt)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = password?.contentHashCode() ?: 0
+                result = 31 * result + (salt?.contentHashCode() ?: 0)
+                return result
+            }
+        }
+    }
 
     enum class Status {
         Successful,
@@ -46,7 +68,8 @@ class ExpressivePasswordFieldState(
     enum class Action {
         Unlock,
         Verify,
-        Set
+        Set,
+        Confirm
     }
 
     companion object {
@@ -62,14 +85,18 @@ class ExpressivePasswordFieldState(
         MaterialShapes.Pentagon
     )
 
-    private var password: ByteArray? = null
+    private var pin: ByteArray? = null
     private var salt: ByteArray? = null
     private val availableShapes = mutableListOf<RoundedPolygon>()
     private val runner = SingleJobRunner(coroutineScope)
     private val hasher = PinHasher()
 
+    private val _events = Channel<Event>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     private val _code = mutableStateListOf<Code>()
-    val code = snapshotFlow { _code.toList() }
+    val code: List<Code>
+        get() = _code
 
     private val _status = MutableStateFlow(Status.Idle)
     val status = _status.asStateFlow()
@@ -86,7 +113,7 @@ class ExpressivePasswordFieldState(
         coroutineScope.launch {
             launch {
                 passwordBytes.collect {
-                    password = it
+                    pin = it
                 }
             }
 
@@ -106,7 +133,7 @@ class ExpressivePasswordFieldState(
 
     fun addCode(data: Int) {
         if (_code.size >= MAX_CODE_LENGTH) {
-            setStatus(false, null, null)
+            setStatus(success = false, clear = false, hash = null, salt = null)
             return
         }
 
@@ -122,7 +149,7 @@ class ExpressivePasswordFieldState(
         val last = _code.lastOrNull()
 
         if (last == null) {
-            setStatus(false, null, null)
+            setStatus(success = false, clear = false, hash = null, salt = null)
             return
         }
 
@@ -134,46 +161,74 @@ class ExpressivePasswordFieldState(
     }
 
     fun submit() {
-        if (_code.size < MAX_CODE_LENGTH) {
-            setStatus(action == Action.Set && _code.isEmpty(), null, null)
+        if (action != Action.Confirm && _code.size < MAX_CODE_LENGTH) {
+            // if setting an empty pin, then pass an empty byte array for the confirmation
+            // to differentiate it from null (which will fall back to the previous pin)
+            setStatus(
+                success = action == Action.Set && _code.isEmpty(),
+                clear = false,
+                hash = ByteArray(0).takeIf { action == Action.Set },
+                salt = ByteArray(0).takeIf { action == Action.Set }
+            )
+
             return
         }
 
-        val chars = getCharPassword()
+        val chars = getCharPIN()
 
-        if (chars != null) {
-            when (action) {
-                Action.Set -> {
-                    val (newHash, newSalt) = hasher.hashNewPin(chars)
-                    setStatus(true, newHash, newSalt)
-                }
-
-                else -> {
-                    if (password == null || salt == null) {
-                        setStatus(false, null, null)
-                        return
-                    }
-
-                    val attemptHash = hasher.hashPinWithSalt(chars, salt!!)
-                    val isSuccess = attemptHash.contentEquals(password)
-
-                    setStatus(isSuccess, password, salt)
-                }
+        when (action) {
+            else if (chars == null) -> {
+                setStatus(success = true, clear = false, hash = null, salt = null)
             }
-        } else {
-            setStatus(true, null, null)
+
+            Action.Set -> {
+                val (newHash, newSalt) = hasher.hashNewPin(chars)
+                setStatus(success = true, clear = false, hash = newHash, salt = newSalt)
+            }
+
+            // To account for the lack of this case above
+            Action.Confirm if (chars.size < MAX_CODE_LENGTH) -> {
+                setStatus(success = false, clear = false, hash = null, salt = null)
+            }
+
+            else -> {
+                if (pin == null || salt == null) {
+                    setStatus(success = false, clear = false, hash = null, salt = null)
+                    return
+                }
+
+                val attemptHash = hasher.hashPinWithSalt(chars, salt!!)
+                val isSuccess = attemptHash.contentEquals(pin)
+
+                setStatus(success = isSuccess, clear = true, hash = pin, salt = salt)
+            }
         }
     }
 
-    private fun getCharPassword() = _code.joinToString("") { it.data.toString() }.toCharArray().takeIf { _code.isNotEmpty() }
+    private fun getCharPIN(): CharArray? {
+        if (_code.isEmpty()) return null
 
-    private fun setStatus(success: Boolean, hash: ByteArray?, salt: ByteArray?) {
+        val charArray = CharArray(_code.size)
+        for (i in _code.indices) {
+            charArray[i] = _code[i].data.digitToChar()
+        }
+
+        return charArray
+    }
+
+    private fun setStatus(
+        success: Boolean,
+        clear: Boolean,
+        hash: ByteArray?,
+        salt: ByteArray?
+    ) {
         _status.value = Status.Idle
 
         if (success) {
             _status.value = Status.Successful
-            onSuccess(hash, salt)
+            _events.trySend(Event.Success(hash, salt))
         } else {
+            _events.trySend(Event.Failure)
             _status.value = Status.Error
             vibrator.vibrateShort()
         }
@@ -181,29 +236,28 @@ class ExpressivePasswordFieldState(
         runner.run {
             delay(1000)
             _status.value = Status.Idle
-            reset()
+
+            if (clear) reset()
         }
     }
 }
 
 @Composable
-fun rememberExpressivePasswordFieldState(
-    action: ExpressivePasswordFieldState.Action,
-    passwordBytes: Flow<ByteArray?> = LocalContext.current.appModule.settings.permissions.getPassword(),
-    saltBytes: Flow<ByteArray?> = LocalContext.current.appModule.settings.permissions.getSalt(),
-    onSuccess: (password: ByteArray?, saltBytes: ByteArray?) -> Unit
-): ExpressivePasswordFieldState {
+fun rememberExpressivePINFieldState(
+    action: ExpressivePINFieldState.Action,
+    pinBytes: Flow<ByteArray?>,
+    saltBytes: Flow<ByteArray?>
+): ExpressivePINFieldState {
     val coroutineScope = rememberCoroutineScope()
     val vibrator = rememberVibratorManager()
 
-    return remember {
-        ExpressivePasswordFieldState(
+    return remember(action, pinBytes, saltBytes) {
+        ExpressivePINFieldState(
             action = action,
-            passwordBytes = passwordBytes,
+            passwordBytes = pinBytes,
             saltBytes = saltBytes,
             coroutineScope = coroutineScope,
-            vibrator = vibrator,
-            onSuccess = onSuccess
+            vibrator = vibrator
         )
     }
 }

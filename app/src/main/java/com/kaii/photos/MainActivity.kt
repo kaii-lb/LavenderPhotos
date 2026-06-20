@@ -87,6 +87,7 @@ import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
+import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.Updater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -116,7 +117,7 @@ import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
-import com.kaii.photos.widgets.ExpressivePasswordFieldState
+import com.kaii.photos.widgets.ExpressivePINFieldState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
@@ -270,7 +271,7 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.Startup.ScreenLock> {
                     ScreenLock(
-                        action = ExpressivePasswordFieldState.Action.Unlock
+                        action = ExpressivePINFieldState.Action.Unlock
                     )
                 }
 
@@ -692,10 +693,20 @@ class MainActivity : ComponentActivity() {
                         DebuggingSettingsPage()
                     }
 
-                    composable<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock> {
+                    composable<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>(
+                        typeMap = mapOf(
+                            typeOf<ByteArray?>() to NullableByteArrayNavType()
+                        )
+                    ) {
                         val screen = it.toRoute<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>()
 
-                        ScreenLock(action = screen.action)
+                        println("PASSWORD HASH ${screen.action} ${screen.password} ${screen.salt}")
+
+                        ScreenLock(
+                            action = screen.action,
+                            password = screen.password,
+                            salt = screen.salt
+                        )
                     }
                 }
 
