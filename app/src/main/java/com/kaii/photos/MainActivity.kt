@@ -700,8 +700,6 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val screen = it.toRoute<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>()
 
-                        println("PASSWORD HASH ${screen.action} ${screen.password} ${screen.salt}")
-
                         ScreenLock(
                             action = screen.action,
                             password = screen.password,
@@ -880,14 +878,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStop() {
+        super.onStop()
 
         lifecycleScope.launch(Dispatchers.IO) {
             val password = applicationContext.appModule.settings.permissions.getPassword().first()
 
             if (password != null) launch(Dispatchers.Main) {
-                navController.popBackStack(Screens.MainPages, true)
                 navController.navigate(Screens.Startup.ScreenLock)
             }
         }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ExpressivePINField
@@ -99,15 +100,20 @@ fun ScreenLock(
 
             val (hashedPassword, hashSalt) = event
 
-            println("PASSWORD ${hashedPassword?.toList()} ${hashSalt?.toList()}")
-
             when (action) {
                 ExpressivePINFieldState.Action.Unlock -> {
                     delay(AnimationConstants.DURATION_LONG.toLong())
-                    navController.navigate(Screens.MainPages) {
-                        popUpTo(Screens.Startup.ScreenLock) {
-                            inclusive = true
+
+                    if (navController.currentDestination?.hasRoute(Screens.MainPages::class) == true
+                        || navController.previousBackStackEntry == null
+                    ) {
+                        navController.navigate(Screens.MainPages) {
+                            popUpTo(Screens.Startup.ScreenLock) {
+                                inclusive = true
+                            }
                         }
+                    } else {
+                        navController.popBackStack()
                     }
                 }
 
