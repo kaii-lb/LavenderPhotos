@@ -6,8 +6,6 @@
     <string name="add_album">新增一個相簿</string>
     <string name="direct_path_album">直接使用路徑新增相簿</string>
     <string name="albums_main_list">主要相簿列表</string>
-    <string name="albums_main_list_selected">在此選中的相簿將顯示在主畫面</string>
-    <string name="albums_selected">選擇的相簿</string>
     <string name="albums_auto_detect">自動偵測相簿</string>
     <string name="albums_auto_detect_desc">偵測此設備上所有媒體的資料夾並將它們添加到相簿</string>
     <string name="albums_clear_list">清除相簿列表</string>
@@ -32,7 +30,6 @@
     <string name="tabs_customize">自訂分頁</string>
     <string name="privacy_policy_title">隱私政策</string>
     <string name="support">支援&amp;贊助</string>
-    <string name="version_info">版本資訊</string>
     <string name="updates">更新</string>
     <string name="updates_check">檢查更新</string>
     <string name="updates_whats_new">有什麼新的</string>

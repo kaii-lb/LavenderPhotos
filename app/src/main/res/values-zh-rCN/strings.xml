@@ -7,8 +7,6 @@
     <string name="add_album">添加一个相册</string>
     <string name="direct_path_album">使用绝对路径添加相册</string>
     <string name="albums_main_list">主页面全部显示</string>
-    <string name="albums_main_list_selected">在此选择的相册将显示于主照片视图中</string>
-    <string name="albums_selected">已选相册</string>
     <string name="albums_auto_detect">自动识别相册</string>
     <string name="albums_auto_detect_desc">检测本设备上所有包含媒体文件的文件夹，并添加至相册视图</string>
     <string name="albums_clear_list">清除相册列表</string>
@@ -45,7 +43,6 @@
     <string name="privacy_policy_title">隐私协议</string>
     <string name="privacy_policy">绝对没有！您的数据仅存于此设备，不会传输至任何地方。不会用于训练AI，没有信息收集算法，绝无任何数据利用。薰衣草图库始终是专注隐私保护的相册应用。</string>
     <string name="support">支持或捐赠</string>
-    <string name="version_info">版本信息</string>
     <string name="updates">更新</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_check_desc">应用启动时检查新版本，需手动安装</string>
@@ -145,7 +142,6 @@
     <string name="editing_pencil">铅笔</string>
     <string name="editing_highlighter">高光笔</string>
     <string name="editing_text">文本</string>
-    <string name="editing_failed">编辑图片保存失败</string>
     <string name="settings">设置</string>
     <string name="settings_general">通用</string>
     <string name="settings_theme">主题</string>
@@ -200,7 +196,6 @@
     <string name="media_restore">恢复</string>
     <string name="media_restore_confirm">恢复这些项目？</string>
     <string name="media_restore_processing">正在恢复文件</string>
-    <string name="media_progress">进度：</string>
     <string name="media_move">移动</string>
     <string name="media_copy">复制</string>
     <string name="media_rename">重命名</string>
@@ -237,7 +232,6 @@
     <string name="error_views_folder_non_existent">文件夹不存在</string>
     <string name="albums_main_list_desc_1">所选相册的照片将在主照片视图中显示</string>
     <string name="albums_main_list_desc_2">所选相册将不会在主照片界面中显示</string>
-    <string name="albums_main_list_selected_inverse">所选相册不会在主照片界面中显示</string>
     <string name="albums_custom_desc">添加任意位置的媒体文件</string>
     <string name="albums_folder_desc">从文件夹加载媒体文件</string>
     <string name="albums_pin">置顶此相册</string>
@@ -357,7 +351,6 @@
     <string name="immich_login_unavailable_desc">未连接到 Immich 账户</string>
     <string name="immich_login_found">当前登录：</string>
     <string name="immich_login">Immich 登录</string>
-    <string name="immich_login_confirm">登录</string>
     <string name="immich_login_ongoing">登录中…</string>
     <string name="immich_login_successful">登录成功！</string>
     <string name="immich_login_failed">登录失败</string>
@@ -438,8 +431,6 @@
     <string name="secure_unlock_failed">认证失败 :&lt;</string>
     <string name="secure_unlock_short">解锁文件夹</string>
     <string name="secure_move_out">要将媒体移出安全文件夹吗？</string>
-    <string name="settings_about_unknown_version">无法获取版本号</string>
-    <string name="media_restore_processing_desc">请稍候，正在处理媒体</string>
     <string name="close">关闭</string>
     <string name="changelog_name">日志</string>
     <string name="exif_name">名称：</string>

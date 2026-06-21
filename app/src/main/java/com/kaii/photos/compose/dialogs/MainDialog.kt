@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.dialogs
 
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -37,36 +36,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.settings.VersionInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
 import com.kaii.photos.compose.widgets.ExpressiveDialogRowWithAction
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
+import com.kaii.photos.compose.widgets.news.NewsPopup
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.models.news.NewsViewModelFactory
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private const val TAG = "com.kaii.photos.compose.dialogs.MainDialog"
 
 private enum class SettingsItems(
     val title: Int,
@@ -313,6 +313,7 @@ fun MainDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 fun LazyListScope.settingsColumnItems(
     navController: NavController,
     coroutineScope: CoroutineScope,
@@ -436,27 +437,23 @@ fun LazyListScope.settingsColumnItems(
 
     item {
         val context = LocalContext.current
-        val resources = LocalResources.current
-        val versionName = remember {
-            try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            } catch (e: Throwable) {
-                Log.e(TAG, e.toString())
-                resources.getString(R.string.settings_about_unknown_version)
+        var showVersionInfoDialog by remember { mutableStateOf(false) }
+
+        if (showVersionInfoDialog) {
+            ComponentViewModelScope(key = "News Section") {
+                NewsPopup(
+                    viewModel = viewModel(
+                        factory = NewsViewModelFactory(context = context),
+                        viewModelStoreOwner = LocalViewModelStoreOwner.current!!
+                    ),
+                    onDismiss = { showVersionInfoDialog = false }
+                )
             }
         }
 
-        var showVersionInfoDialog by remember { mutableStateOf(false) }
-        if (showVersionInfoDialog) {
-            VersionInfoDialog(
-                changelog = stringResource(id = R.string.changelog),
-                onDismiss = { showVersionInfoDialog = false }
-            )
-        }
-
         ExpressiveDialogRow(
-            title = versionName ?: stringResource(id = R.string.version_info),
-            icon = painterResource(id = R.drawable.info),
+            title = stringResource(id = R.string.news),
+            icon = painterResource(id = R.drawable.newspaper),
             position = RowPosition.Bottom,
             onClick = {
                 showVersionInfoDialog = true

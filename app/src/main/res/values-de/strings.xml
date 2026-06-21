@@ -7,8 +7,6 @@
     <string name="add_album">Album hinzufügen</string>
     <string name="direct_path_album">Pfad verwenden, um ein Album hinzuzufügen</string>
     <string name="albums_main_list">Alle in Hauptansicht anzeigen</string>
-    <string name="albums_main_list_selected">Hier ausgewählten Alben werden in der Hauptansicht der Fotos angezeigt</string>
-    <string name="albums_selected">Ausgewählte Alben</string>
     <string name="albums_auto_detect">Alben automatisch erkennen</string>
     <string name="albums_auto_detect_desc">Erkennt alle Ordner mit Medien auf diesem Gerät und fügt sie der Albenansicht hinzu</string>
     <string name="albums_clear_list">Alben-Liste leeren</string>
@@ -45,7 +43,6 @@
     <string name="privacy_policy_title">Datenschutzerklärung</string>
     <string name="privacy_policy">Es gibt keine! Die Daten bleiben alle auf Deinem Gerät. Es wird keine KI darauf trainiert, keine Algorithmen zum Sammeln von Informationen, nichts. Lavender Photos ist und bleibt eine auf Datenschutz ausgerichtete Galerie-App.</string>
     <string name="support">Unterstützen &amp; Spenden</string>
-    <string name="version_info">Versionsinfo</string>
     <string name="updates">Aktualisierungen</string>
     <string name="updates_check">Auf Updates überprüfen</string>
     <string name="updates_check_desc">Benachrichtigt über neue Version, wenn die App geöffnet. Installiert die Aktualisierung nicht automatisch</string>
@@ -74,7 +71,6 @@
     <string name="favourites_add_this">Zu Favoriten hinzufügen</string>
     <string name="albums_main_list_desc_1">Fotos ausgewählter Alben werden in der Hauptansicht gezeigt</string>
     <string name="albums_main_list_desc_2">Ausgewählte Alben werden nicht in der Hauptansicht angezeigt</string>
-    <string name="albums_main_list_selected_inverse">Ausgewählte Alben werden nicht in der Hauptansicht angezeigt</string>
     <string name="albums_custom_desc">Medien aus beliebigen Quellen hinzufügen</string>
     <string name="albums_folder_desc">Medien aus Ordner laden</string>
     <string name="albums_pin">Album anpinnen</string>
@@ -186,7 +182,6 @@
     <string name="editing_highlighter">Marker</string>
     <string name="editing_image">Bild</string>
     <string name="editing_saving">Bearbeitetes Bild speichern</string>
-    <string name="editing_failed">Fehler beim Speichern des bearbeiteten Bildes</string>
     <string name="editing_upload_image">Auswählen</string>
     <string name="editing_upload_image_failed">Bild konnte nicht ausgewählt werden</string>
     <string name="editing_bitrate_unit">Bit pro Sekunde</string>

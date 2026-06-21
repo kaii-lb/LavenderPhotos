@@ -19,7 +19,6 @@
     <string name="tabs_max_reached">Sa ei saa lisada üle 16 vahekaardi</string>
     <string name="tabs_min_reached">Olemas peab olema vähemalt üks vahekaart</string>
     <string name="return_to_previous_page">Tagasi eelmisele lehele</string>
-    <string name="version_info">Versiooniteave</string>
     <string name="updates">Uuendused</string>
     <string name="updates_check">Kontrolli uuendusi</string>
     <string name="updates_check_desc">Teavitab rakenduse avamisel uuenduse olemasolust, kuid ei paigalda seda</string>
@@ -41,8 +40,6 @@
     <string name="more_info">Lisateave</string>
     <string name="direct_path_album">Kasuta albumi lisamiseks täpset asukohta</string>
     <string name="albums_main_list">Albumite põhiline vaade</string>
-    <string name="albums_main_list_selected">Siia valitud albumid saavad olema nähtavad põhilises fotovaates</string>
-    <string name="albums_selected">Valitud albumid</string>
     <string name="albums_auto_detect">Tuvasta albumid automaatselt</string>
     <string name="albums_auto_detect_desc">Tuvastab selle seadme meediafailidega kaustad ja lisab need albumite vaatesse</string>
     <string name="albums_clear_list">Tühjenda albumite loend</string>
@@ -99,7 +96,6 @@
     <string name="editing_overwrite">Salvesta</string>
     <string name="editing_overwrite_desc">Kirjuta algne fail üle</string>
     <string name="editing_saving">Salvestan muudetud pilti</string>
-    <string name="editing_failed">Muudetud pildi salvestamine ei õnnestunud</string>
     <string name="debugging_loading">Veaotsing ja silumine…</string>
     <string name="video">Video</string>
     <string name="editing_crop">Kadreeri</string>
@@ -131,7 +127,6 @@
     <string name="media_delete">Kustuta</string>
     <string name="media_cancel">Katkesta</string>
     <string name="media_restore">Taasta</string>
-    <string name="media_progress">Edenemine:</string>
     <string name="media_move">Teisalda</string>
     <string name="media_copy">Kopeeri</string>
     <string name="media_rename">Muuda nime</string>
@@ -157,7 +152,6 @@
     <string name="filter_vintage">Vanamoodne</string>
     <string name="albums_main_list_desc_1">Näita valitud albumitest multimeediat</string>
     <string name="albums_main_list_desc_2">Näita multimeediat, mis ei leidu valitud albumites</string>
-    <string name="albums_main_list_selected_inverse">Siinvalitud albumid ei saa olema fotode põhivaates nähtavad</string>
     <string name="albums_remove">Eemalda</string>
     <string name="albums_pin">Tõsta see album esile</string>
     <string name="albums_unpin">Lõpeta selle albumi esiletõstmine</string>
@@ -211,7 +205,6 @@
     <string name="trash_empty_desc">Järgnevaga kustutad kõik prügikastis leiduva ja seda tegevust ei saa tagasi pöörata</string>
     <string name="media_restore_confirm">Kas taastad need objektid?</string>
     <string name="media_restore_processing">Taastan faile</string>
-    <string name="media_restore_processing_desc">Palun oota, kuni multimeediafailid on töödeldud</string>
     <string name="media_exif_erase">Kustuta EXIF-metateave</string>
     <string name="media_exif_done">EXIF-metateave on kustutatud</string>
     <string name="media_exif_failed">EXIF-metateabe kustutamine ei õnnestunud</string>

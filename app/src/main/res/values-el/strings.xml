@@ -16,10 +16,7 @@
     <string name="albums_main_list">Προβολή όλων στην Κεντρική σελίδα</string>
     <string name="albums_main_list_desc_1">Οι φωτογραφίες των επιλεγμένων συλλογών θα φαίνονται στην κεντρική σελίδα</string>
     <string name="albums_main_list_desc_2">Οι επιλεγμένες συλλογές δεν θα φαίνονται στην κεντρική σελίδα</string>
-    <string name="albums_main_list_selected">Οι επιλεγμένες συλλογές θα φαίνονται στην κεντρική σελίδα</string>
-    <string name="albums_main_list_selected_inverse">Οι επιλεγμένες συλλογές δεν θα φαίνονται στην κεντρική σελίδα</string>
     <string name="direct_path_album">Χρήση απευθείας διαδρομής για την προσθήκη συλλογής</string>
-    <string name="albums_selected">Επιλεγμένες Συλλογές</string>
     <string name="albums_auto_detect">Αυτόματη αναγνώριση συλλογών</string>
     <string name="albums_auto_detect_desc">Αναγνωρίζει όλους τους φακέλους με πολυμέσα στην συσκευή και τις προσθέτει στην σελίδα συλλογών</string>
     <string name="albums_clear_list">Εκκαθάριση λίστας συλλογών</string>

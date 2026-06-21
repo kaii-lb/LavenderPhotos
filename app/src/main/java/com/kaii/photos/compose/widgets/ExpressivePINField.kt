@@ -18,10 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.compose.modifiers.wiggle
+import com.kaii.photos.ui.theme.LocalExtraColorsPalette
 import com.kaii.photos.widgets.ExpressivePINFieldState
 
 @Preview
@@ -63,7 +63,7 @@ fun ExpressivePINField(
             repeat(ExpressivePINFieldState.MAX_CODE_LENGTH) {
                 val color by animateColorAsState(
                     targetValue = when (status()) {
-                        ExpressivePINFieldState.Status.Successful -> Color(0xFFA2CB8B) // TODO: move to app theme
+                        ExpressivePINFieldState.Status.Successful -> LocalExtraColorsPalette.current.success
                         ExpressivePINFieldState.Status.Error -> MaterialTheme.colorScheme.error
                         ExpressivePINFieldState.Status.Idle -> MaterialTheme.colorScheme.primary
                     }

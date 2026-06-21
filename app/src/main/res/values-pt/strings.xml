@@ -7,7 +7,6 @@
     <string name="add_album">Adicionar álbum</string>
     <string name="direct_path_album">Use o caminho de uma pasta para adicionar um álbum</string>
     <string name="albums_main_list">Lista Principal de Álbuns</string>
-    <string name="albums_selected">Álbuns Selecionados</string>
     <string name="albums_auto_detect">Detectar álbuns automaticamente</string>
     <string name="albums_clear_list_desc">Remover todos os álbuns, exceto Câmera e Download</string>
     <string name="albums_media_sorting">Ordenação de Mídia</string>
@@ -34,7 +33,6 @@
     <string name="privacy_policy_title">política de Privacidade</string>
     <string name="privacy_policy">Não existe! Nenhum dos seus dados vai para lugar nenhum além deste dispositivo. Nenhuma IA é treinada nele, nenhum algoritmo para coletar informações, nada. O Lavender Photos foi e sempre será um aplicativo de galeria focado em privacidade.</string>
     <string name="support">Apoio e Doações</string>
-    <string name="version_info">Informações da versão</string>
     <string name="updates">Atualizações</string>
     <string name="updates_check">Verificar atualizações</string>
     <string name="updates_check_desc">Notifica sobre uma nova versão ao abrir o aplicativo. A atualização não instala automaticamente</string>
