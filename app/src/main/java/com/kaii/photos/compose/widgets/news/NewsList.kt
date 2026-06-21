@@ -15,7 +15,7 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.kaii.photos.datasources.News
+import com.kaii.photos.domain.news.News
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.flow.flowOf

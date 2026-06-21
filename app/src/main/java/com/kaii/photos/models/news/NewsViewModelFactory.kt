@@ -3,7 +3,8 @@ package com.kaii.photos.models.news
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.kaii.photos.datasources.NewsDataSource
+import com.kaii.photos.data.datasources.NewsDataSource
+import com.kaii.photos.data.parsers.LnmParser
 import com.kaii.photos.repositories.NewsRepository
 
 @Suppress("UNCHECKED_CAST")
@@ -12,7 +13,11 @@ class NewsViewModelFactory(
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == NewsViewModel::class.java) {
-            val dataSource = NewsDataSource(context.applicationContext)
+            val dataSource = NewsDataSource(
+                context = context.applicationContext,
+                parser = LnmParser()
+            )
+
             val repository = NewsRepository(dataSource)
 
             return NewsViewModel(repository) as T

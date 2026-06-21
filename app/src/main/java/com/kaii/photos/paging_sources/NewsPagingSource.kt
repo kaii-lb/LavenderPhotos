@@ -2,7 +2,7 @@ package com.kaii.photos.paging_sources
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.kaii.photos.datasources.News
+import com.kaii.photos.domain.news.News
 import com.kaii.photos.repositories.NewsRepository
 
 class NewsPagingSource(

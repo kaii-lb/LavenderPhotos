@@ -1,11 +1,12 @@
 package com.kaii.photos.repositories
 
-import com.kaii.photos.datasources.NewsDataSource
+import com.kaii.photos.data.datasources.NewsDataSource
+import com.kaii.photos.domain.news.NewsPageResponse
 
 class NewsRepository(
     private val newsDataSource: NewsDataSource
 ) {
-    suspend fun getNewsData(page: Int, size: Int): NewsDataSource.PageResponse {
+    suspend fun getNewsData(page: Int, size: Int): NewsPageResponse {
         return newsDataSource.getPage(page, size)
     }
 }
