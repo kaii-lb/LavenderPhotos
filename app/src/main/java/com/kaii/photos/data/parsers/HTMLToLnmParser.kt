@@ -2,19 +2,23 @@ package com.kaii.photos.data.parsers
 
 class HTMLToLnmParser {
     fun parse(markdown: String): String {
-        return markdown.lineSequence().joinToString("\n") { line ->
-            when {
-                line.startsWith("<b><h4>Note: ") || line.startsWith("<b><h4>Critical: ") -> parseNote(line)
-
-                line.startsWith("<b><h4>- ") -> parseCategory(line)
-
-                line.startsWith("- ") -> parseItem(line)
-
-                line.startsWith("v") -> parseVersion(line)
-
-                else -> "" // ignore errors while parsing HTML so the app doesn't blow up
+        return markdown.lineSequence()
+            .filter {
+                it != "<ul>" && it != "</ul>" && it.isNotEmpty()
             }
-        }
+            .joinToString("\n") { line ->
+                when {
+                    line.startsWith("<b><h4>Note: ") || line.startsWith("<b><h4>Critical: ") -> parseNote(line)
+
+                    line.startsWith("<h4><b>") -> parseCategory(line)
+
+                    line.startsWith("<li>") -> parseItem(line)
+
+                    line.startsWith("v") -> parseVersion(line)
+
+                    else -> "" // ignore errors while parsing HTML so the app doesn't blow up
+                }
+            }
     }
 
     /** vX.Y.Z - Hotfix - Broken DD-MM-YYYY */
@@ -51,26 +55,36 @@ class HTMLToLnmParser {
         return "! urgency=$urgency info=$info"
     }
 
-    /** <b><h4>- Feature */
+    /** <h4><b>Feature</b></h4> */
     private fun parseCategory(line: String): String {
-        val category = line.replace("<b><h4>- ", "").replace("</h4></b>", "")
+        val category = line
+            .replace("<h4><b>", "")
+            .replace("</b></h4>", "")
+            .trim()
 
         return "+ category=$category"
     }
 
-    /** - Description. Fixes Issue: #123 */
+    /** <li>Description. Fixes Issue: #123</li> */
     private fun parseItem(line: String): String {
-        val issueNumberIndex = line.indexOf("Fixes Issue: ")
+        val cleanLine = line
+            .replace("<li>", "")
+            .replace("</li>", "")
+            .trim()
+
+        val issueNumberIndex = cleanLine.indexOf("Fixes Issue: ")
 
         val issueNumber = if (issueNumberIndex != -1) {
-            line.substring(issueNumberIndex + 13)
+            cleanLine.substring(issueNumberIndex + 13)
                 .drop(1)
-                .padStart(6, '0') // Fixes Issue: #123 -> 123
+                .padStart(6, '0')
         } else null
 
-        val title =
-            if (issueNumberIndex != -1) line.substring(0, issueNumberIndex).substringAfter("- ").trim()
-            else line.substringAfter("- ").trim()
+        val title = if (issueNumberIndex != -1) {
+            cleanLine.substring(0, issueNumberIndex).trim().removeSuffix(".")
+        } else {
+            cleanLine
+        }
 
         return if (issueNumber != null) {
             "- issueNumber=${issueNumber} title=$title"
