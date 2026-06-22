@@ -87,8 +87,8 @@
     <string name="updates_notice">Download Notice</string>
     <string name="updates_notice_desc">
         <![CDATA[
-            <p>This updater downloads apks from <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> which
-                means that they don\'t go through the additional screening and testing performed at IzzyOnDroid, F-Droid or elsewhere.
+            <p>This updater does NOT download APKs. It only links to <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>. This
+                means that these APKs don\'t go through the additional screening and testing performed at IzzyOnDroid, F-Droid or elsewhere.
 
                 <br><br>The builds hosted on GitHub are always signed, checked, and verified by the developer (kaii-lb), but it is up to you whether you want to use them or not.
 
@@ -96,13 +96,9 @@
             </p>
         ]]>
     </string>
-    <string name="updates_not_found">No Updates Found</string>
-    <string name="updates_new_version_available">New version available!</string>
-    <string name="updates_latest">Already on latest version</string>
-    <string name="updates_failed">Failed checking for updates</string>
+    <string name="updates_new_version_available">Update Available!</string>
+    <string name="updates_latest">Up to Date</string>
     <string name="updates_checking">Checking For Updates</string>
-    <string name="updates_start">Start Update</string>
-    <string name="updates_failed_download">Couldn\'t download update</string>
     <string name="updates_no_changelog">No Changelog Available</string>
 
     <!-- Secure Folder -->
@@ -727,9 +723,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="news">News</string>
     <string name="news_note">Note: %1$s</string>
     <string name="news_github_issue_number">Github Issue: #%1$d</string>
-    <string name="news_category_feature">Feature</string>
-    <string name="news_category_improvement">Improvement</string>
-    <string name="news_category_fix">Fix</string>
+    <string name="news_category_feature">Features</string>
+    <string name="news_category_improvement">Improvements</string>
+    <string name="news_category_fix">Fixes</string>
     <string name="news_version_latest">Latest</string>
     <string name="news_version_broken">Broken</string>
 </resources>

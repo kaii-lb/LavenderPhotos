@@ -34,12 +34,9 @@
     <string name="updates_check">檢查更新</string>
     <string name="updates_whats_new">有什麼新的</string>
     <string name="updates_notice">下載通知</string>
-    <string name="updates_not_found">沒有可用的更新</string>
     <string name="updates_new_version_available">有可用的新版本！</string>
     <string name="updates_latest">已經是最新版本</string>
-    <string name="updates_failed">檢查更新失敗</string>
     <string name="updates_checking">正在檢查更新</string>
-    <string name="updates_start">開始更新</string>
     <string name="secure_folder">安全資料夾</string>
     <string name="app_name">圖片</string>
     <string name="updates_check_desc">開啟應用時提醒更新。不會自動翁安裝更新</string>

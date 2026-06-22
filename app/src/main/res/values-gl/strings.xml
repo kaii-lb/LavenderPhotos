@@ -78,13 +78,9 @@
                 <br><br>Lavender Photos nunca se auto-actualiza, e só o fai co consentimento explícito da persoa usuaria.
             </p>
         ]]></string>
-    <string name="updates_not_found">Non hai novas versións</string>
     <string name="updates_new_version_available">Hai unha nova versión!</string>
     <string name="updates_latest">Xa usas a última versión</string>
-    <string name="updates_failed">Fallou a comprobación de actualizacións</string>
     <string name="updates_checking">Buscando actualizacións</string>
-    <string name="updates_start">Actualizar</string>
-    <string name="updates_failed_download">Non se puido descargar a actualización</string>
     <string name="updates_no_changelog">Non está dispoñible o rexistro cos cambios</string>
     <string name="locked_folder_help_top">O Cartafol Bloqueado é un cartafol protexido para as túas imaxes e vídeos neste dispositivo.\nO multimedia protexido non se sobe a ningunha outra parte e sempre permanece no dispositivo, cifrado cunha clave única en relación ao contrasinal do dispositivo ou datos da impresión dactilar.</string>
     <string name="locked_folder_help_bottom">Os datos protexidos non se poden restablecer se esqueces o contrasinal ou se retira a impresión dactilar.\nOs elementos protexidos vanse perder se desinstalas a app, fai copia de apoio para evitalo.</string>

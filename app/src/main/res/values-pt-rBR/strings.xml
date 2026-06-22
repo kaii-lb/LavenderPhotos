@@ -69,12 +69,9 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
                 <br><br>Lavender Photos nunca atualiza automaticamente e somente atualiza com seu consentimento explícito.
             </p>
         ]]></string>
-    <string name="updates_not_found">Não foram encontradas atualizações</string>
     <string name="updates_new_version_available">Nova versão disponível!</string>
     <string name="updates_latest">Já está na versão mais recente</string>
-    <string name="updates_failed">Falha ao procurar por atualizações</string>
     <string name="updates_checking">Procurando por atualizações</string>
-    <string name="updates_start">Iniciar Atualização</string>
     <string name="locked_folder_help_top">Diretório Trancado é um diretório seguro para suas fotos e vídeos nesse dispositivo.\nA mídia protegida nunca é enviada para nenhum lugar e sempre permanece no dispositivo, criptografado com uma chave única atrelada à senha do dispositivo ou dados biométricos.</string>
     <string name="locked_folder_help_bottom">Os dados protegdidos não podem ser recuperados se a senha for esquecida ou a biometria for removida.</string>
     <string name="secure_folder">Diretório Protegido</string>

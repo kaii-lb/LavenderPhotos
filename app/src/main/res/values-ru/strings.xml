@@ -48,12 +48,9 @@
     <string name="updates_check_desc">Уведомление о новой версии при открытии приложения. Не устанавливает обновление автоматически</string>
     <string name="updates_whats_new">Что нового</string>
     <string name="updates_notice">Уведомление о загрузке</string>
-    <string name="updates_not_found">Обновлений не найдено</string>
     <string name="updates_new_version_available">Доступна новая версия!</string>
     <string name="updates_latest">Уже установлена последняя версия</string>
-    <string name="updates_failed">Не удалось проверить наличие обновлений</string>
     <string name="updates_checking">Проверка наличия обновлений</string>
-    <string name="updates_start">Начать обновление</string>
     <string name="locked_folder_help_top">Защищённая папка — это защищённая папка для ваших изображений и видео на этом устройстве.\nЗащищённые медиафайлы никогда никуда не загружаются и всегда находятся на устройстве, зашифрованные ключом, уникальным для пароля или отпечатка пальца вашего устройства.</string>
     <string name="locked_folder_help_bottom">Защищённые данные невозможно восстановить, если вы забыли пароль или удалили отпечаток пальца.\nПри удалении приложения все сохраненные данные будут потеряны, поэтому сделайте их резервную копию.</string>
     <string name="secure_folder">Защищённая папка</string>
@@ -252,7 +249,6 @@
     <string name="navigation_search">Поиск</string>
     <string name="navigation_favourites">Избранное</string>
     <string name="navigation_trash">Корзина</string>
-    <string name="updates_failed_download">Не удалось скачать обновление</string>
     <string name="secure_export_failed">Не удалось экспортировать резервную копию!</string>
     <string name="secure_encryption_failed_no_permission">Невозможно зашифровать фотографии без разрешения</string>
     <string name="secure_migrating">Перенос</string>

@@ -79,12 +79,9 @@
             </p>
         ]]>
     </string>
-    <string name="updates_not_found">Güncelleme Bulunamadı</string>
     <string name="updates_new_version_available">Yeni sürüm mevcut!</string>
     <string name="updates_latest">Zaten en son sürümdesiniz</string>
-    <string name="updates_failed">Güncellemeler kontrol edilemedi</string>
     <string name="updates_checking">Güncellemeler Kontrol Ediliyor</string>
-    <string name="updates_start">Güncellemeyi Başlat</string>
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Güvenli Klasör, bu cihazdaki resimleriniz ve videolarınız için güvenli bir klasördür.\nGüvenli hale getirilen medya hiçbir yere yüklenmez ve her zaman cihazınızda, cihazınızın parolasına veya parmak izi verilerine özgü bir anahtarla şifrelenmiş olarak kalır.</string>
     <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>

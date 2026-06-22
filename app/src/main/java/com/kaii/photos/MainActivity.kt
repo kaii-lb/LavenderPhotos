@@ -85,11 +85,11 @@ import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.appModule
+import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.Updater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
@@ -114,14 +114,19 @@ import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.models.updater.UpdaterViewModel
+import com.kaii.photos.models.updater.UpdaterViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.photos.widgets.ExpressivePINFieldState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -217,15 +222,6 @@ class MainActivity : ComponentActivity() {
                     logManager.startRecording()
                 }
 
-                val checkForUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().first()
-                if (checkForUpdatesOnStartup) {
-                    val updater = Updater(
-                        context = context,
-                        coroutineScope = lifecycleScope
-                    )
-                    updater.startupUpdateCheck(navController)
-                }
-
                 val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
                 if (!hasClearedCache) {
                     settings.storage.clearThumbnailCache()
@@ -297,6 +293,31 @@ class MainActivity : ComponentActivity() {
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
                             factory = SearchViewModelFactory(context = context)
                         )
+
+                        val checkForUpdatesOnStartup by viewModel.checkUpdatesOnStartup.collectAsStateWithLifecycle()
+                        if (checkForUpdatesOnStartup) {
+                            val updaterViewModel = viewModel<UpdaterViewModel>(
+                                viewModelStoreOwner = storeOwner,
+                                factory = UpdaterViewModelFactory(context = context)
+                            )
+
+                            LaunchedEffect(Unit) {
+                                updaterViewModel.updateStateChannel.collectLatest { state ->
+                                    if (state != UpdateState.Available) return@collectLatest
+
+                                    LavenderSnackbarController.pushEvent(
+                                        event = LavenderSnackbarEvent.ActionEvent(
+                                            message = resources.getString(R.string.updates_new_version_available),
+                                            icon = R.drawable.update,
+                                            actionIcon = R.drawable.download,
+                                            action = {
+                                                navController.navigate(Screens.Settings.Misc.UpdatePage)
+                                            }
+                                        )
+                                    )
+                                }
+                            }
+                        }
 
                         MainPages(
                             viewModel = viewModel,
@@ -716,7 +737,20 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Settings.Misc.UpdatePage> {
-                        UpdatesPage()
+                        val viewModel = viewModel<UpdaterViewModel>(
+                            factory = UpdaterViewModelFactory(context)
+                        )
+
+                        val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+                        val news by viewModel.news.collectAsStateWithLifecycle()
+                        val showUpdateNotice by viewModel.showUpdateNotice.collectAsStateWithLifecycle()
+
+                        UpdatesPage(
+                            updateState = { updateState },
+                            news = { news },
+                            showUpdateNotice = { showUpdateNotice },
+                            onRefresh = viewModel::refresh
+                        )
                     }
 
                     composable<Screens.Settings.Misc.LicensesPage> {

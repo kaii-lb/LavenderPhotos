@@ -8,5 +8,6 @@ val LocalExtraColorsPalette = staticCompositionLocalOf { ExtraColorsPalette() }
 
 @Immutable
 data class ExtraColorsPalette(
-    val success: Color = com.kaii.photos.ui.theme.success
+    val success: Color = com.kaii.photos.ui.theme.success,
+    val onSuccess: Color = com.kaii.photos.ui.theme.onSuccess
 )

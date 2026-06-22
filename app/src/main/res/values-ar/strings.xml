@@ -48,12 +48,9 @@
     <string name="updates_check_desc">ينبه عن الإصدارات الجديدة عند فتح التطبيق. لا تثبت التحديث تلقائيًا</string>
     <string name="updates_whats_new">ما الجديد</string>
     <string name="updates_notice">تنزيل الإشعار</string>
-    <string name="updates_not_found">لم يتم العثور على تحديثات</string>
     <string name="updates_new_version_available">نسخة جديدة متاحة!</string>
     <string name="updates_latest">من الاساس على أحدث إصدار</string>
-    <string name="updates_failed">لقد فشل التحقق من التحديثات</string>
     <string name="updates_checking">جاري التحقق من التحديثات</string>
-    <string name="updates_start">ابدأ التحديث</string>
     <string name="locked_folder_help_top">المجلد المأمن هو مجلد آمن لصورك ومقاطع الفيديو على هذا الجهاز.\nلا يتم تحميل المحتوى أبدًا في أي مكان وهي دائمًا على الجهاز ، مشفرة بمفتاح فريد من نوعه لكلمة مرور الجهاز أو بيانات البصمات.</string>
     <string name="locked_folder_help_bottom">لا يمكن استعادة البيانات المأمته إذا تم نسيان كلمة المرور أو إزالة بصمة الإصبع. سيتم فقدان العناصر المؤمنة عند إلغاء تثبيت التطبيق،قم بنسخها احتياطيًا وفقًا لذلك.</string>
     <string name="secure_folder">مجلد آمن</string>
@@ -233,7 +230,6 @@
     <string name="licenses_extra">تفاصيل اضافية</string>
     <string name="licenses_extra_desc">عرض معلومات مفصلة التراخيص</string>
     <string name="special_thanks_to">شكر خاص ل:</string>
-    <string name="updates_failed_download">تعذر تنزيل التحديث</string>
     <string name="updates_no_changelog">لا يوجد سجل التغيير متاح</string>
     <string name="secure_getting_file_info">جارٍ الحصول على معلومات الملف…</string>
     <string name="secure_please_wait">انتظر من فضلك…</string>

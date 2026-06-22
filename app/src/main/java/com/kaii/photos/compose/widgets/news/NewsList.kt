@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -40,7 +41,7 @@ private fun NewsListPreview() {
                             id = 1
                         ),
                         News.Category(
-                            category = News.Category.Type.Feature,
+                            category = News.Category.Type.Features,
                             id = 2
                         ),
                         News.Item(
@@ -59,7 +60,7 @@ private fun NewsListPreview() {
                             id = 5
                         ),
                         News.Category(
-                            category = News.Category.Type.Improvement,
+                            category = News.Category.Type.Improvements,
                             id = 6
                         ),
                         News.Item(
@@ -68,7 +69,7 @@ private fun NewsListPreview() {
                             id = 7
                         ),
                         News.Category(
-                            category = News.Category.Type.Fix,
+                            category = News.Category.Type.Fixes,
                             id = 8
                         ),
                         News.Item(
@@ -88,7 +89,7 @@ private fun NewsListPreview() {
                             id = 11
                         ),
                         News.Category(
-                            category = News.Category.Type.Feature,
+                            category = News.Category.Type.Features,
                             id = 12
                         ),
                         News.Item(
@@ -127,47 +128,99 @@ fun NewsList(
                 it.id
             }
         ) { index ->
-            when (val item = list[index]) {
-                is News.Section -> {
-                    NewsSection(
-                        version = item.version,
-                        date = item.date,
-                        status = item.status,
-                        modifier = Modifier
-                            .padding(
-                                top = if (index - 1 > 0) {
-                                    if (list[index - 1] is News.Item) 8.dp
-                                    else 0.dp
-                                } else 8.dp
-                            )
-                    )
-                }
+            val item = list[index]
 
-                is News.Category -> {
-                    NewsCategory(
-                        category = item.category
-                    )
-                }
-
-                is News.Item -> {
-                    NewsCard(
-                        title = item.title,
-                        issueNumber = item.issueNumber,
-                        position = calcRowPosition(index, list.itemCount) {
-                            list[it]!!
-                        }
-                    )
-                }
-
-                is News.Note -> {
-                    NewsNote(
-                        info = item.info,
-                        urgency = item.urgency
-                    )
-                }
-
-                null -> {}
+            if (item != null) {
+                ItemContent(
+                    item = item,
+                    position = calcRowPosition(index, list.itemCount) {
+                        list[it]!!
+                    },
+                    sectionTopPadding = {
+                        if (index - 1 > 0) {
+                            if (list[index - 1] is News.Item) 8.dp
+                            else 0.dp
+                        } else 8.dp
+                    }
+                )
             }
+        }
+    }
+}
+
+@Composable
+fun NewsList(
+    list: List<News>,
+    modifier: Modifier = Modifier
+) {
+    val state = rememberLazyListState()
+
+    LazyColumn(
+        state = state,
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(
+            space = 2.dp,
+            alignment = Alignment.Top
+        )
+    ) {
+        items(
+            count = list.size,
+            key = { list[it].id }
+        ) { index ->
+            val item = list[index]
+
+            ItemContent(
+                item = item,
+                position = calcRowPosition(index, list.size) {
+                    list[it]
+                },
+                sectionTopPadding = {
+                    if (index - 1 > 0) {
+                        if (list[index - 1] is News.Item) 8.dp
+                        else 0.dp
+                    } else 8.dp
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ItemContent(
+    item: News,
+    position: RowPosition,
+    sectionTopPadding: () -> Dp
+) {
+    when (item) {
+        is News.Section -> {
+            NewsSection(
+                version = item.version,
+                date = item.date,
+                status = item.status,
+                modifier = Modifier
+                    .padding(top = sectionTopPadding())
+            )
+        }
+
+        is News.Category -> {
+            NewsCategory(
+                category = item.category
+            )
+        }
+
+        is News.Item -> {
+            NewsCard(
+                title = item.title,
+                issueNumber = item.issueNumber,
+                position = position
+            )
+        }
+
+        is News.Note -> {
+            NewsNote(
+                info = item.info,
+                urgency = item.urgency
+            )
         }
     }
 }

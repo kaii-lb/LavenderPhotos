@@ -23,7 +23,7 @@ import com.kaii.photos.ui.theme.PhotosTheme
 private fun NewsCategoryPreview() {
     PhotosTheme(theme = 1) {
         NewsCategory(
-            category = News.Category.Type.Feature,
+            category = News.Category.Type.Features,
             modifier = Modifier
                 .width(300.dp)
         )
@@ -44,9 +44,9 @@ fun NewsCategory(
     ) {
         Text(
             text = when (category) {
-                News.Category.Type.Feature -> stringResource(id = R.string.news_category_feature)
-                News.Category.Type.Improvement -> stringResource(id = R.string.news_category_improvement)
-                News.Category.Type.Fix -> stringResource(id = R.string.news_category_fix)
+                News.Category.Type.Features -> stringResource(id = R.string.news_category_feature)
+                News.Category.Type.Improvements -> stringResource(id = R.string.news_category_improvement)
+                News.Category.Type.Fixes -> stringResource(id = R.string.news_category_fix)
             },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,

@@ -57,12 +57,9 @@
                 <br><br>薰衣草图库从不自动更新，仅在有用户明确同意时才会执行更新。
             </p>
         ]]></string>
-    <string name="updates_not_found">未找到更新</string>
     <string name="updates_new_version_available">有新版本可用！</string>
     <string name="updates_latest">已是最新版本</string>
-    <string name="updates_failed">检查更新失败</string>
     <string name="updates_checking">正在检查更新</string>
-    <string name="updates_start">开始更新</string>
     <string name="locked_folder_help_top">加密文件夹是此设备上用于保护您图像和视频的安全空间。\n受保护的媒体文件绝不会上传至任何地方，始终仅存储在设备本地，并通过与您设备密码或指纹数据关联的唯一密钥进行加密。</string>
     <string name="locked_folder_help_bottom">如果忘记密码或移除指纹，加密数据将无法恢复。</string>
     <string name="secure_folder">安全文件夹</string>

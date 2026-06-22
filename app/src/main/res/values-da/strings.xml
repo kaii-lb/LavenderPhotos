@@ -57,11 +57,8 @@
                 <br><br>Lavender Photos vil aldrig opdatere automatisk, og opdaterer kun med udtrykkelig samtykke fra brugeren.
             </p>
         ]]></string>
-    <string name="updates_not_found">Ingen Opdateringer Fundet</string>
     <string name="updates_new_version_available">Ny version tilgængelig!</string>
     <string name="updates_latest">Allerede på nyeste version</string>
-    <string name="updates_failed">Kunne ikke tjekke efter nye opdateringer</string>
     <string name="updates_checking">Tjekker Efter Opdateringer</string>
-    <string name="updates_start">Start Opdatering</string>
     <string name="locked_folder_help_top">Låst Mappe er en sikker mappe for dine billeder og videoer på denne enhed.\nDe låste medier bliver aldrig uploaded noget sted og forbliver altid på din enhed, krypteret med en unik nøgle beskyttet af din enheds password eller fingeraftryks-data.</string>
 </resources>

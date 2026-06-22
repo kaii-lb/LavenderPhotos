@@ -37,9 +37,7 @@
     <string name="updates_whats_new">新着情報</string>
     <string name="updates_new_version_available">更新はありません！</string>
     <string name="updates_latest">既に最新のバージョンです</string>
-    <string name="updates_failed">更新の確認に失敗しました</string>
     <string name="updates_checking">更新を確認中</string>
-    <string name="updates_start">更新を開始</string>
     <string name="secure_folder">セキュアフォルダ</string>
     <string name="exporting_backup">バックアップをエクスポート中…</string>
     <string name="export_unenc_zip">バックアップを Zip にエクスポート</string>
@@ -71,7 +69,6 @@
     <string name="tabs_max_reached">5 つ以上のタブは追加できません</string>
     <string name="tabs_min_reached">少なくとも 1 つのタブが必要です</string>
     <string name="updates_notice">ダウンロードのお知らせ</string>
-    <string name="updates_not_found">更新は見つかりません</string>
     <string name="secure_processing">このメディアを処理中です</string>
     <string name="secure_encrypting">ファイルの暗号化</string>
     <string name="secure_decrypting">ファイルの復号化</string>

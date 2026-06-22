@@ -48,12 +48,9 @@
     <string name="updates_check_desc">Benachrichtigt über neue Version, wenn die App geöffnet. Installiert die Aktualisierung nicht automatisch</string>
     <string name="updates_whats_new">Neuerungen</string>
     <string name="updates_notice">Downloadinformation</string>
-    <string name="updates_not_found">Keine Updates gefunden</string>
     <string name="updates_new_version_available">Neue Version verfügbar!</string>
     <string name="updates_latest">Auf dem neuesten Stand</string>
-    <string name="updates_failed">Fehler beim Überprüfen nach Aktualisierungen</string>
     <string name="updates_checking">Suche nach Aktualisierungen</string>
-    <string name="updates_start">Aktualisieren</string>
     <string name="locked_folder_help_top">Gesperrter Ordner ist ein sicherer Ordner für Ihre Bilder und Videos auf diesem Gerät.\nDie gesicherten Medien werden nie irgendwo hochgeladen und befinden sich immer auf dem Gerät, verschlüsselt mit einem Schlüssel, der nur mit dem Passwort oder den Fingerabdruckdaten Ihres Geräts verknüpft ist.</string>
     <string name="locked_folder_help_bottom">Die gesicherten Daten können nicht wiederhergestellt werden, wenn das Passwort vergessen wurde oder der Fingerabdruck entfernt wurde.\nGesicherte Elemente gehen bei der Deinstallation der App verloren, sichere diese daher entsprechend.</string>
     <string name="secure_folder">Sicherer Ordner</string>
@@ -123,7 +120,6 @@
     <string name="navigation_search">Suche</string>
     <string name="navigation_favourites">Favoriten</string>
     <string name="navigation_trash">Gelöscht</string>
-    <string name="updates_failed_download">Konnte Update nicht herunterladen</string>
     <string name="updates_no_changelog">Keine Änderungen verfügbar</string>
     <string name="secure_export_failed">Exportieren des Backups fehlgeschlagen!</string>
     <string name="secure_encryption_failed_no_permission">Fotos können ohne Berechtigung nicht verschlüsselt werden</string>

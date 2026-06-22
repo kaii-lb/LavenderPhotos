@@ -47,12 +47,9 @@
     <string name="updates_check_desc">Powiadamia o nowej wersji po otwarciu aplikacji. Nie instaluje automatycznie aktualizacji</string>
     <string name="updates_whats_new">Co nowego</string>
     <string name="updates_notice">Pobierz powiadomienie</string>
-    <string name="updates_not_found">Nie znaleziono aktualizacji</string>
     <string name="updates_new_version_available">Nowa wersja jest dostępna!</string>
     <string name="updates_latest">Jest już w najnowszej wersji</string>
-    <string name="updates_failed">Nie udało się sprawdzić aktualizacji</string>
     <string name="updates_checking">Sprawdzanie aktualizacji</string>
-    <string name="updates_start">Rozpocznij aktualizację</string>
     <string name="locked_folder_help_top">Zabezpieczony folder to bezpieczny folder na Twoje zdjęcia i filmy na tym urządzeniu. \nZabezpieczone multimedia nigdy nie są nigdzie przesyłane i zawsze znajdują się na urządzeniu, zaszyfrowane kluczem unikalnym dla hasła lub odcisku palca Twojego urządzenia.</string>
     <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.\nZabezpieczone dane zostaną utracone po odinstalowaniu aplikacji. Należy wykonać ich kopię zapasową.</string>
     <string name="secure_folder">Zabezpieczony folder</string>
@@ -416,7 +413,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="permissions_explanation">Wyjaśnienie dotyczące uprawnień</string>
     <string name="albums_folder">Album folderów</string>
     <string name="video_seek_icon_desc">Pokazuje, w którą stronę użytkownik wyszukuje</string>
-    <string name="updates_failed_download">Nie udało się pobrać aktualizacji</string>
     <string name="secure_export_failed">Nie udało się wyeksportować kopii zapasowej!</string>
     <string name="secure_encryption_failed_no_permission">Nie można szyfrować zdjęć bez pozwolenia</string>
     <string name="secure_migrating">Migracja</string>

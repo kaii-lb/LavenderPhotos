@@ -28,9 +28,7 @@
     <string name="updates_check_desc">Vous informe d\'une nouvelle version quand vous ouvrez cette appli. N\'installe pas automatiquement la mise à jour</string>
     <string name="updates_whats_new">Quoi de neuf</string>
     <string name="updates_notice">Notification de téléchargement</string>
-    <string name="updates_not_found">Pas de mise à jour trouvée</string>
     <string name="updates_latest">Dernière version déjà installée</string>
-    <string name="updates_failed">Échec de la vérification de mise à jour</string>
     <string name="secure_folder">Dossier Sécurisé</string>
     <string name="secure_encrypting">Fichiers en cours d\'encryptage</string>
     <string name="export_unenc_backup">Exporter une sauvegarde décryptée</string>
@@ -45,7 +43,6 @@
     <string name="albums_found">Tous les albums trouvés !</string>
     <string name="albums_folder">Dossier de l\'album</string>
     <string name="privacy_policy">Il n\'y en a pas ! Aucune de vos données ne sort de cet appareil. Aucune IA n\'est entraînée sur vos données, aucun algorithme ne récolte vos informations, rien. Lavender Photos a toujours été et sera toujours une appli de galerie photo qui privilégie la confidentialité.</string>
-    <string name="updates_start">Démarrer la mise à jour</string>
     <string name="secure_processing">Merci d\'attendre pendant que le média est traité</string>
     <string name="updates_new_version_available">Nouvelle version disponible !</string>
     <string name="updates_checking">Vérification de mise à jour</string>

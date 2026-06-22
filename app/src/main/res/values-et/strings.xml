@@ -23,12 +23,9 @@
     <string name="updates_check">Kontrolli uuendusi</string>
     <string name="updates_check_desc">Teavitab rakenduse avamisel uuenduse olemasolust, kuid ei paigalda seda</string>
     <string name="updates_whats_new">Mida on meil uut</string>
-    <string name="updates_not_found">Uuendusi ei leidu</string>
     <string name="updates_new_version_available">Saadaval on uus versioon!</string>
     <string name="updates_latest">Sa kasutad juba viimast versiooni</string>
-    <string name="updates_failed">Uuenduste kontrollimine ei õnnestunud</string>
     <string name="updates_checking">Kontrollin uuendusi</string>
-    <string name="updates_start">Käivita uuendamine</string>
     <string name="error_views_album_empty">See album on tühi</string>
     <string name="albums_remove_desc">Kas eemaldad albumi loendist?</string>
     <string name="albums_info">Albumi teave</string>
@@ -173,7 +170,6 @@
     <string name="licenses_extra">Täiendavad üksikasjad</string>
     <string name="licenses_extra_desc">Vaata detailsemat teavet litsentside kohta</string>
     <string name="special_thanks_to">Eriline tänu:</string>
-    <string name="updates_failed_download">Uuenduse allalaadimine ei õnnestunud</string>
     <string name="updates_no_changelog">Muudatuste logi pole saadaval</string>
     <string name="secure_getting_file_info">Tuvastan faili teavet…</string>
     <string name="secure_please_wait">Palun oota…</string>

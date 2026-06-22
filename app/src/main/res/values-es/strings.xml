@@ -57,12 +57,9 @@
                 <br><br>Lavender Photos nunca realiza actualizaciones automáticas, y solo se actualiza con el consentimiento explícito del usuario.
             </p>
         ]]></string>
-    <string name="updates_not_found">No Se Encontraron Actualizaciones</string>
     <string name="updates_new_version_available">¡Nueva versión disponible!</string>
     <string name="updates_latest">Ya en la última versión</string>
-    <string name="updates_failed">Error al buscar actualizaciones</string>
     <string name="updates_checking">Comprobando Actualizaciones</string>
-    <string name="updates_start">Iniciar Actualización</string>
     <string name="locked_folder_help_top">La carpeta bloqueada es una carpeta segura para sus imágenes y videos en este dispositivo.\nLos medios protegidos nunca se cargan en ningún lugar y siempre están en el dispositivo, encriptados con una clave exclusiva de la contraseña o los datos de huellas dactilares de su dispositivo.</string>
     <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.\nLos elementos protegidos se perderán al desinstalar la aplicación, haga una copia de seguridad de ellos en consecuencia.</string>
     <string name="secure_folder">Carpeta Segura</string>
@@ -419,7 +416,6 @@
     <string name="permissions_read_media_explanation">Este permiso es necesario para encontrar fotos y videos en el dispositivo. Lavender Photos es muy estricto con los archivos que lee y nunca comparte ni explota esta información.</string>
     <string name="permissions_manage_media_explanation">Este permiso es opcional, pero muy recomendable. Administrar permisos de medios permite que Lavender Photos use la API de Resolución de contenido de Android para eliminar/mover/copiar medios, lo que hace que el proceso sea mucho más fluido y más interoperable con otras aplicaciones.</string>
     <string name="permissions_explanation">Explicación del Permiso</string>
-    <string name="updates_failed_download">No se pudo descargar la actualización</string>
     <string name="secure_export_failed">Error al exportar la copia de seguridad!</string>
     <string name="secure_encryption_failed_no_permission">No se pueden cifrar fotos sin permiso</string>
     <string name="secure_migrating">Migración</string>

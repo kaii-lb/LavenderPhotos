@@ -22,7 +22,6 @@
     <string name="albums_found">Знайти усі альбоми!</string>
     <string name="updates_latest">Вже на останній версії</string>
     <string name="updates_new_version_available">Доступна нова версія!</string>
-    <string name="updates_not_found">Не знайдено оновлень</string>
     <string name="updates_whats_new">Що нового</string>
     <string name="updates">Оновлення</string>
     <string name="privacy_policy_title">Політика конфіденційності</string>
@@ -30,7 +29,6 @@
     <string name="support">Підтримати нас</string>
     <string name="updates_check">Перевірити оновлення</string>
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
-    <string name="updates_start">Почати оновлення</string>
     <string name="settings_privacy">Приватність та безпека</string>
     <string name="settings_look_and_feel">Оформлення та поведінка</string>
     <string name="settings_dark_theme">Темна тема</string>
@@ -108,7 +106,6 @@
     <string name="tabs_empty_params">Параметри вкладки не можуть бути порожніми</string>
     <string name="tabs_min_reached">Має бути хоча б одна вкладка</string>
     <string name="updates_notice">Сповіщення про завантаження</string>
-    <string name="updates_failed">Не вдалось перевірити оновлення</string>
     <string name="updates_checking">Перевірка наявності оновлень</string>
     <string name="secure_encrypting">Шифрування файлів</string>
     <string name="secure_decrypting">Розшифрування файлів</string>
@@ -248,7 +245,6 @@
     <string name="licenses_extra">Додаткові відомості</string>
     <string name="licenses_extra_desc">Переглянути детальнішу інформацію про ліцензії</string>
     <string name="special_thanks_to">Подяки до:</string>
-    <string name="updates_failed_download">Не вдалося оновитись</string>
     <string name="updates_no_changelog">Немає доступного журналу змін</string>
     <string name="secure_getting_file_info">Отримуємо інформацію про файл…</string>
     <string name="secure_please_wait">Зачекайте, будь ласка…</string>

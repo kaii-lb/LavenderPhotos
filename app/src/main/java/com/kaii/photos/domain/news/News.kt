@@ -21,9 +21,9 @@ sealed interface News {
         override val id: Int
     ) : News {
         enum class Type {
-            Feature,
-            Fix,
-            Improvement
+            Features,
+            Fixes,
+            Improvements
         }
     }
 

@@ -11,7 +11,6 @@
     <string name="tabs_default">Tab Bawaan</string>
     <string name="tabs_default_desc">Foto Lavender Photos akan terbuka otomatis di tab ini saat memulai</string>
     <string name="updates_checking">Memeriksa Pembaruan</string>
-    <string name="updates_start">Mulai Pembaruan</string>
     <string name="locked_folder_help_bottom">Data yang diamankan tidak dapat dipulihkan jika kata sandi lupa atau sidik jari dihapus.\nItem yang diamankan akan hilang saat aplikasi di-uninstall, cadangkan sesuai kebutuhan.</string>
     <string name="secure_folder">Folder Aman</string>
     <string name="video_seek_icon_desc">Menampilkan arah yang sedang dicari pengguna</string>
@@ -83,10 +82,8 @@
                 <br><br>Lavender Photos tidak pernah melakukan pembaruan otomatis, dan hanya memperbarui dengan persetujuan eksplisit pengguna.
             </p>
         ]]></string>
-    <string name="updates_not_found">Tidak Ada Pembaruan Ditemukan</string>
     <string name="updates_new_version_available">Versi baru tersedia!</string>
     <string name="updates_latest">Sudah menggunakan versi terbaru</string>
-    <string name="updates_failed">Gagal memeriksa pembaruan</string>
     <string name="locked_folder_help_top">Folder Terkunci adalah folder aman untuk gambar dan video Anda di perangkat ini.\nMedia yang diamankan tidak pernah diunggah ke mana pun dan selalu berada di perangkat, dienkripsi dengan kunci unik berdasarkan kata sandi atau data sidik jari perangkat Anda.</string>
     <string name="secure_processing">Tunggu sebentar saat media ini diproses</string>
     <string name="secure_encrypting">Mengenkripsi File</string>
@@ -218,7 +215,6 @@
     <string name="licenses_extra">Detail Tambahan</string>
     <string name="licenses_extra_desc">Lihat informasi lebih rinci tentang lisensi</string>
     <string name="special_thanks_to">Terima kasih khusus kepada:</string>
-    <string name="updates_failed_download">Tidak dapat mengunduh pembaruan</string>
     <string name="updates_no_changelog">Tidak Ada Catatan Perubahan Tersedia</string>
     <string name="secure_decrypting">Mendekripsi File</string>
     <string name="secure_getting_file_info">Mendapatkan info file…</string>

@@ -103,6 +103,12 @@ class MainGridViewModel(
         initialValue = false
     )
 
+    val checkUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     fun changeAlbum(album: AlbumType.Folder) = repo.changeAlbum(album)
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
