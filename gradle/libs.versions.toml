@@ -128,8 +128,8 @@ lavender-snackbars-android = { module = "io.github.kaii-lb.lavender:snackbars-an
 
 saket-zoomable-image-glide = { module = "me.saket.telephoto:zoomable-image-glide", version.ref = "zoomable-glide-image" }
 
-mikepenz-aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "mikepenz-aboutlibraries" }
-mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries-core", version.ref = "mikepenz-aboutlibraries" }
+mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries-core-android", version.ref = "mikepenz-aboutlibraries" }
+mikepenz-aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose", version.ref = "mikepenz-aboutlibraries" }
 
 pdvrieze-xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "pdvrieze-xmlutil" }
 pdvrieze-xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "pdvrieze-xmlutil" }

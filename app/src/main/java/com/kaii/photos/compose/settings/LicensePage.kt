@@ -6,8 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,9 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -45,10 +41,13 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
+import com.mikepenz.aboutlibraries.ui.compose.DefaultChipColors
+import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
+import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
-import com.mikepenz.aboutlibraries.ui.compose.util.author
-import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
+import com.mikepenz.aboutlibraries.ui.compose.libraryColors
+import com.mikepenz.aboutlibraries.ui.compose.style.defaultVariantColors
+import com.mikepenz.aboutlibraries.ui.compose.variant.LibrariesVariant
 
 private data class CreditsLicense(
     val title: String,
@@ -292,74 +291,75 @@ fun ExtendedLicensePage() {
 
         LibrariesContainer(
             libraries = libraries,
-            name = { name ->
-                Text(
-                    text = name,
-                    fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp),
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .padding(end = 16.dp)
+            variant = LibrariesVariant.Refined,
+            colors = LibraryDefaults.libraryColors(
+                libraryBackgroundColor = MaterialTheme.colorScheme.background,
+                libraryContentColor = MaterialTheme.colorScheme.onBackground,
+                licenseChipColors = DefaultChipColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
                 )
-            },
-            license = { license ->
-                Text(
-                    text = license.name,
-                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                )
-            },
-            version = { version ->
-                Text(
-                    text = version,
-                    fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxHeight(1f)
-                )
-            },
-            author = { author ->
-                Text(
-                    text = author,
-                    fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            },
-            licenseDialogBody = { library, modifier ->
-                Column(
-                    modifier = modifier
-                        .fillMaxHeight(0.8f)
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = library.name,
-                        fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = library.author,
-                        fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp),
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = AnnotatedString.fromHtml(
-                            htmlString = library.htmlReadyLicenseContent
-                        ),
-                        fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp)
-                    )
-                }
-            },
+            ),
+            variantColors = LibraryDefaults.defaultVariantColors(
+                headerSubtleContent = MaterialTheme.colorScheme.primary,
+                rowSubtleContent = MaterialTheme.colorScheme.secondary,
+                actionFilledContainer = MaterialTheme.colorScheme.primary,
+                actionFilledContent = MaterialTheme.colorScheme.onPrimary,
+                actionOutlineBorder = MaterialTheme.colorScheme.primary,
+                actionOutlineContent = MaterialTheme.colorScheme.primary,
+                actionLinkColor = MaterialTheme.colorScheme.primary,
+                headerBackground = MaterialTheme.colorScheme.background,
+                headerOnBackground = MaterialTheme.colorScheme.onBackground,
+                headerDivider = MaterialTheme.colorScheme.surfaceContainerHighest,
+                rowBackground = MaterialTheme.colorScheme.background,
+                rowExpandedBackground = MaterialTheme.colorScheme.surface,
+                rowOnBackground = MaterialTheme.colorScheme.onBackground,
+                rowDivider = MaterialTheme.colorScheme.surfaceContainerHighest
+            ),
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         )
+
+        // LibrariesContainer(
+        //     libraries = libraries,
+        //     name = { name ->
+        //         Text(
+        //             text = name,
+        //             fontSize = TextUnit(TextStylingConstants.MEDIUM_TEXT_SIZE, TextUnitType.Sp),
+        //             fontWeight = FontWeight.SemiBold,
+        //             modifier = Modifier
+        //                 .padding(end = 16.dp)
+        //         )
+        //     },
+        //     license = { license ->
+        //         Text(
+        //             text = license.name,
+        //             fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
+        //             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+        //         )
+        //     },
+        //     version = { version ->
+        //         Text(
+        //             text = version,
+        //             fontSize = TextUnit(TextStylingConstants.EXTRA_SMALL_TEXT_SIZE, TextUnitType.Sp),
+        //             color = MaterialTheme.colorScheme.primary,
+        //             textAlign = TextAlign.Center,
+        //             modifier = Modifier
+        //                 .fillMaxHeight(1f)
+        //         )
+        //     },
+        //     author = { author ->
+        //         Text(
+        //             text = author,
+        //             fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
+        //             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+        //         )
+        //     },
+
+        //     modifier = Modifier
+        //         .padding(innerPadding)
+        //         .fillMaxSize()
+        // )
     }
 }
