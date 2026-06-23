@@ -11,21 +11,17 @@ class NewsDataSource(
     private val parser: LnmParser
 ) {
     private var cachedNews: List<String>? = null
-    private var id = 0
 
-    suspend fun getPage(page: Int, size: Int): NewsPageResponse = withContext(Dispatchers.IO) {
+    suspend fun getPage(offset: Int, size: Int): NewsPageResponse = withContext(Dispatchers.IO) {
         val allNews = cachedNews ?: parseFile().also { cachedNews = it }
 
-        val startIndex = (page - 1) * size
-        val pageData = allNews.drop(startIndex).take(size).map { line ->
-            id += 1
-            parser.parseLine(line, id)
+        val pageData = allNews.drop(offset).take(size).mapIndexed { index, line ->
+            parser.parseLine(line, offset + index + 1)
         }
 
         NewsPageResponse(
             data = pageData,
-            page = page,
-            isEndOfList = startIndex + size >= allNews.size
+            isEndOfList = offset + size >= allNews.size
         )
     }
 
@@ -39,6 +35,4 @@ class NewsDataSource(
                 }.toList()
             }
     }
-
-
 }

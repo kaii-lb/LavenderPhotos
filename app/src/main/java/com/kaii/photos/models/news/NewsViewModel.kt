@@ -12,8 +12,10 @@ class NewsViewModel(
     private val newsRepository: NewsRepository
 ) : ViewModel() {
     val news = Pager(
-        config = PagingConfig(pageSize = 20),
-        initialKey = 1,
+        config = PagingConfig(
+            pageSize = 20,
+            enablePlaceholders = false
+        ),
         pagingSourceFactory = { NewsPagingSource(newsRepository) }
     ).flow.cachedIn(viewModelScope)
 }

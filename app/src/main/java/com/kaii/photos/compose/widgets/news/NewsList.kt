@@ -20,6 +20,7 @@ import com.kaii.photos.domain.news.News
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.flow.flowOf
+import kotlin.reflect.KClass
 
 @Preview
 @Composable
@@ -136,9 +137,9 @@ fun NewsList(
                     position = calcRowPosition(index, list.itemCount) {
                         list[it]!!
                     },
-                    sectionTopPadding = {
+                    topPaddingFor = { classType ->
                         if (index - 1 > 0) {
-                            if (list[index - 1] is News.Item) 8.dp
+                            if (list[index - 1]!!::class == classType) 8.dp
                             else 0.dp
                         } else 8.dp
                     }
@@ -174,9 +175,9 @@ fun NewsList(
                 position = calcRowPosition(index, list.size) {
                     list[it]
                 },
-                sectionTopPadding = {
+                topPaddingFor = { classType ->
                     if (index - 1 > 0) {
-                        if (list[index - 1] is News.Item) 8.dp
+                        if (list[index - 1]::class == classType) 8.dp
                         else 0.dp
                     } else 8.dp
                 }
@@ -189,7 +190,7 @@ fun NewsList(
 private fun ItemContent(
     item: News,
     position: RowPosition,
-    sectionTopPadding: () -> Dp
+    topPaddingFor: (classType: KClass<out News>) -> Dp
 ) {
     when (item) {
         is News.Section -> {
@@ -198,7 +199,7 @@ private fun ItemContent(
                 date = item.date,
                 status = item.status,
                 modifier = Modifier
-                    .padding(top = sectionTopPadding())
+                    .padding(top = topPaddingFor(News.Section::class))
             )
         }
 
@@ -219,7 +220,9 @@ private fun ItemContent(
         is News.Note -> {
             NewsNote(
                 info = item.info,
-                urgency = item.urgency
+                urgency = item.urgency,
+                modifier = Modifier
+                    .padding(top = topPaddingFor(News.Note::class))
             )
         }
     }

@@ -6,7 +6,7 @@ import com.kaii.photos.domain.news.NewsPageResponse
 class NewsRepository(
     private val newsDataSource: NewsDataSource
 ) {
-    suspend fun getNewsData(page: Int, size: Int): NewsPageResponse {
-        return newsDataSource.getPage(page, size)
+    suspend fun getNewsData(offset: Int, size: Int): NewsPageResponse {
+        return newsDataSource.getPage(offset, size)
     }
 }

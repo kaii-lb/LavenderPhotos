@@ -17,16 +17,18 @@ class NewsPagingSource(
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, News> {
         return try {
-            val currentPage = params.key ?: 1
-            val response = newsRepository.getNewsData(currentPage, params.loadSize)
+            val currentOffset = params.key ?: 0
+            val response = newsRepository.getNewsData(currentOffset, params.loadSize)
 
             LoadResult.Page(
                 data = response.data,
-                prevKey = (currentPage - 1).takeIf { currentPage != 1 },
-                nextKey = (currentPage + 1).takeIf { !response.isEndOfList }
+                prevKey = maxOf(0, currentOffset - params.loadSize).takeIf { currentOffset != 0 },
+                nextKey = (currentOffset + response.data.size).takeIf { !response.isEndOfList }
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }
     }
+
+    override val jumpingSupported = true
 }

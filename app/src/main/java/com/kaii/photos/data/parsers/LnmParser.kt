@@ -1,16 +1,27 @@
 package com.kaii.photos.data.parsers
 
+import android.util.Log
 import com.kaii.photos.domain.news.News
 
 class LnmParser {
-    fun parseLine(line: String, id: Int): News {
-        return when (line.firstOrNull()) {
-            '#' -> parseSection(line, id)
-            '+' -> parseCategory(line, id)
-            '-' -> parseItem(line, id)
-            '!' -> parseNote(line, id)
+    companion object {
+        private val TAG = LnmParser::class.qualifiedName
+    }
 
-            else -> throw IllegalArgumentException("Cannot parse char: ${line.firstOrNull()}")
+    fun parseLine(line: String, id: Int): News {
+        try {
+            return when (line.firstOrNull()) {
+                '#' -> parseSection(line, id)
+                '+' -> parseCategory(line, id)
+                '-' -> parseItem(line, id)
+                '!' -> parseNote(line, id)
+
+                else -> throw IllegalArgumentException("Cannot parse char at line $id: ${line.firstOrNull()}")
+            }
+        } catch (e: Throwable) {
+            Log.d(TAG, e.message.toString())
+            e.printStackTrace()
+            throw e
         }
     }
 
@@ -41,13 +52,12 @@ class LnmParser {
     private fun parseItem(item: String, id: Int): News.Item {
         // string is of the format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
         val issueNumberIndex = item.indexOf("issueNumber=")
-        val title = item.substring(
-            if (issueNumberIndex != -1) 20
-            else 8
-        )
+        val titleIndex = item.indexOf("title=")
+
+        val title = item.substring(titleIndex + 6)
 
         val issueNumber = if (issueNumberIndex != -1) {
-            item.substring(14, 20).toInt()
+            item.substring(issueNumberIndex + 12, titleIndex - 1).toInt()
         } else null
 
         return News.Item(title, issueNumber, id)

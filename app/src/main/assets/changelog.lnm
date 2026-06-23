@@ -1,11 +1,89 @@
 // A line starting with '//' indicates a comment
 // A line starting with '#' indicates a section, with format: # version=vX.Y.Z[-beta|-hotfix] date=DD-MM-YYYY [status=None|Broken|Latest]
 // A line starting with '!' indicates a note, with format: ! urgency=Normal|Critical info=VARIABLE_LENGTH_STRING
-// A line starting with '+' indicates a category, with format: + category=+ category=Features|Fixes|Improvements
+// A line starting with '+' indicates a category, with format: + category=Features|Fixes|Improvements
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v1.4.0-hotfix date=06-01-2026 status=Latest
+# version=v2.0.0 date=23-06-2026 status=Latest
+    ! urgency=Critical info=Make a backup of your secure media before installing!
+    ! urgency=Normal info=First time startup "Processing Screen" can be skipped
+
+    + category=Features
+        - title=Rework media loading to support paging!
+        - title=New Immich integration system!
+        - title=Cloud-only album integration and support
+        - title=Bidirectional sync between cloud and local albums
+        - issueNumber=000195 title=Full Immich account management with usage statistics
+        - title=Support for playing cloud-only videos
+        - title=Offline capable cloud sync system, so no action is lost
+        - title=Significantly improve secure folder stability and performance
+        - title=Pick cloud-only media using the media picker
+        - title=Duplicate detection and already-uploaded checks for less data usage
+        - issueNumber=000163 title=Authentication with Immich API keys as well as accounts
+        - title=Share cloud-only albums using Immich
+        - title=Immich server version check and update notification
+        - issueNumber=000252 title=Allow for automatic recovery of secured media in case of decrypt failure
+        - issueNumber=000190 title=Add "Privacy Mode" to stop unwanted scrolling when handing phone to other people
+        - issueNumber=000056 title=Add ability to change image resolution in editor
+        - title=Blurred backgrounds for media viewers
+        - title=New search logic and UI/UX
+        - issueNumber=000046 title=Media tagging system with associated search functionality
+        - issueNumber=000188 title=Ability to create album groups
+        - issueNumber=000182 title=Export quality control for photo editor
+        - issueNumber=000191 title=Show video durations on thumbnails
+        - issueNumber=000212 title=Ability to disable haptic feedback
+        - issueNumber=000214 title=Customizable video loop settings
+        - title=Add audio track selector for videos with more than 1 track
+        - issueNumber=000251 title=Opt-In ability to allow screenshots in secure folder
+        - title=In-App language selector for Android 13+
+        - issueNumber=000258 title=App lock with PIN
+        - title=New changelog UI & custom format parser
+
+    + category=Improvements
+        - title=Updated translations for Polish, Greek, Estonian, Russian, Galician, Chinese Simplified, Ukrainian, Indonesian, Vietnamese, and Spanish
+        - title=Improve the look of all dialogs in the app
+        - title=Auto-refresh album thumbnails
+        - issueNumber=000175 title=Improve date editor UI
+        - issueNumber=000186 title=Pin bottom app bar when in selection mode
+        - title=Editors now support cloud-only files
+        - title=Show cloud icon on cloud-only media
+        - title=Show RAW icon on RAW-format photos
+        - issueNumber=000184 title=Require authentication before making secure-folder backups
+        - issueNumber=000150 title=Improve scrolling wallpaper behaviour
+        - issueNumber=000220 title=Clearing app cache does not affect secure item thumbnails
+        - issueNumber=000217 title=Ability to secure hundreds of megabytes of media at once
+        - title=New permission handling system
+        - title=No more in-app updates
+        - title=Improved updater UI
+        - title=Better check-update-on-startup behaviour
+        - title=Speed improvements for video playback in secure folder
+        - title=Improved loading snackbar UI
+        - title=Support cloud-favourited items in app's favourite tab
+        - title=Periodic sync with Immich server (even in background)
+        - title=Share cloud-only media with local apps
+        - title=Improved search by date-format
+
+    + category=Fixes
+        - issueNumber=000193 title=Crash when moving files from info dialogs
+        - title=Secure folder not popping back on app exit
+        - issueNumber=000209 title=Crash when emptying trash
+        - title=File operation failure resulting in infinitely visible snackbar
+        - issueNumber=000176 title=Editing a photo's date not reflecting in UI
+        - issueNumber=000215 title=Wrong media shown after exiting editor
+        - issueNumber=000218 title=GIFs not being animated
+        - title=Wallpaper no longer crashes on odd-sized images
+        - issueNumber=000244 title=Crash when saving videos with non-default-mediastore paths
+        - issueNumber=000223 title=Crash when saving videos with high bitrates
+        - issueNumber=000224 title=Cut off text in external open-with view
+        - issueNumber=000235 title=Save Copy overwriting file in open-with view's editor
+        - issueNumber=000242 title=Crash when trying to pick media
+        - issueNumber=000257 title=Customization of main-view albums being broken
+        - issueNumber=000229 title=Some photo-grid items being selected even though user never selected them
+        - title="Folder is empty" text not being centered
+
+
+# version=v1.4.0-hotfix date=06-01-2026
     + category=Fixes
         - title=Critical bug where the new tab translation system would not allow for migration from older versions, rendering app unusable
         - title=Inability to secure items from single photo views bottom bar
