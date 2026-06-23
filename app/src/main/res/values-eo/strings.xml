@@ -1,3 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Fotoj</string>
+    <string name="albums">Albumoj</string>
+    <string name="finding_albums_on_device">Trovante albumojn…</string>
+    <string name="albums_main_list_desc_1">Montri dosierojn el la elektitaj albumoj</string>
+    <string name="albums_main_list_desc_2">Montri dosierojn ne el la elektitaj albumoj</string>
+    <string name="albums_main_list_selected">Albumoj elektitaj ĉi tie aperos en la ĉefa fotovido</string>
+    <string name="albums_main_list_selected_inverse">Albumoj elektitaj ĉi tie ne aperos en la ĉefa fotovido</string>
+    <string name="albums_selected">Elektitaj Albumoj</string>
+    <string name="albums_remove">Forigi</string>
+    <string name="albums_remove_desc">Ĉu forigi albumon el la listo?</string>
+    <string name="albums_pin">Alpingli ĉi tiun albumon</string>
+    <string name="albums_unpin">Malalpingli ĉi tiun albumon</string>
+    <string name="albums_info">Informoj pri la albumo</string>
+    <string name="albums_path">Pado:</string>
+    <string name="albums_paths">Padoj:</string>
+    <string name="albums_item_count">Nombro de eroj:</string>
+    <string name="albums_name">Albumnomo</string>
+    <string name="albums_type">Albuma Tipo</string>
+    <string name="albums_folder">Dosieralbumo</string>
+    <string name="albums_add_failed">Malsukcesis aldoni albumojn :&lt;</string>
+    <string name="albums_immich_not_backed_up">Ne sekurkopiita</string>
+    <string name="albums_rename_failure">Malvalida albumnomo</string>
+    <string name="tabs">Taboj</string>
+    <string name="tabs_default">Defaŭlta langeto</string>
+    <string name="tabs_default_desc">Lavendaj Fotoj aŭtomate malfermos ĉi tiun langeton ĉe ekfunkciigo</string>
+    <string name="tabs_customize">Agordi langetojn</string>
+    <string name="tabs_customize_desc">Ŝanĝi kiajn langetojn haveblas en la malsupra breto</string>
+    <string name="tabs_navigate_to">Navigado al paĝo %1$s</string>
+    <string name="tabs_add">Aldoni langeton</string>
+    <string name="tabs_name">Langetonomo</string>
+    <string name="tabs_albums_incl">Albumoj Inkluditaj</string>
+    <string name="app_name_full">Lavendaj Fotoj</string>
+    <string name="privacy_policy_title">Regularo pri Privateco</string>
+    <string name="navigation_photos">Fotoj</string>
+    <string name="navigation_secure">Sekura</string>
+    <string name="navigation_albums">Albumoj</string>
+    <string name="navigation_search">Serĉi</string>
+    <string name="navigation_favourites">Favoratoj</string>
+    <string name="navigation_trash">Rubo</string>
 </resources>
