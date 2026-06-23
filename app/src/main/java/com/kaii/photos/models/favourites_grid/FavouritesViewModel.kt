@@ -21,15 +21,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class FavouritesViewModel(
-    context: Context,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    context: Context
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo = FavouritesRepository(
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
+        db = db,
         client = context.applicationContext.appModule.apiClient,
         scope = viewModelScope,
         info = settings.immich.getImmichBasicInfo(),
@@ -113,7 +112,7 @@ class FavouritesViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,
@@ -192,5 +191,19 @@ class FavouritesViewModel(
 
     override fun renameAlbum(context: Context, newName: String) {
         throw IllegalAccessError("Cannot rename album in favourites!")
+    }
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        throw NotImplementedError("Secure folder functionality is not implemented in favourites contexts")
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        throw NotImplementedError("Secure folder functionality is not implemented in favourites contexts")
     }
 }

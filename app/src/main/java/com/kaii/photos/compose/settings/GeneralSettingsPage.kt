@@ -2,8 +2,6 @@ package com.kaii.photos.compose.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -35,14 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.SortModeSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
-import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
+import com.kaii.photos.compose.widgets.popup_album_chooser.PopUpAlbumChooser
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -53,6 +50,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -60,7 +58,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val settings = LocalContext.current.appModule.settings
     val navController = LocalNavController.current
 
-    val allAlbums by settings.albums.get().collectAsStateWithLifecycle(initialValue = emptyList())
     val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptySet())
     val shouldShowEverything by settings.mainPhotosView.getShowEverything().collectAsStateWithLifecycle(initialValue = false)
     val autoDetectAlbums by settings.albums.getAutoDetect().collectAsStateWithLifecycle(initialValue = true)
@@ -70,7 +67,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
     GeneralSettingsPageImpl(
-        allAlbums = { allAlbums },
         mainPhotosPaths = { mainPhotosPaths },
         shouldShowEverything = { shouldShowEverything },
         autoDetectAlbums = { autoDetectAlbums },
@@ -96,7 +92,6 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
 @Composable
 private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
     GeneralSettingsPageImpl(
-        allAlbums = { emptyList() },
         mainPhotosPaths = { emptySet() },
         shouldShowEverything = { false },
         autoDetectAlbums = { false },
@@ -118,9 +113,9 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsPageImpl(
-    allAlbums: () -> List<AlbumType>,
     mainPhotosPaths: () -> Set<String>,
     shouldShowEverything: () -> Boolean,
     autoDetectAlbums: () -> Boolean,
@@ -158,16 +153,9 @@ private fun GeneralSettingsPageImpl(
             }
 
             item {
+                val coroutineScope = rememberCoroutineScope()
                 val selectedAlbums = remember { mutableStateListOf<String>() }
-                val showAlbumsSelectionDialog = remember { mutableStateOf(false) }
-
-                val singles = remember(allAlbums()) {
-                    allAlbums()
-                        .filterIsInstance<AlbumType.Folder>()
-                        .filter {
-                            it.paths.size == 1
-                        }
-                }
+                var showAlbumsSelectionDialog by remember { mutableStateOf(false) }
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_main_list),
@@ -180,75 +168,41 @@ private fun GeneralSettingsPageImpl(
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = {
                         selectedAlbums.clear()
-                        selectedAlbums.addAll(
-                            if (shouldShowEverything()) {
-                                val flat = singles.flatMap { it.paths }
+                        selectedAlbums.addAll(mainPhotosPaths())
 
-                                flat - mainPhotosPaths().toSet()
-                            } else {
-                                mainPhotosPaths()
-                            }
-                        )
-
-                        showAlbumsSelectionDialog.value = true
+                        showAlbumsSelectionDialog = true
                     },
                     onSwitchClick = { checked ->
                         setShowEverything(checked)
 
                         selectedAlbums.clear()
-                        selectedAlbums.addAll(
-                            if (!checked) {
-                                val flat = singles.flatMap { it.paths }
-
-                                flat - mainPhotosPaths().toSet()
-                            } else {
-                                mainPhotosPaths()
-                            }
-                        )
-
                         clearMainPhotosAlbums()
-                        selectedAlbums.distinct().forEach { album ->
-                            addMainPhotosAlbum(album)
-                        }
                     }
                 )
 
-                if (showAlbumsSelectionDialog.value) {
-                    SelectableButtonListDialog(
-                        title = stringResource(id = R.string.albums_selected),
-                        body =
-                            if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_selected)
-                            else stringResource(id = R.string.albums_main_list_selected_inverse),
-                        showDialog = showAlbumsSelectionDialog,
-                        onConfirm = {
-                            clearMainPhotosAlbums()
-
-                            selectedAlbums.distinct().forEach { album ->
-                                addMainPhotosAlbum(album)
+                if (showAlbumsSelectionDialog) {
+                    PopUpAlbumChooser(
+                        selectedAlbums = selectedAlbums,
+                        key = { (it as? AlbumType.Folder)?.paths?.first() ?: it.id },
+                        filter = { searchedForText, albums ->
+                            albums.filter { album ->
+                                album.name.contains(searchedForText, true)
+                                        && album.info.album is AlbumType.Folder
+                                        && album.info.album.paths.size == 1
                             }
                         },
-                        buttons = {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth(1f)
-                                    .height(384.dp)
-                            ) {
-                                items(
-                                    count = singles.size
-                                ) { index ->
-                                    val associatedAlbum = singles[index]
+                        onDismiss = {
+                            coroutineScope.launch(Dispatchers.Default) {
+                                clearMainPhotosAlbums()
 
-                                    CheckBoxButtonRow(
-                                        text = associatedAlbum.name,
-                                        checked = associatedAlbum.paths.first() in selectedAlbums
-                                    ) {
-                                        if (associatedAlbum.paths.first() in selectedAlbums && (selectedAlbums.size > 1 || shouldShowEverything())) {
-                                            selectedAlbums.remove(associatedAlbum.paths.first())
-                                        } else {
-                                            selectedAlbums.add(associatedAlbum.paths.first())
-                                        }
-                                    }
+                                selectedAlbums.distinct().forEach { album ->
+                                    addMainPhotosAlbum(album)
                                 }
+
+                                // hack as hell but fsr it's the only thing that works
+                                delay(200)
+
+                                showAlbumsSelectionDialog = false
                             }
                         }
                     )

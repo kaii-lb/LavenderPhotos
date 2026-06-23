@@ -23,8 +23,8 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.exif.MediaData
@@ -36,18 +36,23 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import nl.adaptivity.xmlutil.core.impl.multiplatform.name
 import java.io.File
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
@@ -99,6 +104,14 @@ interface GenericFileManager {
         data class Share(
             val list: List<SelectionManager.SelectedItem>
         ) : Action
+
+        data class Secure(
+            val list: List<SelectionManager.SelectedItem>
+        ) : Action
+
+        data class Restore(
+            val list: List<SelectionManager.SelectedItem>
+        ) : Action
     }
 
     data class CopyResult(
@@ -111,7 +124,16 @@ interface GenericFileManager {
     val syncTaskDao: SyncTaskDao
     val assetClient: AssetsClient
     val albumsClient: AlbumsClient
-    val info: ImmichBasicInfo
+
+    fun setEndpoint(endpoint: String) {
+        albumsClient.setEndpoint(endpoint)
+        assetClient.setEndpoint(endpoint)
+    }
+
+    fun setAuth(auth: Auth) {
+        albumsClient.setAuth(auth)
+        assetClient.setAuth(auth)
+    }
 
     fun allowedAlbumTypesFor(
         moving: Boolean,
@@ -188,6 +210,7 @@ interface GenericFileManager {
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
         albumId: String?,
+        immichId: String?,
         taskId: Int? = null,
         onItemDone: (totaCount: Int) -> Unit
     ): Boolean
@@ -255,7 +278,12 @@ interface GenericFileManager {
 
         settings.edit(
             id = album.id,
-            newInfo = (album as AlbumType.Custom).copy(name = newName)
+            newInfo = when (album) {
+                is AlbumType.Cloud -> album.copy(name = newName)
+                is AlbumType.Custom -> album.copy(name = newName)
+                is AlbumType.Folder -> album.copy(name = newName)
+                AlbumType.PlaceHolder -> throw IllegalArgumentException("Physically cannot rename ${AlbumType.PlaceHolder::class.name}")
+            }
         )
     }
 
@@ -304,6 +332,16 @@ interface GenericFileManager {
             )
         }
 
+    suspend fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean
+
+    suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean
+
     suspend fun moveItems(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
@@ -346,6 +384,13 @@ interface GenericFileManager {
         }
 
         mediaItems.forEach { onItemDone(it.uri) }
+
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
+        }
 
         return@withContext mediaItems.fastMap {
             CopyResult(
@@ -399,6 +444,13 @@ interface GenericFileManager {
             onItemDone(media.uri)
         }
 
+        launch {
+            delay(5000)
+            if (destination.immichId != null) {
+                CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
+            }
+        }
+
         return@withContext newItems.toList()
     }
 
@@ -437,11 +489,10 @@ interface GenericFileManager {
                 media.map { item ->
                     AssetBulkUploadCheckItem(
                         checksum = hashes[item.id]!!,
-                        id = item.id.toString()
+                        id = item.immichId ?: item.id.toString()
                     )
                 }
-            ),
-            accessToken = info.accessToken
+            )
         )?.associateBy { it.id } ?: return@withContext emptyList()
 
         val taskId = taskId ?: syncTaskDao.insert(
@@ -489,19 +540,19 @@ interface GenericFileManager {
                     immichId = mediaItem.immichId
                 )
             } else {
-                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
-
                 val resp = assetClient.upload(
                     AssetUploadRequest(
-                        assetData = assetData,
-                        deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
+                        assetSource = UriAssetSource(
+                            context = context,
+                            uri = mediaItem.uri.toUri()
+                        ),
+                        deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
                         deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
                         filename = mediaItem.displayName
-                    ),
-                    accessToken = info.accessToken
+                    )
                 )
 
                 if (resp != null) {
@@ -521,15 +572,11 @@ interface GenericFileManager {
             }
         }
 
-        assetClient.restore(
-            ids = trashedItems,
-            accessToken = info.accessToken
-        )
+        assetClient.restore(ids = trashedItems)
 
         albumsClient.addAssets(
             albumId = Uuid.parse(destination.immichId),
-            assetIds = total.fastMap { Uuid.parse(it.immichId!!) },
-            accessToken = info.accessToken
+            assetIds = total.fastMap { Uuid.parse(it.immichId!!) }
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,

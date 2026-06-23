@@ -36,6 +36,7 @@ object AnimationConstants {
 object VideoPlayerConstants {
     const val CONTROLS_HIDE_TIMEOUT = 4000L
     const val TRIM_THUMBNAIL_COUNT = 8
+    const val END_OF_VIDEO_TIMEOUT = 2000L
 }
 
 object TextStylingConstants {

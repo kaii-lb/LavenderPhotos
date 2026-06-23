@@ -14,12 +14,17 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.appModule
+import com.kaii.photos.file_management.managers.SecureFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.paging.SecuredListPagingSource
 import com.kaii.photos.helpers.paging.mapToSecuredMedia
@@ -28,6 +33,10 @@ import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.getThumbnailIv
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,6 +47,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -45,6 +55,7 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
+import kotlin.reflect.KClass
 
 class SecureRepository(
     scope: CoroutineScope,
@@ -52,7 +63,7 @@ class SecureRepository(
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
-) {
+) : BaseRepo {
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
 
@@ -73,15 +84,19 @@ class SecureRepository(
 
             val secureThumbnail = file.secureThumbnailImage(context)
             try {
-                secureThumbnail
-                    .outputStream()
-                    .let {
-                        if (encrypted.size <= 8 * 1024) it.write(encrypted)
-                        else it.buffered().write(encrypted)
-                    }
+                // use{} flushes and closes the stream; the old bare .let{} leaked the fd and a
+                // never-flushed buffered stream could drop the trailing bytes. keep the size split:
+                // some devices wouldn't write images under 8kb when going through a buffered stream
+                secureThumbnail.outputStream().use { raw ->
+                    if (encrypted.size <= 8 * 1024) raw.write(encrypted)
+                    else raw.buffered().use { it.write(encrypted) }
+                }
             } catch (e: IOException) {
+                // bail before inserting the row: a row pointing at a missing/truncated thumbnail
+                // passes verifyThumbnails' (row != null && file.exists()) check and decodes to garbage
                 Log.d(TAG, e.toString())
                 e.printStackTrace()
+                return
             }
 
             dao.insertEntity(
@@ -102,9 +117,54 @@ class SecureRepository(
     ) : RoomQueryParams(sortMode, format, info)
 
     private val appContext = context.applicationContext
-    private val dao = MediaDatabase.getInstance(appContext).securedItemEntityDao()
+    private val db = MediaDatabase.getInstance(appContext)
+    private val secureDao = db.securedItemEntityDao()
+
+    override val fileManager = SecureFileManager(
+        secureDao = secureDao,
+        mediaDao = db.mediaDao(),
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
+        assetClient = AssetsClient(
+            endpoint = "",
+            auth = Auth.None,
+            client = context.appModule.apiClient
+        ),
+        albumsClient = AlbumsClient(
+            endpoint = "",
+            auth = Auth.None,
+            client = context.appModule.apiClient
+        )
+    )
 
     private val secureFolder = File(appContext.appSecureFolderDir)
+
+    private val repoScope = scope
+
+    // load() does a read-modify-write on items.value, so concurrent calls (init, the FileObserver firing
+    // once per file during a batch secure, the post-verify reload) used to lost-update each other and
+    // freeze a not-ready zero-iv row. serialise load() and coalesce bursts: while one runs, extra
+    // requests just set a rerun flag instead of spawning more coroutines
+    private val loadMutex = Mutex()
+    @Volatile
+    private var loadQueued = false
+
+    private fun requestLoad(context: Context) {
+        repoScope.launch { runLoadCoalesced(context) }
+    }
+
+    private suspend fun runLoadCoalesced(context: Context) {
+        loadQueued = true
+        if (!loadMutex.tryLock()) return // a load is already active; it will observe loadQueued and rerun
+        try {
+            while (loadQueued) {
+                loadQueued = false
+                load(context)
+            }
+        } finally {
+            loadMutex.unlock()
+        }
+    }
 
     private val fileObserver =
         object : FileObserver(File(appContext.appSecureFolderDir), CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
@@ -112,10 +172,7 @@ class SecureRepository(
                 // doesn't matter what event type just refresh
                 if (path != null) {
                     _fileList.value = secureFolder.listFiles()
-
-                    scope.launch {
-                        load(context = appContext)
-                    }
+                    requestLoad(appContext)
                 }
             }
         }
@@ -143,7 +200,7 @@ class SecureRepository(
 
     init {
         scope.launch {
-            load(context)
+            runLoadCoalesced(context)
         }
 
         scope.launch {
@@ -162,7 +219,7 @@ class SecureRepository(
             ),
             pagingSourceFactory = { SecuredListPagingSource(media = params.items) }
         ).flow.mapToSecuredMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -190,9 +247,29 @@ class SecureRepository(
         val metadataRetriever = MediaMetadataRetriever()
 
         snapshot.forEach { file ->
-            // if file is already processed, skip processing it
-            if (mediaStoreData.any { it.item.absolutePath == file.absolutePath }) {
-                return@forEach
+            // self-healing skip: only keep an already-processed item if its cached thumbnail iv still
+            // matches the db. if not (it was the zero not-ready sentinel, or the thumbnail was rebuilt
+            // after a cacheDir eviction with a fresh iv) drop it and rebuild below. previously this
+            // unconditionally skipped, freezing a broken thumbnail until app restart
+            val existingIndex = mediaStoreData.indexOfFirst { it.item.absolutePath == file.absolutePath }
+            if (existingIndex != -1) {
+                val dbThumbnailIv = secureDao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
+                val cachedThumbnailIv = mediaStoreData[existingIndex].bytes
+                    ?.takeIf { it.size >= 32 }
+                    ?.getThumbnailIv()
+                val cachedIsNotReady = cachedThumbnailIv != null && cachedThumbnailIv.all { it.toInt() == 0 }
+                val healthy =
+                    if (dbThumbnailIv == null) {
+                        // no thumbnail yet: keep the not-ready row as-is so we don't re-probe the item on
+                        // every FileObserver event during a batch. verifyThumbnails will generate it and
+                        // reload, after which dbThumbnailIv is non-null and the else branch rebuilds it
+                        cachedIsNotReady
+                    } else {
+                        cachedThumbnailIv != null && dbThumbnailIv.contentEquals(cachedThumbnailIv)
+                    }
+
+                if (healthy) return@forEach
+                mediaStoreData.removeAt(existingIndex)
             }
 
             val mimeType = Files.probeContentType(Path(file.absolutePath))
@@ -203,14 +280,25 @@ class SecureRepository(
                 else return@forEach
 
             val decryptedBytes = run {
-                val iv = dao.getIvFromSecuredPath(file.absolutePath)
-                val thumbnailIv = dao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
+                val iv = secureDao.getIvFromSecuredPath(file.absolutePath)
+                val thumbnailIv = secureDao.getIvFromSecuredPath(file.secureThumbnailImage(context).absolutePath)
 
-                iv?.plus(thumbnailIv ?: ByteArray(16))
+                // pad corrupted/short ivs to 16 zero bytes so the [fileIv(16)][thumbnailIv(16)][path]
+                // layout holds and getThumbnailIv() doesn't read into the path bytes; recover first
+                val fileIv =
+                    if (iv != null && iv.size == 16) {
+                        // a 16-byte iv can still be wrong (decrypts to garbage); re-check it against the
+                        // format magic and re-recover if bad rather than trusting size==16 forever
+                        if (SecureIvRecovery.ivProducesValidHeader(file, iv, mimeType)) iv
+                        else SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: iv
+                    }
+                    else if (iv != null) SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: ByteArray(16)
+                    else ByteArray(16)
+                fileIv + (thumbnailIv ?: ByteArray(16))
             }
 
             val originalPath =
-                dao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
+                secureDao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
             val duration = if (type == MediaType.Video) {
                 // thanks to IvanCarapovic
@@ -248,9 +336,9 @@ class SecureRepository(
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
                 item = item,
-                accessToken = params.value.info.accessToken,
+                auth = params.value.info.auth,
                 endpoint = params.value.info.endpoint,
-                bytes = decryptedBytes?.plus(originalPath.encodeToByteArray())
+                bytes = decryptedBytes.plus(originalPath.encodeToByteArray())
             )
 
             mediaStoreData.add(securedItem)
@@ -271,10 +359,15 @@ class SecureRepository(
     private suspend fun verifyThumbnails(context: Context) = withContext(Dispatchers.IO) {
         val snapshot = _fileList.value ?: return@withContext
 
+        var generatedAny = false
+
         snapshot.forEach { file ->
             val thumbnail = file.secureThumbnailImage(context)
 
-            if (dao.getIvFromSecuredPath(thumbnail.absolutePath) != null) return@forEach
+            // regenerate if the iv row is missing OR the cached png is gone. the thumbnail cache lives
+            // in cacheDir, which the OS can purge under storage pressure, leaving a dangling iv row that
+            // would otherwise never be rebuilt
+            if (secureDao.getIvFromSecuredPath(thumbnail.absolutePath) != null && thumbnail.exists()) return@forEach
 
             val mimeType = Files.probeContentType(Path(file.absolutePath))
             val type =
@@ -285,16 +378,30 @@ class SecureRepository(
             if (type == MediaType.Image) {
                 addImageThumbnail(file, context)
             } else {
-                addImageThumbnail(file.secureVideoThumbnailImage(context), context)
+                addVideoThumbnail(file, context)
             }
+            generatedAny = true
         }
+
+        // refresh the listing so items holding a not-ready (zero) iv pick up their real iv via the
+        // self-healing skip in load(). single coalesced reload, not one per file
+        if (generatedAny) runLoadCoalesced(context)
     }
 
     private suspend fun addImageThumbnail(
         file: File,
         context: Context
     ) = withContext(Dispatchers.IO) {
-        val iv = dao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+        var iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+
+        // recover a corrupted iv (ByteArray(0) from a failed-secure catch block) before decoding
+        if (iv.size != 16) {
+            val mimeType = Files.probeContentType(Path(file.absolutePath))
+            iv = SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: run {
+                Log.e(TAG, "Cannot generate thumbnail for ${file.name}: iv unrecoverable")
+                return@withContext
+            }
+        }
 
         val bytes = EncryptionManager.decryptBytes(
             bytes = file.readBytes(),
@@ -309,6 +416,78 @@ class SecureRepository(
             .submit()
             .get()
 
-        addEncryptedThumbnail(context, thumbnail, file, dao)
+        addEncryptedThumbnail(context, thumbnail, file, secureDao)
     }
+
+    /**
+     * Regenerate a secure video's thumbnail. The original source is already deleted by securing time,
+     * so the frame must come from the encrypted copy: decrypt it to the video cache, grab a frame,
+     * re-encrypt the thumbnail. Mirrors the create path in [LocalSecureManager.secure].
+     */
+    private suspend fun addVideoThumbnail(
+        file: File,
+        context: Context
+    ) = withContext(Dispatchers.IO) {
+        var iv = secureDao.getIvFromSecuredPath(file.absolutePath) ?: return@withContext
+
+        if (iv.size != 16) {
+            val mimeType = Files.probeContentType(Path(file.absolutePath))
+            iv = SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: run {
+                Log.e(TAG, "Cannot generate video thumbnail for ${file.name}: iv unrecoverable")
+                return@withContext
+            }
+        }
+
+        val decrypted = try {
+            EncryptionManager.decryptVideo(file.absolutePath, iv, context) {}
+        } catch (e: Throwable) {
+            Log.e(TAG, "Cannot decrypt ${file.name} for thumbnail", e)
+            return@withContext
+        }
+
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(decrypted.absolutePath)
+            retriever.getScaledFrameAtTime(-1L, MediaMetadataRetriever.OPTION_CLOSEST, 1024, 1024)
+                ?.let { bitmap ->
+                    addEncryptedThumbnail(context, bitmap, file.secureVideoThumbnailImage(context), secureDao)
+                }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Cannot extract frame from ${file.name}", e)
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+            decrypted.delete()
+        }
+    }
+
+    override suspend fun getMediaCount(): Int {
+        throw NotImplementedError("Cannot get media count in secure folder")
+    }
+
+    override suspend fun getMediaSize(): Long {
+        throw NotImplementedError("Cannot get media size in secure folder")
+    }
+
+    override fun allowedAlbumTypesFor(moving: Boolean): List<KClass<out AlbumType>> {
+        throw NotImplementedError("Cannot use this in secure folder")
+    }
+
+    override suspend fun renameAlbum(context: Context, newName: String) {
+        throw NotImplementedError("Cannot rename the secure folder")
+    }
+
+    override suspend fun delete(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.permanentlyDelete(context, list)
+
+    override suspend fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ): Boolean = fileManager.restore(context, list)
+
+    override suspend fun share(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) = fileManager.share(context, list)
 }

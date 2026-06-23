@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.kaii.photos.R
 
@@ -45,8 +46,8 @@ fun rememberPlayerView(
             }
         ).apply {
             layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
 
             useController = false
@@ -57,6 +58,8 @@ fun rememberPlayerView(
             setShutterBackgroundColor(backgroundColor)
             outlineSpotShadowColor = backgroundColor
             outlineAmbientShadowColor = backgroundColor
+
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
         }
     }
 

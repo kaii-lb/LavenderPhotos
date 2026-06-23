@@ -12,6 +12,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.kaii.photos.helpers.editing.darkenColor
@@ -78,7 +79,6 @@ fun PhotosTheme(
             }
         }
 
-
         1 -> if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicDarkColorScheme(
             context
         ) else DarkColorScheme
@@ -100,10 +100,14 @@ fun PhotosTheme(
         else -> LightColorScheme
     }
 
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content,
-        motionScheme = MotionScheme.expressive()
-    )
+    CompositionLocalProvider(
+        LocalExtraColorsPalette provides ExtraColorsPalette()
+    ) {
+        MaterialExpressiveTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content,
+            motionScheme = MotionScheme.expressive()
+        )
+    }
 }

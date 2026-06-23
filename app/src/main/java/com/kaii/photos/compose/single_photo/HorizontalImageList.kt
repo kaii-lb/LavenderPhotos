@@ -40,29 +40,30 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.load.resource.gif.GifDrawable
-import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.transformable
+import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.SingleViewConstants
+import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.helpers.video.retainVideoPlayerState
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo
 import com.kaii.photos.mediastore.getIv
+import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
-import kotlin.time.Clock
+import java.io.File
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -88,11 +89,14 @@ fun HorizontalImageList(
         }
     )
 
+    val context = LocalContext.current
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
-        // beyondViewportPageCount = 5, // TODO: check this
+        // preload one page either side so the next/previous secure image starts decrypting before the
+        // swipe settles. kept at 1 (not 5) since each secure neighbour is a full-file decrypt
+        beyondViewportPageCount = 1,
         key = items.itemKey { it.itemKey() },
         snapPosition = SnapPosition.Center,
         userScrollEnabled = !scrollState.privacyMode && !scrollState.videoLock,
@@ -138,7 +142,26 @@ fun HorizontalImageList(
                     }
 
                     GlideImage(
-                        model = media.item.uri.toUri(),
+                        model = when {
+                            isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
+                                SecureInfo(
+                                    iv = bytes.getThumbnailIv(),
+                                    absolutePath = File(media.item.absolutePath).secureThumbnailImage(context).absolutePath,
+                                    key = media.signature()
+                                )
+                            }
+
+                            media.item.isCloud -> ImmichInfo(
+                                thumbnail = media.item.immichThumbnail!!,
+                                original = media.item.immichUrl!!,
+                                hash = media.item.hash!!,
+                                auth = media.auth,
+                                endpoint = media.endpoint!!,
+                                useThumbnail = false
+                            )
+
+                            else -> media.item.uri
+                        },
                         contentScale = ContentScale.Crop,
                         contentDescription = null,
                         loading = placeholder(R.drawable.broken_image),
@@ -155,7 +178,7 @@ fun HorizontalImageList(
 
                 VideoPlayer(
                     item = media.item,
-                    accessToken = { media.accessToken ?: "" },
+                    auth = { media.auth },
                     endpoint = { media.endpoint ?: "" },
                     state = videoPlayerState,
                     appBarsVisible = appBarsVisible,
@@ -168,7 +191,7 @@ fun HorizontalImageList(
                     },
                     useCache = useCache,
                     modifier = Modifier
-                        .fillMaxSize(1f)
+                        .fillMaxSize()
                         .transformable(),
                 )
             }
@@ -177,11 +200,11 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize(1f)
             ) {
-                val glideModel = remember(media) {
+                val glideModel = remember(media.item.uri) {
                     when {
-                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let {
+                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
                             SecureInfo(
-                                iv = it.getIv(),
+                                iv = bytes.getIv(),
                                 absolutePath = media.item.absolutePath,
                                 key = media.signature()
                             )
@@ -191,13 +214,36 @@ fun HorizontalImageList(
                             thumbnail = media.item.immichThumbnail!!,
                             original = media.item.immichUrl!!,
                             hash = media.item.hash!!,
-                            accessToken = media.accessToken!!,
+                            auth = media.auth,
                             endpoint = media.endpoint!!,
                             useThumbnail = false
                         )
 
                         else -> media.item.uri
                     }
+                }
+
+                // cheap base layer for the secure viewer: the small pre-stored encrypted thumbnail (same
+                // model the grid uses, so it's likely already in glide's memory cache). gated on a ready
+                // (non-zero) iv and an existing file; null -> the full-file model is used as the base
+                val glideThumbnailModel = remember(media) {
+                    if (!isSecuredMedia) null
+                    else (media as PhotoLibraryUIModel.SecuredMedia).bytes
+                        ?.takeIf { it.size >= 32 }
+                        ?.getThumbnailIv()
+                        ?.takeIf { iv -> iv.any { b -> b.toInt() != 0 } }
+                        ?.let { thumbIv ->
+                            val thumbFile = File(media.item.absolutePath).secureThumbnailImage(context)
+                            if (thumbFile.exists()) {
+                                SecureInfo(
+                                    iv = thumbIv,
+                                    absolutePath = thumbFile.absolutePath,
+                                    key = media.signature()
+                                )
+                            } else {
+                                null
+                            }
+                        }
                 }
 
                 if (blurViews) {
@@ -235,7 +281,7 @@ fun HorizontalImageList(
                         zoomableState = zoomableState,
                         appBarsVisible = appBarsVisible,
                         window = window,
-                        accessToken = { media.accessToken ?: "" },
+                        auth = { media.auth },
                         endpoint = { media.endpoint ?: "" },
                         shouldPlay = { state.currentPage == index },
                         blurViews = blurViews,
@@ -243,6 +289,7 @@ fun HorizontalImageList(
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = glideModel,
+                                thumbnailModel = glideThumbnailModel,
                                 item = media.item,
                                 zoomableState = zoomableState,
                                 window = window,
@@ -256,6 +303,7 @@ fun HorizontalImageList(
                 } else {
                     GlideView(
                         model = glideModel,
+                        thumbnailModel = glideThumbnailModel,
                         item = media.item,
                         zoomableState = zoomableState,
                         window = window,
@@ -290,7 +338,8 @@ fun GlideView(
     modifier: Modifier = Modifier,
     useCache: Boolean,
     disableSetBarVisibility: Boolean = false,
-    isHidden: Boolean = false
+    isHidden: Boolean = false,
+    thumbnailModel: Any? = null
 ) {
     val context = LocalContext.current
     val state = rememberZoomableImageState(zoomableState = zoomableState)
@@ -325,16 +374,21 @@ fun GlideView(
         modifier = modifier
             .fillMaxSize()
     ) {
+        // never disk-cache secure media even if "cache thumbnails" is on: the disk cache would hold the
+        // decrypted bytes as plaintext. the grid already hardcodes NONE for secure; mirror that here
+        val isSecure = model is SecureInfo
         val request = it
-            .signature(
-                if (useCache) item.signature()
-                else ObjectKey(Clock.System.now().toEpochMilliseconds())
-            )
+            // stable per-item signature. the old ObjectKey(now()) branch (used when !useCache, the secure
+            // default) changed every recomposition, busting the memory cache and forcing a full re-decrypt
+            // -> the jitter / low-quality flash. disk caching is still governed by diskCacheStrategy below
+            .signature(item.signature())
             .downsample(DownsampleStrategy.FIT_CENTER)
-            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+            .diskCacheStrategy(if (useCache && !isSecure) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             .error(
                 when {
-                    isHidden -> R.drawable.empty_image
+                    // secure full-image decode failed: fall back to the working thumbnail rather than
+                    // the blank empty_image; broken_image only when there's no thumbnail
+                    isHidden -> thumbnailModel ?: R.drawable.broken_image
 
                     model is ImmichInfo -> model.copy(useThumbnail = true)
 
@@ -344,11 +398,14 @@ fun GlideView(
             .thumbnail(
                 Glide.with(context)
                     .load(
-                        if (model is ImmichInfo) model.copy(useThumbnail = true)
-                        else model
+                        // prefer the cheap small thumbnail so the base layer isn't a second full-file
+                        // decrypt; fall back to the full model when none was supplied
+                        thumbnailModel
+                            ?: if (model is ImmichInfo) model.copy(useThumbnail = true)
+                            else model
                     )
                     .signature(item.signature())
-                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                    .diskCacheStrategy(if (useCache && !isSecure) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                     .override(windowSize.width, windowSize.height)
             )
             .transition(withCrossFade(if (isHidden) 250 else 100))

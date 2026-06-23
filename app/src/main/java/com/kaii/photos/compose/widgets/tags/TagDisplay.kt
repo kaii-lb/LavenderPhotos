@@ -44,7 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
-import com.kaii.photos.compose.animatePlacement
+import com.kaii.photos.compose.modifiers.animatePlacement
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants

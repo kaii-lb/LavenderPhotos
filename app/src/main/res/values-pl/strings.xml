@@ -7,8 +7,6 @@
     <string name="add_album">Dodaj album</string>
     <string name="direct_path_album">Użyj bezpośredniej ścieżki, aby dodać album</string>
     <string name="albums_main_list">Albumy widoku głównego</string>
-    <string name="albums_main_list_selected">Wybrane tutaj albumy pojawią się w głównym widoku zdjęć</string>
-    <string name="albums_selected">Wybrane albumy</string>
     <string name="albums_auto_detect">Automatyczne wykrywanie albumów</string>
     <string name="albums_auto_detect_desc">Wykrywa wszystkie foldery zawierające multimedia na tym urządzeniu i dodaje je do widoku albumów</string>
     <string name="albums_clear_list">Wyczyść listę albumów</string>
@@ -44,18 +42,14 @@
     <string name="privacy_policy_title">Polityka prywatności</string>
     <string name="privacy_policy">Nie ma takiego! Żadne z Twoich danych nie trafiają nigdzie indziej niż na to urządzenie. Nie jest na nim szkolona żadna sztuczna inteligencja, żadne algorytmy nie zbierają informacji, nic. Lavender Photos zawsze była i zawsze będzie galerią zdjęć skupioną na prywatności.</string>
     <string name="support">Wsparcie i darowizny</string>
-    <string name="version_info">Informacje o wersji</string>
     <string name="updates">Aktualizacje</string>
     <string name="updates_check">Sprawdź aktualizacje</string>
     <string name="updates_check_desc">Powiadamia o nowej wersji po otwarciu aplikacji. Nie instaluje automatycznie aktualizacji</string>
     <string name="updates_whats_new">Co nowego</string>
     <string name="updates_notice">Pobierz powiadomienie</string>
-    <string name="updates_not_found">Nie znaleziono aktualizacji</string>
     <string name="updates_new_version_available">Nowa wersja jest dostępna!</string>
     <string name="updates_latest">Jest już w najnowszej wersji</string>
-    <string name="updates_failed">Nie udało się sprawdzić aktualizacji</string>
     <string name="updates_checking">Sprawdzanie aktualizacji</string>
-    <string name="updates_start">Rozpocznij aktualizację</string>
     <string name="locked_folder_help_top">Zabezpieczony folder to bezpieczny folder na Twoje zdjęcia i filmy na tym urządzeniu. \nZabezpieczone multimedia nigdy nie są nigdzie przesyłane i zawsze znajdują się na urządzeniu, zaszyfrowane kluczem unikalnym dla hasła lub odcisku palca Twojego urządzenia.</string>
     <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.\nZabezpieczone dane zostaną utracone po odinstalowaniu aplikacji. Należy wykonać ich kopię zapasową.</string>
     <string name="secure_folder">Zabezpieczony folder</string>
@@ -127,7 +121,6 @@
     <string name="editing_pencil">Ołówek</string>
     <string name="editing_highlighter">Zakreślacz</string>
     <string name="editing_text">Tekst</string>
-    <string name="editing_failed">Nie udało się zapisać edytowanego obrazu</string>
     <string name="settings">Ustawienia</string>
     <string name="settings_general">Ogólne</string>
     <string name="settings_theme">Motyw</string>
@@ -180,7 +173,6 @@
     <string name="media_restore">Przywróć</string>
     <string name="media_restore_confirm">Przywrócić te elementy?</string>
     <string name="media_restore_processing">Przywracanie plików</string>
-    <string name="media_progress">Postęp:</string>
     <string name="media_move">Przenieś</string>
     <string name="media_copy">Kopiuj</string>
     <string name="media_rename">Zmień nazwę</string>
@@ -230,7 +222,6 @@
     <string name="media_share">Udostępnij</string>
     <string name="albums_main_list_desc_1">Pokaż multimedia z wybranych albumów</string>
     <string name="albums_main_list_desc_2">Pokaż multimedia spoza wybranych albumów</string>
-    <string name="albums_main_list_selected_inverse">Wybrane tutaj albumy nie będą wyświetlane w głównym widoku zdjęć</string>
     <string name="albums_custom_desc">Dodaj dowolne multimedia z dowolnego miejsca</string>
     <string name="albums_folder_desc">Załaduj multimedia z folderu</string>
     <string name="albums_pin">Przypnij ten album</string>
@@ -315,7 +306,7 @@
     <string name="permissions_do_not_trash">Nie używaj kosza</string>
     <string name="permissions_do_not_trash_desc">Natychmiastowe i trwałe usuwanie elementów bez przenoszenia ich najpierw do kosza</string>
     <string name="media">Multimedia</string>
-    <string name="media_move_copy_list_search_bar">Wyszukaj album</string>
+    <string name="albums_search_for">Wyszukaj album</string>
     <string name="media_tools">Narzędzia</string>
     <string name="media_information">Informacja</string>
     <string name="edit_desc">Lavender Photos edytował plik w %1$s</string>
@@ -352,7 +343,6 @@
     <string name="immich_login_unavailable_desc">Brak połączonego konta Immich</string>
     <string name="immich_login_found">Zalogowano jako:</string>
     <string name="immich_login">Zaloguj się za pomocą Immich</string>
-    <string name="immich_login_confirm">Login</string>
     <string name="immich_login_ongoing">Logowanie…</string>
     <string name="immich_login_successful">Zalogowano pomyślne!</string>
     <string name="immich_login_failed">Logowanie nieudane</string>
@@ -423,7 +413,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="permissions_explanation">Wyjaśnienie dotyczące uprawnień</string>
     <string name="albums_folder">Album folderów</string>
     <string name="video_seek_icon_desc">Pokazuje, w którą stronę użytkownik wyszukuje</string>
-    <string name="updates_failed_download">Nie udało się pobrać aktualizacji</string>
     <string name="secure_export_failed">Nie udało się wyeksportować kopii zapasowej!</string>
     <string name="secure_encryption_failed_no_permission">Nie można szyfrować zdjęć bez pozwolenia</string>
     <string name="secure_migrating">Migracja</string>
@@ -436,8 +425,6 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="secure_unlock_short">Odblokuj folder</string>
     <string name="secure_move_out">Przenieść multimedia z Zabezpieczonego folderu?</string>
     <string name="editing_resolution_scale">Skala</string>
-    <string name="settings_about_unknown_version">Nie udało się uzyskać numeru wersji</string>
-    <string name="media_restore_processing_desc">Proszę czekać, aż multimedia zostaną przetworzone</string>
     <string name="close">Zamknij</string>
     <string name="changelog_name">Lista zmian</string>
     <string name="look_and_feel_image_details_format">Format szczegółów obrazu</string>

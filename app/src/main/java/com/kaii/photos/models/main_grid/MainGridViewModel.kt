@@ -16,12 +16,14 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
+import com.kaii.photos.repositories.LoginState
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
+import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -30,14 +32,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainGridViewModel(
-    context: Context,
-    override val scope: CoroutineScope = context.appModule.scope,
-    override val apiClient: ApiClient = context.appModule.apiClient
+    context: Context
 ) : BaseViewModel(context) {
+    override val scope: CoroutineScope = context.appModule.scope
+    override val apiClient: ApiClient = context.appModule.apiClient
+
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
@@ -99,14 +103,18 @@ class MainGridViewModel(
         initialValue = false
     )
 
+    val checkUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     fun changeAlbum(album: AlbumType.Folder) = repo.changeAlbum(album)
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo =
         HybridRepository(
-            mediaDao = db.mediaDao(),
-            customDao = db.customDao(),
-            syncTaskDao = db.taskDao(),
+            db = db,
             client = context.applicationContext.appModule.apiClient,
             scope = viewModelScope,
             info = immichInfo,
@@ -121,28 +129,44 @@ class MainGridViewModel(
             )
         )
 
-    private val loginState = LoginStateManager()
+    private val loginClient = LoginClient(
+        client = context.appModule.apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
     init {
-        val apiClient = context.appModule.apiClient
-
         viewModelScope.launch {
             immichInfo.collectLatest {
-                loginState.setBaseUrl(
-                    baseUrl = it.endpoint,
-                    apiClient = apiClient
-                )
+                loginClient.setEndpoint(it.endpoint)
+                loginClient.setAuth(it.auth)
 
-                val state = loginState.refresh(accessToken = it.accessToken)
+                val state = getLoginState()
                 if (state is LoginState.LoggedIn) {
                     settings.immich.setUsername(state.user.name)
                     settings.immich.setUpdatedAt(state.user.updatedAt)
                 }
             }
         }
+    }
+
+    private suspend fun getLoginState() = withContext(Dispatchers.IO) {
+        if (!loginClient.ping()) {
+            return@withContext LoginState.ServerUnreachable
+        }
+
+        val validated = loginClient.validate()
+
+        if (!validated) {
+            return@withContext LoginState.LoggedOut
+        }
+
+        loginClient.getMe()?.let {
+            LoginState.LoggedIn(user = it)
+        } ?: LoginState.LoggedOut
     }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
@@ -340,7 +364,7 @@ class MainGridViewModel(
                 )
             )
 
-            repo.setTrashed(context, list, trashed) {
+            repo.setTrashed(context, list, trashed, null, null) {
                 percentage.floatValue = it.toFloat() / list.size
                 body.value = context.resources.getString(
                     R.string.media_delete_snackbar_body,
@@ -410,5 +434,47 @@ class MainGridViewModel(
 
     override fun renameAlbum(context: Context, newName: String) {
         throw IllegalAccessError("Cannot rename album in a main view!")
+    }
+
+    override fun secure(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_encrypting),
+                    icon = R.drawable.secure_folder,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.secure(context, list)
+
+            isLoading.value = false
+        }
+    }
+
+    override fun restore(
+        context: Context,
+        list: List<SelectionManager.SelectedItem>
+    ) {
+        scope.launch {
+            val isLoading = mutableStateOf(true)
+
+            LavenderSnackbarController.pushEvent(
+                LavenderSnackbarEvent.LoadingEvent(
+                    message = context.resources.getString(R.string.secure_decrypting),
+                    icon = R.drawable.unlock,
+                    isLoading = isLoading
+                )
+            )
+
+            repo.restore(context, list)
+
+            isLoading.value = false
+        }
     }
 }

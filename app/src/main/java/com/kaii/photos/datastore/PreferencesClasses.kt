@@ -7,6 +7,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.kaii.photos.R
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
@@ -231,7 +232,7 @@ data class AlbumInfo(
 @Serializable
 data class ImmichBasicInfo(
     val endpoint: String,
-    val accessToken: String,
+    val auth: Auth,
     val username: String,
     val userId: String,
     val updatedAt: String
@@ -239,7 +240,7 @@ data class ImmichBasicInfo(
     companion object {
         val Empty = ImmichBasicInfo(
             endpoint = "",
-            accessToken = "",
+            auth = Auth.None,
             username = "",
             userId = "",
             updatedAt = ""
@@ -263,7 +264,8 @@ sealed interface AlbumType : Parcelable {
         override val name: String,
         override val pinned: Boolean,
         override val immichId: String?,
-        val paths: Set<String>
+        val paths: Set<String>,
+        val wasCloud: Boolean = false
     ) : AlbumType {
         class NavType : androidx.navigation.NavType<Folder>(isNullableAllowed = false) {
             override fun get(bundle: Bundle, key: String): Folder? {

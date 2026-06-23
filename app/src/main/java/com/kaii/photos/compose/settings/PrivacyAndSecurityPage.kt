@@ -32,14 +32,20 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
+import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.StartupManager
+import com.kaii.photos.permissions.auth.rememberPasswordAuthManager
+import com.kaii.photos.widgets.ExpressivePINFieldState
 
 @Composable
 fun PrivacyAndSecurityPage(
@@ -52,17 +58,23 @@ fun PrivacyAndSecurityPage(
     val confirmToDelete by settings.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
     val preserveDate by settings.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
+    val allowSecureFolderScreenCapture by settings.getAllowSecureFolderScreenCapture().collectAsStateWithLifecycle(initialValue = false)
+    val password by settings.getPassword().collectAsStateWithLifecycle(initialValue = null)
 
     PrivacyAndSecurityPageImpl(
         isMediaManager = { isMediaManager },
         confirmToDelete = { confirmToDelete },
         preserveDate = { preserveDate },
         doNotTrash = { doNotTrash },
+        allowSecureFolderScreenCapture = { allowSecureFolderScreenCapture },
+        password = { password },
+        navController = LocalNavController.current,
         modifier = modifier,
         setIsMediaManager = settings::setIsMediaManager,
         setConfirmToDelete = settings::setConfirmToDelete,
         setPreserveDate = settings::setPreserveDateOnMove,
         setDoNotTrash = settings::setDoNotTrash,
+        setAllowSecureFolderScreenCapture = settings::setAllowSecureFolderScreenCapture,
         onPermissionResult = {
             startupManager.onPermissionResult(
                 permission = Manifest.permission.MANAGE_MEDIA,
@@ -80,11 +92,15 @@ fun PrivacyAndSecurityPagePreview() {
         confirmToDelete = { false },
         preserveDate = { false },
         doNotTrash = { false },
+        allowSecureFolderScreenCapture = { false },
+        password = { null },
+        navController = rememberNavController(),
         modifier = Modifier,
         setIsMediaManager = {},
         setConfirmToDelete = {},
         setPreserveDate = {},
         setDoNotTrash = {},
+        setAllowSecureFolderScreenCapture = {},
         onPermissionResult = {}
     )
 }
@@ -95,16 +111,20 @@ private fun PrivacyAndSecurityPageImpl(
     confirmToDelete: () -> Boolean,
     preserveDate: () -> Boolean,
     doNotTrash: () -> Boolean,
+    allowSecureFolderScreenCapture: () -> Boolean,
+    password: () -> ByteArray?,
+    navController: NavController,
     modifier: Modifier,
     setIsMediaManager: (value: Boolean) -> Unit,
     setConfirmToDelete: (value: Boolean) -> Unit,
     setPreserveDate: (value: Boolean) -> Unit,
     setDoNotTrash: (value: Boolean) -> Unit,
+    setAllowSecureFolderScreenCapture: (value: Boolean) -> Unit,
     onPermissionResult: (granted: Boolean) -> Unit
 ) {
     Scaffold(
         topBar = {
-            PrivacyAndSecuritySettingsTopBar()
+            PrivacyAndSecuritySettingsTopBar(navController)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -188,15 +208,66 @@ private fun PrivacyAndSecurityPageImpl(
                     onSwitchClick = setDoNotTrash
                 )
             }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.secure_folder)
+                )
+            }
+
+            item {
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.permissions_allow_secure_folder_screen_capture),
+                    summary = stringResource(id = R.string.permissions_allow_secure_folder_screen_capture_desc),
+                    iconResID = R.drawable.visibility,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    checked = allowSecureFolderScreenCapture(),
+                    onSwitchClick = setAllowSecureFolderScreenCapture
+                )
+            }
+
+            item {
+                PreferencesSeparatorText(
+                    text = stringResource(id = R.string.app_lock)
+                )
+            }
+
+            item {
+                val authManager = rememberPasswordAuthManager {
+                    navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
+                        action = ExpressivePINFieldState.Action.Set,
+                        password = null,
+                        salt = null
+                    ))
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.app_lock_password),
+                    summary = stringResource(id = R.string.app_lock_password_desc),
+                    iconResID = R.drawable.secure_folder,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    action = {
+                        if (password() == null) {
+                            authManager.authenticate()
+                        } else {
+                            navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
+                                action = ExpressivePINFieldState.Action.Verify,
+                                password = null,
+                                salt = null
+                            ))
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PrivacyAndSecuritySettingsTopBar() {
-    val navController = LocalNavController.current
-
+private fun PrivacyAndSecuritySettingsTopBar(navController: NavController) {
     TopAppBar(
         title = {
             Text(

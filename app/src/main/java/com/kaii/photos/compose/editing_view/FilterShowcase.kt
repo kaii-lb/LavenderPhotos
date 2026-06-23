@@ -39,12 +39,14 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.compose.widgets.shimmerEffect
@@ -57,6 +59,7 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.withColorFilter
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -157,7 +160,9 @@ fun FilterShowcase(
 fun VideoFilterPage(
     drawingPaintState: DrawingPaintState,
     currentVideoPosition: Float,
-    absolutePath: String,
+    uri: String,
+    endpoint: () -> String,
+    auth: () -> Auth,
     allowedToRefresh: Boolean,
     pagerState: PagerState,
     modifier: Modifier = Modifier
@@ -165,12 +170,24 @@ fun VideoFilterPage(
     var bitmap: ImageBitmap? by remember { mutableStateOf(null) }
     val coroutineScope = rememberCoroutineScope()
 
+    val context = LocalContext.current
     LaunchedEffect(currentVideoPosition, allowedToRefresh) {
         if (allowedToRefresh) return@LaunchedEffect
+        if (uri.startsWith("/api") && auth().asString().isBlank()) return@LaunchedEffect
 
         coroutineScope.launch(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
-            metadata.setDataSource(absolutePath)
+            if (uri.startsWith("/api")) {
+                metadata.setDataSource(
+                    endpoint() + uri.replace("original", "video/playback"),
+                    auth().headers
+                )
+            } else {
+                metadata.setDataSource(
+                    context,
+                    uri.toUri()
+                )
+            }
 
             // just so the image doesn't flash a million times, and we don't cause a million recompositions
             var localBitmap = ImageBitmap(8, 8)

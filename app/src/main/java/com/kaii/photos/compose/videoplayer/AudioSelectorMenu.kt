@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
-import com.kaii.photos.helpers.video.LavenderExoPlayer
+import com.kaii.photos.screens.video.LavenderExoPlayer
 
 @Composable
 fun AudioSelectorMenu(

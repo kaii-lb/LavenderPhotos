@@ -6,13 +6,12 @@ import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.LocalFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -21,6 +20,7 @@ import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.TrashDataSource
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -37,9 +37,7 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class TrashRepository(
-    mediaDao: MediaDao,
-    customDao: CustomEntityDao,
-    syncTaskDao: SyncTaskDao,
+    db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
     context: Context,
@@ -61,19 +59,23 @@ class TrashRepository(
             cancellationSignal = cancellationSignal
         )
 
-    override var fileManager = LocalFileManager(
-        mediaDao = mediaDao,
-        customDao = customDao,
-        syncTaskDao = syncTaskDao,
+    override val fileManager = LocalFileManager(
+        mediaDao = db.mediaDao(),
+        customDao = db.customDao(),
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
-        info = ImmichBasicInfo.Empty
+        secureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
+        )
     )
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
@@ -108,7 +110,7 @@ class TrashRepository(
             ),
             pagingSourceFactory = { ListPagingSource(media = params.items) }
         ).flow.mapToMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -122,13 +124,6 @@ class TrashRepository(
     }.cachedIn(scope)
 
     fun cancel() = cancellationSignal.cancel()
-
-    override suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, null, null, onItemDone)
 
     override suspend fun delete(
         context: Context,

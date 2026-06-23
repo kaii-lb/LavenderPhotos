@@ -1,12 +1,14 @@
 package com.kaii.photos.datastore.preferences
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.datastore
 import com.kaii.photos.helpers.EncryptionManager
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -18,6 +20,7 @@ class SettingsImmichImpl(
     private val immichEncryptionIV = byteArrayPreferencesKey("immich_encryption_iv")
     private val immichEndpoint = stringPreferencesKey("immich_endpoint")
     private val immichToken = byteArrayPreferencesKey("immich_token")
+    private val immichTokenIsKey = booleanPreferencesKey("immich_token_is_key")
     private val username = stringPreferencesKey("immich_username")
     private val userId = stringPreferencesKey("immich_user_id")
     private val updatedAt = stringPreferencesKey("immich_updated_at")
@@ -25,6 +28,7 @@ class SettingsImmichImpl(
     fun getImmichBasicInfo() = context.datastore.data.map { data ->
         val endpoint = data[immichEndpoint] ?: return@map ImmichBasicInfo.Empty
         val token = data[immichToken] ?: return@map ImmichBasicInfo.Empty
+        val immichTokenIsKey = data[immichTokenIsKey] ?: return@map ImmichBasicInfo.Empty
         val iv = data[immichEncryptionIV] ?: return@map ImmichBasicInfo.Empty
         val username = data[username] ?: return@map ImmichBasicInfo.Empty
         val userId = data[userId] ?: return@map ImmichBasicInfo.Empty
@@ -35,9 +39,19 @@ class SettingsImmichImpl(
             iv = iv
         )
 
+        val tokenString = decToken.decodeToString()
+        val auth =
+            when {
+                tokenString.isBlank() -> Auth.None
+
+                immichTokenIsKey -> Auth.ApiKey(tokenString)
+
+                else -> Auth.AccessToken(tokenString)
+            }
+
         ImmichBasicInfo(
             endpoint = endpoint,
-            accessToken = decToken.decodeToString(),
+            auth = auth,
             username = username,
             userId = userId,
             updatedAt = updatedAt
@@ -46,11 +60,12 @@ class SettingsImmichImpl(
 
     fun setImmichBasicInfo(info: ImmichBasicInfo) = scope.launch {
         context.datastore.edit { data ->
-            val (enc, iv) = EncryptionManager.encryptBytes(info.accessToken.toByteArray())
+            val (enc, iv) = EncryptionManager.encryptBytes(info.auth.asString().toByteArray())
 
             data[username] = info.username
             data[immichEndpoint] = info.endpoint
             data[immichToken] = enc
+            data[immichTokenIsKey] = info.auth is Auth.ApiKey
             data[immichEncryptionIV] = iv
             data[userId] = info.userId
             data[updatedAt] = info.updatedAt

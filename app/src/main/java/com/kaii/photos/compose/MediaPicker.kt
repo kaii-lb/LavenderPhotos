@@ -1,14 +1,11 @@
 package com.kaii.photos.compose
 
 import android.app.Activity
-import android.app.Activity.RESULT_OK
-import android.content.ClipData
-import android.content.ContentResolver
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -34,12 +31,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -65,10 +65,14 @@ import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.rememberSingleJobRunner
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
+import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -77,11 +81,14 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
 
@@ -115,8 +122,7 @@ class MediaPicker : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
                     window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
@@ -200,7 +206,7 @@ class MediaPicker : ComponentActivity() {
             }
 
             navigation<Screens.Album>(
-                startDestination = Screens.Favourites.GridView::class
+                startDestination = Screens.Album.GridView::class
             ) {
                 composable<Screens.Album.GridView>(
                     typeMap = mapOf(
@@ -299,13 +305,37 @@ class MediaPicker : ComponentActivity() {
                 }
             }
 
+            navigation<Screens.Immich>(
+                startDestination = Screens.Immich.GridView::class
+            ) {
+                composable<Screens.Immich.GridView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumType.Cloud>() to AlbumType.Cloud.NavType()
+                    )
+                ) {
+                    setupNextScreen(window = window)
+
+                    val screen = it.toRoute<Screens.Immich.GridView>()
+                    val viewModel = viewModel<ImmichAlbumViewModel>(
+                        factory = ImmichAlbumViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
+                    )
+
+                    SingleAlbumView(
+                        album = screen.album,
+                        viewModel = viewModel,
+                        incomingIntent = incomingIntent
+                    )
+                }
+            }
+
             composable<Screens.AlbumGroup> {
                 val screen = it.toRoute<Screens.AlbumGroup>()
 
                 AlbumGroup(
-                    id = screen.id,
-                    name = screen.name,
-                    albumGridState = appModule.albumGridState
+                    id = screen.id
                 )
             }
         }
@@ -315,11 +345,18 @@ class MediaPicker : ComponentActivity() {
 @Composable
 fun MediaPickerConfirmButton(
     incomingIntent: Intent,
-    uris: List<Uri>,
-    contentResolver: ContentResolver
+    items: () -> List<SelectionManager.SelectedItem>
 ) {
+    val state = retainMediaPickerState(incomingIntent)
+
+    BackHandler(
+        enabled = state.isLoading,
+        onBack = { /* block while downloading media */ }
+    )
+
     val context = LocalContext.current
-    val activity = remember(context) { context as Activity }
+    val resources = LocalResources.current
+    val runner = rememberSingleJobRunner()
 
     Box(
         modifier = Modifier
@@ -331,34 +368,40 @@ fun MediaPickerConfirmButton(
     ) {
         Button(
             onClick = {
-                if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-                    || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
-                ) {
-                    val resultIntent = Intent().apply {
-                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        val clipData = ClipData.newUri(contentResolver, "Media", uris.first())
-                        for (i in 1 until uris.size) {
-                            clipData.addItem(ClipData.Item(uris[i]))
+                runner.run {
+                    val itemCount = items().size
+
+                    val body = mutableStateOf(resources.getString(R.string.media_picker_processing_items_body, 0, itemCount))
+                    val percentage = mutableFloatStateOf(0f)
+
+                    LavenderSnackbarController.pushEvent(
+                        event = LavenderSnackbarEvent.ProgressEvent(
+                            message = resources.getString(R.string.media_picker_processing_items),
+                            body = body,
+                            icon = R.drawable.data,
+                            percentage = percentage
+                        )
+                    )
+
+                    launch {
+                        // kinda funky state management but wtv
+                        state.processedCount.collect {
+                            body.value = resources.getString(R.string.media_picker_processing_items_body, it, itemCount)
+                            percentage.floatValue = it.toFloat() / itemCount
                         }
-                        setClipData(clipData)
                     }
 
-                    activity.setResult(RESULT_OK, resultIntent)
-                } else {
-                    val resultIntent = Intent().apply {
-                        data = uris.first()
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
+                    state.shareWithApp(
+                        items = items()
+                    )
 
-                    activity.setResult(RESULT_OK, resultIntent)
+                    percentage.floatValue = 1f
+                    (context as Activity).finish()
                 }
-
-                (context as Activity).finish()
             },
             shape = CircleShape,
             elevation = ButtonDefaults.elevatedButtonElevation(),
-            enabled = uris.isNotEmpty(),
+            enabled = items().isNotEmpty(),
             modifier = Modifier
                 .width(160.dp)
                 .height(52.dp)

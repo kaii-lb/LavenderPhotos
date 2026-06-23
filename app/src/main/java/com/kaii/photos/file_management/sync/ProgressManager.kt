@@ -1,24 +1,64 @@
 package com.kaii.photos.file_management.sync
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
+import com.kaii.photos.helpers.AnimationConstants
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class ProgressManager {
-    private val _isTracking = MutableStateFlow(false)
-    val isTracking = _isTracking.asStateFlow()
+class ProgressManager(
+    private val scope: CoroutineScope,
+    settings: SettingsImmichImpl
+) {
+    enum class State {
+        StartingUp,
+        Tracking,
+        Error,
+        Idle
+    }
 
-    private val _progress = MutableStateFlow(0f)
-    val progress = _progress.asStateFlow()
+    var state by mutableStateOf(State.Idle)
+        private set
 
-    var currentItems = 0
-    var totalItems = 0
+    var progress by mutableFloatStateOf(0f)
+        private set
+
+    var currentItems by mutableIntStateOf(0)
+        private set
+
+    var totalItems by mutableIntStateOf(0)
+        private set
+
+    init {
+        // startup gauge check
+        scope.launch {
+            val connected = settings.getImmichBasicInfo().first().auth.asString().isNotBlank()
+
+            if (!connected) return@launch
+
+            state = State.StartingUp
+
+            delay(AnimationConstants.DURATION_SHORT.toLong())
+
+            progress = 1f
+
+            delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2L)
+            state = State.Idle
+        }
+    }
 
     fun startTracking(totalItems: Int) {
         this.totalItems = totalItems
-        _progress.value = 0f
+        progress = 0f
         currentItems = 0
 
-        _isTracking.value = true
+        state = State.Tracking
     }
 
     fun addToTotalItems(count: Int) {
@@ -37,13 +77,19 @@ class ProgressManager {
     }
 
     fun stopTracking() {
-        _isTracking.value = false
+        scope.launch {
+            delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG.toLong())
+            state = if (progress == 1f || totalItems == 0) State.Idle else State.Error
+        }
+    }
+
+    fun dismiss() {
+        if (state == State.Error) state = State.Idle
     }
 
     private fun updateProgress() {
-        _progress.value =
+        progress =
             if (totalItems <= 0) 0f
             else currentItems.toFloat() / totalItems
     }
-
 }

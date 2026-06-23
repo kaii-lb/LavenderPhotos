@@ -77,8 +77,7 @@ val Context.appSecureThumbnailCacheDir: String
         return dir.absolutePath.removeSuffix("/")
     }
 
-/** doesn't end with a "/" */
-val appCloudFolderDir: String
+val appCloudFolderDir: File
     get() {
         val pictures = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         if (!pictures.exists()) pictures.mkdirs()
@@ -86,7 +85,7 @@ val appCloudFolderDir: String
         val appDir = File(pictures, AppDirectories.CloudDir.path)
         if (!appDir.exists()) appDir.mkdirs()
 
-        return appDir.absolutePath.removeSuffix("/")
+        return appDir
     }
 
 val Context.appSecureFolderVideoThumbnailDir: String

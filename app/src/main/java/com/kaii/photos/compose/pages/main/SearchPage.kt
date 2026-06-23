@@ -88,14 +88,20 @@ fun SearchPage(
         val coroutineScope = rememberCoroutineScope()
         val tags by viewModel.tags.collectAsStateWithLifecycle()
 
-        val showDialog = remember { mutableStateOf(false) }
         var currentTag by remember { mutableStateOf<Tag?>(null) }
-        ConfirmationDialog(
-            showDialog = showDialog,
-            dialogTitle = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
-            confirmButtonLabel = stringResource(id = R.string.media_delete)
-        ) {
-            viewModel.deleteTag(currentTag!!)
+        var showDialog by remember { mutableStateOf(false) }
+
+        if (showDialog) {
+            ConfirmationDialog(
+                title = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    viewModel.deleteTag(currentTag!!)
+                },
+                onDismiss = {
+                    showDialog = false
+                }
+            )
         }
 
         val selectedTags by viewModel.selectedTags.collectAsStateWithLifecycle()
@@ -131,7 +137,7 @@ fun SearchPage(
             },
             onTagRemove = {
                 currentTag = it
-                showDialog.value = true
+                showDialog = true
             },
             setSearchingForTags = viewModel::setSearchingForTags,
             onClearTags = viewModel::clearSelectedTags

@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -59,10 +58,13 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.immich.ImmichAccountPage
-import com.kaii.photos.compose.immich.ImmichDashboardPage
 import com.kaii.photos.compose.immich.ImmichLoginPage
+import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
+import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
+import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
+import com.kaii.photos.compose.pages.ScreenLock
 import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.compose.settings.BehaviourSettingsPage
@@ -83,10 +85,11 @@ import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.appModule
+import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
+import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.Updater
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
@@ -97,6 +100,8 @@ import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
 import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
+import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -109,13 +114,19 @@ import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.models.updater.UpdaterViewModel
+import com.kaii.photos.models.updater.UpdaterViewModelFactory
 import com.kaii.photos.permissions.StartupManager
+import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LocalApiClient
+import com.kaii.photos.widgets.ExpressivePINFieldState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,10 +137,17 @@ val LocalNavController = compositionLocalOf<NavHostController> {
 }
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+    private lateinit var navController: NavHostController
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        var isCheckingCredentials = true
+        var isAppLocked = false
+
+        splashScreen.setKeepOnScreenCondition { isCheckingCredentials }
+
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val settings = applicationContext.appModule.settings
@@ -137,6 +155,10 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             startupManager.checkState()
+
+            val password = settings.permissions.getPassword().first()
+            isAppLocked = password != null
+            isCheckingCredentials = false
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 appModule.settings.permissions.setIsMediaManager(
@@ -147,7 +169,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val followDarkTheme by settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
-
             PhotosTheme(
                 theme = followDarkTheme,
                 dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -160,8 +181,7 @@ class MainActivity : ComponentActivity() {
 
                 val navControllerLocal = rememberNavController()
                 CompositionLocalProvider(
-                    LocalNavController provides navControllerLocal,
-                    LocalApiClient provides appModule.apiClient
+                    LocalNavController provides navControllerLocal
                 ) {
                     SetContentForActivity(
                         startupManager = startupManager,
@@ -171,6 +191,8 @@ class MainActivity : ComponentActivity() {
                                 StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
 
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
+
+                                else if (isAppLocked) -> Screens.Startup.ScreenLock
 
                                 else -> Screens.MainPages
                             }
@@ -190,7 +212,7 @@ class MainActivity : ComponentActivity() {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val context = LocalContext.current
-        val navController = LocalNavController.current
+        navController = LocalNavController.current
 
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
@@ -198,15 +220,6 @@ class MainActivity : ComponentActivity() {
                 if (canRecordLogs) {
                     val logManager = LogManager(context = context)
                     logManager.startRecording()
-                }
-
-                val checkForUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().first()
-                if (checkForUpdatesOnStartup) {
-                    val updater = Updater(
-                        context = context,
-                        coroutineScope = lifecycleScope
-                    )
-                    updater.startupUpdateCheck(navController)
                 }
 
                 val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
@@ -252,6 +265,12 @@ class MainActivity : ComponentActivity() {
                     StartupLoadingPage(startupManager = startupManager)
                 }
 
+                composable<Screens.Startup.ScreenLock> {
+                    ScreenLock(
+                        action = ExpressivePINFieldState.Action.Unlock
+                    )
+                }
+
                 navigation<Screens.MainPages>(
                     startDestination = Screens.MainPages.MainGrid.GridView
                 ) {
@@ -274,6 +293,31 @@ class MainActivity : ComponentActivity() {
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
                             factory = SearchViewModelFactory(context = context)
                         )
+
+                        val checkForUpdatesOnStartup by viewModel.checkUpdatesOnStartup.collectAsStateWithLifecycle()
+                        if (checkForUpdatesOnStartup) {
+                            val updaterViewModel = viewModel<UpdaterViewModel>(
+                                viewModelStoreOwner = storeOwner,
+                                factory = UpdaterViewModelFactory(context = context)
+                            )
+
+                            LaunchedEffect(Unit) {
+                                updaterViewModel.updateStateChannel.collectLatest { state ->
+                                    if (state != UpdateState.Available) return@collectLatest
+
+                                    LavenderSnackbarController.pushEvent(
+                                        event = LavenderSnackbarEvent.ActionEvent(
+                                            message = resources.getString(R.string.updates_new_version_available),
+                                            icon = R.drawable.update,
+                                            actionIcon = R.drawable.download,
+                                            action = {
+                                                navController.navigate(Screens.Settings.Misc.UpdatePage)
+                                            }
+                                        )
+                                    )
+                                }
+                            }
+                        }
 
                         MainPages(
                             viewModel = viewModel,
@@ -303,9 +347,9 @@ class MainActivity : ComponentActivity() {
                             viewModel.changeAlbum(screen.album)
                         }
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -319,9 +363,9 @@ class MainActivity : ComponentActivity() {
 
                     composable<Screens.MainPages.Search.SinglePhoto> {
                         val screen = it.toRoute<Screens.MainPages.Search.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
@@ -376,9 +420,9 @@ class MainActivity : ComponentActivity() {
                         )
                         multiAlbumViewModel.changeAlbum(album = screen.album)
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -410,9 +454,9 @@ class MainActivity : ComponentActivity() {
                         )
 
                         val screen = it.toRoute<Screens.Favourites.SinglePhoto>()
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -517,6 +561,30 @@ class MainActivity : ComponentActivity() {
                         ImmichLoginPage(viewModel = viewModel)
                     }
 
+                    composable<Screens.Immich.BackupOptions> {
+                        ImmichBackupOptionsPage(
+                            state = rememberImmichBackupOptionsState(),
+                            navController = navController
+                        )
+                    }
+
+                    composable<Screens.Immich.ShareAlbumPage> {
+                        val screen = it.toRoute<Screens.Immich.ShareAlbumPage>()
+                        val viewModel = it.sharedViewModel<ImmichShareAlbumViewModel>(
+                            factory = ImmichShareAlbumViewModelFactory(
+                                context = context,
+                                albumImmichId = screen.albumImmichId
+                            )
+                        )
+
+                        ImmichShareLinkPage(
+                            latestImage = screen.latestImage,
+                            albumTitle = screen.albumTitle,
+                            itemCount = screen.itemCount,
+                            viewModel = viewModel
+                        )
+                    }
+
                     composable<Screens.Immich.GridView>(
                         typeMap = mapOf(
                             typeOf<AlbumType.Cloud>() to AlbumType.Cloud.NavType()
@@ -552,9 +620,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -604,9 +672,9 @@ class MainActivity : ComponentActivity() {
                             )
                         )
 
-                        val editId by it.savedStateHandle.getStateFlow(
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
-                            initialValue = -1L
+                            initialValue = null
                         ).collectAsStateWithLifecycle()
 
                         SinglePhotoView(
@@ -645,6 +713,20 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Settings.MainPage.Debugging> {
                         DebuggingSettingsPage()
                     }
+
+                    composable<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>(
+                        typeMap = mapOf(
+                            typeOf<ByteArray?>() to NullableByteArrayNavType()
+                        )
+                    ) {
+                        val screen = it.toRoute<Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock>()
+
+                        ScreenLock(
+                            action = screen.action,
+                            password = screen.password,
+                            salt = screen.salt
+                        )
+                    }
                 }
 
                 navigation<Screens.Settings.Misc>(
@@ -655,7 +737,20 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Settings.Misc.UpdatePage> {
-                        UpdatesPage()
+                        val viewModel = viewModel<UpdaterViewModel>(
+                            factory = UpdaterViewModelFactory(context)
+                        )
+
+                        val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+                        val news by viewModel.news.collectAsStateWithLifecycle()
+                        val showUpdateNotice by viewModel.showUpdateNotice.collectAsStateWithLifecycle()
+
+                        UpdatesPage(
+                            updateState = { updateState },
+                            news = { news },
+                            showUpdateNotice = { showUpdateNotice },
+                            onRefresh = viewModel::refresh
+                        )
                     }
 
                     composable<Screens.Settings.Misc.LicensesPage> {
@@ -671,9 +766,7 @@ class MainActivity : ComponentActivity() {
                     val screen = it.toRoute<Screens.AlbumGroup>()
 
                     AlbumGroup(
-                        id = screen.id,
-                        name = screen.name,
-                        albumGridState = appModule.albumGridState
+                        id = screen.id
                     )
                 }
 
@@ -722,21 +815,24 @@ class MainActivity : ComponentActivity() {
 
                     val screen: Screens.ImageEditor = it.toRoute()
                     val viewModel = viewModel<EditorViewModel>(
-                        factory = EditorViewModelFactory(context = context)
+                        factory = EditorViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
                     )
 
-                    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
                     val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
+                    val info by viewModel.immichInfo.collectAsStateWithLifecycle()
 
                     ImageEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
+                        info = { info },
                         isFromOpenWithView = false,
-                        album = screen.album,
                         exportQuality = { exportQuality },
-                        exitOnSave = { exitOnSave },
-                        overwriteByDefault = { overwriteByDefault }
+                        overwriteByDefault = { overwriteByDefault },
+                        editImage = viewModel::editImage,
+                        setNavProps = viewModel::setNavProps
                     )
                 }
 
@@ -786,8 +882,7 @@ class MainActivity : ComponentActivity() {
                     val screen = it.toRoute<Screens.VideoEditor>()
 
                     VideoEditor(
-                        uri = screen.uri.toUri(),
-                        absolutePath = screen.absolutePath,
+                        uri = screen.uri,
                         album = screen.album,
                         window = window,
                         isFromOpenWithView = false
@@ -813,6 +908,18 @@ class MainActivity : ComponentActivity() {
                         ExistingWorkPolicy.REPLACE,
                         OneTimeWorkRequest.Builder(SyncWorker::class).build()
                     )
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val password = applicationContext.appModule.settings.permissions.getPassword().first()
+
+            if (password != null) launch(Dispatchers.Main) {
+                navController.navigate(Screens.Startup.ScreenLock)
             }
         }
     }

@@ -8,7 +8,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -20,72 +19,63 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 
 @Composable
 fun ConfirmationDialogWithBody(
-    showDialog: MutableState<Boolean>,
-    dialogTitle: String,
-    dialogBody: String,
+    title: String,
+    body: String,
     confirmButtonLabel: String,
     showCancelButton: Boolean = true,
     onCancel: () -> Unit = {},
-    action: () -> Unit
+    action: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val isLandscape by rememberDeviceOrientation()
 
-    val modifier = if (isLandscape)
-        Modifier.width(256.dp)
-    else
-        Modifier.Companion
-
-    if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = {
-                showDialog.value = false
-            },
-            modifier = modifier,
-            confirmButton = {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = if (isLandscape) Modifier.width(256.dp) else Modifier,
+        confirmButton = {
+            Button(
+                onClick = {
+                    action()
+                    onDismiss()
+                }
+            ) {
+                Text(
+                    text = confirmButtonLabel,
+                    fontSize = TextUnit(14f, TextUnitType.Sp)
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = TextUnit(16f, TextUnitType.Sp)
+            )
+        },
+        text = {
+            Text(
+                text = body,
+                fontSize = TextUnit(14f, TextUnitType.Sp)
+            )
+        },
+        dismissButton = {
+            if (showCancelButton) {
                 Button(
                     onClick = {
-                        showDialog.value = false
-                        action()
-                    }
+                        onCancel()
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 ) {
                     Text(
-                        text = confirmButtonLabel,
+                        text = stringResource(id = R.string.media_cancel),
                         fontSize = TextUnit(14f, TextUnitType.Sp)
                     )
                 }
-            },
-            title = {
-                Text(
-                    text = dialogTitle,
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-            },
-            text = {
-                Text(
-                    text = dialogBody,
-                    fontSize = TextUnit(14f, TextUnitType.Sp)
-                )
-            },
-            dismissButton = {
-                if (showCancelButton) {
-                    Button(
-                        onClick = {
-                            onCancel()
-                            showDialog.value = false
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.media_cancel),
-                            fontSize = TextUnit(14f, TextUnitType.Sp)
-                        )
-                    }
-                }
-            },
-            shape = RoundedCornerShape(32.dp)
-        )
-    }
+            }
+        },
+        shape = RoundedCornerShape(32.dp)
+    )
 }

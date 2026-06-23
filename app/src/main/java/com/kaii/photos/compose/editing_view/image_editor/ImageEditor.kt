@@ -2,7 +2,6 @@ package com.kaii.photos.compose.editing_view.image_editor
 
 import android.app.Activity
 import android.graphics.Bitmap
-import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -37,7 +36,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,6 +71,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -88,11 +88,9 @@ import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
 import com.kaii.photos.compose.widgets.shimmerEffect
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.editing.DrawableText
 import com.kaii.photos.helpers.editing.ImageEditorTabs
 import com.kaii.photos.helpers.editing.ImageModification
@@ -100,9 +98,8 @@ import com.kaii.photos.helpers.editing.MediaAdjustments
 import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
-import com.kaii.photos.helpers.editing.saveImage
+import com.kaii.photos.mediastore.ImmichInfo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -112,13 +109,13 @@ import kotlin.time.Clock
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ImageEditor(
-    uri: Uri,
-    absolutePath: String,
+    uri: String,
+    info: () -> ImmichBasicInfo,
     isFromOpenWithView: Boolean,
-    album: AlbumType?,
     exportQuality: () -> Int,
-    exitOnSave: () -> Boolean,
-    overwriteByDefault: () -> Boolean
+    overwriteByDefault: () -> Boolean,
+    editImage: (NavController, GenericFileEditor.EditParameters.Image) -> Unit,
+    setNavProps: (NavHostController) -> Unit
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -143,15 +140,29 @@ fun ImageEditor(
 
     val windowInfo = LocalWindowInfo.current
     val context = LocalContext.current
-    LaunchedEffect(uri, absolutePath) {
+    LaunchedEffect(uri, info()) {
+        if (uri.startsWith("/api") && info().auth.asString().isBlank()) return@LaunchedEffect
+
         withContext(Dispatchers.IO) {
             val drawable =
                 Glide.with(context)
-                    .load(uri)
+                    .load(
+                        if (uri.startsWith("/api")) {
+                            ImmichInfo(
+                                thumbnail = uri,
+                                original = uri,
+                                hash = "",
+                                auth = info().auth,
+                                endpoint = info().endpoint,
+                                useThumbnail = false
+                            )
+                        } else uri
+                    )
                     .override(Target.SIZE_ORIGINAL)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
                     .submit()
+
                     .get()
 
             val res = IntSize(drawable.intrinsicWidth, drawable.intrinsicHeight)
@@ -233,7 +244,6 @@ fun ImageEditor(
 
             val navController = LocalNavController.current
 
-            var navMediaId by remember { mutableLongStateOf(-1L) }
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
                 lastSavedModCount = lastSavedModCount,
@@ -243,59 +253,48 @@ fun ImageEditor(
                     overwrite = it
                 },
                 saveImage = {
-                    navMediaId = saveImage(
-                        context = context,
-                        image =
-                            Glide.with(context)
-                                .asBitmap()
-                                .load(uri)
-                                .skipMemoryCache(true)
-                                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                                .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))
-                                .override(Target.SIZE_ORIGINAL)
-                                .submit()
-                                .get()
-                                .asImageBitmap(),
-                        containerDimens = containerDimens,
-                        exportQuality = exportQuality(),
-                        absolutePath = absolutePath,
-                        drawingPaintState = drawingPaintState,
-                        imageEditingState = imageEditingState,
-                        modifications = modifications,
-                        textMeasurer = textMeasurer,
-                        actualLeft = actualStarts.first,
-                        actualTop = actualStarts.second,
-                        overwrite = overwrite,
-                        isFromOpenWithView = isFromOpenWithView
-                    )
-
-                    delay(PhotoGridConstants.UPDATE_TIME * 2)
-                    if (album?.id.takeIf { album !is AlbumType.Folder } != null && navMediaId != -1L) coroutineScope.launch(Dispatchers.IO) {
-                        MediaDatabase.getInstance(context)
-                            .customDao()
-                            .upsertAll(
-                                listOf(
-                                    CustomItem(
-                                        id = navMediaId,
-                                        album = album!!.id
+                    editImage(
+                        navController,
+                        GenericFileEditor.EditParameters.Image(
+                            context = context,
+                            uri = uri,
+                            image =
+                                Glide.with(context)
+                                    .asBitmap()
+                                    .load(
+                                        if (uri.startsWith("/api")) {
+                                            ImmichInfo(
+                                                thumbnail = uri,
+                                                original = uri,
+                                                hash = "",
+                                                auth = info().auth,
+                                                endpoint = info().endpoint,
+                                                useThumbnail = false
+                                            )
+                                        } else uri
                                     )
-                                )
-                            )
-                    }
-
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("editId", navMediaId)
-
-                    if (exitOnSave() && navMediaId != -1L && !isFromOpenWithView) coroutineScope.launch(Dispatchers.Main) { // need to be on main thread
-                        navController.popBackStack()
-                    }
+                                    .skipMemoryCache(true)
+                                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                    .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))
+                                    .override(Target.SIZE_ORIGINAL)
+                                    .submit()
+                                    .get()
+                                    .asImageBitmap(),
+                            containerDimens = containerDimens,
+                            exportQuality = exportQuality(),
+                            drawingPaintState = drawingPaintState,
+                            imageEditingState = imageEditingState,
+                            modifications = modifications,
+                            textMeasurer = textMeasurer,
+                            actualLeft = actualStarts.first,
+                            actualTop = actualStarts.second,
+                            overwrite = overwrite,
+                            isFromOpenWithView = isFromOpenWithView
+                        )
+                    )
                 },
                 navigateBack = {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("editId", navMediaId)
-
+                    setNavProps(navController)
                     if (isFromOpenWithView) {
                         (context as Activity).finish()
                     } else {

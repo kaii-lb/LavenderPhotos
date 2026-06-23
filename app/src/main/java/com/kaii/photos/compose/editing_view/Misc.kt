@@ -61,11 +61,13 @@ fun getAvailableEditorsForType(
         context.packageManager.queryIntentActivities(editIntent, PackageManager.MATCH_DEFAULT_ONLY)
     }
 
-    return info.map {
+    return info.mapNotNull { info ->
         EditorApp(
-            icon = it.activityInfo.loadIcon(context.packageManager).toBitmap(1024, 1024).asImageBitmap(),
-            name = it.loadLabel(context.packageManager).toString(),
-            packageName = it.activityInfo.packageName
-        )
+            icon = info.activityInfo.loadIcon(context.packageManager).toBitmap(1024, 1024).asImageBitmap(),
+            name = info.loadLabel(context.packageManager).toString(),
+            packageName = info.activityInfo.packageName
+        ).takeIf { app ->
+            app.packageName != "com.kaii.photos"
+        }
     }
 }

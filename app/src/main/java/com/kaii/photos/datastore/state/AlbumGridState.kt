@@ -8,7 +8,8 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -16,17 +17,14 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.mediastore.signature
+import com.kaii.photos.helpers.parent
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumsGetAllState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.AllAlbumsState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginState
-import io.github.kaii_lb.lavender.immichintegration.state_managers.LoginStateManager
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,13 +38,15 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class AlbumGridState(
-    private val scope: CoroutineScope,
-    private val albumsFlow: Flow<List<AlbumType>>,
-    private val albumGroupsFlow: Flow<List<AlbumGroup>>,
-    private val albumsOrderFlow: Flow<List<String>>,
     private val apiClient: ApiClient,
-    private val info: Flow<ImmichBasicInfo>,
     private val context: Context,
+    private val mediaDao: MediaDao,
+    private val customDao: CustomEntityDao,
+    scope: CoroutineScope,
+    albumsFlow: Flow<List<AlbumType>>,
+    albumGroupsFlow: Flow<List<AlbumGroup>>,
+    albumsOrderFlow: Flow<List<String>>,
+    info: Flow<ImmichBasicInfo>,
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
@@ -64,6 +64,7 @@ class AlbumGridState(
             val info: Info,
             override val id: String,
             override val name: String,
+            val summary: String?,
             override val date: Long,
             override val pinned: Boolean
         ) : Album
@@ -88,7 +89,8 @@ class AlbumGridState(
             val uri: String,
             val signature: ObjectKey,
             val albumId: String,
-            val date: Long
+            val date: Long,
+            val isGif: Boolean
         )
     }
 
@@ -100,8 +102,7 @@ class AlbumGridState(
         val order: List<String>
     )
 
-    private val mediaDao = MediaDatabase.getInstance(context).mediaDao()
-    private val customDao = MediaDatabase.getInstance(context).customDao()
+    private var immichInfo = ImmichBasicInfo.Empty
 
     private val _albums = MutableStateFlow(emptyList<Album>())
     val albums = _albums.asStateFlow()
@@ -109,7 +110,6 @@ class AlbumGridState(
     private val _singleAlbums = MutableStateFlow(emptyList<Album.Single>())
     val singleAlbums = _singleAlbums.asStateFlow()
 
-    private var job: Job? = null
     private var params = Params(
         sortMode = MediaItemSortMode.DateTaken,
         albumSortMode = AlbumSortMode.LastModifiedDesc,
@@ -120,293 +120,224 @@ class AlbumGridState(
 
     init {
         scope.launch(Dispatchers.IO) {
-            combine(
-                flow = sortModeFlow,
-                flow2 = albumSortModeFlow,
-                flow3 = albumsFlow,
-                flow4 = albumGroupsFlow,
-                flow5 = albumsOrderFlow
-            ) { sortMode, albumSortMode, albums, groups, order ->
-                Params(sortMode, albumSortMode, albums, groups, order)
-            }.collectLatest {
-                params = it
-                refresh()
+            launch {
+                info.collect {
+                    immichInfo = it
+                }
             }
-        }
 
-        scope.launch(Dispatchers.IO) {
-            allAlbumsFlow.distinctUntilChanged().collectLatest {
-                if (it) {
-                    val mediaDao = MediaDatabase.getInstance(context).mediaDao()
+            launch {
+                combine(
+                    flow = sortModeFlow,
+                    flow2 = albumSortModeFlow,
+                    flow3 = albumsFlow,
+                    flow4 = albumGroupsFlow,
+                    flow5 = albumsOrderFlow
+                ) { sortMode, albumSortMode, albums, groups, order ->
+                    Params(sortMode, albumSortMode, albums, groups, order)
+                }.collectLatest {
+                    params = it
+                    refresh()
+                }
+            }
 
-                    mediaDao
-                        .getAllAlbums()
-                        .distinctUntilChanged()
-                        .collectLatest { list ->
-                            updateAlbums(
-                                list.fastMapNotNull { album ->
-                                    AlbumType.Folder(
-                                        id = Uuid.random().toString(),
-                                        name = album.filename(),
-                                        paths = setOf(album),
-                                        pinned = false,
-                                        immichId = ""
-                                    )
-                                },
-                                emptyList(),
-                                albumsFlow.first().fastMapNotNull { album ->
-                                    album.id.takeIf {
-                                        val empty = album is AlbumType.Folder && mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths) == null
+            launch(Dispatchers.IO) {
+                allAlbumsFlow.distinctUntilChanged().collectLatest {
+                    if (it) {
+                        val mediaDao = MediaDatabase.getInstance(context).mediaDao()
 
-                                        empty || album.name.isBlank()
+                        mediaDao
+                            .getAllAlbums()
+                            .distinctUntilChanged()
+                            .collect { list ->
+                                updateAlbums(
+                                    list.fastMapNotNull { album ->
+                                        AlbumType.Folder(
+                                            id = Uuid.random().toString(),
+                                            name = album.filename(),
+                                            paths = setOf(album),
+                                            pinned = false,
+                                            immichId = null
+                                        )
+                                    },
+                                    emptyList(),
+                                    albumsFlow.first().fastMapNotNull { album ->
+                                        album.id.takeIf {
+                                            val empty = album is AlbumType.Folder
+                                                    && album.immichId == null
+                                                    && mediaDao.countInFolder(paths = album.paths.toList()) == 0
+
+                                            empty || album.name.isBlank()
+                                        }
                                     }
-                                }
-                            )
-                        }
+                                )
+                            }
+                    }
                 }
             }
         }
     }
 
-    fun refresh() {
-        job?.cancel()
-        job = scope.launch {
-            update()
-            updateImmich()
+    fun getImmichInfo() = immichInfo
+
+    suspend fun refresh() {
+        coroutineScope {
+            launch { update() }
+            launch { updateImmich() }
         }
     }
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
-        val immichInfo = info.first()
-        val loginManager = LoginStateManager()
-
-        loginManager.setBaseUrl(
-            baseUrl = immichInfo.endpoint,
-            apiClient = apiClient
+        val albumsClient = AlbumsClient(
+            client = apiClient,
+            endpoint = immichInfo.endpoint,
+            auth = immichInfo.auth
         )
 
-        val state = loginManager.refresh(
-            accessToken = immichInfo.accessToken
-        )
+        val allAlbums = albumsClient.getAll() ?: return@withContext
 
-        if (state !is LoginState.LoggedIn) return@withContext
-
-        val albumState = AllAlbumsState(
-            baseUrl = immichInfo.endpoint,
-            apiClient = apiClient,
-            coroutineScope = scope
-        )
-
-        albumState.load(immichInfo.accessToken).join()
-
-        albumState.state.value.let { state ->
-            if (state is AlbumsGetAllState.Retrieved) {
-                val albumIds = state.albums.fastMap { it.id }
-                val removedOrImmichIdChanged = _albums.value
-                    .flatMap { album ->
-                        if (album is Album.Single) listOf(album.info)
-                        else (album as Album.Group).info
-                    }
-                    .fastMapNotNull { album ->
-                        album.album.id.takeIf {
-                            album.album is AlbumType.Cloud && album.album.immichId !in albumIds
-                        }
-                    }
-
-                val updated = _albums.value
-                    .filterIsInstance<Album.Single>()
-                    .fastMapNotNull { album ->
-                        val match = state.albums.find { it.id == album.id }
-
-                        val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
-
-                        match?.albumName?.let { changed?.copy(name = it) }
-                    }
-
-                updateAlbums(
-                    state.albums.fastMapNotNull { album ->
-                        AlbumType.Cloud(
-                            id = album.id,
-                            name = album.albumName,
-                            pinned = false
-                        )
-                    },
-                    updated,
-                    removedOrImmichIdChanged
-                )
+        val albumIds = allAlbums.fastMap { it.id }.toSet()
+        val removedOrImmichIdChanged = _albums.value
+            .flatMap { album ->
+                if (album is Album.Single) listOf(album.info)
+                else (album as Album.Group).info
             }
-        }
+            .fastMapNotNull { album ->
+                album.album.id.takeIf {
+                    album.album is AlbumType.Cloud && album.album.immichId !in albumIds
+                }
+            }
+
+        val updated = _albums.value
+            .filterIsInstance<Album.Single>()
+            .fastMapNotNull { album ->
+                val match = allAlbums.find { it.id == album.id }
+
+                val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
+
+                match?.albumName?.let { changed?.copy(name = it) }
+            }
+
+        updateAlbums(
+            allAlbums.fastMapNotNull { album ->
+                AlbumType.Cloud(
+                    id = album.id,
+                    name = album.albumName,
+                    pinned = false
+                )
+            },
+            updated,
+            removedOrImmichIdChanged
+        )
     }
 
     private suspend fun update() = withContext(Dispatchers.IO) {
+        val remainingAlbums = params.albums.associateByTo(mutableMapOf()) { it.id }
         val result = mutableListOf<Album>()
-        val albums = params.albums.toMutableList()
         val singleAlbums = mutableListOf<Album.Single>()
 
+        val (folderAlbums, customAlbums) = params.albums.partition { it is AlbumType.Folder }
+        val customThumbnails = customDao.getThumbnails(
+            albumIds = customAlbums.map { it.id },
+            sortMode = params.sortMode,
+            albumSortMode = params.albumSortMode
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val folderThumbnails = mediaDao.getFolderThumbnails(
+            folders = folderAlbums as List<AlbumType.Folder>,
+            sortMode = params.sortMode,
+            albumSortMode = params.albumSortMode
+        )
+
+        // 1. Process Groups
         params.groups.forEach { group ->
-            val info = albums.filter { it.id in group.albumIds }.map { album ->
-                albums.remove(album)
-
-                val thumbnail =
-                    if (album is AlbumType.Folder) {
-                        val media = if (params.sortMode.isDateModified) {
-                            mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
+            val infoList = group.albumIds.mapNotNull { id ->
+                remainingAlbums.remove(id)?.let { album ->
+                    val thumbnail =
+                        if (album is AlbumType.Folder) {
+                            folderThumbnails[album.id]!!
                         } else {
-                            mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                        } ?: MediaStoreData.dummyItem
+                            customThumbnails[album.id]!!
+                        }
 
-                        Info.Thumbnail(
-                            uri = media.uri,
-                            date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                            signature = media.signature(),
-                            albumId = album.id
-                        )
-                    } else {
-                        val media = if (params.sortMode.isDateModified) {
-                            customDao.getThumbnailForAlbumDateModified(album = album.id)
-                        } else {
-                            customDao.getThumbnailForAlbumDateTaken(album = album.id)
-                        } ?: MediaStoreData.dummyItem
-
-                        Info.Thumbnail(
-                            uri = media.uri,
-                            date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                            signature = media.signature(),
-                            albumId = album.id
-                        )
-                    }
-
-                val info = Info(
-                    album = album,
-                    thumbnail = thumbnail
-                )
-
-                singleAlbums.add(
-                    Album.Single(
-                        info = info,
-                        id = album.id,
-                        name = album.name,
-                        date = thumbnail.date,
-                        pinned = album.pinned
-                    )
-                )
-
-                info
+                    val info = Info(album, thumbnail)
+                    singleAlbums.add(Album.Single(info, album.id, album.name, null, thumbnail.date, album.pinned))
+                    info
+                }
             }
 
             result.add(
                 Album.Group(
                     id = group.id,
                     name = group.name,
-                    date = info.minByOrNull { it.thumbnail.date }?.thumbnail?.date ?: 0L,
+                    date = infoList.minOfOrNull { it.thumbnail.date } ?: 0L,
                     pinned = group.pinned,
-                    info = info.sortedByDescending { it.thumbnail.date }.toImmutableList()
+                    info = infoList.sortedByDescending { it.thumbnail.date }.toImmutableList()
                 )
             )
         }
 
-        albums.forEach { album ->
+        remainingAlbums.values.forEach { album ->
             val thumbnail =
                 if (album is AlbumType.Folder) {
-                    val media = if (params.sortMode.isDateModified) {
-                        mediaDao.getThumbnailForAlbumDateModified(paths = album.paths)
-                    } else {
-                        mediaDao.getThumbnailForAlbumDateTaken(paths = album.paths)
-                    } ?: MediaStoreData.dummyItem
-
-                    Info.Thumbnail(
-                        uri = media.uri,
-                        date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                        signature = media.signature(),
-                        albumId = album.id
-                    )
+                    folderThumbnails[album.id]!!
                 } else {
-                    val media = if (params.sortMode.isDateModified) {
-                        customDao.getThumbnailForAlbumDateModified(album = album.id)
-                    } else {
-                        customDao.getThumbnailForAlbumDateTaken(album = album.id)
-                    } ?: MediaStoreData.dummyItem
-
-                    Info.Thumbnail(
-                        uri = media.uri,
-                        date = if (params.sortMode.isDateModified) media.dateModified else media.dateTaken,
-                        signature = media.signature(),
-                        albumId = album.id
-                    )
+                    customThumbnails[album.id]!!
                 }
 
-            val info = Album.Single(
-                id = album.id,
-                name = album.name,
-                date = thumbnail.date,
-                pinned = album.pinned,
+            val single = Album.Single(
                 info = Info(
                     album = album,
                     thumbnail = thumbnail
-                )
+                ),
+                id = album.id,
+                name = album.name,
+                summary = null,
+                date = thumbnail.date,
+                pinned = album.pinned
             )
 
-            result.add(info)
-            singleAlbums.add(info)
+            result.add(single)
+            singleAlbums.add(single)
         }
 
-        val sorted = when (params.albumSortMode) {
-            AlbumSortMode.LastModified -> {
-                result.sortedBy { it.date }
+        val nameCounts = singleAlbums.groupingBy { it.name }.eachCount()
+        val deduplicatedSingleAlbums = singleAlbums.map { album ->
+            if ((nameCounts[album.name] ?: 0) > 1) {
+                val parentPath = (album.info.album as? AlbumType.Folder)?.paths?.firstOrNull()?.parent()
+                album.copy(summary = parentPath)
+            } else {
+                album
             }
+        }
 
-            AlbumSortMode.LastModifiedDesc -> {
-                result.sortedByDescending { it.date }
-            }
+        _albums.value = sortAndPin(result, params.albumSortMode, params.order)
+        _singleAlbums.value = sortAndPin(deduplicatedSingleAlbums, params.albumSortMode, params.order)
+    }
 
-            AlbumSortMode.Alphabetically -> {
-                result.sortedBy { it.name }
-            }
-
-            AlbumSortMode.AlphabeticallyDesc -> {
-                result.sortedByDescending { it.name }
-            }
+    private fun <T : Album> sortAndPin(list: List<T>, mode: AlbumSortMode, order: List<String>): List<T> {
+        val sorted = when (mode) {
+            AlbumSortMode.LastModified -> list.sortedBy { it.date }
+            AlbumSortMode.LastModifiedDesc -> list.sortedByDescending { it.date }
+            AlbumSortMode.Alphabetically -> list.sortedBy { it.name }
+            AlbumSortMode.AlphabeticallyDesc -> list.sortedByDescending { it.name }
 
             else -> {
-                val lut = result.associateBy { it.id }
+                val lut = list.associateBy { it.id }
+                val orderSet = order.toSet()
 
-                params.order.mapNotNull { lut[it] } + result.filter { it.id !in lut.keys }
+                val ordered = order.mapNotNull { lut[it] }
+                val rest = list.filter { it.id !in orderSet }
+
+                ordered + rest
             }
         }
 
-        _albums.value = sorted.toMutableList().let { list ->
-            if (params.albumSortMode != AlbumSortMode.Custom) {
-                val pinned = list.filter { it.pinned }
-                list.removeAll(pinned)
-                list.addAll(0, pinned)
-            }
+        if (mode == AlbumSortMode.Custom) return sorted
 
-            list
-        }
-
-        _singleAlbums.value = when (params.albumSortMode) {
-            AlbumSortMode.LastModified -> {
-                singleAlbums.sortedBy { it.date }
-            }
-
-            AlbumSortMode.LastModifiedDesc -> {
-                singleAlbums.sortedByDescending { it.date }
-            }
-
-            AlbumSortMode.Alphabetically -> {
-                singleAlbums.sortedBy { it.name }
-            }
-
-            AlbumSortMode.AlphabeticallyDesc -> {
-                singleAlbums.sortedByDescending { it.name }
-            }
-
-            else -> {
-                val lut = singleAlbums.associateBy { it.id }
-
-                params.order.mapNotNull { lut[it] } + singleAlbums.filter { it.id !in lut.keys }
-            }
-        }
+        val (pinned, unpinned) = sorted.partition { it.pinned }
+        return pinned + unpinned
     }
 }
 
@@ -417,6 +348,8 @@ fun createAlbumGridState(
 ) = AlbumGridState(
     scope = coroutineScope,
     context = context,
+    mediaDao = MediaDatabase.getInstance(context).mediaDao(),
+    customDao = MediaDatabase.getInstance(context).customDao(),
     albumsFlow = context.appModule.settings.albums.get(),
     sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
     albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
@@ -427,8 +360,8 @@ fun createAlbumGridState(
     apiClient = apiClient,
     updateAlbums = { added, updated, removed ->
         val settings = context.appModule.settings.albums
+        settings.removeAll(removed) // order is important here
         settings.add(added)
-        settings.removeAll(removed)
 
         updated.forEach { album ->
             settings.edit(

@@ -7,7 +7,6 @@
     <string name="add_album">Adicionar álbum</string>
     <string name="direct_path_album">Use o caminho de uma pasta para adicionar um álbum</string>
     <string name="albums_main_list">Lista Principal de Álbuns</string>
-    <string name="albums_selected">Álbuns Selecionados</string>
     <string name="albums_auto_detect">Detectar álbuns automaticamente</string>
     <string name="albums_clear_list_desc">Remover todos os álbuns, exceto Câmera e Download</string>
     <string name="albums_media_sorting">Ordenação de Mídia</string>
@@ -34,7 +33,6 @@
     <string name="privacy_policy_title">política de Privacidade</string>
     <string name="privacy_policy">Não existe! Nenhum dos seus dados vai para lugar nenhum além deste dispositivo. Nenhuma IA é treinada nele, nenhum algoritmo para coletar informações, nada. O Lavender Photos foi e sempre será um aplicativo de galeria focado em privacidade.</string>
     <string name="support">Apoio e Doações</string>
-    <string name="version_info">Informações da versão</string>
     <string name="updates">Atualizações</string>
     <string name="updates_check">Verificar atualizações</string>
     <string name="updates_check_desc">Notifica sobre uma nova versão ao abrir o aplicativo. A atualização não instala automaticamente</string>
@@ -54,7 +52,6 @@
     <string name="albums_clear_list_done">Lista de álbuns limpa</string>
     <string name="albums_name">Nome do álbum</string>
     <string name="albums_type">Tipo de álbum</string>
-    <string name="updates_start">Iniciar Atualização</string>
     <string name="locked_folder_help_top">A Pasta Bloqueada é uma pasta segura para suas fotos e vídeos neste dispositivo.\nA mídia protegida nunca é enviada para nenhum lugar e permanece sempre no dispositivo, criptografada com uma chave única associada à senha ou aos dados de impressão digital do seu aparelho.</string>
     <string name="locked_folder_help_bottom">Os dados protegidos não poderão ser recuperados caso a senha seja esquecida ou a impressão digital seja removida.</string>
     <string name="secure_folder">Pasta Segura</string>

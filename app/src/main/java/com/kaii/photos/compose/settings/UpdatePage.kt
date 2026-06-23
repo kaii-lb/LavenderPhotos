@@ -1,14 +1,15 @@
 package com.kaii.photos.compose.settings
 
-import android.util.Log
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,18 +17,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,17 +34,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
@@ -57,83 +52,90 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
+import com.kaii.photos.compose.widgets.news.NewsList
 import com.kaii.photos.di.appModule
+import com.kaii.photos.domain.news.News
+import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.helpers.Updater
-import com.kaii.photos.helpers.rememberUpdater
-import kotlinx.coroutines.launch
+import com.kaii.photos.ui.theme.LocalExtraColorsPalette
+import com.kaii.photos.ui.theme.PhotosTheme
 
-private const val TAG = "com.kaii.photos.compose.settings.UpdatePage"
+@Preview
+@Composable
+private fun UpdatePagePreview() {
+    PhotosTheme(theme = 2) {
+        UpdatesPage(
+            updateState = { UpdateState.Available },
+            news = {
+                listOf(
+                    News.Section(
+                        version = "v2.0.0",
+                        date = "20-7-2026",
+                        status = News.Section.Status.Latest,
+                        id = 0
+                    ),
+                    News.Note(
+                        info = "This is a note.",
+                        urgency = News.Note.Urgency.Critical,
+                        id = 1
+                    ),
+                    News.Category(
+                        category = News.Category.Type.Features,
+                        id = 2
+                    ),
+                    News.Item(
+                        title = "This is a very long description for a very boring UI component",
+                        issueNumber = 123,
+                        id = 3
+                    ),
+                    News.Item(
+                        title = "This is a very long description for a very boring UI component",
+                        issueNumber = 123,
+                        id = 4
+                    )
+                )
+            },
+            navController = rememberNavController(),
+            showUpdateNotice = { false },
+            onRefresh = {}
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpdatesPage() {
-    val updater = rememberUpdater()
-    val resources = LocalResources.current
-
-    var showLoadingSpinner by remember { mutableStateOf(true) }
-    val updateStatusText = remember { mutableStateOf(resources.getString(R.string.updates_not_found)) }
-
-    var changelog by remember { mutableStateOf(updater.getChangelog()) }
-
-    fun refresh() {
-        updater.refresh { state ->
-            when (state) {
-                Updater.State.Succeeded -> {
-                    showLoadingSpinner = false
-
-                    updateStatusText.value =
-                        if (updater.hasUpdates.value) resources.getString(R.string.updates_new_version_available)
-                        else resources.getString(R.string.updates_latest)
-
-                    changelog = updater.getChangelog()
-                }
-
-                Updater.State.Failed -> {
-                    showLoadingSpinner = false
-                    updateStatusText.value = resources.getString(R.string.updates_failed)
-                }
-
-                Updater.State.Checking -> {
-                    showLoadingSpinner = true
-                    updateStatusText.value = resources.getString(R.string.updates_checking)
-                }
-            }
-        }
-    }
-
+fun UpdatesPage(
+    updateState: () -> UpdateState,
+    news: () -> List<News>,
+    showUpdateNotice: () -> Boolean,
+    modifier: Modifier = Modifier,
+    navController: NavController = LocalNavController.current,
+    onRefresh: () -> Unit
+) {
     Scaffold(
         topBar = {
-            TopBar()
+            TopBar(navController, showUpdateNotice)
         },
         bottomBar = {
-            BottomBar(
-                updater = updater,
-                updateStatusText = updateStatusText
-            )
+            BottomBar(updateState = updateState)
         },
-        contentWindowInsets = WindowInsets.systemBars
+        contentWindowInsets = WindowInsets.systemBars,
+        modifier = modifier
     ) { innerPadding ->
-        val coroutineScope = rememberCoroutineScope()
-
-        LaunchedEffect(Unit) {
-            coroutineScope.launch { refresh() }
-        }
-
         PullToRefreshBox(
-            isRefreshing = showLoadingSpinner,
-            onRefresh = {
-                coroutineScope.launch {
-                    refresh()
-                }
-            },
+            isRefreshing = updateState() == UpdateState.Loading,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize(1f)
                 .padding(innerPadding)
@@ -142,13 +144,13 @@ fun UpdatesPage() {
             Column(
                 modifier = Modifier
                     .fillMaxSize(1f)
-                    .padding(8.dp),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = stringResource(id = R.string.updates_whats_new),
-                    fontSize = TextUnit(TextStylingConstants.LARGE_TEXT_SIZE, TextUnitType.Sp),
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .clip(CircleShape)
@@ -158,23 +160,38 @@ fun UpdatesPage() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .wrapContentHeight()
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    item {
-                        Text(
-                            text = AnnotatedString.fromHtml(changelog),
-                            fontSize = TextUnit(14f, TextUnitType.Sp),
+                AnimatedContent(
+                    targetState = news().isNotEmpty(),
+                    transitionSpec = {
+                        val enter = fadeIn() + scaleIn(initialScale = 0.8f)
+                        val exit = fadeOut() + scaleOut()
+
+                        enter.togetherWith(exit)
+                    },
+                    contentAlignment = Alignment.Center
+                ) { state ->
+                    if (state) {
+                        NewsList(
+                            list = news(),
                             modifier = Modifier
-                                .padding(2.dp)
+                                .fillMaxSize()
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(size = 32.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainer)
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.updates_no_changelog),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -184,7 +201,10 @@ fun UpdatesPage() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar() {
+private fun TopBar(
+    navController: NavController,
+    showUpdateNotice: () -> Boolean
+) {
     TopAppBar(
         title = {
             Text(
@@ -193,8 +213,6 @@ private fun TopBar() {
             )
         },
         navigationIcon = {
-            val navController = LocalNavController.current
-
             IconButton(
                 onClick = {
                     navController.popBackStack()
@@ -212,11 +230,10 @@ private fun TopBar() {
         actions = {
             val context = LocalContext.current
             val resources = LocalResources.current
-            val showUpdateNotice by context.appModule.settings.versions.getShowUpdateNotice().collectAsStateWithLifecycle(false)
             var showDialog by remember { mutableStateOf(false) }
 
-            LaunchedEffect(showUpdateNotice) {
-                if (showUpdateNotice) {
+            LaunchedEffect(showUpdateNotice()) {
+                if (showUpdateNotice()) {
                     showDialog = true
 
                     context.appModule.settings.versions.setShowUpdateNotice(false)
@@ -267,103 +284,51 @@ private fun TopBar() {
 
 @Composable
 private fun BottomBar(
-    updater: Updater,
-    updateStatusText: MutableState<String>
+    updateState: () -> UpdateState
 ) {
-    val resources = LocalResources.current
+    val context = LocalContext.current
 
-    var isDownloading by remember { mutableStateOf(false) }
-    var progress by remember { mutableFloatStateOf(0f) }
-
-    Column(
+    Box(
         modifier = Modifier
-            .fillMaxWidth(1f)
-            .wrapContentHeight()
-            .systemBarsPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .safeDrawingPadding()
+            .fillMaxWidth()
+            .padding(all = 16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        val newVersionExists by updater.hasUpdates
-
-        AnimatedContent(
-            targetState = isDownloading,
-            transitionSpec = {
-                (slideInHorizontally { width -> width } + fadeIn())
-                    .togetherWith(
-                        slideOutHorizontally { width -> -width } + fadeOut()
-                    )
-            },
-            label = "animate update download loading bar",
-            modifier = Modifier
-                .padding(8.dp, 8.dp, 8.dp, 16.dp)
-        ) { downloading ->
-            if (downloading) {
-                LinearProgressIndicator(
-                    progress = {
-                        progress
-                    },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceBright,
-                    strokeCap = StrokeCap.Round,
-                    // drawStopIndicator = {},
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth(0.6f)
-                        .height(16.dp)
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .wrapContentHeight(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = updateStatusText.value,
-                        fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-                            .padding(12.dp, 8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (newVersionExists) {
-                        Button(
-                            onClick = {
-                                if (!isDownloading) {
-                                    updater.startUpdate(
-                                        progress = { percent ->
-                                            isDownloading = true
-                                            progress = percent / 100f
-                                        },
-
-                                        onDownloadStopped = { success ->
-                                            isDownloading = false
-
-                                            if (success) {
-                                                Log.d(TAG, "Download succeeded, installing...")
-                                                updater.installUpdate()
-                                            } else {
-                                                Log.d(TAG, "Download failed")
-                                                updateStatusText.value = resources.getString(R.string.updates_failed_download)
-                                            }
-                                        }
-                                    )
-                                }
-                            }
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.updates_start),
-                                fontSize = TextUnit(TextStylingConstants.SMALL_TEXT_SIZE, TextUnitType.Sp),
-                            )
-                        }
-                    }
+        Button(
+            onClick = {
+                val intent = Intent().apply {
+                    action = Intent.ACTION_VIEW
+                    data = "https://github.com/kaii-lb/LavenderPhotos/releases/latest".toUri()
                 }
-            }
+
+                context.startActivity(intent)
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor =
+                    if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.success
+                    else MaterialTheme.colorScheme.errorContainer,
+                contentColor =
+                    if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.onSuccess
+                    else MaterialTheme.colorScheme.onErrorContainer,
+                disabledContainerColor =
+                    if (updateState() == UpdateState.NotAvailable) MaterialTheme.colorScheme.errorContainer
+                    else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
+                disabledContentColor =
+                    if (updateState() == UpdateState.Available) MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+            ),
+            enabled = updateState() == UpdateState.Available
+        ) {
+            Text(
+                text = when (updateState()) {
+                    UpdateState.Available -> stringResource(id = R.string.updates_new_version_available)
+                    UpdateState.NotAvailable -> stringResource(id = R.string.updates_latest)
+                    UpdateState.Loading -> stringResource(id = R.string.updates_checking)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

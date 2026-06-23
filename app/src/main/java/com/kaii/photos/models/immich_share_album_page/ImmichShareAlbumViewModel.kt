@@ -1,0 +1,123 @@
+package com.kaii.photos.models.immich_share_album_page
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kaii.photos.di.appModule
+import com.kaii.photos.screens.ImmichShareLinkState
+import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+interface CreateLinkState {
+    object Idle : CreateLinkState
+    object Creating : CreateLinkState
+    object Failed : CreateLinkState
+    data class Success(val url: String) : CreateLinkState
+}
+
+@OptIn(ExperimentalUuidApi::class)
+class ImmichShareAlbumViewModel(
+    context: Context,
+    private val albumImmichId: String
+) : ViewModel() {
+    private val settings = context.applicationContext.appModule.settings
+    private val sharedLinkClient = SharedLinkClient(
+        client = context.appModule.apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
+
+    private val _state = MutableStateFlow<CreateLinkState>(CreateLinkState.Idle)
+    val state = _state.asStateFlow()
+
+    private val _links = MutableStateFlow(emptyList<SharedLinkResponse>())
+    val links = _links.asStateFlow()
+
+    val shareLinkState = ImmichShareLinkState()
+
+    private var endpoint = ""
+
+    init {
+        viewModelScope.launch {
+            settings.immich.getImmichBasicInfo().collect { info ->
+                sharedLinkClient.setEndpoint(info.endpoint)
+                sharedLinkClient.setAuth(info.auth)
+                endpoint = info.endpoint
+
+                if (endpoint.isNotBlank()) launch {
+                    while (true) {
+                        if (endpoint.isBlank()) break
+
+                        refreshLinks()
+
+                        delay(5.seconds)
+                    }
+                }
+            }
+        }
+    }
+
+    fun createLink() {
+        viewModelScope.launch {
+            _state.value = CreateLinkState.Creating
+
+            val url = getLink()
+
+            _state.value = if (url != null) {
+                CreateLinkState.Success(url)
+            } else {
+                CreateLinkState.Failed
+            }
+        }
+    }
+
+    fun showLink(slug: String?, id: String) {
+        _state.value = CreateLinkState.Success(
+            url = buildLink(slug, id)
+        )
+    }
+
+    fun dismiss() {
+        _state.value = CreateLinkState.Idle
+    }
+
+    fun removeLink(id: String) {
+        viewModelScope.launch {
+            sharedLinkClient.deleteLink(id = id)
+            refreshLinks()
+        }
+    }
+
+    /** returns the URL of the shared album */
+    @OptIn(ExperimentalUuidApi::class)
+    private suspend fun getLink(): String? {
+        val link = sharedLinkClient.postLink(
+            link = shareLinkState.createRequest(albumImmichId)
+        ) ?: return null
+
+        return buildLink(link.slug, link.id)
+    }
+
+    private fun buildLink(slug: String?, id: String) =
+        buildString {
+            append("$endpoint/s/")
+
+            if (slug != null) append(slug)
+            else append(id)
+        }
+
+    private suspend fun refreshLinks() {
+        _links.value = sharedLinkClient.getAllLinks(
+            albumId = Uuid.parse(albumImmichId),
+            linkId = null
+        ) ?: emptyList()
+    }
+}

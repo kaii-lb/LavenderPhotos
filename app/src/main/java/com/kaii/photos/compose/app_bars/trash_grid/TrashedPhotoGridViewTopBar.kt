@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,14 +37,18 @@ fun TrashedPhotoGridViewTopBar(
     deleteAll: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    val showDialog = remember { mutableStateOf(false) }
-    ConfirmationDialogWithBody(
-        showDialog = showDialog,
-        dialogTitle = stringResource(id = R.string.trash_empty),
-        dialogBody = stringResource(id = R.string.trash_empty),
-        confirmButtonLabel = stringResource(id = R.string.trash_empty_confirm),
-        action = deleteAll
-    )
+    var showDialog by remember { mutableStateOf(false) }
+    if (showDialog) {
+        ConfirmationDialogWithBody(
+            title = stringResource(id = R.string.trash_empty),
+            body = stringResource(id = R.string.trash_empty),
+            confirmButtonLabel = stringResource(id = R.string.trash_empty_confirm),
+            action = deleteAll,
+            onDismiss = {
+                showDialog = false
+            }
+        )
+    }
 
     val show by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -86,7 +91,7 @@ fun TrashedPhotoGridViewTopBar(
                 actions = {
                     IconButton(
                         onClick = {
-                            showDialog.value = true
+                            showDialog = true
                         },
                     ) {
                         Icon(

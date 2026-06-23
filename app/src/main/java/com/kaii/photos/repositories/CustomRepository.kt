@@ -4,18 +4,18 @@ import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.HybridFileManager
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -33,16 +33,16 @@ import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CustomRepository(
-    private val customDao: CustomEntityDao,
     private val album: AlbumType,
-    mediaDao: MediaDao,
-    syncTaskDao: SyncTaskDao,
+    db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
 ) : BaseRepo {
+    private val customDao = db.customDao()
+
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -53,18 +53,22 @@ class CustomRepository(
 
     override var fileManager = HybridFileManager(
         isCustom = true,
-        mediaDao = mediaDao,
+        mediaDao = db.mediaDao(),
         customDao = customDao,
-        syncTaskDao = syncTaskDao,
+        syncTaskDao = db.taskDao(),
         assetClient = AssetsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
         albumsClient = AlbumsClient(
-            baseUrl = "",
+            endpoint = "",
+            auth = Auth.None,
             client = client
         ),
-        info = ImmichBasicInfo.Empty
+        localSecureManager = LocalSecureManager(
+            secureDao = db.securedItemEntityDao()
+        )
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -81,7 +85,7 @@ class CustomRepository(
                 else customDao.getPagedMediaDateTaken(album = album.id)
             }
         ).flow.mapToMedia(
-            accessToken = params.info.accessToken,
+            auth = params.info.auth,
             endpoint = params.info.endpoint
         )
     }.cachedIn(scope)
@@ -114,21 +118,8 @@ class CustomRepository(
             params.mapLatest { it.info }
                 .distinctUntilChanged()
                 .collectLatest { info ->
-                    fileManager = HybridFileManager(
-                        isCustom = true,
-                        mediaDao = mediaDao,
-                        customDao = customDao,
-                        syncTaskDao = syncTaskDao,
-                        assetClient = AssetsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        albumsClient = AlbumsClient(
-                            baseUrl = info.endpoint,
-                            client = client
-                        ),
-                        info = info
-                    )
+                    fileManager.setEndpoint(info.endpoint)
+                    fileManager.setAuth(info.auth)
                 }
         }
     }
@@ -165,6 +156,8 @@ class CustomRepository(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         trashed: Boolean,
+        albumId: String?,
+        immichId: String?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, album.id, null, onItemDone)
+    ) = fileManager.setTrashed(context, list, trashed, albumId ?: album.id, immichId ?: album.immichId, null, onItemDone)
 }

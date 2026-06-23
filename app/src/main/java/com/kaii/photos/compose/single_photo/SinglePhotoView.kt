@@ -34,8 +34,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,15 +65,12 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -81,7 +79,6 @@ import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
-import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -116,7 +113,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: CustomAlbumViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     isOpenWithDefaultView: Boolean = false
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -168,7 +165,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MultiAlbumViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -221,7 +218,7 @@ fun SinglePhotoView(
     window: Window,
     viewModel: MainGridViewModel,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Folder,
     isOpenWithDefaultView: Boolean = false,
 ) {
@@ -274,7 +271,7 @@ fun SinglePhotoView(
     viewModel: SearchViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long
+    editId: () -> Long?
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -325,7 +322,7 @@ fun SinglePhotoView(
     viewModel: FavouritesViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long
+    editId: () -> Long?
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
@@ -375,7 +372,7 @@ fun SinglePhotoView(
     viewModel: ImmichAlbumViewModel,
     window: Window,
     index: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType.Cloud
 ) {
     val items = viewModel.mediaFlow.collectAsLazyPagingItems()
@@ -427,7 +424,7 @@ fun SinglePhotoView(
 private fun SinglePhotoViewCommon(
     items: LazyPagingItems<PhotoLibraryUIModel>,
     startIndex: Int,
-    editId: () -> Long,
+    editId: () -> Long?,
     album: AlbumType,
     navController: NavHostController,
     window: Window,
@@ -521,7 +518,7 @@ private fun SinglePhotoViewCommon(
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
     Scaffold(
         topBar = {
@@ -573,7 +570,6 @@ private fun SinglePhotoViewCommon(
                         if (mediaItem.type == MediaType.Image) {
                             navController.navigate(
                                 Screens.ImageEditor(
-                                    absolutePath = mediaItem.absolutePath,
                                     uri = mediaItem.uri,
                                     dateTaken = mediaItem.dateTaken,
                                     album = album
@@ -583,7 +579,6 @@ private fun SinglePhotoViewCommon(
                             navController.navigate(
                                 Screens.VideoEditor(
                                     uri = mediaItem.uri,
-                                    absolutePath = mediaItem.absolutePath,
                                     album = album
                                 )
                             )
@@ -685,19 +680,10 @@ private fun BottomBar(
     showEditingView: () -> Unit,
     process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
-    var showLoadingDialog by remember { mutableStateOf(false) }
-
-    if (showLoadingDialog) {
-        LoadingDialog(
-            title = stringResource(id = R.string.secure_encrypting),
-            body = stringResource(id = R.string.secure_processing)
-        )
-    }
-
     val context = LocalContext.current
 
     AnimatedVisibility(
-        visible = visible || showLoadingDialog,
+        visible = visible,
         enter = scaleIn(
             animationSpec = AnimationConstants.expressiveSpring(),
             initialScale = 0.2f
@@ -814,10 +800,10 @@ private fun BottomBar(
 
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        context.appModule.scope.launch {
-                            val item = currentItem()
-
-                            moveMediaToSecureFolder(
+                        val item = currentItem()
+                        process(
+                            context,
+                            GenericFileManager.Action.Secure(
                                 list = listOf(
                                     SelectionManager.SelectedItem(
                                         id = item.id,
@@ -826,40 +812,40 @@ private fun BottomBar(
                                         isImage = item.type == MediaType.Image,
                                         parentPath = item.parentPath
                                     )
-                                ),
-                                context = context,
-                                applicationDatabase = MediaDatabase.getInstance(context)
-                            ) {
-                                showLoadingDialog = false
-                            }
-                        }
+                                )
+                            )
+                        )
                     }
                 )
 
                 val dirPermissionManager = rememberDirectoryPermissionManager(
                     onGranted = {
-                        showLoadingDialog = true
                         filePermissionManager.get(
                             uris = listOf(currentItem().uri.toUri())
                         )
                     }
                 )
 
-                val showMoveToSecureFolderDialog = remember { mutableStateOf(false) }
-                ConfirmationDialog(
-                    showDialog = showMoveToSecureFolderDialog,
-                    dialogTitle = stringResource(id = R.string.media_secure_confirm),
-                    confirmButtonLabel = stringResource(id = R.string.media_secure)
-                ) {
-                    dirPermissionManager.start(
-                        directories = setOf(currentItem().absolutePath.parent())
+                var showMoveToSecureFolderDialog by remember { mutableStateOf(false) }
+                if (showMoveToSecureFolderDialog) {
+                    ConfirmationDialog(
+                        title = stringResource(id = R.string.media_secure_confirm),
+                        confirmButtonLabel = stringResource(id = R.string.media_secure),
+                        action = {
+                            dirPermissionManager.start(
+                                directories = setOf(currentItem().absolutePath.parent())
+                            )
+                        },
+                        onDismiss = {
+                            showMoveToSecureFolderDialog = false
+                        }
                     )
                 }
 
                 val motionPhoto = rememberMotionPhoto(uri = currentItem().uri.toUri())
                 IconButton(
                     onClick = {
-                        showMoveToSecureFolderDialog.value = true
+                        showMoveToSecureFolderDialog = true
                     },
                     enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !currentItem().isCloud
                 ) {
@@ -948,11 +934,10 @@ private fun BottomBar(
                     }
                 )
 
-                val showDeleteDialog = remember { mutableStateOf(false) }
-                if (showDeleteDialog.value) {
+                var showDeleteDialog by remember { mutableStateOf(false) }
+                if (showDeleteDialog) {
                     ConfirmationDialog(
-                        showDialog = showDeleteDialog,
-                        dialogTitle = stringResource(
+                        title = stringResource(
                             id =
                                 when {
                                     isCustom -> R.string.custom_album_remove_media_desc
@@ -969,39 +954,43 @@ private fun BottomBar(
 
                                     else -> R.string.media_delete
                                 }
-                        )
-                    ) {
-                        val item = currentItem()
-                        val list = listOf(
-                            SelectionManager.SelectedItem(
-                                id = item.id,
-                                uri = item.uri,
-                                immichUrl = item.immichUrl,
-                                isImage = item.type == MediaType.Image,
-                                parentPath = item.parentPath
-                            )
-                        )
-
-                        if (item.isCloud) {
-                            process(
-                                context,
-                                GenericFileManager.Action.Trash(
-                                    list = list,
-                                    trashed = true
+                        ),
+                        action = {
+                            val item = currentItem()
+                            val list = listOf(
+                                SelectionManager.SelectedItem(
+                                    id = item.id,
+                                    uri = item.uri,
+                                    immichUrl = item.immichUrl,
+                                    isImage = item.type == MediaType.Image,
+                                    parentPath = item.parentPath
                                 )
                             )
-                        } else {
-                            trashFilePermissionManager.get(
-                                uris = listOf(currentItem().uri.toUri())
-                            )
+
+                            if (item.isCloud) {
+                                process(
+                                    context,
+                                    GenericFileManager.Action.Trash(
+                                        list = list,
+                                        trashed = true
+                                    )
+                                )
+                            } else {
+                                trashFilePermissionManager.get(
+                                    uris = listOf(currentItem().uri.toUri())
+                                )
+                            }
+                        },
+                        onDismiss = {
+                            showDeleteDialog = false
                         }
-                    }
+                    )
                 }
 
                 IconButton(
                     onClick = {
                         if (confirmToDelete) {
-                            showDeleteDialog.value = true
+                            showDeleteDialog = true
                         } else {
                             val item = currentItem()
                             val list = listOf(

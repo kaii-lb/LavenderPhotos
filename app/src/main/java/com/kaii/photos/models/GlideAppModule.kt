@@ -67,11 +67,16 @@ class ImmichModelLoader(
         return model.endpoint + if (model.useThumbnail) model.thumbnail else model.original
     }
 
-    override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers {
-        return LazyHeaders.Builder()
-            .addHeader("Authorization", "Bearer ${model.accessToken}")
+    override fun getHeaders(model: ImmichInfo, width: Int, height: Int, options: Options?): Headers =
+        LazyHeaders.Builder()
+            .apply {
+                model.auth.headers.keys.firstOrNull()?.let { headerName ->
+                    val headerValue = model.auth.headers[headerName]!!
+                    addHeader(headerName, headerValue)
+                }
+            }
             .build()
-    }
+
 
     override fun handles(model: ImmichInfo): Boolean = true
 
@@ -126,12 +131,25 @@ class DecryptedThumbnailFetcher(
 ) : DataFetcher<InputStream> {
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
         try {
+            // all-zero iv means the thumbnail isn't ready yet; decrypting with it gives garbage, so
+            // fail cleanly and let glide show the placeholder + retry instead of a half-decoded image
+            if (item.iv.isEmpty() || item.iv.all { it.toInt() == 0 }) {
+                callback.onLoadFailed(IllegalStateException("secure thumbnail IV not ready for ${item.absolutePath}"))
+                return
+            }
+
             val encryptedBytes = File(item.absolutePath).readBytes()
 
             val decryptedBytes = EncryptionManager.decryptBytes(
                 bytes = encryptedBytes,
                 iv = item.iv
             )
+
+            // empty decrypt means corrupt/missing data; fail rather than hand glide an empty stream
+            if (decryptedBytes.isEmpty()) {
+                callback.onLoadFailed(IllegalStateException("secure decrypt produced no data for ${item.absolutePath}"))
+                return
+            }
 
             val inputStream = ByteArrayInputStream(decryptedBytes)
 

@@ -9,12 +9,14 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.appModule
+import com.kaii.photos.screens.AlbumGroupState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class AlbumGroupViewModel(
-    context: Context
+    context: Context,
+    id: String
 ) : ViewModel() {
     private val settings = context.applicationContext.appModule.settings
 
@@ -41,6 +43,19 @@ class AlbumGroupViewModel(
         started = SharingStarted.Eagerly,
         initialValue = emptyList()
     )
+
+    private val state = AlbumGroupState(
+        id = id,
+        albumGridState = context.appModule.albumGridState,
+        groups = groups,
+        sortMode = sortMode,
+        scope = viewModelScope
+    )
+
+    val group: AlbumGroup?
+        get() = state.group
+
+    val albums = state.albums
 
     fun editGroup(
         id: String,
@@ -91,4 +106,16 @@ class AlbumGroupViewModel(
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
     fun setAlbumOrder(list: List<String>) = settings.albums.setOrder(list)
+
+    fun setGroupAlbums(
+        id: String,
+        albumIds: List<String>
+    ) {
+        viewModelScope.launch {
+            settings.albums.editGroup(
+                id = id,
+                albumIds = albumIds
+            )
+        }
+    }
 }

@@ -70,7 +70,7 @@ fun AlbumGridItem(
         ) {
             AlbumGlideImage(
                 albumInfo = album.info,
-                info = info()
+                info = info
             )
 
             Row(
@@ -89,17 +89,23 @@ fun AlbumGridItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (album.info.album !is AlbumType.Folder) {
+                if (album.info.album !is AlbumType.Folder || album.info.album.wasCloud) {
                     Icon(
                         painter = painterResource(
                             id =
-                                if (album.info.album is AlbumType.Custom) R.drawable.art_track
-                                else R.drawable.cloud
+                                when (val album = album.info.album) {
+                                    is AlbumType.Folder if album.wasCloud -> R.drawable.cloud_download
+                                    is AlbumType.Cloud -> R.drawable.cloud
+                                    else -> R.drawable.art_track
+                                }
                         ),
                         contentDescription = stringResource(
                             id =
-                                if (album.info.album is AlbumType.Custom) R.string.albums_is_custom
-                                else R.string.albums_is_cloud
+                                when (val album = album.info.album) {
+                                    is AlbumType.Folder if album.wasCloud -> R.string.albums_is_cloud_linked
+                                    is AlbumType.Cloud -> R.string.albums_is_cloud
+                                    else -> R.string.albums_is_custom
+                                }
                         ),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier

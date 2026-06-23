@@ -1,17 +1,14 @@
 package com.kaii.photos.compose.dialogs.immich
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -41,6 +38,7 @@ import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.dialogs.TitleCloseRow
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.ClearableTextField
+import com.kaii.photos.compose.widgets.SwitchRow
 import com.kaii.photos.compose.widgets.infiniteLoadingIndicator
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.RowPosition
@@ -92,9 +90,9 @@ fun PasswordChangeDialog(
             ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val currentPassword = remember { mutableStateOf("") }
-            val newPassword1 = remember { mutableStateOf("") }
-            val newPassword2 = remember { mutableStateOf("") }
+            var currentPassword by remember { mutableStateOf("") }
+            var newPassword1 by remember { mutableStateOf("") }
+            var newPassword2 by remember { mutableStateOf("") }
 
             val hiddenTransformation = remember<VisualTransformation> { PasswordVisualTransformation(mask = '\u2B24') }
             var visualTransformation by remember { mutableStateOf(hiddenTransformation) }
@@ -109,7 +107,8 @@ fun PasswordChangeDialog(
             )
 
             ClearableTextField(
-                text = currentPassword,
+                value = currentPassword,
+                onValueChange = { currentPassword = it },
                 placeholder = stringResource(id = R.string.immich_auth_current_password),
                 icon = R.drawable.password,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -129,12 +128,13 @@ fun PasswordChangeDialog(
                     focusManager.moveFocus(FocusDirection.Down)
                 },
                 onClear = {
-                    currentPassword.value = ""
+                    currentPassword = ""
                 }
             )
 
             ClearableTextField(
-                text = newPassword1,
+                value = newPassword1,
+                onValueChange = { newPassword1 = it },
                 placeholder = stringResource(id = R.string.immich_auth_new_password),
                 icon = R.drawable.password,
                 onConfirm = {
@@ -151,12 +151,13 @@ fun PasswordChangeDialog(
                     ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 onClear = {
-                    newPassword1.value = ""
+                    newPassword1 = ""
                 }
             )
 
             ClearableTextField(
-                text = newPassword2,
+                value = newPassword2,
+                onValueChange = { newPassword2 = it },
                 placeholder = stringResource(id = R.string.immich_auth_repeat_new_password),
                 icon = R.drawable.password,
                 onConfirm = {
@@ -177,7 +178,7 @@ fun PasswordChangeDialog(
                     ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 onClear = {
-                    newPassword2.value = ""
+                    newPassword2 = ""
                 }
             )
 
@@ -186,7 +187,7 @@ fun PasswordChangeDialog(
             val successColor = MaterialTheme.colorScheme.primary
             val errorColor = MaterialTheme.colorScheme.error
 
-            LaunchedEffect(currentPassword.value, newPassword1.value, newPassword2.value) {
+            LaunchedEffect(currentPassword, newPassword1, newPassword2) {
                 error = false
             }
 
@@ -194,10 +195,10 @@ fun PasswordChangeDialog(
                 derivedStateOf {
                     val textId = when {
                         error -> R.string.immich_account_change_password_failed
-                        newPassword1.value != newPassword2.value -> R.string.immich_auth_password_do_not_match
-                        newPassword1.value.length < 8 -> R.string.immich_auth_password_too_short
-                        newPassword1.value == currentPassword.value -> R.string.immich_auth_password_same_as_old
-                        currentPassword.value.isBlank() -> R.string.immich_auth_password_current_blank
+                        newPassword1 != newPassword2 -> R.string.immich_auth_password_do_not_match
+                        newPassword1.length < 8 -> R.string.immich_auth_password_too_short
+                        newPassword1 == currentPassword -> R.string.immich_auth_password_same_as_old
+                        currentPassword.isBlank() -> R.string.immich_auth_password_current_blank
                         else -> R.string.immich_auth_password_good_to_go
                     }
 
@@ -216,40 +217,18 @@ fun PasswordChangeDialog(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
 
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable(
-                        interactionSource = null,
-                        indication = null
-                    ) {
-                        visualTransformation =
-                            if (visualTransformation == hiddenTransformation) VisualTransformation.None
-                            else hiddenTransformation
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Text(
-                    text = stringResource(id = R.string.immich_auth_show_password),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier
-                        .weight(1f)
-                )
-
-                Switch(
-                    checked = visualTransformation != hiddenTransformation,
-                    onCheckedChange = {
-                        visualTransformation =
-                            if (visualTransformation == hiddenTransformation) VisualTransformation.None
-                            else hiddenTransformation
-                    }
-                )
-            }
+            SwitchRow(
+                text = stringResource(id = R.string.immich_auth_show_password),
+                checked = { visualTransformation != hiddenTransformation },
+                onCheckedChange = {
+                    visualTransformation =
+                        if (visualTransformation == hiddenTransformation) VisualTransformation.None
+                        else hiddenTransformation
+                }
+            )
 
             Box(
                 modifier = Modifier
@@ -280,19 +259,19 @@ fun PasswordChangeDialog(
                     ),
                     position = RowPosition.Single,
                     enabled =
-                        newPassword1.value == newPassword2.value &&
-                                currentPassword.value.isNotBlank() &&
-                                newPassword1.value.isNotBlank() &&
-                                newPassword1.value != currentPassword.value &&
-                                newPassword1.value.length >= 8 &&
+                        newPassword1 == newPassword2 &&
+                                currentPassword.isNotBlank() &&
+                                newPassword1.isNotBlank() &&
+                                newPassword1 != currentPassword &&
+                                newPassword1.length >= 8 &&
                                 !loading
                 ) {
                     keyboardController?.hide()
                     visualTransformation = hiddenTransformation
 
                     changePassword(
-                        currentPassword.value,
-                        newPassword1.value
+                        currentPassword,
+                        newPassword1
                     )
                 }
             }

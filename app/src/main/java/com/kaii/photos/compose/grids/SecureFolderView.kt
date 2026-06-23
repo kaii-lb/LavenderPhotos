@@ -22,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -70,6 +71,19 @@ fun SecureFolderView(
         mutableStateOf(false)
     }
 
+    val allowScreenCapture by context.appModule.settings.permissions
+        .getAllowSecureFolderScreenCapture()
+        .collectAsStateWithLifecycle(initialValue = false)
+
+    // apply/clear FLAG_SECURE reactively so toggling the setting takes effect immediately
+    LaunchedEffect(allowScreenCapture) {
+        if (allowScreenCapture) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
     DisposableEffect(lifecycleState) {
         val lifecycleObserver =
             LifecycleEventObserver { _, event ->
@@ -91,7 +105,9 @@ fun SecureFolderView(
                     }
 
                     else -> {
-                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        if (!allowScreenCapture) {
+                            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        }
                     }
                 }
             }
@@ -126,7 +142,13 @@ fun SecureFolderView(
             ) {
                 SecureFolderViewBottomAppBar(
                     selectionManager = selectionManager,
-                    isGettingPermissions = isGettingPermissions
+                    isGettingPermissions = isGettingPermissions,
+                    process = { action ->
+                        viewModel.runAction(
+                            context = context,
+                            action = action
+                        )
+                    }
                 )
             }
         },

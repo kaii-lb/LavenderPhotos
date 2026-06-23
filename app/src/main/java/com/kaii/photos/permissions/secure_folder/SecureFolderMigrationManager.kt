@@ -15,6 +15,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.di.appModule
+import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -22,7 +23,6 @@ import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.moveMediaToSecureFolder
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
@@ -197,10 +197,9 @@ class SecureFolderMigrationManager(
         )
 
         Log.d(TAG, "Encrypting secure folder media...")
-        moveMediaToSecureFolder(
-            list = mediaItems,
+        LocalSecureManager(appDatabase.securedItemEntityDao()).moveMediaToSecureFolder(
             context = context,
-            applicationDatabase = appDatabase,
+            list = mediaItems,
             onDone = {
                 uris = emptyList()
                 onDone()

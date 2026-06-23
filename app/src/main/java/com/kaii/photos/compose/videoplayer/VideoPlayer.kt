@@ -3,11 +3,12 @@ package com.kaii.photos.compose.videoplayer
 import android.app.Activity
 import android.view.Window
 import androidx.activity.compose.BackHandler
-import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -20,11 +21,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -33,9 +32,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -46,22 +43,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
-import androidx.media3.common.util.UnstableApi
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -71,17 +65,17 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.helpers.video.VideoPlayerState
+import com.kaii.photos.screens.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
+import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay
 
-@OptIn(UnstableApi::class)
-@kotlin.OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun VideoPlayer(
     item: MediaStoreData,
-    accessToken: () -> String,
+    auth: () -> Auth,
     endpoint: () -> String,
     state: VideoPlayerState,
     appBarsVisible: MutableState<Boolean>,
@@ -92,66 +86,74 @@ fun VideoPlayer(
     useBlackBackground: Boolean,
     useCache: Boolean,
     modifier: Modifier = Modifier,
-    isOpenWithView: Boolean = false,
-    isSecuredMedia: Boolean = false
+    isOpenWithView: Boolean = false
 ) {
     val context = LocalContext.current
     var securedMediaProgress by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(shouldPlay(), accessToken(), endpoint()) {
+    LaunchedEffect(shouldPlay(), auth(), endpoint()) {
         if (shouldPlay()) {
             state.setSource(
                 context = context,
                 item = item,
-                accessToken = accessToken(),
+                auth = auth(),
                 endpoint = endpoint(),
                 shouldPlay = shouldPlay,
-                progress = {
+                decryptProgress = {
                     securedMediaProgress = it
                 }
             )
         }
     }
 
-    if (isSecuredMedia) {
-        if (securedMediaProgress < 1f) {
-            Column(
+    Crossfade(
+        targetState = securedMediaProgress < 1f && item.absolutePath.startsWith(context.appSecureFolderDir),
+        animationSpec = AnimationConstants.expressiveTween(
+            durationMillis = AnimationConstants.DURATION_LONG
+        ),
+        modifier = Modifier
+            .fillMaxSize()
+    ) { visible ->
+        if (visible) {
+            DecodingLoadingView(
+                progress = {
+                    securedMediaProgress
+                },
                 modifier = modifier
-                    .fillMaxSize(1f),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(id = R.string.video_decrypting),
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = stringResource(id = R.string.media_progress),
-                    fontSize = TextUnit(16f, TextUnitType.Sp)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                LinearProgressIndicator(
-                    progress = {
-                        securedMediaProgress
-                    },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainer,
-                    gapSize = 0.dp,
-                    strokeCap = StrokeCap.Round,
-                    drawStopIndicator = {},
-                    modifier = Modifier
-                        .height(14.dp)
-                        .fillMaxWidth(0.6f),
-                )
-            }
-
-            return
+            )
+        } else {
+            VideoPlayerUI(
+                item = item,
+                state = state,
+                appBarsVisible = appBarsVisible,
+                scrollState = scrollState,
+                window = window,
+                shouldPlay = shouldPlay,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache,
+                modifier = modifier,
+                isOpenWithView = isOpenWithView
+            )
         }
     }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun VideoPlayerUI(
+    item: MediaStoreData,
+    state: VideoPlayerState,
+    appBarsVisible: MutableState<Boolean>,
+    scrollState: SinglePhotoScrollState,
+    window: Window,
+    shouldPlay: () -> Boolean,
+    blurViews: Boolean,
+    useBlackBackground: Boolean,
+    useCache: Boolean,
+    modifier: Modifier = Modifier,
+    isOpenWithView: Boolean = false
+) {
+    val context = LocalContext.current
 
     BackHandler(
         enabled = isOpenWithView
@@ -191,6 +193,13 @@ fun VideoPlayer(
                 useBlackBackground = useBlackBackground
             )
 
+            val animatedAlpha by animateFloatAsState(
+                targetValue = if (state.fadeInPlayer) 1f else 0f,
+                animationSpec = AnimationConstants.expressiveTween(
+                    durationMillis = AnimationConstants.DURATION
+                )
+            )
+
             AndroidView(
                 factory = {
                     playerView
@@ -200,6 +209,7 @@ fun VideoPlayer(
                 },
                 modifier = modifier
                     .align(Alignment.Center)
+                    .alpha(animatedAlpha)
             )
         }
 

@@ -7,8 +7,6 @@
     <string name="add_album">Tilføj et album</string>
     <string name="direct_path_album">Brug en direkte sti for at tilføje et album</string>
     <string name="albums_main_list">Primære Album Liste</string>
-    <string name="albums_main_list_selected">Album valgt her vil vises i den primære photo visning</string>
-    <string name="albums_selected">Valgte Album</string>
     <string name="albums_auto_detect">Find automatisk album</string>
     <string name="albums_auto_detect_desc">Finder alle folderene med medier på denne enhed og tilføjer dem til album visningen</string>
     <string name="albums_clear_list">Ryd album liste</string>
@@ -45,7 +43,6 @@
     <string name="privacy_policy_title">Privatlivspolitik</string>
     <string name="privacy_policy">Der er ikke en! Intet af dit data forlader din enhed. Ingen AI trænes på det, ingen algoritmer høster din information, intet. Lavender Photos har altid været og vil altid være en privatlivs-fokuseret galleri app.</string>
     <string name="support">Støtte &amp; Donationer</string>
-    <string name="version_info">Versions-information</string>
     <string name="updates">Opdateringer</string>
     <string name="updates_check">Tjek om der er opdateringer</string>
     <string name="updates_check_desc">Notificerer om nye opdateringer når du åbner appen. Installerer ikke opdateringen</string>
@@ -60,11 +57,8 @@
                 <br><br>Lavender Photos vil aldrig opdatere automatisk, og opdaterer kun med udtrykkelig samtykke fra brugeren.
             </p>
         ]]></string>
-    <string name="updates_not_found">Ingen Opdateringer Fundet</string>
     <string name="updates_new_version_available">Ny version tilgængelig!</string>
     <string name="updates_latest">Allerede på nyeste version</string>
-    <string name="updates_failed">Kunne ikke tjekke efter nye opdateringer</string>
     <string name="updates_checking">Tjekker Efter Opdateringer</string>
-    <string name="updates_start">Start Opdatering</string>
     <string name="locked_folder_help_top">Låst Mappe er en sikker mappe for dine billeder og videoer på denne enhed.\nDe låste medier bliver aldrig uploaded noget sted og forbliver altid på din enhed, krypteret med en unik nøgle beskyttet af din enheds password eller fingeraftryks-data.</string>
 </resources>

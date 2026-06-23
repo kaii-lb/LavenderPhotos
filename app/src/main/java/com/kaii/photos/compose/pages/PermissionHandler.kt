@@ -652,7 +652,8 @@ fun FullWidthDialogButton(
     ) {
         Text(
             text = text,
-            color = textColor,
+            color =
+                if (enabled) textColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             fontSize = TextUnit(14f, TextUnitType.Sp)
         )
     }

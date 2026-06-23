@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,7 +86,18 @@ fun PreferencesRow(
         iconResID = iconResID,
         position = position,
         modifier = modifier,
-        summary = summary,
+        summary = if (summary != null) {
+            {
+                Text(
+                    text = summary,
+                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    textAlign = TextAlign.Start,
+                    color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        } else null,
         goesToOtherPage = goesToOtherPage,
         showBackground = showBackground,
         enabled = enabled,
@@ -103,7 +115,7 @@ fun PreferencesRow(
     iconResID: Int,
     position: RowPosition,
     modifier: Modifier = Modifier,
-    summary: String? = null,
+    summary: AnnotatedString? = null,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     enabled: Boolean = true,
@@ -126,7 +138,19 @@ fun PreferencesRow(
         iconResID = iconResID,
         position = position,
         modifier = modifier,
-        summary = summary,
+        summary =
+            if (summary != null) {
+                {
+                    Text(
+                        text = summary,
+                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        textAlign = TextAlign.Start,
+                        color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else null,
         goesToOtherPage = goesToOtherPage,
         showBackground = showBackground,
         enabled = enabled,
@@ -144,7 +168,7 @@ private fun PreferencesRowBase(
     iconResID: Int,
     position: RowPosition,
     modifier: Modifier = Modifier,
-    summary: String? = null,
+    summary: (@Composable () -> Unit)?,
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     enabled: Boolean = true,
@@ -195,7 +219,7 @@ private fun PreferencesRowBase(
         Icon(
             painter = painterResource(id = iconResID),
             contentDescription = "an icon describing: $title",
-            tint = contentColor,
+            tint = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
             modifier = Modifier
                 .size(28.dp)
         )
@@ -212,14 +236,7 @@ private fun PreferencesRowBase(
             title()
 
             if (summary != null) {
-                Text(
-                    text = summary,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
-                    textAlign = TextAlign.Start,
-                    color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
+                summary()
             }
         }
 
@@ -227,7 +244,7 @@ private fun PreferencesRowBase(
             Icon(
                 painter = painterResource(id = R.drawable.other_page_indicator),
                 contentDescription = "this preference row leads to another page",
-                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.5f),
+                tint = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
                 modifier = Modifier
                     .size(28.dp)
             )
@@ -712,7 +729,7 @@ fun ExpressiveDialogRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    onClick: () -> Unit
+    onClick: (() -> Unit)?
 ) {
     val (shape, _) = getDefaultShapeSpacerForPosition(
         position = position,
@@ -726,7 +743,11 @@ fun ExpressiveDialogRow(
             .height(56.dp)
             .clip(shape)
             .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
-            .clickable(onClick = onClick, enabled = enabled)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick, enabled = enabled)
+                } else Modifier
+            )
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(
@@ -759,6 +780,7 @@ fun ExpressiveDialogRowWithAction(
     title: String,
     icon: Painter,
     actionIcon: Painter,
+    position: RowPosition,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -766,6 +788,8 @@ fun ExpressiveDialogRowWithAction(
     onClick: () -> Unit,
     onActionClick: () -> Unit
 ) {
+    val (shape, _) = getDefaultShapeSpacerForPosition(position = position, cornerRadius = 32.dp, innerCornerRadius = 8.dp)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(
@@ -777,7 +801,12 @@ fun ExpressiveDialogRowWithAction(
             modifier = modifier
                 .weight(1f)
                 .height(56.dp)
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 8.dp, bottomStart = 32.dp, bottomEnd = 8.dp))
+                .clip(
+                    RoundedCornerShape(
+                        topStart = shape.topStart, topEnd = CornerSize(8.dp),
+                        bottomStart = shape.bottomStart, bottomEnd = CornerSize(8.dp)
+                    )
+                )
                 .background(containerColor.copy(alpha = if (enabled) 1f else 0.6f))
                 .clickable(onClick = onClick, enabled = enabled)
                 .padding(12.dp),
@@ -810,7 +839,12 @@ fun ExpressiveDialogRowWithAction(
             modifier = Modifier
                 .width(60.dp)
                 .height(56.dp)
-                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 32.dp, bottomStart = 8.dp, bottomEnd = 32.dp))
+                .clip(
+                    RoundedCornerShape(
+                        topStart = CornerSize(8.dp), topEnd = shape.topEnd,
+                        bottomStart = CornerSize(8.dp), bottomEnd = shape.bottomEnd
+                    )
+                )
                 .background(actionContainerColor)
                 .clickable(onClick = onActionClick, enabled = enabled)
                 .padding(12.dp),

@@ -9,9 +9,6 @@
     <string name="albums_main_list">Hiện tất cả trong Main</string>
     <string name="albums_main_list_desc_1">Hiện tập tin từ album được chọn</string>
     <string name="albums_main_list_desc_2">Hiện tập tin không thuộc các album đã chọn</string>
-    <string name="albums_main_list_selected">Các album được chọn ở đây sẽ hiện ra trong chế độ xem ảnh chính</string>
-    <string name="albums_main_list_selected_inverse">Các album đã chọn sẽ không hiện trong mục xem ảnh chính</string>
-    <string name="albums_selected">Các album đã chọn</string>
     <string name="albums_auto_detect">Rà album tự động</string>
     <string name="albums_auto_detect_desc">Rà soát các thư mục với ảnh/video trên thiết bị và thêm chúng vào danh sách thư mục</string>
     <string name="albums_clear_list">Ẩn danh sách album</string>
@@ -41,7 +38,6 @@
     <string name="privacy_policy_title">Chính sách bảo mật</string>
     <string name="privacy_policy">Dữ liệu của bạn không đi đâu cả. Không có AI, không có thuật toán để lấy dữ liệu của bạn. Lavender luôn luôn và sẽ là một ứng dụng thư viện tập trung vào quyền riêng tư của bạn.</string>
     <string name="support">Hỗ trợ &amp; quyên góp</string>
-    <string name="version_info">Thông tin phiên bản</string>
     <string name="translation">Dịch</string>
     <string name="licenses">Giấy phép</string>
     <string name="licenses_extra">Thông tin thêm</string>
@@ -51,12 +47,9 @@
     <string name="updates_check">Kiểm tra cập nhật mới</string>
     <string name="updates_check_desc">Thông báo về phiên bản mới khi mở ứng dụng. Không tự động tải cập nhật mới</string>
     <string name="updates_whats_new">Có gì mới</string>
-    <string name="updates_not_found">Không có bản cập nhật mới được tìm thấy</string>
     <string name="updates_new_version_available">Đã có phiên bản mới!</string>
     <string name="updates_latest">Đã ở phiên bản mới nhất</string>
-    <string name="updates_failed">Không kiểm tra được bản cập nhật</string>
     <string name="updates_checking">Đang kiểm tra cập nhật</string>
-    <string name="updates_start">Bắt đầu cập nhật</string>
     <string name="locked_folder_help_top">Thư mục mã hóa là thư mục được bảo mật cho hình ảnh và video trên thiết bị.\nẢnh &amp; video đã được mã hóa không bao giờ được tải lên bất kỳ đâu và luôn nằm trên thiết bị, được mã hóa bằng khóa duy nhất với mật khẩu hoặc dữ liệu vân tay của thiết bị.</string>
     <string name="locked_folder_help_bottom">Dữ liệu đã mã hóa không thể khôi phục nếu quên mật khẩu hoặc bị xóa vân tay.</string>
     <string name="secure_folder">Thư mục mã hóa</string>
@@ -153,7 +146,6 @@
     <string name="editing_text">Chữ</string>
     <string name="editing_image">Ảnh</string>
     <string name="editing_saving">Đang lưu ảnh đã sửa</string>
-    <string name="editing_failed">Lưu ảnh đã sửa thất bại</string>
     <string name="editing_upload_image">Chọn</string>
     <string name="editing_upload_image_failed">Không thể chọn ảnh</string>
     <string name="editing_bitrate">Tốc độ bit</string>
@@ -238,7 +230,6 @@
                 <br><br>Lavender Photos không bao giờ tự cập nhật trừ khi có cho phép từ người dùng.
             </p>
         ]]></string>
-    <string name="updates_failed_download">Không thể tải bản cập nhật</string>
     <string name="updates_no_changelog">Không có nhật ký thay đổi nào hiện tại</string>
     <string name="secure_export_failed">Xuất bản sao lưu thất bại!</string>
     <string name="secure_encryption_failed_no_permission">Không thể mã hóa ảnh nếu không cấp quyền</string>
@@ -298,7 +289,6 @@
     <string name="filter_posterize">Posterize</string>
     <string name="settings_storage_thumbnails_clear_cache">Xóa bộ nhớ đệm hình thu nhỏ</string>
     <string name="settings_storage_thumbnails_clear_cache_desc">Xóa bộ nhớ đệm hình thu nhỏ để giải phóng dung lượng lưu trữ</string>
-    <string name="settings_about_unknown_version">Không thể lấy được số phiên bản</string>
     <string name="settings_storage_export_quality">Chất lượng xuất file của trình chỉnh sửa: %d%%</string>
     <string name="settings_storage_export_quality_warn">Giá trị cao dẫn đến kích thước ảnh lớn.</string>
     <string name="trash_bin">Thùng Rác</string>

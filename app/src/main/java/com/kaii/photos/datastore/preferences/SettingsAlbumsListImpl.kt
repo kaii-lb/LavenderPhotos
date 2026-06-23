@@ -2,6 +2,7 @@ package com.kaii.photos.datastore.preferences
 
 import android.content.Context
 import android.os.Environment
+import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -45,21 +46,39 @@ class SettingsAlbumsListImpl(
             val jsonString = data[albumsKey]
             val present = jsonString?.let { json.decodeFromString<List<AlbumType>>(jsonString) } ?: defaultAlbumsList
 
-            val presentPaths = present.fastMapNotNull { (it as? AlbumType.Folder)?.paths }
-            val presentIds = present.fastMap { it.id }
+            val presentPaths = HashMap(
+                present
+                    .filterIsInstance<AlbumType.Folder>()
+                    .associateBy { it.paths }
+            )
 
-            present.toMutableList().apply {
-                addAll(
-                    list.filter {
-                        when (it) {
-                            is AlbumType.Folder -> it.paths !in presentPaths && it.name.isNotBlank()
-                            else -> it.id !in presentIds && it.name.isNotBlank()
-                        }
+            val presentIds = present.fastMap { it.id }.toHashSet()
+            val presentImmichIds = present.fastMapNotNull { it.immichId }.toHashSet()
+
+            val newAlbums = list.filter { album ->
+                when (album) {
+                    is AlbumType.Cloud -> {
+                        album.immichId !in presentImmichIds
                     }
-                )
-            }.let { new ->
-                data[albumsKey] = json.encodeToString(new)
+
+                    is AlbumType.Custom -> {
+                        album.id !in presentIds
+                    }
+
+                    is AlbumType.Folder -> {
+                        !presentPaths.containsKey(album.paths)
+                    }
+
+                    AlbumType.PlaceHolder -> false
+                }
+            }.fastMap { album ->
+                when (album) {
+                    is AlbumType.Folder -> album.copy(paths = album.paths.map { it.trim() }.toSet())
+                    else -> album
+                }
             }
+
+            data[albumsKey] = json.encodeToString(present + newAlbums)
         }
     }
 
@@ -117,8 +136,8 @@ class SettingsAlbumsListImpl(
                     pinned = it.isPinned,
                     immichId = null,
                     paths = it.paths.map { path ->
-                        if (!path.startsWith("/storage/")) baseInternalStorageDirectory + path.removePrefix("/")
-                        else path
+                        if (!path.startsWith("/storage/")) (baseInternalStorageDirectory + path.removePrefix("/")).trim()
+                        else path.trim()
                     }.toSet()
                 )
             }
@@ -179,6 +198,8 @@ class SettingsAlbumsListImpl(
     }
 
     fun removeAll(albumIds: List<String>) = scope.launch {
+        if (albumIds.isEmpty()) return@launch
+
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
             val present = json.decodeFromString<List<AlbumType>>(list).toMutableList()
@@ -193,7 +214,8 @@ class SettingsAlbumsListImpl(
 
     fun edit(
         id: String,
-        newInfo: AlbumType
+        newInfo: AlbumType,
+        overwriteId: Boolean = false
     ) = scope.launch {
         context.datastore.edit { data ->
             val list = data[albumsKey] ?: jsonDefaultAlbumsList
@@ -203,9 +225,21 @@ class SettingsAlbumsListImpl(
 
             present[index] =
                 when (newInfo) {
-                    is AlbumType.Folder -> newInfo.copy(id = id)
-                    is AlbumType.Custom -> newInfo.copy(id = id)
-                    is AlbumType.Cloud -> newInfo.copy(id = id)
+                    is AlbumType.Folder -> newInfo.let { album ->
+                        if (!overwriteId) album.copy(id = id, paths = album.paths.map { it.trim() }.toSet())
+                        else album.copy(paths = album.paths.map { it.trim() }.toSet())
+                    }
+
+                    is AlbumType.Custom -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
+                    is AlbumType.Cloud -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
                     else -> AlbumType.PlaceHolder
                 }
 
@@ -214,8 +248,18 @@ class SettingsAlbumsListImpl(
     }
 
     fun reset() = scope.launch {
-        context.datastore.edit {
-            it[albumsKey] = jsonDefaultAlbumsList
+        context.datastore.edit { data ->
+            val currentList = data[albumsKey] ?: return@edit
+            val filtered = json.decodeFromString<List<AlbumType>>(currentList).fastFilter {
+                it !is AlbumType.Folder
+            }
+
+            val string = data[albumGroupsKey] ?: "[]"
+            json.decodeFromString<List<AlbumGroup>>(string).forEach {
+                removeGroup(it.id)
+            }
+
+            data[albumsKey] = json.encodeToString(filtered)
         }
     }
 

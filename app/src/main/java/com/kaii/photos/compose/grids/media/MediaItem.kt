@@ -99,8 +99,6 @@ fun MediaItem(
                 enabled = !isDragSelecting.value
             ) {
                 if (isMediaPicker) {
-                    isDragSelecting.value = true
-
                     toggleSelection()
                 } else {
                     if (isSelecting()) {
@@ -115,19 +113,24 @@ fun MediaItem(
 
         GlideImage(
             model = when {
-                isSecureMedia -> (item as PhotoLibraryUIModel.SecuredMedia).bytes?.getThumbnailIv()?.let {
-                    SecureInfo(
-                        iv = it,
-                        absolutePath = File(item.item.absolutePath).secureThumbnailImage(context).absolutePath,
-                        key = item.signature()
-                    )
-                }
+                isSecureMedia -> (item as PhotoLibraryUIModel.SecuredMedia).bytes
+                    ?.takeIf { it.size >= 32 }
+                    ?.getThumbnailIv()
+                    // all-zero iv means the thumbnail isn't ready; fall through to a null model -> placeholder
+                    ?.takeIf { iv -> iv.any { it.toInt() != 0 } }
+                    ?.let {
+                        SecureInfo(
+                            iv = it,
+                            absolutePath = File(item.item.absolutePath).secureThumbnailImage(context).absolutePath,
+                            key = item.signature()
+                        )
+                    }
 
                 item.item.isCloud -> ImmichInfo(
                     thumbnail = item.item.immichThumbnail!!,
                     original = item.item.immichUrl!!,
                     hash = item.item.hash!!,
-                    accessToken = item.accessToken!!,
+                    auth = item.auth,
                     endpoint = item.endpoint!!,
                     useThumbnail = true
                 )
@@ -138,14 +141,18 @@ fun MediaItem(
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.broken_image),
             modifier = Modifier
-                .fillMaxSize(1f)
+                .fillMaxSize()
                 .align(Alignment.Center)
                 .scale(animatedItemScale)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(animatedItemCornerRadius))
+                .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
             if (isSecureMedia) {
-                it.signature(item.signature())
+                // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode to
+                // the requested size like the non-secure branch
+                val secureRequest = it.signature(item.signature())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
+                if (thumbnailSettings().second != 0) secureRequest.override(thumbnailSettings().second)
+                else secureRequest
             } else if (thumbnailSettings().second == 0) {
                 it.signature(item.signature())
                     .diskCacheStrategy(
@@ -162,73 +169,96 @@ fun MediaItem(
             }
         }
 
-        if (item.item.type == MediaType.Video) {
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = 2.dp, y = (-2).dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .padding(start = 4.dp, top = 0.dp, end = 6.dp, bottom = 0.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = 4.dp,
-                    alignment = Alignment.Start
-                )
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.movie_filled),
-                    contentDescription = stringResource(id = R.string.file_is_a_video),
-                    tint = Color.White,
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomStart),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 2.dp,
+                alignment = Alignment.Start
+            )
+        ) {
+            if (item.item.type == MediaType.Video) {
+                Row(
                     modifier = Modifier
-                        .size(20.dp)
-                )
-
-                if (item.item.duration != null) {
-                    // show video duration text on the thumbnail
-                    Text(
-                        text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
-                        color = Color.White,
-                        fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
-                        fontWeight = FontWeight.Bold,
+                        .offset(x = 2.dp, y = (-2).dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .padding(start = 4.dp, top = 0.dp, end = 6.dp, bottom = 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 4.dp,
+                        alignment = Alignment.Start
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.movie_filled),
+                        contentDescription = stringResource(id = R.string.file_is_a_video),
+                        tint = Color.White,
                         modifier = Modifier
-                            .offset(y = 1.dp)
+                            .size(20.dp)
+                    )
+
+                    if (item.item.duration != null) {
+                        // show video duration text on the thumbnail
+                        Text(
+                            text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
+                            color = Color.White,
+                            fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .offset(y = 1.dp)
+                        )
+                    }
+                }
+            }
+
+            if (item.item.isRawImage()) {
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.raw_on),
+                        contentDescription = stringResource(id = R.string.media_is_raw),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .align(Alignment.Center)
                     )
                 }
             }
-        }
 
-        if (item.item.isRawImage()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(2.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.raw_on),
-                    contentDescription = stringResource(id = R.string.media_is_raw),
-                    tint = Color.White,
+            if (item.item.isGIF()) {
+                Box(
                     modifier = Modifier
-                        .size(28.dp)
-                        .align(Alignment.Center)
-                )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.gif_2),
+                        contentDescription = stringResource(id = R.string.media_is_gif),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                    )
+                }
             }
-        }
 
-        if (item.item.isGIF()) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(2.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.gif_2),
-                    contentDescription = stringResource(id = R.string.media_is_gif),
-                    tint = Color.White,
+            if (item.item.isCloud) {
+                Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.Center)
-                )
+                        .padding(2.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.cloud),
+                        contentDescription = stringResource(id = R.string.media_is_cloud),
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.Center)
+                    )
+                }
             }
         }
 

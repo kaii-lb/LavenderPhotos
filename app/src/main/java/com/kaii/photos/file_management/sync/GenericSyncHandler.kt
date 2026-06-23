@@ -5,15 +5,21 @@ import android.content.Context
 import android.provider.MediaStore
 import android.provider.Settings
 import androidx.compose.ui.util.fastMap
+import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
+import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.calculateSha1Checksum
+import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
 import com.kaii.photos.mediastore.toMediaStoreData
+import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
+import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
@@ -41,18 +47,36 @@ interface GenericSyncHandler {
         originId: String,
         destinationPath: String
     ) = withContext(Dispatchers.IO) {
+        if (cloudMedia.isEmpty() && localMedia.isEmpty()) return@withContext
+
         val cloudById = cloudMedia.associateBy { it.id }
         val cloudByHash = cloudMedia.associateBy { it.checksum }
 
         val toUpload = mutableListOf<MediaStoreData>()
         val toDownload = mutableListOf<String>()
+        val toTrashLocal = mutableListOf<MediaStoreData>()
+        val toTrashCloud = mutableListOf<String>()
 
         localMedia.forEach { local ->
-            if (local.immichId != null && cloudById.containsKey(local.immichId)) {
-                return@forEach
+            var currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
+
+            if (local.immichId != null) {
+                val cloudItem = cloudById[local.immichId] ?: fileManager.assetClient.get(
+                    id = Uuid.parse(local.immichId!!)
+                )
+
+                if (cloudItem?.isTrashed == true) {
+                    toTrashLocal.add(local)
+                    return@forEach
+                }
+
+                // recalculate hash in case there has been modifications
+                if (cloudItem != null && local.dateModified != cloudItem.toMediaStoreData().dateModified) {
+                    toTrashCloud.add(cloudItem.id)
+                    currentHash = calculateSha1Checksum(File(local.absolutePath))
+                }
             }
 
-            val currentHash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
             val cloudMatch = cloudByHash[currentHash]
 
             if (cloudMatch != null) {
@@ -66,10 +90,15 @@ interface GenericSyncHandler {
             }
         }
 
-        val localHashes = localMedia.map {
-            val hash = it.hash ?: calculateSha1Checksum(File(it.absolutePath))
+        val localHashes = localMedia.map { local ->
+            val hash = local.hash ?: calculateSha1Checksum(File(local.absolutePath))
 
-            hash to it.immichId
+            fileManager.mediaDao.linkToHash(
+                id = local.id,
+                hash = hash
+            )
+
+            hash to local.immichId
         }.toSet()
 
         cloudMedia.forEach { cloud ->
@@ -82,6 +111,8 @@ interface GenericSyncHandler {
                 toDownload.add(cloud.id)
             }
         }
+
+        progressManager.addToTotalItems(count = toUpload.size + toDownload.size + toTrashLocal.size)
 
         if (toUpload.isNotEmpty()) {
             uploadMedia(
@@ -98,6 +129,26 @@ interface GenericSyncHandler {
                 destination = destinationPath
             )
         }
+
+        if (toTrashLocal.isNotEmpty()) {
+            albums.get().first().find { album ->
+                album.immichId == originId
+            }?.id?.let { albumId ->
+                trashMedia(
+                    context = context,
+                    media = toTrashLocal,
+                    albumId = albumId
+                )
+            }
+        }
+
+        if (toTrashCloud.isNotEmpty()) {
+            fileManager.assetClient.delete(
+                ids = toTrashCloud.map {
+                    Uuid.parse(it)
+                }
+            )
+        }
     }
 
     suspend fun fetchCloudAlbums() =
@@ -107,13 +158,11 @@ interface GenericSyncHandler {
                 it.immichId?.isNotBlank() == true && (it is AlbumType.Folder || it is AlbumType.Custom)
             }
 
-    suspend fun uploadMedia(
+    private suspend fun uploadMedia(
         context: Context,
         media: List<MediaStoreData>,
         albumImmichId: String
     ): Boolean {
-        progressManager.addToTotalItems(count = media.size)
-
         val hashes = media.associate { item ->
             val hash = item.hash ?: calculateSha1Checksum(file = File(item.absolutePath))
 
@@ -128,8 +177,7 @@ interface GenericSyncHandler {
                         id = item.id.toString()
                     )
                 }
-            ),
-            accessToken = fileManager.info.accessToken
+            )
         )?.associateBy { it.id } ?: return false
 
         val trashedItems = mutableListOf<Uuid>()
@@ -156,20 +204,19 @@ interface GenericSyncHandler {
 
                 bulkResponse.assetId
             } else {
-                // TODO: stream this instead of uploading whole file
-                val assetData = File(mediaItem.absolutePath).inputStream().buffered().readBytes()
-
                 val resp = fileManager.assetClient.upload(
                     AssetUploadRequest(
-                        assetData = assetData,
-                        deviceAssetId = "${mediaItem.displayName}-${mediaItem.size}",
+                        assetSource = UriAssetSource(
+                            context = context,
+                            uri = mediaItem.uri.toUri()
+                        ),
+                        deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
                         deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
                         filename = mediaItem.displayName
-                    ),
-                    accessToken = fileManager.info.accessToken
+                    )
                 )
 
                 if (resp != null) {
@@ -185,21 +232,17 @@ interface GenericSyncHandler {
             }
         }
 
-        fileManager.assetClient.restore(
-            ids = trashedItems,
-            accessToken = fileManager.info.accessToken
-        )
+        fileManager.assetClient.restore(ids = trashedItems)
 
         val success = fileManager.albumsClient.addAssets(
             albumId = Uuid.parse(albumImmichId),
-            assetIds = total.fastMap { Uuid.parse(it) },
-            accessToken = fileManager.info.accessToken
+            assetIds = total.fastMap { Uuid.parse(it) }
         )
 
         return total.size == media.size && success
     }
 
-    suspend fun downloadMedia(
+    private suspend fun downloadMedia(
         context: Context,
         ids: List<String>,
         destination: String
@@ -208,27 +251,29 @@ interface GenericSyncHandler {
 
         ids.forEach { id ->
             val cloudItem = fileManager.assetClient.get(
-                id = Uuid.parse(id),
-                accessToken = fileManager.info.accessToken
+                id = Uuid.parse(id)
             ) ?: return@forEach
 
-            val localItem = fileManager.mediaDao.getMediaFromHashes(
+            val localItems = fileManager.mediaDao.getMediaFromHashes(
                 hashes = listOf(cloudItem.checksum)
-            ).firstOrNull()
+            ).filter { it.parentPath == destination }
 
-            if (localItem != null) {
-                successes += 1
-                fileManager.mediaDao.linkToImmich(
-                    id = localItem.id,
-                    hash = cloudItem.checksum,
-                    immichUrl = "/api/assets/${cloudItem.id}/original"
-                )
+            if (localItems.isNotEmpty()) {
+                localItems.forEach { localItem ->
+                    successes += 1
+                    progressManager.increaseProgress()
+
+                    fileManager.mediaDao.linkToImmich(
+                        id = localItem.id,
+                        hash = cloudItem.checksum,
+                        immichUrl = "/api/assets/${cloudItem.id}/original"
+                    )
+                }
 
                 return@forEach
             }
 
             // Proceed with download only if content is truly missing
-            val bytes = fileManager.assetClient.download(Uuid.parse(cloudItem.id), fileManager.info.accessToken) ?: return@forEach
             val item = cloudItem.toMediaStoreData()
 
             val newUri = context.contentResolver.insertMedia(
@@ -241,12 +286,17 @@ interface GenericSyncHandler {
             )
 
             newUri?.let { uri ->
-                context.contentResolver.openOutputStream(uri)?.use {
-                    if (bytes.size <= 8 * 1024) it.write(bytes)
-                    else it.buffered().write(bytes)
+                val downloaded = fileManager.assetClient.download(
+                    id = Uuid.parse(cloudItem.id),
+                    channel = UriWriteChannel(
+                        uri = uri,
+                        context = context
+                    )
+                )
 
-                    it.flush()
-                    it.close()
+                if (!downloaded) {
+                    context.contentResolver.delete(uri, null)
+                    return@let
                 }
 
                 context.contentResolver.setDateForMedia(uri, item.type, item.dateTaken)
@@ -260,10 +310,38 @@ interface GenericSyncHandler {
                     )))
                 }
 
+                progressManager.increaseProgress()
                 successes += 1
             }
         }
 
         return successes == ids.size
+    }
+
+    private suspend fun trashMedia(
+        context: Context,
+        media: List<MediaStoreData>,
+        albumId: String
+    ) {
+        fileManager.setTrashed(
+            context = context,
+            list = media.fastMap {
+                SelectionManager.SelectedItem(
+                    id = it.id,
+                    uri = it.uri,
+                    immichUrl = it.immichUrl,
+                    isImage = it.type == MediaType.Image,
+                    parentPath = it.parentPath
+                )
+            },
+            trashed = true,
+            albumId = albumId.takeIf {
+                fileManager is CustomFileManager
+            },
+            immichId = null,
+            onItemDone = {
+                progressManager.increaseProgress()
+            }
+        )
     }
 }

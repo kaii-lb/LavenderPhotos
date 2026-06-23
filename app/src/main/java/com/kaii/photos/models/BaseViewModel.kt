@@ -163,6 +163,8 @@ abstract class BaseViewModel(
     abstract fun renameAlbum(context: Context, newName: String)
     abstract fun share(context: Context, list: List<SelectionManager.SelectedItem>)
     abstract fun renameItem(context: Context, uri: String, newName: String): IntentSender?
+    abstract fun secure(context: Context, list: List<SelectionManager.SelectedItem>)
+    abstract fun restore(context: Context, list: List<SelectionManager.SelectedItem>)
 
     fun runAction(
         context: Context,
@@ -227,6 +229,20 @@ abstract class BaseViewModel(
                 context = context,
                 uri = action.uri,
                 newName = action.newName
+            )
+        }
+
+        is GenericFileManager.Action.Secure -> {
+            secure(
+                context = context,
+                list = action.list
+            )
+        }
+
+        is GenericFileManager.Action.Restore -> {
+            restore(
+                context = context,
+                list = action.list
             )
         }
 

@@ -12,7 +12,7 @@ plugins {
 
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
+        jvmTarget = JvmTarget.JVM_21
     }
 
     ksp {
@@ -67,8 +67,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     buildFeatures {
@@ -82,6 +82,21 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    androidResources {
+        generateLocaleConfig = true
+
+        localeFilters.addAll(
+            listOf(
+                "en", "ar", "ca", "cs", "da",
+                "de", "el", "es", "et", "fr",
+                "gl", "hy", "in", "it", "ja",
+                "kn", "pl", "pt", "pt-rBR", "ru",
+                "sv", "tr", "uk", "vl", "zh",
+                "zh-rCN", "zh-rTW"
+            )
+        )
     }
 }
 
@@ -112,6 +127,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.google.material)
+    implementation(libs.google.zxing)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)

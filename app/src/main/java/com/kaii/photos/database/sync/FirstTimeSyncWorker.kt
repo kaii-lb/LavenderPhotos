@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.room.concurrent.AtomicInt
 import androidx.work.CoroutineWorker
-import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkInfo
@@ -20,6 +19,7 @@ import com.kaii.photos.mediastore.updateLatestGen
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
@@ -61,9 +61,9 @@ class FirstTimeSyncWorker(
             val request = start(context)
 
             WorkManager.getInstance(context.applicationContext)
-                .getWorkInfoByIdLiveData(request.id)
-                .observeForever { workInfo ->
-                    isLoading.value = workInfo?.state == WorkInfo.State.SUCCEEDED || workInfo?.outputData != Data.EMPTY
+                .getWorkInfoByIdFlow(request.id)
+                .collect { workInfo ->
+                    isLoading.value = workInfo?.state != WorkInfo.State.SUCCEEDED
                 }
         }
     }
@@ -118,6 +118,8 @@ class FirstTimeSyncWorker(
             TAG,
             "First Time Sync Worker has finished running. Out of ${mediaStoreIds.size} items there was ${added.size} inserted and ${removed.size} removed. Total time was ${endTime - startTime}"
         )
+
+        delay(1000)
 
         setProgress(
             workDataOf(

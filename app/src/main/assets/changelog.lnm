@@ -1,0 +1,694 @@
+// A line starting with '//' indicates a comment
+// A line starting with '#' indicates a section, with format: # version=vX.Y.Z[-beta|-hotfix] date=DD-MM-YYYY [status=None|Broken|Latest]
+// A line starting with '!' indicates a note, with format: ! urgency=Normal|Critical info=VARIABLE_LENGTH_STRING
+// A line starting with '+' indicates a category, with format: + category=Features|Fixes|Improvements
+// A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
+//      note that issueNumber is not mandatory, but if found it needs to be at the start
+
+# version=v2.0.0 date=23-06-2026 status=Latest
+    ! urgency=Critical info=Make a backup of your secure media before installing!
+    ! urgency=Normal info=First time startup "Processing Screen" can be skipped
+
+    + category=Features
+        - title=Rework media loading to support paging!
+        - title=New Immich integration system!
+        - title=Cloud-only album integration and support
+        - title=Bidirectional sync between cloud and local albums
+        - issueNumber=000195 title=Full Immich account management with usage statistics
+        - title=Support for playing cloud-only videos
+        - title=Offline capable cloud sync system, so no action is lost
+        - title=Significantly improve secure folder stability and performance
+        - title=Pick cloud-only media using the media picker
+        - title=Duplicate detection and already-uploaded checks for less data usage
+        - issueNumber=000163 title=Authentication with Immich API keys as well as accounts
+        - title=Share cloud-only albums using Immich
+        - title=Immich server version check and update notification
+        - issueNumber=000252 title=Allow for automatic recovery of secured media in case of decrypt failure
+        - issueNumber=000190 title=Add "Privacy Mode" to stop unwanted scrolling when handing phone to other people
+        - issueNumber=000056 title=Add ability to change image resolution in editor
+        - title=Blurred backgrounds for media viewers
+        - title=New search logic and UI/UX
+        - issueNumber=000046 title=Media tagging system with associated search functionality
+        - issueNumber=000188 title=Ability to create album groups
+        - issueNumber=000182 title=Export quality control for photo editor
+        - issueNumber=000191 title=Show video durations on thumbnails
+        - issueNumber=000212 title=Ability to disable haptic feedback
+        - issueNumber=000214 title=Customizable video loop settings
+        - title=Add audio track selector for videos with more than 1 track
+        - issueNumber=000251 title=Opt-In ability to allow screenshots in secure folder
+        - title=In-App language selector for Android 13+
+        - issueNumber=000258 title=App lock with PIN
+        - title=New changelog UI & custom format parser
+
+    + category=Improvements
+        - title=Updated translations for Polish, Greek, Estonian, Russian, Galician, Chinese Simplified, Ukrainian, Indonesian, Vietnamese, and Spanish
+        - title=Improve the look of all dialogs in the app
+        - title=Auto-refresh album thumbnails
+        - issueNumber=000175 title=Improve date editor UI
+        - issueNumber=000186 title=Pin bottom app bar when in selection mode
+        - title=Editors now support cloud-only files
+        - title=Show cloud icon on cloud-only media
+        - title=Show RAW icon on RAW-format photos
+        - issueNumber=000184 title=Require authentication before making secure-folder backups
+        - issueNumber=000150 title=Improve scrolling wallpaper behaviour
+        - issueNumber=000220 title=Clearing app cache does not affect secure item thumbnails
+        - issueNumber=000217 title=Ability to secure hundreds of megabytes of media at once
+        - title=New permission handling system
+        - title=No more in-app updates
+        - title=Improved updater UI
+        - title=Better check-update-on-startup behaviour
+        - title=Speed improvements for video playback in secure folder
+        - title=Improved loading snackbar UI
+        - title=Support cloud-favourited items in app's favourite tab
+        - title=Periodic sync with Immich server (even in background)
+        - title=Share cloud-only media with local apps
+        - title=Improved search by date-format
+
+    + category=Fixes
+        - issueNumber=000193 title=Crash when moving files from info dialogs
+        - title=Secure folder not popping back on app exit
+        - issueNumber=000209 title=Crash when emptying trash
+        - title=File operation failure resulting in infinitely visible snackbar
+        - issueNumber=000176 title=Editing a photo's date not reflecting in UI
+        - issueNumber=000215 title=Wrong media shown after exiting editor
+        - issueNumber=000218 title=GIFs not being animated
+        - title=Wallpaper no longer crashes on odd-sized images
+        - issueNumber=000244 title=Crash when saving videos with non-default-mediastore paths
+        - issueNumber=000223 title=Crash when saving videos with high bitrates
+        - issueNumber=000224 title=Cut off text in external open-with view
+        - issueNumber=000235 title=Save Copy overwriting file in open-with view's editor
+        - issueNumber=000242 title=Crash when trying to pick media
+        - issueNumber=000257 title=Customization of main-view albums being broken
+        - issueNumber=000229 title=Some photo-grid items being selected even though user never selected them
+        - title="Folder is empty" text not being centered
+
+
+# version=v1.4.0-hotfix date=06-01-2026
+    + category=Fixes
+        - title=Critical bug where the new tab translation system would not allow for migration from older versions, rendering app unusable
+        - title=Inability to secure items from single photo views bottom bar
+
+
+# version=v1.3.9 date=05-01-2026 status=Broken
+    + category=Improvements
+        - title=Auto update single photo topbar to reflect media item changes
+        - title=Update translations for Polish and simplified Chinese
+
+    + category=Fixes
+        - title=Crash when trying to open gallery from camera
+        - title=Exif dates not lining up with local timezone
+        - title=Translations not loading for bottom bar tabs if tab list is not customized
+        - title=Unable to continue on favourites migration page if there are no items to migrate
+        - title=Favourites and Trash not displaying dates correctly for some images
+        - title=Media info not showing in trash and secure folder
+
+
+# version=v1.3.8 date=03-01-2026
+    + category=Features
+        - title=Vastly improved favouriting system. Can sync with all apps that use Android's MediaStore
+        - title=Favourites and Trash now usable in Media Picker
+        - title=Per-ABI apk for smaller apk size
+
+    + category=Improvements
+        - title=Add a help section to show export location in data & backup page
+        - title=Main App Bottom Bar now clips items correctly and is smoothly animated
+
+
+# version=v1.3.6 date=01-01-2026
+    + category=Features
+        - title=Subsampling images (zoom in without losing details)
+        - title=Animated scroll to edited/moved/deleted/secured media
+        - title=Date editor for images (change when image was taken)
+
+    + category=Fixes
+        - title=Double press back button to exit open-with videoplayer
+        - title=Broken drag-to-select behavior
+        - title=Broken select all behavior
+        - title=Crash when unable to read XMP metadata
+        - title=Crash when checking if image is HDR
+        - title=Inability to open some images from external apps
+        - title=Edited images not being at 100% resolution when not manually choosing so from dialog
+        - title=Drag-and-Drop triggering if date section has only one item
+        - title=Edited media's date changing to "now"
+
+    + category=Improvements
+        - title=Make all Updater strings translatable & better changelog formatting
+        - title=Update translations for French, Polish, Russian and Spanish
+        - title=Better navigation bar and status bar colors
+        - title=Performance improvements to media loading system
+        - title=Enhanced double-tap to zoom behavior
+        - title=Disable videoplayer seekbar animations when manually seeking via drag gestures
+        - title=Proper preserve date on move/copy (and don't preserve) behavior
+        - title=Media info dialog UI/UX when in landscape mode
+
+
+# version=v1.3.1 date=24-12-2025
+    + category=Fixes
+        - title=Crash when app is unable to parse XMP data
+        - title=Shutter speed is now shown in a better format
+
+
+# version=v1.3.0 date=23-12-2025
+    ! urgency=Critical info=This update will remove all customized bottom bar tabs
+
+    + category=Features
+        - title=Ability to open other editors from Lavender Photos' editor
+        - title=JPEG-XL support
+        - title=Change export resolution in image editor
+        - title=Dates and times now respect 24-hour format choice
+        - title=Add new date formats
+        - title=Media details customization for top bar text
+        - title=Material Expressive-ify buttons
+        - title=HDR image support
+        - title=Media Info dialog now works in landscape mode
+        - title=Label RAW format images with an icon
+        - title=Support for "Open by Default" (ie: open from camera, other apps, etc.)
+        - title=Ability to disable date tags but sort by last modified (keep option as last modified and turn off "Media Sorting")
+        - title=Drag and Drop support (long press after selecting an item)
+        - title=Motion Photo support
+
+    + category=Fixes
+        - title=Low resolution images when zooming in or saving edits
+        - title=Date tags not using "Today" and "Yesterday"
+        - title=Misspelling in "Current Log" info string
+        - title=race condition when loading images
+        - title=Fixed update page text formatting
+
+    + category=Improvements
+        - title=Baseline Profiles for improved startup performance
+        - title=Translation updates for Turkish, Vietnamese, Armenian, Spanish, Portuguese, Polish, Chinese simplified, French, German, Swedish, and Estonian
+        - title=Move secure folder to a more performant ViewModel implementation
+        - title=Significant performance improvements to loading times
+        - title=Bottom bar tabs no longer suck
+
+# version=v1.2.0 date=13-11-2025
+    + category=Fixes
+        - title=Use black background not applying to videoplayer
+        - title=Editor bar item texts overflowing on some screens
+        - title=Add missing gridview icon
+        - title=Crash when app name is shorter than 2 words
+        - title=Media picker navbar not hiding correctly
+        - title=Crash when trying to overwrite media in non standard folder
+        - title=Crash when trying to rename media more than once
+        - title=Scroll-lock after drag selecting
+        - title=Inability to add a custom album
+        - title=Don't scroll back to top when navigation back from SinglePhotoViews
+        - title=Crash when trying to secure media with broken thumbnails
+        - title=Editor rotation breaking filters page
+        - title=Inability to draw in editors
+        - title=Crash when using OpenWithView
+        - title=Image editor sometimes opening images with incorrect rotation
+        - title=Crash because of removed index key for bottom bar tabs
+        - title=First played video respects "start muted" preference
+        - title=Fixed Misrepresented album pin state
+        - title=Erratic behavior when deleting media
+        - title=Apply editor rotation to images after saving
+        - title=Removed selected image/text border from final render
+
+    + category=Features
+        - title=Expressive-ify trash and secure photo views
+        - title=Added option to disable rotation in single photo views
+        - title=Support for alternative URLs for Immich server
+        - title=Better scrollbars
+        - title=Preserve image dates when moving/copying
+        - title=Scroll to edited image on exit from editor
+        - title=Rounded thumbnail corner support
+        - title=Toggle to always show immich user info
+        - title=Toggle to open videos in external player
+        - title=Display album grid thumbnails according to user selected sort mode
+        - title=Location parsing from media with GPS Exif data
+        - title=Better and faster search
+
+    + category=Improvements
+        - title=Significant performance and smoothness improvements
+        - title=Hide parent album from copy/move list
+        - title=Progress snackbar for exporting video
+        - title=Increase videoplayer seekbar height
+        - title=Better scrollable wallpaper support
+        - title=Drag to select now requires long press
+        - title=Immich login dialog now supports autofill
+        - title=Ability to use cleartext traffic for http Immich servers
+        - title=Photo info dialog loading improvements
+        - title=Improved trashed items loading
+        - title=Raise app main bar
+        - title=Support disabled-sorting in every grid view
+        - title=Increase video seekbar update rate & screen on implementation
+
+
+# version=v1.1.6 date=25-09-2025
+    + category=Fixes
+        - title=Crash when editing from OpenWithView
+
+
+# version=v1.1.5 date=25-09-2025
+    + category=Features
+        - title=Hide navigation bar while scrolling
+        - title=Zoom text/images while moving them in editors
+        - title=Scrollable wallpapers in wallpaper setter
+        - title=Added Polish translation, updated Chinese simplified
+
+    + category=Fixes
+        - title=Video editor not respecting start videos muted option
+        - title=Inability to play video in video editor after trimming it
+        - title=Navigation bar tab text being misaligned
+
+
+# version=v1.1.0 date=24-09-2025
+    + category=Features
+        - title=Added simplified Chinese translation
+        - title=Ability to blacklist albums when using "show all in main"
+        - title=Pin albums even when "auto-detect albums" is enabled
+        - title=Toggle to immediately exit app on start page and not in photo view
+        - title=Show loading snackbars in OpenWithView
+
+    + category=Improvements
+        - title=Ask for directory permission before editing file
+        - title=Increase default video editor export bitrate
+        - title=Make main navigation bar side-scrollable
+        - title=New app icon
+        - title=Albums in AlbumGridView now require long press to drag
+
+    + category=Fixes
+        - title=Inability to clear Immich server address if not logged in
+        - title=Show everything in main shows everything everywhere
+        - title=Update page's formatting being broken
+        - title=Crash when deleting all media in an album
+        - title=Crash when editing media from OpenWithView
+        - title=Saving videos in non-standard directories would cause an infinite hang
+
+
+# version=v1.0.0 date=20-09-2025
+    ! urgency=Normal info=New Look! Lavender Photos has moved to Material Expressive! A new look, with more fluid, dynamic and fun animations brings the app to life
+
+    + category=Features
+        - title=New Image and Video Editors!
+        - title=Refreshed look for the image editor, and a video editor has been implemented
+        - title=Significantly improved editing experience
+        - title=Crop, adjust, markup and filter your images
+        - title=Change bitrate. frame-rate, speed or volume of your videos, as well as everything mentioned in the image editor
+        - title=Overlay text and images on both images and videos
+        - title=Animate text and images on video
+        - title=Change column count of the Album View
+        - title=Toggle black background for media views
+        - title=Zoom on videos
+        - title=Click on media title to open info dialog
+        - title=Avif image loading
+        - title=New app icon
+        - title=Arabic, Spanish, Russian, Turkish and Ukrainian translations
+        - title=Increased custom tab limit
+        - title=Immich help and info dialogs
+        - title=Retain albums on uninstall
+        - title=Open source licenses page
+        - title=Tabs for Favourites and Trash views
+        - title=In-app wallpaper setter
+        - title=Smoother loading effects
+        - title=Immediately and permanently delete media instead of moving to trash first
+        - title=Video player playback speed control
+
+    + category=Fixes
+        - title=Slow secure photo decryption
+        - title=Crash when loading high resolution images in image editor
+        - title=Crash when swiping horizontally on Favourites or Trash button in Albums View
+        - title=Crash when deleting first media in an album and navigating back with Auto Detect Albums turned on
+        - title=Crash when deleting last media in an album and navigating back
+        - title=Corrected some-times broken custom tabs
+        - title=Splash screen now always displays correctly
+        - title=Certain grid views not retaining scroll position when navigating away from them
+        - title=Some items getting erroneously cleared when trying to drag select
+        - title=MediaPicker not reporting back correct items
+        - title=Open with Lavender Photos now displays the correct version of all images
+        - title=Corrected inaccurate application of adjustments in image editor
+        - title=Highlights adjustment being broken
+        - title=Crash when drag selecting over a Section
+        - title=Sharing multiple images now properly shows all app targets
+        - title=Inability to secure items from a single photo view on some android versions
+        - title=Crash when selecting more than 2000 items on android 16+
+
+# version=v0.9.9-beta date=15-07-2025
+    + category=Features
+        - title=Make album path dialog actually usable
+        - title=Fixed custom albums not having thumbnails and MoveCopyAlbumListView.kt not having ANY thumbnails at all
+        - title=Unable to rename albums and album info not immediately updating
+        - title=Added sort albums by last-modified or date-taken depending on user choice
+        - title=Handle error in TextEntryDialog correctly
+        - title=Added media picker activity
+        - title=Added Immich backup integration for albums
+        - title=Add background sync indicator around pfp pic in top bar and main dialog
+        - title=Change "overwrite data on copy" to "try to keep date on copy", since keeping date isn't always guaranteed
+        - title=Added ability to copy or move files into albums with multiple paths, custom albums remain unaffected
+        - title=Don't crash when loading thumbnails for custom albums without paths
+        - title=Sort search media by user preference
+        - title=A lot of smoothness and performance improvements to anything with a PhotoGridView.kt
+        - title=Fixed album info item count included sections, it shouldn't
+        - title=Added progress snackbar for copying, moving or deleting media
+        - title=Don't crash when dragging to select on an item that doesn't exist
+        - title=Add Immich server info to Immich Main Page
+        - title=Add album sync with immich page to album top bar
+        - title=Crashing on secure folder view when unable to export backup due to no IV data present
+        - title=Fix some photo-grid-views not remembering their position when being navigated back to from another page
+        - title=Fix v0.9.8-beta-hotfix changelog missing
+        - title=Make video loading much smoother
+        - title=Added a setting to control grid column size
+        - title=Respect locale in grid view separators
+        - title=PhotoGridView.kt scrollbars now respect layout direction (rtl or ltr)
+        - title=Added ability to show everything in main photos view
+    
+# version=v0.9.8-beta date=29-06-2025
+    + category=Features
+        - title=hotfix to fix issue with IzzyOnDroid checks
+        - title=increase overall app smoothness (media loading is smoother)
+        - title=fix issue where updater would crash when release has "-hotfix" in name
+    
+# version=v0.9.7-beta date=28-06-2025
+    + category=Features
+        - title=Sub-second full device album search added
+        - title=Added translations for Indonesian and French
+        - title=Fixed issue where album grid items would flicker infinitely
+        - title=Fixed issue where you couldn't use custom albums for custom stuff
+        - title=No longer ask every time for permissions to move/copy to album after user already gave permissions once
+        - title=Added date format selector
+        - title=Handle memory leak because of stupid compose state stuff
+        - title=Added AMOLED theme
+        - title=Added translation notice to about page
+        - title=Significant performance improvements
+        - title=Dependencies version bump
+        - title=No longer crash when directory to data &amp; backup export paths doesn't exist
+        - title=Blurring now accounts for filters, adjustments and drawing in editing view
+        - title=Added external volume support (sdcard, etc)
+        - title=Added ability to reset an editing adjustments value by tapping it again
+        - title=Make text scaling in editing view more responsive
+        - title=Added ability to pin albums to top of album list
+    
+# version=v0.9.6-beta date=15-05-2025
+    + category=Features
+        - title=Added ability to include entire folders in custom albums
+        - title=Fixed custom tabs not loading
+        - title=Select-All disabled for albums with over 5000 items (fixes crash because of android limitation)
+    
+# version=v0.9.5-beta date=12-05-2025
+    + category=Features
+        - title=Added animation to double tap to zoom and reset in horizontal photo views
+        - title=Added custom albums (non folder based)
+        - title=Added item count to album info dialog
+        - title=Fixed editing view text zooming
+        - title=Fixed jank in default tab reordering
+        - title=Added toggle switch for photo copy dates
+        - title=Fixed issue where drawing with paint after blur would cause a crash in editing view
+        - title=Text scaling/rotating/moving doesn't suck anymore
+        - title=Fixed tap to draw not working (used to always show up in top left corner, now works normally)
+        - title=Color contrast improvements for bottom bar items in editing view
+        - title=Added ability to resize and change color of already set text in editing view (tap on text to select it)
+        - title=Added ability to zoom in editing view paint mode
+        - title=Increased editing view blur brush radius (more blurring)
+    
+# version=v0.9.4-beta date=26-03-2025
+    + category=Features
+        - title=Fixed icon colors for main bars
+        - title=Added export favourites to zipfile or folder
+        - title=Fix videoplayer doubletap to skip not correctly changing direction in case of quicktaps
+        - title=Made paths horizontally scrollable in path-displaying views
+        - title=Added sort mode customizer
+        - title=Fixed check for update on startup running multiple times
+        - title=Added snackbars for editing failure and success
+        - title=Add confirm to delete toggle
+        - title=Fixed trash not always sorting by most recently trashed
+        - title=No more missing files if user moves or copies and exits view
+        - title=Finished album info implementation
+        - title=Added icons for confirm to delete, media sorting, and check for updates
+        - title=Fixed videoplayer doubletap to seek showing underneath other UI
+        - title=Code cleanup and improvement
+        - title=Added ability to send previous run's logs
+        - title=Videoplayer doubletap to skip now only needs doubletap on initial try and then its single tap to skip
+        - title=Autodetect albums now adds albums as it finds them
+        - title=Fixed irrecoverable secured item issue if it's associated album is removed from lavender photos
+        - title=Added bulk encrypting photos from search page
+        - title=Fix doubletap to skip blocking other UI
+        - title=Added exif data eraser
+        - title=Added basic blur tool in editing view for android 12 and above
+        - title=Added exit on save toggle for editing view
+        - title=Fixed secure folder ghost media issue
+        - title=Securing media loading dialog no longer disappear with app bars while media is still being secured
+    
+# version=v0.9.3-beta date=15-03-2025
+    + category=Features
+        - title=Use stable identifiers for drawables
+        - title=Add update info notice
+        - title=Added option to disable check updates on startup
+        - title=Added fully customizable tabs
+        - title=Entirely rework migration logic
+        - title=Unified dialog colors
+        - title=Fix mediastore not refreshing correctly
+        - title=Better media size display
+        - title=Add export secure folder to zip file
+    
+# version=v0.9.2-beta date=09-03-2025
+    + category=Features
+        - title=Fixed erroneous crash in horizontal image list
+        - title=Fixed updater view not showing progress
+        - title=Fixed updater not installing packages
+        - title=Fixed move copy to albums list not showing thumbnails
+        - title=Fixed alignment and overflow issues with single album dialogs
+        - title=Added data and backup
+        - title=Migration to encrypted photos is no longer broken
+        - title=Added default tab customization
+    
+# version=v0.9.1-beta date=07-03-2025
+    + category=Features
+        - title=Fix dialog info for secured media
+        - title=Better drag to select behavior
+        - title=Fixed add albums from debugging settings
+        - title=Added custom album sorting
+        - title=Much faster album loading
+        - title=Dynamic album reordering so last modified albums are on top
+        - title=Added automatic album detection
+        - title=Added Lavender Snackbars to app
+        - title=Better migration to encrypted secure folder
+        - title=Double tap to skip is now supported in videoplayer
+        - title=Misc performance improvements
+    
+# version=v0.9.0-beta date=09-02-2025
+    + category=Features
+        - title=Load file metadata into info dialog after decryption
+        - title=Added in-app updater
+        - title=Reworked entire media loading system to allow for multiple albums to be loaded
+        - title=Added + icon to album grid view top bar
+        - title=Fixed lag spike when opening an album
+        - title=Extreme optimizations and performance gains
+        - title=Fix loading dialogs for encryption and decryption
+        - title=Fix secure folder thumbnails not always loading
+        - title=Fix possible security flaw due to glide caching secured images
+        - title=Videoplayer no longer pauses music if its muted
+        - title=Added loading screen for encrypted videos
+        - title=Unified selecting top bar
+        - title=Fixed isPreV083 behavior
+        - title=Fixed open with view not being open withable
+        - title=Don't forever hang if clicking move to secure folder from selecting top bar while list is empty
+        - title=Finally fixed android 11 and 12 boot issues
+    
+# version=v0.8.9-beta date=02-02-2025
+    + category=Features
+        - title=Added AES encryption for secured photos
+        - title=Added error icon for manual add path
+        - title=Fix loading screen on secure folder
+        - title=Fixed elements in light theme not being consistent and cohesive
+        - title=Video player remembers last mute state
+        - title=Added landscape friendly views for secure folder and permission screen
+        - title=Added open with Lavender Photos
+        - title=Removed alternative pick albums
+        - title=Added loading dialogs for actions that take time
+    
+# version=v0.8.8-beta date=26-01-2025
+    ! urgency=Normal info=Please delete the Lavender Photos folder from Internal Storage
+
+    + category=Features
+        - title=Removed MANAGE_EXTERNAL_STORAGE permission
+        - title=Reworked entire file handling system
+        - title=Changed main app top bar animation
+        - title=Improved performance
+        - title=Fixed issues with securing media items
+        - title=Fixed scrolling lagginess
+        - title=Fixed favourites view crashing when tapping an item
+        - title=Fixed porting previous albums from v0.8.3 to higher versions
+        - title=Make explanation dialogs consistent
+        - title=Stop app from freezing when loading albums with files other than images
+        - title=Fix log saving, restructure app folders
+        - title=Added file sharing from secure folder
+    
+# version=v0.8.7-beta-hotfix date=10-01-2025
+    + category=Features
+        - title=Fix search not displaying correct items
+        - title=Exoplayer no longer shuts off after background-ing the app
+        - title=Better logcat behavior
+        - title=Fixed permission screen UI
+        - title=Added multiple ways of adding albums until a better way is found
+        - title=Fixed crash when photogrid is empty
+        - title=MUCH faster drag to select with better behavior
+    
+# version=v0.8.7-beta date=05-01-2025
+    + category=Features
+        - title=Fix videoplayer crashing after playing multiple videos in a row
+        - title=Touch lock no longer gets stuck if app switches to portrait mode
+        - title=Add video autoplay setting
+        - title=Add video mute on startup setting
+        - title=Set icons for settings that were using placeholders
+        - title=Added app theme selector
+        - title=Add default album list for first app launch
+        - title=Clarified Manage All Files permission purpose
+        - title=Add highlights and color tint adjustments in editing view
+        - title=Add mini privacy policy statement
+        - title=Add image filters in editing view
+        - title=New option to overwrite by default when editing
+        - title=Added drag to select in photo grids
+        - title=Animate select checkmark
+        - title=In video player app bars now only show when clicking the more options button, no more annoying click and double click
+    
+# version=v0.8.6-beta date=24-12-2024
+    + category=Features
+        - title=Completely refactored datastore for MUCH better performance and scalability
+        - title=Added trash bin auto delete interval settings
+        - title=Fix possible crash on android 11 devices when trying to hide app bars
+        - title=Fixed photo sharing in secure folder
+        - title=Enhanced settings look
+        - title=Faster empty folder checks, app will feel slightly faster
+        - title=Fixed video resolution info
+        - title=Added thumbnail size and cache settings
+        - title=Added clear thumbnail cache setting
+        - title=Fixed landscape behavior for main page
+        - title=Fixed jitter when switching pages in main screen
+        - title=Folders that don't contain images or videos won't be stuck on loading forever now
+        - title=Fixed Manage All Files permission button not working
+        - title=Added explanations to permissions
+        - title=Secured photos now maintain their original date and other info
+    
+    
+# version=v0.8.5-beta date=21-12-2024
+    + category=Features
+        - title=Fix videoplayer completely refetching data when changing orientation
+        - title=Move/Copy popup doesn't go past statusbar now
+        - title=Secure folder locks when leaving the app temporarily
+        - title=Fixed inaccessible folders even if they exist
+        - title=SinglePhotoView photo list now updates dynamically to match present media
+        - title=Fixed brightness adjustment and added whitepoint adjustment
+        - title=Landscape videoplayer now has lock touch option
+        - title=Videoplayer controls automatically hide after 5 seconds
+        - title=Videoplayer will resume playback after exiting and reentering app
+    
+# version=v0.8.4-beta date=15-12-2024
+    + category=Features
+        - title=Fix permission handling
+        - title=Better and faster media queries
+        - title=Add random search bar placeholders
+        - title=More readable date taken for photos
+        - title=Added settings for permissions and debugging with logs
+    
+# version=v0.8.3-beta date=08-12-2024
+    + category=Features
+        - title=Fixed wrong behavior when album name contains a comma
+        - title=Properly trash and delete media with content resolver
+        - title=Added value indicator for adjustments slider in editing view
+        - title=Add option to overwrite instead of save a new copy for edits
+        - title=Check if not media manager and delete stuff properly too
+        - title=Fix not being able to un-trash files when app is media manager
+        - title=Newly edited photos now show up in system normally
+        - title=Editing view adjustment actually take effect now (oups)
+    
+# version=v0.8.2-beta date=30-11-2024
+    + category=Features
+        - title=Added contrast/brightness/saturation adjustments to editing view
+        - title=Added blackpoint and warmth (color temperature) adjustments to editing view
+    
+# version=v0.8.1-beta date=27-11-2024
+    + category=Features
+        - title=Fixed favourite view excessive top padding
+        - title=Fixed crash when loading or unloading HorizontalImageList and media changes
+        - title=Fixed crash when adding new albums that already where added
+        - title=Fixed video playback not resetting to 0 when reaching end
+        - title=Fixed video playback sometimes only going to one second less than the video duration
+        - title=Added rotating and resizing text by gestures in editing view
+        - title=Fix search page resetting scroll position when viewing an image
+    
+# version=v0.8.0-beta date=Unknown
+    + category=Features
+        - title=Cropping added
+        - title=Added cropping ratios
+        - title=Better save and undo functionality
+    
+# version=v0.7.9-beta date=Unknown
+    + category=Features
+        - title=Fix erroneous scaling when rotating images in editing view
+        - title=Fix video autoplay when changing orientation
+        - title=Fix videoplayer seekbar time not always going to end
+        - title=Fix videoplayer current and end times being slightly off
+    
+# version=v0.7.8-beta date=Unknown
+    + category=Features
+        - title=All the below changes are in editing view
+        - title=Added drawing on images
+        - title=Added drawing text on images
+        - title=Added rotating images
+        - title=Added size change for drawing and text
+        - title=Added color change for drawing and text
+        - title=Make editing view usable in landscape mode
+    
+# version=v0.7.7-beta date=Unknown
+    + category=Features
+        - title=Better showing of new images in albums view
+    
+# version=v0.7.6-beta date=Unknown
+    + category=Fixes
+        - title=Fixed animation and spacing on copy or move dialog
+        - title=Fixed spacing on favourties view
+    
+# version=v0.7.5-beta date=Unknown
+    + category=Features
+        - title=Added editing view (no functionality)
+        - title=Added proper zooming/panning/rotating
+    
+# version=v0.7.3-beta date=Unknown
+    + category=Features
+        - title=Added info dialogs in secure folder and trash
+        - title=Intelligent album sorting
+        - title=Search by date added
+        - title=Close data streams after exiting a page
+        - title=Fixed today and yesterday tags in photo grid
+        - title=Secured items now go back to original place
+        - title=Fixed dates in secure folder (were broken showing everything as if it were secured today)
+        - title=Fixed resolution not showing on all media
+    
+# version=v0.7.2-beta date=Unknown
+    + category=Features
+        -Complete rework of delete/copy/move/trash system
+        - title=Trash interoperates with rest of system now
+        - title=Much more fluidity to grids
+        - title=Albums no longer show photos from subfolders
+        - title=Performance improvements and quality of life stuff
+    
+# version=v0.7.0-beta date=Unknown
+    + category=Features
+        - title=Search improvements
+        - title=Copy and move added in selection
+        - title=Speed improvements to large selection deletion/restoration
+        - title=Smoother transitions to selecting in views with no bottom bar
+    
+# version=v0.6.9-beta date=Unknown
+    + category=Features
+        - title=Added favouriting media
+        - title=Improved scrollbars behavior
+        - title=Sort secure folder by recency
+        - title=Lots of code cleanup and misc performance improvements
+        - title=General responsiveness improvements
+        - title=Fixed navigation bar colors in light mode
+        - title=Proper icons and dialogs for actions
+        - title=Selection available in every gridview
+        - title=Videoplayer experience is better
+    
+# version=v0.6.6-beta date=Unknown
+    + category=Features
+        - title=Added scrollbars to grids
+        - title=Major performance improvements
+        - title=Added selecting items from grid
+        - title=Fix lag when showing bottom bars
+        - title=Can clear trash bin now
+        - title=Infinitely faster search
+        - title=Fix single photo view resetting on rotation change
+        - title=Fix search not allowing selection

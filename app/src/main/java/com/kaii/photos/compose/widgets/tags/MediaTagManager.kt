@@ -233,16 +233,20 @@ private fun MediaTagManagerImpl(
             }
         }
 
-        val showDeleteDialog = remember { mutableStateOf(false) }
         var currentTag by remember { mutableStateOf<Tag?>(null) }
-        if (showDeleteDialog.value) {
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
+        if (showDeleteDialog) {
             ConfirmationDialog(
-                showDialog = showDeleteDialog,
-                dialogTitle = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
-                confirmButtonLabel = stringResource(id = R.string.media_delete)
-            ) {
-                onTagDelete(currentTag!!)
-            }
+                title = stringResource(id = R.string.tags_delete, currentTag?.name ?: ""),
+                confirmButtonLabel = stringResource(id = R.string.media_delete),
+                action = {
+                    onTagDelete(currentTag!!)
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                }
+            )
         }
 
 
@@ -254,7 +258,7 @@ private fun MediaTagManagerImpl(
             onTagClick = onTagClick,
             onTagRemove = {
                 currentTag = it
-                showDeleteDialog.value = true
+                showDeleteDialog = true
             },
             onToggleSearchingForTags = {
                 searchingForTags = it

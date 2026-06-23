@@ -24,10 +24,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +46,12 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.widgets.DateTimePickerState
 import com.kaii.photos.widgets.rememberDateTimePickerState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 @Preview
 @Composable
@@ -65,30 +68,27 @@ fun DateTimePicker(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
-    var isLoading by remember { mutableStateOf(false) }
-    var isError by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isError) {
-        if (isError) {
-            delay(1.seconds)
-            isError = false
-            isLoading = false
-        }
-    }
-
     val state = rememberDateTimePickerState(
-        mediaItem = mediaItem,
-        onDone = {
-            isLoading = false
-            isError = false
-            onDismiss()
-        },
-        onFailed = {
-            isLoading = false
-            isError = true
-        }
+        mediaItem = mediaItem
     )
 
+    DateTimePicker(
+        state = state,
+        modifier = modifier,
+        onDismiss = onDismiss,
+        onConfirm = {
+            state.writeDate()
+        }
+    )
+}
+
+@Composable
+fun DateTimePicker(
+    state: DateTimePickerState,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit,
+    onConfirm: (instant: Instant) -> Unit
+) {
     Dialog(
         onDismissRequest = {
             onDismiss()
@@ -165,8 +165,8 @@ fun DateTimePicker(
 
                     FilledTonalIconButton(
                         onClick = {
-                            isLoading = false
-                            isError = false
+                            state.setIsLoading(loading = false)
+                            state.setIsError(error = false)
                             showTimePicker = false
                         },
                         modifier = Modifier
@@ -181,15 +181,16 @@ fun DateTimePicker(
 
                     val color by animateColorAsState(
                         targetValue =
-                            if (isError) MaterialTheme.colorScheme.error
+                            if (state.isError) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.secondaryContainer,
                         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
                     )
 
+                    val coroutineScope = rememberCoroutineScope()
                     FullWidthDialogButton(
                         text = stringResource(
                             id = when {
-                                isError -> R.string.error
+                                state.isError -> R.string.error
 
                                 showTimePicker -> R.string.media_confirm
 
@@ -199,11 +200,21 @@ fun DateTimePicker(
                         color = color,
                         textColor = MaterialTheme.colorScheme.contentColorFor(color),
                         position = RowPosition.Single,
-                        enabled = !isLoading && !isError
+                        enabled = !state.isLoading && !state.isError
                     ) {
                         if (showTimePicker) {
-                            isLoading = true
-                            state.writeDate()
+                            state.setIsLoading(loading = true)
+                            onConfirm(state.getDateTime())
+
+                            coroutineScope.launch {
+                                var counter = 0
+                                while (state.isLoading && counter < 60) {
+                                    delay(1.seconds)
+                                    counter += 1
+                                }
+
+                                onDismiss()
+                            }
                         } else {
                             showTimePicker = true
                         }
