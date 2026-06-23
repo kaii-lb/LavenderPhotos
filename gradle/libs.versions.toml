@@ -1,5 +1,5 @@
 [versions]
-agp = "9.1.1"
+agp = "9.2.1"
 androidx-benchmark-macro = "1.4.1"
 androidx-activity-compose = "1.13.0"
 androidx-compose-bom = "2026.06.00"
@@ -37,8 +37,8 @@ kotlinx-serialization-json = "1.11.0"
 kotlinx-collections = "0.5.0"
 lavender-immichintegration = "2.2.2"
 lavender-snackbars = "0.3.3"
-mikepenz-aboutlibraries = "14.2.1"
-mikepenz-aboutlibraries-android-plugin = "14.2.1"
+mikepenz-aboutlibraries = "15.0.0"
+mikepenz-aboutlibraries-android-plugin = "15.0.0"
 pdvrieze-xmlutil = "0.91.3"
 room = "2.8.4"
 zoomable-glide-image = "0.19.0"
@@ -129,7 +129,7 @@ lavender-snackbars-android = { module = "io.github.kaii-lb.lavender:snackbars-an
 saket-zoomable-image-glide = { module = "me.saket.telephoto:zoomable-image-glide", version.ref = "zoomable-glide-image" }
 
 mikepenz-aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "mikepenz-aboutlibraries" }
-mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries", version.ref = "mikepenz-aboutlibraries" }
+mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries-core", version.ref = "mikepenz-aboutlibraries" }
 
 pdvrieze-xmlutil-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "pdvrieze-xmlutil" }
 pdvrieze-xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "pdvrieze-xmlutil" }
