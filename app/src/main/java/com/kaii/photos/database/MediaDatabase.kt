@@ -26,6 +26,13 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.database.entities.TaggedItem
+import com.kaii.photos.database.migrations.Migration10To11
+import com.kaii.photos.database.migrations.Migration12To13
+import com.kaii.photos.database.migrations.Migration14To15
+import com.kaii.photos.database.migrations.Migration16To17
+import com.kaii.photos.database.migrations.Migration3to4
+import com.kaii.photos.database.migrations.Migration4to5
+import com.kaii.photos.database.migrations.Migration9To10
 
 @Database(
     entities =
@@ -47,9 +54,7 @@ import com.kaii.photos.database.entities.TaggedItem
         AutoMigration(from = 6, to = 7, spec = DeleteDupeEntityTable::class),
         AutoMigration(from = 7, to = 8, spec = DeleteOldMediaTable::class),
         AutoMigration(from = 8, to = 9, spec = DropCustomIdColumnSpec::class),
-        AutoMigration(from = 10, to = 11, spec = DropOldCustomTable::class),
         AutoMigration(from = 11, to = 12),
-        AutoMigration(from = 12, to = 13, spec = DropIntAlbumCustomTable::class),
         AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class),
         AutoMigration(from = 15, to = 16, spec = DropTrashTableSpec::class),
         AutoMigration(from = 17, to = 18, spec = UpdateSyncTaskTable::class)
@@ -84,6 +89,8 @@ abstract class MediaDatabase : RoomDatabase() {
                         Migration3to4(appContext),
                         Migration4to5(appContext),
                         Migration9To10(appContext),
+                        Migration10To11(),
+                        Migration12To13(),
                         Migration14To15(appContext),
                         Migration16To17(appContext)
                     )
@@ -109,12 +116,6 @@ class DeleteOldMediaTable : AutoMigrationSpec
     columnName = "customId"
 )
 class DropCustomIdColumnSpec : AutoMigrationSpec
-
-@DeleteTable(tableName = "custom_media")
-class DropOldCustomTable : AutoMigrationSpec
-
-@DeleteColumn(tableName = "custom_items", columnName = "album")
-class DropIntAlbumCustomTable : AutoMigrationSpec
 
 @DeleteColumn(tableName = "media", columnName = "immichThumbnail")
 class DropImmichThumbnailColumn : AutoMigrationSpec

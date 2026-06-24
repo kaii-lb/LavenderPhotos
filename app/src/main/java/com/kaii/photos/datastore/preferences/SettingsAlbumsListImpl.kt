@@ -31,8 +31,7 @@ class SettingsAlbumsListImpl(
     private val context: Context,
     private val scope: CoroutineScope
 ) {
-    private val v095ListKey = stringPreferencesKey("album_folder_path_list")
-    private val v140ListKey = stringPreferencesKey("album_items_key")
+    private val oldAlbumListKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
     private val albumsKey = stringPreferencesKey("album_albums_key")
@@ -124,7 +123,9 @@ class SettingsAlbumsListImpl(
         return list.fastMap {
             if (it.isCustomAlbum) {
                 AlbumType.Custom(
-                    id = Uuid.random().toString(),
+                    id = Uuid.fromLongs(it.id.toLong(), 0L).toString().also { thing ->
+                        println("MIGRATION ALBUM ${it.id} $thing")
+                    },
                     name = it.name,
                     pinned = it.isPinned,
                     immichId = null
@@ -146,9 +147,9 @@ class SettingsAlbumsListImpl(
 
     fun migrate() = scope.launch {
         context.datastore.data.first().let {
-            if (it[v095ListKey] == null && it[v140ListKey] == null) return@launch
+            if (it[oldAlbumListKey] == null) return@launch
 
-            var data = it[v095ListKey]
+            var data = it[oldAlbumListKey]
             var list = emptyList<AlbumType>()
 
             if (data != null) {
@@ -160,7 +161,7 @@ class SettingsAlbumsListImpl(
             }
 
             if (list.isEmpty()) {
-                data = it[v140ListKey] ?: return@launch
+                data = it[oldAlbumListKey] ?: return@launch
                 list = parsePreV140List(data)
             }
 
@@ -168,8 +169,7 @@ class SettingsAlbumsListImpl(
         }
 
         context.datastore.edit {
-            it.remove(v095ListKey)
-            it.remove(v140ListKey)
+            it.remove(oldAlbumListKey)
         }
     }
 

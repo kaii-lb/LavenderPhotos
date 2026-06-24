@@ -1,21 +1,16 @@
-package com.kaii.photos.database
+package com.kaii.photos.database.migrations
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
 import android.media.MediaMetadataRetriever
 import androidx.core.net.toUri
 import androidx.room.OnConflictStrategy
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.mediastore.LavenderContentProvider
-import com.kaii.photos.mediastore.LavenderMediaColumns
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
 import com.kaii.photos.mediastore.toMediaType
-import kotlinx.coroutines.runBlocking
 
 class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersion = 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -91,87 +86,5 @@ class Migration3to4(val context: Context) : Migration(startVersion = 3, endVersi
                 }
             )
         }
-    }
-}
-
-class Migration4to5(val context: Context) : Migration(startVersion = 4, endVersion = 5) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("DROP TABLE secureditementity")
-        db.execSQL("CREATE TABLE IF NOT EXISTS `secureditementity` (`originalPath` TEXT NOT NULL, `secured_path` TEXT NOT NULL, `iv` BLOB NOT NULL, PRIMARY KEY(`originalPath`))")
-    }
-}
-
-class Migration9To10(val context: Context) : Migration(startVersion = 9, endVersion = 10) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        val cursor = context.contentResolver.query(
-            LavenderContentProvider.CONTENT_URI,
-            arrayOf(
-                LavenderMediaColumns.URI,
-                LavenderMediaColumns.PARENT_ID
-            ),
-            null,
-            null
-        ) ?: return
-
-        val uriCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.URI)
-        val parentCol = cursor.getColumnIndexOrThrow(LavenderMediaColumns.PARENT_ID)
-
-        while (cursor.moveToNext()) {
-            val uri = cursor.getString(uriCol)
-            val parent = cursor.getInt(parentCol)
-
-            db.insert(
-                table = "custom_media",
-                conflictAlgorithm = SQLiteDatabase.CONFLICT_REPLACE,
-                values = ContentValues().apply {
-                    put("mediaId", uri.toUri().lastPathSegment!!.toLong())
-                    put("album", parent)
-                }
-            )
-        }
-
-        cursor.close()
-    }
-}
-
-class Migration14To15(val context: Context) : Migration(startVersion = 14, endVersion = 15) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE media ADD COLUMN 'duration' INTEGER")
-
-        val mediaStoreIds = mutableSetOf<Long>()
-        db.query("SELECT id FROM media WHERE uri LIKE 'content://%' AND type = 'Video'").use { cursor ->
-            val colIndex = cursor.getColumnIndexOrThrow("id")
-            while (cursor.moveToNext()) {
-                mediaStoreIds.add(cursor.getLong(colIndex))
-            }
-        }
-
-        if (mediaStoreIds.isEmpty()) return
-
-        val contentValues = ContentValues()
-
-        val data = runBlocking {
-            getMediaStoreDataForIds(ids = mediaStoreIds, context = context)
-        }
-
-        data.forEach { item ->
-            contentValues.clear()
-            contentValues.put("duration", item.duration)
-
-            db.update(
-                table = "media",
-                conflictAlgorithm = SQLiteDatabase.CONFLICT_REPLACE,
-                values = contentValues,
-                whereClause = "id = ?",
-                whereArgs = arrayOf(item.id)
-            )
-        }
-    }
-}
-
-class Migration16To17(val context: Context) : Migration(startVersion = 16, endVersion = 17) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE sync_tasks DROP COLUMN itemIds")
-        db.execSQL("ALTER TABLE sync_tasks ADD COLUMN items TEXT NOT NULL DEFAULT '[]'")
     }
 }
