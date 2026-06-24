@@ -2,7 +2,6 @@ package com.kaii.photos.data.providers
 
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.core.content.pm.PackageInfoCompat
 
 class AppVersionProvider(
     private val context: Context
@@ -20,6 +19,10 @@ class AppVersionProvider(
     }
 
     fun getCurrentVersionCode(): Long {
-        return PackageInfoCompat.getLongVersionCode(packageInfo)
+        return packageInfo?.longVersionCode ?: 0L
+    }
+
+    fun getCurrentVersionString(): String {
+        return packageInfo?.versionName ?: ""
     }
 }

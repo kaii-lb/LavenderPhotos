@@ -69,6 +69,10 @@
 
     <!-- App -->
     <string name="app_name_full">Lavender Photos</string>
+    <string name="app_description">Privacy-first, performant, and stylish open-source gallery app</string>
+    <string name="app_version">Version %1$s</string>
+    <string name="app_repo">App\'s Repository</string>
+    <string name="app_get">Download this app</string>
     <string name="dev_name" translatable="false">kaii-lb</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy">There isn\'t one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.</string>
@@ -328,6 +332,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_clear">Clear</string>
     <string name="settings_clear_cache_desc">This will erase all the thumbnail caches on this device, freeing up storage. Thumbnail loading will take longer on the next startup.</string>
     <string name="settings_about_and_updates">About &amp; Updates</string>
+    <string name="settings_about">About</string>
     <string name="settings_behaviour">Behaviour</string>
     <string name="settings_navigation_exit_immediately">Exit Immediately</string>
     <string name="settings_navigation_exit_immediately_desc">Skips going back to the default tab when pressing the back button</string>
@@ -728,4 +733,18 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="news_category_fix">Fixes</string>
     <string name="news_version_latest">Latest</string>
     <string name="news_version_broken">Broken</string>
+
+    <!--  Contributors  -->
+    <string name="contributor">Contributor</string>
+    <string name="contributor_major">Major Contributor</string>
+    <string name="contributor_maintainer">Maintainer</string>
+    <string name="contributor_kaii_desc">Building apps that redefine what\'s possible, without compromising safety and privacy</string>
+    <string name="contributor_kexxdumb_desc">Helped shape, test, and improve the app from its very first days</string>
+    <string name="contributor_tyrypyrking_desc">Improved secure encryption systems and file recovery processes</string>
+    <string name="contributors_community_member">Community Member</string>
+    <string name="contributors_github">Github</string>
+    <string name="contributors_telegram">Telegram</string>
+    <string name="contributors_separator_developer">Developer</string>
+    <string name="contributors_separator_major">Highlights</string>
+    <string name="contributors_separator_contributors">Open-source contributors</string>
 </resources>

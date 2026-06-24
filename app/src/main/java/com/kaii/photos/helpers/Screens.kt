@@ -211,6 +211,9 @@ interface Screens {
 
             @Serializable
             object ExtendedLicensePage : Screens
+
+            @Serializable
+            object AboutPage : Screens
         }
     }
 

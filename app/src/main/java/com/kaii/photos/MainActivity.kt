@@ -62,6 +62,7 @@ import com.kaii.photos.compose.immich.ImmichLoginPage
 import com.kaii.photos.compose.immich.backup_options_page.ImmichBackupOptionsPage
 import com.kaii.photos.compose.immich.dashboard.ImmichDashboardPage
 import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
+import com.kaii.photos.compose.pages.AboutPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
 import com.kaii.photos.compose.pages.ScreenLock
@@ -90,6 +91,8 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.contributors.ContributorViewModel
+import com.kaii.photos.models.contributors.ContributorViewModelFactory
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
@@ -131,6 +134,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
+import kotlin.time.Duration.Companion.milliseconds
 
 val LocalNavController = compositionLocalOf<NavHostController> {
     throw IllegalStateException("CompositionLocal LocalNavController not present")
@@ -760,6 +764,20 @@ class MainActivity : ComponentActivity() {
                     composable<Screens.Settings.Misc.ExtendedLicensePage> {
                         ExtendedLicensePage()
                     }
+
+                    composable<Screens.Settings.Misc.AboutPage> {
+                        val viewModel = viewModel<ContributorViewModel>(
+                            factory = ContributorViewModelFactory(context)
+                        )
+
+                        val contributors by viewModel.contributors.collectAsStateWithLifecycle()
+
+                        AboutPage(
+                            contributors = contributors,
+                            appVersion = viewModel.appVersion,
+                            navController = navController
+                        )
+                    }
                 }
 
                 composable<Screens.AlbumGroup> {
@@ -899,7 +917,7 @@ class MainActivity : ComponentActivity() {
 
         appModule.scope.launch(Dispatchers.IO) {
             if (SyncManager(applicationContext).getGeneration() > 0L) {
-                delay(2000) // so it isn't immediate on startup
+                delay(2000.milliseconds) // so it isn't immediate on startup
 
                 // run work manager immediately after user navigates back to app
                 WorkManager.getInstance(applicationContext)
