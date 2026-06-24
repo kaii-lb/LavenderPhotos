@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -130,7 +128,6 @@ fun UpdatesPage(
         bottomBar = {
             BottomBar(updateState = updateState)
         },
-        contentWindowInsets = WindowInsets.systemBars,
         modifier = modifier
     ) { innerPadding ->
         PullToRefreshBox(
@@ -143,7 +140,7 @@ fun UpdatesPage(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize(1f)
+                    .fillMaxSize()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -161,7 +158,7 @@ fun UpdatesPage(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AnimatedContent(
-                    targetState = news().isNotEmpty(),
+                    targetState = news().isNotEmpty() && updateState() == UpdateState.Available,
                     transitionSpec = {
                         val enter = fadeIn() + scaleIn(initialScale = 0.8f)
                         val exit = fadeOut() + scaleOut()
@@ -175,6 +172,7 @@ fun UpdatesPage(
                             list = news(),
                             modifier = Modifier
                                 .fillMaxSize()
+                                .clip(RoundedCornerShape(size = 32.dp))
                         )
                     } else {
                         Box(
@@ -290,7 +288,7 @@ private fun BottomBar(
 
     Box(
         modifier = Modifier
-            .safeDrawingPadding()
+            .navigationBarsPadding()
             .fillMaxWidth()
             .padding(all = 16.dp),
         contentAlignment = Alignment.Center

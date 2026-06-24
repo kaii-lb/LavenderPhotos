@@ -44,7 +44,7 @@ class UpdaterViewModel(
             _news.value = latestNewsRepository.getNews()
 
             _updateState.value =
-                if (latestNewsRepository.checkHasUpdate()) UpdateState.Available
+                if (latestNewsRepository.hasUpdate()) UpdateState.Available
                 else UpdateState.NotAvailable
 
             _updateStateChannel.trySend(_updateState.value)

@@ -22,7 +22,7 @@ class LatestNewsRepository(
         }.toList()
     }
 
-    suspend fun checkHasUpdate(): Boolean {
+    suspend fun hasUpdate(): Boolean {
         val latestVersion = dataSource.getLatestVersion()
             ?.replace("v" , "")
             ?.replace(".", "")
