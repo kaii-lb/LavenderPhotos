@@ -39,4 +39,25 @@
     <string name="navigation_search">Serĉi</string>
     <string name="navigation_favourites">Favoratoj</string>
     <string name="navigation_trash">Rubo</string>
+    <string name="editing_pencil">Krajono</string>
+    <string name="editing_image">Bildo</string>
+    <string name="editing_upload_image">Elektu</string>
+    <string name="permissions_grant_long">Doni Permeson</string>
+    <string name="permissions_do_not_trash">Ne uzu Rubujon</string>
+    <string name="look_and_feel_date_format_date_taken">Dato Prenita</string>
+    <string name="immich_endpoint_base_desc">Ligilo al la rezervservilo de Immich</string>
+    <string name="immich_endpoint_base_placeholder">https://mia.immich.servilo.com/</string>
+    <string name="immich_clear_endpoint">Ĉu forigi servilon?</string>
+    <string name="immich_clear_endpoint_desc">Ĉu vi certas, ke vi volas forigi ĉi tiun servilan adreson?</string>
+    <string name="immich_logout">Elsaluti?</string>
+    <string name="immich_logout_desc">Ĉu vi certas, ke vi volas elsaluti el ĉi tiu konto?</string>
+    <string name="immich_email">Retpoŝto:</string>
+    <string name="immich_state_unknown">Nekonata</string>
+    <string name="album_group_desc">Organizu viajn albumojn</string>
+    <string name="album_group_name">Grupnomo</string>
+    <string name="album_group_name_error">Nomo ne validas!</string>
+    <string name="album_group_dialog_name">Nomo:</string>
+    <string name="album_group_delete">Ĉu forigi ĉi tiun grupon?</string>
+    <string name="album_group_item_count">Subalbumoj:</string>
+    <string name="album_group_info">Informoj pri albumgrupo</string>
 </resources>
