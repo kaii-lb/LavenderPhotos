@@ -5,7 +5,7 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.0 date=23-06-2026 status=Latest
+# version=v2.0.0 date=25-06-2026 status=Latest
     ! urgency=Critical info=Make a backup of your secure media before installing!
     ! urgency=Normal info=First time startup "Processing Screen" can be skipped
 
