@@ -151,16 +151,16 @@ fun ImmichDashboardPage(
                                     updatedAt = loginInfo.updatedAt
                                 )
                             )
-                        }
-
-                        coroutineScope.launch {
-                            LavenderSnackbarController.pushEvent(
-                                LavenderSnackbarEvent.MessageEvent(
-                                    message = resources.getString(R.string.immich_server_unreachable),
-                                    icon = R.drawable.globe_2_cancel,
-                                    duration = SnackbarDuration.Short
+                        } else {
+                            coroutineScope.launch {
+                                LavenderSnackbarController.pushEvent(
+                                    LavenderSnackbarEvent.MessageEvent(
+                                        message = resources.getString(R.string.immich_server_unreachable),
+                                        icon = R.drawable.globe_2_cancel,
+                                        duration = SnackbarDuration.Short
+                                    )
                                 )
-                            )
+                            }
                         }
 
                         validated && pinged

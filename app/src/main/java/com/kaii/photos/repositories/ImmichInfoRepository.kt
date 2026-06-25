@@ -203,7 +203,10 @@ class ImmichInfoRepository(
         }
     }
 
-    suspend fun ping(address: String) = serverClient.ping(address = address)
+    suspend fun ping(address: String): Boolean {
+        serverClient.setEndpoint(address)
+        return serverClient.ping(address = address)
+    }
     fun validateServerAddress(address: String) = Patterns.WEB_URL.matcher(address).matches()
 
     suspend fun updateInfo(

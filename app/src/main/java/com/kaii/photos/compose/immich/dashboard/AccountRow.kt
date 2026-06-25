@@ -93,7 +93,7 @@ fun AccountRow(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .clickable(enabled = userInfo() !is LoginState.ServerUnreachable && !isLoadingInfo()) {
+            .clickable(enabled = immichInfo().endpoint.isNotBlank() && userInfo() !is LoginState.ServerUnreachable && !isLoadingInfo()) {
                 navController.navigate(
                     if (userInfo() is LoginState.LoggedIn) Screens.Immich.Account
                     else Screens.Immich.Login
