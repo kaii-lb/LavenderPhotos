@@ -67,8 +67,7 @@
     <string name="updates_check_desc">Uygulamayı açtığınızda yeni sürüm olduğunda bildirir. Güncellemeyi otomatik olarak yüklemez</string>
     <string name="updates_whats_new">Yenilikler</string>
     <string name="updates_notice">İndirme Uyarısı</string>
-    <string name="updates_notice_desc">
-        <![CDATA[
+    <string name="updates_notice_desc"><![CDATA[
             <p>Bu güncelleyici, apk\'leri <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Sürümleri</a>\'nden indirir, bu da
                 IzzyOnDroid, F-Droid veya başka bir yerde gerçekleştirilen ek tarama ve testlerden geçmedikleri anlamına gelir.
 
@@ -76,8 +75,7 @@
 
                 <br><br>Lavender Photos asla otomatik güncelleme yapmaz ve yalnızca açık kullanıcı onayı ile günceller.
             </p>
-        ]]>
-    </string>
+        ]]></string>
     <string name="updates_new_version_available">Yeni sürüm mevcut!</string>
     <string name="updates_latest">Zaten en son sürümdesiniz</string>
     <string name="updates_checking">Güncellemeler Kontrol Ediliyor</string>
