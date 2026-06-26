@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fotky</string>
+    <string name="albums">Albumy</string>
+    <string name="finding_albums_on_device">Hľadať v albumoch</string>
+    <string name="albums_found">Všetky nájdené albumy!</string>
+    <string name="add_album">Vytvoriť album</string>
+    <string name="direct_path_album">Použiť priamu lokáciu pre pridanie do albumu</string>
+    <string name="albums_main_list">Hlavné albumy</string>
+    <string name="albums_main_list_desc_1">Zobraziť média zo zvolených albumov</string>
+    <string name="albums_main_list_desc_2">Zobraziť media z nevybraných albumov</string>
+    <string name="albums_main_list_selected">Tieto albumy budú na hlavnej obrazovke</string>
+    <string name="albums_main_list_selected_inverse">Zvolené albumy nebudu zobrazené na hlavnej obrazovke</string>
+    <string name="albums_selected">Vybrané albumy</string>
+    <string name="albums_auto_detect">Automatická detekcia albumov</string>
+</resources>
