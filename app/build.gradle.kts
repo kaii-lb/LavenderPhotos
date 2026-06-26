@@ -81,6 +81,25 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "**/kotlin/**"
+            excludes += "**/*.txt"
+            excludes += "**/*.xml"
+        }
+
+        jniLibs {
+            useLegacyPackaging = false
+
+            keepDebugSymbols += "**/libandroidx.graphics.path.so"
+            keepDebugSymbols += "**/libavif_android.so"
+            keepDebugSymbols += "**/libbrotli*.so"
+            keepDebugSymbols += "**/libdatastore_shared_counter.so"
+            keepDebugSymbols += "**/libjxl*.so"
         }
     }
 
