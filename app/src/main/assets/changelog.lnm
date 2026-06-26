@@ -5,7 +5,16 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.1 date=25-06-2026 status=Latest
+# version=v2.0.2 date=26-06-2026 status=Latest
+    + category=Features
+        - title=Show latest changelog in updater even if no update is needed
+        - title=Add Slovak and Esperanto translations
+        - title=Prepare app for F-Droid release
+
+    + category=Fixes
+        - issueNumber=000263 title=Don't clear "Download" album and albums that are linked to Immich
+
+# version=v2.0.1 date=25-06-2026
     + category=Fixes
         - issueNumber=000262 title=Fix inability to set immich server endpoint
 
