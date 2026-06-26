@@ -2,6 +2,8 @@ package com.kaii.photos.compose.settings
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -158,7 +160,7 @@ fun UpdatesPage(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AnimatedContent(
-                    targetState = news().isNotEmpty() && updateState() == UpdateState.Available,
+                    targetState = news().isNotEmpty(),
                     transitionSpec = {
                         val enter = fadeIn() + scaleIn(initialScale = 0.8f)
                         val exit = fadeOut() + scaleOut()
@@ -293,6 +295,34 @@ private fun BottomBar(
             .padding(all = 16.dp),
         contentAlignment = Alignment.Center
     ) {
+        val containerColor by animateColorAsState(
+            targetValue =
+                if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.success
+                else MaterialTheme.colorScheme.errorContainer,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+        )
+
+        val contentColor by animateColorAsState(
+            targetValue =
+                if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.onSuccess
+                else MaterialTheme.colorScheme.onErrorContainer,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+        )
+
+        val disabledContainerColor by animateColorAsState(
+            targetValue =
+                if (updateState() == UpdateState.NotAvailable) MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+        )
+
+        val disabledContentColor by animateColorAsState(
+            targetValue =
+                if (updateState() == UpdateState.Available) MaterialTheme.colorScheme.onErrorContainer
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+        )
+
         Button(
             onClick = {
                 val intent = Intent().apply {
@@ -303,18 +333,10 @@ private fun BottomBar(
                 context.startActivity(intent)
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor =
-                    if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.success
-                    else MaterialTheme.colorScheme.errorContainer,
-                contentColor =
-                    if (updateState() == UpdateState.Available) LocalExtraColorsPalette.current.onSuccess
-                    else MaterialTheme.colorScheme.onErrorContainer,
-                disabledContainerColor =
-                    if (updateState() == UpdateState.NotAvailable) MaterialTheme.colorScheme.errorContainer
-                    else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8f),
-                disabledContentColor =
-                    if (updateState() == UpdateState.Available) MaterialTheme.colorScheme.onErrorContainer
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContainerColor = disabledContainerColor,
+                disabledContentColor = disabledContentColor
             ),
             enabled = updateState() == UpdateState.Available
         ) {
@@ -325,7 +347,11 @@ private fun BottomBar(
                     UpdateState.Loading -> stringResource(id = R.string.updates_checking)
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .animateContentSize(
+                        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+                    )
             )
         }
     }
