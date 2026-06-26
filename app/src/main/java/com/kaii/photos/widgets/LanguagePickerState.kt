@@ -56,7 +56,9 @@ class LanguagePickerState(
         Language("vi"),
         Language("zh"),
         Language("zh-CN"),
-        Language("zh-TW")
+        Language("zh-TW"),
+        Language("eo"),
+        Language("sk")
     ).sortedBy { it.tag }
 
     private val localeManager = context.getSystemService(LocaleManager::class.java)
