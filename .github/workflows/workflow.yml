@@ -21,7 +21,7 @@ jobs:
         cache: 'gradle'
 
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v5
+      uses: android-actions/setup-android@v4
     - run: sdkmanager "build-tools;37.0.0"
 
     - name: Grant execute permission to gradlew
