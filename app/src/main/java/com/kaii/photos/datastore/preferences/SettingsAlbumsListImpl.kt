@@ -250,8 +250,8 @@ class SettingsAlbumsListImpl(
     fun reset() = scope.launch {
         context.datastore.edit { data ->
             val currentList = data[albumsKey] ?: return@edit
-            val filtered = json.decodeFromString<List<AlbumType>>(currentList).fastFilter {
-                it !is AlbumType.Folder
+            val keptAlbums = json.decodeFromString<List<AlbumType>>(currentList).fastFilter {
+                it !is AlbumType.Folder || it.immichId != null
             }
 
             val string = data[albumGroupsKey] ?: "[]"
@@ -259,7 +259,7 @@ class SettingsAlbumsListImpl(
                 removeGroup(it.id)
             }
 
-            data[albumsKey] = json.encodeToString(filtered)
+            data[albumsKey] = json.encodeToString(keptAlbums + defaultAlbumsList)
         }
     }
 
