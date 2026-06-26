@@ -9,8 +9,5 @@
     <string name="albums_main_list">Hlavné albumy</string>
     <string name="albums_main_list_desc_1">Zobraziť média zo zvolených albumov</string>
     <string name="albums_main_list_desc_2">Zobraziť media z nevybraných albumov</string>
-    <string name="albums_main_list_selected">Tieto albumy budú na hlavnej obrazovke</string>
-    <string name="albums_main_list_selected_inverse">Zvolené albumy nebudu zobrazené na hlavnej obrazovke</string>
-    <string name="albums_selected">Vybrané albumy</string>
     <string name="albums_auto_detect">Automatická detekcia albumov</string>
 </resources>

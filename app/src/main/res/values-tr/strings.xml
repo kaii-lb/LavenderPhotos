@@ -53,7 +53,6 @@
     <string name="navigation">Gezinme</string>
     <!-- App -->
     <string name="app_name_full">Lavender Photos</string>
-    <string name="dev_name">kaii-lb</string>
     <string name="privacy_policy_title">Gizlilik Politikası</string>
     <string name="privacy_policy">Öyle bir şey yok! Verilerinizin hiçbiri bu cihazdan başka bir yere gitmez. Üzerinde hiçbir yapay zeka eğitilmez, bilgi toplamak için hiçbir algoritma kullanılmaz, hiçbir şey. Lavender Photos, gizlilik odaklı bir galeri uygulamasıdır ve her zaman öyle kalacaktır.</string>
     <string name="support">Destek &amp; Bağışlar</string>

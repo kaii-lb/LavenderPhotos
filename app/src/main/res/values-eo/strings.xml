@@ -5,9 +5,6 @@
     <string name="finding_albums_on_device">Trovante albumojn…</string>
     <string name="albums_main_list_desc_1">Montri dosierojn el la elektitaj albumoj</string>
     <string name="albums_main_list_desc_2">Montri dosierojn ne el la elektitaj albumoj</string>
-    <string name="albums_main_list_selected">Albumoj elektitaj ĉi tie aperos en la ĉefa fotovido</string>
-    <string name="albums_main_list_selected_inverse">Albumoj elektitaj ĉi tie ne aperos en la ĉefa fotovido</string>
-    <string name="albums_selected">Elektitaj Albumoj</string>
     <string name="albums_remove">Forigi</string>
     <string name="albums_remove_desc">Ĉu forigi albumon el la listo?</string>
     <string name="albums_pin">Alpingli ĉi tiun albumon</string>
