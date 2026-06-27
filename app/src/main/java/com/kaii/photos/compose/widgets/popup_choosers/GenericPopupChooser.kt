@@ -45,6 +45,7 @@ fun <T> GenericPopupChooser(
     key: (item: T) -> Any,
     modifier: Modifier = Modifier,
     placeholder: String = stringResource(id = R.string.search),
+    showSearchBar: Boolean = true,
     onDismiss: () -> Unit,
     content: @Composable LazyItemScope.(index: Int, item: T) -> Unit
 ) {
@@ -64,7 +65,7 @@ fun <T> GenericPopupChooser(
             .statusBarsPadding()
     ) {
         AnimatedVisibility(
-            visible = sheetState.currentValue != SheetValue.Hidden,
+            visible = sheetState.currentValue != SheetValue.Hidden && showSearchBar,
             enter = expandVertically(
                 expandFrom = Alignment.Top
             ) + fadeIn(),

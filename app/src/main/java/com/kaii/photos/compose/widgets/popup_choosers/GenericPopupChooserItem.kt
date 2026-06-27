@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.widgets.popup_choosers.language
+package com.kaii.photos.compose.widgets.popup_choosers
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,10 +28,10 @@ import com.kaii.photos.helpers.RowPosition
 
 @Preview
 @Composable
-private fun LanguagePopupChooserItemPreview() {
-    LanguagePopupChooserItem(
+private fun GenericPopupChooserItemPreview() {
+    GenericPopupChooserItem(
         name = "English",
-        localName = "English",
+        summary = "English",
         selected = { true },
         position = RowPosition.Single,
         onClick = {}
@@ -39,9 +39,9 @@ private fun LanguagePopupChooserItemPreview() {
 }
 
 @Composable
-fun LanguagePopupChooserItem(
+fun GenericPopupChooserItem(
     name: String,
-    localName: String,
+    summary: String?,
     selected: () -> Boolean,
     position: RowPosition,
     modifier: Modifier = Modifier,
@@ -74,14 +74,16 @@ fun LanguagePopupChooserItem(
                 maxLines = 1
             )
 
-            Text(
-                text = localName,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Start,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                overflow = TextOverflow.StartEllipsis,
-                maxLines = 1
-            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    overflow = TextOverflow.StartEllipsis,
+                    maxLines = 1
+                )
+            }
         }
 
         if (selected()) {

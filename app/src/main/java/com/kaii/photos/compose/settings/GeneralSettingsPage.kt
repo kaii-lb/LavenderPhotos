@@ -34,12 +34,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
-import com.kaii.photos.compose.dialogs.settings.SortModeSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.popup_album_chooser.PopUpAlbumChooser
+import com.kaii.photos.compose.widgets.popup_choosers.SortModePopupChooser
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
@@ -47,11 +47,13 @@ import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.widgets.rememberSortModePickerState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun GeneralSettingsPage(modifier: Modifier = Modifier) {
@@ -200,7 +202,7 @@ private fun GeneralSettingsPageImpl(
                                 }
 
                                 // hack as hell but fsr it's the only thing that works
-                                delay(200)
+                                delay(200.milliseconds)
 
                                 showAlbumsSelectionDialog = false
                             }
@@ -273,13 +275,13 @@ private fun GeneralSettingsPageImpl(
             }
 
             item {
+                val state = rememberSortModePickerState()
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
                 if (showSortModeSelectorDialog) {
-                    SortModeSelectorDialog(
-                        currentSortMode = currentSortMode,
-                        setSortMode = setSortMode,
-                        dismiss = {
+                    SortModePopupChooser(
+                        state = state,
+                        onDismiss = {
                             showSortModeSelectorDialog = false
                         }
                     )
@@ -287,7 +289,10 @@ private fun GeneralSettingsPageImpl(
 
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.albums_media_sorting),
-                    summary = stringResource(id = R.string.albums_media_sorting_desc),
+                    summary = stringResource(
+                        id = R.string.albums_media_sorting_desc,
+                        stringResource(id = state.currentMode.labelId)
+                    ),
                     iconResID = R.drawable.sorting,
                     position = RowPosition.Single,
                     showBackground = false,

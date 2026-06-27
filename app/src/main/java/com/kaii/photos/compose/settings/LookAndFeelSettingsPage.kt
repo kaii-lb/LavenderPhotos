@@ -53,7 +53,7 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
-import com.kaii.photos.compose.widgets.popup_choosers.language.LanguagePickerPopup
+import com.kaii.photos.compose.widgets.popup_choosers.LanguagePickerPopup
 import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
@@ -67,6 +67,7 @@ import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -377,7 +378,7 @@ private fun LookAndFeelSettingsPageImpl(
                 var currentState by remember { mutableIntStateOf(columnSize()) }
                 val interactionSource = remember { MutableInteractionSource() }
                 LaunchedEffect(interactionSource) {
-                    delay(100)
+                    delay(100.milliseconds)
                     currentState = columnSize()
                     interactionSource.interactions.collectLatest {
                         if (it is PressInteraction.Release) {
@@ -418,7 +419,7 @@ private fun LookAndFeelSettingsPageImpl(
                 var currentState by remember { mutableIntStateOf(albumColumnSize()) }
                 val interactionSource = remember { MutableInteractionSource() }
                 LaunchedEffect(interactionSource) {
-                    delay(100)
+                    delay(100.milliseconds)
                     currentState = albumColumnSize()
                     interactionSource.interactions.collectLatest {
                         if (it is PressInteraction.Release) {

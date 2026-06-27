@@ -1,26 +1,22 @@
-package com.kaii.photos.compose.widgets.popup_choosers.language
+package com.kaii.photos.compose.widgets.popup_choosers
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.compose.widgets.popup_choosers.GenericPopupChooser
+import androidx.compose.ui.res.stringResource
+import com.kaii.photos.domain.settings.SortModeItem
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.widgets.LanguagePickerState
+import com.kaii.photos.widgets.SortModePickerState
 import kotlinx.coroutines.launch
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LanguagePickerPopup(
-    state: LanguagePickerState,
+fun SortModePopupChooser(
+    state: SortModePickerState,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
@@ -29,15 +25,17 @@ fun LanguagePickerPopup(
     onDismiss: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val itemList by state.languages.collectAsStateWithLifecycle()
 
     GenericPopupChooser(
         sheetState = sheetState,
-        query = { state.query },
-        onQueryChanged = state::search,
-        itemList = { itemList },
-        key = { it.tag },
+        query = { "" },
+        onQueryChanged = {},
+        itemList = {
+            SortModeItem.defaultItems
+        },
+        key = { it.sortMode.ordinal },
         modifier = modifier,
+        showSearchBar = false,
         onDismiss = {
             coroutineScope.launch {
                 sheetState.hide()
@@ -45,20 +43,19 @@ fun LanguagePickerPopup(
             }
         }
     ) { index, item ->
-        LanguagePopupChooserItem(
-            name = item.name,
-            localName = item.localName,
+        GenericPopupChooserItem(
+            name = stringResource(id = item.labelId),
+            summary = null,
             selected = {
-                state.currentLanguage == item
+                state.currentMode == item
             },
-            position = when {
-                itemList.size == 1 -> RowPosition.Single
-                index == 0 -> RowPosition.Top
-                index == itemList.size - 1 -> RowPosition.Bottom
+            position = when (index) {
+                0 -> RowPosition.Top
+                SortModeItem.defaultItems.size - 1 -> RowPosition.Bottom
                 else -> RowPosition.Middle
             },
             onClick = {
-                state.choose(item)
+                state.setMode(item)
             }
         )
     }
