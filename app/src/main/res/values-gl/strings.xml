@@ -12,7 +12,7 @@
     <string name="albums_auto_detect">Atopar álbums automaticamente</string>
     <string name="albums_auto_detect_desc">Detecta neste dispositivo todos os cartafoles con multimedia e engádeos á vista de álbums</string>
     <string name="albums_clear_list">Limpar lista de álbums</string>
-    <string name="albums_clear_list_desc">Retirar todos os álbums non esenciais da lista de álbums</string>
+    <string name="albums_clear_list_desc">Retira todos os grupos de álbums e álbums de cartafol pero mantendo álbums persoais e de nube</string>
     <string name="albums_clear_list_done">Limpouse a lista de álbums</string>
     <string name="albums_media_sorting">Orde do multimedia</string>
     <string name="albums_media_sorting_desc">Establece a orde das fotos e vídeos nas grellas</string>
@@ -78,8 +78,8 @@
                 <br><br>Lavender Photos nunca se auto-actualiza, e só o fai co consentimento explícito da persoa usuaria.
             </p>
         ]]></string>
-    <string name="updates_new_version_available">Hai unha nova versión!</string>
-    <string name="updates_latest">Xa usas a última versión</string>
+    <string name="updates_new_version_available">Actualización dispoñible!</string>
+    <string name="updates_latest">Estás ao día</string>
     <string name="updates_checking">Buscando actualizacións</string>
     <string name="updates_no_changelog">Non está dispoñible o rexistro cos cambios</string>
     <string name="locked_folder_help_top">O Cartafol Bloqueado é un cartafol protexido para as túas imaxes e vídeos neste dispositivo.\nO multimedia protexido non se sobe a ningunha outra parte e sempre permanece no dispositivo, cifrado cunha clave única en relación ao contrasinal do dispositivo ou datos da impresión dactilar.</string>
