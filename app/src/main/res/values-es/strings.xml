@@ -3,7 +3,7 @@
     <string name="albums_auto_detect">Auto detectar álbumes</string>
     <string name="albums_auto_detect_desc">Detecta todas las carpetas con medios en este dispositivo y las agrega a la vista álbumes</string>
     <string name="albums_clear_list">Borrar lista de álbumes</string>
-    <string name="albums_clear_list_desc">Eliminar todos los álbumes no esenciales de la lista de álbumes</string>
+    <string name="albums_clear_list_desc">Elimina todos los grupos de álbumes y álbumes de carpetas mientras mantiene álbumes personalizados y en la nube</string>
     <string name="albums_clear_list_done">Lista de álbumes borrados</string>
     <string name="albums_media_sorting">Clasificación de Medios</string>
     <string name="albums_media_sorting_desc">Establece la clasificación de fotos y videos en cuadrículas</string>
@@ -38,7 +38,7 @@
     <string name="support">Apoyo y Donaciones</string>
     <string name="updates">Actualizaciones</string>
     <string name="updates_check">Buscar Actualizaciones</string>
-    <string name="updates_check_desc">Notifica la nueva versión cuando abres la aplicación. No instala automáticamente la actualización</string>
+    <string name="updates_check_desc">Notifica la nueva versión cuando abres la app. No instala automáticamente la actualización</string>
     <string name="updates_whats_new">Qué hay de nuevo</string>
     <string name="updates_notice">Aviso de Descarga</string>
     <string name="app_name">Fotos</string>
@@ -49,19 +49,19 @@
     <string name="direct_path_album">Usar una ruta directa para agregar un álbum</string>
     <string name="albums_main_list">Álbumes de la Vista Principal</string>
     <string name="updates_notice_desc"><![CDATA[
-            <p>Este actualizador descarga apks desde <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> lo que
-                significa que no pasan por las revisiones y pruebas adicionales realizadas en IzzyOnDroid, F-Droid u otros lugares.
+            <p>Este actualizador NO descarga APKs. Solo enlaza con <a href="https://github.com/kaii-lb/LavenderPhotos/releases">Lanzamientos de GitHub</a>. Esto
+                significa que estos APKs no pasan por las evaluaciones y pruebas adicionales realizadas en IzzyOnDroid, F-Droid o en otros lugares.
 
-                <br><br>Las compilaciones alojadas en GitHub siempre están firmadas, revisadas y verificadas por el desarrollador (kaii-lb), pero depende de ti si deseas usarlas o no.
+                <br><br>Las compilaciones alojadas en GitHub siempre están firmadas, revisadas y verificadas por el desarrollador (kaii-lb), pero depende de usted si desea usarlas o no.
 
-                <br><br>Lavender Photos nunca realiza actualizaciones automáticas, y solo se actualiza con el consentimiento explícito del usuario.
+                <br><br>Lavender Photos nunca realiza actualizaciones automáticas y solo las actualiza con el consentimiento explícito del usuario.
             </p>
         ]]></string>
-    <string name="updates_new_version_available">¡Nueva versión disponible!</string>
-    <string name="updates_latest">Ya en la última versión</string>
+    <string name="updates_new_version_available">¡Actualización disponible!</string>
+    <string name="updates_latest">Actualizado</string>
     <string name="updates_checking">Comprobando Actualizaciones</string>
     <string name="locked_folder_help_top">La carpeta bloqueada es una carpeta segura para sus imágenes y videos en este dispositivo.\nLos medios protegidos nunca se cargan en ningún lugar y siempre están en el dispositivo, encriptados con una clave exclusiva de la contraseña o los datos de huellas dactilares de su dispositivo.</string>
-    <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.\nLos elementos protegidos se perderán al desinstalar la aplicación, haga una copia de seguridad de ellos en consecuencia.</string>
+    <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.\nLos elementos protegidos se perderán al desinstalar la app, haga una copia de seguridad de ellos en consecuencia.</string>
     <string name="secure_folder">Carpeta Segura</string>
     <string name="secure_processing">Aguanta mientras se procesa este medio</string>
     <string name="secure_encrypting">Cifrado de Archivos</string>
@@ -370,15 +370,15 @@
     <string name="immich_help_general">¿Qué es esto?</string>
     <string name="immich_help_general_desc">Permite la copia de seguridad de medios a nivel de álbum en un servidor Immich</string>
     <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotos y vídeos de auto-alojamiento,
-            que permite que cualquier persona aloje su propio servidor de copia de seguridad en la nube.
+            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotografías y vídeos autohospedada,
+            eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.
             </p>
-            <h3 style="text-align:center;">¿Cómo usarlo?<h3/>
+            <h3 style="text-align:center;">¿Cómo utilizarlo?<h3/>
             <ul>
-                <li>Auto-aloja un <a href="https://immich.app/">servidor de Immich</a></li>
-                <li>Especifica la dirección del servidor en Lavender Photos</li>
-                <li>Inicia sesión con tu cuenta de usuario de Immich</li>
-                <li>Ve a cualquier álbum y haz clic en el icono de la nube</li>
+                <li>Autohospedar un <a href="https://immich.app/">Servidor Immich</a></li>
+                <li>Especifique la dirección del servidor en Lavender Photos</li>
+                <li>Inicie sesión con la cuenta de usuario de Immich</li>
+                <li>Vaya a cualquier álbum, haga clic en el ícono de la nube</li>
                 <li>¡Empieza a hacer copias de seguridad de tus fotos!</li>
             </ul>
         ]]></string>
@@ -534,4 +534,141 @@
     <string name="media_restoring_snackbar_body">Restaurando %1$d de %2$d</string>
     <string name="look_and_feel_vibrate_on_media_click">Vibrar al hacer clic</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Si tocas un elemento multimedia genera una vibración breve.</string>
+    <string name="albums_is_cloud_linked">Este es un álbum vinculado a la nube</string>
+    <string name="app_description">Aplicación de galería de código abierto elegante, eficiente y con la privacidad en mente</string>
+    <string name="app_version">Versión %1$s</string>
+    <string name="app_repo">Repositorio de la App</string>
+    <string name="app_get">Descarga esta app</string>
+    <string name="debugging_spawn_progress_snackbar">Generar una Snackbar de Progreso</string>
+    <string name="debugging_spawn_progress_snackbar_desc">Muestra una barra de progreso finita con el progreso actualizándose cada segundo durante 5 segundos</string>
+    <string name="debugging_internals">Internos</string>
+    <string name="debugging_reset_scan_generation">Re-escanear Multimedia</string>
+    <string name="debugging_reset_scan_generation_desc">Revisa toda la multimedia en el dispositivo y los agrega a la base de datos de la aplicación. Úselo si algunas imágenes no aparecen</string>
+    <string name="debugging_reset_scan_generation_loading">Escaneando multimedia…</string>
+    <string name="video_change_audio_track">Cambiar la pista de audio de este video</string>
+    <string name="editing_export_image_failed">No se pudo exportar la foto</string>
+    <string name="editing_export_video_uploading">Subiendo video…</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_behaviour_loop_never">Nunca Reproducir Videos en Bucle</string>
+    <string name="settings_behaviour_loop_under_30">Bucle por Debajo de 30 segundos</string>
+    <string name="settings_behaviour_loop_always">Vídeos en Bucle</string>
+    <string name="settings_behaviour_loop_never_desc">La reproducción de video se detiene cuando se llega al final</string>
+    <string name="settings_behaviour_loop_under_30_desc">Todos los videos que tengan menos de 30 segundos se reproducirán infinitamente</string>
+    <string name="settings_behaviour_loop_always_desc">Todos los videos, independientemente de su duración, se reproducirán infinitamente</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Permitir capturas de pantalla en la Carpeta Segura</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">Permitir capturas de pantalla, grabación de pantalla y uso compartido de pantalla mientras la carpeta segura está abierta. El contenido seguro también puede aparecer en la vista previa de aplicaciones recientes. Déjalo apagado para mantenerlo protegido</string>
+    <string name="media_is_gif">Este es un GIF</string>
+    <string name="media_is_cloud">Este es un elemento solo en la nube</string>
+    <string name="media_sharing">Compartiendo…</string>
+    <string name="search">Buscar</string>
+    <string name="search_nothing_found">No se ha encontrado nada</string>
+    <string name="refresh">Refrescar</string>
+    <string name="copy_link">Copiar enlace</string>
+    <string name="download">Descargar</string>
+    <string name="upload">Subir</string>
+    <string name="metadata">Metadatos</string>
+    <string name="media_picker_processing_items">Procesando elementos…</string>
+    <string name="media_picker_processing_items_body">Procesando %1$d de %2$d</string>
+    <string name="app_lock">Bloqueo de App</string>
+    <string name="app_lock_password">Colocar PIN</string>
+    <string name="app_lock_password_desc">Requiere un PIN cuando se inicia la app. Un PIN vacío quita el bloqueo</string>
+    <string name="app_lock_password_set">PIN Actualizado</string>
+    <string name="app_lock_password_cleared">PIN despejado</string>
+    <string name="app_lock_unlock">Bloqueo de app activado</string>
+    <string name="app_lock_enter_pin">Ingrese su PIN</string>
+    <string name="app_lock_set">Establecer bloqueo de app</string>
+    <string name="app_lock_verify">Verifica tu PIN</string>
+    <string name="app_lock_confirm">Confirma tu PIN</string>
+    <string name="app_lock_submit">Envíe el PIN para verificar</string>
+    <string name="app_lock_backspace">Eliminar el último carácter de la entrada</string>
+    <string name="look_and_feel_language">Idioma</string>
+    <string name="look_and_feel_language_selected">Este idioma está seleccionado</string>
+    <string name="look_and_feel_app_language">Idioma de la App</string>
+    <string name="look_and_feel_app_language_desc">Cambie el idioma de visualización de la app. Puede requerir reiniciar la aplicación. Actual: %1$s</string>
+    <string name="immich_logout">Cerrar sesión</string>
+    <string name="immich_logout_desc">Elimina la cuenta de este dispositivo</string>
+    <string name="immich_auth_api_key">Clave de Api</string>
+    <string name="immich_auth_current_password">Contraseña actual</string>
+    <string name="immich_auth_new_password">Nueva contraseña</string>
+    <string name="immich_auth_repeat_new_password">Repetir contraseña</string>
+    <string name="immich_auth_show_password">Mostrar contraseña</string>
+    <string name="immich_auth_password_same_as_old">La contraseña no puede ser idéntica a la actual</string>
+    <string name="immich_auth_password_do_not_match">Las contraseñas nuevas no coinciden</string>
+    <string name="immich_auth_password_too_short">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="immich_auth_password_current_blank">La contraseña actual no puede estar en blanco</string>
+    <string name="immich_auth_password_good_to_go">Listo para cambiar la contraseña!</string>
+    <string name="immich_auth_hide_password">Mostrar u ocultar contraseña</string>
+    <string name="immich_auth_login_with_api_key">Inicie sesión con la clave api</string>
+    <string name="immich_auth_login_with_account">Iniciar sesión con cuenta</string>
+    <string name="immich_server_info_new_version_available">Nueva versión disponible: %1$s</string>
+    <string name="immich_server_storage_desc_detailed">%1$s GB de %2$s GB usados</string>
+    <string name="immich_account_username">Nombre de Usuario</string>
+    <string name="immich_account_role">Rol</string>
+    <string name="immich_account_is_user">Usuario</string>
+    <string name="immich_account_is_admin">Administrador</string>
+    <string name="immich_account_usage">Uso de la Cuenta</string>
+    <string name="immich_account_usage_images">Recuento de Imágenes</string>
+    <string name="immich_account_usage_videos">Recuento de Videos</string>
+    <string name="immich_account_unlimited">%s GB usados - Almacenamiento Ilimitado</string>
+    <string name="immich_account_change_password">Cambiar Contraseña</string>
+    <string name="immich_account_change_password_confirm">Cambiar</string>
+    <string name="immich_account_storage">Almacenamiento de Usuario</string>
+    <string name="immich_account_change_username_failed">Error al cambiar el nombre de usuario</string>
+    <string name="immich_account_change_email_failed">­Error al cambiar el correo electrónico</string>
+    <string name="immich_account_change_email_invalid">¡El correo electrónico no es válido!</string>
+    <string name="immich_account_change_password_failed">Error al cambiar la contraseña</string>
+    <string name="immich_account_change_pfp_succeeeded">¡Foto de perfil cambiada!</string>
+    <string name="immich_account_change_pfp_failed">No se pudo cambiar la foto de perfil</string>
+    <string name="immich_account_create">Crear cuenta</string>
+    <string name="immich_album_item_description">Agregar o quitar este elemento de la copia de seguridad en la nube</string>
+    <string name="immich_backup_options">Opciones de Copia de Seguridad</string>
+    <string name="immich_backup_options_desc">Elija qué álbumes sincronizar con la nube</string>
+    <string name="immich_backup_options_empty">Nada que mostrar…</string>
+    <string name="immich_backup_option_cloud_synced_albums">Álbumes sincronizados en la nube: %d</string>
+    <string name="immich_backup_option_total_uploaded_count">Recuento total de subidas: %d</string>
+    <string name="immich_backup_option_changes_synced">¡Cambios sincronizados!</string>
+    <string name="immich_backup_option_changes_unsaved">Cambios no guardados</string>
+    <string name="immich_backup_option_changes_unsaved_desc">Refrescar deshará todos tus cambios</string>
+    <string name="immich_backup_sync">Sincronizar Elementos</string>
+    <string name="immich_backup_sync_desc">Conciliar los cambios entre Lavender Photos y el servidor Immich</string>
+    <string name="immich_backup_sync_running">Sincronización de elementos…</string>
+    <string name="immich_backup_sync_count">Sincronizando %1$d de %2$d elementos</string>
+    <string name="immich_share_album">Compartir Álbum</string>
+    <string name="immich_share_album_item_count">%d elementos</string>
+    <string name="immich_share_album_use_expiry_date">Caduca En</string>
+    <string name="immich_share_album_allow_uploads">Permitir Subidas</string>
+    <string name="immich_share_album_allow_downloads">Permitir Descargas</string>
+    <string name="immich_share_album_require_password">Requerir Contraseña</string>
+    <string name="immich_share_album_custom_url">URL Personalizada</string>
+    <string name="immich_share_album_use_custom_url">Usar URL Personalizada</string>
+    <string name="immich_share_album_description">Descripción</string>
+    <string name="immich_share_album_loading">Creando enlace…</string>
+    <string name="immich_share_album_loading_failed">Error al crear el enlace</string>
+    <string name="immich_share_album_clip_title">Enlace para compartir álbum de Immich</string>
+    <string name="immich_share_album_empty">¡El álbum está vacío!</string>
+    <string name="immich_share_album_customize_link">Personalizar propiedades de enlace</string>
+    <string name="immich_share_album_create_link">Crear Enlace</string>
+    <string name="immich_share_album_qr_code">Representación en código QR del enlace para compartir</string>
+    <string name="immich_share_album_other_links">Otros enlaces de este álbum</string>
+    <string name="immich_share_album_delete_link">Eliminar este enlace para compartir immich</string>
+    <string name="immich_share_album_expires_at">Expira el: %s</string>
+    <string name="album_group_show_add_dialog">Agregar álbumes a este grupo</string>
+    <string name="news">Noticias</string>
+    <string name="news_note">Nota: %1$s</string>
+    <string name="news_github_issue_number">Problema de Github: #%1$d</string>
+    <string name="news_category_feature">Características</string>
+    <string name="news_category_improvement">Mejoras</string>
+    <string name="news_category_fix">Arreglos</string>
+    <string name="news_version_latest">Última</string>
+    <string name="news_version_broken">Roto</string>
+    <string name="contributor">Contribuidor</string>
+    <string name="contributor_major">Contribuyente Principal</string>
+    <string name="contributor_maintainer">Mantenedor</string>
+    <string name="contributor_kaii_desc">Construyendo apps que redefinan lo que es posible, sin comprometer la seguridad y la privacidad</string>
+    <string name="contributor_kexxdumb_desc">Ayudó a dar forma, probar y mejorar la aplicación desde sus primeros días</string>
+    <string name="contributor_tyrypyrking_desc">Sistemas de cifrado seguros mejorados y procesos de recuperación de archivos</string>
+    <string name="contributors_community_member">Miembro de la Comunidad</string>
+    <string name="contributors_separator_developer">Desarrollador</string>
+    <string name="contributors_separator_major">Destacados</string>
+    <string name="contributors_separator_contributors">Contribuyentes de código abierto</string>
 </resources>
