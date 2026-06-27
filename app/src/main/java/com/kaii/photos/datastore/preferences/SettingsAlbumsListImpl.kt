@@ -123,9 +123,7 @@ class SettingsAlbumsListImpl(
         return list.fastMap {
             if (it.isCustomAlbum) {
                 AlbumType.Custom(
-                    id = Uuid.fromLongs(it.id.toLong(), 0L).toString().also { thing ->
-                        println("MIGRATION ALBUM ${it.id} $thing")
-                    },
+                    id = Uuid.fromLongs(it.id.toLong(), 0L).toString(),
                     name = it.name,
                     pinned = it.isPinned,
                     immichId = null

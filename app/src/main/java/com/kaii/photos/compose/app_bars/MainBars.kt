@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,12 +88,15 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.helpers.OnBackPressedEffect
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +120,22 @@ fun MainAppTopBar(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     )
+
+    // popup main dialog if coming from settings
+    var previousDestination by rememberSaveable { mutableStateOf<String?>(null) }
+    OnBackPressedEffect { destination ->
+        if (previousDestination?.startsWith(Screens.Settings::class.qualifiedName!!) == true
+            || previousDestination?.startsWith(Screens.Immich.Dashboard::class.qualifiedName!!) == true
+        ) {
+            coroutineScope.launch {
+                showMainDialog = true
+                delay(50.milliseconds)
+                sheetState.expand()
+            }
+        }
+
+        previousDestination = destination.route
+    }
 
     if (showMainDialog) {
         MainDialog(
@@ -209,7 +229,7 @@ fun MainAppTopBar(
                     AnimatedLoginIcon(immichInfo = immichInfo) {
                         coroutineScope.launch {
                             showMainDialog = true
-                            delay(50)
+                            delay(50.milliseconds)
                             sheetState.expand()
                         }
                     }

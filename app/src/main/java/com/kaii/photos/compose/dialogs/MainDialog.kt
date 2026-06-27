@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.dialogs
 
-import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -35,14 +34,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -65,80 +63,12 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.models.news.NewsViewModelFactory
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
+import com.kaii.photos.presentation.main_dialog.AboutLinkItems
+import com.kaii.photos.presentation.main_dialog.SettingsItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-
-private enum class SettingsItems(
-    val title: Int,
-    val icon: Int,
-    val screen: Screens
-) {
-    General(
-        title = R.string.settings_general,
-        icon = R.drawable.settings,
-        screen = Screens.Settings.MainPage.General
-    ),
-
-    PrivacyAndSecurity(
-        title = R.string.settings_privacy,
-        icon = R.drawable.shield_lock,
-        screen = Screens.Settings.MainPage.PrivacyAndSecurity
-    ),
-
-    LookAndFeel(
-        title = R.string.settings_look_and_feel,
-        icon = R.drawable.paintbrush,
-        screen = Screens.Settings.MainPage.LookAndFeel
-    ),
-
-    Behaviour(
-        title = R.string.settings_behaviour,
-        icon = R.drawable.graph,
-        screen = Screens.Settings.MainPage.Behaviour
-    ),
-
-    MemoryAndStorage(
-        title = R.string.settings_memory_storage,
-        icon = R.drawable.storage,
-        screen = Screens.Settings.MainPage.MemoryAndStorage
-    )
-}
-
-private enum class AboutLinkItems(
-    val title: Int,
-    val icon: Int,
-    val intent: Intent,
-    val enabled: Boolean = true
-) {
-    Translation(
-        title = R.string.translation,
-        icon = R.drawable.globe,
-        intent =
-            Intent(Intent.ACTION_VIEW).apply {
-                data = "https://hosted.weblate.org/projects/lavender-photos/".toUri()
-            }
-    ),
-
-    Donations(
-        title = R.string.support,
-        icon = R.drawable.donation,
-        enabled = false,
-        intent =
-            Intent(Intent.ACTION_VIEW).apply {
-                // data = TODO()
-            }
-    );
-
-    val color: Color
-        @Composable
-        get() =
-            when (this) {
-                Donations -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.surfaceContainerHighest
-            }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -178,7 +108,8 @@ fun MainDialog(
             ) {
                 LazyColumn(
                     modifier = Modifier
-                        .padding(start = 24.dp, end = 24.dp),
+                        .padding(start = 24.dp, end = 24.dp)
+                        .clip(RoundedCornerShape(size = 32.dp)),
                     verticalArrangement = Arrangement.spacedBy(
                         space = 4.dp,
                         alignment = Alignment.Top
@@ -253,14 +184,14 @@ fun MainDialog(
                             onClick = {
                                 coroutineScope.launch {
                                     dismiss()
-                                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                                     navController.navigate(Screens.Settings.Misc.DataAndBackup)
                                 }
                             },
                             onActionClick = {
                                 coroutineScope.launch {
                                     dismiss()
-                                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                                     navController.navigate(Screens.Immich.Dashboard)
                                 }
                             }
@@ -333,7 +264,7 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(item.screen)
                 }
             }
@@ -355,7 +286,7 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
 
                     navController.navigate(Screens.Settings.Misc.AboutPage)
                 }
@@ -377,7 +308,7 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     context.startActivity(item.intent)
                 }
             }
@@ -392,7 +323,7 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(Screens.Settings.Misc.UpdatePage)
                 }
             }
@@ -413,7 +344,7 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_SHORT.milliseconds)
+                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(Screens.Settings.Misc.LicensesPage)
                 }
             }

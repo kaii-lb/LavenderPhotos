@@ -26,6 +26,7 @@ object AnimationConstants {
         stiffness = Spring.StiffnessMediumLow
     )
 
+    const val DURATION_EXTRA_SHORT = 50
     const val DURATION_SHORT = 200
     const val DURATION = 350
     const val DURATION_LONG = 600
