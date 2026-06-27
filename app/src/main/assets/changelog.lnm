@@ -5,7 +5,18 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.2 date=26-06-2026 status=Latest
+# version=v2.0.3 date=27-06-2026 status=Latest
+    + category=Features
+        - title=New media sort mode selection popup
+        - issueNumber=000033 title=Swipe down to dismiss single photo view
+
+    + category=Improvements
+        - issueNumber=000266 title=Pop up main dialog when coming back from settings
+
+    + category=Fixes
+        - title=Immich-linked videos not playing even if they exist locally
+
+# version=v2.0.2 date=26-06-2026
     + category=Features
         - title=Show latest changelog in updater even if no update is needed
         - title=Add Slovak and Esperanto translations
