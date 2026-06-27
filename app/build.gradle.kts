@@ -94,12 +94,6 @@ android {
 
         jniLibs {
             useLegacyPackaging = false
-
-            keepDebugSymbols += "**/libandroidx.graphics.path.so"
-            keepDebugSymbols += "**/libavif_android.so"
-            keepDebugSymbols += "**/libbrotli*.so"
-            keepDebugSymbols += "**/libdatastore_shared_counter.so"
-            keepDebugSymbols += "**/libjxl*.so"
         }
     }
 
