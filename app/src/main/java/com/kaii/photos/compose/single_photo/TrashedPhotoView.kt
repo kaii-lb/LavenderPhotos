@@ -91,12 +91,15 @@ import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
+import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SingleTrashedPhotoView(
@@ -191,6 +194,7 @@ private fun SingleTrashedPhotoViewImpl(
     val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
+    val draggableState = rememberDismissSinglePhotoState()
 
     Scaffold(
         topBar = {
@@ -205,10 +209,12 @@ private fun SingleTrashedPhotoViewImpl(
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
-                        delay(50)
+                        delay(50.milliseconds)
                         sheetState.partialExpand()
                     }
-                }
+                },
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         bottomBar = {
@@ -219,7 +225,9 @@ private fun SingleTrashedPhotoViewImpl(
                 showDeleteDialog = {
                     showDialog = true
                 },
-                process = process
+                process = process,
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -241,7 +249,7 @@ private fun SingleTrashedPhotoViewImpl(
 
             LaunchedEffect(items.itemCount) {
                 snapshotFlow { items.itemCount }.collectLatest {
-                    delay(PhotoGridConstants.LOADING_TIME_SHORT)
+                    delay(PhotoGridConstants.LOADING_TIME_SHORT.milliseconds)
                     if (items.itemCount == 0) launch(Dispatchers.Main) {
                         navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
                     }
@@ -293,7 +301,8 @@ private fun SingleTrashedPhotoViewImpl(
             scrollState = scrollState,
             blurViews = blurViews,
             useBlackBackground = useBlackBackground,
-            useCache = useCache
+            useCache = useCache,
+            swipeDownProgress = { draggableState.progress }
         )
     }
 }
@@ -304,13 +313,14 @@ private fun BottomBar(
     visible: Boolean,
     item: () -> MediaStoreData,
     privacyMode: Boolean,
+    modifier: Modifier = Modifier,
     showDeleteDialog: () -> Unit,
     process: (context: Context, action: GenericFileManager.Action) -> Unit
 ) {
     val context = LocalContext.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(4.dp, 0.dp)
             .wrapContentHeight()

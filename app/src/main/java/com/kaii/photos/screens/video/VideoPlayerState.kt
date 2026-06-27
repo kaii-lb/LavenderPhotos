@@ -42,6 +42,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VideoPlayerState(
@@ -222,7 +223,7 @@ class VideoPlayerState(
         this.audioTracks.clear()
         this.fadeInPlayer = false
 
-        val immichUrl = item.immichVideoUrl?.let { endpoint + it }
+        val immichUrl = item.immichVideoUrl?.takeIf { item.isCloud }?.let { endpoint + it }
         val uri = immichUrl ?: item.uri
         if (currentSource == uri) return
 
@@ -268,7 +269,7 @@ class VideoPlayerState(
                 }
             }
 
-            item.immichUrl != null -> {
+            item.isCloud && item.immichUrl != null -> {
                 LavenderExoPlayer.Input.Networked(
                     uri = uri.toUri(),
                     auth = auth
@@ -310,10 +311,10 @@ class VideoPlayerState(
 
     private fun endOfVideo() =
         currentPosition >= duration &&
-            duration != 0f &&
-            isPlaying &&
-            !loop &&
-            !isRepeatModeOn
+                duration != 0f &&
+                isPlaying &&
+                !loop &&
+                !isRepeatModeOn
 
     fun play() {
         if (!shouldPlay() || isReleased) return
@@ -335,7 +336,7 @@ class VideoPlayerState(
             while (isPlaying && shouldPlay()) {
                 currentPosition = player.currentPosition
 
-                delay(250)
+                delay(250.milliseconds)
 
 
                 if (endOfVideo()) {

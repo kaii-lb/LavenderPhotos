@@ -93,12 +93,15 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
+import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RestrictedApi")
 @Composable
@@ -191,7 +194,7 @@ fun SecurePhotoView(
 
     LaunchedEffect(items.itemCount) {
         snapshotFlow { items.itemCount }.collectLatest {
-            delay(PhotoGridConstants.LOADING_TIME_SHORT)
+            delay(PhotoGridConstants.LOADING_TIME_SHORT.milliseconds)
             if (items.itemCount == 0) launch(Dispatchers.Main) {
                 navController.popBackStack(Screens.SecureFolder::class, inclusive = false)
             }
@@ -200,6 +203,8 @@ fun SecurePhotoView(
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
+
+    val draggableState = rememberDismissSinglePhotoState()
 
     Scaffold(
         topBar = {
@@ -215,7 +220,9 @@ fun SecurePhotoView(
                 showTags = false,
                 expandInfoDialog = {
                     showInfoDialog = true
-                }
+                },
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         bottomBar = {
@@ -232,7 +239,9 @@ fun SecurePhotoView(
                         context = context,
                         action = action
                     )
-                }
+                },
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -259,7 +268,8 @@ fun SecurePhotoView(
                 scrollState = scrollState,
                 blurViews = blurViews,
                 useBlackBackground = useBlackBackground,
-                useCache = useCache
+                useCache = useCache,
+                swipeDownProgress = { draggableState.progress }
             )
         }
 
@@ -283,6 +293,7 @@ private fun BottomBar(
     securedMedia: PhotoLibraryUIModel.SecuredMedia,
     privacyMode: Boolean,
     isGettingPermissions: MutableState<Boolean>,
+    modifier: Modifier = Modifier,
     getMediaCount: () -> Int,
     process: (action: GenericFileManager.Action) -> Unit
 ) {
@@ -363,7 +374,7 @@ private fun BottomBar(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(4.dp, 0.dp)
             .wrapContentHeight()

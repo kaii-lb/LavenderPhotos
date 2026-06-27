@@ -12,6 +12,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,6 +99,8 @@ import com.kaii.photos.permissions.favourites.rememberCloudFavouritesState
 import com.kaii.photos.permissions.favourites.rememberLocalFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
+import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
+import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -106,6 +110,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SinglePhotoView(
@@ -501,7 +506,7 @@ private fun SinglePhotoViewCommon(
 
     LaunchedEffect(items.itemCount) {
         snapshotFlow { items.itemCount }.collectLatest {
-            delay(PhotoGridConstants.LOADING_TIME_SHORT)
+            delay(PhotoGridConstants.LOADING_TIME_SHORT.milliseconds)
             if (items.itemCount == 0) launch(Dispatchers.Main) {
                 navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
             }
@@ -520,6 +525,8 @@ private fun SinglePhotoViewCommon(
     var showTagDialog by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
+    val draggableState = rememberDismissSinglePhotoState()
+
     Scaffold(
         topBar = {
             SingleViewTopBar(
@@ -535,17 +542,19 @@ private fun SinglePhotoViewCommon(
                     coroutineScope.launch {
                         showTagDialog = false
                         showInfoDialog = true
-                        delay(100)
+                        delay(100.milliseconds)
                         sheetState.show()
                     }
                 },
                 expandTagDialog = {
                     coroutineScope.launch {
                         showInfoDialog = false
-                        delay(50)
+                        delay(50.milliseconds)
                         showTagDialog = !showTagDialog
                     }
-                }
+                },
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         bottomBar = {
@@ -585,7 +594,9 @@ private fun SinglePhotoViewCommon(
                         }
                     }
                 },
-                process = process
+                process = process,
+                modifier = Modifier
+                    .barScaleModifier(draggableState)
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -654,16 +665,28 @@ private fun SinglePhotoViewCommon(
                 }
             }
 
-            HorizontalImageList(
-                items = items,
-                state = state,
-                window = window,
-                appBarsVisible = appBarsVisible,
-                scrollState = scrollState,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground,
-                useCache = useCache
-            )
+            Box(
+                modifier = Modifier
+                    .anchoredDraggable(
+                        state = draggableState.state,
+                        orientation = Orientation.Vertical,
+                        flingBehavior = draggableState.flingBehavior
+                    )
+            ) {
+                HorizontalImageList(
+                    items = items,
+                    state = state,
+                    window = window,
+                    appBarsVisible = appBarsVisible,
+                    scrollState = scrollState,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground,
+                    useCache = useCache,
+                    swipeDownProgress = {
+                        draggableState.progress
+                    }
+                )
+            }
         }
     }
 }
@@ -677,6 +700,7 @@ private fun BottomBar(
     isCustom: Boolean,
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
+    modifier: Modifier = Modifier,
     showEditingView: () -> Unit,
     process: (context: Context, action: GenericFileManager.Action) -> Any?
 ) {
@@ -694,7 +718,7 @@ private fun BottomBar(
         ) + fadeOut()
     ) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .wrapContentHeight()
                 .fillMaxWidth(1f),
             contentAlignment = Alignment.Center
@@ -747,7 +771,7 @@ private fun BottomBar(
                                     directories = setOf(currentItem().absolutePath.parent())
                                 )
                             } else {
-                                showEditingView() // TODO: support cloud media
+                                showEditingView()
                             }
                         },
                         colors = IconButtonDefaults.iconButtonColors(

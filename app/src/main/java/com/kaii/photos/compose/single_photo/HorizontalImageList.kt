@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -47,17 +48,17 @@ import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.SingleViewConstants
-import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.screens.video.retainVideoPlayerState
+import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -77,7 +78,8 @@ fun HorizontalImageList(
     blurViews: Boolean,
     useBlackBackground: Boolean,
     useCache: Boolean,
-    isSecuredMedia: Boolean = false
+    isSecuredMedia: Boolean = false,
+    swipeDownProgress: () -> Float
 ) {
     val windowSize = LocalWindowInfo.current.containerSize / 4
 
@@ -95,7 +97,7 @@ fun HorizontalImageList(
         verticalAlignment = Alignment.CenterVertically,
         pageSpacing = 8.dp,
         // preload one page either side so the next/previous secure image starts decrypting before the
-        // swipe settles. kept at 1 (not 5) since each secure neighbour is a full-file decrypt
+        // swipe settles. kept at 1 (not 5) since each secure neighbor is a full-file decrypt
         beyondViewportPageCount = 1,
         key = items.itemKey { it.itemKey() },
         snapPosition = SnapPosition.Center,
@@ -192,7 +194,11 @@ fun HorizontalImageList(
                     useCache = useCache,
                     modifier = Modifier
                         .fillMaxSize()
-                        .transformable(),
+                        .transformable()
+                        .graphicsLayer {
+                            scaleX = 1f - swipeDownProgress() * 0.25f
+                            scaleY = 1f - swipeDownProgress() * 0.25f
+                        }
                 )
             }
         } else {
@@ -299,6 +305,11 @@ fun HorizontalImageList(
                                 disableSetBarVisibility = true
                             )
                         },
+                        modifier = Modifier
+                            .graphicsLayer {
+                                scaleX = 1f - swipeDownProgress() * 0.25f
+                                scaleY = 1f - swipeDownProgress() * 0.25f
+                            }
                     )
                 } else {
                     GlideView(
@@ -312,6 +323,10 @@ fun HorizontalImageList(
                         isHidden = isSecuredMedia,
                         modifier = Modifier
                             .align(Alignment.Center)
+                            .graphicsLayer {
+                                scaleX = 1f - swipeDownProgress() * 0.25f
+                                scaleY = 1f - swipeDownProgress() * 0.25f
+                            }
                     )
                 }
             }

@@ -62,6 +62,7 @@ fun SingleViewTopBar(
     topBarDetailsFormat: TopBarDetailsFormat,
     isOpenWithDefaultView: Boolean,
     showTags: Boolean,
+    modifier: Modifier = Modifier,
     showTagDialog: () -> Boolean = { false },
     expandInfoDialog: () -> Unit,
     expandTagDialog: () -> Unit = {}
@@ -83,7 +84,7 @@ fun SingleViewTopBar(
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(4.dp, 0.dp)
             .wrapContentHeight()

@@ -71,6 +71,7 @@ import com.kaii.photos.screens.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun VideoPlayer(
@@ -235,7 +236,7 @@ private fun VideoPlayerUI(
         )
 
         LaunchedEffect(doubleTapDisplayTimeMillis) {
-            delay(1000)
+            delay(1000.milliseconds)
             doubleTapDisplayTimeMillis = 0
         }
         LaunchedEffect(isLandscape) {
@@ -249,7 +250,7 @@ private fun VideoPlayerUI(
         }
 
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize(1f)
                 .pointerInput(Unit) {
                     detectTapGestures(
@@ -300,7 +301,6 @@ private fun VideoPlayerUI(
                         }
                     )
                 }
-                .then(modifier)
         )
 
         // seperate boxes to avoid touch blocking due to zindex ordering
@@ -408,8 +408,8 @@ private fun VideoPlayerUI(
             exit = fadeOut(
                 animationSpec = AnimationConstants.expressiveTween()
             ),
-            modifier = Modifier
-                .fillMaxSize(1f)
+            modifier = modifier
+                .fillMaxSize()
                 .align(Alignment.Center)
         ) {
             VideoPlayerControls(
