@@ -34,10 +34,14 @@ jobs:
       run: echo "${{ secrets.KEYSTORE_KEY }}" | base64 --decode > app/release.keystore
 
     - name: Sign Arm v8a APK
-      run: /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign -v -p 4 app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-aligned.apk && /usr/local/lib/android/sdk/build-tools/36.0.0/apksigner sign --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-aligned.apk --out photos_signed_release_arm64-v8a.apk
+      run: |
+        /usr/local/lib/android/sdk/build-tools/37.0.0/zipalign -v -f -P 16 4 app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-aligned.apk
+        /usr/local/lib/android/sdk/build-tools/37.0.0/apksigner sign --alignment-preserved --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-aligned.apk --out photos_signed_release_arm64-v8a.apk
 
     - name: Sign ARM v7a APK
-      run: /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign -v -p 4 app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-aligned.apk && /usr/local/lib/android/sdk/build-tools/36.0.0/apksigner sign --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-aligned.apk --out photos_signed_release_armeabi-v7a.apk
+      run: |
+        /usr/local/lib/android/sdk/build-tools/37.0.0/zipalign -v -f -P 16 4 app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned.apk app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-aligned.apk
+        /usr/local/lib/android/sdk/build-tools/37.0.0/apksigner sign --alignment-preserved --ks app/release.keystore --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" --ks-pass pass:"${{ secrets.KEYSTORE_PASS }}" --in app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-aligned.apk --out photos_signed_release_armeabi-v7a.apk
 
     - name: Clean Up
       run: shred -u app/release.keystore

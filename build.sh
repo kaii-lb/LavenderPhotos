@@ -32,7 +32,7 @@ function build() {
 		unaligned="./app/build/outputs/apk/$path/app-$abi-$target.apk"
 		aligned="./app/build/outputs/apk/$path/app-$abi-$target-aligned.apk"
 		if [ -f $aligned ]; then rm $aligned; fi
-		zipalign -v -p 4 $unaligned $aligned 1>/dev/null
+		zipalign -v -f -P 16 4 $unaligned $aligned 1>/dev/null
 		apksigner -J-enable-native-access=ALL-UNNAMED sign --in $aligned --out outputs/"photos_signed_${tag}_${abi}.apk" --key keys/releasekey.pk8 --cert keys/releasekey.x509.pem
 	done
 
