@@ -10,7 +10,7 @@
     <string name="albums_auto_detect">Automatyczne wykrywanie albumów</string>
     <string name="albums_auto_detect_desc">Wykrywa wszystkie foldery zawierające multimedia na tym urządzeniu i dodaje je do widoku albumów</string>
     <string name="albums_clear_list">Wyczyść listę albumów</string>
-    <string name="albums_clear_list_desc">Usuń wszystkie nieistotne albumy z listy albumów</string>
+    <string name="albums_clear_list_desc">Usuwa wszystkie grupy albumów i albumy folderów, zachowując jednocześnie albumy niestandardowe i w chmurze</string>
     <string name="albums_clear_list_done">Lista usuniętych albumów</string>
     <string name="albums_media_sorting">Sortowanie multimediów</string>
     <string name="albums_media_sorting_desc">Ustawia sortowanie zdjęć i filmów w siatkach</string>
@@ -47,8 +47,8 @@
     <string name="updates_check_desc">Powiadamia o nowej wersji po otwarciu aplikacji. Nie instaluje automatycznie aktualizacji</string>
     <string name="updates_whats_new">Co nowego</string>
     <string name="updates_notice">Pobierz powiadomienie</string>
-    <string name="updates_new_version_available">Nowa wersja jest dostępna!</string>
-    <string name="updates_latest">Jest już w najnowszej wersji</string>
+    <string name="updates_new_version_available">Aktualizacja dostępna!</string>
+    <string name="updates_latest">Aktualny</string>
     <string name="updates_checking">Sprawdzanie aktualizacji</string>
     <string name="locked_folder_help_top">Zabezpieczony folder to bezpieczny folder na Twoje zdjęcia i filmy na tym urządzeniu. \nZabezpieczone multimedia nigdy nie są nigdzie przesyłane i zawsze znajdują się na urządzeniu, zaszyfrowane kluczem unikalnym dla hasła lub odcisku palca Twojego urządzenia.</string>
     <string name="locked_folder_help_bottom">Zabezpieczonych danych nie można odzyskać, jeśli zapomniano hasła lub usunięto odcisk palca.\nZabezpieczone dane zostaną utracone po odinstalowaniu aplikacji. Należy wykonać ich kopię zapasową.</string>
@@ -534,4 +534,26 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="media_restoring_snackbar_body">Przywracanie %1$d z %2$d</string>
     <string name="look_and_feel_vibrate_on_media_click">Wibracje po kliknięciu</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Stuknięcie w element multimedialny powoduje krótką wibrację.</string>
+    <string name="albums_is_cloud_linked">To album połączony z chmurą</string>
+    <string name="app_description">Aplikacja galerii open-source, która stawia na prywatność, jest wydajna i stylowa</string>
+    <string name="app_version">Wersja %1$s</string>
+    <string name="app_repo">Repozytorium aplikacji</string>
+    <string name="app_get">Pobierz tę aplikację</string>
+    <string name="debugging_spawn_progress_snackbar">Wywołaj pasek postępu</string>
+    <string name="debugging_spawn_progress_snackbar_desc">Wyświetla pasek postępu aktualizowany co sekundę przez 5 sekund</string>
+    <string name="debugging_internals">Wewnętrzne</string>
+    <string name="debugging_reset_scan_generation">Skanuj ponownie multimedia</string>
+    <string name="debugging_reset_scan_generation_desc">Przeszukuje wszystkie multimedia na urządzeniu i dodaje je do bazy danych aplikacji. Użyj tej opcji, jeśli niektóre obrazy się nie wyświetlają</string>
+    <string name="debugging_reset_scan_generation_loading">Skanowanie multimediów…</string>
+    <string name="video_change_audio_track">Zmień ścieżkę audio tego filmu</string>
+    <string name="editing_export_image_failed">Nie udało się wyeksportować zdjęcia</string>
+    <string name="editing_export_video_uploading">Przesyłanie wideo…</string>
+    <string name="settings_about">O</string>
+    <string name="settings_behaviour_loop_never">Nigdy nie zapętlaj filmów</string>
+    <string name="settings_behaviour_loop_under_30">Zapętlaj poniżej 30s</string>
+    <string name="settings_behaviour_loop_always">Zapętlaj filmy</string>
+    <string name="settings_behaviour_loop_never_desc">Odtwarzanie zatrzymuje się na końcu filmu</string>
+    <string name="settings_behaviour_loop_under_30_desc">Wszystkie filmy krótsze niż 30 sekund będą odtwarzane w nieskończonej pętli</string>
+    <string name="settings_behaviour_loop_always_desc">Wszystkie filmy, niezależnie od czasu trwania, będą odtwarzane w nieskończonej pętli</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Zezwól na zrzuty ekranu w Bezpiecznym Folderze</string>
 </resources>
