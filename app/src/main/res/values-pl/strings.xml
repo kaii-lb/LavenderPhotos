@@ -207,12 +207,12 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="updates_notice_desc"><![CDATA[
-            <p>Ten aktualizator pobiera pliki APK z serwisu <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>, co
-                oznacza, że nie przechodzą one dodatkowej kontroli i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne podmioty.
+            <p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza
+                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub w innych miejscach.
 
-                <br><br>Kompilacje hostowane na GitHub są zawsze podpisywane, sprawdzane i weryfikowane przez programistę (kaii-lb), ale to użytkownik decyduje, czy chce z nich korzystać, czy nie.
+                <br><br>Wersje udostępniane w serwisie GitHub są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
 
-                <br><br>Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
+                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
             </p>
         ]]></string>
     <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
@@ -364,19 +364,7 @@
     <string name="immich_server">Serwer Immich</string>
     <string name="immich_help_general">Co to jest?</string>
     <string name="immich_help_general_desc">Umożliwia tworzenie kopii zapasowych multimediów na poziomie albumu na serwerze Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-<p><a href="https://immich.app/">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,
-które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
-</p>
-<h3 style="text-align:center;">Jak korzystać?<h3/>
-<ul>
-<li>Samodzielne hostowanie <a href="https://immich.app/">serwera Immich</a></li>
-<li>Określanie adresu serwera w Lavender Photos</li>
-<li>Zaloguj się przy użyciu konta użytkownika Immich</li>
-<li>Przejdź do dowolnego albumu i kliknij ikonę chmury</li>
-<li>Rozpocznij tworzenie kopii zapasowych swoich zdjęć!</li>
-</ul>
-]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA[<p><a href=\"https://immich.app/\">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,\nktóre pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.\n</p>\n<h3 style=\"text-align:center;\">Jak korzystać?<h3/>\n<ul>\n<li>Samodzielne hostowanie <a href=\"https://immich.app/\">serwera Immich</a></li>\n<li>Określanie adresu serwera w Lavender Photos</li>\n<li>Zaloguj się przy użyciu konta użytkownika Immich</li>\n<li>Przejdź do dowolnego albumu i kliknij ikonę chmury</li>\n<li>Rozpocznij tworzenie kopii zapasowych swoich zdjęć!</li>\n</ul>]]></string>
     <string name="immich_server_url_invalid">Nieprawidłowy adres URL!</string>
     <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
     <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
@@ -660,4 +648,18 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="album_group_show_add_dialog">Dodaj albumy do tej grupy</string>
     <string name="news">Nowości</string>
     <string name="news_note">Notatka: %1$s</string>
+    <string name="news_category_feature">Cechy</string>
+    <string name="news_category_improvement">Ulepszenia</string>
+    <string name="news_version_latest">Najnowsze</string>
+    <string name="news_version_broken">Uszkodzony</string>
+    <string name="contributor">Współtwórca</string>
+    <string name="contributor_major">Główny współtwórca</string>
+    <string name="contributor_maintainer">Maintainer</string>
+    <string name="contributor_kaii_desc">Tworzenie aplikacji, które definiują na nowo to, co możliwe, bez pójścia na kompromis w kwestii bezpieczeństwa i prywatności</string>
+    <string name="contributor_kexxdumb_desc">Pomagali kształtować, testować i ulepszać aplikację od jej pierwszych dni</string>
+    <string name="contributor_tyrypyrking_desc">Ulepszono systemy bezpiecznego szyfrowania oraz procesy odzyskiwania plików</string>
+    <string name="contributors_separator_developer">Deweloper</string>
+    <string name="contributors_separator_major">Najważniejsze nowości</string>
+    <string name="contributors_separator_contributors">Współtwórcy oprogramowania typu open source</string>
+    <string name="news_github_issue_number">Problem na GitHub: #%1$d</string>
 </resources>
