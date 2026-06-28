@@ -127,7 +127,7 @@ class SettingsLookAndFeelImpl(
 
     fun getBlurViews(): Flow<Boolean> =
         context.datastore.data.map {
-            it[blurForViews] ?: false
+            it[blurForViews] ?: true
         }
 
     fun setBlurViews(value: Boolean) = scope.launch {
