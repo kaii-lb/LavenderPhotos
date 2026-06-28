@@ -13,7 +13,7 @@
     <string name="albums_clear_list_desc">Usuwa wszystkie grupy albumów i albumy folderów, zachowując jednocześnie albumy niestandardowe i w chmurze</string>
     <string name="albums_clear_list_done">Lista usuniętych albumów</string>
     <string name="albums_media_sorting">Sortowanie multimediów</string>
-    <string name="albums_media_sorting_desc">Ustawia sortowanie zdjęć i filmów w siatkach</string>
+    <string name="albums_media_sorting_desc">Ustawia sortowanie zdjęć i filmów w siatkach. Obecny tryb: %1$s</string>
     <string name="albums_is_custom">To jest album niestandardowy</string>
     <string name="albums_custom">Album niestandardowy</string>
     <string name="albums_non_existent">Nie istnieją takie albumy</string>
@@ -654,12 +654,14 @@
     <string name="news_version_broken">Uszkodzony</string>
     <string name="contributor">Współtwórca</string>
     <string name="contributor_major">Główny współtwórca</string>
-    <string name="contributor_maintainer">Maintainer</string>
+    <string name="contributor_maintainer">Opiekun</string>
     <string name="contributor_kaii_desc">Tworzenie aplikacji, które definiują na nowo to, co możliwe, bez pójścia na kompromis w kwestii bezpieczeństwa i prywatności</string>
-    <string name="contributor_kexxdumb_desc">Pomagali kształtować, testować i ulepszać aplikację od jej pierwszych dni</string>
-    <string name="contributor_tyrypyrking_desc">Ulepszono systemy bezpiecznego szyfrowania oraz procesy odzyskiwania plików</string>
+    <string name="contributor_kexxdumb_desc">Pomógł w kształtowaniu, testowaniu i doskonaleniu aplikacji od pierwszych dni jej istnienia</string>
+    <string name="contributor_tyrypyrking_desc">Usprawnił systemy szyfrowania i procesy odzyskiwania plików</string>
     <string name="contributors_separator_developer">Deweloper</string>
     <string name="contributors_separator_major">Najważniejsze nowości</string>
     <string name="contributors_separator_contributors">Współtwórcy oprogramowania typu open source</string>
     <string name="news_github_issue_number">Problem na GitHub: #%1$d</string>
+    <string name="contributors_community_member">Członek Społeczności</string>
+    <string name="news_category_fix">Poprawki</string>
 </resources>
