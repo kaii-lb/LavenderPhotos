@@ -32,7 +32,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -176,7 +175,7 @@ fun SearchTextField(
                     val backgroundColor by animateColorAsState(
                         targetValue =
                             if (searchMode == mode) MaterialTheme.colorScheme.primary
-                            else MenuDefaults.itemColors().containerColor
+                            else MaterialTheme.colorScheme.surfaceContainer
                     )
 
                     Column(
