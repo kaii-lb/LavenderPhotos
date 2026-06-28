@@ -1,9 +1,6 @@
 package com.kaii.photos.compose.widgets.news
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,9 +37,6 @@ fun NewsPopup(
         ),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         onDismissRequest = onDismiss,
-        contentWindowInsets = {
-            WindowInsets.safeContent.add(WindowInsets(bottom = 8.dp))
-        },
         modifier = modifier
             .statusBarsPadding()
     ) {
@@ -51,7 +45,7 @@ fun NewsPopup(
         NewsList(
             list = list,
             modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 .clip(RoundedCornerShape(size = 32.dp))
         )
     }
