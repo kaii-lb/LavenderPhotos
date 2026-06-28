@@ -40,7 +40,7 @@
     <string name="return_to_previous_page">Powrót do poprzedniej strony</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="privacy_policy_title">Polityka prywatności</string>
-    <string name="privacy_policy">Nie ma takiego! Żadne z Twoich danych nie trafiają nigdzie indziej niż na to urządzenie. Nie jest na nim szkolona żadna sztuczna inteligencja, żadne algorytmy nie zbierają informacji, nic. Lavender Photos zawsze była i zawsze będzie galerią zdjęć skupioną na prywatności.</string>
+    <string name="privacy_policy">Po prostu jej nie ma! Żadne Twoje dane nie trafiają nigdzie poza to urządzenie. Żadna sztuczna inteligencja nie jest na nich szkolona, nie ma tu żadnych algorytmów zbierających informacje – zupełnie nic. Lavender Photos jest i zawsze będzie aplikacją galerii skoncentrowaną na prywatności.</string>
     <string name="support">Wsparcie i darowizny</string>
     <string name="updates">Aktualizacje</string>
     <string name="updates_check">Sprawdź aktualizacje</string>
@@ -530,7 +530,7 @@
     <string name="debugging_spawn_progress_snackbar">Wywołaj pasek postępu</string>
     <string name="debugging_spawn_progress_snackbar_desc">Wyświetla pasek postępu aktualizowany co sekundę przez 5 sekund</string>
     <string name="debugging_internals">Wewnętrzne</string>
-    <string name="debugging_reset_scan_generation">Skanuj ponownie multimedia</string>
+    <string name="debugging_reset_scan_generation">Przeskanuj multimedia ponownie</string>
     <string name="debugging_reset_scan_generation_desc">Przeszukuje wszystkie multimedia na urządzeniu i dodaje je do bazy danych aplikacji. Użyj tej opcji, jeśli niektóre obrazy się nie wyświetlają</string>
     <string name="debugging_reset_scan_generation_loading">Skanowanie multimediów…</string>
     <string name="video_change_audio_track">Zmień ścieżkę audio tego filmu</string>
@@ -543,8 +543,8 @@
     <string name="settings_behaviour_loop_never_desc">Odtwarzanie zatrzymuje się na końcu filmu</string>
     <string name="settings_behaviour_loop_under_30_desc">Wszystkie filmy krótsze niż 30 sekund będą odtwarzane w nieskończonej pętli</string>
     <string name="settings_behaviour_loop_always_desc">Wszystkie filmy, niezależnie od czasu trwania, będą odtwarzane w nieskończonej pętli</string>
-    <string name="permissions_allow_secure_folder_screen_capture">Zezwól na zrzuty ekranu w Bezpiecznym Folderze</string>
-    <string name="permissions_allow_secure_folder_screen_capture_desc">Zezwala na robienie zrzutów ekranu, nagrywanie ekranu i udostępnianie ekranu, gdy Bezpieczny Folder jest otwarty. Chroniona zawartość może również pojawiać się w podglądzie ostatnich aplikacji. Pozostaw opcję wyłączoną, aby zachować ochronę</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Zezwól na zrzuty ekranu w Zabezpiecznym Folderze</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">Zezwala na robienie zrzutów ekranu, nagrywanie ekranu i udostępnianie ekranu, gdy Zabezpieczny Folder jest otwarty. Chroniona zawartość może również pojawiać się w podglądzie ostatnich aplikacji. Pozostaw opcję wyłączoną, aby zachować ochronę</string>
     <string name="settings_sort_mode_date_taken">Data wykonania</string>
     <string name="app_lock_verify">Zweryfikuj swój PIN</string>
     <string name="app_lock_confirm">Potwierdź swój PIN</string>
@@ -599,7 +599,7 @@
     <string name="immich_account_role">Rola</string>
     <string name="immich_account_is_user">Użytkownik</string>
     <string name="immich_account_is_admin">Admin</string>
-    <string name="immich_account_usage">Użycie konta</string>
+    <string name="immich_account_usage">Użyte konto</string>
     <string name="immich_account_usage_images">Liczba obrazów</string>
     <string name="immich_account_usage_videos">Liczba filmów</string>
     <string name="immich_account_unlimited">Użyto %s GB — nieograniczona przestrzeń</string>
@@ -648,14 +648,14 @@
     <string name="album_group_show_add_dialog">Dodaj albumy do tej grupy</string>
     <string name="news">Nowości</string>
     <string name="news_note">Notatka: %1$s</string>
-    <string name="news_category_feature">Cechy</string>
+    <string name="news_category_feature">Nowe funkcje</string>
     <string name="news_category_improvement">Ulepszenia</string>
     <string name="news_version_latest">Najnowsze</string>
-    <string name="news_version_broken">Uszkodzony</string>
+    <string name="news_version_broken">Wycofane</string>
     <string name="contributor">Współtwórca</string>
     <string name="contributor_major">Główny współtwórca</string>
-    <string name="contributor_maintainer">Opiekun</string>
-    <string name="contributor_kaii_desc">Tworzenie aplikacji, które definiują na nowo to, co możliwe, bez pójścia na kompromis w kwestii bezpieczeństwa i prywatności</string>
+    <string name="contributor_maintainer">Twórca</string>
+    <string name="contributor_kaii_desc">Tworzę aplikacje, które definiują na nowo to, co możliwe – bez kompromisów w kwestii bezpieczeństwa i prywatności</string>
     <string name="contributor_kexxdumb_desc">Pomógł w kształtowaniu, testowaniu i doskonaleniu aplikacji od pierwszych dni jej istnienia</string>
     <string name="contributor_tyrypyrking_desc">Usprawnił systemy szyfrowania i procesy odzyskiwania plików</string>
     <string name="contributors_separator_developer">Deweloper</string>
@@ -663,5 +663,5 @@
     <string name="contributors_separator_contributors">Współtwórcy oprogramowania typu open source</string>
     <string name="news_github_issue_number">Problem na GitHub: #%1$d</string>
     <string name="contributors_community_member">Członek Społeczności</string>
-    <string name="news_category_fix">Poprawki</string>
+    <string name="news_category_fix">Naprawione błędy</string>
 </resources>
