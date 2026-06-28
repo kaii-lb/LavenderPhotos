@@ -5,10 +5,22 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.3 date=27-06-2026 status=Latest
+# version=v2.0.4 date=28-06-2026 status=Latest
     + category=Features
         - title=New media sort mode selection popup
         - issueNumber=000033 title=Swipe down to dismiss single photo view
+        - title=Update contributor list
+
+    + category=Improvements
+        - title=Cleanup Main Dialog logic
+
+    + category=Fixes
+        - issueNumber=000267 title=Revert "show Main Dialog on back navigation from settings"
+        - title=Fix news list padding being too large
+
+# version=v2.0.3 date=27-06-2026 status=Broken
+    + category=Features
+        - title=Blur backgrounds by default
 
     + category=Improvements
         - issueNumber=000266 title=Pop up main dialog when coming back from settings
