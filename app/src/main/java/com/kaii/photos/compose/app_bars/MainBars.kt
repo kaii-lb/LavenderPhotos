@@ -40,11 +40,9 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,7 +50,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,10 +70,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesBottomAppBarItems
 import com.kaii.photos.compose.app_bars.trash_grid.TrashPhotoGridBottomBarItems
-import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.dialogs.user_action.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
@@ -88,15 +85,10 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.rememberVibratorManager
-import com.kaii.photos.helpers.vibrateShort
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +97,6 @@ fun MainAppTopBar(
     selectionManager: SelectionManager,
     immichInfo: () -> ImmichBasicInfo,
     showAddAlbumButton: () -> Boolean,
-    extraSecureFolderEntry: () -> Boolean,
     showTagDialog: () -> Boolean,
     isFromMediaPicker: Boolean,
     groups: () -> List<AlbumGroup>,
@@ -113,53 +104,6 @@ fun MainAppTopBar(
     addAlbum: (album: AlbumType) -> Unit,
     addGroup: (name: String) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val vibratorManager = rememberVibratorManager()
-    var showMainDialog by remember { mutableStateOf(false) }
-    val sheetState = rememberBottomSheetState(
-        initialValue = SheetValue.Hidden,
-        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
-    )
-
-    // popup main dialog if coming from settings
-    var previousDestination by rememberSaveable { mutableStateOf<String?>(null) }
-    OnBackPressedEffect { destination ->
-        if (previousDestination?.startsWith(Screens.Settings::class.qualifiedName!!) == true
-            || previousDestination?.startsWith(Screens.Immich.Dashboard::class.qualifiedName!!) == true
-        ) {
-            coroutineScope.launch {
-                showMainDialog = true
-                delay(50.milliseconds)
-                sheetState.expand()
-            }
-        }
-
-        previousDestination = destination.route
-    }
-
-    if (showMainDialog) {
-        MainDialog(
-            sheetState = sheetState,
-            coroutineScope = coroutineScope,
-            extraSecureFolderEntry = extraSecureFolderEntry,
-            immichInfo = immichInfo,
-            toggleSelectMode = {
-                vibratorManager.vibrateShort()
-                selectionManager.enterSelectMode()
-                coroutineScope.launch {
-                    sheetState.hide()
-                    showMainDialog = false
-                }
-            },
-            dismiss = {
-                coroutineScope.launch {
-                    sheetState.hide()
-                    showMainDialog = false
-                }
-            }
-        )
-    }
-
     DualFunctionTopAppBar(
         alternated = alternate(),
         title = {
@@ -226,12 +170,9 @@ fun MainAppTopBar(
                 }
 
                 if (!isFromMediaPicker) {
+                    val navController = LocalNavController.current
                     AnimatedLoginIcon(immichInfo = immichInfo) {
-                        coroutineScope.launch {
-                            showMainDialog = true
-                            delay(50.milliseconds)
-                            sheetState.expand()
-                        }
+                        navController.navigate(Screens.MainPages.MainGrid.SettingsDialog)
                     }
                 } else {
                     val context = LocalContext.current

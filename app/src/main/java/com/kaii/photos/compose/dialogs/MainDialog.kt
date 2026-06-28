@@ -6,10 +6,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -17,9 +20,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -78,7 +83,6 @@ fun MainDialog(
     extraSecureFolderEntry: () -> Boolean,
     immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
-    toggleSelectMode: () -> Unit,
     dismiss: () -> Unit
 ) {
     // remove (weird) drag handle ripple
@@ -124,29 +128,32 @@ fun MainDialog(
                                 dismiss = dismiss
                             )
                         } else {
-                            Text(
-                                text = stringResource(id = R.string.app_name_full),
-                                fontSize = TextStylingConstants.EXTRA_EXTRA_LARGE_TEXT_SIZE.sp,
-                                textAlign = TextAlign.Center,
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                            )
+                                    .fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(space = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.lavender_no_padding),
+                                    contentDescription = stringResource(id = R.string.app_name_full),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .background(color = MaterialTheme.colorScheme.primary)
+                                        .padding(all = 12.dp)
+                                )
+
+                                Text(
+                                    text = stringResource(id = R.string.app_name_full),
+                                    fontSize = TextStylingConstants.LARGE_TEXT_SIZE.sp,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                )
+                            }
                         }
-                    }
-
-                    item {
-                        PreferencesSeparatorText(
-                            text = stringResource(id = R.string.management)
-                        )
-                    }
-
-                    item {
-                        ExpressiveDialogRow(
-                            title = stringResource(id = R.string.media_select),
-                            icon = painterResource(id = R.drawable.checklist),
-                            position = if (extraSecureFolderEntry()) RowPosition.Top else RowPosition.Single,
-                            onClick = toggleSelectMode
-                        )
                     }
 
                     if (extraSecureFolderEntry()) {

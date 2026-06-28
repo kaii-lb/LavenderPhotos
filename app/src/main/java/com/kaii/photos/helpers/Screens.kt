@@ -124,6 +124,9 @@ interface Screens {
             object GridView : Screens
 
             @Serializable
+            object SettingsDialog : Screens
+
+            @Serializable
             data class SinglePhoto(
                 val album: AlbumType.Folder,
                 val index: Int

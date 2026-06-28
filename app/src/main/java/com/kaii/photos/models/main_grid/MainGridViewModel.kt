@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -77,12 +78,6 @@ class MainGridViewModel(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = AlbumSortMode.LastModifiedDesc
-    )
-
-    val extraSecureFolderNavEntry = settings.lookAndFeel.getShowExtraSecureNav().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
     )
 
     val migrateFav = settings.versions.getMigrateFav().stateIn(
@@ -277,7 +272,7 @@ class MainGridViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -322,7 +317,7 @@ class MainGridViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -372,7 +367,7 @@ class MainGridViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

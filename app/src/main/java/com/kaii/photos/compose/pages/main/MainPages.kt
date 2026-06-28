@@ -71,6 +71,7 @@ import com.kaii.photos.setupNextScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -153,7 +154,7 @@ fun MainPages(
             showTagDialog = false
         } else if (floatingBarState.offset != 0f) {
             delayOver = false
-            delay(AnimationConstants.DURATION.toLong())
+            delay(AnimationConstants.DURATION.milliseconds)
             floatingBarState.offset = 0f
             delayOver = true
         }
@@ -162,7 +163,6 @@ fun MainPages(
     Scaffold(
         topBar = {
             val groups by viewModel.groups.collectAsStateWithLifecycle()
-            val extraSecureFolderEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
 
             MainAppTopBar(
                 alternate = { isSelecting },
@@ -171,7 +171,6 @@ fun MainPages(
                 showAddAlbumButton = {
                     tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
                 },
-                extraSecureFolderEntry = { extraSecureFolderEntry },
                 showTagDialog = { showTagDialog },
                 isFromMediaPicker = incomingIntent != null,
                 groups = { groups },
@@ -185,7 +184,7 @@ fun MainPages(
         bottomBar = {
             LaunchedEffect(Unit) {
                 floatingBarState.offset = 0f
-                delay(AnimationConstants.DURATION.toLong())
+                delay(AnimationConstants.DURATION.milliseconds)
                 delayOver = true
             }
 
@@ -300,7 +299,7 @@ fun MainPages(
             coroutineScope.launch {
                 while (canRefresh) {
                     refreshAlbums()
-                    delay(5000)
+                    delay(5000.milliseconds)
                 }
             }
 

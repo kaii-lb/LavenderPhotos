@@ -19,13 +19,17 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -40,6 +44,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
@@ -50,6 +55,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.dialogs.MainDialog
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.compose.grids.FavouritesGridView
@@ -105,6 +111,8 @@ import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModelFactory
 import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
 import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModelFactory
+import com.kaii.photos.models.main_dialog.MainDialogViewModel
+import com.kaii.photos.models.main_dialog.MainDialogViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.models.multi_album.MultiAlbumViewModel
@@ -184,6 +192,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
+
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal
                 ) {
@@ -206,6 +215,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
     private fun SetContentForActivity(
@@ -241,7 +251,7 @@ class MainActivity : ComponentActivity() {
                 navController = navController,
                 startDestination = startupPage,
                 modifier = Modifier
-                    .fillMaxSize(1f)
+                    .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
                 enterTransition = {
                     slideInHorizontally { width -> width } + fadeIn()
@@ -330,6 +340,34 @@ class MainActivity : ComponentActivity() {
                             window = window,
                             incomingIntent = null,
                             refreshAlbums = appModule.albumGridState::refresh
+                        )
+                    }
+
+                    dialog<Screens.MainPages.MainGrid.SettingsDialog> {
+                        val viewModel = viewModel<MainDialogViewModel>(
+                            factory = MainDialogViewModelFactory(context = context)
+                        )
+
+                        val coroutineScope = rememberCoroutineScope()
+                        val sheetState = rememberBottomSheetState(
+                            initialValue = SheetValue.Hidden,
+                            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+                        )
+
+                        val extraSecureFolderNavEntry by viewModel.extraSecureFolderNavEntry.collectAsStateWithLifecycle()
+                        val immichInfo by viewModel.immichInfo.collectAsStateWithLifecycle()
+
+                        MainDialog(
+                            sheetState = sheetState,
+                            coroutineScope = coroutineScope,
+                            extraSecureFolderEntry = { extraSecureFolderNavEntry },
+                            immichInfo = { immichInfo },
+                            dismiss = {
+                                coroutineScope.launch {
+                                    sheetState.hide()
+                                    navController.popBackStack()
+                                }
+                            }
                         )
                     }
 
