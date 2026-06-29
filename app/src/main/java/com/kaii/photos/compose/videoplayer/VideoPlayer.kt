@@ -249,60 +249,6 @@ private fun VideoPlayerUI(
             }
         }
 
-        Box(
-            modifier = modifier
-                .fillMaxSize(1f)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { position ->
-                            if (!scrollState.videoLock && doubleTapDisplayTimeMillis == 0) {
-                                setBarVisibility(
-                                    visible = if (isLandscape) false else !state.controlsVisible,
-                                    window = window
-                                ) {
-                                    appBarsVisible.value = it
-                                }
-
-                                state.controlsVisible = !state.controlsVisible
-                                state.delayHide()
-                            } else if (!scrollState.videoLock && doubleTapDisplayTimeMillis != 0) {
-                                if (position.x < size.width / 2) {
-                                    if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
-                                        0
-                                    doubleTapDisplayTimeMillis -= 1000
-
-                                    state.seekBack()
-                                } else if (position.x >= size.width / 2) {
-                                    if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis =
-                                        0
-                                    doubleTapDisplayTimeMillis += 1000
-
-                                    state.seekForward()
-                                }
-
-                                state.delayHide()
-                            }
-                        },
-
-                        onDoubleTap = { position ->
-                            if (!scrollState.videoLock && position.x < size.width / 2) {
-                                if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
-                                doubleTapDisplayTimeMillis -= 1000
-
-                                state.seekBack()
-                            } else if (!scrollState.videoLock && position.x >= size.width / 2) {
-                                if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
-                                doubleTapDisplayTimeMillis += 1000
-
-                                state.seekForward()
-                            }
-
-                            state.delayHide()
-                        }
-                    )
-                }
-        )
-
         // seperate boxes to avoid touch blocking due to zindex ordering
         Box(
             modifier = Modifier
@@ -400,42 +346,96 @@ private fun VideoPlayerUI(
             }
         }
 
-        AnimatedVisibility(
-            visible = state.controlsVisible,
-            enter = fadeIn(
-                animationSpec = AnimationConstants.expressiveTween()
-            ),
-            exit = fadeOut(
-                animationSpec = AnimationConstants.expressiveTween()
-            ),
+        Box(
             modifier = modifier
                 .fillMaxSize()
-                .align(Alignment.Center)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { position ->
+                            if (!scrollState.videoLock && doubleTapDisplayTimeMillis == 0) {
+                                setBarVisibility(
+                                    visible = if (isLandscape) false else !state.controlsVisible,
+                                    window = window
+                                ) {
+                                    appBarsVisible.value = it
+                                }
+
+                                state.controlsVisible = !state.controlsVisible
+                                state.delayHide()
+                            } else if (!scrollState.videoLock && doubleTapDisplayTimeMillis != 0) {
+                                if (position.x < size.width / 2) {
+                                    if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis =
+                                        0
+                                    doubleTapDisplayTimeMillis -= 1000
+
+                                    state.seekBack()
+                                } else if (position.x >= size.width / 2) {
+                                    if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis =
+                                        0
+                                    doubleTapDisplayTimeMillis += 1000
+
+                                    state.seekForward()
+                                }
+
+                                state.delayHide()
+                            }
+                        },
+
+                        onDoubleTap = { position ->
+                            if (!scrollState.videoLock && position.x < size.width / 2) {
+                                if (doubleTapDisplayTimeMillis > 0) doubleTapDisplayTimeMillis = 0
+                                doubleTapDisplayTimeMillis -= 1000
+
+                                state.seekBack()
+                            } else if (!scrollState.videoLock && position.x >= size.width / 2) {
+                                if (doubleTapDisplayTimeMillis < 0) doubleTapDisplayTimeMillis = 0
+                                doubleTapDisplayTimeMillis += 1000
+
+                                state.seekForward()
+                            }
+
+                            state.delayHide()
+                        }
+                    )
+                }
         ) {
-            VideoPlayerControls(
-                isPlaying = { state.isPlaying },
-                isMuted = { state.isMuted },
-                isRepeatModeOn = { state.isRepeatModeOn },
-                currentVideoPosition = { state.currentPosition },
-                duration = { state.duration },
-                title = { state.videoTitle },
-                playbackSpeed = { state.playbackSpeed },
-                audioTracks = { state.audioTracks },
-                selectedAudioTrack = { state.selectedAudioTrack },
-                modifier = Modifier.fillMaxSize(),
-                onAnyTap = { state.delayHide() },
-                togglePlayPause = {
-                    if (state.isPlaying) state.pause()
-                    else state.play()
-                },
-                seekBack = state::seekBack,
-                seekForward = state::seekForward,
-                seekTo = state::seekTo,
-                toggleMute = state::toggleMute,
-                toggleRepeatMode = state::toggleRepeatMode,
-                setPlaybackSpeed = state::setPlaybackSpeed,
-                setAudioTrack = state::setAudioTrack
-            )
+            AnimatedVisibility(
+                visible = state.controlsVisible,
+                enter = fadeIn(
+                    animationSpec = AnimationConstants.expressiveTween()
+                ),
+                exit = fadeOut(
+                    animationSpec = AnimationConstants.expressiveTween()
+                ),
+                modifier = modifier
+                    .fillMaxSize()
+                    .align(Alignment.Center)
+            ) {
+                VideoPlayerControls(
+                    isPlaying = { state.isPlaying },
+                    isMuted = { state.isMuted },
+                    isRepeatModeOn = { state.isRepeatModeOn },
+                    currentVideoPosition = { state.currentPosition },
+                    duration = { state.duration },
+                    title = { state.videoTitle },
+                    playbackSpeed = { state.playbackSpeed },
+                    audioTracks = { state.audioTracks },
+                    selectedAudioTrack = { state.selectedAudioTrack },
+                    modifier = Modifier.fillMaxSize(),
+                    onAnyTap = { state.delayHide() },
+                    togglePlayPause = {
+                        if (state.isPlaying) state.pause()
+                        else state.play()
+                    },
+                    seekBack = state::seekBack,
+                    seekForward = state::seekForward,
+                    seekTo = state::seekTo,
+                    toggleMute = state::toggleMute,
+                    toggleRepeatMode = state::toggleRepeatMode,
+                    setPlaybackSpeed = state::setPlaybackSpeed,
+                    setAudioTrack = state::setAudioTrack
+                )
+            }
         }
 
         if ((scrollState.videoLock || state.controlsVisible) && isLandscape) {

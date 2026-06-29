@@ -65,7 +65,6 @@ fun VideoPlayerControls(
 
         if (isLandscape) {
             // title box
-            @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
             Box(
                 modifier = Modifier
                     .wrapContentSize()

@@ -304,9 +304,13 @@ class VideoPlayerState(
         timeoutDebouncer.run {
             if (!isPlaying) return@run
 
-            controlsVisible = false
+            hide()
             onControlsTimeout()
         }
+    }
+
+    fun hide() {
+        controlsVisible = false
     }
 
     private fun endOfVideo() =
