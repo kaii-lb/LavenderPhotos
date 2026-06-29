@@ -6,7 +6,7 @@
     <string name="albums_clear_list_desc">Elimina todos los grupos de álbumes y álbumes de carpetas mientras mantiene álbumes personalizados y en la nube</string>
     <string name="albums_clear_list_done">Lista de álbumes borrados</string>
     <string name="albums_media_sorting">Clasificación de Medios</string>
-    <string name="albums_media_sorting_desc">Establece la clasificación de fotos y videos en cuadrículas</string>
+    <string name="albums_media_sorting_desc">Establece la clasificación de fotos y videos en cuadrículas. Modo actual: %1$s</string>
     <string name="albums_is_custom">Este es un álbum personalizado</string>
     <string name="albums_custom">Álbum Personalizado</string>
     <string name="albums_non_existent">No existen tales álbumes</string>
@@ -29,7 +29,7 @@
     <string name="tabs_albums_incl">Álbumes Incluidos</string>
     <string name="tabs_confirm">Agregar Pestaña</string>
     <string name="tabs_empty_params">Los parámetros de la pestaña no pueden estar vacíos</string>
-    <string name="tabs_max_reached">No se pueden agregar más de 16 pestañas</string>
+    <string name="tabs_max_reached">No se puede agregar más de 16 pestañas</string>
     <string name="tabs_min_reached">Debe existir al menos una pestaña</string>
     <string name="return_to_previous_page">Volver a la página anterior</string>
     <string name="app_name_full">Lavender Photos</string>
@@ -671,4 +671,9 @@
     <string name="contributors_separator_developer">Desarrollador</string>
     <string name="contributors_separator_major">Destacados</string>
     <string name="contributors_separator_contributors">Contribuyentes de código abierto</string>
+    <string name="settings_sort_mode_date_taken">Fecha Tomada</string>
+    <string name="settings_sort_mode_date_modified">Última Modificación</string>
+    <string name="settings_sort_mode_month_taken">Mes Tomado</string>
+    <string name="settings_sort_mode_date_taken_no_separators">Fecha Tomada sin separación</string>
+    <string name="settings_sort_mode_date_modified_no_separators">Ultima Modificación sin separación</string>
 </resources>
