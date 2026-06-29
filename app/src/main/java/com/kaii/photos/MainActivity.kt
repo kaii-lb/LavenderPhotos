@@ -245,6 +245,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val snackbarHostState = remember { LavenderSnackbarHostState() }
+        val coroutineScope = rememberCoroutineScope()
 
         LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
             NavHost(
@@ -348,7 +349,6 @@ class MainActivity : ComponentActivity() {
                             factory = MainDialogViewModelFactory(context = context)
                         )
 
-                        val coroutineScope = rememberCoroutineScope()
                         val sheetState = rememberBottomSheetState(
                             initialValue = SheetValue.Hidden,
                             enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
@@ -363,10 +363,8 @@ class MainActivity : ComponentActivity() {
                             extraSecureFolderEntry = { extraSecureFolderNavEntry },
                             immichInfo = { immichInfo },
                             dismiss = {
-                                coroutineScope.launch {
-                                    sheetState.hide()
-                                    navController.popBackStack()
-                                }
+                                sheetState.hide()
+                                navController.popBackStack()
                             }
                         )
                     }

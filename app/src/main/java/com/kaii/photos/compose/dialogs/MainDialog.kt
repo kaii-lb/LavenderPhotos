@@ -61,7 +61,6 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.sync.ProgressManager
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
@@ -71,9 +70,7 @@ import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import com.kaii.photos.presentation.main_dialog.AboutLinkItems
 import com.kaii.photos.presentation.main_dialog.SettingsItems
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -83,7 +80,7 @@ fun MainDialog(
     extraSecureFolderEntry: () -> Boolean,
     immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
-    dismiss: () -> Unit
+    dismiss: suspend () -> Unit
 ) {
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
@@ -98,7 +95,11 @@ fun MainDialog(
             tonalElevation = 16.dp,
             shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp),
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            onDismissRequest = dismiss,
+            onDismissRequest = {
+                coroutineScope.launch {
+                    dismiss()
+                }
+            },
             contentWindowInsets = {
                 if (!isLandscape) WindowInsets.systemBars
                 else WindowInsets()
@@ -125,7 +126,11 @@ fun MainDialog(
                             MainDialogUserInfo(
                                 coroutineScope = coroutineScope,
                                 immichInfo = immichInfo,
-                                dismiss = dismiss
+                                dismiss = {
+                                    coroutineScope.launch {
+                                        dismiss()
+                                    }
+                                }
                             )
                         } else {
                             Column(
@@ -160,7 +165,11 @@ fun MainDialog(
                         item {
                             val authManager = rememberSecureFolderAuthManager(
                                 coroutineScope = coroutineScope,
-                                extraAction = dismiss
+                                extraAction = {
+                                    coroutineScope.launch {
+                                        dismiss()
+                                    }
+                                }
                             )
 
                             ExpressiveDialogRow(
@@ -191,14 +200,12 @@ fun MainDialog(
                             onClick = {
                                 coroutineScope.launch {
                                     dismiss()
-                                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                                     navController.navigate(Screens.Settings.Misc.DataAndBackup)
                                 }
                             },
                             onActionClick = {
                                 coroutineScope.launch {
                                     dismiss()
-                                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                                     navController.navigate(Screens.Immich.Dashboard)
                                 }
                             }
@@ -248,7 +255,7 @@ fun MainDialog(
 fun LazyListScope.settingsColumnItems(
     navController: NavController,
     coroutineScope: CoroutineScope,
-    dismiss: () -> Unit
+    dismiss: suspend () -> Unit
 ) {
     item {
         PreferencesSeparatorText(
@@ -271,7 +278,6 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(item.screen)
                 }
             }
@@ -293,7 +299,6 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
 
                     navController.navigate(Screens.Settings.Misc.AboutPage)
                 }
@@ -315,7 +320,6 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     context.startActivity(item.intent)
                 }
             }
@@ -330,7 +334,6 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(Screens.Settings.Misc.UpdatePage)
                 }
             }
@@ -351,7 +354,6 @@ fun LazyListScope.settingsColumnItems(
             onClick = {
                 coroutineScope.launch {
                     dismiss()
-                    delay(AnimationConstants.DURATION_EXTRA_SHORT.milliseconds)
                     navController.navigate(Screens.Settings.Misc.LicensesPage)
                 }
             }
