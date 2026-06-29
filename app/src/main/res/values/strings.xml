@@ -21,7 +21,7 @@
     <string name="albums_is_custom">This is a custom album</string>
     <string name="albums_is_cloud">This is a cloud-only album</string>
     <string name="albums_is_cloud_linked">This is a cloud-linked album</string>
-    <string name="albums_custom">Custom Album</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_custom_desc">Add any media from anywhere</string>
     <string name="albums_folder_desc">Load media from a folder</string>
     <string name="albums_non_existent">No such albums exist</string>
@@ -35,7 +35,7 @@
     <string name="albums_item_count">Item Count:</string>
     <string name="albums_name">Album Name</string>
     <string name="albums_type">Album Type</string>
-    <string name="albums_folder">Folder Album</string>
+    <string name="albums_folder">Folder</string>
     <string name="albums_add_failed">Failed to add albums :&lt;</string>
     <string name="albums_immich_not_backed_up">Not backed up</string>
     <string name="albums_rename_failure">Invalid album name</string>
