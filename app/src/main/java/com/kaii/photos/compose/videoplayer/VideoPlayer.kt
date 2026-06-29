@@ -8,7 +8,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -43,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -107,7 +105,7 @@ fun VideoPlayer(
     }
 
     Crossfade(
-        targetState = securedMediaProgress < 1f && item.absolutePath.startsWith(context.appSecureFolderDir),
+        targetState = item.absolutePath.startsWith(context.appSecureFolderDir) && securedMediaProgress < 1f,
         animationSpec = AnimationConstants.expressiveTween(
             durationMillis = AnimationConstants.DURATION_LONG
         ),
@@ -175,43 +173,45 @@ private fun VideoPlayerUI(
                 } else Modifier.Companion
             )
     ) {
-        if (!shouldPlay()) {
-            GlideImage(
-                model = item.uri.toUri(),
-                contentScale = ContentScale.Fit,
-                contentDescription = null,
-                loading = placeholder(R.drawable.broken_image),
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                it.signature(item.signature())
-                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-            }
-        } else {
-            val playerView = rememberPlayerView(
-                useTextureView = false,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground
-            )
-
-            val animatedAlpha by animateFloatAsState(
-                targetValue = if (state.fadeInPlayer) 1f else 0f,
-                animationSpec = AnimationConstants.expressiveTween(
-                    durationMillis = AnimationConstants.DURATION
+        Crossfade(
+            targetState = shouldPlay(),
+            animationSpec = tween(
+                durationMillis = AnimationConstants.DURATION_LONG,
+                delayMillis = AnimationConstants.DURATION
+            ),
+            modifier = Modifier
+                .fillMaxSize()
+        ) { visible ->
+            if (visible) {
+                val playerView = rememberPlayerView(
+                    useTextureView = true,
+                    blurViews = blurViews,
+                    useBlackBackground = useBlackBackground
                 )
-            )
 
-            AndroidView(
-                factory = {
-                    playerView
-                },
-                update = {
-                    state.linkPlayerView(it)
-                },
-                modifier = modifier
-                    .align(Alignment.Center)
-                    .alpha(animatedAlpha)
-            )
+                AndroidView(
+                    factory = {
+                        playerView
+                    },
+                    update = {
+                        state.linkPlayerView(it)
+                    },
+                    modifier = modifier
+                        .align(Alignment.Center)
+                )
+            } else {
+                GlideImage(
+                    model = item.uri.toUri(),
+                    contentScale = ContentScale.Fit,
+                    contentDescription = null,
+                    loading = placeholder(R.drawable.broken_image),
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    it.signature(item.signature())
+                        .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                }
+            }
         }
 
         var doubleTapDisplayTimeMillis by remember { mutableIntStateOf(0) }

@@ -17,7 +17,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.Effect
 import androidx.media3.common.Format
-import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -94,9 +93,6 @@ class VideoPlayerState(
     var selectedAudioTrack by mutableStateOf<LavenderExoPlayer.AudioTrack?>(null)
         private set
 
-    var fadeInPlayer by mutableStateOf(false)
-        private set
-
     private val player: LavenderExoPlayer = LavenderExoPlayer(
         context = context,
         onDurationChanged = { new ->
@@ -107,13 +103,7 @@ class VideoPlayerState(
         onCurrentPositionChanged = { new ->
             currentPosition = new
         },
-        onPlaybackStateChanged = { state ->
-            onPlaybackStateChanged(state)
-
-            if (!fadeInPlayer) {
-                fadeInPlayer = state == Player.STATE_READY
-            }
-        },
+        onPlaybackStateChanged = onPlaybackStateChanged,
         onAudioTracksChanged = { tracks ->
             audioTracks.clear()
             audioTracks.addAll(tracks)
@@ -221,7 +211,8 @@ class VideoPlayerState(
         this.loop = loop
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
-        this.fadeInPlayer = false
+
+        pause()
 
         val immichUrl = item.immichVideoUrl?.takeIf { item.isCloud }?.let { endpoint + it }
         val uri = immichUrl ?: item.uri

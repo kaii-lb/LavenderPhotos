@@ -245,10 +245,9 @@ class LavenderExoPlayer(
     ) {
         if (exoPlayer.isReleased) return
 
-        if (exoPlayer.isCommandAvailable(Player.COMMAND_STOP)) exoPlayer.stop()
-        if (exoPlayer.isCommandAvailable(Player.COMMAND_CHANGE_MEDIA_ITEMS)) exoPlayer.clearMediaItems()
-
         setRepeatMode(loop)
+
+        if (exoPlayer.isCommandAvailable(Player.COMMAND_STOP)) exoPlayer.stop()
 
         val source = when (input) {
             is Input.Secure -> {
@@ -300,8 +299,8 @@ class LavenderExoPlayer(
             }
         }
 
-        exoPlayer.setMediaSource(source)
         if (exoPlayer.isCommandAvailable(Player.COMMAND_PREPARE)) exoPlayer.prepare()
+        exoPlayer.setMediaSource(source)
     }
 
     fun release() {
