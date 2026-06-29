@@ -5,7 +5,22 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.4 date=28-06-2026 status=Latest
+# version=v2.0.5 date=29-06-2026 status=Latest
+    + category=Features
+        - title=New media sort mode selection popup
+        - issueNumber=000269 title=Add Favourites and Trash as bottom bar tabs
+
+    + category=Improvements
+        - title=Better album designations
+        - title=Smoother video transitions in single views
+
+    + category=Fixes
+        - title=Crash when switching search modes
+        - issueNumber=000271 title=Inability to navigate to settings with animations turned off
+        - issueNumber=000268 title=Video player not allowing show/hide taps
+
+
+# version=v2.0.4 date=28-06-2026
     + category=Features
         - title=New media sort mode selection popup
         - issueNumber=000033 title=Swipe down to dismiss single photo view
