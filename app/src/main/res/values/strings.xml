@@ -454,6 +454,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="custom_album_remove_media">Remove</string>
     <string name="custom_album_remove_media_desc">Remove these items from the album?</string>
     <string name="action_cannot_be_undone">This action cannot be undone!</string>
+    <string name="explanation_nothing_here">Nothing here…</string>
 
     <!-- Miscellaneous -->
     <string name="show_options">Show more options</string>

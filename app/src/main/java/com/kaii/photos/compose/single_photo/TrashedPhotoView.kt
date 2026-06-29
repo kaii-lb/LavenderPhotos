@@ -147,7 +147,7 @@ private fun SingleTrashedPhotoViewImpl(
     }
 
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
-    LaunchedEffect(currentIndex) {
+    LaunchedEffect(currentIndex, items, items.itemSnapshotList) {
         withContext(Dispatchers.IO) {
             mediaItem =
                 if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {

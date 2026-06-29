@@ -2,16 +2,16 @@ package com.kaii.photos.compose.pages.main
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.LazyPagingItems
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.models.main_grid.MainGridViewModel
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 
 @Composable
 fun MainGridView(
-    viewModel: MainGridViewModel,
+    items:  LazyPagingItems<PhotoLibraryUIModel>,
     album: () -> AlbumType.Folder,
     selectionManager: SelectionManager,
     isMediaPicker: Boolean,
@@ -21,15 +21,14 @@ fun MainGridView(
     thumbnailSize: () -> Int,
     useRoundedCorners: () -> Boolean,
     vibrateOnClick: () -> Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewProperties: ViewProperties = ViewProperties.Main
 ) {
-    val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-
     PhotoGrid(
         pagingItems = items,
         album = album,
         selectionManager = selectionManager,
-        viewProperties = ViewProperties.Main,
+        viewProperties = viewProperties,
         isMainPage = true,
         isMediaPicker = isMediaPicker,
         columnSize = columnSize,

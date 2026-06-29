@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.pages.main.MainGridView
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.grid_management.rememberSelectionManager
@@ -50,8 +51,10 @@ fun StartupLoadingPage(
         Box(
             modifier = Modifier.blur(64.dp)
         ) {
+            val items = mainGridViewModel.gridMediaFlow.collectAsLazyPagingItems()
+
             MainGridView(
-                viewModel = mainGridViewModel,
+                items = items,
                 album = { album },
                 selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
                 isMediaPicker = false,

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -139,7 +140,7 @@ fun FolderIsEmpty(
         GlideImage(
             model = emptyIconResId,
             contentDescription = stringResource(id = R.string.error_views_folder_non_existent),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.contentColorFor(backgroundColor)),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(56.dp)
@@ -150,7 +151,7 @@ fun FolderIsEmpty(
         Text(
             text = emptyText,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.contentColorFor(backgroundColor),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()

@@ -95,6 +95,15 @@ object DefaultTabs {
         TabTypes.albums,
         TabTypes.search
     )
+
+    val extendedList = listOf(
+        TabTypes.photos,
+        TabTypes.secure,
+        TabTypes.albums,
+        TabTypes.search,
+        TabTypes.favourites,
+        TabTypes.trash
+    )
 }
 
 @Serializable
