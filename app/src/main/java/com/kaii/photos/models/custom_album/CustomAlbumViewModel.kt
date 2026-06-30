@@ -5,10 +5,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.CustomRepository
@@ -19,18 +19,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 
 class CustomAlbumViewModel(
-    context: Context,
-    private val album: AlbumType
-) : BaseViewModel(context) {
-    override val scope: CoroutineScope = context.appModule.scope
-    override val apiClient: ApiClient = context.appModule.apiClient
-
-    private val db = MediaDatabase.getInstance(context.applicationContext)
+    private val album: AlbumType,
+    override val scope: CoroutineScope = PhotosApplication.appModule.scope,
+    override val apiClient: ApiClient = PhotosApplication.appModule.apiClient,
+    db: MediaDatabase = PhotosApplication.appModule.db
+) : BaseViewModel() {
     override val repo = CustomRepository(
         db = db,
-        client = context.applicationContext.appModule.apiClient,
+        client = apiClient,
         album = album,
         scope = viewModelScope,
         sortMode = settings.photoGrid.getSortMode(),
@@ -80,7 +79,7 @@ class CustomAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -125,7 +124,7 @@ class CustomAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -184,7 +183,7 @@ class CustomAlbumViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

@@ -6,12 +6,12 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -28,12 +28,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class SearchViewModel(
     context: Context
-) : BaseViewModel(context) {
-    override val scope: CoroutineScope = context.appModule.scope
-    override val apiClient: ApiClient = context.appModule.apiClient
+) : BaseViewModel() {
+    override val scope: CoroutineScope = PhotosApplication.appModule.scope
+    override val apiClient: ApiClient = PhotosApplication.appModule.apiClient
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     override val repo = SearchRepository(
@@ -43,7 +44,7 @@ class SearchViewModel(
         info = ImmichBasicInfo.Empty,
         sortMode = MediaItemSortMode.DateTaken,
         format = DisplayDateFormat.Default,
-        client = context.appModule.apiClient
+        client = PhotosApplication.appModule.apiClient
     )
 
     private val searchManager = SearchManager(
@@ -154,7 +155,7 @@ class SearchViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -199,7 +200,7 @@ class SearchViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -291,7 +292,7 @@ class SearchViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

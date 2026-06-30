@@ -125,7 +125,7 @@ class SearchRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val mediaFlow = params.flatMapLatest { details ->
+    override val mediaFlow = params.flatMapLatest { details ->
         Pager(
             config = PagingConfig(
                 pageSize = 100,
@@ -164,7 +164,7 @@ class SearchRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = params.flatMapLatest { details ->
+    override val gridMediaFlow = params.flatMapLatest { details ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = details.sortMode,
             format = details.format

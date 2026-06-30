@@ -1,11 +1,12 @@
 package com.kaii.photos.models.immich_share_album_page
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.screens.ImmichShareLinkState
 import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
 import kotlinx.coroutines.delay
@@ -25,12 +26,12 @@ interface CreateLinkState {
 
 @OptIn(ExperimentalUuidApi::class)
 class ImmichShareAlbumViewModel(
-    context: Context,
-    private val albumImmichId: String
+    private val albumImmichId: String,
+    private val settings: Settings = PhotosApplication.appModule.settings,
+    apiClient: ApiClient = PhotosApplication.appModule.apiClient
 ) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
     private val sharedLinkClient = SharedLinkClient(
-        client = context.appModule.apiClient,
+        client = apiClient,
         endpoint = "",
         auth = Auth.None
     )

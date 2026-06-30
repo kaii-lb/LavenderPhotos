@@ -1,25 +1,24 @@
 package com.kaii.photos.models.album_group
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.di.appModule
 import com.kaii.photos.screens.AlbumGroupState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class AlbumGroupViewModel(
-    context: Context,
-    id: String
+    id: String,
+    albumGridState: AlbumGridState = PhotosApplication.appModule.albumGridState,
+    private val settings: Settings = PhotosApplication.appModule.settings
 ) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
-
     val albumColumnSize = settings.lookAndFeel.getAlbumColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -46,7 +45,7 @@ class AlbumGroupViewModel(
 
     private val state = AlbumGroupState(
         id = id,
-        albumGridState = context.appModule.albumGridState,
+        albumGridState = albumGridState,
         groups = groups,
         sortMode = sortMode,
         scope = viewModelScope

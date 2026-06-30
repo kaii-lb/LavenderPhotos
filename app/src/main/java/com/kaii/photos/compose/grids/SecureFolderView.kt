@@ -39,13 +39,13 @@ import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
@@ -71,7 +71,7 @@ fun SecureFolderView(
         mutableStateOf(false)
     }
 
-    val allowScreenCapture by context.appModule.settings.permissions
+    val allowScreenCapture by PhotosApplication.appModule.settings.permissions
         .getAllowSecureFolderScreenCapture()
         .collectAsStateWithLifecycle(initialValue = false)
 
@@ -93,7 +93,7 @@ fun SecureFolderView(
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) context.appModule.scope.launch(Dispatchers.IO) {
+                            if (event == Lifecycle.Event.ON_DESTROY) PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                                 File(context.appSecureVideoCacheDir).listFiles()?.forEach {
                                     it.delete()
                                 }

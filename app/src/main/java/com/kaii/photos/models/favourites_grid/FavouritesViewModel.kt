@@ -5,10 +5,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.FavouritesRepository
@@ -19,17 +19,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 
 class FavouritesViewModel(
-    context: Context
-) : BaseViewModel(context) {
-    override val scope: CoroutineScope = context.appModule.scope
-    override val apiClient: ApiClient = context.appModule.apiClient
-
-    private val db = MediaDatabase.getInstance(context.applicationContext)
+    context: Context,
+    db: MediaDatabase = PhotosApplication.appModule.db,
+    override val scope: CoroutineScope = PhotosApplication.appModule.scope,
+    override val apiClient: ApiClient = PhotosApplication.appModule.apiClient
+) : BaseViewModel() {
     override val repo = FavouritesRepository(
         db = db,
-        client = context.applicationContext.appModule.apiClient,
+        client = apiClient,
         scope = viewModelScope,
         info = settings.immich.getImmichBasicInfo(),
         sortMode = settings.photoGrid.getSortMode(),
@@ -38,6 +38,31 @@ class FavouritesViewModel(
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    var selectionManager = SelectionManager(
+        sortMode = sortMode.value,
+        scope = viewModelScope,
+        context = context,
+        getMediaInDate = { timestamp ->
+            db.mediaDao().favMediaInDateRange(timestamp = timestamp, dateModified = sortMode.value.isDateModified)
+        }
+    )
+        private set
+
+    init {
+        viewModelScope.launch {
+            sortMode.collect {
+                selectionManager = SelectionManager(
+                    sortMode = it,
+                    scope = viewModelScope,
+                    context = context,
+                    getMediaInDate = { timestamp ->
+                        db.mediaDao().favMediaInDateRange(timestamp = timestamp, dateModified = it.isDateModified)
+                    }
+                )
+            }
+        }
+    }
 
     override fun copy(
         context: Context,
@@ -70,7 +95,7 @@ class FavouritesViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -120,7 +145,7 @@ class FavouritesViewModel(
                 )
             }.let { success ->
                 if (!success) {
-                    delay(1000)
+                    delay(1000.milliseconds)
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

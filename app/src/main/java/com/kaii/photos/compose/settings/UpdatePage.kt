@@ -61,10 +61,10 @@ import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.AnnotatedExplanationDialog
 import com.kaii.photos.compose.widgets.news.NewsList
-import com.kaii.photos.di.appModule
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.TextStylingConstants
@@ -228,7 +228,6 @@ private fun TopBar(
             }
         },
         actions = {
-            val context = LocalContext.current
             val resources = LocalResources.current
             var showDialog by remember { mutableStateOf(false) }
 
@@ -236,7 +235,7 @@ private fun TopBar(
                 if (showUpdateNotice()) {
                     showDialog = true
 
-                    context.appModule.settings.versions.setShowUpdateNotice(false)
+                    PhotosApplication.appModule.settings.versions.setShowUpdateNotice(false)
                 }
             }
 

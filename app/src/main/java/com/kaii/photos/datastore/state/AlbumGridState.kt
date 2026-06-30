@@ -7,6 +7,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import com.bumptech.glide.signature.ObjectKey
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
@@ -14,7 +15,6 @@ import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.parent
@@ -350,16 +350,16 @@ fun createAlbumGridState(
     context = context,
     mediaDao = MediaDatabase.getInstance(context).mediaDao(),
     customDao = MediaDatabase.getInstance(context).customDao(),
-    albumsFlow = context.appModule.settings.albums.get(),
-    sortModeFlow = context.appModule.settings.photoGrid.getSortMode(),
-    albumSortModeFlow = context.appModule.settings.albums.getSortMode(),
-    allAlbumsFlow = context.appModule.settings.albums.getAutoDetect(),
-    albumGroupsFlow = context.appModule.settings.albums.getGroups(),
-    albumsOrderFlow = context.appModule.settings.albums.getOrder(),
-    info = context.appModule.settings.immich.getImmichBasicInfo(),
+    albumsFlow = PhotosApplication.appModule.settings.albums.get(),
+    sortModeFlow = PhotosApplication.appModule.settings.photoGrid.getSortMode(),
+    albumSortModeFlow = PhotosApplication.appModule.settings.albums.getSortMode(),
+    allAlbumsFlow = PhotosApplication.appModule.settings.albums.getAutoDetect(),
+    albumGroupsFlow = PhotosApplication.appModule.settings.albums.getGroups(),
+    albumsOrderFlow = PhotosApplication.appModule.settings.albums.getOrder(),
+    info = PhotosApplication.appModule.settings.immich.getImmichBasicInfo(),
     apiClient = apiClient,
     updateAlbums = { added, updated, removed ->
-        val settings = context.appModule.settings.albums
+        val settings = PhotosApplication.appModule.settings.albums
         settings.removeAll(removed) // order is important here
         settings.add(added)
 

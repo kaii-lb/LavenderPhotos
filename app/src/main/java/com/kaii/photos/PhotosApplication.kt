@@ -26,7 +26,9 @@ import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 class PhotosApplication : Application() {
-    lateinit var appModule: AppModule
+    companion object {
+        lateinit var appModule: AppModule
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -40,7 +42,7 @@ class PhotosApplication : Application() {
             MediaDatabase.getInstance(applicationContext)
             registerContentObserver()
 
-            delay(2000)
+            delay(2000.milliseconds)
             CloudSyncWorker.enqueue(applicationContext)
         }
     }

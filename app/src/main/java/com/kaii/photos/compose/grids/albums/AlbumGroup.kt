@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kaii.photos.LocalNavController
@@ -26,6 +25,7 @@ import com.kaii.photos.models.album_group.AlbumGroupViewModelFactory
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +33,7 @@ fun AlbumGroup(
     id: String,
     modifier: Modifier = Modifier,
     viewModel: AlbumGroupViewModel = viewModel(
-        factory = AlbumGroupViewModelFactory(
-            context = LocalContext.current,
-            id = id
-        )
+        factory = AlbumGroupViewModelFactory(id = id)
     )
 ) {
     val navController = LocalNavController.current
@@ -80,7 +77,7 @@ fun AlbumGroup(
                     if (viewModel.group != null) {
                         coroutineScope.launch {
                             showInfoDialog = true
-                            delay(50)
+                            delay(50.milliseconds)
                             sheetState.expand()
                         }
                     }

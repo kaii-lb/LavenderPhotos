@@ -25,7 +25,7 @@ class UpdaterViewModelFactory(
 
             return UpdaterViewModel(
                 latestNewsRepository = repository,
-                paramProvider = UpdaterParamProvider(context.applicationContext)
+                paramProvider = UpdaterParamProvider()
             ) as T
         }
         throw IllegalArgumentException("${UpdaterViewModel::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${UpdaterViewModel::class.simpleName}!! This should never happen!!")

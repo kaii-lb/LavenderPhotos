@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.settings.ThumbnailSizeDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
@@ -58,12 +58,12 @@ import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
 @Composable
@@ -83,7 +83,7 @@ private fun MemoryAndStorageSettingsPagePreview() {
 
 @Composable
 fun MemoryAndStorageSettingsPage(modifier: Modifier = Modifier) {
-    val settings = LocalContext.current.appModule.settings.storage
+    val settings = PhotosApplication.appModule.settings.storage
 
     val thumbnailSize by settings.getThumbnailSize().collectAsStateWithLifecycle(initialValue = 0)
     val cacheThumbnails by settings.getCacheThumbnails().collectAsStateWithLifecycle(initialValue = true)
@@ -235,7 +235,7 @@ private fun MemoryAndStorageSettingsPageImpl(
 
                 val interactionSource = remember { MutableInteractionSource() }
                 LaunchedEffect(interactionSource) {
-                    delay(100)
+                    delay(100.milliseconds)
                     currentQuality = exportQuality()
                     interactionSource.interactions.collectLatest {
                         if (it is PressInteraction.Release) {

@@ -44,7 +44,6 @@ fun StartupLoadingPage(
 
     LaunchedEffect(mainPhotosAlbums) {
         album = album.copy(paths = mainPhotosAlbums)
-        mainGridViewModel.changeAlbum(album = album)
     }
 
     Box {

@@ -72,7 +72,7 @@ class CustomRepository(
     )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow = params.flatMapLatest { params ->
+    override val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -91,7 +91,7 @@ class CustomRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = params.flatMapLatest { params ->
+    override val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = params.sortMode,
             format = params.format

@@ -31,13 +31,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.IsSelectingTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.dialogs.user_action.AlbumPathsDialog
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
@@ -138,7 +138,6 @@ fun SingleAlbumViewTopBar(
 
                     if (!isMediaPicker && info is AlbumType.Folder && !info.wasCloud) {
                         var showPathsDialog by remember { mutableStateOf(false) }
-                        val context = LocalContext.current
 
                         if (showPathsDialog) {
                             AlbumPathsDialog(
@@ -150,7 +149,7 @@ fun SingleAlbumViewTopBar(
                                             paths = selectedPaths
                                         )
 
-                                    context.appModule.settings.albums.edit(
+                                    PhotosApplication.appModule.settings.albums.edit(
                                         id = info.id,
                                         newInfo = newInfo
                                     )

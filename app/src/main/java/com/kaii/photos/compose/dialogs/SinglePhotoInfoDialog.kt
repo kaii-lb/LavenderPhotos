@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
@@ -69,7 +70,6 @@ import com.kaii.photos.compose.widgets.date_time.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -417,7 +417,7 @@ private fun Content(
         val coroutineScope = rememberCoroutineScope()
         val permissionState = rememberFilePermissionManager(
             onGranted = {
-                context.appModule.scope.launch(Dispatchers.IO) {
+                PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                     try {
                         eraseExifMedia(mediaItem().absolutePath)
 

@@ -6,8 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.domain.settings.SortModeItem
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import kotlinx.coroutines.CoroutineScope
@@ -38,10 +37,10 @@ class SortModePickerState(
 
 @Composable
 fun rememberSortModePickerState(): SortModePickerState {
-    val settings = LocalContext.current.appModule.settings.photoGrid
     val coroutineScope = rememberCoroutineScope()
 
     return remember {
+        val settings = PhotosApplication.appModule.settings.photoGrid
         SortModePickerState(
             sortModeFlow = settings.getSortMode(),
             coroutineScope = coroutineScope,

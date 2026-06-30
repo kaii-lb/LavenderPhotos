@@ -23,7 +23,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.editing.applyEffects
 import io.github.kaii_lb.lavender.immichintegration.Auth
@@ -279,7 +279,7 @@ class LavenderExoPlayer(
 
             is Input.Networked -> {
                 val cacheSink = CacheDataSink.Factory()
-                    .setCache(context.appModule.cache)
+                    .setCache(PhotosApplication.appModule.cache)
 
                 val downstream = FileDataSource.Factory()
                 val upstream = DefaultHttpDataSource.Factory()
@@ -288,7 +288,7 @@ class LavenderExoPlayer(
                     .setDefaultRequestProperties(input.auth.headers)
 
                 val factory = CacheDataSource.Factory()
-                    .setCache(context.appModule.cache)
+                    .setCache(PhotosApplication.appModule.cache)
                     .setCacheWriteDataSinkFactory(cacheSink)
                     .setCacheReadDataSourceFactory(downstream)
                     .setUpstreamDataSourceFactory(upstream)

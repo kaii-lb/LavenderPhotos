@@ -40,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
@@ -49,7 +50,6 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.filename
@@ -88,7 +88,7 @@ class OpenWithView : ComponentActivity() {
                     else -> 0
                 }
 
-            val followDarkTheme by applicationContext.appModule.settings.lookAndFeel.getFollowDarkMode()
+            val followDarkTheme by PhotosApplication.appModule.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialDarkMode
                 )
@@ -319,8 +319,8 @@ private fun Content(uri: Uri, window: Window) {
             }
 
             else -> {
-                val blurViews by context.appModule.settings.lookAndFeel.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
-                val useBlackBackground by context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews()
+                val blurViews by PhotosApplication.appModule.settings.lookAndFeel.getBlurViews().collectAsStateWithLifecycle(initialValue = false)
+                val useBlackBackground by PhotosApplication.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews()
                     .collectAsStateWithLifecycle(initialValue = false)
 
                 OpenWithContent(

@@ -10,7 +10,7 @@ class MainGridViewModelFactory(
 ) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == MainGridViewModel::class.java) {
-            return MainGridViewModel(context) as T
+            return MainGridViewModel(context = context) as T
         }
         throw IllegalArgumentException("${MainGridViewModelFactory::class.simpleName}: Cannot cast ${modelClass.simpleName} as ${MainGridViewModel::class.simpleName}!! This should never happen!!")
     }

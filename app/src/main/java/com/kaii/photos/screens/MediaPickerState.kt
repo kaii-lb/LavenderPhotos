@@ -16,8 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import io.github.kaii_lb.lavender.immichintegration.Auth
@@ -51,7 +51,7 @@ class MediaPickerState(
 
     init {
         coroutineScope.launch {
-            context.appModule.settings.immich.getImmichBasicInfo().collect {
+            PhotosApplication.appModule.settings.immich.getImmichBasicInfo().collect {
                 endpoint = it.endpoint
                 auth = it.auth
             }
@@ -70,7 +70,7 @@ class MediaPickerState(
         val cacheDir = context.cacheDir
 
         val assetClient = AssetsClient(
-            client = context.appModule.apiClient,
+            client = PhotosApplication.appModule.apiClient,
             endpoint = endpoint,
             auth = auth
         )

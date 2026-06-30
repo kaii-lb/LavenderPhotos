@@ -10,13 +10,13 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.bumptech.glide.Glide
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.SecureFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
@@ -36,6 +36,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +63,8 @@ class SecureRepository(
     context: Context,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
-    info: Flow<ImmichBasicInfo>
+    info: Flow<ImmichBasicInfo>,
+    apiClient: ApiClient = PhotosApplication.appModule.apiClient
 ) : BaseRepo {
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
@@ -128,12 +130,12 @@ class SecureRepository(
         assetClient = AssetsClient(
             endpoint = "",
             auth = Auth.None,
-            client = context.appModule.apiClient
+            client = apiClient
         ),
         albumsClient = AlbumsClient(
             endpoint = "",
             auth = Auth.None,
-            client = context.appModule.apiClient
+            client = apiClient
         )
     )
 
@@ -146,6 +148,7 @@ class SecureRepository(
     // freeze a not-ready zero-iv row. serialise load() and coalesce bursts: while one runs, extra
     // requests just set a rerun flag instead of spawning more coroutines
     private val loadMutex = Mutex()
+
     @Volatile
     private var loadQueued = false
 
@@ -209,7 +212,7 @@ class SecureRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow = params.flatMapLatest { params ->
+    override val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -225,7 +228,7 @@ class SecureRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = params.flatMapLatest { params ->
+    override val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
@@ -291,8 +294,7 @@ class SecureRepository(
                         // format magic and re-recover if bad rather than trusting size==16 forever
                         if (SecureIvRecovery.ivProducesValidHeader(file, iv, mimeType)) iv
                         else SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: iv
-                    }
-                    else if (iv != null) SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: ByteArray(16)
+                    } else if (iv != null) SecureIvRecovery.recoverAndPersist(context, file, mimeType, secureDao) ?: ByteArray(16)
                     else ByteArray(16)
                 fileIv + (thumbnailIv ?: ByteArray(16))
             }
@@ -422,7 +424,7 @@ class SecureRepository(
     /**
      * Regenerate a secure video's thumbnail. The original source is already deleted by securing time,
      * so the frame must come from the encrypted copy: decrypt it to the video cache, grab a frame,
-     * re-encrypt the thumbnail. Mirrors the create path in [LocalSecureManager.secure].
+     * re-encrypt the thumbnail. Mirrors the create path in [com.kaii.photos.file_management.secure.LocalSecureManager.secure].
      */
     private suspend fun addVideoThumbnail(
         file: File,
@@ -455,7 +457,10 @@ class SecureRepository(
         } catch (e: Throwable) {
             Log.e(TAG, "Cannot extract frame from ${file.name}", e)
         } finally {
-            try { retriever.release() } catch (_: Exception) {}
+            try {
+                retriever.release()
+            } catch (_: Exception) {
+            }
             decrypted.delete()
         }
     }

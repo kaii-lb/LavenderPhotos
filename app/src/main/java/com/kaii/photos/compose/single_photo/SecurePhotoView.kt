@@ -73,13 +73,13 @@ import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -117,7 +117,8 @@ fun SecurePhotoView(
 
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
 
-    val allowScreenCapture by context.appModule.settings.permissions
+    // TODO: viewmodel this
+    val allowScreenCapture by PhotosApplication.appModule.settings.permissions
         .getAllowSecureFolderScreenCapture()
         .collectAsStateWithLifecycle(initialValue = false)
 
@@ -139,7 +140,7 @@ fun SecurePhotoView(
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.GridView::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) context.appModule.scope.launch(Dispatchers.IO) {
+                            if (event == Lifecycle.Event.ON_DESTROY) PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                                 File(context.appSecureVideoCacheDir).listFiles()?.forEach {
                                     it.delete()
                                 }

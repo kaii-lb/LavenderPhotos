@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.settings.DateFormatDialog
 import com.kaii.photos.compose.dialogs.settings.TopBarDetailsFormatDialog
@@ -54,7 +55,6 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
 import com.kaii.photos.compose.widgets.popup_choosers.LanguagePickerPopup
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -72,7 +72,7 @@ import kotlin.time.ExperimentalTime
 
 @Composable
 fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
-    val settings = LocalContext.current.appModule.settings.lookAndFeel
+    val settings = PhotosApplication.appModule.settings.lookAndFeel
 
     val followDarkMode by settings.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
     val displayDateFormat by settings.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)

@@ -35,12 +35,12 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -58,7 +58,7 @@ private const val TAG = "com.kaii.photos.compose.settings.DataAndBackupPage"
 
 @Composable
 fun DataAndBackupPage(modifier: Modifier = Modifier) {
-    val settings = LocalContext.current.appModule.settings
+    val settings = PhotosApplication.appModule.settings
 
     DataAndBackupPageImpl(
         modifier = modifier,
@@ -105,7 +105,7 @@ private fun DataAndBackupPageImpl(
                 val isLoading = remember { mutableStateOf(false) }
 
                 val authManager = rememberExportAuthManager {
-                    context.appModule.scope.launch(Dispatchers.IO) {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(
                             applicationDatabase = MediaDatabase.getInstance(context)
                         )
@@ -153,7 +153,7 @@ private fun DataAndBackupPageImpl(
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    context.appModule.scope.launch(Dispatchers.IO) {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(
                             applicationDatabase = MediaDatabase.getInstance(context)
                         )
@@ -200,7 +200,7 @@ private fun DataAndBackupPageImpl(
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    context.appModule.scope.launch(Dispatchers.IO) {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(
                             applicationDatabase = MediaDatabase.getInstance(context)
                         )
@@ -258,7 +258,7 @@ private fun DataAndBackupPageImpl(
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    context.appModule.scope.launch {
+                    PhotosApplication.appModule.scope.launch {
                         val helper = DataAndBackupHelper(
                             applicationDatabase = MediaDatabase.getInstance(context)
                         )
@@ -306,7 +306,7 @@ private fun DataAndBackupPageImpl(
                 val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
                 val authManager = rememberExportAuthManager {
-                    context.appModule.scope.launch(Dispatchers.IO) {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val helper = DataAndBackupHelper(
                             applicationDatabase = MediaDatabase.getInstance(context)
                         )

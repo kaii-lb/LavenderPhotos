@@ -51,18 +51,18 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
-import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
@@ -70,9 +70,9 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
-import com.kaii.photos.screens.video.retainVideoPlayerState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.screens.video.retainVideoPlayerState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -319,7 +319,7 @@ private fun BottomBar(
                         iconResId = R.drawable.paintbrush,
                         cornerRadius = 32.dp,
                         action = {
-                            context.appModule.scope.launch(Dispatchers.IO) {
+                            PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                                 val isLoading = mutableStateOf(true)
 
                                 LavenderSnackbarController.pushEvent(
@@ -373,7 +373,7 @@ private fun BottomBar(
 
                                     isLoading.value = false
 
-                                    context.appModule.scope.launch(Dispatchers.Main) {
+                                    PhotosApplication.appModule.scope.launch(Dispatchers.Main) {
                                         navController.navigate(
                                             if (mediaType == MediaType.Image) {
                                                 Screens.ImageEditor(

@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.IntentSender
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.SecureRepository
@@ -19,9 +19,9 @@ import kotlinx.coroutines.launch
 
 class SecureFolderViewModel(
     context: Context
-) : BaseViewModel(context) {
-    override val scope: CoroutineScope = context.appModule.scope
-    override val apiClient: ApiClient = context.appModule.apiClient
+) : BaseViewModel() {
+    override val scope: CoroutineScope = PhotosApplication.appModule.scope
+    override val apiClient: ApiClient = PhotosApplication.appModule.apiClient
 
     override val repo = SecureRepository(
         context = context,
@@ -46,7 +46,7 @@ class SecureFolderViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        context.appModule.scope.launch {
+        PhotosApplication.appModule.scope.launch {
             val isLoading = mutableStateOf(true)
 
             LavenderSnackbarController.pushEvent(
@@ -67,7 +67,7 @@ class SecureFolderViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        context.appModule.scope.launch {
+        PhotosApplication.appModule.scope.launch {
             val isLoading = mutableStateOf(true)
 
             LavenderSnackbarController.pushEvent(
@@ -88,7 +88,7 @@ class SecureFolderViewModel(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ) {
-        context.appModule.scope.launch {
+        PhotosApplication.appModule.scope.launch {
             val isLoading = mutableStateOf(true)
 
             LavenderSnackbarController.pushEvent(

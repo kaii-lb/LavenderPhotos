@@ -30,8 +30,7 @@ private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
 /** Loads metadata from the media store for images and videos. */
 class TrashDataSource(
-    private val context: Context,
-    private val cancellationSignal: CancellationSignal
+    private val context: Context
 ) {
     companion object {
         private val PROJECTION =
@@ -49,6 +48,8 @@ class TrashDataSource(
                 MediaColumns.DURATION
             )
     }
+
+    private val cancellationSignal = CancellationSignal()
 
     fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
         val contentObserver =
@@ -165,4 +166,6 @@ class TrashDataSource(
 
         return holderMap.sortedByDescending { it.dateModified }
     }
+
+    fun cancel() = cancellationSignal.cancel()
 }

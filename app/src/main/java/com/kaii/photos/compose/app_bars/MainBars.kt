@@ -72,8 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesBottomAppBarItems
-import com.kaii.photos.compose.app_bars.trash_grid.TrashPhotoGridBottomBarItems
 import com.kaii.photos.compose.dialogs.user_action.AlbumAddChoiceDialog
 import com.kaii.photos.compose.widgets.AnimatedLoginIcon
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
@@ -289,23 +287,6 @@ fun MainAppBottomBar(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             when (currentTab) {
-                                DefaultTabs.TabTypes.trash -> {
-                                    TrashPhotoGridBottomBarItems(
-                                        selectionManager = selectionManager,
-                                        process = {}
-                                    )
-                                }
-
-                                DefaultTabs.TabTypes.favourites -> {
-                                    FavouritesBottomAppBarItems(
-                                        selectionManager = selectionManager,
-                                        confirmToDelete = confirmToDelete,
-                                        doNotTrash = doNotTrash,
-                                        allowedAlbumsFor = allowedAlbumsFor,
-                                        process = process
-                                    )
-                                }
-
                                 else -> {
                                     SelectingBottomBarItems(
                                         albumInfo = AlbumType.Folder(

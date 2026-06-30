@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.app_bars
 
 import android.view.Window
+import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -41,15 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.helpers.AnimationConstants
 
 /** please only use dialogComposable for its intended purpose */
@@ -158,9 +157,9 @@ fun setBarVisibility(
 
     window.insetsController?.apply {
         if (visible) {
-            show(WindowInsetsCompat.Type.systemBars())
+            show(WindowInsets.Type.systemBars())
         } else {
-            hide(WindowInsetsCompat.Type.systemBars())
+            hide(WindowInsets.Type.systemBars())
             systemBarsBehavior =
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
@@ -179,7 +178,8 @@ fun DualFunctionTopAppBar(
     alternateActions: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = @Composable {}
 ) {
-    val settings = LocalContext.current.appModule.settings
+    // TODO: clean this up
+    val settings = PhotosApplication.appModule.settings
     val isAmoled by settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = false)
 
     TopAppBar(

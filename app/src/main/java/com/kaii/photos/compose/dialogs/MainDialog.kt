@@ -50,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
@@ -59,7 +60,6 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.news.NewsPopup
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.helpers.RowPosition
@@ -86,7 +86,7 @@ fun MainDialog(
     CompositionLocalProvider(
         LocalRippleConfiguration provides null
     ) {
-        val progressManager = LocalContext.current.appModule.cloudProgressManager
+        val progressManager = PhotosApplication.appModule.cloudProgressManager
         val navController = LocalNavController.current
         val isLandscape by rememberDeviceOrientation()
 

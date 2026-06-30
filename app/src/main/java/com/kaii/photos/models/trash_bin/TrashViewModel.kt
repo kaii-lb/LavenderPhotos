@@ -5,13 +5,17 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.di.appModule
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.mediastore.TrashDataSource
 import com.kaii.photos.repositories.TrashRepository
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
@@ -21,10 +25,12 @@ import kotlinx.coroutines.launch
 
 class TrashViewModel(
     context: Context,
-    private val scope: CoroutineScope = context.appModule.scope
+    datasource: TrashDataSource,
+    db: MediaDatabase = PhotosApplication.appModule.db,
+    apiClient: ApiClient = PhotosApplication.appModule.apiClient,
+    settings: Settings = PhotosApplication.appModule.settings,
+    private val scope: CoroutineScope = PhotosApplication.appModule.scope
 ) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
-
     val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -91,19 +97,27 @@ class TrashViewModel(
         initialValue = true
     )
 
-    private val db = MediaDatabase.getInstance(context.applicationContext)
     private val repo = TrashRepository(
         db = db,
-        client = context.appModule.apiClient,
+        client = apiClient,
         scope = viewModelScope,
-        context = context,
         sortMode = settings.photoGrid.getSortMode(),
         format = settings.lookAndFeel.getDisplayDateFormat(),
-        info = settings.immich.getImmichBasicInfo()
+        info = settings.immich.getImmichBasicInfo(),
+        dataSource = datasource
     )
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    val selectionManager = SelectionManager(
+        sortMode = MediaItemSortMode.DateModified,
+        scope = viewModelScope,
+        context = context,
+        getMediaInDate = { timestamp ->
+            repo.getItemsForDate(timestamp, MediaItemSortMode.DateModified)
+        }
+    )
 
     override fun onCleared() {
         repo.cancel()

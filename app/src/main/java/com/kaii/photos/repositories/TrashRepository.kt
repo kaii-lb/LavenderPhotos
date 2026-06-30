@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.os.CancellationSignal
 import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -34,16 +33,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
 class TrashRepository(
     db: MediaDatabase,
     client: ApiClient,
     scope: CoroutineScope,
-    context: Context,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
-    info: Flow<ImmichBasicInfo>
+    info: Flow<ImmichBasicInfo>,
+    private val dataSource: TrashDataSource
 ) : BaseRepo {
     private data class Params(
         val items: List<MediaStoreData>,
@@ -51,13 +51,6 @@ class TrashRepository(
         override val format: DisplayDateFormat,
         override val info: ImmichBasicInfo
     ) : RoomQueryParams(sortMode, format, info)
-
-    private val cancellationSignal = CancellationSignal()
-    private val dataSource =
-        TrashDataSource(
-            context = context,
-            cancellationSignal = cancellationSignal
-        )
 
     override val fileManager = LocalFileManager(
         mediaDao = db.mediaDao(),
@@ -100,7 +93,7 @@ class TrashRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val mediaFlow = params.flatMapLatest { params ->
+    override val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -116,14 +109,14 @@ class TrashRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val gridMediaFlow = params.flatMapLatest { params ->
+    override val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
         )
     }.cachedIn(scope)
 
-    fun cancel() = cancellationSignal.cancel()
+    fun cancel() = dataSource.cancel()
 
     override suspend fun delete(
         context: Context,
@@ -159,5 +152,30 @@ class TrashRepository(
 
     override suspend fun renameAlbum(context: Context, newName: String) {
         throw IllegalAccessException("This cannot and should not be called in a search context.")
+    }
+
+    suspend fun getItemsForDate(
+        timestamp: Long,
+        sortMode: MediaItemSortMode
+    ) = withContext(Dispatchers.IO) {
+        val allTrashItems = dataSource.query()
+
+        allTrashItems.filter { item ->
+            val key = when {
+                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
+                sortMode.isDateModified -> item.getDateModifiedDay()
+                else -> item.getDateTakenDay()
+            }
+
+            key in timestamp..(timestamp + 86400)
+        }.associate { item ->
+            item.id to SelectionManager.SelectedItem(
+                id = item.id,
+                uri = item.uri,
+                immichUrl = item.immichUrl,
+                isImage = item.type == MediaType.Image,
+                parentPath = item.parentPath
+            )
+        }.toMap()
     }
 }

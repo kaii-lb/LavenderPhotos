@@ -23,7 +23,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.settings.DefaultTabSelectorDialog
 import com.kaii.photos.compose.dialogs.settings.TabCustomizationDialog
@@ -43,7 +43,6 @@ import com.kaii.photos.compose.widgets.popup_choosers.SortModePopupChooser
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -57,7 +56,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun GeneralSettingsPage(modifier: Modifier = Modifier) {
-    val settings = LocalContext.current.appModule.settings
+    val settings = PhotosApplication.appModule.settings
     val navController = LocalNavController.current
 
     val mainPhotosPaths by settings.mainPhotosView.getAlbums().collectAsStateWithLifecycle(initialValue = emptySet())
@@ -98,7 +97,7 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
         shouldShowEverything = { false },
         autoDetectAlbums = { false },
         currentSortMode = { MediaItemSortMode.DateTaken },
-        tabList = { DefaultTabs.extendedList },
+        tabList = { DefaultTabs.defaultList },
         defaultTab = { DefaultTabs.TabTypes.photos },
         checkForUpdatesOnStartup = { false },
         modifier = modifier,
@@ -212,8 +211,6 @@ private fun GeneralSettingsPageImpl(
             }
 
             item {
-                val context = LocalContext.current
-
                 val isAlreadyLoading = remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
                 val findingAlbums = stringResource(id = R.string.finding_albums_on_device)
@@ -228,7 +225,7 @@ private fun GeneralSettingsPageImpl(
                     checked = autoDetectAlbums()
                 ) { checked ->
                     // as to keep the MutableState alive even if the user leaves the screen
-                    context.appModule.scope.launch(Dispatchers.IO) {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         if (!isAlreadyLoading.value) {
                             isAlreadyLoading.value = true
 

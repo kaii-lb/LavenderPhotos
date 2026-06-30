@@ -9,9 +9,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.core.net.toUri
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.di.appModule
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.permissions.files.FilePermissionsState
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -70,7 +70,7 @@ fun rememberDateTimePickerState(
     val resources = LocalResources.current
     val permissionManager = rememberFilePermissionManager(
         onGranted = {
-            context.appModule.scope.launch {
+            PhotosApplication.appModule.scope.launch {
                 state.setIsError(error = false)
                 state.setIsLoading(loading = false)
                 state.save()

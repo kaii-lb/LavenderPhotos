@@ -6,11 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.editing.CustomFileEditor
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.file_management.editing.HybridFileEditor
@@ -28,7 +28,7 @@ class EditorViewModel(
     context: Context,
     album: AlbumType
 ) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
+    private val settings = PhotosApplication.appModule.settings
     private var exitOnSave = false
 
     val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
@@ -66,12 +66,12 @@ class EditorViewModel(
 
     private val db = MediaDatabase.getInstance(context.applicationContext)
     private val assetsClient = AssetsClient(
-        client = context.appModule.apiClient,
+        client = PhotosApplication.appModule.apiClient,
         endpoint = "",
         auth = Auth.None
     )
     private val albumsClient = AlbumsClient(
-        client = context.appModule.apiClient,
+        client = PhotosApplication.appModule.apiClient,
         endpoint = "",
         auth = Auth.None
     )
@@ -120,7 +120,7 @@ class EditorViewModel(
         navController: NavController,
         params: GenericFileEditor.EditParameters.Image
     ) {
-        params.context.appModule.scope.launch {
+        PhotosApplication.appModule.scope.launch {
             val isLoading = mutableStateOf(true)
 
             LavenderSnackbarController.pushEvent(
@@ -172,7 +172,7 @@ class EditorViewModel(
         navController: NavController,
         params: GenericFileEditor.EditParameters.Video
     ) {
-        params.context.appModule.scope.launch {
+        PhotosApplication.appModule.scope.launch {
             val result = editor.editVideo(
                 context = params.context,
                 modifications = params.modifications,

@@ -1,11 +1,11 @@
 package com.kaii.photos.database.sync
 
 import android.content.Context
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
@@ -25,17 +25,18 @@ class CloudSyncManager(
     private val localFileManager: LocalFileManager,
     customFileManager: CustomFileManager
 ) {
-    private val progressManager = context.appModule.cloudProgressManager
+    val appModule = PhotosApplication.appModule
+    private val progressManager = appModule.cloudProgressManager
 
     private val localSyncHandler = LocalSyncHandler(
         fileManager = localFileManager,
         progressManager = progressManager,
-        albums = context.appModule.settings.albums
+        albums = appModule.settings.albums
     )
     private val customSyncHandler = CustomSyncHandler(
         fileManager = customFileManager,
         progressManager = progressManager,
-        albums = context.appModule.settings.albums
+        albums = appModule.settings.albums
     )
     private val cloudCleanupHandler = CloudCleanupHandler(
         mediaDao = cloudFileManager.mediaDao,
@@ -73,7 +74,7 @@ class CloudSyncManager(
         albums.forEach { album ->
             if (album is AlbumType.Custom) {
                 customSyncHandler.sync(context, album)
-            } else if (album is AlbumType.Folder ){
+            } else if (album is AlbumType.Folder) {
                 localSyncHandler.sync(context, album)
             }
         }
@@ -96,7 +97,7 @@ class CloudSyncManager(
 
         if (album is AlbumType.Custom) {
             customSyncHandler.sync(context, album)
-        } else if (album is AlbumType.Folder ){
+        } else if (album is AlbumType.Folder) {
             localSyncHandler.sync(context, album)
         }
 
@@ -170,7 +171,7 @@ class CloudSyncManager(
     private suspend fun renameAlbumTask(
         task: SyncTask
     ) = withContext(Dispatchers.IO) {
-        val album = context.appModule.settings.albums
+        val album = appModule.settings.albums
             .get()
             .first()
             .first { it.id == task.destination }
@@ -187,7 +188,7 @@ class CloudSyncManager(
         task: SyncTask,
         items: List<SelectionManager.SelectedItem>
     ) = withContext(Dispatchers.IO) {
-        val album = context.appModule.settings.albums
+        val album = appModule.settings.albums
             .get()
             .first()
             .first { it.id == task.destination }

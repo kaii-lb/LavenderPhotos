@@ -10,11 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.helpers.DataAndBackupHelper
@@ -216,7 +216,7 @@ fun rememberSecureFolderManager(): SecureFolderMigrationManager {
         SecureFolderMigrationManager(
             context = context,
             appDatabase = MediaDatabase.getInstance(context = context),
-            albums = context.appModule.settings.albums
+            albums = PhotosApplication.appModule.settings.albums
         )
     }
 }

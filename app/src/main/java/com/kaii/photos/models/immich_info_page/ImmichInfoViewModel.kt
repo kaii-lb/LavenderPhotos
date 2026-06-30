@@ -6,12 +6,14 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.repositories.ImmichInfoRepository
 import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -23,17 +25,15 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 class ImmichInfoViewModel(
-    context: Context
+    apiClient: ApiClient = PhotosApplication.appModule.apiClient,
+    private val settings: Settings = PhotosApplication.appModule.settings
 ) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
-
     val info = settings.immich.getImmichBasicInfo().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val apiClient = context.appModule.apiClient
     val repo = ImmichInfoRepository(
         serverClient = ServerClient(
             client = apiClient,

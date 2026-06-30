@@ -54,6 +54,7 @@ import androidx.navigation.toRoute
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.grids.FavouritesGridView
@@ -63,7 +64,6 @@ import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.rememberSingleJobRunner
@@ -92,8 +92,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
 
-// private const val TAG = "com.kaii.photos.compose.MediaPicker"
-
 class MediaPicker : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,7 +99,7 @@ class MediaPicker : ComponentActivity() {
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val incomingIntent = intent
-        val settings = applicationContext.appModule.settings
+        val settings = PhotosApplication.appModule.settings
 
         setContent {
             val initialFollowDarkTheme = runBlocking(Dispatchers.IO) {
@@ -185,7 +183,7 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     setupNextScreen(window)
 
-                    val deviceAlbums by appModule.albumGridState.albums.collectAsStateWithLifecycle()
+                    val deviceAlbums by PhotosApplication.appModule.albumGridState.albums.collectAsStateWithLifecycle()
                     val storeOwner = remember(it) {
                         navController.getBackStackEntry(Screens.MainPages)
                     }
@@ -200,7 +198,7 @@ class MediaPicker : ComponentActivity() {
                         deviceAlbums = { deviceAlbums },
                         window = window,
                         incomingIntent = incomingIntent,
-                        refreshAlbums = appModule.albumGridState::refresh
+                        refreshAlbums = PhotosApplication.appModule.albumGridState::refresh
                     )
                 }
             }
@@ -235,7 +233,6 @@ class MediaPicker : ComponentActivity() {
                 }
             }
 
-            // TODO: immich albums
             navigation<Screens.CustomAlbum>(
                 startDestination = Screens.CustomAlbum.GridView::class
             ) {
@@ -249,10 +246,7 @@ class MediaPicker : ComponentActivity() {
                     val screen = it.toRoute<Screens.CustomAlbum.GridView>()
 
                     val viewModel: CustomAlbumViewModel = viewModel(
-                        factory = CustomAlbumViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
+                        factory = CustomAlbumViewModelFactory(album = screen.album)
                     )
 
                     SingleAlbumView(
@@ -270,9 +264,7 @@ class MediaPicker : ComponentActivity() {
                     setupNextScreen(window)
 
                     val viewModel = viewModel<FavouritesViewModel>(
-                        factory = FavouritesViewModelFactory(
-                            context = context
-                        )
+                        factory = FavouritesViewModelFactory(context)
                     )
 
                     FavouritesGridView(
@@ -317,10 +309,7 @@ class MediaPicker : ComponentActivity() {
 
                     val screen = it.toRoute<Screens.Immich.GridView>()
                     val viewModel = viewModel<ImmichAlbumViewModel>(
-                        factory = ImmichAlbumViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
+                        factory = ImmichAlbumViewModelFactory(album = screen.album)
                     )
 
                     SingleAlbumView(

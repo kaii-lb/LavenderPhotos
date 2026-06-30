@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.IntentSender
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
@@ -21,27 +22,25 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 
 abstract class BaseViewModel(
-    context: Context
+    val settings: Settings = PhotosApplication.appModule.settings
 ) : ViewModel() {
     abstract val scope: CoroutineScope
     abstract val apiClient: ApiClient
     abstract val repo: BaseRepo
 
-    val settings = context.applicationContext.appModule.settings
-
-    val useBlackBackground = context.appModule.settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val confirmToDelete = context.appModule.settings.permissions.getConfirmToDelete().stateIn(
+    val confirmToDelete = settings.permissions.getConfirmToDelete().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val doNotTrash = context.appModule.settings.permissions.getDoNotTrash().stateIn(
+    val doNotTrash = settings.permissions.getDoNotTrash().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false

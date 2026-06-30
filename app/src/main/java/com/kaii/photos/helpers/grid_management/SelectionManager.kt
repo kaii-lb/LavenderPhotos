@@ -14,11 +14,11 @@ import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.epochToDayStart
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.MediaType
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -35,10 +35,10 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 class SelectionManager(
-    private val sortMode: MediaItemSortMode,
+    private var sortMode: MediaItemSortMode,
     private val scope: CoroutineScope,
     private val context: Context,
-    private val getMediaInDate: (Long) -> Map<Long, SelectedItem>
+    private val getMediaInDate: suspend (Long) -> Map<Long, SelectedItem>
 ) {
     @Serializable
     data class SelectedItem(
@@ -319,8 +319,13 @@ class SelectionManager(
         _selection = snapshot
         _sections = sections
     }
+
+    fun setSortMode(mode: MediaItemSortMode) {
+        sortMode = mode
+    }
 }
 
+// TODO: move these to view-models
 @Composable
 fun rememberSelectionManager(
     paths: () -> Set<String>
@@ -328,7 +333,7 @@ fun rememberSelectionManager(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
 
     return remember(sortMode, context, paths()) {
         SelectionManager(
@@ -352,7 +357,7 @@ fun rememberSelectionManager(
 @Composable
 fun rememberFavSelectionManager(): SelectionManager {
     val context = LocalContext.current
-    val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val coroutineScope = rememberCoroutineScope()
 
     return remember(sortMode, context) {
@@ -372,7 +377,7 @@ fun rememberFavSelectionManager(): SelectionManager {
 @Composable
 fun rememberCustomSelectionManager(albumId: String): SelectionManager {
     val context = LocalContext.current
-    val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val coroutineScope = rememberCoroutineScope()
 
     return remember(sortMode, albumId) {
@@ -398,7 +403,7 @@ fun rememberSelectionManager(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>
 ): SelectionManager {
     val context = LocalContext.current
-    val sortMode by context.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
+    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
     val coroutineScope = rememberCoroutineScope()
 
     return remember(sortMode, context) {

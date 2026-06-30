@@ -54,13 +54,11 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.MediaPickerConfirmButton
-import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
@@ -69,17 +67,10 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.ComponentViewModelScope
-import com.kaii.photos.helpers.grid_management.rememberFavSelectionManager
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
-import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
-import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.setupNextScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -139,10 +130,7 @@ fun MainPages(
         state = floatingBarState
     )
 
-    var paths by remember { mutableStateOf(mainPhotosPaths) }
-    val selectionManager = rememberSelectionManager(paths = { paths })
-
-    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+    val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     var showTagDialog by remember { mutableStateOf(false) }
 
     val tagViewModel = viewModel<TagViewModel>(
@@ -154,7 +142,7 @@ fun MainPages(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
+        viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -179,7 +167,7 @@ fun MainPages(
 
             MainAppTopBar(
                 alternate = { isSelecting },
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 immichInfo = { immichInfo },
                 showAddAlbumButton = {
                     tabList.isNotEmpty() && tabList[pagerState.settledPage] == DefaultTabs.TabTypes.albums
@@ -209,7 +197,7 @@ fun MainPages(
                 val context = LocalContext.current
                 MainAppBottomBar(
                     pagerState = pagerState,
-                    selectionManager = selectionManager,
+                    selectionManager = viewModel.selectionManager,
                     tabs = tabList,
                     defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
@@ -291,7 +279,7 @@ fun MainPages(
             coroutineScope.launch {
                 snapshotFlow { pagerState.currentPage }.collectLatest {
                     setupNextScreen(window = window)
-                    selectionManager.clear()
+                    viewModel.selectionManager.clear()
 
                     if (lastPage != tabList.indexOf(DefaultTabs.TabTypes.search)) {
                         searchViewModel.clear()
@@ -325,6 +313,38 @@ fun MainPages(
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            val context = LocalContext.current
+            LaunchedEffect(pagerState.currentPage, tabList, mainPhotosPaths) {
+                if (tabList.isEmpty() || pagerState.currentPage !in tabList.indices) return@LaunchedEffect
+
+                val tab = tabList[pagerState.currentPage]
+
+                when {
+                    tab.isCustom -> {
+                        viewModel.changeAlbum(
+                            context = context,
+                            paths = tab.toAlbum().paths
+                        )
+                    }
+
+                    tab == DefaultTabs.TabTypes.photos -> {
+                        viewModel.changeAlbum(
+                            context = context,
+                            paths = mainPhotosPaths
+                        )
+                    }
+
+                    tab == DefaultTabs.TabTypes.search -> {
+                        viewModel.changeAlbum(
+                            context = context,
+                            paths = emptySet()
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = !isSelecting,
@@ -348,17 +368,11 @@ fun MainPages(
                         val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
                         val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
-                        LaunchedEffect(Unit) {
-                            paths = tab.albumPaths
-
-                            viewModel.changeAlbum(album = tab.toAlbum())
-                        }
-
                         val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
                         MainGridView(
                             items = items,
                             album = { tab.toAlbum() },
-                            selectionManager = selectionManager,
+                            selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
@@ -377,17 +391,11 @@ fun MainPages(
                         val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
                         val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
-                        LaunchedEffect(mainPhotosPaths) {
-                            paths = mainPhotosPaths
-
-                            viewModel.changeAlbum(album = tab.toAlbum(paths = mainPhotosPaths))
-                        }
-
                         val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
                         MainGridView(
                             items = items,
                             album = { tab.copy(albumPaths = mainPhotosPaths).toAlbum() },
-                            selectionManager = selectionManager,
+                            selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
@@ -426,81 +434,11 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.search -> {
-                        LaunchedEffect(Unit) {
-                            paths = emptySet()
-                        }
-
                         SearchPage(
                             viewModel = searchViewModel,
-                            selectionManager = selectionManager,
+                            selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null
                         )
-                    }
-
-                    // this is hacky, gross, and shouldn't exist
-                    tab == DefaultTabs.TabTypes.favourites -> {
-                        val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
-
-                        ComponentViewModelScope(key = "Favourites View") {
-                            val context = LocalContext.current
-                            val favViewModel = viewModel<FavouritesViewModel>(
-                                factory = FavouritesViewModelFactory(context = context),
-                                viewModelStoreOwner = LocalViewModelStoreOwner.current!!
-                            )
-
-                            val items = favViewModel.gridMediaFlow.collectAsLazyPagingItems()
-                            MainGridView(
-                                items = items,
-                                album = { tab.toAlbum() },
-                                selectionManager = rememberFavSelectionManager(),
-                                isMediaPicker = incomingIntent != null,
-                                columnSize = { columnSize },
-                                openVideosExternally = { openVideosExternally },
-                                cacheThumbnails = { cacheThumbnails },
-                                thumbnailSize = { thumbnailSize },
-                                useRoundedCorners = { useRoundedCorners },
-                                vibrateOnClick = { vibrateOnClick },
-                                viewProperties = ViewProperties.Favourites
-                            )
-                        }
-                    }
-
-                    // this as well
-                    tab == DefaultTabs.TabTypes.trash -> {
-                        val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
-                        val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
-                        val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
-                        val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
-                        val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
-                        val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
-
-                        ComponentViewModelScope(key = "Trash View") {
-                            val context = LocalContext.current
-                            val trashViewModel = viewModel<TrashViewModel>(
-                                factory = TrashViewModelFactory(context = context),
-                                viewModelStoreOwner = LocalViewModelStoreOwner.current!!
-                            )
-
-                            val items = trashViewModel.gridMediaFlow.collectAsLazyPagingItems()
-                            MainGridView(
-                                items = items,
-                                album = { tab.toAlbum() },
-                                selectionManager = rememberSelectionManager(pagingItems = items),
-                                isMediaPicker = incomingIntent != null,
-                                columnSize = { columnSize },
-                                openVideosExternally = { openVideosExternally },
-                                cacheThumbnails = { cacheThumbnails },
-                                thumbnailSize = { thumbnailSize },
-                                useRoundedCorners = { useRoundedCorners },
-                                vibrateOnClick = { vibrateOnClick },
-                                viewProperties = ViewProperties.Trash
-                            )
-                        }
                     }
 
                     else -> {
@@ -515,8 +453,8 @@ fun MainPages(
 
             if (incomingIntent != null) {
                 val context = LocalContext.current
-                val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
-                val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+                val selectedItemsList by viewModel.selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
+                val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
                 AnimatedContent(
                     targetState = isSelecting,
@@ -537,7 +475,7 @@ fun MainPages(
                                 tabs = tabList,
                                 defaultTab = { defaultTab },
                                 scrollBehaviour = scrollBehaviour,
-                                selectionManager = selectionManager,
+                                selectionManager = viewModel.selectionManager,
                                 confirmToDelete = { confirmToDelete },
                                 doNotTrash = { doNotTrash },
                                 allowedAlbumsFor = viewModel::allowedAlbumTypesFor,

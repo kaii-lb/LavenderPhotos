@@ -39,16 +39,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import kotlinx.coroutines.launch
 
@@ -60,7 +59,7 @@ fun PopUpAlbumChooser(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     ),
-    albumGridState: AlbumGridState = LocalContext.current.appModule.albumGridState,
+    albumGridState: AlbumGridState = PhotosApplication.appModule.albumGridState,
     key: (album: AlbumType) -> String,
     filter: (searchedForText: String, list: List<AlbumGridState.Album.Single>) -> List<AlbumGridState.Album.Single>,
     onDismiss: () -> Unit

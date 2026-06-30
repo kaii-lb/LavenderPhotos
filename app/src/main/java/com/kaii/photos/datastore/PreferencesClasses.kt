@@ -71,22 +71,6 @@ object DefaultTabs {
             id = 3,
             storedNameIndex = StoredName.Search.ordinal
         )
-
-        val favourites = BottomBarTab(
-            name = "Favourites",
-            albumPaths = setOf("favourites_page"),
-            icon = StoredDrawable.Favourite,
-            id = 4,
-            storedNameIndex = StoredName.Favourites.ordinal
-        )
-
-        val trash = BottomBarTab(
-            name = "Trash",
-            albumPaths = setOf("trash_page"),
-            icon = StoredDrawable.Trash,
-            id = 5,
-            storedNameIndex = StoredName.Trash.ordinal
-        )
     }
 
     val defaultList = listOf(
@@ -94,15 +78,6 @@ object DefaultTabs {
         TabTypes.secure,
         TabTypes.albums,
         TabTypes.search
-    )
-
-    val extendedList = listOf(
-        TabTypes.photos,
-        TabTypes.secure,
-        TabTypes.albums,
-        TabTypes.search,
-        TabTypes.favourites,
-        TabTypes.trash
     )
 }
 

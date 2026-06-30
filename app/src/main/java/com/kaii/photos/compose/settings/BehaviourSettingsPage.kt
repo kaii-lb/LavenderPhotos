@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,11 +26,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 
@@ -39,7 +38,7 @@ import com.kaii.photos.helpers.TextStylingConstants
 fun BehaviourSettingsPage(
     modifier: Modifier = Modifier
 ) {
-    val settings = LocalContext.current.appModule.settings
+    val settings = PhotosApplication.appModule.settings
 
     val shouldAutoPlay by settings.video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
     val muteOnStart by settings.video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)

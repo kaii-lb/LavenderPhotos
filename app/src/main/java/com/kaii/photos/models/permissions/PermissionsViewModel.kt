@@ -1,16 +1,13 @@
 package com.kaii.photos.models.permissions
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class PermissionsViewModel(
-    context: Context
-) : ViewModel() {
-    private val settings = context.applicationContext.appModule.settings
+class PermissionsViewModel : ViewModel() {
+    private val settings = PhotosApplication.appModule.settings
 
     fun setIsMediaManager(value: Boolean) {
         viewModelScope.launch {

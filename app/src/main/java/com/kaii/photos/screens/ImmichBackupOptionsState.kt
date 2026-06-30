@@ -8,15 +8,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.appCloudFolderDir
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
@@ -35,6 +33,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -150,7 +149,7 @@ class ImmichBackupOptionsState(
                 }
             }
 
-        delay(1000) // eye candy
+        delay(1000.milliseconds) // eye candy
 
         isLoading = false
     }
@@ -237,7 +236,7 @@ class ImmichBackupOptionsState(
 
         CloudSyncWorker.immediateEnqueue(context = context, albumId = null)
 
-        delay(1000) // eye candy
+        delay(1000.milliseconds) // eye candy
 
         hasUnsavedChanges = false
         isLoading = false
@@ -317,14 +316,13 @@ class ImmichBackupOptionsState(
 
 @Composable
 fun rememberImmichBackupOptionsState(): ImmichBackupOptionsState {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     return remember {
-        val appModule = context.appModule
+        val appModule = PhotosApplication.appModule
 
         ImmichBackupOptionsState(
-            mediaDao = MediaDatabase.getInstance(context).mediaDao(),
+            mediaDao = appModule.db.mediaDao(),
             scope = scope,
             albumsFlow = appModule.albumGridState.singleAlbums,
             settings = appModule.settings.albums,

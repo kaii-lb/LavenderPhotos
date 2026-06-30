@@ -35,11 +35,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
@@ -52,7 +52,7 @@ fun PrivacyAndSecurityPage(
     startupManager: StartupManager,
     modifier: Modifier = Modifier
 ) {
-    val settings = LocalContext.current.appModule.settings.permissions
+    val settings = PhotosApplication.appModule.settings.permissions
 
     val isMediaManager by settings.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
     val confirmToDelete by settings.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
@@ -235,11 +235,13 @@ private fun PrivacyAndSecurityPageImpl(
 
             item {
                 val authManager = rememberPasswordAuthManager {
-                    navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
-                        action = ExpressivePINFieldState.Action.Set,
-                        password = null,
-                        salt = null
-                    ))
+                    navController.navigate(
+                        Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
+                            action = ExpressivePINFieldState.Action.Set,
+                            password = null,
+                            salt = null
+                        )
+                    )
                 }
 
                 PreferencesRow(
@@ -252,11 +254,13 @@ private fun PrivacyAndSecurityPageImpl(
                         if (password() == null) {
                             authManager.authenticate()
                         } else {
-                            navController.navigate(Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
-                                action = ExpressivePINFieldState.Action.Verify,
-                                password = null,
-                                salt = null
-                            ))
+                            navController.navigate(
+                                Screens.Settings.MainPage.PrivacyAndSecurity.ScreenLock(
+                                    action = ExpressivePINFieldState.Action.Verify,
+                                    password = null,
+                                    salt = null
+                                )
+                            )
                         }
                     }
                 )

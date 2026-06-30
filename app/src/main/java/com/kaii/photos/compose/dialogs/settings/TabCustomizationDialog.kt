@@ -54,7 +54,7 @@ fun TabCustomizationDialog(
         ) {
             val resources = LocalResources.current
 
-            DefaultTabs.extendedList.forEach { tab ->
+            DefaultTabs.defaultList.forEach { tab ->
                 InfoRow(
                     text = tab.name,
                     iconResId = if (tab in tabList()) R.drawable.delete else R.drawable.add,
@@ -95,7 +95,7 @@ fun TabCustomizationDialog(
             }
 
             tabList().forEach { tab ->
-                if (tab !in DefaultTabs.extendedList) {
+                if (tab !in DefaultTabs.defaultList) {
                     InfoRow(
                         text = tab.name,
                         iconResId = R.drawable.delete

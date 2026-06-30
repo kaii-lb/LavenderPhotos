@@ -1,6 +1,7 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
+import androidx.paging.PagingData
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -8,6 +9,8 @@ import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 open class RoomQueryParams(
@@ -18,6 +21,9 @@ open class RoomQueryParams(
 
 interface BaseRepo {
     val fileManager: GenericFileManager
+
+    val mediaFlow: Flow<PagingData<PhotoLibraryUIModel>>
+    val gridMediaFlow: Flow<PagingData<PhotoLibraryUIModel>>
 
     suspend fun getMediaCount(): Int
     suspend fun getMediaSize(): Long

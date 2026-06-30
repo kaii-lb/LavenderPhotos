@@ -27,15 +27,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.editing.ImageModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -131,7 +130,6 @@ fun ImageEditorTopBar(
                 }
             }
 
-            val context = LocalContext.current
             SplitButtonLayout(
                 leadingButton = {
                     SplitButtonDefaults.LeadingButton(
@@ -139,7 +137,7 @@ fun ImageEditorTopBar(
                             lastSavedModCount.intValue = modifications.size
 
                             // mainViewModel so it doesn't die if user exits before image is saved
-                            context.appModule.scope.launch(Dispatchers.IO) {
+                            PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                                 saveImage()
                             }
                         }

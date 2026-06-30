@@ -34,11 +34,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -65,7 +65,7 @@ fun SecureFolderEntryPage() {
 
     val migrateEncryptedFilePM = rememberFilePermissionManager(
         onGranted = {
-            context.appModule.scope.launch {
+            PhotosApplication.appModule.scope.launch {
                 secureFolderManager.migrateFromUnencrypted {
                     migrating = false
                     canOpenSecureFolder = true
@@ -76,7 +76,7 @@ fun SecureFolderEntryPage() {
 
     val migrateUnencryptedDirectoryPM = rememberDirectoryPermissionManager(
         onGranted = {
-            context.appModule.scope.launch {
+            PhotosApplication.appModule.scope.launch {
                 migrating = true
                 canOpenSecureFolder = false
 
@@ -99,7 +99,7 @@ fun SecureFolderEntryPage() {
 
     val migrateOldDirectoryPM = rememberDirectoryPermissionManager(
         onGranted = {
-            context.appModule.scope.launch {
+            PhotosApplication.appModule.scope.launch {
                 migrating = true
                 canOpenSecureFolder = false
 
@@ -131,7 +131,7 @@ fun SecureFolderEntryPage() {
             title = stringResource(id = R.string.secure_migrating_notice),
             explanation = stringResource(id = R.string.secure_migrating_notice_desc)
         ) {
-            context.appModule.scope.launch {
+            PhotosApplication.appModule.scope.launch {
                 if (secureFolderManager.needsMigrationFromOld()) {
                     migrateOldDirectoryPM.start(directories = setOf(context.appRestoredFilesDir))
                 } else {

@@ -50,13 +50,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
@@ -318,7 +318,7 @@ private fun IconContentImpl(
         IconButton(
             onClick = {
                 // so it doesn't die when the dialog dismisses
-                context.appModule.scope.launch {
+                PhotosApplication.appModule.scope.launch {
                     if (albumInfo().immichId != null) {
                         val itemCount = itemCount()
 
@@ -334,7 +334,7 @@ private fun IconContentImpl(
                             return@launch
                         }
 
-                        val albums = context.appModule.albumGridState.singleAlbums.value
+                        val albums = PhotosApplication.appModule.albumGridState.singleAlbums.value
 
                         albums.find {
                             it.id == albumInfo().id
@@ -482,7 +482,7 @@ private fun IconContentImpl(
                         }
                     } else if (album is AlbumType.Custom) {
                         // TODO: possible make less messy
-                        context.appModule.scope.launch(Dispatchers.IO) {
+                        PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                             MediaDatabase.getInstance(context)
                                 .customDao()
                                 .deleteAlbum(album = album.id)

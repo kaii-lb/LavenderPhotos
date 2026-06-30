@@ -12,9 +12,9 @@ import androidx.core.net.toUri
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.permissions.MediaPermissionsState
 import com.kaii.photos.permissions.rememberMediaPermissionsState
@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class MigrationState {
     NeedsPermission,
@@ -95,7 +96,7 @@ class FavouritesMigrationState(
         _state.value = MigrationState.InProgress
 
         coroutineScope.launch {
-            delay(3000) // just to look pretty
+            delay(3000.milliseconds) // just to look pretty
             val taskId = scheduler.scheduleTask(context = context)
 
             WorkManager.getInstance(context)
@@ -141,7 +142,7 @@ fun rememberFavouritesMigrationState(): FavouritesMigrationState {
                 }
             },
             onDone = {
-                context.appModule.settings.versions.setMigrateFav(false)
+                PhotosApplication.appModule.settings.versions.setMigrateFav(false)
             }
         )
     }

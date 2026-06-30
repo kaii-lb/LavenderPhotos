@@ -60,7 +60,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,13 +73,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SplitButton(
@@ -361,7 +361,7 @@ fun AnimatedImmichBackupIcon(
                 .zIndex(2f),
         )
 
-        val progressManager = LocalContext.current.appModule.cloudProgressManager
+        val progressManager = PhotosApplication.appModule.cloudProgressManager
         val percentage by animateFloatAsState(
             targetValue = progressManager.progress,
             animationSpec = tween(
@@ -409,7 +409,7 @@ fun AnimatedLoginIcon(
 ) {
     var info by remember { mutableStateOf(immichInfo()) }
     LaunchedEffect(immichInfo()) {
-        delay(500)
+        delay(500.milliseconds)
         info = immichInfo()
     }
 

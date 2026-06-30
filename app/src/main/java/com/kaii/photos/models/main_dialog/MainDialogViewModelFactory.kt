@@ -1,17 +1,14 @@
 package com.kaii.photos.models.main_dialog
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.kaii.photos.di.appModule
+import com.kaii.photos.PhotosApplication
 
 @Suppress("UNCHECKED_CAST")
-class MainDialogViewModelFactory(
-    private val context: Context
-) : ViewModelProvider.NewInstanceFactory() {
+class MainDialogViewModelFactory : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass == MainDialogViewModel::class.java) {
-            val settings = context.appModule.settings
+            val settings = PhotosApplication.appModule.settings
 
             return MainDialogViewModel(settings) as T
         }

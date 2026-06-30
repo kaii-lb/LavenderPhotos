@@ -25,7 +25,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ExpressivePINField
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -47,6 +46,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
+import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
 @Composable
@@ -86,7 +86,7 @@ fun ScreenLock(
 ) {
     val resources = LocalResources.current
     val navController = LocalNavController.current
-    val settings = LocalContext.current.appModule.settings.permissions
+    val settings = PhotosApplication.appModule.settings.permissions
 
     val state = rememberExpressivePINFieldState(
         action = action,
@@ -102,7 +102,7 @@ fun ScreenLock(
 
             when (action) {
                 ExpressivePINFieldState.Action.Unlock -> {
-                    delay(AnimationConstants.DURATION_LONG.toLong())
+                    delay(AnimationConstants.DURATION_LONG.milliseconds)
 
                     if (navController.currentDestination?.hasRoute(Screens.MainPages::class) == true
                         || navController.previousBackStackEntry == null

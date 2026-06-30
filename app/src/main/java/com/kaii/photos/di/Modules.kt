@@ -7,7 +7,7 @@ import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import com.kaii.photos.BuildConfig
-import com.kaii.photos.PhotosApplication
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
 import com.kaii.photos.file_management.sync.ProgressManager
@@ -16,14 +16,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 
-val Context.appModule: AppModule
-    get() = (applicationContext as PhotosApplication).appModule
-
 @OptIn(UnstableApi::class)
 class AppModule(
     context: Context
 ) {
-    val settings = Settings(context.applicationContext, MainScope())
+    val settings by lazy {
+        Settings(context.applicationContext, MainScope())
+    }
 
     val apiClient by lazy {
         buildApiClient(debugMode = BuildConfig.DEBUG)
@@ -52,5 +51,9 @@ class AppModule(
             scope = scope,
             settings = settings.immich
         )
+    }
+
+    val db by lazy {
+        MediaDatabase.getInstance(context.applicationContext)
     }
 }

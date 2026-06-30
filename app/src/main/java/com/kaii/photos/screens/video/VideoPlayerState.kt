@@ -20,9 +20,9 @@ import androidx.media3.common.Format
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.JobDebouncer
 import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.SingleJobRunner
@@ -189,7 +189,7 @@ class VideoPlayerState(
 
         player.release()
 
-        context.appModule.scope.launch(Dispatchers.IO) {
+        PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
             val dir = File(context.appSecureVideoCacheDir)
 
             dir.listFiles()?.forEach { if (it.exists()) it.delete() }
@@ -436,7 +436,7 @@ fun retainVideoPlayerState(
     onPlaybackStateChanged: (state: Int) -> Unit
 ): VideoPlayerState {
     val context = LocalContext.current
-    val settings = context.applicationContext.appModule.settings
+    val settings = PhotosApplication.appModule.settings
     val coroutineScope = rememberCoroutineScope()
 
     val state = retain {

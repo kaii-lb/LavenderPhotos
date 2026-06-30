@@ -12,8 +12,8 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.di.appModule
 import com.kaii.photos.file_management.managers.CloudFileManager
 import com.kaii.photos.file_management.managers.CustomFileManager
 import com.kaii.photos.file_management.managers.LocalFileManager
@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 class CloudSyncWorker(
     private val context: Context,
@@ -87,17 +88,17 @@ class CloudSyncWorker(
 
     override suspend fun doWork(): Result {
         val db = MediaDatabase.getInstance(context.applicationContext)
-        val info = context.appModule.settings.immich.getImmichBasicInfo().first()
+        val info = PhotosApplication.appModule.settings.immich.getImmichBasicInfo().first()
 
         val assetsClient = AssetsClient(
             endpoint = info.endpoint,
             auth = info.auth,
-            client = context.appModule.apiClient
+            client = PhotosApplication.appModule.apiClient
         )
         val albumsClient = AlbumsClient(
             endpoint = info.endpoint,
             auth = info.auth,
-            client = context.appModule.apiClient
+            client = PhotosApplication.appModule.apiClient
         )
 
         val manager = CloudSyncManager(
@@ -132,7 +133,7 @@ class CloudSyncWorker(
             )
         )
 
-        delay(1000)
+        delay(1000.milliseconds)
 
         val albumId = params.inputData.getString(ALBUM_ID)
         if (albumId != null) {

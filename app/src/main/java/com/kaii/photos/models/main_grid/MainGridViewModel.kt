@@ -2,17 +2,20 @@ package com.kaii.photos.models.main_grid
 
 import android.content.Context
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
-import com.kaii.photos.di.appModule
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
@@ -24,6 +27,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -38,11 +42,11 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class MainGridViewModel(
-    context: Context
-) : BaseViewModel(context) {
-    override val scope: CoroutineScope = context.appModule.scope
-    override val apiClient: ApiClient = context.appModule.apiClient
-
+    context: Context,
+    override val scope: CoroutineScope = PhotosApplication.appModule.scope,
+    override val apiClient: ApiClient = PhotosApplication.appModule.apiClient,
+    private val db: MediaDatabase = PhotosApplication.appModule.db
+) : BaseViewModel() {
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,
@@ -104,45 +108,57 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    fun changeAlbum(album: AlbumType.Folder) = repo.changeAlbum(album)
-
-    private val db = MediaDatabase.getInstance(context.applicationContext)
-    override val repo =
-        HybridRepository(
-            db = db,
-            client = context.applicationContext.appModule.apiClient,
-            scope = viewModelScope,
-            info = immichInfo,
-            sortMode = sortMode,
-            format = displayDateFormat,
-            initialAlbum = AlbumType.Folder(
-                id = "",
-                name = "",
-                pinned = false,
-                immichId = null,
-                paths = mainPhotosAlbums.value
-            )
+    override val repo = HybridRepository(
+        db = db,
+        client = apiClient,
+        scope = viewModelScope,
+        info = settings.immich.getImmichBasicInfo(),
+        sortMode = settings.photoGrid.getSortMode(),
+        format = settings.lookAndFeel.getDisplayDateFormat(),
+        initialAlbum = AlbumType.Folder(
+            id = "",
+            name = "",
+            pinned = false,
+            immichId = null,
+            paths = mainPhotosAlbums.value
         )
+    )
+
+    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, emptySet()))
+        private set
 
     private val loginClient = LoginClient(
-        client = context.appModule.apiClient,
+        client = apiClient,
         endpoint = "",
         auth = Auth.None
     )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow = repo.mediaFlow
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = repo.gridMediaFlow
 
     init {
         viewModelScope.launch {
-            immichInfo.collectLatest {
-                loginClient.setEndpoint(it.endpoint)
-                loginClient.setAuth(it.auth)
+            launch {
+                immichInfo.collectLatest {
+                    loginClient.setEndpoint(it.endpoint)
+                    loginClient.setAuth(it.auth)
 
-                val state = getLoginState()
-                if (state is LoginState.LoggedIn) {
-                    settings.immich.setUsername(state.user.name)
-                    settings.immich.setUpdatedAt(state.user.updatedAt)
+                    val state = getLoginState()
+                    if (state is LoginState.LoggedIn) {
+                        settings.immich.setUsername(state.user.name)
+                        settings.immich.setUpdatedAt(state.user.updatedAt)
+                    }
+                }
+            }
+
+            launch {
+                viewModelScope.launch {
+                    sortMode.collect {
+                        selectionManager.setSortMode(it)
+                    }
                 }
             }
         }
@@ -162,6 +178,25 @@ class MainGridViewModel(
         loginClient.getMe()?.let {
             LoginState.LoggedIn(user = it)
         } ?: LoginState.LoggedOut
+    }
+
+    fun changeAlbum(
+        context: Context,
+        paths: Set<String>
+    ) {
+        selectionManager = createSelectionManager(context, sortMode.value, paths)
+
+        if (paths.isEmpty()) return
+
+        repo.changeAlbum(
+            album = AlbumType.Folder(
+                id = "",
+                name = "",
+                pinned = false,
+                immichId = null,
+                paths = paths
+            )
+        )
     }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)
@@ -472,4 +507,24 @@ class MainGridViewModel(
             isLoading.value = false
         }
     }
+
+    private fun createSelectionManager(
+        context: Context,
+        sortMode: MediaItemSortMode,
+        paths: Set<String>
+    ) = SelectionManager(
+        sortMode = sortMode,
+        scope = viewModelScope,
+        context = context,
+        getMediaInDate = { timestamp ->
+            val dao = db.mediaDao()
+
+            if (paths.isEmpty()) {
+                // search
+                dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+            } else {
+                dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+            }
+        }
+    )
 }

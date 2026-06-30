@@ -15,13 +15,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.di.appModule
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
@@ -56,7 +56,7 @@ class EditingView : ComponentActivity() {
                     else -> 0
                 }
 
-            val followDarkTheme by applicationContext.appModule.settings.lookAndFeel.getFollowDarkMode()
+            val followDarkTheme by PhotosApplication.appModule.settings.lookAndFeel.getFollowDarkMode()
                 .collectAsStateWithLifecycle(
                     initialValue = initialDarkMode
                 )

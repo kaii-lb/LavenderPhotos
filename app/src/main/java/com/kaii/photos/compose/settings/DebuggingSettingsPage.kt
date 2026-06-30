@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
@@ -48,7 +49,6 @@ import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -59,12 +59,13 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Composable
 fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
-    val settings = LocalContext.current.appModule.settings
+    val settings = PhotosApplication.appModule.settings
     val shouldRecordLogs by settings.debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
     DebuggingSettingsPageImpl(
@@ -284,7 +285,7 @@ private fun DebuggingSettingsPageImpl(
                             )
                         )
 
-                        delay(5000)
+                        delay(5000.milliseconds)
                         isLoading.value = false
                     }
                 }
@@ -340,14 +341,14 @@ private fun DebuggingSettingsPageImpl(
                             )
                         )
 
-                        delay(3000)
+                        delay(3000.milliseconds)
 
                         val count = 5
                         repeat(count) {
                             percentage.floatValue += 1f / count
                             body.value = "Progress: ${(percentage.floatValue * 100f).toString().substring(0, 3).removeSuffix(".")}%"
 
-                            delay(3000)
+                            delay(3000.milliseconds)
                         }
                     }
                 }

@@ -14,6 +14,7 @@ import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
@@ -25,7 +26,6 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.di.appModule
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
@@ -57,6 +57,7 @@ import java.io.File
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -274,7 +275,7 @@ interface GenericFileManager {
         newName: String,
         taskId: Int? = null
     ) {
-        val settings = context.appModule.settings.albums
+        val settings = PhotosApplication.appModule.settings.albums
 
         settings.edit(
             id = album.id,
@@ -386,7 +387,7 @@ interface GenericFileManager {
         mediaItems.forEach { onItemDone(it.uri) }
 
         launch {
-            delay(5000)
+            delay(5000.milliseconds)
             if (destination.immichId != null) {
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }
@@ -445,7 +446,7 @@ interface GenericFileManager {
         }
 
         launch {
-            delay(5000)
+            delay(5000.milliseconds)
             if (destination.immichId != null) {
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }
