@@ -25,3 +25,12 @@
 -keep class androidx.media3.effect.DefaultVideoFrameProcessor$Factory$Builder {
     public <init>();
 }
+
+# don't warn about this
+-dontwarn nl.adaptivity.xmlutil.util.SerializationProvider
+-dontwarn nl.adaptivity.xmlutil.serialization.KotlinxSerializationProvider
+-dontwarn nl.adaptivity.xmlutil.util.DefaultSerializationProvider
+
+-keep class nl.adaptivity.xmlutil.util.SerializationProvider { *; }
+-keep class nl.adaptivity.xmlutil.serialization.KotlinxSerializationProvider { *; }
+-keep class nl.adaptivity.xmlutil.util.DefaultSerializationProvider { *; }
