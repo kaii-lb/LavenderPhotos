@@ -191,6 +191,7 @@ class MainGridViewModel(
         context: Context,
         paths: Set<String>
     ) {
+        selectionManager.clear()
         selectionManager = createSelectionManager(context, sortMode.value, paths)
 
         if (paths.isEmpty()) return

@@ -52,7 +52,7 @@ class SelectionManager(
     private var _sections by mutableStateOf<List<Long>>(emptyList())
 
     private var manualEnable by mutableStateOf(false)
-    val enabled = snapshotFlow { _selection.values.any { it.values.isNotEmpty() } || manualEnable }
+    val enabled = snapshotFlow { manualEnable || _selection.values.any { it.values.isNotEmpty() } }
 
     @OptIn(FlowPreview::class)
     val count = selection.map { it.size }.debounce(25.milliseconds)
