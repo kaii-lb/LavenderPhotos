@@ -59,7 +59,7 @@
     <string name="navigation_favourites">Preferiti</string>
     <string name="navigation_trash">Cestino</string>
     <string name="navigation_away">Naviga in un\'altra pagina</string>
-    <string name="app_name_full">App</string>
+    <string name="app_name_full">Lavender Photos</string>
     <string name="app_description">App galleria open source veloce, elegante e progettata per la privacy</string>
     <string name="app_version">Versione %1$s</string>
     <string name="app_repo">Repository dell\'App</string>
@@ -99,14 +99,16 @@
     <string name="secure_unlock_desc">Usa le credenziali biometriche per sbloccare</string>
     <string name="secure_unlock_failed">Autenticazione non riuscita :&lt;</string>
     <string name="albums_media_sorting_desc">Imposta l\'ordinamento di foto e video nelle griglie. Modalità attuale: %1$s</string>
-    <string name="updates_notice_desc"><![CDATA[
-<p>Questo sistema di aggiornamento <b>NON</b> scarica file APK. Si limita a collegarti alle <a href="https://github.com/kaii-lb/LavenderPhotos/releases">release su GitHub</a>. Ciò significa che questi APK non vengono sottoposti ai controlli e ai test aggiuntivi effettuati da IzzyOnDroid, F-Droid o altre piattaforme.
+    <string name="updates_notice_desc">
+        <![CDATA[
+            <p>Questo sistema di aggiornamento <b>NON</b> scarica file APK. Si limita a collegarti alle <a href="https://github.com/kaii-lb/LavenderPhotos/releases">release su GitHub</a>. Ciò significa che questi APK non vengono sottoposti ai controlli e ai test aggiuntivi effettuati da IzzyOnDroid, F-Droid o altre piattaforme.
 
-<br><br>Le build ospitate su GitHub sono sempre firmate, controllate e verificate dallo sviluppatore (kaii-lb), ma la scelta di utilizzarle spetta a te.
+            <br><br>Le build ospitate su GitHub sono sempre firmate, controllate e verificate dallo sviluppatore (kaii-lb), ma la scelta di utilizzarle spetta a te.
 
-<br><br>Lavender Photos non esegue mai aggiornamenti automatici e si aggiorna solo con il consenso esplicito dell'utente.
-</p>
-]]></string>
+            <br><br>Lavender Photos non esegue mai aggiornamenti automatici e si aggiorna solo con il consenso esplicito dell\'utente.
+            </p>
+        ]]>
+    </string>
     <string name="secure_unlock_short">Sblocca cartella</string>
     <string name="secure_move_out">Spostare media fuori dalla cartella protetta?</string>
     <string name="secure_restore_failed">Impossibile ripristinare il file</string>
