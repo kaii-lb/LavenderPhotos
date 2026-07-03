@@ -118,7 +118,8 @@ class CloudSyncWorker(
                 assetClient = assetsClient,
                 albumsClient = albumsClient,
                 secureManager = LocalSecureManager(
-                    secureDao = db.securedItemEntityDao()
+                    secureDao = db.securedItemEntityDao(),
+                    mediaDao = db.mediaDao()
                 )
             ),
             customFileManager = CustomFileManager(
@@ -128,7 +129,8 @@ class CloudSyncWorker(
                 assetClient = assetsClient,
                 albumsClient = albumsClient,
                 secureManager = LocalSecureManager(
-                    secureDao = db.securedItemEntityDao()
+                    secureDao = db.securedItemEntityDao(),
+                    mediaDao = db.mediaDao()
                 )
             )
         )

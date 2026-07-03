@@ -109,7 +109,8 @@ class SearchRepository(
             client = client
         ),
         localSecureManager = LocalSecureManager(
-            secureDao = db.securedItemEntityDao()
+            secureDao = db.securedItemEntityDao(),
+            mediaDao = db.mediaDao()
         )
     )
 

@@ -22,6 +22,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.getMediaByIds
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.calculateSha1Checksum
@@ -31,7 +32,6 @@ import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.toActivity
 import com.kaii.photos.mediastore.copyUriToUri
-import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.toContentId
 import io.github.kaii_lb.lavender.immichintegration.Auth
@@ -385,8 +385,8 @@ interface GenericFileManager {
         mediaItems.forEach { onItemDone(it.uri) }
 
         launch {
-            delay(5000.milliseconds)
             if (destination.immichId != null) {
+                delay(1000.milliseconds)
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }
         }
@@ -410,10 +410,7 @@ interface GenericFileManager {
     ) = withContext(Dispatchers.IO) {
         val contentResolver = context.contentResolver
 
-        val items = getMediaStoreDataForIds(
-            ids = list.fastMap { it.id }.toSet(),
-            context = context
-        )
+        val items = mediaDao.getMediaByIds(list)
 
         val newItems = mutableListOf<CopyResult>()
         items.forEachIndexed { index, media ->
@@ -444,8 +441,8 @@ interface GenericFileManager {
         }
 
         launch {
-            delay(5000.milliseconds)
             if (destination.immichId != null) {
+                delay(1000.milliseconds)
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }
         }
@@ -462,11 +459,7 @@ interface GenericFileManager {
         taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
     ): List<CopyResult> = withContext(Dispatchers.IO) {
-        val ids = list.fastMap { it.id }.toSet()
-        val media = getMediaStoreDataForIds(
-            ids = ids,
-            context = context
-        )
+        val media = mediaDao.getMediaByIds(list)
 
         customDao.upsertAll(
             items = media.map {

@@ -106,7 +106,6 @@ class LocalFileManager(
         }
 
         var count = 0
-        val toBeDeleted = mutableListOf<SelectionManager.SelectedItem>()
 
         copyItems(
             context = context,
@@ -116,11 +115,6 @@ class LocalFileManager(
             overrideDisplayName = null,
             taskId = taskId,
             onItemDone = { uri ->
-                val item = list.first { it.uri == uri }
-                if (!toBeDeleted.contains(item)) {
-                    toBeDeleted.add(item)
-                }
-
                 count += 1
                 onItemDone(uri)
             }
@@ -128,7 +122,7 @@ class LocalFileManager(
 
         permanentlyDelete(
             context = context,
-            list = toBeDeleted
+            list = list
         )
 
         return@withContext count == list.size

@@ -4,13 +4,14 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.provider.MediaStore
 import android.util.Log
-import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bumptech.glide.Glide
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.database.getMediaByIds
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
@@ -25,7 +26,6 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getIv
-import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
@@ -35,7 +35,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 class LocalSecureManager(
-    private val secureDao: SecuredMediaItemEntityDao
+    private val secureDao: SecuredMediaItemEntityDao,
+    private val mediaDao: MediaDao
 ) : GenericSecureManager {
     companion object {
         private val TAG = LocalSecureManager::class.qualifiedName
@@ -45,10 +46,7 @@ class LocalSecureManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ): List<SelectionManager.SelectedItem> {
-        val media = getMediaStoreDataForIds(
-            ids = list.fastMap { it.id }.toSet(),
-            context = context
-        ).toList()
+        val media = mediaDao.getMediaByIds(list)
 
         return secureImpl(context, media)
     }

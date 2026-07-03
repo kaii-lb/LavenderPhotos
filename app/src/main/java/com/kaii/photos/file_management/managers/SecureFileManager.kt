@@ -37,7 +37,7 @@ class SecureFileManager(
         private val TAG = SecureFileManager::class.qualifiedName
     }
 
-    private val secureManager = LocalSecureManager(secureDao)
+    private val secureManager = LocalSecureManager(secureDao, mediaDao)
 
     override suspend fun setTrashed(
         context: Context,

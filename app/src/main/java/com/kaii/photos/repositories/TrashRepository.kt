@@ -67,7 +67,8 @@ class TrashRepository(
             client = client
         ),
         secureManager = LocalSecureManager(
-            secureDao = db.securedItemEntityDao()
+            secureDao = db.securedItemEntityDao(),
+            mediaDao = db.mediaDao()
         )
     )
 

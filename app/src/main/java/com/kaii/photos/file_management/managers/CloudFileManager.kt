@@ -13,6 +13,7 @@ import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.getMediaByIds
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.appCloudFolderDir
@@ -50,9 +51,7 @@ class CloudFileManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ): List<SelectionManager.SelectedItem> {
-        val names = list.chunked(500).flatMap { chunk ->
-            mediaDao.getMedia(ids = chunk.fastMap { it.id })
-        }.associate { it.id to it.displayName }
+        val names = mediaDao.getMediaByIds(list).associate { it.id to it.displayName }
 
         return list.mapNotNull { item ->
             val file = File(context.cacheDir, names[item.id]!!)
@@ -466,9 +465,7 @@ class CloudFileManager(
     ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
         val contentResolver = context.contentResolver
 
-        val mediaItems = list.chunked(500).flatMap { chunk ->
-            mediaDao.getMedia(ids = chunk.fastMap { it.id })
-        }.associateBy { it.id }
+        val mediaItems = mediaDao.getMediaByIds(list).associateBy { it.id }
 
         val result = list.mapNotNull { item ->
             val media = mediaItems[item.id]!!
@@ -518,8 +515,8 @@ class CloudFileManager(
         }
 
         launch {
-            delay(5000.milliseconds)
             if (destination.immichId != null) {
+                delay(1000.milliseconds)
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }
         }
