@@ -156,7 +156,7 @@ private fun DeviceMedia(
         LazyVerticalGrid(
             state = gridState,
             columns = GridCells.Fixed(
-                if (isLandscape) {
+                if (isLandscape && columnSize() <= 3) {
                     columnSize() * 2
                 } else {
                     columnSize()

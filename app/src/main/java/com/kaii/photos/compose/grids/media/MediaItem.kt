@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -147,7 +148,7 @@ fun MediaItem(
                 .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
             if (isSecureMedia) {
-                // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode to
+                // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode op to
                 // the requested size like the non-secure branch
                 val secureRequest = it.signature(item.signature())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -204,7 +205,11 @@ fun MediaItem(
                         Text(
                             text = (item.item.duration as Long).seconds.formatLikeANormalPerson().first,
                             color = Color.White,
-                            fontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp,
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = TextStylingConstants.EXTRA_EXTRA_SMALL_TEXT_SIZE.sp,
+                                maxFontSize = TextStylingConstants.EXTRA_SMALL_TEXT_SIZE.sp
+                            ),
+                            maxLines = 1,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .offset(y = 1.dp)

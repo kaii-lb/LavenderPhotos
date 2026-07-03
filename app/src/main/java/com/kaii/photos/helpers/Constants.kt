@@ -40,6 +40,7 @@ object VideoPlayerConstants {
 }
 
 object TextStylingConstants {
+    const val EXTRA_EXTRA_SMALL_TEXT_SIZE = 6f
     const val EXTRA_SMALL_TEXT_SIZE = 12f
     const val SMALL_TEXT_SIZE = 14f
     const val MEDIUM_TEXT_SIZE = 16f
