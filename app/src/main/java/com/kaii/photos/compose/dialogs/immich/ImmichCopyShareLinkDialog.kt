@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.nativeClipboardManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -98,7 +99,7 @@ fun ImmichCopyShareLinkDialog(
 
                     if (state is CreateLinkState.Success) {
                         val label = resources.getString(R.string.immich_share_album_clip_title)
-                        clipboard.nativeClipboard.setPrimaryClip(
+                        clipboard.nativeClipboardManager.setPrimaryClip(
                             ClipData.newPlainText(label, state.url)
                         )
                     }
@@ -200,7 +201,7 @@ fun ImmichCopyShareLinkDialog(
 
             if (state is CreateLinkState.Success) {
                 val label = resources.getString(R.string.immich_share_album_clip_title)
-                clipboard.nativeClipboard.setPrimaryClip(
+                clipboard.nativeClipboardManager.setPrimaryClip(
                     ClipData.newPlainText(label, state.url)
                 )
             }
