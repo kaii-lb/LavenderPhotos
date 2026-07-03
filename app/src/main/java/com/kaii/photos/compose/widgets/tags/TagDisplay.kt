@@ -1,16 +1,12 @@
 package com.kaii.photos.compose.widgets.tags
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -18,18 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -48,6 +40,7 @@ import com.kaii.photos.compose.modifiers.animatePlacement
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.presentation.ui.ColorCreator
 import kotlin.random.Random
 
 @Preview
@@ -166,6 +159,8 @@ private fun TagFlowRow(
     onTagClick: (tag: Tag) -> Unit,
     onTagRemove: (tag: Tag) -> Unit
 ) {
+    val colorCreator = remember { ColorCreator() }
+
     FlowRow(
         modifier = modifier
             .verticalScroll(state = rememberScrollState()),
@@ -195,6 +190,7 @@ private fun TagFlowRow(
                             TagItem(
                                 tag = tag,
                                 selected = selectedTags().contains(tag),
+                                colorCreator = colorCreator,
                                 onClick = { onTagClick(tag) },
                                 onRemove = { onTagRemove(tag) }
                             )
@@ -205,40 +201,3 @@ private fun TagFlowRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun TagItem(
-    tag: Tag,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    onRemove: () -> Unit
-) {
-    val borderColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.primary else tag.color,
-        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec()
-    )
-
-    Box(
-        modifier = modifier
-            .wrapContentWidth()
-            .clip(CircleShape)
-            .background(tag.color)
-            .border(
-                width = 2.dp,
-                color = borderColor,
-                shape = CircleShape
-            )
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onRemove
-            )
-            .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = tag.name,
-            fontSize = TextStylingConstants.SMALL_TEXT_SIZE.sp
-        )
-    }
-}

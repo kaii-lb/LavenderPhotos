@@ -6,12 +6,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.R
+import com.kaii.photos.presentation.ui.ColorCreator
 import kotlinx.serialization.Serializable
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.random.Random
 
-fun Color.Companion.random() = Color(red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat())
+fun Color.Companion.random() = ColorCreator().generateColor()
 
 fun darkenColor(color: Color, percentage: Float): Color {
     val r = (color.red * 255).toInt()
