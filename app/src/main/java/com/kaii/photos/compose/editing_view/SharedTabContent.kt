@@ -94,7 +94,6 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.SharedModification
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -502,7 +501,25 @@ private fun ImageSelector(
                 IntSize(options.outWidth, options.outHeight)
             }
 
-            val isAvif = context.contentResolver.getMediaStoreDataFromUri(uri = uri)?.absolutePath?.endsWith(".avif") == true
+            val isAvif: Boolean = run {
+                try {
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        val header = ByteArray(12)
+                        val read = input.read(header)
+                        if (read < 12) return@run false
+
+                        val brand = header.copyOfRange(4, 12).decodeToString()
+
+                        brand == "ftypavif" ||
+                        brand == "ftypav01" ||
+                        brand == "ftypavis" ||
+                        brand == "ftypmiaf" ||
+                        brand == "ftypmif1"
+                    } ?: false
+                } catch (_: Exception) {
+                    false
+                }
+            }
 
             drawingPaintState.setSelectedItem(
                 if (drawingPaintState.isVideo) {
