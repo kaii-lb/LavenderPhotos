@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.database.sync.FirstTimeSyncWorker"
 
@@ -119,7 +120,7 @@ class FirstTimeSyncWorker(
             "First Time Sync Worker has finished running. Out of ${mediaStoreIds.size} items there was ${added.size} inserted and ${removed.size} removed. Total time was ${endTime - startTime}"
         )
 
-        delay(1000)
+        delay(1000.milliseconds)
 
         setProgress(
             workDataOf(

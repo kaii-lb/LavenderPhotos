@@ -390,13 +390,13 @@ fun CropBox(
                                             if (left + offset.x >= maxLeft
                                                 && left + offset.x + width <= maxLeft + originalWidth
                                             ) {
-                                                left = left + offset.x
+                                                left += offset.x
                                             }
 
                                             if (top + offset.y >= maxTop
                                                 && top + offset.y + height <= maxTop + originalHeight
                                             ) {
-                                                top = top + offset.y
+                                                top += offset.y
                                             }
 
                                             selectedArea = SelectedCropArea.Whole
@@ -437,7 +437,7 @@ fun CropBox(
                                                     val maxRight = (newLeft + newWidth) - threshold
                                                     val maxBottom = (newTop + newHeight) - threshold
 
-                                                    if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                                    if (newLeft in maxLeft..maxRight && newTop >= maxTop && newTop <= maxBottom) {
                                                         left = newLeft
                                                         width = newWidth
                                                         top = newTop
@@ -453,7 +453,7 @@ fun CropBox(
                                                     val maxRight = (newLeft + newWidth) - threshold
                                                     val maxBottom = (newTop + newHeight) - threshold
 
-                                                    if (newLeft >= maxLeft && newLeft <= maxRight && newTop >= maxTop && newTop <= maxBottom) {
+                                                    if (newLeft in maxLeft..maxRight && newTop >= maxTop && newTop <= maxBottom) {
                                                         left = newLeft
                                                         width = newWidth
                                                         top = newTop
@@ -496,7 +496,7 @@ fun CropBox(
                                                     val maxRight = (newLeft + newWidth) - threshold
                                                     val maxBottom = (top + newHeight) - threshold
 
-                                                    if (newLeft >= maxLeft && newLeft <= maxRight && top + newHeight <= maxTop + originalHeight && top <= maxBottom) {
+                                                    if (newLeft in maxLeft..maxRight && top + newHeight <= maxTop + originalHeight && top <= maxBottom) {
                                                         left = newLeft
                                                         width = newWidth
                                                         height = newHeight
@@ -510,7 +510,7 @@ fun CropBox(
                                                     val maxRight = (newLeft + newWidth) - threshold
                                                     val maxBottom = (top + newHeight) - threshold
 
-                                                    if (newLeft >= maxLeft && newLeft <= maxRight && top <= maxBottom && top + newHeight <= maxTop + originalHeight) {
+                                                    if (newLeft in maxLeft..maxRight && top <= maxBottom && top + newHeight <= maxTop + originalHeight) {
                                                         left = newLeft
                                                         width = newWidth
                                                         height = newHeight
@@ -553,7 +553,7 @@ fun CropBox(
                                                     val maxRight = (left + newWidth) - threshold
                                                     val maxBottom = (top + newHeight) - threshold
 
-                                                    if (top >= maxTop && top <= maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
+                                                    if (top in maxTop..maxBottom && left + newWidth <= maxLeft + originalWidth && left <= maxRight) {
                                                         top = newTop
                                                         width = newWidth
                                                         height = newHeight
@@ -649,8 +649,7 @@ fun CropBox(
                                                 val newLeft = left - (newWidth - width) / 2
                                                 val newTop = top - (newHeight - height) / 2
 
-                                                if (newTop >= maxTop
-                                                    && newTop <= maxBottom
+                                                if (newTop in maxTop..maxBottom
                                                     && newTop + newHeight <= maxTop + originalHeight
                                                     && newLeft >= maxLeft
                                                     && newLeft <= maxRight
@@ -689,8 +688,7 @@ fun CropBox(
                                                 val newLeft = left - (newWidth - width) / 2
                                                 val newTop = top - (newHeight - height) / 2
 
-                                                if (newTop >= maxTop
-                                                    && newTop <= maxBottom
+                                                if (newTop in maxTop..maxBottom
                                                     && newTop + newHeight <= maxTop + originalHeight
                                                     && newLeft >= maxLeft
                                                     && newLeft <= maxRight
@@ -727,8 +725,7 @@ fun CropBox(
                                                 val newLeft = left - (newWidth - width) / 2
                                                 val newTop = top - (newHeight - height) / 2
 
-                                                if (newTop >= maxTop
-                                                    && newTop <= maxBottom
+                                                if (newTop in maxTop..maxBottom
                                                     && newTop + newHeight <= maxTop + originalHeight
                                                     && newLeft >= maxLeft
                                                     && newLeft <= maxRight
@@ -765,8 +762,7 @@ fun CropBox(
                                                 val newLeft = left - (newWidth - width) / 2
                                                 val newTop = top - (newHeight - height) / 2
 
-                                                if (newTop >= maxTop
-                                                    && newTop <= maxBottom
+                                                if (newTop in maxTop..maxBottom
                                                     && newTop + newHeight <= maxTop + originalHeight
                                                     && newLeft >= maxLeft
                                                     && newLeft <= maxRight

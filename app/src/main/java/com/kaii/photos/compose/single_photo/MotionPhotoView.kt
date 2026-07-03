@@ -92,7 +92,7 @@ fun MotionPhotoView(
                     initialTouchHeldJob.cancel()
 
                     if (!isHeld) coroutineScope.launch {
-                        delay(viewConfiguration.longPressTimeoutMillis) // to match other views' behaviour (delay because of on long press listener)
+                        delay(viewConfiguration.longPressTimeoutMillis.milliseconds) // to match other views' behaviour (delay because of on long press listener)
                         setBarVisibility(
                             visible = !appBarsVisible.value,
                             window = window

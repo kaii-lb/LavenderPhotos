@@ -48,6 +48,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
 @Composable
@@ -62,7 +63,7 @@ private fun PasswordChangeDialogPreview() {
         changePassword = { _, _ ->
             coroutineScope.launch {
                 channel.send(OperationStatus.Loading)
-                delay(3000)
+                delay(3000.milliseconds)
                 channel.send(OperationStatus.Failed)
             }
         }
@@ -242,7 +243,7 @@ fun PasswordChangeDialog(
                         loading = status == OperationStatus.Loading
 
                         if (status == OperationStatus.Successful) {
-                            delay(AnimationConstants.DURATION.toLong())
+                            delay(AnimationConstants.DURATION.toLong().milliseconds)
                             onDismiss()
                         }
                     }

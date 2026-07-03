@@ -27,6 +27,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.milliseconds
 
 class SortableGridState(
     private val gridState: LazyGridState,
@@ -96,7 +97,7 @@ class SortableGridState(
 
                 val index = item.index - indexOffset
 
-                if (index in 0 until albums().size) {
+                if (index in albums().indices) {
                     selectedItem = albums()[index]
                     itemScale = selectedScale
 
@@ -304,7 +305,7 @@ fun rememberSortableGridState(
 
                     state.scrollBy(scrolledBy)
 
-                    delay(16)
+                    delay(16.milliseconds)
                 }
             }
         }

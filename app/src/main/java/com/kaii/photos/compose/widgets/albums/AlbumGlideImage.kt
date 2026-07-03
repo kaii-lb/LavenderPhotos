@@ -33,6 +33,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.mediastore.ImmichInfo
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -91,7 +92,7 @@ fun AlbumGlideImage(
         } else {
             var timedOut by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
-                delay(5000)
+                delay(5000.milliseconds)
                 timedOut = true
             }
 

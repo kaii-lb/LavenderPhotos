@@ -39,11 +39,11 @@ class DrawingPaints {
             DrawingPaint(
                 type = PaintType.Pencil,
                 strokeWidth = 20f,
-                strokeCap = StrokeCap.Companion.Round,
-                strokeJoin = StrokeJoin.Companion.Round,
+                strokeCap = StrokeCap.Round,
+                strokeJoin = StrokeJoin.Round,
                 strokeMiterLimit = DefaultStrokeLineMiter,
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
-                blendMode = BlendMode.Companion.SrcOver,
+                pathEffect = PathEffect.cornerPathEffect(50f),
+                blendMode = BlendMode.SrcOver,
                 color = DrawingColors.Red,
                 alpha = 1f
             )
@@ -52,11 +52,11 @@ class DrawingPaints {
             DrawingPaint(
                 type = PaintType.Highlighter,
                 strokeWidth = 20f,
-                strokeCap = StrokeCap.Companion.Square,
-                strokeJoin = StrokeJoin.Companion.Miter,
+                strokeCap = StrokeCap.Square,
+                strokeJoin = StrokeJoin.Miter,
                 strokeMiterLimit = DefaultStrokeLineMiter,
                 pathEffect = null,
-                blendMode = BlendMode.Companion.SrcOver,
+                blendMode = BlendMode.SrcOver,
                 color = DrawingColors.Red,
                 alpha = 0.5f,
             )
@@ -65,25 +65,12 @@ class DrawingPaints {
             DrawingPaint(
                 type = PaintType.Text,
                 strokeWidth = 20f,
-                strokeCap = StrokeCap.Companion.Round,
-                strokeJoin = StrokeJoin.Companion.Round,
+                strokeCap = StrokeCap.Round,
+                strokeJoin = StrokeJoin.Round,
                 strokeMiterLimit = DefaultStrokeLineMiter,
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
-                blendMode = BlendMode.Companion.SrcOver,
+                pathEffect = PathEffect.cornerPathEffect(50f),
+                blendMode = BlendMode.SrcOver,
                 color = DrawingColors.Red,
-                alpha = 1f
-            )
-
-        val Blur =
-            DrawingPaint(
-                type = PaintType.Blur,
-                strokeWidth = 20f,
-                strokeCap = StrokeCap.Companion.Round,
-                strokeJoin = StrokeJoin.Companion.Round,
-                strokeMiterLimit = DefaultStrokeLineMiter,
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
-                blendMode = BlendMode.Companion.SrcOver,
-                color = DrawingColors.Black,
                 alpha = 1f
             )
 
@@ -91,11 +78,11 @@ class DrawingPaints {
             DrawingPaint(
                 type = PaintType.Image,
                 strokeWidth = 100f,
-                strokeCap = StrokeCap.Companion.Round,
-                strokeJoin = StrokeJoin.Companion.Round,
+                strokeCap = StrokeCap.Round,
+                strokeJoin = StrokeJoin.Round,
                 strokeMiterLimit = DefaultStrokeLineMiter,
-                pathEffect = PathEffect.Companion.cornerPathEffect(50f),
-                blendMode = BlendMode.Companion.SrcOver,
+                pathEffect = PathEffect.cornerPathEffect(50f),
+                blendMode = BlendMode.SrcOver,
                 color = Color.Transparent,
                 alpha = 1f
             )
@@ -363,13 +350,6 @@ interface Modification
 @Immutable
 @Serializable
 data class DrawablePath(
-    val path: Path,
-    val paint: DrawingPaint
-) : Modification
-
-@Immutable
-@Serializable
-data class DrawableBlur(
     val path: Path,
     val paint: DrawingPaint
 ) : Modification

@@ -17,6 +17,7 @@ import com.kaii.photos.helpers.editing.VideoModification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class CustomFileEditor(
     private val customDao: CustomEntityDao,
@@ -58,7 +59,7 @@ class CustomFileEditor(
             var tries = 0
             while (tries < 60 && !mediaDao.exists(id)) {
                 tries += 1
-                delay(500)
+                delay(500.milliseconds)
             }
 
             customDao.upsertAll(
@@ -105,7 +106,7 @@ class CustomFileEditor(
             var tries = 0
             while (tries < 60 && !mediaDao.exists(id)) {
                 tries += 1
-                delay(500)
+                delay(500.milliseconds)
             }
 
             customDao.upsertAll(

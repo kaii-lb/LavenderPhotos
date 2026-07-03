@@ -65,6 +65,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 
@@ -141,7 +142,7 @@ fun SingleSecurePhotoInfoDialog(
 
                         if (cachedFile.length() < originalFile.length()) {
                             while (cachedFile.length() + threshold < originalFile.length()) {
-                                delay(100)
+                                delay(100.milliseconds)
                             }
 
                             cachedFile
@@ -172,7 +173,7 @@ fun SingleSecurePhotoInfoDialog(
                             cachedFile
                         } else if (cachedFile.length() < originalFile.length()) {
                             while (cachedFile.length() + threshold < originalFile.length()) {
-                                delay(100)
+                                delay(100.milliseconds)
                             }
 
                             cachedFile

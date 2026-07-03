@@ -88,6 +88,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 // TODO: awful execution plz fix
 @OptIn(ExperimentalMaterial3Api::class)
@@ -418,7 +419,7 @@ fun FloatingScrollbar(
         if (isScrolling || isDraggingHandle) {
             showHandle = true
         } else {
-            delay(AnimationConstants.DURATION_EXTRA_LONG * 2L)
+            delay((AnimationConstants.DURATION_EXTRA_LONG * 2L).milliseconds)
             showHandle = false
         }
     }
@@ -471,10 +472,12 @@ fun FloatingScrollbar(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(
-                            x = 8.dp,
-                            y = thumbPosition
-                        )
+                        .offset {
+                            IntOffset(
+                                x = 8.dp.roundToPx(),
+                                y = thumbPosition.roundToPx()
+                            )
+                        }
                         .height(thumbHeight)
                         .width(48.dp)
                         .clip(
@@ -533,10 +536,12 @@ fun FloatingScrollbar(
                 val layoutDirection = LocalLayoutDirection.current
                 Box(
                     modifier = Modifier
-                        .offset(
-                            x = 8.dp,
-                            y = thumbPosition + 8.dp
-                        )
+                        .offset {
+                            IntOffset(
+                                x = 8.dp.roundToPx(),
+                                y = (thumbPosition + 8.dp).roundToPx()
+                            )
+                        }
                         .graphicsLayer {
                             translationX =
                                 if (layoutDirection == LayoutDirection.Rtl) 220f

@@ -86,7 +86,7 @@ fun ExpressivePINField(
 
                     val scale by animateFloatAsState(
                         targetValue =
-                            if (it in 0 until code().size) 1f else 0f,
+                            if (it in code().indices) 1f else 0f,
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
                     )
 

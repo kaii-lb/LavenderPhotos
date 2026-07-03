@@ -40,6 +40,7 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.editing.CroppingAspectRatio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +94,7 @@ fun CroppingRatioBottomSheet(
                         onSetCroppingRatio(entry)
 
                         coroutineScope.launch {
-                            delay(AnimationConstants.DURATION.toLong())
+                            delay(AnimationConstants.DURATION.milliseconds)
                             sheetState.hide()
                             show.value = false
                         }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 class ExpressivePINFieldState(
@@ -234,7 +235,7 @@ class ExpressivePINFieldState(
         }
 
         runner.run {
-            delay(1000)
+            delay(1000.milliseconds)
             _status.value = Status.Idle
 
             if (clear) reset()

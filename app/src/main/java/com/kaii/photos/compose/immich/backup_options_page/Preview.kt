@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
 @Composable
@@ -91,7 +92,7 @@ private fun ImmichBackupOptionsPagePreview() {
                 override suspend fun confirm(context: Context) = false
                 override suspend fun refresh() {
                     isLoading = true
-                    delay(3000)
+                    delay(3000.milliseconds)
                     isLoading = false
                 }
             }

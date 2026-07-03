@@ -44,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.app_bars.wallpaper_setter.WallpaperSetterBottomBar"
 
@@ -119,7 +120,7 @@ fun WallpaperSetterBottomBar(
 
                         wallpaperManager.setBitmap(destinationBitmap, null, true, wallpaperType.flag)
 
-                        delay(1000)
+                        delay(1000.milliseconds)
 
                         close()
                     }

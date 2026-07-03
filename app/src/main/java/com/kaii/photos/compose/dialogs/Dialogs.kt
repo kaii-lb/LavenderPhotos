@@ -67,6 +67,7 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Do not use background colours for your composable
 currently you need to calculate dp height of your composable manually */
@@ -122,7 +123,7 @@ fun DialogExpandableItem(
             )
             spacerHeight = 0.dp
         } else {
-            delay(150)
+            delay(150.milliseconds)
             shape = firstShape
             spacerHeight = firstSpacerHeight
         }

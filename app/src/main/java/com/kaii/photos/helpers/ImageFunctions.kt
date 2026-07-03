@@ -5,9 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.copyUriToUri
@@ -15,9 +13,6 @@ import com.kaii.photos.mediastore.getMediaStoreDataForIds
 import com.kaii.photos.mediastore.insertMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-
-private const val TAG = "com.kaii.photos.helpers.ImageFunctions"
 
 fun permanentlyDeletePhotoList(context: Context, list: List<Uri>) {
     if (list.isNotEmpty()) {

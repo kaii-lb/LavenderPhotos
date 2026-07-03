@@ -28,6 +28,7 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import kotlinx.coroutines.delay
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun LoadingItem(
@@ -36,7 +37,7 @@ fun LoadingItem(
 ) {
     var showColors by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        delay(10) // to avoid a pop-in effect
+        delay(10.milliseconds) // to avoid a pop-in effect
         showColors = true
     }
 

@@ -35,6 +35,7 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.repositories.SearchMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -124,7 +125,7 @@ fun SearchPage(
                     viewModel.search(query = text)
 
                     if (searchMode != SearchMode.Tag) {
-                        delay(PhotoGridConstants.UPDATE_TIME)
+                        delay(PhotoGridConstants.UPDATE_TIME.milliseconds)
                         gridState.scrollToItem(0)
                     }
                 }

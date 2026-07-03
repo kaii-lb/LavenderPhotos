@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 fun Modifier.dragSelectionHandler(
     state: LazyGridState,
@@ -59,7 +60,7 @@ fun Modifier.dragSelectionHandler(
         if (scrollSpeed.floatValue != 0f) {
             while (isActive) {
                 gridState.scrollBy(scrollSpeed.floatValue)
-                delay(10)
+                delay(10.milliseconds)
             }
         }
     }

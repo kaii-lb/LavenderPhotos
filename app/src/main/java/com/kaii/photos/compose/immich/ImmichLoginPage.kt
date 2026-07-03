@@ -72,6 +72,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlin.time.Duration.Companion.milliseconds
 
 @Preview
 @Composable
@@ -136,7 +137,7 @@ private fun ImmichLoginPageImpl(
             loading = status == OperationStatus.Loading || status == OperationStatus.Successful
 
             // for dramatic effect
-            delay(5000)
+            delay(5000.milliseconds)
 
             if (status is OperationStatus.Successful) {
                 loading = false
