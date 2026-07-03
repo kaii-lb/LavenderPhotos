@@ -2,7 +2,6 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import androidx.compose.ui.util.fastMap
-import androidx.compose.ui.util.fastMapNotNull
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -117,32 +116,32 @@ class ImmichRepository(
         val cloudAlbum = fileManager.albumsClient.get(
             id = Uuid.parse(album.immichId!!),
             withoutAssets = false
-        )
+        ) ?: return
 
-        if (cloudAlbum != null) {
-            val items =
-                cloudAlbum.assets.fastMap { asset ->
-                    asset.toMediaStoreData()
-                }
+        val cloudAssets = fileManager.assetClient.getForAlbum(cloudAlbum.id) ?: return
 
-            val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()
-            val added = items.fastMap { it.id }.toSet() - mediaIds
-            val deleted = mediaIds - items.fastMap { it.id }.toSet()
-
-            db.withTransaction {
-                mediaDao.upsertAll(items = items)
-
-                customDao.deleteAll(ids = deleted, album = album.id)
-                customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
-
-                db.exifDataDao().upsertAll(
-                    items = cloudAlbum.assets.fastMapNotNull {
-                        it.exifInfo?.toExifData(
-                            mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
-                        )
-                    }
-                )
+        val items =
+            cloudAssets.map { asset ->
+                asset.toMediaStoreData()
             }
+
+        val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()
+        val added = items.fastMap { it.id }.toSet() - mediaIds
+        val deleted = mediaIds - items.fastMap { it.id }.toSet()
+
+        db.withTransaction {
+            mediaDao.upsertAll(items = items)
+
+            customDao.deleteAll(ids = deleted, album = album.id)
+            customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
+
+            db.exifDataDao().upsertAll(
+                items = cloudAssets.mapNotNull {
+                    it.exifInfo?.toExifData(
+                        mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
+                    )
+                }
+            )
         }
     }
 

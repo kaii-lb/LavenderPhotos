@@ -61,13 +61,14 @@ import com.kaii.photos.helpers.expiryDate
 import com.kaii.photos.models.immich_share_album_page.CreateLinkState
 import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
 import com.kaii.photos.widgets.rememberDateTimePickerState
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkType
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 @Preview
 @Composable
@@ -86,7 +87,7 @@ private fun ImmichShareLinkPagePreview() {
             buildList {
                 repeat(5) {
                     add(
-                        SharedLinkResponse(
+                        SharedLinkResponseDto(
                             album = null,
                             allowDownload = true,
                             allowUpload = false,
@@ -94,14 +95,13 @@ private fun ImmichShareLinkPagePreview() {
                             createdAt = "May 16, 2026",
                             description = "description",
                             expiresAt = "May 17, 2026",
-                            id = "$it",
+                            id = Uuid.fromLongs(0L, it.toLong()),
                             key = "",
                             password = "some password",
                             showMetadata = false,
                             slug = "kitty",
                             type = SharedLinkType.Album,
-                            userId = "",
-                            token = null
+                            userId = Uuid.NIL
                         )
                     )
                 }
@@ -205,7 +205,7 @@ private fun ImmichShareLinkPageImpl(
     allowUploads: () -> Boolean,
     allowDownloads: () -> Boolean,
     usesExpiryDate: () -> Boolean,
-    links: () -> List<SharedLinkResponse>,
+    links: () -> List<SharedLinkResponseDto>,
     navController: NavController,
     modifier: Modifier,
     setCustomSlug: (slug: String?) -> Unit,
@@ -440,10 +440,10 @@ private fun ImmichShareLinkPageImpl(
                             modifier = Modifier
                                 .animateItem(),
                             copyLink = {
-                                showLink(link.slug, link.id)
+                                showLink(link.slug, link.id.toString())
                             },
                             deleteLink = {
-                                removeLink(link.id)
+                                removeLink(link.id.toString())
                             }
                         )
                     }

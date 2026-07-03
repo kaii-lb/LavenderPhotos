@@ -5,7 +5,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.kaii.photos.R
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalDateTime
@@ -147,29 +147,13 @@ fun Duration.formatLikeANormalPerson(): Pair<String, Boolean> {
     return Pair(formatted, longboi)
 }
 
-fun String.immichDurationToSecondsOrNull(): Long? {
-    val stripped = replace(".", "").replace(":", "")
-
-    if (isBlank() || stripped.all { it == '0' }) return null
-
-    val duration = split(".")[0]
-    val split = duration.split(":").reversed()
-
-    val seconds = split.getOrNull(0)?.toLongOrNull() ?: 0L
-    val minutes = split.getOrNull(1)?.toLongOrNull() ?: 0L
-    val hours = split.getOrNull(2)?.toLongOrNull() ?: 0L
-    val days = split.getOrNull(3)?.toLongOrNull() ?: 0L
-
-    return days * 86400L + hours * 3600L + minutes * 60L + seconds
-}
-
 /** @param n is the precision of the output */
 fun Long.bytesToGB(n: Int = 2) = ((this.toDouble() / (1024 * 1024 * 1024)) * 10f.pow(n)).roundToLong() / 10f.pow(n)
 
 fun Double.round(n: Int = 2) = (this * 10f.pow(n)).roundToLong() / 10f.pow(n)
 fun Float.round(n: Int = 2) = (this * 10f.pow(n)).roundToLong() / 10f.pow(n)
 
-fun SharedLinkResponse.expiryDate(context: Context): String? {
+fun SharedLinkResponseDto.expiryDate(context: Context): String? {
     if (expiresAt == null) return null
 
     val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
@@ -185,7 +169,7 @@ fun SharedLinkResponse.expiryDate(context: Context): String? {
         )
 }
 
-fun SharedLinkResponse.creationDate(context: Context): String? {
+fun SharedLinkResponseDto.creationDate(context: Context): String? {
     val is24Hr = android.text.format.DateFormat.is24HourFormat(context)
 
     return Instant.parse(createdAt)

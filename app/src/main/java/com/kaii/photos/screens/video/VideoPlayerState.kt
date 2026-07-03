@@ -59,8 +59,8 @@ class VideoPlayerState(
     }
 
     private val playingRunner = SingleJobRunner(coroutineScope)
-    private val timeoutDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT)
-    private val endOfVideoDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.END_OF_VIDEO_TIMEOUT)
+    private val timeoutDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.CONTROLS_HIDE_TIMEOUT.milliseconds)
+    private val endOfVideoDebouncer = JobDebouncer(coroutineScope, VideoPlayerConstants.END_OF_VIDEO_TIMEOUT.milliseconds)
 
     private var currentSource = ""
     private var autoPlay = false

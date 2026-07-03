@@ -173,7 +173,7 @@ fun VideoFilterPage(
     val context = LocalContext.current
     LaunchedEffect(currentVideoPosition, allowedToRefresh) {
         if (allowedToRefresh) return@LaunchedEffect
-        if (uri.startsWith("/api") && auth().asString().isBlank()) return@LaunchedEffect
+        if (uri.startsWith("/api") && !auth().isValid()) return@LaunchedEffect
 
         coroutineScope.launch(Dispatchers.IO) {
             val metadata = MediaMetadataRetriever()
@@ -198,7 +198,7 @@ fun VideoFilterPage(
 
             // sort by index since order of application is very important
             val adjustments = drawingPaintState.modifications
-                .mapNotNull { it as? VideoModification.Adjustment }
+                .filterIsInstance<VideoModification.Adjustment>()
                 .sortedBy {
                     MediaAdjustments.entries.indexOf(it.type)
                 }

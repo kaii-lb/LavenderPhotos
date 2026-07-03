@@ -19,6 +19,7 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class AuthManager(
     private val context: Context,
@@ -77,7 +78,7 @@ fun rememberSecureFolderAuthManager(
                 coroutineScope.launch {
                     if (extraAction != null) {
                         extraAction()
-                        delay(AnimationConstants.DURATION.toLong())
+                        delay(AnimationConstants.DURATION.milliseconds)
                     }
 
                     navController.navigate(route = Screens.SecureFolder.GridView)

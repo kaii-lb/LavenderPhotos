@@ -81,7 +81,7 @@ class CloudSyncManager(
 
         progressManager.stopTracking()
 
-        cloudCleanupHandler.cleanUp(context)
+        cloudCleanupHandler.cleanUp()
     }
 
     suspend fun syncFor(

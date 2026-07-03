@@ -10,12 +10,13 @@ import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.repositories.ImmichInfoRepository
-import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
+import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
@@ -41,6 +42,11 @@ class ImmichInfoViewModel(
             auth = Auth.None
         ),
         loginClient = LoginClient(
+            client = apiClient,
+            endpoint = "",
+            auth = Auth.None
+        ),
+        userClient = UserClient(
             client = apiClient,
             endpoint = "",
             auth = Auth.None
@@ -84,9 +90,7 @@ class ImmichInfoViewModel(
     fun setInfo(info: ImmichBasicInfo) = settings.immich.setImmichBasicInfo(info)
 
     fun refresh() {
-        viewModelScope.launch {
-            repo.refresh()
-        }
+        repo.refresh()
     }
 
     fun logout() {
@@ -140,7 +144,7 @@ class ImmichInfoViewModel(
                         endpoint = info.value.endpoint,
                         auth = Auth.AccessToken(accessToken = state.accessToken),
                         username = state.name,
-                        userId = state.userId,
+                        userId = state.userId.toString(),
                         updatedAt = ""
                     )
                 } else {
@@ -171,7 +175,7 @@ class ImmichInfoViewModel(
 
             val state = repo.authenticate(apiKey)
 
-            if (state is LoginState.LoggedIn) {
+            if (state is ImmichLoginState.LoggedIn) {
                 eventTitle.value = context.resources.getString(R.string.immich_login_successful)
                 isLoading.value = false
             } else {
@@ -186,12 +190,12 @@ class ImmichInfoViewModel(
             }
 
             setInfo(
-                info = if (state is LoginState.LoggedIn) {
+                info = if (state is ImmichLoginState.LoggedIn) {
                     ImmichBasicInfo(
                         endpoint = info.value.endpoint,
                         auth = Auth.ApiKey(apiKey = apiKey),
                         username = state.user.name,
-                        userId = state.user.id,
+                        userId = state.user.id.toString(),
                         updatedAt = ""
                     )
                 } else {

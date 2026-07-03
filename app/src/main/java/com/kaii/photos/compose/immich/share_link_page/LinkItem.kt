@@ -25,7 +25,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.creationDate
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 
 @Preview
 @Composable
@@ -44,7 +44,7 @@ private fun Preview() {
 
 @Composable
 fun getLinkItemDescription(
-    link: SharedLinkResponse,
+    link: SharedLinkResponseDto,
 ) = buildString {
     append(link.creationDate(context = LocalContext.current))
 

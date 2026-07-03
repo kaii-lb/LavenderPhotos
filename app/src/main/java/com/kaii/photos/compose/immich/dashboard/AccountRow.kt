@@ -39,15 +39,15 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.repositories.LoginState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AccountRow(
     immichInfo: () -> ImmichBasicInfo,
-    userInfo: () -> LoginState,
+    userInfo: () -> ImmichLoginState,
     isLoadingInfo: () -> Boolean,
     pullToRefreshState: PullToRefreshState
 ) {
@@ -55,11 +55,11 @@ fun AccountRow(
     val title by remember {
         derivedStateOf {
             when (val info = userInfo()) {
-                is LoginState.LoggedIn -> {
+                is ImmichLoginState.LoggedIn -> {
                     resources.getString(R.string.immich_login_found) + " " + info.user.name
                 }
 
-                is LoginState.LoggedOut -> {
+                is ImmichLoginState.LoggedOut -> {
                     resources.getString(R.string.immich_login_unavailable)
                 }
 
@@ -73,11 +73,11 @@ fun AccountRow(
     val summary by remember {
         derivedStateOf {
             when (val info = userInfo()) {
-                is LoginState.LoggedIn -> {
+                is ImmichLoginState.LoggedIn -> {
                     resources.getString(R.string.immich_email) + " " + info.user.email
                 }
 
-                is LoginState.LoggedOut -> {
+                is ImmichLoginState.LoggedOut -> {
                     resources.getString(R.string.immich_login_unavailable_desc)
                 }
 
@@ -93,9 +93,9 @@ fun AccountRow(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(align = Alignment.CenterVertically)
-            .clickable(enabled = immichInfo().endpoint.isNotBlank() && userInfo() !is LoginState.ServerUnreachable && !isLoadingInfo()) {
+            .clickable(enabled = immichInfo().endpoint.isNotBlank() && userInfo() !is ImmichLoginState.ServerUnreachable && !isLoadingInfo()) {
                 navController.navigate(
-                    if (userInfo() is LoginState.LoggedIn) Screens.Immich.Account
+                    if (userInfo() is ImmichLoginState.LoggedIn) Screens.Immich.Account
                     else Screens.Immich.Login
                 )
             }

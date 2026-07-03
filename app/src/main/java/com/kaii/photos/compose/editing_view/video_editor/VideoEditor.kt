@@ -95,6 +95,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
@@ -157,7 +158,7 @@ fun VideoEditorImpl(
 
     val context = LocalContext.current
     LaunchedEffect(uri, info()) {
-        if (uri.startsWith("/api") && (info().auth.asString().isBlank() || info().endpoint.isBlank())) return@LaunchedEffect
+        if (uri.startsWith("/api") && (info().auth.isValid().not() || info().endpoint.isBlank())) return@LaunchedEffect
 
         videoPlayerState.setSource(
             context = context,
@@ -205,7 +206,7 @@ fun VideoEditorImpl(
         val threshold = 150f
         val current = videoPlayerState.currentPosition * 1000
         if (current in (end - threshold)..(end + threshold) || current >= end) {
-            delay(1000)
+            delay(1000.milliseconds)
             videoPlayerState.pause()
             videoPlayerState.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
             Log.d(TAG, "Ending video...")
@@ -218,13 +219,13 @@ fun VideoEditorImpl(
             val threshold = 150f
             val current = videoPlayerState.currentPosition * 1000
             if (current in (end - threshold)..(end + threshold) || current >= end) {
-                delay(1000)
+                delay(1000.milliseconds)
                 videoPlayerState.pause()
                 videoPlayerState.seekTo((videoEditingState.startTrimPosition * 1000).toLong())
                 Log.d(TAG, "Ending video...")
             }
 
-            delay(100)
+            delay(100.milliseconds)
         }
     }
 
@@ -273,10 +274,9 @@ fun VideoEditorImpl(
     Log.d(TAG, "basic video data $basicVideoData")
 
     LaunchedEffect(videoPlayerState.duration, videoPlayerState.audioTracks.lastOrNull(), info()) {
-        if (uri.startsWith("/api") && info().auth.asString().isBlank()) return@LaunchedEffect
+        if (uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
 
         val videoFormat = videoPlayerState.videoFormat
-        var tries = 0
         val audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
         val frameRate = videoPlayerState.getFrameRate()
 
@@ -337,10 +337,9 @@ fun VideoEditorImpl(
                     height = size.height,
                     audioChannelCount = audioChannelCount
                 )
-            tries += 1
 
             Log.d(TAG, "Video data $basicVideoData")
-            delay(100)
+            delay(100.milliseconds)
         }
     }
 

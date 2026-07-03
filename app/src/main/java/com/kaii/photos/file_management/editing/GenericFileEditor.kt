@@ -86,6 +86,7 @@ import java.io.File
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 interface GenericFileEditor {
     companion object {
@@ -373,7 +374,7 @@ interface GenericFileEditor {
 
             body.value = context.resources.getString(R.string.editing_export_video_loading_body, 1, 3)
 
-            delay(1000)
+            delay(1000.milliseconds)
         }
 
         if (error) {
@@ -382,7 +383,7 @@ interface GenericFileEditor {
         }
 
         progressHolder.progress = 0 // reset for second operation
-        delay(1000)
+        delay(1000.milliseconds)
 
         modList.clear()
 
@@ -464,9 +465,9 @@ interface GenericFileEditor {
                 body.value = context.resources.getString(R.string.editing_export_video_loading_body, 2, 3)
             }
 
-            delay(1000)
+            delay(1000.milliseconds)
         }
-        delay(1000)
+        delay(1000.milliseconds)
 
         if (!tempFileCrop.exists() || tempFileCrop.length() <= 0) {
             Log.d(TAG, "Video export step 2 failed - temp file crop failed")

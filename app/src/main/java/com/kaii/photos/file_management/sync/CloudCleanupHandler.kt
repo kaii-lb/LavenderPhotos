@@ -1,11 +1,11 @@
 package com.kaii.photos.file_management.sync
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.provider.Settings
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.MediaDao
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetExistsRequest
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
@@ -15,29 +15,26 @@ class CloudCleanupHandler(
     private val assetsClient: AssetsClient
 ) {
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun cleanUp(context: Context) = withContext(Dispatchers.IO) {
-        val cloudItems = mediaDao.getCloudMedia().filter {
-            it.isCloud // just to be sure we don't delete user's local media
-        }
-
+    suspend fun cleanUp() = withContext(Dispatchers.IO) {
+        val cloudItems = mediaDao.getCloudMedia()
         if (cloudItems.isEmpty()) return@withContext
 
-        // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
-        @SuppressLint("HardwareIds")
-        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        // check what exists in cloud from what we have
+        val bulkCheck = assetsClient.check(
+            assets = AssetBulkUploadCheckDto(
+                assets = cloudItems.fastMap { item ->
+                    AssetBulkUploadCheckItem(
+                        checksum = item.hash!!,
+                        id = item.id.toString()
+                    )
+                }
+            )
+        )
 
-        cloudItems.forEach { item ->
-            val exists = assetsClient.exists(
-                request = AssetExistsRequest(
-                    deviceAssetIds = listOf(
-                        "${deviceId}-${item.displayName}-${item.size}"
-                    ),
-                    deviceId = deviceId
-                )
-            )?.existingIds?.isEmpty() == true
-
-            if (!exists) {
-                mediaDao.delete(item.id)
+        bulkCheck?.forEach { item ->
+            // if it doesn't exist in cloud, remove it from local
+            if (item.isTrashed || (item.assetId == null && item.action == AssetUploadAction.Accept)) {
+                mediaDao.delete(item.id.toLong())
             }
         }
     }

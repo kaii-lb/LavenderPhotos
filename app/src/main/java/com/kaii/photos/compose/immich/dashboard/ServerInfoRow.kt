@@ -15,12 +15,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.core.net.toUri
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesRow
+import com.kaii.photos.domain.immich.ImmichServerInfo
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.repositories.ServerInfo
 
 @Composable
 fun ServerInfoRow(
-    serverInfo: () -> ServerInfo?,
+    serverInfo: () -> ImmichServerInfo?,
     enabled: () -> Boolean
 ) {
     val resources = LocalResources.current

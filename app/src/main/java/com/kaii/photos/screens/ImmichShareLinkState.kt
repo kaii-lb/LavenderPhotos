@@ -3,8 +3,8 @@ package com.kaii.photos.screens
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkRequest
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkType
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.CreateSharedLinkDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkType
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -19,7 +19,7 @@ class ImmichShareLinkState {
 
     @OptIn(ExperimentalUuidApi::class)
     fun createRequest(albumImmichId: String) =
-        SharedLinkRequest(
+        CreateSharedLinkDto(
             albumId = Uuid.parse(albumImmichId),
             allowDownload = allowDownloads,
             allowUpload = allowUploads,

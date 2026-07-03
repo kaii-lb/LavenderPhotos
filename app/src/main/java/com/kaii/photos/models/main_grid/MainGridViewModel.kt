@@ -15,14 +15,15 @@ import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
-import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
@@ -133,6 +134,12 @@ class MainGridViewModel(
         auth = Auth.None
     )
 
+    private val userClient = UserClient(
+        client = apiClient,
+        endpoint = "",
+        auth = Auth.None
+    )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val mediaFlow = repo.mediaFlow
 
@@ -146,8 +153,11 @@ class MainGridViewModel(
                     loginClient.setEndpoint(it.endpoint)
                     loginClient.setAuth(it.auth)
 
+                    userClient.setEndpoint(it.endpoint)
+                    userClient.setAuth(it.auth)
+
                     val state = getLoginState()
-                    if (state is LoginState.LoggedIn) {
+                    if (state is ImmichLoginState.LoggedIn) {
                         settings.immich.setUsername(state.user.name)
                         settings.immich.setUpdatedAt(state.user.updatedAt)
                     }
@@ -166,18 +176,18 @@ class MainGridViewModel(
 
     private suspend fun getLoginState() = withContext(Dispatchers.IO) {
         if (!loginClient.ping()) {
-            return@withContext LoginState.ServerUnreachable
+            return@withContext ImmichLoginState.ServerUnreachable
         }
 
         val validated = loginClient.validate()
 
         if (!validated) {
-            return@withContext LoginState.LoggedOut
+            return@withContext ImmichLoginState.LoggedOut
         }
 
-        loginClient.getMe()?.let {
-            LoginState.LoggedIn(user = it)
-        } ?: LoginState.LoggedOut
+        userClient.getMe()?.let {
+            ImmichLoginState.LoggedIn(user = it)
+        } ?: ImmichLoginState.LoggedOut
     }
 
     fun changeAlbum(
@@ -306,8 +316,14 @@ class MainGridViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -351,8 +367,14 @@ class MainGridViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -401,8 +423,14 @@ class MainGridViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

@@ -8,7 +8,7 @@ import com.kaii.photos.screens.ImmichShareLinkState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.SharedLinkResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +39,7 @@ class ImmichShareAlbumViewModel(
     private val _state = MutableStateFlow<CreateLinkState>(CreateLinkState.Idle)
     val state = _state.asStateFlow()
 
-    private val _links = MutableStateFlow(emptyList<SharedLinkResponse>())
+    private val _links = MutableStateFlow(emptyList<SharedLinkResponseDto>())
     val links = _links.asStateFlow()
 
     val shareLinkState = ImmichShareLinkState()
@@ -104,7 +104,7 @@ class ImmichShareAlbumViewModel(
             link = shareLinkState.createRequest(albumImmichId)
         ) ?: return null
 
-        return buildLink(link.slug, link.id)
+        return buildLink(link.slug, link.id.toString())
     }
 
     private fun buildLink(slug: String?, id: String) =

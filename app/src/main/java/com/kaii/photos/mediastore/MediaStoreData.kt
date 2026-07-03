@@ -5,9 +5,8 @@ import android.provider.MediaStore
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.immichDurationToSecondsOrNull
 import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
@@ -84,7 +83,7 @@ fun MediaStoreData.isGIF(): Boolean = this.mimeType.lowercase() == "image/gif"
 fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())
 
 @OptIn(ExperimentalUuidApi::class)
-fun AssetResponse.toMediaStoreData() =
+fun AssetResponseDto.toMediaStoreData() =
     MediaStoreData(
         id = Uuid.parse(id).toLongs { a, _ -> a },
         uri = "/api/assets/${id}/original",
@@ -99,5 +98,5 @@ fun AssetResponse.toMediaStoreData() =
         hash = checksum,
         size = exifInfo?.fileSizeInByte ?: 0L,
         favourited = isFavorite,
-        duration = duration.immichDurationToSecondsOrNull()
+        duration = duration?.let { it / 1000 } // ms to s
     )

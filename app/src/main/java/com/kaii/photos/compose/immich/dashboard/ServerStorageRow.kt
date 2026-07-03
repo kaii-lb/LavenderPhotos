@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
-import com.kaii.photos.repositories.ServerInfo
+import com.kaii.photos.domain.immich.ImmichServerInfo
 
 @Composable
 fun ServerStorageRow(
-    serverInfo: () -> ServerInfo?,
+    serverInfo: () -> ImmichServerInfo?,
     enabled: () -> Boolean
 ) {
     val resources = LocalResources.current

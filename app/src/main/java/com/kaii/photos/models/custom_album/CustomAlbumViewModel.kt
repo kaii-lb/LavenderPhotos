@@ -78,8 +78,14 @@ class CustomAlbumViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -123,8 +129,14 @@ class CustomAlbumViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),
@@ -182,8 +194,14 @@ class CustomAlbumViewModel(
                     it, list.size
                 )
             }.let { success ->
-                if (!success) {
-                    delay(1000.milliseconds)
+                delay(1000.milliseconds)
+                if (success) {
+                    percentage.floatValue = 1f
+                    body.value = context.resources.getString(
+                        R.string.media_copy_snackbar_body,
+                        list.size, list.size
+                    )
+                } else {
                     LavenderSnackbarController.pushEvent(
                         LavenderSnackbarEvent.MessageEvent(
                             message = context.resources.getString(R.string.media_snackbar_operation_failed),

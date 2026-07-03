@@ -18,8 +18,8 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.appCloudFolderDir
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.Album
-import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumCreateRequest
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumResponseDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.CreateAlbumDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -119,7 +119,7 @@ class ImmichBackupOptionsState(
             client = apiClient
         )
 
-        val cloud = albumsClient.getAll()?.map { it.id }
+        val cloud = albumsClient.getAll()?.map { it.id.toString() }
 
         if (cloud == null) {
             isLoading = false
@@ -190,7 +190,7 @@ class ImmichBackupOptionsState(
         local.forEach { album ->
             if (album !is AlbumType.Cloud) {
                 val exists = cloud.any {
-                    it.id == album.immichId
+                    it.id.toString() == album.immichId
                 }
 
                 if (exists) return@forEach
@@ -208,14 +208,14 @@ class ImmichBackupOptionsState(
         val nonCloud = albumTypes.filter { it !is AlbumType.Cloud }
         cloud.forEach { cloudAlbum ->
             val album = nonCloud.find {
-                it.immichId == cloudAlbum.id
+                it.immichId == cloudAlbum.id.toString()
             }
 
             if (album == null || album.id in selectedAlbumIds) return@forEach
 
             if (album !is AlbumType.Folder || !album.wasCloud) {
                 albumsClient.delete(
-                    id = Uuid.parse(cloudAlbum.id)
+                    id = cloudAlbum.id
                 )
             }
 
@@ -247,7 +247,7 @@ class ImmichBackupOptionsState(
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun linkToCloud(
         album: AlbumType,
-        cloud: List<Album>,
+        cloud: List<AlbumResponseDto>,
         client: AlbumsClient
     ) {
         var immichId = cloud.find {
@@ -256,7 +256,7 @@ class ImmichBackupOptionsState(
 
         if (immichId == null) {
             val response = client.createAlbum(
-                info = AlbumCreateRequest(
+                info = CreateAlbumDto(
                     albumName = album.name,
                     albumUsers = emptyList(),
                     assetIds = emptyList(),
@@ -270,8 +270,8 @@ class ImmichBackupOptionsState(
         settings.edit(
             id = album.id,
             newInfo = when (album) {
-                is AlbumType.Folder -> album.copy(immichId = immichId)
-                is AlbumType.Custom -> album.copy(immichId = immichId)
+                is AlbumType.Folder -> album.copy(immichId = immichId.toString())
+                is AlbumType.Custom -> album.copy(immichId = immichId.toString())
                 else -> throw IllegalStateException("Cannot operate on a cloud album!")
             }
         )

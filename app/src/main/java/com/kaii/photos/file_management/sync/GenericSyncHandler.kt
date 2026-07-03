@@ -1,9 +1,7 @@
 package com.kaii.photos.file_management.sync
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.MediaStore
-import android.provider.Settings
 import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
@@ -20,10 +18,10 @@ import com.kaii.photos.mediastore.toContentId
 import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponse
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetMediaCreateDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -42,7 +40,7 @@ interface GenericSyncHandler {
 
     suspend fun sync(
         context: Context,
-        cloudMedia: List<AssetResponse>,
+        cloudMedia: List<AssetResponseDto>,
         localMedia: List<MediaStoreData>,
         originId: String,
         destinationPath: String
@@ -170,7 +168,7 @@ interface GenericSyncHandler {
         }
 
         val bulkCheck = fileManager.assetClient.check(
-            assets = AssetBulkUploadRequest(
+            assets = AssetBulkUploadCheckDto(
                 media.map { item ->
                     AssetBulkUploadCheckItem(
                         checksum = hashes[item.id]!!,
@@ -181,10 +179,6 @@ interface GenericSyncHandler {
         )?.associateBy { it.id } ?: return false
 
         val trashedItems = mutableListOf<Uuid>()
-
-        // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
-        @SuppressLint("HardwareIds")
-        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
         val total = media.mapNotNull { mediaItem ->
             val bulkResponse = bulkCheck[mediaItem.id.toString()]
@@ -202,16 +196,16 @@ interface GenericSyncHandler {
                     trashedItems.add(Uuid.parse(bulkResponse.assetId!!))
                 }
 
-                bulkResponse.assetId
+                bulkResponse.assetId?.let {
+                    Uuid.parse(it)
+                }
             } else {
                 val resp = fileManager.assetClient.upload(
-                    AssetUploadRequest(
+                    AssetMediaCreateDto(
                         assetSource = UriAssetSource(
                             context = context,
                             uri = mediaItem.uri.toUri()
                         ),
-                        deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
-                        deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
@@ -236,7 +230,7 @@ interface GenericSyncHandler {
 
         val success = fileManager.albumsClient.addAssets(
             albumId = Uuid.parse(albumImmichId),
-            assetIds = total.fastMap { Uuid.parse(it) }
+            assetIds = total
         )
 
         return total.size == media.size && success
@@ -302,12 +296,16 @@ interface GenericSyncHandler {
                 context.contentResolver.setDateForMedia(uri, item.type, item.dateTaken)
 
                 uri.toContentId(context.contentResolver, item.type)?.let { newId ->
-                    fileManager.mediaDao.upsertAll(listOf(item.copy(
-                        id = newId,
-                        uri = uri.toString(),
-                        hash = cloudItem.checksum,
-                        immichUrl = "/api/assets/${cloudItem.id}/original"
-                    )))
+                    fileManager.mediaDao.upsertAll(
+                        listOf(
+                            item.copy(
+                                id = newId,
+                                uri = uri.toString(),
+                                hash = cloudItem.checksum,
+                                immichUrl = "/api/assets/${cloudItem.id}/original"
+                            )
+                        )
+                    )
                 }
 
                 progressManager.increaseProgress()

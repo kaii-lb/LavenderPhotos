@@ -21,9 +21,9 @@ class LocalSyncHandler(
     ) = withContext(Dispatchers.IO) {
         if (album.immichId == null) return@withContext
 
-        val cloudMedia = fileManager.albumsClient.get(
-            id = Uuid.parse(album.immichId)
-        )?.assets ?: return@withContext
+        val cloudMedia = fileManager.assetClient.getForAlbum(
+            albumId = Uuid.parse(album.immichId)
+        ) ?: emptyList()
 
         val localMedia = fileManager.mediaDao.getMediaInPaths(paths = album.paths)
 

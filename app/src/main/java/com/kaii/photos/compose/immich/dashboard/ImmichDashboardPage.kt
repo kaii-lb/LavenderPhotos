@@ -47,11 +47,11 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
-import com.kaii.photos.repositories.LoginState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch
@@ -184,7 +184,7 @@ fun ImmichDashboardPage(
                     iconResID = R.drawable.add_photo_alternate,
                     position = RowPosition.Single,
                     showBackground = false,
-                    enabled = userInfo is LoginState.LoggedIn && !isLoadingInfo,
+                    enabled = userInfo is ImmichLoginState.LoggedIn && !isLoadingInfo,
                     action = {
                         navController.navigate(Screens.Immich.BackupOptions)
                     }
@@ -203,7 +203,7 @@ fun ImmichDashboardPage(
 
                 ServerInfoRow(
                     serverInfo = { serverInfo },
-                    enabled = { userInfo is LoginState.LoggedIn }
+                    enabled = { userInfo is ImmichLoginState.LoggedIn }
                 )
             }
 
@@ -213,7 +213,7 @@ fun ImmichDashboardPage(
 
                 ServerStorageRow(
                     serverInfo = { serverInfo },
-                    enabled = { userInfo is LoginState.LoggedIn }
+                    enabled = { userInfo is ImmichLoginState.LoggedIn }
                 )
             }
 
@@ -249,7 +249,7 @@ fun ImmichDashboardPage(
                     iconResID = R.drawable.cloud_sync,
                     position = RowPosition.Single,
                     showBackground = false,
-                    enabled = !loading && userInfo is LoginState.LoggedIn
+                    enabled = !loading && userInfo is ImmichLoginState.LoggedIn
                 ) {
                     loading = true
                     id = CloudSyncWorker.immediateEnqueue(

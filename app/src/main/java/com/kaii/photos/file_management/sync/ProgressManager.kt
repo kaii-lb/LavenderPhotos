@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class ProgressManager(
     private val scope: CoroutineScope,
@@ -38,17 +39,17 @@ class ProgressManager(
     init {
         // startup gauge check
         scope.launch {
-            val connected = settings.getImmichBasicInfo().first().auth.asString().isNotBlank()
+            val connected = settings.getImmichBasicInfo().first().auth.isValid()
 
             if (!connected) return@launch
 
             state = State.StartingUp
 
-            delay(AnimationConstants.DURATION_SHORT.toLong())
+            delay(AnimationConstants.DURATION_SHORT.milliseconds)
 
             progress = 1f
 
-            delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2L)
+            delay((AnimationConstants.DURATION_EXTRA_EXTRA_LONG * 2L).milliseconds)
             state = State.Idle
         }
     }
@@ -78,7 +79,7 @@ class ProgressManager(
 
     fun stopTracking() {
         scope.launch {
-            delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG.toLong())
+            delay(AnimationConstants.DURATION_EXTRA_EXTRA_LONG.milliseconds)
             state = if (progress == 1f || totalItems == 0) State.Idle else State.Error
         }
     }

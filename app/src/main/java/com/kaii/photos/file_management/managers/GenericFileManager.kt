@@ -1,6 +1,5 @@
 package com.kaii.photos.file_management.managers
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentValues
@@ -9,7 +8,6 @@ import android.content.Intent
 import android.content.IntentSender
 import android.net.Uri
 import android.provider.MediaStore
-import android.provider.Settings
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.ui.util.fastMap
@@ -40,9 +38,9 @@ import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadCheckItem
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBulkUploadRequest
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetMediaCreateDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -486,11 +484,11 @@ interface GenericFileManager {
         }
 
         val bulkCheck = assetClient.check(
-            assets = AssetBulkUploadRequest(
+            assets = AssetBulkUploadCheckDto(
                 media.map { item ->
                     AssetBulkUploadCheckItem(
                         checksum = hashes[item.id]!!,
-                        id = item.immichId ?: item.id.toString()
+                        id = item.id.toString()
                     )
                 }
             )
@@ -516,10 +514,6 @@ interface GenericFileManager {
 
         val trashedItems = mutableListOf<Uuid>()
 
-        // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
-        @SuppressLint("HardwareIds")
-        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-
         val total = media.map { mediaItem ->
             val bulkResponse = bulkCheck[mediaItem.id.toString()]
 
@@ -529,7 +523,7 @@ interface GenericFileManager {
                 mediaDao.linkToImmich(
                     id = mediaItem.id,
                     hash = hashes[mediaItem.id]!!,
-                    immichUrl = mediaItem.immichUrl!!
+                    immichUrl = mediaItem.immichUrl ?: "/api/assets/${bulkResponse.assetId}"
                 )
 
                 if (bulkResponse.isTrashed) {
@@ -538,17 +532,15 @@ interface GenericFileManager {
 
                 CopyResult(
                     id = mediaItem.id,
-                    immichId = mediaItem.immichId
+                    immichId = mediaItem.immichId ?: bulkResponse.assetId
                 )
             } else {
                 val resp = assetClient.upload(
-                    AssetUploadRequest(
+                    AssetMediaCreateDto(
                         assetSource = UriAssetSource(
                             context = context,
                             uri = mediaItem.uri.toUri()
                         ),
-                        deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
-                        deviceId = deviceId,
                         fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                         metadata = emptyList(),
@@ -568,7 +560,7 @@ interface GenericFileManager {
 
                 CopyResult(
                     id = mediaItem.id,
-                    immichId = resp?.id
+                    immichId = resp?.id?.toString()
                 )
             }
         }

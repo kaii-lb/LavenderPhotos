@@ -27,19 +27,17 @@ import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.ImmichInfo
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainDialogUserInfo(
     coroutineScope: CoroutineScope,
     immichInfo: () -> ImmichBasicInfo,
-    dismiss: () -> Unit
+    dismiss: suspend () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -58,7 +56,6 @@ fun MainDialogUserInfo(
                 .clickable(enabled = immichInfo().username.isNotBlank()) {
                     coroutineScope.launch {
                         dismiss()
-                        delay(AnimationConstants.DURATION_SHORT.toLong())
                         navController.navigate(Screens.Immich.Dashboard)
                     }
                 }

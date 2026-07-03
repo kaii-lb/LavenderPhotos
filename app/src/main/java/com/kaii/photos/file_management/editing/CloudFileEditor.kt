@@ -1,8 +1,6 @@
 package com.kaii.photos.file_management.editing
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.provider.Settings
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Size
@@ -27,7 +25,7 @@ import io.github.kaii_lb.lavender.immichintegration.BitmapAssetSource
 import io.github.kaii_lb.lavender.immichintegration.FileAssetSource
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadRequest
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetMediaCreateDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.CopyAssetRequest
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -97,7 +95,6 @@ class CloudFileEditor(
         )
 
         val id = upload(
-            context = context,
             mediaItem = mediaItem,
             assetSource = FileAssetSource(
                 file = result.newUri.toFile()
@@ -139,7 +136,6 @@ class CloudFileEditor(
         ) ?: return@withContext null
 
         val id = upload(
-            context = context,
             mediaItem = mediaItem,
             assetSource = BitmapAssetSource(bitmap = result),
             overwrite = overwrite
@@ -150,20 +146,13 @@ class CloudFileEditor(
 
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun upload(
-        context: Context,
         mediaItem: MediaStoreData,
         assetSource: AssetSource,
         overwrite: Boolean
     ): String? {
-        // this is okay because it is not being used to tracking purposes, only for identification to the immich server.
-        @SuppressLint("HardwareIds")
-        val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-
         val response = assetsClient.upload(
-            asset = AssetUploadRequest(
+            asset = AssetMediaCreateDto(
                 assetSource = assetSource,
-                deviceAssetId = "${deviceId}-${mediaItem.displayName}-${mediaItem.size}",
-                deviceId = deviceId,
                 fileCreatedAt = Instant.fromEpochSeconds(mediaItem.dateTaken).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                 fileModifiedAt = Instant.fromEpochSeconds(mediaItem.dateModified).format(DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET),
                 metadata = emptyList(),
@@ -174,9 +163,7 @@ class CloudFileEditor(
         if (albumImmichId != null) {
             albumsClient.addAssets(
                 albumId = Uuid.parse(albumImmichId),
-                assetIds = listOf(
-                    Uuid.parse(response.id)
-                )
+                assetIds = listOf(response.id)
             )
         }
 
@@ -199,18 +186,18 @@ class CloudFileEditor(
                         sidecar = true,
                         sourceId = Uuid.parse(mediaItem.immichId!!),
                         stack = true,
-                        targetId = Uuid.parse(response.id)
+                        targetId = response.id
                     )
                 )
             }
         }
 
         assetsClient.get(
-            id = Uuid.parse(response.id)
+            id = response.id
         )?.let { newAsset ->
             mediaDao.insert(newAsset.toMediaStoreData())
         }
 
-        return response.id
+        return response.id.toString()
     }
 }

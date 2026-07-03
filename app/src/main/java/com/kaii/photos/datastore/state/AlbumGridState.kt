@@ -196,7 +196,8 @@ class AlbumGridState(
 
         val allAlbums = albumsClient.getAll() ?: return@withContext
 
-        val albumIds = allAlbums.fastMap { it.id }.toSet()
+        // TODO: this is removing albums when not connected to immich, fix it
+        val albumIds = allAlbums.fastMap { it.id.toString() }.toSet()
         val removedOrImmichIdChanged = _albums.value
             .flatMap { album ->
                 if (album is Album.Single) listOf(album.info)
@@ -211,7 +212,7 @@ class AlbumGridState(
         val updated = _albums.value
             .filterIsInstance<Album.Single>()
             .fastMapNotNull { album ->
-                val match = allAlbums.find { it.id == album.id }
+                val match = allAlbums.find { it.id.toString() == album.id }
 
                 val changed = album.info.album.takeIf { it.name != match?.albumName } as? AlbumType.Cloud
 
@@ -221,7 +222,7 @@ class AlbumGridState(
         updateAlbums(
             allAlbums.fastMapNotNull { album ->
                 AlbumType.Cloud(
-                    id = album.id,
+                    id = album.id.toString(),
                     name = album.albumName,
                     pinned = false
                 )

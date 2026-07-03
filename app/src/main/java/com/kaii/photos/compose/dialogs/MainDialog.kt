@@ -126,11 +126,7 @@ fun MainDialog(
                             MainDialogUserInfo(
                                 coroutineScope = coroutineScope,
                                 immichInfo = immichInfo,
-                                dismiss = {
-                                    coroutineScope.launch {
-                                        dismiss()
-                                    }
-                                }
+                                dismiss = dismiss
                             )
                         } else {
                             Column(
@@ -163,6 +159,14 @@ fun MainDialog(
 
                     if (extraSecureFolderEntry()) {
                         item {
+                            PreferencesSeparatorText(
+                                text = stringResource(id = R.string.management)
+                            )
+                        }
+                    }
+
+                    if (extraSecureFolderEntry()) {
+                        item {
                             val authManager = rememberSecureFolderAuthManager(
                                 coroutineScope = coroutineScope,
                                 extraAction = {
@@ -175,7 +179,7 @@ fun MainDialog(
                             ExpressiveDialogRow(
                                 title = stringResource(id = R.string.secure_folder),
                                 icon = painterResource(id = R.drawable.secure_folder),
-                                position = RowPosition.Bottom,
+                                position = RowPosition.Single,
                                 onClick = {
                                     authManager.authenticate()
                                 }

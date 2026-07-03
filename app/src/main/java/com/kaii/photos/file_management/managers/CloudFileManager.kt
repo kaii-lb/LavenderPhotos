@@ -20,11 +20,13 @@ import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
+import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
 import io.github.kaii_lb.lavender.immichintegration.FileWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumUpdateDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -32,6 +34,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -274,11 +277,17 @@ class CloudFileManager(
 
         super.renameAlbum(context, album, newName, taskId)
 
-        albumsClient.rename(
+        albumsClient.update(
             id = Uuid.parse(
                 uuidString = album.immichId!!
             ),
-            newName = newName
+            info = AlbumUpdateDto(
+                albumName = newName,
+                albumThumbnailAssetId = null,
+                description = null,
+                isActivityEnabled = null,
+                order = null
+            )
         ).let { success ->
             syncTaskDao.updateTaskStatus(
                 id = taskId,
@@ -426,7 +435,7 @@ class CloudFileManager(
 
         var tries = 0
         while (!mediaDao.exists(ids.last().id) && tries < 100) {
-            delay(500)
+            delay(500.milliseconds)
             tries += 1
         }
 
@@ -492,6 +501,12 @@ class CloudFileManager(
                         return@mapNotNull null
                     }
 
+                    contentResolver.setDateForMedia(
+                        uri = new,
+                        type = media.type,
+                        dateTaken = media.dateTaken
+                    )
+
                     onItemDone(item.uri)
                 }
             }
@@ -503,7 +518,7 @@ class CloudFileManager(
         }
 
         launch {
-            delay(5000)
+            delay(5000.milliseconds)
             if (destination.immichId != null) {
                 CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
             }

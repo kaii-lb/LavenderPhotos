@@ -72,19 +72,20 @@ import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.immich.ImmichLoginState
+import com.kaii.photos.domain.immich.ImmichServerInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
 import com.kaii.photos.models.OperationStatus
 import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
-import com.kaii.photos.repositories.LoginState
-import com.kaii.photos.repositories.ServerInfo
-import io.github.kaii_lb.lavender.immichintegration.serialization.FullUserResponse
-import io.github.kaii_lb.lavender.immichintegration.serialization.UsageByUserDto
-import io.github.kaii_lb.lavender.immichintegration.serialization.UserAvatarColor
-import io.github.kaii_lb.lavender.immichintegration.serialization.UserStatus
+import io.github.kaii_lb.lavender.immichintegration.serialization.user.UsageByUserDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAdminResponseDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAvatarColor
+import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlin.uuid.Uuid
 
 @Composable
 fun ImmichAccountPage(
@@ -147,11 +148,11 @@ fun ImmichAccountPage(
 private fun ImmichAccountPagePreview() {
     ImmichAccountPageImpl(
         userInfo = {
-            LoginState.LoggedIn(
-                user = FullUserResponse(
+            ImmichLoginState.LoggedIn(
+                user = UserAdminResponseDto(
                     avatarColor = UserAvatarColor.Blue,
                     email = "example@test.dev",
-                    id = "",
+                    id = Uuid.NIL,
                     name = "example",
                     profileChangedAt = "",
                     profileImagePath = "",
@@ -170,7 +171,7 @@ private fun ImmichAccountPagePreview() {
             )
         },
         serverInfo = {
-            ServerInfo(
+            ImmichServerInfo(
                 version = "v2.7.5",
                 build = "24350167851",
                 online = true,
@@ -184,8 +185,9 @@ private fun ImmichAccountPagePreview() {
                         quotaSizeInBytes = 5L * 1024 * 1024 * 1024,
                         usage = (2.65 * 1024 * 1024 * 1024).toLong(),
                         usagePhotos = (0.75 * 1024 * 1024 * 1024).toLong(),
-                        userId = "",
-                        userName = "example"
+                        userId = Uuid.NIL,
+                        userName = "example",
+                        usageVideos = (0.25 * 1024 * 1024 * 1024).toLong()
                     )
                 ),
                 newVersion = "v2.7.5"
@@ -207,8 +209,8 @@ private fun ImmichAccountPagePreview() {
 
 @Composable
 private fun ImmichAccountPageImpl(
-    userInfo: () -> LoginState,
-    serverInfo: () -> ServerInfo?,
+    userInfo: () -> ImmichLoginState,
+    serverInfo: () -> ImmichServerInfo?,
     immichInfo: () -> ImmichBasicInfo,
     operationStatus: Flow<OperationStatus>,
     refreshStatus: Flow<OperationStatus>,
@@ -226,7 +228,7 @@ private fun ImmichAccountPageImpl(
             val info = serverInfo()
             val userInfo = userInfo()
 
-            if (info != null && userInfo is LoginState.LoggedIn) {
+            if (info != null && userInfo is ImmichLoginState.LoggedIn) {
                 info.perUserStorage.first { it.userId == userInfo.user.id }
             } else null
         }
@@ -284,7 +286,7 @@ private fun ImmichAccountPageImpl(
                         modifier = Modifier
                             .size(104.dp)
                             .clip(CircleShape)
-                            .clickable(enabled = userInfo() is LoginState.LoggedIn) {
+                            .clickable(enabled = userInfo() is ImmichLoginState.LoggedIn) {
                                 pfpPicker.launch(
                                     input = PickVisualMediaRequest(
                                         mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
@@ -306,7 +308,7 @@ private fun ImmichAccountPageImpl(
                 if (showDialog) {
                     TextEntryDialog(
                         title = stringResource(id = R.string.immich_account_username),
-                        placeholder = (userInfo() as? LoginState.LoggedIn)?.user?.name ?: "",
+                        placeholder = (userInfo() as? ImmichLoginState.LoggedIn)?.user?.name ?: "",
                         startValue = "",
                         type = KeyboardType.Text,
                         onConfirm = { username ->
@@ -330,11 +332,11 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_username),
                     iconResID = R.drawable.name,
                     position = RowPosition.Top,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.name ?: stringResource(id = R.string.immich_account_username),
+                    summary = (userInfo() as? ImmichLoginState.LoggedIn)?.user?.name ?: stringResource(id = R.string.immich_account_username),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
-                    enabled = userInfo() is LoginState.LoggedIn,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
@@ -346,7 +348,7 @@ private fun ImmichAccountPageImpl(
                 if (showDialog) {
                     TextEntryDialog(
                         title = stringResource(id = R.string.immich_auth_email),
-                        placeholder = (userInfo() as? LoginState.LoggedIn)?.user?.email ?: "",
+                        placeholder = (userInfo() as? ImmichLoginState.LoggedIn)?.user?.email ?: "",
                         startValue = "",
                         errorMessage = stringResource(id = R.string.immich_account_change_email_invalid),
                         type = KeyboardType.Email,
@@ -371,11 +373,11 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_auth_email),
                     iconResID = R.drawable.mail,
                     position = RowPosition.Middle,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.email ?: stringResource(id = R.string.immich_auth_email),
+                    summary = (userInfo() as? ImmichLoginState.LoggedIn)?.user?.email ?: stringResource(id = R.string.immich_auth_email),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
-                    enabled = userInfo() is LoginState.LoggedIn,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
@@ -402,7 +404,7 @@ private fun ImmichAccountPageImpl(
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
-                    enabled = userInfo() is LoginState.LoggedIn,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
@@ -414,7 +416,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_role),
                     iconResID = R.drawable.supervisor_account,
                     position = RowPosition.Bottom,
-                    summary = (userInfo() as? LoginState.LoggedIn)?.user?.isAdmin?.let {
+                    summary = (userInfo() as? ImmichLoginState.LoggedIn)?.user?.isAdmin?.let {
                         stringResource(
                             id =
                                 if (it) R.string.immich_account_is_admin
@@ -439,7 +441,7 @@ private fun ImmichAccountPageImpl(
                     icon = R.drawable.storage,
                     title = stringResource(id = R.string.immich_account_storage),
                     position = RowPosition.Top,
-                    enabled = userInfo() is LoginState.LoggedIn,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn,
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp
@@ -465,7 +467,7 @@ private fun ImmichAccountPageImpl(
                                 MaterialTheme.colorScheme.error
                             }.copy(
                                 alpha =
-                                    if (userInfo() is LoginState.LoggedIn && perUserStorage?.quotaSizeInBytes != null) 1f
+                                    if (userInfo() is ImmichLoginState.LoggedIn && perUserStorage?.quotaSizeInBytes != null) 1f
                                     else 0.6f
                             ),
                         modifier = Modifier

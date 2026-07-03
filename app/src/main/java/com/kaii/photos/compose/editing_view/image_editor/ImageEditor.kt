@@ -141,7 +141,7 @@ fun ImageEditor(
     val windowInfo = LocalWindowInfo.current
     val context = LocalContext.current
     LaunchedEffect(uri, info()) {
-        if (uri.startsWith("/api") && info().auth.asString().isBlank()) return@LaunchedEffect
+        if (uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
 
         withContext(Dispatchers.IO) {
             val drawable =

@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.ExifInfo
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.ExifResponseDto
 
 @Immutable
 @Entity(
@@ -48,7 +48,7 @@ data class ExifData(
     val timeZone: String?
 )
 
-fun ExifInfo.toExifData(mediaId: Long) = ExifData(
+fun ExifResponseDto.toExifData(mediaId: Long) = ExifData(
     mediaId = mediaId,
     city = city,
     country = country,
@@ -60,7 +60,7 @@ fun ExifInfo.toExifData(mediaId: Long) = ExifData(
     fNumber = fNumber,
     fileSizeInByte = fileSizeInByte,
     focalLength = focalLength,
-    iso = iso,
+    iso = iso?.toDouble(),
     latitude = latitude,
     longitude = longitude,
     lensModel = lensModel,
