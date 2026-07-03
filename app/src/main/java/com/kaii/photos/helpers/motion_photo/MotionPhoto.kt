@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.serializer
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
+import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
 import nl.adaptivity.xmlutil.serialization.UnknownChildHandler
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlParsingException
@@ -58,12 +59,19 @@ class MotionPhoto(
             if (xmpData != null) {
                 val serializer = serializer<XmpMeta>()
                 val xml = XML {
+                    fast()
                     autoPolymorphic = true
 
                     // ignore unknown keys
-                    unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
-                        emptyList()
-                    }
+                    val policy = DefaultXmlSerializationPolicy.BuilderCompat()
+                        .apply {
+                            unknownChildHandler = UnknownChildHandler { _, _, _, _, _ ->
+                                emptyList()
+                            }
+                        }
+                        .build()
+
+                    this.policy = policy
                 }
 
                 inputStream.close()
@@ -72,8 +80,8 @@ class MotionPhoto(
             }
 
             inputStream.close()
-        } catch (_: XmlParsingException) {}
-        catch (e: FileNotFoundException) {
+        } catch (_: XmlParsingException) {
+        } catch (e: FileNotFoundException) {
             Log.d(TAG, e.message.toString())
         }
 
