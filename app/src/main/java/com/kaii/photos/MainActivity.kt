@@ -440,7 +440,10 @@ class MainActivity : ComponentActivity() {
                                 album = screen.album
                             )
                         )
-                        multiAlbumViewModel.changeAlbum(album = screen.album)
+                        multiAlbumViewModel.changeAlbum(
+                            context = context,
+                            album = screen.album
+                        )
 
                         SingleAlbumView(
                             album = screen.album,
@@ -460,7 +463,10 @@ class MainActivity : ComponentActivity() {
                                 album = screen.album
                             )
                         )
-                        multiAlbumViewModel.changeAlbum(album = screen.album)
+                        multiAlbumViewModel.changeAlbum(
+                            context = context,
+                            album = screen.album
+                        )
 
                         val editId by it.savedStateHandle.getStateFlow<Long?>(
                             key = "editId",
@@ -629,7 +635,10 @@ class MainActivity : ComponentActivity() {
 
                         val screen = it.toRoute<Screens.Immich.GridView>()
                         val viewModel = it.sharedViewModel<ImmichAlbumViewModel>(
-                            factory = ImmichAlbumViewModelFactory(album = screen.album)
+                            factory = ImmichAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
                         )
 
                         SingleAlbumView(
@@ -646,7 +655,10 @@ class MainActivity : ComponentActivity() {
                         val screen = it.toRoute<Screens.Immich.SinglePhoto>()
 
                         val viewModel = it.sharedViewModel<ImmichAlbumViewModel>(
-                            factory = ImmichAlbumViewModelFactory(album = screen.album)
+                            factory = ImmichAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
                         )
 
                         val editId by it.savedStateHandle.getStateFlow<Long?>(
@@ -676,7 +688,10 @@ class MainActivity : ComponentActivity() {
 
                         val screen = it.toRoute<Screens.CustomAlbum.GridView>()
                         val viewModel = it.sharedViewModel<CustomAlbumViewModel>(
-                            factory = CustomAlbumViewModelFactory(album = screen.album)
+                            factory = CustomAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
                         )
 
                         SingleAlbumView(
@@ -692,7 +707,10 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val screen = it.toRoute<Screens.CustomAlbum.SinglePhoto>()
                         val viewModel = it.sharedViewModel<CustomAlbumViewModel>(
-                            factory = CustomAlbumViewModelFactory(album = screen.album)
+                            factory = CustomAlbumViewModelFactory(
+                                context = context,
+                                album = screen.album
+                            )
                         )
 
                         val editId by it.savedStateHandle.getStateFlow<Long?>(

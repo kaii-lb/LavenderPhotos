@@ -2,21 +2,13 @@ package com.kaii.photos.helpers.grid_management
 
 import android.content.Context
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.LazyPagingItems
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.epochToDayStart
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
@@ -31,7 +23,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 class SelectionManager(
@@ -322,122 +313,5 @@ class SelectionManager(
 
     fun setSortMode(mode: MediaItemSortMode) {
         sortMode = mode
-    }
-}
-
-// TODO: move these to view-models
-@Composable
-fun rememberSelectionManager(
-    paths: () -> Set<String>
-): SelectionManager {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
-
-    return remember(sortMode, context, paths()) {
-        SelectionManager(
-            sortMode = sortMode,
-            scope = coroutineScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                val dao = MediaDatabase.getInstance(context).mediaDao()
-
-                if (paths().isEmpty()) {
-                    // search
-                    dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
-                } else {
-                    dao.mediaInDateRange(timestamp = timestamp, paths = paths(), dateModified = sortMode.isDateModified)
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun rememberFavSelectionManager(): SelectionManager {
-    val context = LocalContext.current
-    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
-    val coroutineScope = rememberCoroutineScope()
-
-    return remember(sortMode, context) {
-        SelectionManager(
-            sortMode = sortMode,
-            scope = coroutineScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                val dao = MediaDatabase.getInstance(context).mediaDao()
-
-                dao.favMediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
-            }
-        )
-    }
-}
-
-@Composable
-fun rememberCustomSelectionManager(albumId: String): SelectionManager {
-    val context = LocalContext.current
-    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
-    val coroutineScope = rememberCoroutineScope()
-
-    return remember(sortMode, albumId) {
-        SelectionManager(
-            sortMode = sortMode,
-            scope = coroutineScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                val dao = MediaDatabase.getInstance(context).customDao()
-
-                dao.mediaInDateRange(
-                    timestamp = timestamp,
-                    album = albumId,
-                    dateModified = sortMode.isDateModified
-                )
-            }
-        )
-    }
-}
-
-@Composable
-fun rememberSelectionManager(
-    pagingItems: LazyPagingItems<PhotoLibraryUIModel>
-): SelectionManager {
-    val context = LocalContext.current
-    val sortMode by PhotosApplication.appModule.settings.photoGrid.getSortMode().collectAsStateWithLifecycle(initialValue = MediaItemSortMode.DateTaken)
-    val coroutineScope = rememberCoroutineScope()
-
-    return remember(sortMode, context) {
-        SelectionManager(
-            sortMode = sortMode,
-            scope = coroutineScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                (0..<min(pagingItems.itemCount, 2000)).mapNotNull {
-                    val item = (pagingItems[it] as? PhotoLibraryUIModel.MediaImpl)?.item
-
-                    if (item != null) {
-                        val key = when {
-                            sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
-
-                            sortMode.isDateModified -> item.getDateModifiedDay()
-
-                            sortMode.isDisabled -> 0
-
-                            else -> item.getDateTakenDay()
-                        }
-
-                        if (key in timestamp..timestamp + 86400) {
-                            item.id to SelectionManager.SelectedItem(
-                                id = item.id,
-                                uri = item.uri,
-                                immichUrl = item.immichUrl,
-                                isImage = item.type == MediaType.Image,
-                                parentPath = item.parentPath
-                            )
-                        } else null
-                    } else null
-                }.toMap()
-            }
-        )
     }
 }

@@ -51,8 +51,6 @@ import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.helpers.grid_management.rememberCustomSelectionManager
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
@@ -65,6 +63,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SingleAlbumView(
@@ -83,17 +82,20 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        delay(1000)
+        delay(1000.milliseconds)
         if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
 
     if (dynamicAlbum == null) return
 
+    val context = LocalContext.current
     LaunchedEffect(dynamicAlbum) {
-        viewModel.changeAlbum(album = dynamicAlbum!!)
+        viewModel.changeAlbum(
+            context = context,
+            album = dynamicAlbum!!
+        )
     }
 
-    val selectionManager = rememberSelectionManager(paths = { dynamicAlbum!!.paths })
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
             context = LocalContext.current
@@ -104,7 +106,7 @@ fun SingleAlbumView(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
+        viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -121,13 +123,12 @@ fun SingleAlbumView(
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
-        selectionManager = selectionManager,
+        selectionManager = viewModel.selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Album,
         columnSize = { columnSize },
@@ -173,14 +174,13 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        delay(1000)
+        delay(1000.milliseconds)
         if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
 
     if (dynamicAlbum == null) return
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberCustomSelectionManager(albumId = album.id)
 
     val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
     val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
@@ -202,7 +202,7 @@ fun SingleAlbumView(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
+        viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -215,7 +215,7 @@ fun SingleAlbumView(
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
-        selectionManager = selectionManager,
+        selectionManager = viewModel.selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.CustomAlbum,
         columnSize = { columnSize },
@@ -261,14 +261,13 @@ fun SingleAlbumView(
     }
 
     LaunchedEffect(dynamicAlbum) {
-        delay(1000)
+        delay(1000.milliseconds)
         if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
     }
 
     if (dynamicAlbum == null) return
 
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberCustomSelectionManager(albumId = album.id)
 
     val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
     val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
@@ -290,7 +289,7 @@ fun SingleAlbumView(
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
+        viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -303,7 +302,7 @@ fun SingleAlbumView(
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
-        selectionManager = selectionManager,
+        selectionManager = viewModel.selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
         tags = { tags },
@@ -425,7 +424,7 @@ private fun SingleAlbumViewCommon(
                 showDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
-                        delay(50)
+                        delay(50.milliseconds)
                         sheetState.expand()
                     }
                 }

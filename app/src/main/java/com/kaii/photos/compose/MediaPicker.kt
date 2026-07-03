@@ -246,7 +246,10 @@ class MediaPicker : ComponentActivity() {
                     val screen = it.toRoute<Screens.CustomAlbum.GridView>()
 
                     val viewModel: CustomAlbumViewModel = viewModel(
-                        factory = CustomAlbumViewModelFactory(album = screen.album)
+                        factory = CustomAlbumViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
                     )
 
                     SingleAlbumView(
@@ -309,7 +312,10 @@ class MediaPicker : ComponentActivity() {
 
                     val screen = it.toRoute<Screens.Immich.GridView>()
                     val viewModel = viewModel<ImmichAlbumViewModel>(
-                        factory = ImmichAlbumViewModelFactory(album = screen.album)
+                        factory = ImmichAlbumViewModelFactory(
+                            context = context,
+                            album = screen.album
+                        )
                     )
 
                     SingleAlbumView(

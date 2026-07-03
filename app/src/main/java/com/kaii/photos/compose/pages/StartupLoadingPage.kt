@@ -16,7 +16,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.pages.main.MainGridView
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.main_grid.MainGridViewModel
 import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.permissions.StartupManager
@@ -55,7 +54,7 @@ fun StartupLoadingPage(
             MainGridView(
                 items = items,
                 album = { album },
-                selectionManager = rememberSelectionManager(paths = { mainPhotosAlbums }),
+                selectionManager = mainGridViewModel.selectionManager,
                 isMediaPicker = false,
                 columnSize = { 3 },
                 openVideosExternally = { false },

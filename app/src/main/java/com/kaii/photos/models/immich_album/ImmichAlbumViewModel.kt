@@ -4,13 +4,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.IntentSender
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.ImmichRepository
@@ -25,6 +28,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalUuidApi::class)
 class ImmichAlbumViewModel(
+    context: Context,
     private val album: AlbumType.Cloud,
     db: MediaDatabase = PhotosApplication.appModule.db,
     override val scope: CoroutineScope = PhotosApplication.appModule.scope,
@@ -40,17 +44,28 @@ class ImmichAlbumViewModel(
         client = apiClient
     )
 
+    val mediaFlow = repo.mediaFlow
+    val gridMediaFlow = repo.gridMediaFlow
+
+    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value))
+        private set
+
     init {
         viewModelScope.launch {
-            while (true) {
-                refresh()
-                delay(5000.milliseconds)
+            launch {
+                while (true) {
+                    refresh()
+                    delay(5000.milliseconds)
+                }
+            }
+
+            launch {
+                sortMode.collect {
+                    selectionManager.setSortMode(it)
+                }
             }
         }
     }
-
-    val mediaFlow = repo.mediaFlow
-    val gridMediaFlow = repo.gridMediaFlow
 
     fun refresh() = repo.refresh()
 
@@ -244,4 +259,23 @@ class ImmichAlbumViewModel(
     ) {
         throw NotImplementedError("Secure folder functionality is not implemented in immich contexts")
     }
+
+    private fun createSelectionManager(
+        context: Context,
+        sortMode: MediaItemSortMode
+    ) =
+        SelectionManager(
+            sortMode = sortMode,
+            scope = viewModelScope,
+            context = context,
+            getMediaInDate = { timestamp ->
+                val dao = MediaDatabase.getInstance(context).customDao()
+
+                dao.mediaInDateRange(
+                    timestamp = timestamp,
+                    album = album.id,
+                    dateModified = sortMode.isDateModified
+                )
+            }
+        )
 }

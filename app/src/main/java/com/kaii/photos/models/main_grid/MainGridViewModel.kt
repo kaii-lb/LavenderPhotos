@@ -16,7 +16,6 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.domain.immich.ImmichLoginState
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
@@ -125,7 +124,7 @@ class MainGridViewModel(
         )
     )
 
-    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, emptySet()))
+    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, mainPhotosAlbums.value))
         private set
 
     private val loginClient = LoginClient(
@@ -165,10 +164,8 @@ class MainGridViewModel(
             }
 
             launch {
-                viewModelScope.launch {
-                    sortMode.collect {
-                        selectionManager.setSortMode(it)
-                    }
+                sortMode.collect {
+                    selectionManager.setSortMode(it)
                 }
             }
         }
@@ -535,24 +532,4 @@ class MainGridViewModel(
             isLoading.value = false
         }
     }
-
-    private fun createSelectionManager(
-        context: Context,
-        sortMode: MediaItemSortMode,
-        paths: Set<String>
-    ) = SelectionManager(
-        sortMode = sortMode,
-        scope = viewModelScope,
-        context = context,
-        getMediaInDate = { timestamp ->
-            val dao = db.mediaDao()
-
-            if (paths.isEmpty()) {
-                // search
-                dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
-            } else {
-                dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
-            }
-        }
-    )
 }

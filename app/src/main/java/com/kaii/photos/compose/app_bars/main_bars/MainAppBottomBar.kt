@@ -1,13 +1,11 @@
-package com.kaii.photos.compose.app_bars
+package com.kaii.photos.compose.app_bars.main_bars
 
-import android.app.Activity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
@@ -33,31 +31,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarScrollBehavior
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
@@ -70,136 +61,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.user_action.AlbumAddChoiceDialog
-import com.kaii.photos.compose.widgets.AnimatedLoginIcon
-import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
-import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
-import com.kaii.photos.datastore.AlbumGroup
+import com.kaii.photos.compose.app_bars.SelectingBottomBarItems
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
-import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainAppTopBar(
-    alternate: () -> Boolean,
-    selectionManager: SelectionManager,
-    immichInfo: () -> ImmichBasicInfo,
-    showAddAlbumButton: () -> Boolean,
-    showTagDialog: () -> Boolean,
-    isFromMediaPicker: Boolean,
-    groups: () -> List<AlbumGroup>,
-    setShowTagDialog: (show: Boolean) -> Unit,
-    addAlbum: (album: AlbumType) -> Unit,
-    addGroup: (name: String) -> Unit
-) {
-    DualFunctionTopAppBar(
-        alternated = alternate(),
-        title = {
-            val split = stringResource(id = R.string.app_name_full).split(" ")
-
-            Row(
-                modifier = Modifier
-                    .wrapContentHeight(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Text(
-                    text = "${split.first()} ",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-
-                Text(
-                    text =
-                        if (split.size >= 2) split[1]
-                        else "",
-                    fontWeight = FontWeight.Normal,
-                    fontSize = TextUnit(22f, TextUnitType.Sp)
-                )
-            }
-        },
-        actions = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
-            ) {
-                AnimatedVisibility(
-                    visible = showAddAlbumButton() && !isFromMediaPicker,
-                    enter = scaleIn(
-                        animationSpec = AnimationConstants.expressiveSpring()
-                    ),
-                    exit = scaleOut(
-                        animationSpec = AnimationConstants.expressiveSpring()
-                    )
-                ) {
-                    var showAlbumTypeDialog by remember { mutableStateOf(false) }
-                    if (showAlbumTypeDialog) {
-                        AlbumAddChoiceDialog(
-                            groups = groups(),
-                            addAlbum = addAlbum,
-                            addGroup = addGroup
-                        ) {
-                            showAlbumTypeDialog = false
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            showAlbumTypeDialog = true
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.add),
-                            contentDescription = stringResource(id = R.string.album_add),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                if (!isFromMediaPicker) {
-                    val navController = LocalNavController.current
-                    AnimatedLoginIcon(immichInfo = immichInfo) {
-                        navController.navigate(Screens.MainPages.MainGrid.SettingsDialog)
-                    }
-                } else {
-                    val context = LocalContext.current
-                    IconButton(
-                        onClick = {
-                            (context as Activity).finish()
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = "Close media picker",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            }
-        },
-        alternateTitle = {
-            SelectViewTopBarLeftButtons(selectionManager = selectionManager)
-        },
-        alternateActions = {
-            SelectViewTopBarRightButtons(
-                showTagDialog = showTagDialog,
-                setShowTagDialog = setShowTagDialog
-            )
-        }
-    )
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

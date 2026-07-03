@@ -59,9 +59,9 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.MediaPickerConfirmButton
-import com.kaii.photos.compose.app_bars.MainAppBottomBar
-import com.kaii.photos.compose.app_bars.MainAppTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
+import com.kaii.photos.compose.app_bars.main_bars.MainAppBottomBar
+import com.kaii.photos.compose.app_bars.main_bars.MainAppTopBar
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs

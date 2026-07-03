@@ -95,7 +95,7 @@ class SecureRepository(
                 }
             } catch (e: IOException) {
                 // bail before inserting the row: a row pointing at a missing/truncated thumbnail
-                // passes verifyThumbnails' (row != null && file.exists()) check and decodes to garbage
+                // passes verifyThumbnails (row != null && file.exists()) check and decodes to garbage
                 Log.d(TAG, e.toString())
                 e.printStackTrace()
                 return
@@ -242,6 +242,31 @@ class SecureRepository(
     fun detachFileObserver() {
         fileObserver.stopWatching()
     }
+
+    fun getItemsForDate(
+        timestamp: Long,
+        sortMode: MediaItemSortMode
+    ) =
+        items.value.filter { media ->
+            val item = media.item
+            val key = when {
+                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
+                sortMode.isDateModified -> item.getDateModifiedDay()
+                else -> item.getDateTakenDay()
+            }
+
+            key in timestamp..(timestamp + 86400)
+        }.associate { media ->
+            val item = media.item
+
+            item.id to SelectionManager.SelectedItem(
+                id = item.id,
+                uri = item.uri,
+                immichUrl = item.immichUrl,
+                isImage = item.type == MediaType.Image,
+                parentPath = item.parentPath
+            )
+        }.toMap()
 
     private suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         val snapshot = _fileList.value?.sortedBy { it.lastModified() } ?: return@withContext
@@ -424,7 +449,7 @@ class SecureRepository(
     /**
      * Regenerate a secure video's thumbnail. The original source is already deleted by securing time,
      * so the frame must come from the encrypted copy: decrypt it to the video cache, grab a frame,
-     * re-encrypt the thumbnail. Mirrors the create path in [com.kaii.photos.file_management.secure.LocalSecureManager.secure].
+     * re-encrypt the thumbnail. Mirrors the creation path in [com.kaii.photos.file_management.secure.LocalSecureManager.secure].
      */
     private suspend fun addVideoThumbnail(
         file: File,

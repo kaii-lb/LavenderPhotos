@@ -2,8 +2,10 @@ package com.kaii.photos.models.multi_album
 
 import android.content.Context
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
@@ -22,7 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
 class MultiAlbumViewModel(
-    album: AlbumType.Folder,
+    private var album: AlbumType.Folder,
     context: Context
 ) : BaseViewModel() {
     override val scope: CoroutineScope = PhotosApplication.appModule.scope
@@ -43,9 +45,27 @@ class MultiAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
+    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, album.paths))
+        private set
+
+    init {
+        viewModelScope.launch {
+            launch {
+                sortMode.collect {
+                    selectionManager.setSortMode(it)
+                }
+            }
+        }
+    }
+
     fun changeAlbum(
+        context: Context,
         album: AlbumType.Folder
-    ) = repo.changeAlbum(album = album)
+    ) {
+        this.album = album
+        repo.changeAlbum(album = album)
+        selectionManager = createSelectionManager(context, sortMode.value, album.paths)
+    }
 
     fun editAlbum(id: String, newInfo: AlbumType) {
         settings.albums.edit(id, newInfo)

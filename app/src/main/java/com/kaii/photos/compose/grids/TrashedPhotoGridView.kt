@@ -40,7 +40,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.trash_bin.TrashViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,13 +49,12 @@ fun TrashedPhotoGridView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberSelectionManager(pagingItems = pagingItems)
 
-    val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+    val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
     BackHandler(
         enabled = isSelecting
     ) {
-        selectionManager.clear()
+        viewModel.selectionManager.clear()
     }
 
     OnBackPressedEffect { destination ->
@@ -71,7 +69,7 @@ fun TrashedPhotoGridView(
             val navController = LocalNavController.current
 
             TrashedPhotoGridViewTopBar(
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 deleteAll = {
                     viewModel.deleteAll(context = context)
                 },
@@ -93,7 +91,7 @@ fun TrashedPhotoGridView(
             ) {
                 val context = LocalContext.current
                 TrashedPhotoGridViewBottomBar(
-                    selectionManager = selectionManager,
+                    selectionManager = viewModel.selectionManager,
                     incomingIntent = incomingIntent,
                     process = { action ->
                         viewModel.runAction(
@@ -145,7 +143,7 @@ fun TrashedPhotoGridView(
                 pagingItems = pagingItems,
                 album = { AlbumType.PlaceHolder },
                 viewProperties = ViewProperties.Trash,
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 isMediaPicker = incomingIntent != null,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },

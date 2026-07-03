@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.SecureRepository
@@ -34,8 +35,23 @@ class SecureFolderViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
+    val selectionManager = SelectionManager(
+        sortMode = MediaItemSortMode.DateModified,
+        scope = viewModelScope,
+        context = context,
+        getMediaInDate = { timestamp ->
+            repo.getItemsForDate(timestamp, sortMode.value)
+        }
+    )
+
     init {
         repo.attachFileObserver()
+
+        viewModelScope.launch {
+            sortMode.collect {
+                selectionManager.setSortMode(it)
+            }
+        }
     }
 
     override fun onCleared() {

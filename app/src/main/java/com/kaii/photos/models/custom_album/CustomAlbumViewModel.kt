@@ -2,8 +2,10 @@ package com.kaii.photos.models.custom_album
 
 import android.content.Context
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
@@ -22,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
 class CustomAlbumViewModel(
+    context: Context,
     private val album: AlbumType,
     override val scope: CoroutineScope = PhotosApplication.appModule.scope,
     override val apiClient: ApiClient = PhotosApplication.appModule.apiClient,
@@ -39,6 +42,17 @@ class CustomAlbumViewModel(
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, album.id))
+        private set
+
+    init {
+        viewModelScope.launch {
+            sortMode.collect {
+                selectionManager.setSortMode(it)
+            }
+        }
+    }
 
     fun editAlbum(id: String, new: AlbumType) {
         settings.albums.edit(id, new)

@@ -43,7 +43,6 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.grid_management.rememberFavSelectionManager
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
@@ -56,7 +55,6 @@ fun FavouritesGridView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberFavSelectionManager()
 
     val navController = LocalNavController.current
     var showTagDialog by remember { mutableStateOf(false) }
@@ -68,7 +66,7 @@ fun FavouritesGridView(
     )
 
     LaunchedEffect(Unit) {
-        selectionManager.selection.collectLatest { selectedItems ->
+        viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -83,7 +81,7 @@ fun FavouritesGridView(
             ),
         topBar = {
             FavouritesViewTopAppBar(
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 showTagDialog = { showTagDialog },
                 setShowTagDialog = { showTagDialog = it },
                 onBackClick = {
@@ -92,7 +90,7 @@ fun FavouritesGridView(
             )
         },
         bottomBar = {
-            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+            val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
             val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
             val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
@@ -107,7 +105,7 @@ fun FavouritesGridView(
             ) {
                 val context = LocalContext.current
                 FavouritesViewBottomAppBar(
-                    selectionManager = selectionManager,
+                    selectionManager = viewModel.selectionManager,
                     incomingIntent = incomingIntent,
                     confirmToDelete = { confirmToDelete },
                     doNotTrash = { doNotTrash },
@@ -173,7 +171,7 @@ fun FavouritesGridView(
             PhotoGrid(
                 pagingItems = pagingItems,
                 album = { AlbumType.PlaceHolder },
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 viewProperties = ViewProperties.Favourites,
                 isMediaPicker = incomingIntent != null,
                 columnSize = { columnSize },

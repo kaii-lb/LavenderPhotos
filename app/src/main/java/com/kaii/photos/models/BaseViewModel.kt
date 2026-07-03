@@ -6,6 +6,7 @@ import android.content.IntentSender
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
+import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -247,4 +248,44 @@ abstract class BaseViewModel(
 
         else -> null
     }
+
+    fun createSelectionManager(
+        context: Context,
+        sortMode: MediaItemSortMode,
+        paths: Set<String>
+    ) = SelectionManager(
+        sortMode = sortMode,
+        scope = viewModelScope,
+        context = context,
+        getMediaInDate = { timestamp ->
+            val dao = MediaDatabase.getInstance(context).mediaDao()
+
+            if (paths.isEmpty()) {
+                // search
+                dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+            } else {
+                dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+            }
+        }
+    )
+
+    fun createSelectionManager(
+        context: Context,
+        sortMode: MediaItemSortMode,
+        albumId: String
+    ) =
+        SelectionManager(
+            sortMode = sortMode,
+            scope = viewModelScope,
+            context = context,
+            getMediaInDate = { timestamp ->
+                val dao = MediaDatabase.getInstance(context).customDao()
+
+                dao.mediaInDateRange(
+                    timestamp = timestamp,
+                    album = albumId,
+                    dateModified = sortMode.isDateModified
+                )
+            }
+        )
 }

@@ -49,13 +49,10 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.helpers.grid_management.rememberSelectionManager
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-
-// private const val TAG = "com.kaii.photos.compose.grids.LockedFolderView"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,16 +117,15 @@ fun SecureFolderView(
     }
 
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val selectionManager = rememberSelectionManager(pagingItems = items)
 
     Scaffold(
         topBar = {
-            SecureFolderViewTopAppBar(selectionManager = selectionManager) {
+            SecureFolderViewTopAppBar(selectionManager = viewModel.selectionManager) {
                 navController.popBackStack()
             }
         },
         bottomBar = {
-            val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
+            val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
             AnimatedVisibility(
                 visible = isSelecting,
@@ -141,7 +137,7 @@ fun SecureFolderView(
                 )
             ) {
                 SecureFolderViewBottomAppBar(
-                    selectionManager = selectionManager,
+                    selectionManager = viewModel.selectionManager,
                     isGettingPermissions = isGettingPermissions,
                     process = { action ->
                         viewModel.runAction(
@@ -194,7 +190,7 @@ fun SecureFolderView(
             PhotoGrid(
                 pagingItems = items,
                 album = { AlbumType.PlaceHolder },
-                selectionManager = selectionManager,
+                selectionManager = viewModel.selectionManager,
                 viewProperties = ViewProperties.SecureFolder,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
