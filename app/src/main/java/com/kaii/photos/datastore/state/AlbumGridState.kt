@@ -20,6 +20,7 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.parent
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
@@ -188,6 +189,14 @@ class AlbumGridState(
     }
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
+        val serverClient = ServerClient(
+            client = apiClient,
+            endpoint = immichInfo.endpoint,
+            auth = immichInfo.auth
+        )
+
+        if (!serverClient.ping()) return@withContext
+
         val albumsClient = AlbumsClient(
             client = apiClient,
             endpoint = immichInfo.endpoint,
@@ -196,7 +205,6 @@ class AlbumGridState(
 
         val allAlbums = albumsClient.getAll() ?: return@withContext
 
-        // TODO: this is removing albums when not connected to immich, fix it
         val albumIds = allAlbums.fastMap { it.id.toString() }.toSet()
         val removedOrImmichIdChanged = _albums.value
             .flatMap { album ->
