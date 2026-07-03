@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalWindowInfo
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.helpers.rememberVibratorManager
+import com.kaii.photos.helpers.vibrateShort
 
 class DismissDragState<T>(
     val state: AnchoredDraggableState<T>,
@@ -80,8 +82,10 @@ fun rememberDismissSinglePhotoState(): DismissDragState<DismissAnchors> {
     )
 
     val navController = LocalNavController.current
+    val vibratorManager = rememberVibratorManager()
     LaunchedEffect(draggableState.state.settledValue) {
         if (draggableState.state.settledValue == DismissAnchors.Dismissed) {
+            vibratorManager.vibrateShort()
             navController.popBackStack()
         }
     }
