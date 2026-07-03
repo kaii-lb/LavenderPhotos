@@ -7,33 +7,32 @@ import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import com.kaii.photos.helpers.OffsetSaver
 import com.kaii.photos.helpers.SingleViewConstants
+import com.kaii.photos.presentation.ui.TransformableState
+import com.kaii.photos.presentation.ui.retainTransformableState
 import kotlin.math.abs
 
 @Composable
-fun Modifier.transformable(): Modifier {
-    var scale by rememberSaveable { mutableFloatStateOf(1f) }
-    var offset by rememberSaveable(stateSaver = OffsetSaver) { mutableStateOf(Offset.Zero) }
-
+fun Modifier.transformable(
+    state: TransformableState = retainTransformableState(),
+): Modifier {
     return this.then(
         Modifier
-            .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale,
-                translationX = -offset.x * scale,
-                translationY = -offset.y * scale,
-                transformOrigin = TransformOrigin(0f, 0f)
+            .then(
+                if (state.applyTransformation) {
+                    Modifier.graphicsLayer(
+                        scaleX = state.scale,
+                        scaleY = state.scale,
+                        translationX = -state.offset.x * state.scale,
+                        translationY = -state.offset.y * state.scale,
+                        transformOrigin = TransformOrigin(0f, 0f)
+                    )
+                } else Modifier
             )
             .pointerInput(Unit) {
                 awaitEachGesture {
@@ -66,7 +65,7 @@ fun Modifier.transformable(): Modifier {
                                 val zoomMotion = abs(1 - localZoom) * centroidSize
                                 val offsetMotion = localOffset.getDistance()
 
-                                // calculate the amount of movement/zoom/rotation happening and if its past a certain point
+                                // calculate the amount of movement/zoom/rotation happening and if it's past a certain point
                                 // then go ahead and try to apply the gestures
                                 if (zoomMotion > touchSlop || offsetMotion > touchSlop) {
                                     pastTouchSlop = true
@@ -77,19 +76,23 @@ fun Modifier.transformable(): Modifier {
                                 val centroid = event.calculateCentroid()
 
                                 if (zoomChange != 1f || offsetChange != Offset.Zero) {
-                                    val oldScale = scale
+                                    val oldScale = state.scale
 
-                                    scale =
-                                        (scale * zoomChange).coerceIn(1f, maxZoom)
+                                    state.scale =
+                                        (state.scale * zoomChange).coerceIn(1f, maxZoom)
+
+                                    val offsetDiff =
+                                        if (state.applyTransformation) offsetChange
+                                        else offsetChange / oldScale
 
                                     // compensate for change of visual center of image and offset by that
                                     // this makes it "cleaner" to scale since the image isn't bouncing around when the user moves or scales it
-                                    offset =
-                                        if (scale == 1f) Offset.Zero else
-                                            (offset + centroid / oldScale) - (centroid / scale + offsetChange)
+                                    state.offset =
+                                        if (state.scale == 1f) Offset.Zero
+                                        else (state.offset + centroid / oldScale) - (centroid / state.scale + offsetDiff)
                                 }
 
-                                if (offset != Offset.Zero || event.changes.size == 2 || scale != 1f) {
+                                if (state.offset != Offset.Zero || event.changes.size == 2 || state.scale != 1f) {
                                     event.changes.forEach {
                                         it.consume()
                                     }

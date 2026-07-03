@@ -55,7 +55,6 @@ import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.BottomAppBarItem
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
@@ -155,8 +154,7 @@ fun OpenWithContent(
                     isOpenWithView = true,
                     useCache = false,
                     modifier = Modifier
-                        .fillMaxSize(1f)
-                        .transformable()
+                        .fillMaxSize()
                 )
             } else {
                 if (motionPhoto.isMotionPhoto.value) {

@@ -43,7 +43,6 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
@@ -194,7 +193,7 @@ fun HorizontalImageList(
                     useCache = useCache,
                     modifier = Modifier
                         .fillMaxSize()
-                        .transformable()
+                        // .transformable()
                         .graphicsLayer {
                             scaleX = 1f - swipeDownProgress() * 0.25f
                             scaleY = 1f - swipeDownProgress() * 0.25f

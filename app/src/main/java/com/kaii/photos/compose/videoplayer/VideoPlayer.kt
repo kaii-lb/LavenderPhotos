@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
@@ -60,13 +62,15 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.modifiers.transformable
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
-import com.kaii.photos.screens.video.VideoPlayerState
 import com.kaii.photos.mediastore.signature
+import com.kaii.photos.presentation.ui.retainTransformableState
+import com.kaii.photos.screens.video.VideoPlayerState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -164,9 +168,11 @@ private fun VideoPlayerUI(
         (context as Activity).finish()
     }
 
+    val transformableState = retainTransformableState(applyTransformation = false)
+
     Box(
         modifier = Modifier
-            .fillMaxSize(1f)
+            .fillMaxSize()
             .then(
                 if (state.isPlaying && shouldPlay()) {
                     Modifier.keepScreenOn()
@@ -181,10 +187,17 @@ private fun VideoPlayerUI(
             ),
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer(
+                    scaleX = transformableState.scale,
+                    scaleY = transformableState.scale,
+                    translationX = -transformableState.offset.x * transformableState.scale,
+                    translationY = -transformableState.offset.y * transformableState.scale,
+                    transformOrigin = TransformOrigin(0f, 0f)
+                )
         ) { visible ->
             if (visible) {
                 val playerView = rememberPlayerView(
-                    useTextureView = true,
+                    useTextureView = false,
                     blurViews = blurViews,
                     useBlackBackground = useBlackBackground
                 )
@@ -239,6 +252,7 @@ private fun VideoPlayerUI(
             delay(1000.milliseconds)
             doubleTapDisplayTimeMillis = 0
         }
+
         LaunchedEffect(isLandscape) {
             setBarVisibility(
                 visible = !isLandscape,
@@ -246,6 +260,15 @@ private fun VideoPlayerUI(
             ) {
                 appBarsVisible.value = it
                 if (!isLandscape) state.controlsVisible = it
+            }
+        }
+
+        LaunchedEffect(state.controlsVisible) {
+            setBarVisibility(
+                visible = state.controlsVisible,
+                window = window
+            ) {
+                appBarsVisible.value = it
             }
         }
 
@@ -398,6 +421,9 @@ private fun VideoPlayerUI(
                         }
                     )
                 }
+                .transformable(
+                    state = transformableState
+                )
         ) {
             AnimatedVisibility(
                 visible = state.controlsVisible,
