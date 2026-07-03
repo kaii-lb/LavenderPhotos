@@ -21,12 +21,12 @@ class LanguagePickerState(
         val tag: String
     ) {
         val localName: String
-            get() = Locale.forLanguageTag(tag).getDisplayLanguage(
+            get() = Locale.forLanguageTag(tag).getDisplayName(
                 AppCompatDelegate.getApplicationLocales()[0] ?: Locale.getDefault()
             )
 
         val name: String
-            get() = Locale.forLanguageTag(tag).getDisplayLanguage(Locale.forLanguageTag(tag))
+            get() = Locale.forLanguageTag(tag).getDisplayName(Locale.forLanguageTag(tag))
     }
 
     private val supportedLanguages = listOf(
@@ -54,7 +54,6 @@ class LanguagePickerState(
         Language("tr"),
         Language("uk"),
         Language("vi"),
-        Language("zh"),
         Language("zh-CN"),
         Language("zh-TW"),
         Language("eo"),

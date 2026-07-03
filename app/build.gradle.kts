@@ -106,8 +106,8 @@ android {
                 "de", "el", "es", "et", "fr",
                 "gl", "hy", "in", "it", "ja",
                 "kn", "pl", "pt", "pt-rBR", "ru",
-                "sv", "tr", "uk", "vl", "zh",
-                "zh-rCN", "zh-rTW", "eo", "sk"
+                "sv", "tr", "uk", "vl", "zh-rCN",
+                "zh-rTW", "eo", "sk"
             )
         )
     }
