@@ -64,7 +64,6 @@ class VideoPlayerState(
 
     private var currentSource = ""
     private var autoPlay = false
-    private var loop = true // default to true to avoid autoplaying when we don't mean it (motion-photo)
     private var loopMode = 0
     private var muteOnStart = true
     private var isReleased = false
@@ -138,7 +137,7 @@ class VideoPlayerState(
             launch {
                 autoPlayFlow.collectLatest {
                     autoPlay = it || isOpenWithView
-                    if (shouldPlay() && autoPlay && !loop) {
+                    if (shouldPlay() && autoPlay) {
                         play()
                     }
                 }
@@ -208,7 +207,7 @@ class VideoPlayerState(
     ) {
         if (isReleased) return
 
-        this.loop = loop
+        this.loopMode = if (loop) 2 else 0
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
 
@@ -283,8 +282,8 @@ class VideoPlayerState(
             decryptProgress = decryptProgress
         )
 
-        player.setPlayWhenReady(autoPlay && shouldPlay() && !loop)
-        if (shouldPlay() && autoPlay && !loop) {
+        player.setPlayWhenReady(autoPlay && shouldPlay())
+        if (shouldPlay() && autoPlay) {
             play()
         }
 
@@ -308,7 +307,6 @@ class VideoPlayerState(
         currentPosition >= duration &&
                 duration != 0f &&
                 isPlaying &&
-                !loop &&
                 !isRepeatModeOn
 
     fun play() {
