@@ -17,7 +17,7 @@
     <string name="albums_media_sorting">Orde do multimedia</string>
     <string name="albums_media_sorting_desc">Establece a orde das fotos e vídeos nas grellas. Modo en uso: %1$s</string>
     <string name="albums_is_custom">Este é un álbum personalizado</string>
-    <string name="albums_custom">Álbum personalizado</string>
+    <string name="albums_custom">Álbum</string>
     <string name="albums_custom_desc">Engade calquera multimedia desde calquera orixe</string>
     <string name="albums_folder_desc">Cargar multimedia desde un cartafol</string>
     <string name="albums_non_existent">Non existen tales álbums</string>
@@ -29,7 +29,7 @@
     <string name="albums_item_count">Número elementos:</string>
     <string name="albums_name">Nome do álbum</string>
     <string name="albums_type">Tipo de álbum</string>
-    <string name="albums_folder">Cartafol do álbum</string>
+    <string name="albums_folder">Cartafol</string>
     <string name="albums_add_failed">Non se puideron engadir os álbums :&lt;</string>
     <string name="tabs">Pestanas</string>
     <string name="tabs_default">Pestana predeterminada</string>
@@ -676,4 +676,5 @@
     <string name="contributors_separator_developer">Desenvolvemento</string>
     <string name="contributors_separator_major">Destacado</string>
     <string name="contributors_separator_contributors">Colaboracións de código aberto</string>
+    <string name="explanation_nothing_here">Nada por aquí…</string>
 </resources>
