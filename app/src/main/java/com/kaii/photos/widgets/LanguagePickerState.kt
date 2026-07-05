@@ -10,13 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-class LanguagePickerState(
-    context: Context
-) {
+interface LanguagePicker {
     data class Language(
         val tag: String
     ) {
@@ -29,46 +27,58 @@ class LanguagePickerState(
             get() = Locale.forLanguageTag(tag).getDisplayName(Locale.forLanguageTag(tag))
     }
 
+    val query: String
+    val currentLanguage: Language
+    val languages: StateFlow<List<Language>>
+
+    fun search(query: String)
+    fun choose(language: Language)
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+class LanguagePickerState(
+    context: Context
+) : LanguagePicker {
     private val supportedLanguages = listOf(
-        Language("en"),
-        Language("ar"),
-        Language("ca"),
-        Language("cs"),
-        Language("da"),
-        Language("de"),
-        Language("el"),
-        Language("es"),
-        Language("et"),
-        Language("fr"),
-        Language("gl"),
-        Language("hy"),
-        Language("id"),
-        Language("it"),
-        Language("ja"),
-        Language("kn"),
-        Language("pl"),
-        Language("pt"),
-        Language("pt-BR"),
-        Language("ru"),
-        Language("sv"),
-        Language("tr"),
-        Language("uk"),
-        Language("vi"),
-        Language("zh-CN"),
-        Language("zh-TW"),
-        Language("eo"),
-        Language("sk")
+        LanguagePicker.Language("en"),
+        LanguagePicker.Language("ar"),
+        LanguagePicker.Language("ca"),
+        LanguagePicker.Language("cs"),
+        LanguagePicker.Language("da"),
+        LanguagePicker.Language("de"),
+        LanguagePicker.Language("el"),
+        LanguagePicker.Language("es"),
+        LanguagePicker.Language("et"),
+        LanguagePicker.Language("fr"),
+        LanguagePicker.Language("gl"),
+        LanguagePicker.Language("hy"),
+        LanguagePicker.Language("id"),
+        LanguagePicker.Language("it"),
+        LanguagePicker.Language("ja"),
+        LanguagePicker.Language("kn"),
+        LanguagePicker.Language("pl"),
+        LanguagePicker.Language("pt"),
+        LanguagePicker.Language("pt-BR"),
+        LanguagePicker.Language("ru"),
+        LanguagePicker.Language("sv"),
+        LanguagePicker.Language("tr"),
+        LanguagePicker.Language("uk"),
+        LanguagePicker.Language("vi"),
+        LanguagePicker.Language("zh-CN"),
+        LanguagePicker.Language("zh-TW"),
+        LanguagePicker.Language("eo"),
+        LanguagePicker.Language("sk")
     ).sortedBy { it.tag }
 
     private val localeManager = context.getSystemService(LocaleManager::class.java)
 
     private val _languages = MutableStateFlow(supportedLanguages)
-    val languages = _languages.asStateFlow()
+    override val languages = _languages.asStateFlow()
 
-    var query by mutableStateOf("")
+    override var query by mutableStateOf("")
         private set
 
-    var currentLanguage by mutableStateOf(supportedLanguages.first())
+    override var currentLanguage by mutableStateOf(supportedLanguages.first())
         private set
 
     init {
@@ -83,7 +93,7 @@ class LanguagePickerState(
         }
     }
 
-    fun search(query: String) {
+    override fun search(query: String) {
         this.query = query
 
         val lower = query.lowercase()
@@ -94,7 +104,7 @@ class LanguagePickerState(
         }
     }
 
-    fun choose(language: Language) {
+    override fun choose(language: LanguagePicker.Language) {
         currentLanguage = language
         localeManager.applicationLocales = LocaleList.forLanguageTags(language.tag)
     }

@@ -553,6 +553,18 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_language_selected">This language is selected</string>
     <string name="look_and_feel_app_language">App Language</string>
     <string name="look_and_feel_app_language_desc">Change the app\'s display language. May require app restart. Current: %1$s</string>
+    <string name="look_and_feel_palette">Color Palette</string>
+    <string name="look_and_feel_palette_desc">Change the app\'s color scheme</string>
+    <string name="look_and_feel_colors">Colors &amp; Style</string>
+    <string name="look_and_feel_colors_desc">Customize the app\'s look, change color palettes, and toggle dynamic theming</string>
+    <string name="look_and_feel_style">App Style</string>
+    <string name="look_and_feel_style_desc">Select the color style of the app</string>
+    <string name="look_and_feel_style_system">System</string>
+    <string name="look_and_feel_style_light">Light</string>
+    <string name="look_and_feel_style_dark">Dark</string>
+    <string name="look_and_feel_style_night">Night</string>
+    <string name="look_and_feel_style_dynamic">Dynamic Colors</string>
+    <string name="look_and_feel_style_dynamic_desc">Use colors from the device\'s wallpaper and system theme</string>
 
     <!-- Immich -->
     <string name="immich_title">Immich Backup</string>

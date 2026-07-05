@@ -35,12 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.kaii.photos.R
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun AppAboutItemPreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         AppAboutItem(
             version = "v2.0.0",
             showNews = {}

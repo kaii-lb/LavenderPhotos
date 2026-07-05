@@ -68,13 +68,14 @@ import com.kaii.photos.compose.widgets.news.NewsList
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.LocalExtraColorsPalette
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun UpdatePagePreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         UpdatesPage(
             updateState = { UpdateState.Available },
             news = {

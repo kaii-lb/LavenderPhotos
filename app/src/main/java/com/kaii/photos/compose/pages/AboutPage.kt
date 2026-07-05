@@ -38,12 +38,13 @@ import com.kaii.photos.domain.about.ContributorItem
 import com.kaii.photos.domain.about.majorContributors
 import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.models.news.NewsViewModelFactory
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun AboutPagePreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         AboutPage(
             contributors = majorContributors,
             appVersion = "v2.0.0",

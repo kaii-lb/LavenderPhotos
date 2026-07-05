@@ -4,11 +4,9 @@ import android.app.WallpaperManager
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
@@ -51,6 +49,7 @@ import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
 import com.kaii.photos.compose.app_bars.wallpaper_setter.WallpaperSetterBottomBar
 import com.kaii.photos.compose.app_bars.wallpaper_setter.WallpaperSetterTopBar
 import com.kaii.photos.helpers.AnimationConstants
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,19 +68,12 @@ class WallpaperSetter : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val initial =
-                when (AppCompatDelegate.getDefaultNightMode()) {
-                    AppCompatDelegate.MODE_NIGHT_YES -> 1
-                    AppCompatDelegate.MODE_NIGHT_NO -> 2
-
-                    else -> 0
-                }
-
-            val followDarkTheme by PhotosApplication.appModule.settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = initial)
+            val themeSerial by PhotosApplication.appModule.settings.lookAndFeel
+                .getThemeConfiguration()
+                .collectAsStateWithLifecycle(initialValue = ThemeConfiguration.Default.serialize())
 
             PhotosTheme(
-                theme = followDarkTheme,
-                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                theme = ThemeConfiguration(themeSerial)
             ) {
                 lavenderEdgeToEdge(
                     isDarkMode = isSystemInDarkTheme(),

@@ -20,12 +20,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.domain.news.News
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun NewsNotePreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         NewsNote(
             info = "This is a note.",
             urgency = News.Note.Urgency.Critical,

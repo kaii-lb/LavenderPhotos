@@ -2,7 +2,6 @@ package com.kaii.photos.compose
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -81,15 +80,13 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.reflect.typeOf
 
 class MediaPicker : ComponentActivity() {
@@ -99,18 +96,14 @@ class MediaPicker : ComponentActivity() {
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val incomingIntent = intent
-        val settings = PhotosApplication.appModule.settings
 
         setContent {
-            val initialFollowDarkTheme = runBlocking(Dispatchers.IO) {
-                settings.lookAndFeel.getFollowDarkMode().first()
-            }
-            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(initialValue = initialFollowDarkTheme)
+            val themeSerial by PhotosApplication.appModule.settings.lookAndFeel
+                .getThemeConfiguration()
+                .collectAsStateWithLifecycle(initialValue = ThemeConfiguration.Default.serialize())
 
             PhotosTheme(
-                theme = followDarkTheme,
-                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                theme = ThemeConfiguration(themeSerial)
             ) {
                 lavenderEdgeToEdge(
                     isDarkMode = isSystemInDarkTheme(),

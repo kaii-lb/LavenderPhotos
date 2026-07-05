@@ -39,6 +39,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ExpressivePINField
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.photos.widgets.ExpressivePINFieldState
 import com.kaii.photos.widgets.rememberExpressivePINFieldState
@@ -51,9 +52,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Preview
 @Composable
 private fun ScreenLockPreview() {
-    PhotosTheme(
-        theme = 1
-    ) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         val state = rememberExpressivePINFieldState(
             action = ExpressivePINFieldState.Action.Unlock,
             pinBytes = flowOf(

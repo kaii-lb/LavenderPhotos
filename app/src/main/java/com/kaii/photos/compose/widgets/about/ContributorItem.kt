@@ -37,12 +37,13 @@ import com.kaii.photos.R
 import com.kaii.photos.domain.about.ContributorItem.Contributor
 import com.kaii.photos.domain.about.SocialButton
 import com.kaii.photos.presentation.ui.ColorCreator
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun ContributorItemPreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         ContributorItem(
             name = "kaii-lb",
             avatarUrl = "https://avatars.githubusercontent.com/u/70664258?v=4",

@@ -9,12 +9,13 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.TextSeparator
 import com.kaii.photos.domain.news.News
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun NewsCategoryPreview() {
-    PhotosTheme(theme = 1) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         NewsCategory(
             category = News.Category.Type.Features,
             modifier = Modifier

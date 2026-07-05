@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import com.kaii.photos.datastore.datastore
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,7 +17,7 @@ class SettingsLookAndFeelImpl(
     private val context: Context,
     private val scope: CoroutineScope
 ) {
-    private val followDarkModeKey = intPreferencesKey("look_and_feel_follow_dark_mode")
+    private val themeConfigKey = intPreferencesKey("look_and_feel_theme_config_key")
     private val displayDateFormat = intPreferencesKey("look_and_feel_display_date_format")
     private val columnSize = intPreferencesKey("look_and_feel_column_size")
     private val albumColumnSize = intPreferencesKey("look_and_feel_album_column_size")
@@ -26,25 +27,6 @@ class SettingsLookAndFeelImpl(
     private val topBarDetailsFormat = intPreferencesKey("look_and_feel_top_bar_details_format")
     private val blurForViews = booleanPreferencesKey("look_and_feel_blur_views")
     private val vibrateOnMediaClick = booleanPreferencesKey("look_and_feel_vibrate_on_media_click")
-
-    /** 0 is follow system
-     * 1 is dark
-     * 2 is light
-     * 3 is amoled black */
-    fun getFollowDarkMode(): Flow<Int> =
-        context.datastore.data.map {
-            it[followDarkModeKey] ?: 0
-        }
-
-    /** 0 is follow system
-     * 1 is dark
-     * 2 is light
-     * 3 is amoled black */
-    fun setFollowDarkMode(value: Int) = scope.launch {
-        context.datastore.edit {
-            it[followDarkModeKey] = value
-        }
-    }
 
     fun getDisplayDateFormat(): Flow<DisplayDateFormat> =
         context.datastore.data.map {
@@ -146,4 +128,14 @@ class SettingsLookAndFeelImpl(
             it[vibrateOnMediaClick] = value
         }
     }
+
+    fun getThemeConfiguration() =
+        context.datastore.data.map {
+            it[themeConfigKey] ?: ThemeConfiguration.Default.serialize()
+        }
+
+    suspend fun setThemeConfiguration(config: Int) =
+        context.datastore.edit {
+            it[themeConfigKey] = config
+        }
 }

@@ -189,7 +189,10 @@ interface Screens {
             }
 
             @Serializable
-            object LookAndFeel : Screens
+            object LookAndFeel : Screens {
+                @Serializable
+                object ColorAndStyle
+            }
 
             @Serializable
             object Behaviour : Screens

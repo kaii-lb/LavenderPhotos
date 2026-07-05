@@ -12,14 +12,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.widgets.LanguagePickerState
+import com.kaii.photos.widgets.LanguagePicker
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanguagePickerPopup(
-    state: LanguagePickerState,
+    state: LanguagePicker,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,

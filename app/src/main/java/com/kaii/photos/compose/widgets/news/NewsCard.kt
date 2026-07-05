@@ -28,12 +28,13 @@ import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 
 @Preview
 @Composable
 private fun NewsCardPreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         NewsCard(
             title = "This is a multiline news item, this text is very long, yes, indeed its so long it could fill up multiple lines",
             issueNumber = 123,

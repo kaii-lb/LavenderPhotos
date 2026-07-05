@@ -18,6 +18,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import kotlinx.coroutines.flow.flowOf
 import kotlin.reflect.KClass
@@ -25,7 +26,7 @@ import kotlin.reflect.KClass
 @Preview
 @Composable
 private fun NewsListPreview() {
-    PhotosTheme(theme = 2) {
+    PhotosTheme(theme = ThemeConfiguration.Default) {
         NewsList(
             list = flowOf(
                 PagingData.from(

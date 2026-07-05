@@ -4,7 +4,6 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,14 +52,17 @@ import com.kaii.photos.compose.widgets.PreferenceRowWithCustomBody
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
-import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
 import com.kaii.photos.compose.widgets.popup_choosers.LanguagePickerPopup
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.widgets.LanguagePicker
 import com.kaii.photos.widgets.LanguagePickerState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
@@ -72,9 +74,9 @@ import kotlin.time.ExperimentalTime
 
 @Composable
 fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val settings = PhotosApplication.appModule.settings.lookAndFeel
 
-    val followDarkMode by settings.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
     val displayDateFormat by settings.getDisplayDateFormat().collectAsStateWithLifecycle(initialValue = DisplayDateFormat.Default)
     val useRoundedCorners by settings.getUseRoundedCorners().collectAsStateWithLifecycle(initialValue = false)
     val showExtraSecureEntry by settings.getShowExtraSecureNav().collectAsStateWithLifecycle(initialValue = false)
@@ -87,7 +89,13 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
 
     LookAndFeelSettingsPageImpl(
         navController = LocalNavController.current,
-        followDarkMode = { followDarkMode },
+        languagePickerState = remember {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                LanguagePickerState(context)
+            } else {
+                null
+            }
+        },
         displayDateFormat = { displayDateFormat },
         useRoundedCorners = { useRoundedCorners },
         showExtraSecureEntry = { showExtraSecureEntry },
@@ -98,7 +106,6 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
         blurViews = { blurViews },
         vibrateOnMediaClick = { vibrateOnMediaClick },
         modifier = modifier,
-        setFollowDarkMode = settings::setFollowDarkMode,
         setDisplayDateFormat = settings::setDisplayDateFormat,
         setUseRoundedCorners = settings::setUseRoundedCorners,
         setShowExtraSecureNav = settings::setShowExtraSecureNav,
@@ -116,7 +123,17 @@ fun LookAndFeelSettingsPage(modifier: Modifier = Modifier) {
 private fun LookAndFeelSettingsPagePreview() {
     LookAndFeelSettingsPageImpl(
         navController = rememberNavController(),
-        followDarkMode = { 0 },
+        languagePickerState = remember {
+            object : LanguagePicker {
+                override val query = ""
+                override val currentLanguage = LanguagePicker.Language("en")
+                override val languages = MutableStateFlow(listOf(currentLanguage)).asStateFlow()
+
+                override fun search(query: String) {}
+
+                override fun choose(language: LanguagePicker.Language) {}
+            }
+        },
         displayDateFormat = { DisplayDateFormat.Default },
         useRoundedCorners = { false },
         showExtraSecureEntry = { false },
@@ -127,7 +144,6 @@ private fun LookAndFeelSettingsPagePreview() {
         blurViews = { false },
         vibrateOnMediaClick = { true },
         modifier = Modifier,
-        setFollowDarkMode = { },
         setDisplayDateFormat = {},
         setUseRoundedCorners = {},
         setShowExtraSecureNav = {},
@@ -144,7 +160,7 @@ private fun LookAndFeelSettingsPagePreview() {
 @Composable
 private fun LookAndFeelSettingsPageImpl(
     navController: NavController,
-    followDarkMode: () -> Int,
+    languagePickerState: LanguagePicker?,
     displayDateFormat: () -> DisplayDateFormat,
     useRoundedCorners: () -> Boolean,
     showExtraSecureEntry: () -> Boolean,
@@ -155,7 +171,6 @@ private fun LookAndFeelSettingsPageImpl(
     blurViews: () -> Boolean,
     vibrateOnMediaClick: () -> Boolean,
     modifier: Modifier,
-    setFollowDarkMode: (value: Int) -> Unit,
     setDisplayDateFormat: (value: DisplayDateFormat) -> Unit,
     setUseRoundedCorners: (value: Boolean) -> Unit,
     setShowExtraSecureNav: (value: Boolean) -> Unit,
@@ -168,7 +183,7 @@ private fun LookAndFeelSettingsPageImpl(
 ) {
     Scaffold(
         topBar = {
-            DebuggingSettingsTopBar(navController = navController)
+            LookAndFeelSettingsTopBar(navController = navController)
         },
         modifier = modifier
     ) { innerPadding ->
@@ -184,52 +199,29 @@ private fun LookAndFeelSettingsPageImpl(
             }
 
             item {
-                PreferencesThreeStateSwitchRow(
-                    title =
-                        when (followDarkMode()) {
-                            0 -> stringResource(id = R.string.settings_Auto_theme)
-                            1, 3 -> stringResource(id = R.string.settings_dark_theme)
-                            else -> stringResource(id = R.string.settings_light_theme)
-                        },
-                    summary = stringResource(id = DarkThemeSetting.entries[if (followDarkMode() == 3) 1 else followDarkMode()].descriptionId),
-                    iconResID = R.drawable.palette,
-                    currentPosition = if (followDarkMode() == 3) 1 else followDarkMode(),
-                    trackIcons = listOf(
-                        R.drawable.theme_auto,
-                        R.drawable.theme_dark,
-                        R.drawable.theme_light
-                    ),
+                PreferencesRow(
+                    title = stringResource(id = R.string.look_and_feel_colors),
+                    summary = stringResource(id = R.string.look_and_feel_colors_desc),
+                    iconResID = R.drawable.paintbrush,
                     position = RowPosition.Single,
                     showBackground = false,
-                    onStateChange = setFollowDarkMode
-                )
-
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.look_and_feel_theme_amoled),
-                    summary = stringResource(id = R.string.look_and_feel_theme_amoled_desc),
-                    position = RowPosition.Single,
-                    iconResID = R.drawable.light_off,
-                    showBackground = false,
-                    checked = followDarkMode() == 3,
-                    enabled = followDarkMode() == 3 || followDarkMode() == 1 || (followDarkMode() == 0 && isSystemInDarkTheme())
-                ) { checked ->
-                    setFollowDarkMode(if (checked) 3 else 1)
+                    goesToOtherPage = true
+                ) {
+                    navController.navigate(Screens.Settings.MainPage.LookAndFeel.ColorAndStyle)
                 }
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && languagePickerState != null) {
                 item {
                     PreferencesSeparatorText(stringResource(id = R.string.look_and_feel_language))
                 }
 
                 item {
-                    val context = LocalContext.current
-                    val state = remember { LanguagePickerState(context) }
                     var showList by remember { mutableStateOf(false) }
 
                     if (showList) {
                         LanguagePickerPopup(
-                            state = state
+                            state = languagePickerState
                         ) {
                             showList = false
                         }
@@ -237,7 +229,7 @@ private fun LookAndFeelSettingsPageImpl(
 
                     PreferencesRow(
                         title = stringResource(id = R.string.look_and_feel_app_language),
-                        summary = stringResource(id = R.string.look_and_feel_app_language_desc, state.currentLanguage.localName),
+                        summary = stringResource(id = R.string.look_and_feel_app_language_desc, languagePickerState.currentLanguage.localName),
                         iconResID = R.drawable.translate,
                         position = RowPosition.Single,
                         showBackground = false,
@@ -491,7 +483,7 @@ private fun LookAndFeelSettingsPageImpl(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DebuggingSettingsTopBar(
+private fun LookAndFeelSettingsTopBar(
     navController: NavController
 ) {
     TopAppBar(
@@ -520,10 +512,4 @@ private fun DebuggingSettingsTopBar(
             containerColor = MaterialTheme.colorScheme.background
         )
     )
-}
-
-enum class DarkThemeSetting(val descriptionId: Int) {
-    FollowSystem(R.string.settings_theme_follow),
-    ForceDark(R.string.settings_theme_dark),
-    ForceLight(R.string.settings_theme_light)
 }

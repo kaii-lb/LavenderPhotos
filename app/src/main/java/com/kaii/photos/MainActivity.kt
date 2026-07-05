@@ -83,6 +83,7 @@ import com.kaii.photos.compose.settings.LicensePage
 import com.kaii.photos.compose.settings.LookAndFeelSettingsPage
 import com.kaii.photos.compose.settings.MemoryAndStorageSettingsPage
 import com.kaii.photos.compose.settings.PrivacyAndSecurityPage
+import com.kaii.photos.compose.settings.ThemePage
 import com.kaii.photos.compose.settings.UpdatesPage
 import com.kaii.photos.compose.single_photo.SecurePhotoView
 import com.kaii.photos.compose.single_photo.SinglePhotoView
@@ -122,11 +123,14 @@ import com.kaii.photos.models.search_page.SearchViewModel
 import com.kaii.photos.models.search_page.SearchViewModelFactory
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.models.secure_folder.SecureFolderViewModelFactory
+import com.kaii.photos.models.theme.ThemeViewModel
+import com.kaii.photos.models.theme.ThemeViewModelFactory
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.models.trash_bin.TrashViewModelFactory
 import com.kaii.photos.models.updater.UpdaterViewModel
 import com.kaii.photos.models.updater.UpdaterViewModelFactory
 import com.kaii.photos.permissions.StartupManager
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.photos.widgets.ExpressivePINFieldState
@@ -179,10 +183,12 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val followDarkTheme by settings.lookAndFeel.getFollowDarkMode().collectAsStateWithLifecycle(initialValue = 0)
+            val themeSerial by PhotosApplication.appModule.settings.lookAndFeel
+                .getThemeConfiguration()
+                .collectAsStateWithLifecycle(initialValue = ThemeConfiguration.Default.serialize())
+
             PhotosTheme(
-                theme = followDarkTheme,
-                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                theme = ThemeConfiguration(themeSerial)
             ) {
                 lavenderEdgeToEdge(
                     isDarkMode = isSystemInDarkTheme(),
@@ -767,6 +773,14 @@ class MainActivity : ComponentActivity() {
                             password = screen.password,
                             salt = screen.salt
                         )
+                    }
+
+                    composable<Screens.Settings.MainPage.LookAndFeel.ColorAndStyle> {
+                        val viewModel = viewModel<ThemeViewModel>(
+                            factory = ThemeViewModelFactory()
+                        )
+
+                        ThemePage(viewModel = viewModel)
                     }
                 }
 

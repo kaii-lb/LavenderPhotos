@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -119,7 +120,6 @@ fun PreferencesRow(
     goesToOtherPage: Boolean = false,
     showBackground: Boolean = true,
     enabled: Boolean = true,
-    titleTextSize: Float = 18f,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     cornerRadius: Dp = 0.dp,
@@ -130,7 +130,7 @@ fun PreferencesRow(
         title = {
             Text(
                 text = title,
-                fontSize = TextUnit(titleTextSize, TextUnitType.Sp),
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Start,
                 color = if (enabled) contentColor else contentColor.copy(alpha = 0.5f)
             )
@@ -143,7 +143,7 @@ fun PreferencesRow(
                 {
                     Text(
                         text = summary,
-                        fontSize = TextUnit(14f, TextUnitType.Sp),
+                        style = MaterialTheme.typography.titleSmall,
                         textAlign = TextAlign.Start,
                         color = if (enabled) contentColor else contentColor.copy(alpha = 0.6f),
                         maxLines = 3,
@@ -261,6 +261,8 @@ fun PreferencesSwitchRow(
     summary: String? = null,
     enabled: Boolean = true,
     showBackground: Boolean = true,
+    titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    iconPadding: Dp = 16.dp,
     onRowClick: ((checked: Boolean) -> Unit)? = null,
     onSwitchClick: (checked: Boolean) -> Unit
 ) {
@@ -268,11 +270,11 @@ fun PreferencesSwitchRow(
 
     val backgroundColor = when {
         enabled && showBackground -> {
-            MaterialTheme.colorScheme.surfaceVariant
+            MaterialTheme.colorScheme.surfaceContainer
         }
 
         !enabled && showBackground -> {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.6f)
         }
 
         else -> {
@@ -304,7 +306,7 @@ fun PreferencesSwitchRow(
                 .size(28.dp)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(iconPadding))
 
         Column(
             modifier = Modifier
@@ -315,7 +317,7 @@ fun PreferencesSwitchRow(
         ) {
             Text(
                 text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
+                style = titleStyle,
                 textAlign = TextAlign.Start,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -323,7 +325,7 @@ fun PreferencesSwitchRow(
             if (summary != null) {
                 Text(
                     text = summary,
-                    fontSize = TextUnit(14f, TextUnitType.Sp),
+                    style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Start,
                     color = darkenColor(MaterialTheme.colorScheme.onSurface, 0.15f),
                     maxLines = 3,
@@ -704,7 +706,7 @@ fun PreferenceRowWithCustomBody(
         ) {
             Text(
                 text = title,
-                fontSize = TextUnit(18f, TextUnitType.Sp),
+                style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Start,
                 color = contentColor.copy(alpha = if (enabled) 1f else 0.6f)
             )

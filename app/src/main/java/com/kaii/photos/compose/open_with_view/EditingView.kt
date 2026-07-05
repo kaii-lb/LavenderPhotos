@@ -1,11 +1,9 @@
 package com.kaii.photos.compose.open_with_view
 
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,6 +23,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
+import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
@@ -48,22 +47,12 @@ class EditingView : ComponentActivity() {
         }
 
         setContent {
-            val initialDarkMode =
-                when (AppCompatDelegate.getDefaultNightMode()) {
-                    AppCompatDelegate.MODE_NIGHT_YES -> 1
-                    AppCompatDelegate.MODE_NIGHT_NO -> 2
-
-                    else -> 0
-                }
-
-            val followDarkTheme by PhotosApplication.appModule.settings.lookAndFeel.getFollowDarkMode()
-                .collectAsStateWithLifecycle(
-                    initialValue = initialDarkMode
-                )
+            val themeSerial by PhotosApplication.appModule.settings.lookAndFeel
+                .getThemeConfiguration()
+                .collectAsStateWithLifecycle(initialValue = ThemeConfiguration.Default.serialize())
 
             PhotosTheme(
-                theme = followDarkTheme,
-                dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                theme = ThemeConfiguration(themeSerial)
             ) {
                 val navController = rememberNavController()
 
