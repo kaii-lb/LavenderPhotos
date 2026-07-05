@@ -525,7 +525,9 @@ private fun SinglePhotoViewCommon(
     var showTagDialog by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
-    val draggableState = rememberDismissSinglePhotoState()
+    val draggableState = rememberDismissSinglePhotoState {
+        scrollState.privacyMode
+    }
 
     Scaffold(
         topBar = {

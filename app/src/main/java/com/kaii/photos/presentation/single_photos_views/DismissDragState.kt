@@ -4,12 +4,15 @@ import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.snapTo
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -30,10 +33,18 @@ class DismissDragState<T>(
             }
     }
 
+    var enabled by mutableStateOf(true)
+
     val progress by derivedStateOf {
-        val dragOffset = state.requireOffset().coerceAtLeast(0f)
-        (dragOffset / screenHeightPx).coerceIn(0f, 1f)
+        if (enabled) {
+            val dragOffset = state.requireOffset().coerceAtLeast(0f)
+            (dragOffset / screenHeightPx).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
     }
+
+    suspend fun snapto(target: T) = state.snapTo(target)
 }
 
 @Composable
@@ -67,7 +78,9 @@ fun <T> rememberDismissDragState(
 }
 
 @Composable
-fun rememberDismissSinglePhotoState(): DismissDragState<DismissAnchors> {
+fun rememberDismissSinglePhotoState(
+    privacyMode: () -> Boolean
+): DismissDragState<DismissAnchors> {
     val screenHeightPx = LocalWindowInfo.current.containerSize.height.toFloat()
     val anchors = remember(screenHeightPx) {
         DraggableAnchors {
@@ -84,10 +97,15 @@ fun rememberDismissSinglePhotoState(): DismissDragState<DismissAnchors> {
     val navController = LocalNavController.current
     val vibratorManager = rememberVibratorManager()
     LaunchedEffect(draggableState.state.settledValue) {
-        if (draggableState.state.settledValue == DismissAnchors.Dismissed) {
+        if (draggableState.state.settledValue == DismissAnchors.Dismissed && draggableState.enabled) {
             vibratorManager.vibrateShort()
             navController.popBackStack()
         }
+    }
+
+    LaunchedEffect(privacyMode()) {
+        draggableState.enabled = !privacyMode()
+        draggableState.snapto(DismissAnchors.Resting)
     }
 
     return draggableState

@@ -194,7 +194,9 @@ private fun SingleTrashedPhotoViewImpl(
     val appBarsVisible = remember { mutableStateOf(true) }
     var showInfoDialog by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
-    val draggableState = rememberDismissSinglePhotoState()
+    val draggableState = rememberDismissSinglePhotoState {
+        scrollState.privacyMode
+    }
 
     Scaffold(
         topBar = {

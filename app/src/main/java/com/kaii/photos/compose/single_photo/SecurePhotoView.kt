@@ -205,7 +205,9 @@ fun SecurePhotoView(
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
 
-    val draggableState = rememberDismissSinglePhotoState()
+    val draggableState = rememberDismissSinglePhotoState {
+        scrollState.privacyMode
+    }
 
     Scaffold(
         topBar = {
