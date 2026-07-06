@@ -38,8 +38,7 @@ class TrashDataSource(
                 MediaColumns._ID,
                 MediaColumns.DATA,
                 MediaColumns.DATE_TAKEN,
-                MediaColumns.DATE_ADDED,
-                MediaColumns.DATE_MODIFIED,
+                MediaColumns.DATE_EXPIRES,
                 MediaColumns.MIME_TYPE,
                 MediaColumns.DISPLAY_NAME,
                 FileColumns.MEDIA_TYPE,
@@ -116,7 +115,8 @@ class TrashDataSource(
         val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
         val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
         val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+        val dateExpiresColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_EXPIRES)
         val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
 
         val holderMap = mutableListOf<MediaStoreData>()
@@ -128,7 +128,8 @@ class TrashDataSource(
             val id = cursor.getLong(idColNum)
             val mimeType = cursor.getString(mimeTypeColNum)
             val absolutePath = cursor.getString(absolutePathColNum)
-            val dateModified = cursor.getLong(dateModifiedColumn)
+            val dateTaken = cursor.getLong(dateTakenColumn) / 1000
+            val dateExpires = cursor.getLong(dateExpiresColumn)
             val displayName = cursor.getString(displayNameIndex)
             val size = cursor.getLong(sizeColumn)
             val duration = cursor.getLongOrNull(durationColumn)
@@ -147,8 +148,8 @@ class TrashDataSource(
                     id = id,
                     uri = uri.toString(),
                     mimeType = mimeType,
-                    dateModified = dateModified,
-                    dateTaken = dateModified,
+                    dateModified = dateExpires - (30 * 24 * 60 * 60),
+                    dateTaken = dateTaken,
                     displayName = displayName,
                     absolutePath = absolutePath,
                     parentPath = absolutePath.parent(),

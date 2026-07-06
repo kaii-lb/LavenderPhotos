@@ -1,7 +1,6 @@
 package com.kaii.photos.file_management.managers
 
 import android.app.RecoverableSecurityException
-import android.content.ContentValues
 import android.content.Context
 import android.provider.MediaStore
 import android.util.Log
@@ -13,13 +12,10 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.mediastore.getPathsFromUriList
-import com.kaii.photos.mediastore.getTrashPathsFromUriList
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 
 class LocalFileManager(
@@ -51,26 +47,13 @@ class LocalFileManager(
 
         val contentResolver = context.contentResolver
 
-        val currentTimeMillis = System.currentTimeMillis()
-        val trashedValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.IS_TRASHED, trashed)
-            put(MediaStore.MediaColumns.DATE_MODIFIED, currentTimeMillis)
-        }
-
         return@withContext try {
-            val list = list.fastMap { it.uri.toUri() }
-            val map =
-                if (trashed) context.contentResolver.getPathsFromUriList(list = list).toMap()
-                else context.contentResolver.getTrashPathsFromUriList(list = list).toMap()
+            val mediaUris = list.fastMap { it.uri.toUri() }
 
-            list.forEachIndexed { index, uri ->
-                // order is very important!
-                // this WILL crash if you try to set last modified on a file that got moved from ex image.png to .trashed-{timestamp}-image.png
-                File(map[uri]!!).setLastModified(currentTimeMillis)
-                contentResolver.update(uri, trashedValues, null)
+            val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, trashed)
+            context.startIntentSender(pendingIntent.intentSender, null, 0, 0, 0)
 
-                onItemDone(index + 1)
-            }
+            onItemDone(mediaUris.size)
 
             true
         } catch (securityException: RecoverableSecurityException) {
