@@ -3,13 +3,17 @@ This is Lavender Photos, a no non-sense, smooth, and performant gallery app for 
 
 <img src="/assets/images/Banner.png" alt="banner" style="width=100%">
 
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.svg" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.kaii.photos)
+
 # Features
 - Browse all your photos and videos smoothly, separated by date
 - Add and remove albums as you wish, no arbitrary or forced selections
 - Search for an image by its name or date (in many formats!)
 - Immich integration for safe and easy cloud media backup
+- Tagging system to properly organize media
 - Trash Bin that's sorted by recently trashed
 - Full fledged favouriting system
+- Create groups of albums
 - A selection system that doesn't suck
 - Edit and personalize any photo or video, any time, without an internet connection
 - Secure sensitive photos in an encrypted medium, for safe keeping
