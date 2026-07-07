@@ -230,12 +230,7 @@
     <string name="editing_export_video_loading">Video wird exportiert…</string>
     <string name="editing_export_video_loading_body">Schritt %1$d von %2$d</string>
     <string name="editing_export_video_failed">Video konnte nicht exportiert werden</string>
-    <string name="settings_light_theme">Helles Design</string>
-    <string name="settings_Auto_theme">Automatisches Design</string>
     <string name="settings_look_and_feel">Aussehen und Haptik</string>
-    <string name="settings_theme_follow">App folgt dem System Design</string>
-    <string name="settings_theme_dark">App ist immer im dunklen Design</string>
-    <string name="settings_theme_light">App ist immer im hellen Design</string>
     <string name="settings_privacy">Privatsphäre &amp; Sicherheit</string>
     <string name="settings_memory_storage">Cache &amp; Speicher</string>
     <string name="settings_storage">Speicher</string>
@@ -316,7 +311,6 @@
     <string name="permissions_read_external_storage_desc">Erlaubt Lavender Photos, Videos und Bilder auf diesem Gerät zu entdecken</string>
     <string name="permissions_manage_media">Medien verwalten</string>
     <string name="permissions_manage_media_desc">Optionale Berechtigung. Wird fürs schnellere in den Papierkorb verschieben und Löschen benutzt</string>
-    <string name="permissions_other_info">Weitere Informationen</string>
     <string name="media_is_raw">Dies ist ein RAW Bild</string>
     <string name="media_select_limit_reached">Auswahllimit erreicht!</string>
     <string name="search_photo_name">Nach einem Foto suchen</string>

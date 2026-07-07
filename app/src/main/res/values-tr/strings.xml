@@ -237,13 +237,7 @@
     <string name="settings">Ayarlar</string>
     <string name="settings_general">Genel</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_dark_theme">Koyu Tema</string>
-    <string name="settings_light_theme">Açık Tema</string>
-    <string name="settings_Auto_theme">Otomatik Tema</string>
     <string name="settings_look_and_feel">Görünüm &amp; His</string>
-    <string name="settings_theme_follow">Uygulama sistem temasını takip eder</string>
-    <string name="settings_theme_dark">Uygulama her zaman koyu temadadır</string>
-    <string name="settings_theme_light">Uygulama her zaman açık temadadır</string>
     <string name="settings_privacy">Gizlilik &amp; Güvenlik</string>
     <string name="settings_memory_storage">Bellek &amp; Depolama</string>
     <string name="settings_storage">Depolama</string>
@@ -282,7 +276,6 @@
     <!-- Media -->
     <string name="media">Medya</string>
     <string name="sort_indicator">Sıralama göstergesi</string>
-    <string name="sort_mode">Medya Sıralama Modu</string>
     <string name="sort_date">Tarih</string>
     <string name="sort_name">Ad</string>
     <string name="sort_custom">Özel</string>
@@ -359,8 +352,6 @@
     <string name="look_and_feel_date_format_default">Varsayılan</string>
     <string name="look_and_feel_date_format_short">Kısa</string>
     <string name="look_and_feel_date_format_standard">Sıkıştırılmış</string>
-    <string name="look_and_feel_theme_amoled">Amoled Siyah</string>
-    <string name="look_and_feel_theme_amoled_desc">Amoled cihazlarda güç verimliliği için arka plan rengini siyaha ayarlar</string>
     <string name="look_and_feel_column_size">Sütun Boyutu: %1$d</string>
     <string name="look_and_feel_album_column_size">Albüm Sütun Boyutu: %1$d</string>
     <string name="look_and_feel_grids">Izgaralar</string>

@@ -140,12 +140,8 @@
     <string name="editing_white_point">Titik Putih</string>
     <string name="settings">Pengaturan</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_dark_theme">Tema Gelap</string>
     <string name="settings_look_and_feel">Tampilan &amp; Nuansa</string>
-    <string name="settings_theme_follow">Aplikasi mengikuti tema sistem</string>
-    <string name="settings_theme_dark">Aplikasi selalu dalam tema gelap</string>
     <string name="settings_general">Umum</string>
-    <string name="settings_theme_light">Aplikasi selalu dalam tema terang</string>
     <string name="settings_privacy">Privasi &amp; Keamanan</string>
     <string name="settings_memory_storage">Memori &amp; Penyimpanan</string>
     <string name="settings_storage_thumbnails_clear_cache_desc">Menghapus cache thumbnail untuk membebaskan penyimpanan</string>
@@ -309,8 +305,6 @@
     <string name="editing_volume">Volume</string>
     <string name="editing_wilson">Kecepatan</string>
     <string name="editing_fps">FPS</string>
-    <string name="settings_light_theme">Tema Terang</string>
-    <string name="settings_Auto_theme">Tema Otomatis</string>
     <string name="settings_storage_thumbnails_notice">Resolusi yang lebih tinggi menggunakan lebih banyak penyimpanan</string>
     <string name="settings_about_and_updates">Tentang &amp; Pembaruan</string>
     <string name="settings_behaviour">Perilaku</string>
@@ -333,9 +327,6 @@
     <string name="permissions_read_external_storage_desc">Izinkan Lavender Photos menemukan foto dan video di perangkat</string>
     <string name="permissions_manage_media">Kelola Media</string>
     <string name="permissions_manage_media_desc">Izin opsional. Digunakan untuk fungsionalitas sampah/hapus yang lebih cepat</string>
-    <string name="permissions_other_info">Info Lainnya</string>
-    <string name="permissions_install_packages">Instal Paket</string>
-    <string name="permissions_install_packages_desc">Jika Anda menggunakan pembaruan dalam aplikasi, Lavender Photos akan meminta izin Instal Paket.</string>
     <string name="permissions_continue">Lanjutkan</string>
     <string name="permissions_necessary">Izin yang Diperlukan</string>
     <string name="permissions_necessary_desc">Izin ini diperlukan untuk fungsionalitas aplikasi</string>
@@ -345,7 +336,6 @@
     <string name="permissions_read_media_explanation">Izin ini diperlukan untuk menemukan foto dan video di perangkat. Lavender Photos sangat ketat dengan file yang dibacanya, dan tidak pernah berbagi atau mengeksploitasi info ini.</string>
     <string name="permissions_manage_media_explanation">Izin ini opsional, tetapi sangat disarankan. Izin Kelola Media memungkinkan Lavender Photos menggunakan API Content Resolver Android untuk membuang/menghapus/memindahkan/menyalin media, yang membuat prosesnya jauh lebih mulus dan lebih interoperabel dengan aplikasi lain.</string>
     <string name="permissions_explanation">Penjelasan Izin</string>
-    <string name="sort_mode">Mode Urutan Media</string>
     <string name="media_trash_confirm">Pindahkan item yang dipilih ke tempat sampah?</string>
     <string name="media_restore_confirm">Pulihkan item-item ini?</string>
     <string name="media_restore_processing">Memulihkan File</string>
@@ -396,8 +386,6 @@
     <string name="look_and_feel_date_format_filename">Nama File</string>
     <string name="look_and_feel_date_format_date_taken">Tanggal Diambil</string>
     <string name="look_and_feel_date_format_datetime_taken">Tanggal dan Waktu Diambil</string>
-    <string name="look_and_feel_theme_amoled">Hitam Amoled</string>
-    <string name="look_and_feel_theme_amoled_desc">Mengatur warna latar belakang menjadi hitam untuk efisiensi daya pada perangkat Amoled</string>
     <string name="look_and_feel_column_size">Ukuran Kolom: %1$d</string>
     <string name="look_and_feel_album_column_size">Ukuran kolom Album: %1$d</string>
     <string name="look_and_feel_grids">Grid</string>

@@ -186,13 +186,7 @@
     <string name="filter_selected">Valitud</string>
     <string name="settings_storage_thumbnails_clear_cache">Tühjenda pisipiltide puhver</string>
     <string name="settings_storage_thumbnails_clear_cache_desc">Vaba andmeruumi lisamiseks saad kustutada puhverdatud pisipildid</string>
-    <string name="settings_dark_theme">Tume kujundus</string>
-    <string name="settings_light_theme">Hele kujundus</string>
-    <string name="settings_Auto_theme">Automaatne kujundus</string>
     <string name="settings_look_and_feel">Välimus ja tunnetus</string>
-    <string name="settings_theme_follow">Rakendus järgib süsteemi kujundust</string>
-    <string name="settings_theme_dark">Rakendus kuvatakse alati tumedas kujunduses</string>
-    <string name="settings_theme_light">Rakendus kuvatakse alati heledas kujunduses</string>
     <string name="settings_privacy">Privaatsus ja turvalisus</string>
     <string name="settings_memory_storage">Mälu ja andmeruum</string>
     <string name="trash_bin_short">Prügi</string>
@@ -306,8 +300,6 @@
     <string name="look_and_feel_date_format_filename">Failinimi</string>
     <string name="look_and_feel_date_format_date_taken">Pildistamise kuupäev</string>
     <string name="look_and_feel_date_format_datetime_taken">Pildistamise kuupäev ja aeg</string>
-    <string name="look_and_feel_theme_amoled">Amoledi must</string>
-    <string name="look_and_feel_theme_amoled_desc">Võimaldab AMOLED-ekraaniga seadmetel energia säästmiseks taustavärvina kasutada süsimusta</string>
     <string name="look_and_feel_column_size">Veeru suurus: %1$d</string>
     <string name="look_and_feel_album_column_size">Albumi veeru suurus: %1$d</string>
 </resources>

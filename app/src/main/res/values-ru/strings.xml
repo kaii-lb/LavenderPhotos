@@ -133,11 +133,7 @@
     <string name="settings">Настройки</string>
     <string name="settings_general">Основные</string>
     <string name="settings_theme">Тема</string>
-    <string name="settings_dark_theme">Тёмная тема</string>
     <string name="settings_look_and_feel">Внешний вид</string>
-    <string name="settings_theme_follow">Приложение следует системной теме</string>
-    <string name="settings_theme_dark">Приложение всегда использует тёмную тему</string>
-    <string name="settings_theme_light">Приложение всегда использует светлую тему</string>
     <string name="settings_privacy">Конфиденциальность и безопасность</string>
     <string name="settings_memory_storage">Память и хранилище</string>
     <string name="settings_storage">Хранилище</string>
@@ -167,7 +163,6 @@
     <string name="permissions_needed">Требуется разрешение</string>
     <string name="media">Медиафайлы</string>
     <string name="sort_indicator">Сортировать по индикатору</string>
-    <string name="sort_mode">Режим сортировки медиафайлов</string>
     <string name="sort_date">Дата</string>
     <string name="sort_name">Название</string>
     <string name="sort_custom">Пользовательский</string>
@@ -326,8 +321,6 @@
     <string name="editing_volume">Громкость</string>
     <string name="editing_wilson">Скорость</string>
     <string name="editing_fps">Кадров в секунду</string>
-    <string name="settings_light_theme">Светлая тема</string>
-    <string name="settings_Auto_theme">Автоматическая тема</string>
     <string name="settings_behaviour">Поведение</string>
     <string name="settings_navigation_exit_immediately">Немедленный выход</string>
     <string name="settings_navigation_exit_immediately_desc">Пропускает возврат к основному виду фотографий при нажатии кнопки «Назад»</string>
@@ -342,9 +335,6 @@
     <string name="permissions_read_external_storage_desc">Разрешить Lavender Photos находить фотографии и видео на устройстве</string>
     <string name="permissions_manage_media">Управление медиафайлами</string>
     <string name="permissions_manage_media_desc">Необязательное разрешение. Используется для более быстрой работы с корзиной/удалением</string>
-    <string name="permissions_other_info">Другая информация</string>
-    <string name="permissions_install_packages">Установка пакетов</string>
-    <string name="permissions_install_packages_desc">Если вы используете встроенное обновление, Lavender Photos запросит разрешение на установку пакетов.</string>
     <string name="permissions_continue">Продолжить</string>
     <string name="permissions_necessary">Необходимое разрешение</string>
     <string name="permissions_necessary_desc">Это разрешение необходимо для работы приложения</string>
@@ -381,8 +371,6 @@
     <string name="look_and_feel_date_format_filename">Название файла</string>
     <string name="look_and_feel_date_format_date_taken">Дата съёмки</string>
     <string name="look_and_feel_date_format_datetime_taken">Дата и время съёмки</string>
-    <string name="look_and_feel_theme_amoled">Полностью чёрный цвет</string>
-    <string name="look_and_feel_theme_amoled_desc">Устанавливает чёрный цвет фона для энергоэффективности на устройствах AMOLED</string>
     <string name="look_and_feel_column_size">Размер столбца: %1$d</string>
     <string name="look_and_feel_album_column_size">Размер столбца альбома: %1$d</string>
     <string name="look_and_feel_grids">Сетки</string>

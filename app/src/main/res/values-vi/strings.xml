@@ -262,12 +262,6 @@
     <string name="editing_resolution_scale">Phóng to</string>
     <string name="settings_general">Tổng Quan</string>
     <string name="settings_look_and_feel">Giao diện &amp; Cảm nhận</string>
-    <string name="settings_theme_follow">Ứng dụng theo giao diện hệ thống</string>
-    <string name="settings_theme_dark">Ứng dụng luôn ở giao diện tối</string>
-    <string name="settings_theme_light">Ứng dụng luôn ở giao diện sáng</string>
-    <string name="settings_Auto_theme">Giao Diện Tự Động</string>
-    <string name="settings_light_theme">Giao Diện Sáng</string>
-    <string name="settings_dark_theme">Giao Diên Tối</string>
     <string name="settings_theme">Giao diện</string>
     <string name="settings_clear">Bỏ</string>
     <string name="settings_clear_cache_desc">Thao tác này sẽ xóa tất cả bộ nhớ đệm hình thu nhỏ, giải phóng dung lượng lưu trữ. Quá trình tải hình thu nhỏ sẽ mất nhiều thời gian hơn ở lần khởi động tiếp theo.</string>

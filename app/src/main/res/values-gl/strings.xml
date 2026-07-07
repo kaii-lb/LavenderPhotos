@@ -250,13 +250,7 @@
     <string name="settings">Axustes</string>
     <string name="settings_general">Xeral</string>
     <string name="settings_theme">Decorado</string>
-    <string name="settings_dark_theme">Escuro</string>
-    <string name="settings_light_theme">Claro</string>
-    <string name="settings_Auto_theme">Auto</string>
     <string name="settings_look_and_feel">Aparencia e Comportamento</string>
-    <string name="settings_theme_follow">A app segue o decorado do sistema</string>
-    <string name="settings_theme_dark">A app sempre con decorado escuro</string>
-    <string name="settings_theme_light">A app sempre con decorado claro</string>
     <string name="settings_privacy">Privacidade e Seguridade</string>
     <string name="settings_memory_storage">Memoria e Almacenaxe</string>
     <string name="settings_storage">Almacenaxe</string>
@@ -299,9 +293,6 @@
     <string name="permissions_read_external_storage_desc">Permitir que Lavender Photos atope fotos e vídeos no dispositivo</string>
     <string name="permissions_manage_media">Xestionar multimedia</string>
     <string name="permissions_manage_media_desc">Permiso optativo. Utilízase para mellor rendemento de lixo/eliminar</string>
-    <string name="permissions_other_info">Outra info</string>
-    <string name="permissions_install_packages">Instalar paquetes</string>
-    <string name="permissions_install_packages_desc">Se usas o xestor de actualizacións incluído, Lavender Photos vai solicitar permiso para instalar paquetes.</string>
     <string name="permissions_continue">Continuar</string>
     <string name="permissions_necessary">Permiso necesario</string>
     <string name="permissions_necessary_desc">Este permiso é necesario para que funcione a app</string>
@@ -311,7 +302,6 @@
     <string name="permissions_read_media_explanation">Este permiso é preciso para atopar fotos e vídeos no dispositivo. Lavender Photos é moi estrita cos ficheiros que le, e nunca se aproveita ou comparte esta información.</string>
     <string name="media">Multimedia</string>
     <string name="sort_indicator">Indicador da orde</string>
-    <string name="sort_mode">Modo para ordenar</string>
     <string name="sort_date">Data</string>
     <string name="sort_name">Nome</string>
     <string name="sort_custom">Persoal</string>
@@ -395,8 +385,6 @@
     <string name="look_and_feel_date_format_filename">Nome do ficheiro</string>
     <string name="look_and_feel_date_format_date_taken">Data orixinal</string>
     <string name="look_and_feel_date_format_datetime_taken">Data e Hora orixinais</string>
-    <string name="look_and_feel_theme_amoled">Negro Amoled</string>
-    <string name="look_and_feel_theme_amoled_desc">Establece o fondo con negro para unha maior eficiencia en dispositivos Amoled</string>
     <string name="look_and_feel_column_size">Tamaño columna: %1$d</string>
     <string name="look_and_feel_album_column_size">Tamaño columna álbum: %1$d</string>
     <string name="look_and_feel_grids">Grellas</string>

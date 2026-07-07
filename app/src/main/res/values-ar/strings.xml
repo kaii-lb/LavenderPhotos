@@ -120,11 +120,7 @@
     <string name="settings">إعدادات</string>
     <string name="settings_general">عام</string>
     <string name="settings_theme">المظاهر</string>
-    <string name="settings_dark_theme">المظهر الداكن</string>
     <string name="settings_look_and_feel">المظهر</string>
-    <string name="settings_theme_follow">التطبيق يتبع موضوع النظام</string>
-    <string name="settings_theme_dark">التطبيق دائمًا مظلم</string>
-    <string name="settings_theme_light">التطبيق دائمًا في وضع فاتح</string>
     <string name="settings_privacy">الخصوصية والأمان</string>
     <string name="settings_memory_storage">الذاكرة والتخزين</string>
     <string name="settings_storage">تخزين</string>
@@ -159,7 +155,6 @@
     <string name="permissions_needed">مطلوب إذن</string>
     <string name="media">وسائط</string>
     <string name="sort_indicator">فرز حسب المؤشر</string>
-    <string name="sort_mode">وضع فرز الوسائط</string>
     <string name="sort_date">تاريخ</string>
     <string name="sort_name">اسم</string>
     <string name="sort_custom">مخصص</string>

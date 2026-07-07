@@ -31,7 +31,6 @@
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
     <string name="settings_privacy">Приватність та безпека</string>
     <string name="settings_look_and_feel">Оформлення та поведінка</string>
-    <string name="settings_dark_theme">Темна тема</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_general">Загальні</string>
     <string name="settings">Налаштування</string>
@@ -51,9 +50,6 @@
     <string name="editing_save">Зберегти копію</string>
     <string name="editing_discard_desc">Скасувати зроблені зміни?</string>
     <string name="editing_discard">Скасувати</string>
-    <string name="settings_theme_light">Застосунок завжди в світлій темі</string>
-    <string name="settings_theme_dark">Застосунок завжди в темній темі</string>
-    <string name="settings_theme_follow">Застосунок завжди в системній темі</string>
     <string name="return_to_previous_page">Повернутися на попередню сторінку</string>
     <string name="app_name_full">Lavender Photos</string>
     <string name="locked_folder_help_bottom">Захищені дані неможливо відновити, якщо Ви забули пароль або видалили відбиток пальця.</string>
@@ -139,7 +135,6 @@
     <string name="trash_empty">Очистити кошик?</string>
     <string name="trash_empty_desc">Це видаляє всі елементи з кошика, цю дію не можна скасувати</string>
     <string name="trash_empty_confirm">Очистити</string>
-    <string name="sort_mode">Режим сортування файлів</string>
     <string name="sort_date">За датою</string>
     <string name="sort_name">За іменем</string>
     <string name="sort_custom">Користувацікий</string>
@@ -336,8 +331,6 @@
     <string name="editing_volume">Обсяг</string>
     <string name="editing_wilson">Швидкість</string>
     <string name="editing_fps">FPS</string>
-    <string name="settings_light_theme">Світла тема</string>
-    <string name="settings_Auto_theme">Автоматична тема</string>
     <string name="settings_behaviour">Поведінка</string>
     <string name="settings_navigation_exit_immediately">Негайно вийдіть</string>
     <string name="settings_navigation_exit_immediately_desc">Пропускає повернення до головного перегляду фотографій при натисканні кнопки «Назад»</string>
@@ -354,9 +347,6 @@
     <string name="permissions_read_external_storage_desc">Дозволити Lavender Photos знаходити фотографії та відео на пристрої</string>
     <string name="permissions_manage_media">Керування медіафайлами</string>
     <string name="permissions_manage_media_desc">Необов’язковий дозвіл. Використовується для швидшого видалення/перенесення в кошик</string>
-    <string name="permissions_other_info">Інша інформація</string>
-    <string name="permissions_install_packages">Встановлення пакетів</string>
-    <string name="permissions_install_packages_desc">Якщо ви використовуєте вбудований засіб оновлення, Lavender Photos запитуватиме дозвіл на встановлення пакетів.</string>
     <string name="permissions_continue">Продовжити</string>
     <string name="permissions_necessary">Необхідний дозвіл</string>
     <string name="permissions_necessary_desc">Цей дозвіл необхідний для функціонування програми</string>

@@ -139,11 +139,7 @@
     <string name="settings">Ajustes</string>
     <string name="settings_general">General</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_dark_theme">Tema Oscuro</string>
     <string name="settings_look_and_feel">Aspecto y sensación</string>
-    <string name="settings_theme_follow">La aplicación sigue el tema del sistema</string>
-    <string name="settings_theme_dark">La aplicación siempre está en tema oscuro</string>
-    <string name="settings_theme_light">La aplicación siempre está en tema claro</string>
     <string name="settings_privacy">Privacidad y Seguridad</string>
     <string name="settings_memory_storage">Memoria y Almacenamiento</string>
     <string name="settings_storage">Almacenamiento</string>
@@ -173,7 +169,6 @@
     <string name="permissions_needed">Permiso Necesario</string>
     <string name="media">Multimedia</string>
     <string name="sort_indicator">Ordenar por indicador</string>
-    <string name="sort_mode">Modo de Clasificación de Multimedia</string>
     <string name="sort_date">Fecha</string>
     <string name="sort_name">Nombre</string>
     <string name="sort_custom">Personalizado</string>
@@ -304,8 +299,6 @@
     <string name="editing_volume">Volumen</string>
     <string name="editing_wilson">Velocidad</string>
     <string name="editing_fps">FPS</string>
-    <string name="settings_light_theme">Tema Claro</string>
-    <string name="settings_Auto_theme">Tema Auto</string>
     <string name="settings_behaviour">Comportamiento</string>
     <string name="settings_navigation_exit_immediately">Salir Inmediatamente</string>
     <string name="settings_navigation_exit_immediately_desc">Omite volver a la pestaña predeterminada al presionar el botón Atrás</string>
@@ -332,8 +325,6 @@
     <string name="look_and_feel_date_format_default">Por defecto</string>
     <string name="look_and_feel_date_format_short">Corta</string>
     <string name="look_and_feel_date_format_standard">Comprimida</string>
-    <string name="look_and_feel_theme_amoled">Negro Amoled</string>
-    <string name="look_and_feel_theme_amoled_desc">Establece el color de fondo en negro para la eficiencia energética en dispositivos Amoled</string>
     <string name="look_and_feel_column_size">Tamaño de columna: %1$d</string>
     <string name="look_and_feel_album_column_size">Tamaño de columna de álbum: %1$d</string>
     <string name="look_and_feel_grids">Rejillas</string>
@@ -404,9 +395,6 @@
     <string name="permissions_read_external_storage_desc">Permite que Lavender Photos descubra fotos y videos en el dispositivo</string>
     <string name="permissions_manage_media">Administrar Medios</string>
     <string name="permissions_manage_media_desc">Permiso opcional. Se utiliza para una funcionalidad de basura/eliminación más rápida</string>
-    <string name="permissions_other_info">Otra Info</string>
-    <string name="permissions_install_packages">Instalar Paquetes</string>
-    <string name="permissions_install_packages_desc">Si usa el actualizador en la aplicación, Lavender Photos solicitará permiso para instalar paquetes.</string>
     <string name="permissions_continue">Continuar</string>
     <string name="permissions_necessary">Permiso Necesario</string>
     <string name="permissions_necessary_desc">Este permiso es necesario para la funcionalidad de la aplicación</string>

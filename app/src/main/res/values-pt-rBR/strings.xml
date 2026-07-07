@@ -221,13 +221,7 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="settings">Configurações</string>
     <string name="settings_general">Geral</string>
     <string name="settings_theme">Tema</string>
-    <string name="settings_dark_theme">Tema Escuro</string>
-    <string name="settings_light_theme">Tema Claro</string>
-    <string name="settings_Auto_theme">Tema Automático</string>
     <string name="settings_look_and_feel">Estilo &amp; Sensação</string>
-    <string name="settings_theme_follow">App segue o tema do sistema</string>
-    <string name="settings_theme_dark">App permanece no tema escuro</string>
-    <string name="settings_theme_light">App permanece no tema claro</string>
     <string name="settings_privacy">Privacidade &amp; Segurança</string>
     <string name="settings_memory_storage">Memória &amp; Armazenamento</string>
     <string name="settings_storage">Armazenamento</string>
@@ -321,8 +315,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="look_and_feel_date_format_default">Padrão</string>
     <string name="look_and_feel_date_format_short">Curto</string>
     <string name="look_and_feel_date_format_standard">Comprimido</string>
-    <string name="look_and_feel_theme_amoled">Preto Amoled</string>
-    <string name="look_and_feel_theme_amoled_desc">Define a cor de fundo como preta para maior eficiência energética em dispositivos com tela Amoled</string>
     <string name="look_and_feel_column_size">Tamanho da Coluna: %1$d</string>
     <string name="look_and_feel_album_column_size">Tamanho da colina do Álbum: %1$d</string>
     <string name="look_and_feel_grids">Grades</string>
@@ -330,7 +322,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="look_and_feel_use_black_background_desc">O fundo do visualizador de imagens/reprodutor de vídeos será preto</string>
     <string name="look_and_feel_nav">Navegação</string>
     <string name="sort_indicator">Filtrar por indicador</string>
-    <string name="sort_mode">Modo De Filtragem De Mídia</string>
     <string name="sort_date">Data</string>
     <string name="sort_name">Nome</string>
     <string name="sort_custom">Customizado</string>

@@ -142,11 +142,7 @@
     <string name="settings">设置</string>
     <string name="settings_general">通用</string>
     <string name="settings_theme">主题</string>
-    <string name="settings_dark_theme">深色主题</string>
     <string name="settings_look_and_feel">界面观感</string>
-    <string name="settings_theme_follow">应用跟随系统主题</string>
-    <string name="settings_theme_dark">应用始终使用深色主题</string>
-    <string name="settings_theme_light">应用始终使用浅色主题</string>
     <string name="settings_privacy">隐私与安全</string>
     <string name="settings_memory_storage">内存与存储</string>
     <string name="settings_storage">存储</string>
@@ -176,7 +172,6 @@
     <string name="permissions_needed">需要权限</string>
     <string name="media">媒体</string>
     <string name="sort_indicator">按标记排序</string>
-    <string name="sort_mode">媒体排序模式</string>
     <string name="sort_date">日期</string>
     <string name="sort_name">名称</string>
     <string name="sort_custom">自定义</string>
@@ -304,8 +299,6 @@
     <string name="editing_volume">音量</string>
     <string name="editing_wilson">速度</string>
     <string name="editing_fps">帧率</string>
-    <string name="settings_light_theme">浅色主题</string>
-    <string name="settings_Auto_theme">自动主题</string>
     <string name="settings_behaviour">行为</string>
     <string name="settings_navigation_exit_immediately">直接退出</string>
     <string name="settings_navigation_exit_immediately_desc">按下返回键时跳过主照片界面直接退出</string>
@@ -332,8 +325,6 @@
     <string name="look_and_feel_date_format_default">默认</string>
     <string name="look_and_feel_date_format_short">简写</string>
     <string name="look_and_feel_date_format_standard">紧凑</string>
-    <string name="look_and_feel_theme_amoled">AMOLED 黑色</string>
-    <string name="look_and_feel_theme_amoled_desc">将背景设为黑色，以便在 AMOLED 设备上实现节能效果</string>
     <string name="look_and_feel_column_size">列宽：%1$d</string>
     <string name="look_and_feel_album_column_size">相册列宽：%1$d</string>
     <string name="look_and_feel_grids">网格布局</string>
@@ -404,9 +395,6 @@
     <string name="permissions_read_external_storage_desc">允许薰衣草图库查找设备上的照片和视频</string>
     <string name="permissions_manage_media">媒体管理</string>
     <string name="permissions_manage_media_desc">可选权限，用于更快地执行删除/回收操作</string>
-    <string name="permissions_other_info">其他信息</string>
-    <string name="permissions_install_packages">安装软件包</string>
-    <string name="permissions_install_packages_desc">如果你使用应用内更新，薰衣草图库会请求\"安装软件包\"权限。</string>
     <string name="permissions_continue">继续</string>
     <string name="permissions_necessary">必要权限</string>
     <string name="permissions_necessary_desc">应用功能需要此权限才能正常使用</string>

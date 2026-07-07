@@ -124,11 +124,7 @@
     <string name="settings">Ustawienia</string>
     <string name="settings_general">Ogólne</string>
     <string name="settings_theme">Motyw</string>
-    <string name="settings_dark_theme">Ciemny motyw</string>
     <string name="settings_look_and_feel">Wygląd i styl</string>
-    <string name="settings_theme_follow">Aplikacja dostosowuje się do motywu systemu</string>
-    <string name="settings_theme_dark">Aplikacja jest zawsze w ciemnym motywie</string>
-    <string name="settings_theme_light">Aplikacja jest zawsze w jasnym motywie</string>
     <string name="settings_privacy">Prywatność i bezpieczeństwo</string>
     <string name="settings_memory_storage">Pamięć i przechowywanie</string>
     <string name="settings_storage">Przechowywanie</string>
@@ -157,7 +153,6 @@
     <string name="permissions_overwrite_date_on_move_desc">Zachowuje datę multimediów podczas kopiowania lub przenoszenia</string>
     <string name="permissions_needed">Wymagane pozwolenie</string>
     <string name="sort_indicator">Sortuj według wskaźnika</string>
-    <string name="sort_mode">Tryb sortowania multimediów</string>
     <string name="sort_date">Data</string>
     <string name="sort_name">Nazwa</string>
     <string name="sort_custom">Niestandardowe</string>
@@ -297,8 +292,6 @@
     <string name="editing_volume">Głośność</string>
     <string name="editing_wilson">Prędkość</string>
     <string name="editing_fps">FPS</string>
-    <string name="settings_light_theme">Jasny motyw</string>
-    <string name="settings_Auto_theme">Motyw automatyczny</string>
     <string name="settings_behaviour">Zachowanie</string>
     <string name="settings_navigation_exit_immediately">Wyjdź natychmiast</string>
     <string name="settings_navigation_exit_immediately_desc">Pomija powrót do domyślnej karty po naciśnięciu przycisku Wstecz</string>
@@ -327,8 +320,6 @@
     <string name="look_and_feel_date_format_default">Domyślny</string>
     <string name="look_and_feel_date_format_short">Krótki</string>
     <string name="look_and_feel_date_format_standard">Skompresowany</string>
-    <string name="look_and_feel_theme_amoled">Amoled Czarny</string>
-    <string name="look_and_feel_theme_amoled_desc">Ustawia kolor tła na czarny w celu zwiększenia efektywności energetycznej urządzeń AMOLED</string>
     <string name="look_and_feel_column_size">Rozmiar kolumny: %1$d</string>
     <string name="look_and_feel_album_column_size">Rozmiar kolumny albumu: %1$d</string>
     <string name="look_and_feel_grids">Siatka</string>
@@ -387,9 +378,6 @@
     <string name="permissions_read_external_storage_desc">Zezwól aplikacji Lavender Photos na wyszukiwanie zdjęć i filmów na urządzeniu</string>
     <string name="permissions_manage_media">Zarządzaj multimediami</string>
     <string name="permissions_manage_media_desc">Opcjonalne uprawnienie. Służy do przyspieszenia działania funkcji kosza/usuwania</string>
-    <string name="permissions_other_info">Inne informacje</string>
-    <string name="permissions_install_packages">Instalowanie pakietów</string>
-    <string name="permissions_install_packages_desc">Jeśli korzystasz z aktualizatora w aplikacji, Lavender Photos poprosi o pozwolenie na instalowanie pakietów.</string>
     <string name="permissions_continue">Kontynuuj</string>
     <string name="permissions_necessary">Niezbędne uprawnienia</string>
     <string name="permissions_necessary_desc">To uprawnienie jest niezbędne do działania aplikacji</string>
