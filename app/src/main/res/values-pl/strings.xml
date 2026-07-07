@@ -15,7 +15,7 @@
     <string name="albums_media_sorting">Sortowanie multimediów</string>
     <string name="albums_media_sorting_desc">Ustawia sortowanie zdjęć i filmów w siatkach. Obecny tryb: %1$s</string>
     <string name="albums_is_custom">To jest album niestandardowy</string>
-    <string name="albums_custom">Album niestandardowy</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_non_existent">Nie istnieją takie albumy</string>
     <string name="albums_remove_desc">Usunąć album z listy?</string>
     <string name="albums_info">Informacje o albumie</string>
@@ -202,14 +202,13 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="updates_notice_desc"><![CDATA[
-            <p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza
-                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub w innych miejscach.
+<p>Ten aktualizator NIE pobiera plików APK. Linkuje jedynie do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań GitHub</a>. Oznacza to, że te pliki APK nie przechodzą dodatkowego sprawdzania i testowania w IzzyOnDroid, F-Droid ani w innych miejscach.
 
-                <br><br>Wersje udostępniane w serwisie GitHub są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
+<br><br>Kompilacje hostowane w GitHubie są zawsze podpisywane, sprawdzane i weryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
 
-                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
-            </p>
-        ]]></string>
+<br><br>Lavender Photos nigdy nie aktualizuje się automatycznie i aktualizuje się tylko za wyraźną zgodą użytkownika.
+</p>
+]]></string>
     <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
     <string name="current_run_logs">Aktualne dzienniki logów</string>
     <string name="log_file_non_existent">Jeszcze nie zapisano żadnego pliku loga.</string>
@@ -387,7 +386,7 @@
     <string name="permissions_read_media_explanation">To uprawnienie jest potrzebne, żeby znaleźć zdjęcia i filmy na urządzeniu. Aplikacja Lavender Photos jest bardzo ostrożna, jeśli chodzi o to, jakie pliki odczytuje, i nigdy nie udostępnia ani nie wykorzystuje tych informacji.</string>
     <string name="permissions_manage_media_explanation">To uprawnienie jest opcjonalne, ale zdecydowanie zalecane. Uprawnienie „Zarządzaj multimediami” pozwala aplikacji Lavender Photos korzystać z interfejsu API Content Resolver systemu Android w celu usuwania/przenoszenia/kopiowania multimediów, co znacznie usprawnia proces i zwiększa kompatybilność z innymi aplikacjami.</string>
     <string name="permissions_explanation">Wyjaśnienie dotyczące uprawnień</string>
-    <string name="albums_folder">Album folderów</string>
+    <string name="albums_folder">Folder</string>
     <string name="video_seek_icon_desc">Pokazuje, w którą stronę użytkownik wyszukuje</string>
     <string name="secure_export_failed">Nie udało się wyeksportować kopii zapasowej!</string>
     <string name="secure_encryption_failed_no_permission">Nie można szyfrować zdjęć bez pozwolenia</string>
@@ -652,4 +651,5 @@
     <string name="news_github_issue_number">Problem na GitHub: #%1$d</string>
     <string name="contributors_community_member">Członek Społeczności</string>
     <string name="news_category_fix">Naprawione błędy</string>
+    <string name="explanation_nothing_here">Nic tu nie ma…</string>
 </resources>
