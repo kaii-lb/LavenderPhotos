@@ -74,7 +74,6 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.getDefaultShapeSpacerForPosition
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
-import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.helpers.AnimationConstants
@@ -360,23 +359,6 @@ fun PermissionHandler(
                                 }
                             }
                         }
-                    }
-
-                    item {
-                        PreferencesSeparatorText(
-                            text = stringResource(id = R.string.permissions_other_info)
-                        )
-                    }
-
-                    item {
-                        PreferencesRow(
-                            title = stringResource(id = R.string.permissions_install_packages),
-                            summary = stringResource(id = R.string.permissions_install_packages_desc),
-                            iconResID = R.drawable.error_2,
-                            position = RowPosition.Single,
-                            backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
                     }
                 }
 
