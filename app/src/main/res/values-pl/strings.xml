@@ -61,7 +61,7 @@
     <string name="exporting_backup">Eksportowanie kopii zapasowej…</string>
     <string name="export_raw_backup_desc">Eksportuje folder ze wszystkimi zabezpieczonymi elementami, w postaci surowej (zaszyfrowanej lub nie)</string>
     <string name="export_raw_backup">Eksportuj surową kopię zapasową</string>
-    <string name="export_unenc_zip">Eksportuj kopię zapasową do pliku ZIP</string>
+    <string name="export_unenc_zip">Eksportuj kopię zapasową do pliku Zip</string>
     <string name="export_unenc_zip_desc">Eksportuje plik zip zawierający wszystkie zabezpieczone elementy</string>
     <string name="export_fav_to_folder">Eksportuj kopię zapasową do folderu</string>
     <string name="export_fav_to_folder_desc">Eksport wszystkich ulubionych elementów do folderu</string>
@@ -207,13 +207,14 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="updates_notice_desc"><![CDATA[
-<p>Ten aktualizator NIE pobiera plików APK. Linkuje jedynie do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań GitHub</a>. Oznacza to, że te pliki APK nie przechodzą dodatkowego sprawdzania i testowania w IzzyOnDroid, F-Droid ani w innych miejscach.
+            <p>Ten aktualizator NIE pobiera plików APK. Zawiera on jedynie linki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza 
+                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne platformy.
 
-<br><br>Kompilacje hostowane w GitHubie są zawsze podpisywane, sprawdzane i weryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
+                <br><br>Kompilacje hostowane na GitHubie są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
 
-<br><br>Lavender Photos nigdy nie aktualizuje się automatycznie i aktualizuje się tylko za wyraźną zgodą użytkownika.
-</p>
-]]></string>
+                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
+            </p>
+        ]]></string>
     <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
     <string name="current_run_logs">Aktualne dzienniki logów</string>
     <string name="log_file_non_existent">Jeszcze nie zapisano żadnego pliku loga.</string>
@@ -280,7 +281,7 @@
     <string name="filter_rustic_desc">znaleziono w lesie</string>
     <string name="filter_dried">Wysuszony</string>
     <string name="filter_dried_desc">pozostawione na słońcu</string>
-    <string name="filter_toast">Toasty</string>
+    <string name="filter_toast">Przytulny</string>
     <string name="filter_toast_desc">ładne ubarwienie krzyżówki</string>
     <string name="filter_shimmer">Błysk</string>
     <string name="filter_shimmer_desc">nie zapeszaj</string>
@@ -327,7 +328,7 @@
     <string name="look_and_feel_date_format_short">Krótki</string>
     <string name="look_and_feel_date_format_standard">Skompresowany</string>
     <string name="look_and_feel_theme_amoled">Amoled Czarny</string>
-    <string name="look_and_feel_theme_amoled_desc">Ustawia kolor tła na czarny w celu zwiększenia efektywności energetycznej urządzeń AMOLED</string>
+    <string name="look_and_feel_theme_amoled_desc">Ustawia kolor tła na czarny w celu zwiększenia efektywności energetycznej urządzeń Amoled</string>
     <string name="look_and_feel_column_size">Rozmiar kolumny: %1$d</string>
     <string name="look_and_feel_album_column_size">Rozmiar kolumny albumu: %1$d</string>
     <string name="look_and_feel_grids">Siatka</string>
@@ -363,7 +364,19 @@
     <string name="immich_server">Serwer Immich</string>
     <string name="immich_help_general">Co to jest?</string>
     <string name="immich_help_general_desc">Umożliwia tworzenie kopii zapasowych multimediów na poziomie albumu na serwerze Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[<p><a href=\"https://immich.app/\">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,\nktóre pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.\n</p>\n<h3 style=\"text-align:center;\">Jak korzystać?<h3/>\n<ul>\n<li>Samodzielne hostowanie <a href=\"https://immich.app/\">serwera Immich</a></li>\n<li>Określanie adresu serwera w Lavender Photos</li>\n<li>Zaloguj się przy użyciu konta użytkownika Immich</li>\n<li>Przejdź do dowolnego albumu i kliknij ikonę chmury</li>\n<li>Rozpocznij tworzenie kopii zapasowych swoich zdjęć!</li>\n</ul>]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+            <p><a href="https://immich.app/">Immich</a> to rozwiązanie do samodzielnego hostowania zdjęć i filmów, 
+            które pozwala każdemu na uruchomienie własnego serwera kopii zapasowych w chmurze.
+            </p>
+            <h3 style="text-align:center;">Jak używać?<h3/>
+            <ul>
+                <li>Uruchom własny <a href="https://immich.app/">serwer Immich</a></li>
+                <li>Podaj adres serwera w aplikacji Lavender Photos</li>
+                <li>Zaloguj się na swoje konto użytkownika Immich</li>
+                <li>Przejdź do dowolnego albumu i kliknij ikonę chmury</li>
+                <li>Rozpocznij tworzenie kopii zapasowej swoich zdjęć!</li>
+            </ul>
+        ]]></string>
     <string name="immich_server_url_invalid">Nieprawidłowy adres URL!</string>
     <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
     <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
@@ -664,4 +677,16 @@
     <string name="contributors_community_member">Członek Społeczności</string>
     <string name="news_category_fix">Naprawione błędy</string>
     <string name="explanation_nothing_here">Nic tu nie ma…</string>
+    <string name="look_and_feel_palette">Paleta kolorów</string>
+    <string name="look_and_feel_palette_desc">Zmień schemat kolorów aplikacji</string>
+    <string name="look_and_feel_colors">Kolory i styl</string>
+    <string name="look_and_feel_colors_desc">Dostosuj wygląd aplikacji, zmień paletę kolorów i przełącz dynamiczne motywy</string>
+    <string name="look_and_feel_style">Styl aplikacji</string>
+    <string name="look_and_feel_style_desc">Wybierz styl kolorystyczny aplikacji</string>
+    <string name="look_and_feel_style_system">Systemowy</string>
+    <string name="look_and_feel_style_light">Jasny</string>
+    <string name="look_and_feel_style_dark">Ciemny</string>
+    <string name="look_and_feel_style_night">Nocny</string>
+    <string name="look_and_feel_style_dynamic">Dynamiczne kolory</string>
+    <string name="look_and_feel_style_dynamic_desc">Użyj kolorów z tapety urządzenia i motywu systemowego</string>
 </resources>
