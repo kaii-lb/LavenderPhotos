@@ -15,7 +15,7 @@
     <string name="albums_media_sorting">Сортировка медиафайлов</string>
     <string name="albums_media_sorting_desc">Задает сортировку фотографий и видео в сетках</string>
     <string name="albums_is_custom">Это пользовательский альбом</string>
-    <string name="albums_custom">Пользовательский альбом</string>
+    <string name="albums_custom">Альбом</string>
     <string name="albums_non_existent">Таких альбомов не существует</string>
     <string name="albums_remove_desc">Удалить альбом из списка</string>
     <string name="albums_info">Информация об альбоме</string>
@@ -23,7 +23,7 @@
     <string name="albums_item_count">Количество элементов:</string>
     <string name="albums_name">Название альбома</string>
     <string name="albums_type">Тип альбома</string>
-    <string name="albums_folder">Папка Альбом</string>
+    <string name="albums_folder">Папка</string>
     <string name="albums_add_failed">Не удалось добавить альбомы :(</string>
     <string name="tabs">Вкладки</string>
     <string name="tabs_default">Вкладка по умолчанию</string>
@@ -529,4 +529,16 @@
     <string name="settings_storage_export_quality">Качество экспорта в редакторе: %d%%</string>
     <string name="secure_share_media">Поделится защищённым медиа</string>
     <string name="navigation_away">Направляет на другую страницу</string>
+    <string name="search">Поиск</string>
+    <string name="search_nothing_found">Ничего не найдено</string>
+    <string name="refresh">Обновить</string>
+    <string name="copy_link">Скопировать ссылку</string>
+    <string name="download">Загрузить</string>
+    <string name="upload">Загрузить</string>
+    <string name="app_lock_password">Установить PIN</string>
+    <string name="app_lock_enter_pin">Введите ваш PIN</string>
+    <string name="look_and_feel_views">Просмотры</string>
+    <string name="look_and_feel_language">Язык</string>
+    <string name="look_and_feel_language_selected">Выбран этот язык</string>
+    <string name="look_and_feel_app_language">Язык приложения</string>
 </resources>
