@@ -58,7 +58,7 @@
     <string name="app_name_full">Lavender Photos</string>
     <string name="privacy_policy_title">Directiva de privacidade</string>
     <string name="privacy_policy">Non hai ningunha! Ningún dos teus datos vai a ningures, todo queda no dispositivo Ningunha IA se adestra con eles, nin algoritmos que recollan información. Nada. Lavender Photos sempre foi e sempre será unha app tipo galería centrada na privacidade.</string>
-    <string name="support">Axuda &amp; Doazóns</string>
+    <string name="support">Axuda e doazóns</string>
     <string name="translation">Tradución</string>
     <string name="licenses">Licenzas</string>
     <string name="licenses_extra">Detalles extra</string>
@@ -77,7 +77,7 @@
 
                 <br><br>Lavender Photos nunca se auto-actualiza, e só o fai co consentimento explícito da persoa usuaria.
             </p>
-                ]]></string>
+                        ]]></string>
     <string name="updates_new_version_available">Actualización dispoñible!</string>
     <string name="updates_latest">Estás ao día</string>
     <string name="updates_checking">Buscando actualizacións</string>
@@ -250,8 +250,8 @@
     <string name="settings">Axustes</string>
     <string name="settings_general">Xeral</string>
     <string name="settings_theme">Decorado</string>
-    <string name="settings_dark_theme">Escuro</string>
-    <string name="settings_light_theme">Claro</string>
+    <string name="settings_dark_theme">Decorado escuro</string>
+    <string name="settings_light_theme">Decorado claro</string>
     <string name="settings_Auto_theme">Auto</string>
     <string name="settings_look_and_feel">Aparencia e Comportamento</string>
     <string name="settings_theme_follow">A app segue o decorado do sistema</string>
@@ -444,7 +444,7 @@
                 <li>Vai a un álbum e preme na icona da nube</li>
                 <li>Comeza a copiar as túas fotos!</li>
             </ul>
-                ]]></string>
+                        ]]></string>
     <string name="immich_server_url_invalid">URL non válido!</string>
     <string name="immich_misc">Varios</string>
     <string name="exif_name">Nome:</string>
@@ -677,4 +677,16 @@
     <string name="contributors_separator_major">Destacado</string>
     <string name="contributors_separator_contributors">Colaboracións de código aberto</string>
     <string name="explanation_nothing_here">Nada por aquí…</string>
+    <string name="look_and_feel_palette">Abano de cores</string>
+    <string name="look_and_feel_palette_desc">Cambia a combinación de cores da app</string>
+    <string name="look_and_feel_colors">Cores e estilo</string>
+    <string name="look_and_feel_colors_desc">Personaliza a aparencia da app, cambia as cores, e activa o decorado dinámico</string>
+    <string name="look_and_feel_style">Estilo da app</string>
+    <string name="look_and_feel_style_desc">Selecciona o estilo de cores da app</string>
+    <string name="look_and_feel_style_system">Sistema</string>
+    <string name="look_and_feel_style_light">Claro</string>
+    <string name="look_and_feel_style_dark">Escuro</string>
+    <string name="look_and_feel_style_night">Noite</string>
+    <string name="look_and_feel_style_dynamic">Cores dinámicas</string>
+    <string name="look_and_feel_style_dynamic_desc">Usar as cores do fondo de pantalla e do decorado do sistema</string>
 </resources>
