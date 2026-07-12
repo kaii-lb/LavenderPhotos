@@ -19,7 +19,8 @@ import com.kaii.photos.datastore.preferences.SettingsVideoImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlin.uuid.ExperimentalUuidApi
 
-internal val Context.datastore by preferencesDataStore(name = "settings")
+private val datastore = preferencesDataStore(name = "settings")
+internal val Context.datastore by datastore
 
 class Settings(val context: Context, val scope: CoroutineScope) {
     val debugging by lazy {

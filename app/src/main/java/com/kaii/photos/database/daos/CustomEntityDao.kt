@@ -52,6 +52,9 @@ interface CustomEntityDao {
     @Query(value = "SELECT * FROM media_exif_data WHERE mediaId = :id")
     suspend fun getExifData(id: Long): ExifData?
 
+    @Query(value = "SELECT * FROM custom_items ORDER BY id ASC LIMIT :chunkSize OFFSET :offset")
+    suspend fun getChunked(chunkSize: Int, offset: Int): List<CustomItem>
+
     @Query(
         value = """
         SELECT custom_items.album AS albumId, media.* FROM custom_items 

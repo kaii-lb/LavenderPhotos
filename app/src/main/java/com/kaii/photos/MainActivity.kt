@@ -101,6 +101,8 @@ import com.kaii.photos.models.contributors.ContributorViewModel
 import com.kaii.photos.models.contributors.ContributorViewModelFactory
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
 import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
+import com.kaii.photos.models.data_and_backup.DataAndBackupViewModel
+import com.kaii.photos.models.data_and_backup.DataAndBackupViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
 import com.kaii.photos.models.favourites_grid.FavouritesViewModel
@@ -788,7 +790,11 @@ class MainActivity : ComponentActivity() {
                     startDestination = Screens.Settings.Misc.DataAndBackup
                 ) {
                     composable<Screens.Settings.Misc.DataAndBackup> {
-                        DataAndBackupPage()
+                        val viewModel = viewModel<DataAndBackupViewModel>(
+                            factory = DataAndBackupViewModelFactory(context)
+                        )
+
+                        DataAndBackupPage(viewModel)
                     }
 
                     composable<Screens.Settings.Misc.UpdatePage> {

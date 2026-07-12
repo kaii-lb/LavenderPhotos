@@ -7,7 +7,6 @@ import android.os.Looper
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
@@ -36,10 +35,10 @@ class PhotosApplication : Application() {
         CoroutineScope(Dispatchers.IO).launch {
             appModule = AppModule(applicationContext)
 
-            // try to migrate from an older album system on app startup
+            // try to migrate from an older datastore system on app startup
             appModule.settings.albums.migrate()
+            appModule.settings.permissions.migrate()
 
-            MediaDatabase.getInstance(applicationContext)
             registerContentObserver()
 
             delay(2000.milliseconds)

@@ -143,6 +143,15 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="data_and_backup">Data &amp; Backup</string>
     <string name="export_location">Location</string>
     <string name="export_location_desc" translatable="false">Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports</string>
+    <string name="export_settings_backup_save_load_header">App Settings</string>
+    <string name="export_settings_backup_save">Save App Data</string>
+    <string name="export_settings_backup_save_desc">Exports the app settings and albums to a JSON file so they can be restored later. Does not save Immich logins or secured media.</string>
+    <string name="export_settings_backup_save_success">Saved app data</string>
+    <string name="export_settings_backup_save_error">Couldn\'t save data</string>
+    <string name="export_settings_backup_load">Load App Data</string>
+    <string name="export_settings_backup_load_desc">Loads the app settings and albums from a JSON file. Will overwrite any existing settings.</string>
+    <string name="export_settings_backup_load_success">Loaded app data</string>
+    <string name="export_settings_backup_load_error">Couldn\'t load data</string>
 
     <!-- Favourites -->
     <string name="favourites">Favourites</string>

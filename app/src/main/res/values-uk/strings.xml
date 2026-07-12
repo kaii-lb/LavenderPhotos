@@ -469,8 +469,6 @@
     <string name="look_and_feel_date_format_filename">Назва Файлу</string>
     <string name="look_and_feel_date_format_date_taken">Дата Зйомки</string>
     <string name="look_and_feel_date_format_datetime_taken">Дата і Час Зйомки</string>
-    <string name="look_and_feel_theme_amoled">Чорний Amoled</string>
-    <string name="look_and_feel_theme_amoled_desc">Встановити колір тла на чорний для енергоефективності на Amoled пристроях</string>
     <string name="look_and_feel_column_size">Розмір Стовпчика: %1$d</string>
     <string name="look_and_feel_album_column_size">Розмір Альбомного Стовпчика: %1$d</string>
     <string name="look_and_feel_grids">Сітки</string>

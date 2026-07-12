@@ -19,8 +19,26 @@ class SettingsPermissionsImpl(
     private val preserveDateOnMoveKey = booleanPreferencesKey("permissions_preserve_date_on_move_key")
     private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
     private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
-    private val passwordKey = byteArrayPreferencesKey("permissions_password")
-    private val saltKey = byteArrayPreferencesKey("permissions_key")
+    private val passwordKey = byteArrayPreferencesKey("permissions_password_key")
+    private val saltKey = byteArrayPreferencesKey("permissions_password_salt_key")
+
+    suspend fun migrate() {
+        context.datastore.edit { data ->
+            val oldPasswordKey = byteArrayPreferencesKey("permissions_password")
+            val oldSaltKey = byteArrayPreferencesKey("permissions_key")
+
+            val oldPassword = data[oldPasswordKey]?.takeIf { it.isNotEmpty() }
+            val oldSalt = data[oldSaltKey]?.takeIf { it.isNotEmpty() }
+
+            if (oldPassword != null && oldSalt != null) {
+                data[passwordKey] = oldPassword
+                data[saltKey] = oldSalt
+
+                data.remove(oldPasswordKey)
+                data.remove(oldSaltKey)
+            }
+        }
+    }
 
     fun getIsMediaManager(): Flow<Boolean> =
         context.datastore.data.map {
@@ -81,7 +99,9 @@ class SettingsPermissionsImpl(
     }
 
     fun getPassword() = context.datastore.data.map { data ->
-        data[passwordKey]?.takeIf { it.isNotEmpty() }
+        data[passwordKey]?.takeIf {
+            it.isNotEmpty()
+        }
     }
 
     fun setPassword(password: ByteArray?) = scope.launch {
@@ -91,7 +111,9 @@ class SettingsPermissionsImpl(
     }
 
     fun getSalt() = context.datastore.data.map { data ->
-        data[saltKey]?.takeIf { it.isNotEmpty() }
+        data[saltKey]?.takeIf {
+            it.isNotEmpty()
+        }
     }
 
     fun setSalt(salt: ByteArray?) = scope.launch {

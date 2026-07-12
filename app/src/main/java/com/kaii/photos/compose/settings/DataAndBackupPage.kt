@@ -7,6 +7,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -17,10 +20,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -45,10 +49,14 @@ import com.kaii.photos.helpers.DataAndBackupHelper
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
+import com.kaii.photos.models.data_and_backup.DataAndBackupViewModel
 import com.kaii.photos.permissions.auth.rememberExportAuthManager
+import com.kaii.photos.presentation.settings.DataAndBackupAction
+import com.kaii.photos.presentation.settings.DataAndBackupEffect
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
@@ -57,29 +65,55 @@ import kotlin.uuid.Uuid
 private const val TAG = "com.kaii.photos.compose.settings.DataAndBackupPage"
 
 @Composable
-fun DataAndBackupPage(modifier: Modifier = Modifier) {
+fun DataAndBackupPage(
+    viewModel: DataAndBackupViewModel,
+    modifier: Modifier = Modifier
+) {
     val settings = PhotosApplication.appModule.settings
 
     DataAndBackupPageImpl(
+        effects = viewModel.effects,
         modifier = modifier,
-        addAlbum = { settings.albums.add(listOf(it)) }
+        addAlbum = { settings.albums.add(listOf(it)) },
+        onAction = viewModel::onAction
     )
 }
 
-@Preview
-@Composable
-private fun DataAndBackupPagePreview() {
-    DataAndBackupPageImpl(
-        modifier = Modifier,
-        addAlbum = {}
-    )
-}
+// TODO: refactor auth manager to not need multiple instances,
+// TODO: refactor exports to viewmodel
+// @Preview
+// @Composable
+// private fun DataAndBackupPagePreview() {
+//     DataAndBackupPageImpl(
+//         modifier = Modifier,
+//         addAlbum = {}
+//     )
+// }
 
 @Composable
 private fun DataAndBackupPageImpl(
+    effects: Flow<DataAndBackupEffect>,
     modifier: Modifier,
-    addAlbum: (album: AlbumType) -> Unit
+    addAlbum: (album: AlbumType) -> Unit,
+    onAction: (action: DataAndBackupAction) -> Unit
 ) {
+    val resources = LocalResources.current
+    LaunchedEffect(effects) {
+        effects.collect { effect ->
+            when (effect) {
+                is DataAndBackupEffect.ShowSnackbar -> {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = resources.getString(effect.message),
+                            icon = effect.icon,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             DataAndBackupTopBar()
@@ -101,7 +135,6 @@ private fun DataAndBackupPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
 
                 val authManager = rememberExportAuthManager {
@@ -150,8 +183,8 @@ private fun DataAndBackupPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
+
                 val authManager = rememberExportAuthManager {
                     PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(
@@ -197,8 +230,8 @@ private fun DataAndBackupPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
+
                 val authManager = rememberExportAuthManager {
                     PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val backupHelper = DataAndBackupHelper(
@@ -255,8 +288,8 @@ private fun DataAndBackupPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
+
                 val authManager = rememberExportAuthManager {
                     PhotosApplication.appModule.scope.launch {
                         val helper = DataAndBackupHelper(
@@ -303,8 +336,8 @@ private fun DataAndBackupPageImpl(
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
                 val isLoading = remember { mutableStateOf(false) }
+
                 val authManager = rememberExportAuthManager {
                     PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
                         val helper = DataAndBackupHelper(
@@ -356,13 +389,68 @@ private fun DataAndBackupPageImpl(
 
             item {
                 PreferencesSeparatorText(
+                    text = stringResource(id = R.string.export_settings_backup_save_load_header)
+                )
+            }
+
+            item {
+                val launcher = rememberLauncherForActivityResult(
+                    contract = object : CreateDocument("application/json") {
+                        override fun createIntent(context: Context, input: String): Intent {
+                            return super.createIntent(context, input)
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        }
+                    }
+                ) { uri ->
+                    onAction(
+                        DataAndBackupAction.Save(
+                            uri = uri
+                        )
+                    )
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_settings_backup_save),
+                    iconResID = R.drawable.file_export,
+                    summary = stringResource(id = R.string.export_settings_backup_save_desc),
+                    position = RowPosition.Top,
+                    showBackground = false
+                ) {
+                    launcher.launch("Lavender-Photos-Settings.json")
+                }
+            }
+
+            item {
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    onAction(
+                        DataAndBackupAction.Load(
+                            uri = uri
+                        )
+                    )
+                }
+
+                PreferencesRow(
+                    title = stringResource(id = R.string.export_settings_backup_load),
+                    iconResID = R.drawable.file_open,
+                    summary = stringResource(id = R.string.export_settings_backup_load_desc),
+                    position = RowPosition.Bottom,
+                    showBackground = false
+                ) {
+                    launcher.launch(arrayOf("application/json"))
+                }
+            }
+
+            item {
+                PreferencesSeparatorText(
                     text = stringResource(id = R.string.help)
                 )
             }
 
             item {
                 val context = LocalContext.current
-                val resources = LocalResources.current
 
                 PreferencesRow(
                     title = stringResource(id = R.string.export_location),
