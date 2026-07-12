@@ -18,6 +18,7 @@ class TagViewModel(
     context: Context
 ) : ViewModel() {
     private val mediaIds = MutableStateFlow(emptyList<Long>())
+    private var currentTags = emptyList<Tag>()
 
     private val tagRepo = TagRepository(
         dao = MediaDatabase.getInstance(context.applicationContext).tagDao()
@@ -41,6 +42,18 @@ class TagViewModel(
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = emptyList()
     )
+
+    init {
+        viewModelScope.launch {
+            @OptIn(ExperimentalCoroutinesApi::class)
+            mediaIds.flatMapLatest {
+                println("CHANGING MEDIA $it")
+                tagRepo.getAppliedTags(it)
+            }.collect {
+                currentTags = it
+            }
+        }
+    }
 
     fun setMediaId(id: Long) {
         mediaIds.value = listOf(id)
@@ -72,7 +85,7 @@ class TagViewModel(
 
     fun toggleTag(tag: Tag) {
         viewModelScope.launch {
-            if (tag in appliedTags.value) {
+            if (tag in currentTags) {
                 mediaIds.value.forEach {
                     itemsRepo.removeTag(tag, it)
                 }

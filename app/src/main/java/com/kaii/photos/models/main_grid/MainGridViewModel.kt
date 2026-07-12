@@ -124,7 +124,7 @@ class MainGridViewModel(
         )
     )
 
-    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, mainPhotosAlbums.value))
+    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, mainPhotosAlbums.value))
         private set
 
     private val loginClient = LoginClient(
@@ -192,7 +192,7 @@ class MainGridViewModel(
         paths: Set<String>
     ) {
         selectionManager.clear()
-        selectionManager = createSelectionManager(context, sortMode.value, paths)
+        selectionManager = createSelectionManager(context.applicationContext, sortMode.value, paths)
 
         if (paths.isEmpty()) return
 

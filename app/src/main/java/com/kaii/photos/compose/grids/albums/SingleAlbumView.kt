@@ -105,8 +105,8 @@ fun SingleAlbumView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.selectionManager.selection.collectLatest { selectedItems ->
+    LaunchedEffect(viewModel.selectionManager) {
+        viewModel.selectionManager.selection.collect { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
             )
@@ -201,7 +201,7 @@ fun SingleAlbumView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.selectionManager) {
         viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }
@@ -288,7 +288,7 @@ fun SingleAlbumView(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.selectionManager.selection) {
         viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }

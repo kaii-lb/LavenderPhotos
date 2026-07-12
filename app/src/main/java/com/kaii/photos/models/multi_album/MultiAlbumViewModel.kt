@@ -45,7 +45,7 @@ class MultiAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, album.paths))
+    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, album.paths))
         private set
 
     init {
@@ -64,7 +64,7 @@ class MultiAlbumViewModel(
     ) {
         this.album = album
         repo.changeAlbum(album = album)
-        selectionManager = createSelectionManager(context, sortMode.value, album.paths)
+        selectionManager = createSelectionManager(context.applicationContext, sortMode.value, album.paths)
     }
 
     fun editAlbum(id: String, newInfo: AlbumType) {

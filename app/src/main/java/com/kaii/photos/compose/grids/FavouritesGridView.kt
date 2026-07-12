@@ -65,7 +65,7 @@ fun FavouritesGridView(
         )
     )
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.selectionManager) {
         viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }

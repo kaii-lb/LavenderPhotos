@@ -13,7 +13,6 @@ import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.ImmichRepository
@@ -47,7 +46,7 @@ class ImmichAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value))
+    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, album.id))
         private set
 
     init {
@@ -259,23 +258,4 @@ class ImmichAlbumViewModel(
     ) {
         throw NotImplementedError("Secure folder functionality is not implemented in immich contexts")
     }
-
-    private fun createSelectionManager(
-        context: Context,
-        sortMode: MediaItemSortMode
-    ) =
-        SelectionManager(
-            sortMode = sortMode,
-            scope = viewModelScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                val dao = MediaDatabase.getInstance(context).customDao()
-
-                dao.mediaInDateRange(
-                    timestamp = timestamp,
-                    album = album.id,
-                    dateModified = sortMode.isDateModified
-                )
-            }
-        )
 }

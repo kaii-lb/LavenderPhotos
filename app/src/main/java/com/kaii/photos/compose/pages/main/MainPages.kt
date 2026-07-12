@@ -141,7 +141,7 @@ fun MainPages(
     val tags by tagViewModel.tags.collectAsStateWithLifecycle()
     val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.selectionManager) {
         viewModel.selectionManager.selection.collectLatest { selectedItems ->
             tagViewModel.setMediaIds(
                 ids = selectedItems.fastMap { it.id }

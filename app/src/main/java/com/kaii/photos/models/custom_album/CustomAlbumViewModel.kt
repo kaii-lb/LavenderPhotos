@@ -43,7 +43,7 @@ class CustomAlbumViewModel(
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    var selectionManager by mutableStateOf(createSelectionManager(context, sortMode.value, album.id))
+    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, album.id))
         private set
 
     init {
