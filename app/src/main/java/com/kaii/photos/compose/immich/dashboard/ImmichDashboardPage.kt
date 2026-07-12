@@ -48,6 +48,7 @@ import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.domain.immich.ImmichLoginState
+import com.kaii.photos.domain.immich.cleanUrl
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.OperationStatus
@@ -138,13 +139,14 @@ fun ImmichDashboardPage(
                     validateAddress = viewModel::validateServerAddress,
                     removeAddress = viewModel::removeServer,
                     setServerAddress = { address ->
+                        val address = address.cleanUrl()
                         val validated = viewModel.validateServerAddress(address)
                         val pinged = viewModel.ping(address)
 
                         if (validated && pinged) {
                             viewModel.setInfo(
                                 ImmichBasicInfo(
-                                    endpoint = address.removeSuffix("/"),
+                                    endpoint = address,
                                     auth = loginInfo.auth,
                                     username = loginInfo.username,
                                     userId = loginInfo.userId,
