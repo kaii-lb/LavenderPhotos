@@ -51,7 +51,7 @@ class SettingsAlbumsListImpl(
                     .associateBy { folder ->
                         folder.paths.map { path ->
                             path.lowercase()
-                        }.toSet()
+                        }.hashCode()
                     }
             )
 
@@ -72,7 +72,7 @@ class SettingsAlbumsListImpl(
                         presentPaths.containsKey(
                             album.paths.map { path ->
                                 path.lowercase()
-                            }.toSet()
+                            }.hashCode()
                         ).not()
                     }
 
@@ -184,7 +184,7 @@ class SettingsAlbumsListImpl(
         return@map json.decodeFromString<List<AlbumType>>(jsonString)
     }
 
-    fun set(list: List<AlbumType>) = scope.launch {
+    private fun set(list: List<AlbumType>) = scope.launch {
         context.datastore.edit {
             it[albumsKey] = json.encodeToString(list)
         }

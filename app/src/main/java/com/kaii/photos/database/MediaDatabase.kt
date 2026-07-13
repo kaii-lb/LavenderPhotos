@@ -47,7 +47,7 @@ import com.kaii.photos.database.migrations.Migration9To10
             ExifData::class,
             SyncTaskItem::class
         ],
-    version = 19,
+    version = 20,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -58,7 +58,8 @@ import com.kaii.photos.database.migrations.Migration9To10
         AutoMigration(from = 13, to = 14, spec = DropImmichThumbnailColumn::class),
         AutoMigration(from = 15, to = 16, spec = DropTrashTableSpec::class),
         AutoMigration(from = 17, to = 18, spec = UpdateSyncTaskTable::class),
-        AutoMigration(from = 18, to = 19)
+        AutoMigration(from = 18, to = 19),
+        AutoMigration(from = 19, to = 20)
     ]
 )
 

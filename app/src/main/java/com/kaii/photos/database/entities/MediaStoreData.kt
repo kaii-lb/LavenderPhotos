@@ -29,8 +29,12 @@ data class MediaStoreData(
     @ColumnInfo(collate = ColumnInfo.NOCASE)
     val absolutePath: String,
 
+    @ColumnInfo(collate = ColumnInfo.NOCASE)
     val parentPath: String,
+
+    @ColumnInfo(collate = ColumnInfo.NOCASE)
     val displayName: String,
+
     val dateTaken: Long,
     val dateModified: Long,
     val mimeType: String,
