@@ -69,15 +69,10 @@ fun createDirectoryPicker(
             uri.path?.let { uriPath ->
                 val dir = File(uriPath)
 
-                val basePath = dir.absolutePath.split(":").first().toBasePath().let {
-                    if (it.endsWith("primary/")) baseInternalStorageDirectory
-                    else it
-                }
-                val pathSections =
-                    dir.absolutePath.replace(basePath, "").split(":")
-                val path = pathSections[pathSections.size - 1]
+                val basePath = dir.absolutePath.split(":").first().toBasePath() + "/"
+                val path = dir.absolutePath.split(":").last()
 
-                Log.d(TAG, "Chosen directory is $path with base path $basePath")
+                Log.d(TAG, "Chosen directory is $uri $uriPath ${dir.absolutePath} $basePath $path")
 
                 onGetDir(path, basePath)
             } ?: run {

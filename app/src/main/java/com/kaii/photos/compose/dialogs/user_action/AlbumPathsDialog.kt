@@ -194,7 +194,7 @@ fun AlbumPathsDialog(
                         val total = mutableListOf<String>()
 
                         relative
-                            .groupBy { it.toRelativePath(true).substringBefore("/") }
+                            .groupBy { it.toRelativePath().substringBefore("/") }
                             .forEach { group ->
                                 val min = findMinParent(group.value)
                                 val grouped = min
@@ -217,22 +217,20 @@ fun AlbumPathsDialog(
 
                         fun buildHierarchy(path: String): PathItem {
                             val possibleChildren = children.filter {
-                                it.toRelativePath(true).parent() == path.toRelativePath(
-                                    true
-                                )
+                                it.toRelativePath().parent() == path.toRelativePath()
                             }.toMutableList()
 
                             val possibleSubChildren = children.filter {
-                                it.toRelativePath(true)
+                                it.toRelativePath()
                                     .parent()
-                                    .startsWith(path.toRelativePath(true))
+                                    .startsWith(path.toRelativePath())
                             }
                             if (possibleSubChildren.isNotEmpty()) {
                                 possibleChildren.addAll(
                                     possibleSubChildren.filter { child ->
                                         child !in possibleChildren && !possibleChildren.any {
                                             it.endsWith(
-                                                child.toRelativePath(true)
+                                                child.toRelativePath()
                                                     .parent()
                                             )
                                         }

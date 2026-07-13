@@ -256,7 +256,7 @@ private fun DebuggingSettingsPageImpl(
                             val relativePath = path.trim().replace(baseInternalStorageDirectory, "")
                             val absolutePath = baseInternalStorageDirectory + relativePath
 
-                            !File(absolutePath).exists() || relativePath == ""
+                            File(absolutePath).exists() && relativePath.isNotBlank()
                         }
                     )
                 }

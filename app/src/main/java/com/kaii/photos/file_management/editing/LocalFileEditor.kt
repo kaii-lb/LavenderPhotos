@@ -249,7 +249,7 @@ open class LocalFileEditor(
 
         return@withContext newUri.toContentId(
             contentResolver = context.contentResolver,
-            type = MediaType.Video
+            type = MediaType.Image
         )
     }
 }
