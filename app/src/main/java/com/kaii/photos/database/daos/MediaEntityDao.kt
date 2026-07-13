@@ -20,19 +20,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaDao {
-    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateTaken DESC")
+    @Query(value = "SELECT * FROM media WHERE parentPath COLLATE NOCASE IN (:paths) ORDER BY dateTaken DESC")
     fun getPagedMediaDateTaken(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths) ORDER BY dateModified DESC")
+    @Query(value = "SELECT * FROM media WHERE parentPath COLLATE NOCASE IN (:paths) ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
-    @Query(value = "SELECT * FROM media WHERE parentPath IN (:paths)")
+    @Query(value = "SELECT * FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     fun getMediaInPaths(paths: Set<String>): List<MediaStoreData>
 
-    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath IN (:paths)")
+    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     fun countMediaInPaths(paths: Set<String>): Int
 
-    @Query(value = "SELECT SUM(size) FROM media WHERE parentPath IN (:paths)")
+    @Query(value = "SELECT SUM(size) FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     fun mediaSize(paths: Set<String>): Long
 
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
@@ -59,7 +59,7 @@ interface MediaDao {
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath in (:paths) LIMIT 2000"
+                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath COLLATE NOCASE IN (:paths) LIMIT 2000"
     )
     fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): Map<
             @MapColumn(columnName = "keyId") Long,
@@ -130,14 +130,14 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE uri LIKE '/api%'")
     suspend fun getCloudMedia(): List<MediaStoreData>
 
-    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath in (:paths)")
+    @Query(value = "SELECT COUNT(id) FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     suspend fun countInFolder(paths: List<String>): Int
 
     @Query(
         value = """
         SELECT parentPath AS albumPath, media.* FROM media 
-        WHERE parentPath IN (:paths) 
-        GROUP BY parentPath 
+        WHERE albumPath COLLATE NOCASE IN (:paths) 
+        GROUP BY albumPath COLLATE NOCASE 
         HAVING dateModified = MAX(dateModified)
         """
     )
@@ -146,8 +146,8 @@ interface MediaDao {
     @Query(
         value = """
         SELECT parentPath AS albumPath, media.* FROM media 
-        WHERE parentPath IN (:paths) 
-        GROUP BY parentPath 
+        WHERE albumPath COLLATE NOCASE IN (:paths) 
+        GROUP BY albumPath COLLATE NOCASE
         HAVING dateTaken = MAX(dateTaken)
         """
     )
@@ -165,13 +165,15 @@ interface MediaDao {
             getBatchFolderThumbnailsDateModified(paths = allPaths)
         } else {
             getBatchFolderThumbnailsDateTaken(paths = allPaths)
+        }.mapKeys { (key, _) ->
+            key.lowercase()
         }
 
         val result = mutableMapOf<String, AlbumGridState.Info.Thumbnail>()
 
         folders.forEach { folder ->
             val thumbnail = folder.paths
-                .mapNotNull { pathThumbnails[it] }
+                .mapNotNull { pathThumbnails[it.lowercase()] }
                 .maxByOrNull { media ->
                     if (sortMode.isDateModified) media.dateModified
                     else media.dateTaken
