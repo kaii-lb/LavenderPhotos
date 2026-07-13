@@ -464,4 +464,9 @@
     <string name="albums_remove">移除</string>
     <string name="albums_rename_failure">无效的相册名称</string>
     <string name="albums_paths">路径组：</string>
+    <string name="albums_immich_not_backed_up">未备份</string>
+    <string name="navigation_away">导航至另一页</string>
+    <string name="app_repo">此应用的仓库</string>
+    <string name="app_get">下载本应用</string>
+    <string name="app_version">版本号%1$s</string>
 </resources>
