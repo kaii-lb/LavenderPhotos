@@ -48,7 +48,11 @@ class SettingsAlbumsListImpl(
             val presentPaths = HashMap(
                 present
                     .filterIsInstance<AlbumType.Folder>()
-                    .associateBy { it.paths }
+                    .associateBy { folder ->
+                        folder.paths.map { path ->
+                            path.lowercase()
+                        }.toSet()
+                    }
             )
 
             val presentIds = present.fastMap { it.id }.toHashSet()
@@ -65,7 +69,11 @@ class SettingsAlbumsListImpl(
                     }
 
                     is AlbumType.Folder -> {
-                        !presentPaths.containsKey(album.paths)
+                        presentPaths.containsKey(
+                            album.paths.map { path ->
+                                path.lowercase()
+                            }.toSet()
+                        ).not()
                     }
 
                     AlbumType.PlaceHolder -> false
@@ -354,39 +362,41 @@ class SettingsAlbumsListImpl(
         }
     }
 
-    private val defaultAlbumsList =
-        listOf<AlbumType>(
-            AlbumType.Folder(
-                id = Uuid.random().toString(),
-                name = "Camera",
-                paths = setOf(
-                    File(
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
-                        "Camera"
-                    ).absolutePath
+    private val defaultAlbumsList: List<AlbumType>
+        get() =
+            listOf<AlbumType>(
+                AlbumType.Folder(
+                    id = Uuid.random().toString(),
+                    name = "Camera",
+                    paths = setOf(
+                        File(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                            "Camera"
+                        ).absolutePath
+                    ),
+                    pinned = false,
+                    immichId = null
                 ),
-                pinned = false,
-                immichId = null
-            ),
-            AlbumType.Folder(
-                id = Uuid.random().toString(),
-                name = "Pictures",
-                paths = setOf(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
+                AlbumType.Folder(
+                    id = Uuid.random().toString(),
+                    name = "Pictures",
+                    paths = setOf(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).absolutePath
+                    ),
+                    pinned = false,
+                    immichId = null
                 ),
-                pinned = false,
-                immichId = null
-            ),
-            AlbumType.Folder(
-                id = Uuid.random().toString(),
-                name = "Download",
-                paths = setOf(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-                ),
-                pinned = false,
-                immichId = null
+                AlbumType.Folder(
+                    id = Uuid.random().toString(),
+                    name = "Download",
+                    paths = setOf(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                    ),
+                    pinned = false,
+                    immichId = null
+                )
             )
-        )
 
-    private val jsonDefaultAlbumsList = json.encodeToString(defaultAlbumsList)
+    private val jsonDefaultAlbumsList: String
+        get() = json.encodeToString(defaultAlbumsList)
 }

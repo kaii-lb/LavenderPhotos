@@ -1,6 +1,7 @@
 package com.kaii.photos.database.entities
 
 import androidx.compose.runtime.Immutable
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
@@ -14,13 +15,20 @@ import java.util.Locale
     tableName = "media",
     indices = [
         Index(value = ["dateTaken"], orders = [Index.Order.DESC]),
-        Index(value = ["absolutePath"])
+        Index(value = ["absolutePath"]),
+        Index(
+            value = ["parentPath", "dateModified"],
+            orders = [Index.Order.ASC, Index.Order.DESC]
+        )
     ]
 )
 data class MediaStoreData(
     @PrimaryKey val id: Long,
     val uri: String,
+
+    @ColumnInfo(collate = ColumnInfo.NOCASE)
     val absolutePath: String,
+
     val parentPath: String,
     val displayName: String,
     val dateTaken: Long,
