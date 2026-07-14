@@ -433,7 +433,7 @@
     <string name="look_and_feel_date_format_filename">Nombre de Archivo</string>
     <string name="look_and_feel_date_format_date_taken">Fecha Tomada</string>
     <string name="look_and_feel_date_format_datetime_taken">Fecha y Hora Tomada</string>
-    <string name="albums_remove">Remover</string>
+    <string name="albums_remove">Eliminar</string>
     <string name="albums_paths">Rutas:</string>
     <string name="albums_immich_not_backed_up">No respaldado</string>
     <string name="albums_rename_failure">Nombre de álbum invalido</string>
@@ -442,7 +442,7 @@
     <string name="secure_restore_failed">Error al restaurar medios</string>
     <string name="secure_share_media">Compartir medios protegidos</string>
     <string name="export_location">Ubicación</string>
-    <string name="favourites_remove_this">Remover de favoritos?</string>
+    <string name="favourites_remove_this">Eliminar de favoritos?</string>
     <string name="favourites_migration">¡Favoritos ha sido renovado!</string>
     <string name="favourites_migration_notice">Favoritos</string>
     <string name="favourites_migration_desc">Esta es una forma de realizar un seguimiento de sus mejores momentos; ¡Con Lavender Photos eso significa favoritos que se sincronizan en todas las aplicaciones que lo admiten, con una administración impecable y un sistema de alto rendimiento!\n\nSi vienes de una versión anterior de Lavender Photos, todos tus elementos favoritos anteriores se migrarán al nuevo sistema.\n\nMantenga su teléfono encendido y esta aplicación abierta.</string>
