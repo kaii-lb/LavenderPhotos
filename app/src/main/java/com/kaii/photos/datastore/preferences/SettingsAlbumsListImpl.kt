@@ -69,11 +69,15 @@ class SettingsAlbumsListImpl(
                     }
 
                     is AlbumType.Folder -> {
-                        presentPaths.containsKey(
-                            album.paths.map { path ->
-                                path.lowercase()
-                            }.hashCode()
-                        ).not()
+                        val hash = album.paths.map { path ->
+                            path.lowercase()
+                        }.hashCode()
+
+                        val present = presentPaths.containsKey(hash)
+
+                        if (!present) presentPaths[hash] = album
+
+                        present.not()
                     }
 
                     AlbumType.PlaceHolder -> false
