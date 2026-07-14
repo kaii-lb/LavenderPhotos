@@ -5,7 +5,31 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.5 date=29-06-2026 status=Latest
+# version=v2.0.6 date=14-07-2026 status=Latest
+    + category=Features
+        - issueNumber=000016 title=Themes and color styles for extra customization
+        - title=Add save/load app settings and albums data to file
+        - issueNumber=000272 title=Auto-size thumbnail duration text
+        - issueNumber=000275 title=Update to Immich v3
+
+    + category=Improvements
+        - issueNumber=000273 title=Better AVIF detection
+        - issueNumber=000280 title=Support case-insensitive folder detection
+        - title=Better colors and contrast for tags
+        - title=Speed up all file operations
+        - title=Enhanced path and uri handling
+
+    + category=Fixes
+        - title=Cloud albums no longer randomly disappear
+        - issueNumber=000279 title=Inability to delete items on Graphene OS
+        - title=Incorrect labels for chinese languages
+        - title=Motion photos not looping properly
+        - issueNumber=000268 title=Video player UI zooming with video itself
+        - issueNumber=000278 title=Privacy mode allowing swipe-to-dismiss
+        - title=Inability to set tags on items from grid views
+        - title=Remove '/' from end of Immich urls
+
+# version=v2.0.5 date=29-06-2026
     + category=Features
         - title=New media sort mode selection popup
         - issueNumber=000269 title=Add Favourites and Trash as bottom bar tabs
