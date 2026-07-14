@@ -40,6 +40,19 @@ val majorContributors = listOf(
         )
     ),
     ContributorItem.Contributor(
+        name = "stacsk",
+        description = R.string.contributor_stacsk_desc,
+        title = ContributorItem.Contributor.Title.MajorContributor,
+        avatarUrl = "https://avatars.githubusercontent.com/u/184225704?v=4",
+        contributions = null,
+        socials = listOf(
+            SocialButton(
+                link = "https://github.com/stacsk",
+                icon = SocialButton.Icon.Github
+            )
+        )
+    ),
+    ContributorItem.Contributor(
         name = "tyrypyrking",
         description = R.string.contributor_tyrypyrking_desc,
         title = ContributorItem.Contributor.Title.MajorContributor,

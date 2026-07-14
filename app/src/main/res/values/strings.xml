@@ -754,6 +754,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="contributor_kaii_desc">Building apps that redefine what\'s possible, without compromising safety and privacy</string>
     <string name="contributor_kexxdumb_desc">Helped shape, test, and improve the app from its very first days</string>
     <string name="contributor_tyrypyrking_desc">Improved secure encryption systems and file recovery processes</string>
+    <string name="contributor_stacsk_desc">Identified issues and suggested many improvements to advance the app\'s development</string>
     <string name="contributors_community_member">Community Member</string>
     <string name="contributors_separator_developer">Developer</string>
     <string name="contributors_separator_major">Highlights</string>
