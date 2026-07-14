@@ -150,7 +150,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="export_settings_backup_save_error">Couldn\'t save data</string>
     <string name="export_settings_backup_load">Load App Data</string>
     <string name="export_settings_backup_load_desc">Loads the app settings and albums from a JSON file. Will overwrite any existing settings.</string>
-    <string name="export_settings_backup_load_success">Loaded app data</string>
     <string name="export_settings_backup_load_error">Couldn\'t load data</string>
 
     <!-- Favourites -->
