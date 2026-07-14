@@ -677,4 +677,12 @@
     <string name="contributors_separator_developer">المطور</string>
     <string name="contributors_separator_major">أبرز المساهمات</string>
     <string name="contributors_separator_contributors">المساهمون في المشروع مفتوح المصدر</string>
+    <string name="export_settings_backup_save_load_header">اعدادت التطبيق</string>
+    <string name="export_settings_backup_save">حفظ بيانات التطبيق</string>
+    <string name="export_settings_backup_save_desc">يصدر إعدادات التطبيق والألبومات إلى ملف JSON لاستعادتها لاحقا. لا يحفظ بيانات تسجيل الدخول إلى Immich أو الصور و الفيدوهات المحمية.</string>
+    <string name="export_settings_backup_save_success">تم حفظ البيانات</string>
+    <string name="export_settings_backup_save_error">تعذر حفظ البيانات</string>
+    <string name="export_settings_backup_load">تحميل بيانات التطبيق</string>
+    <string name="export_settings_backup_load_desc">يحمل إعدادات التطبيق والألبومات من ملف JSON. سيؤدي هذا إلى الكتابة فوق الإعدادات الحالية.</string>
+    <string name="export_settings_backup_load_error">تعذر تحميل البيانات</string>
 </resources>
