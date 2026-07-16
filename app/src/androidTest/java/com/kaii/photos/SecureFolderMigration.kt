@@ -10,7 +10,9 @@ import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.helpers.AppDirectories
 import com.kaii.photos.permissions.secure_folder.SecureFolderMigrationManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +41,7 @@ class SecureFolderMigration {
 
         if (outFile.parentFile?.exists() != true) outFile.mkdirs()
 
-        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cat_picture)
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.kaii)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outFile.outputStream())
 
         runBlocking {
@@ -55,9 +57,11 @@ class SecureFolderMigration {
         val file = File(dir, "catpic.png")
 
         if (file.exists()) file.delete()
-        file.createNewFile()
+        withContext(Dispatchers.IO) {
+            file.createNewFile()
+        }
 
-        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cat_picture)
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.kaii)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, file.outputStream())
 
         Assert.assertEquals(secureFolderMigrationManager.needsMigrationFromUnencrypted(), true)
