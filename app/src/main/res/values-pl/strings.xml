@@ -202,7 +202,7 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="updates_notice_desc"><![CDATA[
-            <p>Ten aktualizator NIE pobiera plików APK. Zawiera on jedynie linki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza
+            <p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza
                 to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne platformy.
 
                 <br><br>Kompilacje hostowane na GitHubie są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
@@ -677,4 +677,12 @@
     <string name="look_and_feel_style_night">Nocny</string>
     <string name="look_and_feel_style_dynamic">Dynamiczne kolory</string>
     <string name="look_and_feel_style_dynamic_desc">Użyj kolorów z tapety urządzenia i motywu systemowego</string>
+    <string name="export_settings_backup_save_desc">Eksportuje ustawienia aplikacji i albumy do pliku JSON, aby można je było później przywrócić. Nie zapisuje loginów Immich ani zabezpieczonych multimediów.</string>
+    <string name="export_settings_backup_save_load_header">Ustawienia aplikacji</string>
+    <string name="export_settings_backup_save">Zapisz dane aplikacji</string>
+    <string name="export_settings_backup_save_success">Zapisane dane aplikacji</string>
+    <string name="export_settings_backup_save_error">Nie udało się zapisać danych</string>
+    <string name="export_settings_backup_load">Wczytaj dane aplikacji</string>
+    <string name="export_settings_backup_load_desc">Ładuje ustawienia aplikacji i albumy z pliku JSON. Nadpisze wszelkie istniejące ustawienia.</string>
+    <string name="export_settings_backup_load_error">Nie można wczytać danych</string>
 </resources>
