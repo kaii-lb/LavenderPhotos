@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.widgets.about
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +32,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.Placeholder
 import com.bumptech.glide.integration.compose.placeholder
 import com.kaii.photos.R
 import com.kaii.photos.domain.about.ContributorItem.Contributor
@@ -46,7 +46,7 @@ private fun ContributorItemPreview() {
     PhotosTheme(theme = ThemeConfiguration.Default) {
         ContributorItem(
             name = "kaii-lb",
-            avatarUrl = "https://avatars.githubusercontent.com/u/70664258?v=4",
+            avatarUrl = R.drawable.kaii,
             title = Contributor.Title.Maintainer,
             description = "Building apps that redefine what's possible, without compromising safety and privacy",
             socials = listOf(
@@ -64,7 +64,7 @@ private fun ContributorItemPreview() {
 @Composable
 fun ContributorItem(
     name: String,
-    avatarUrl: Any,
+    @DrawableRes avatarUrl: Int?,
     title: Contributor.Title,
     description: String,
     socials: List<SocialButton>,
@@ -94,16 +94,24 @@ fun ContributorItem(
                 alignment = Alignment.Start
             )
         ) {
-            GlideImage(
-                model = avatarUrl,
-                contentDescription = name,
-                contentScale = ContentScale.Crop,
-                loading = avatarPlaceholder(name, colorCreator),
-                failure = avatarPlaceholder(name, colorCreator),
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-            )
+            if (avatarUrl != null) {
+                GlideImage(
+                    model = avatarUrl,
+                    contentDescription = name,
+                    contentScale = ContentScale.Crop,
+                    loading = placeholder {
+                        AvatarPlaceholder(name, colorCreator)
+                    },
+                    failure = placeholder {
+                        AvatarPlaceholder(name, colorCreator)
+                    },
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                AvatarPlaceholder(name, colorCreator)
+            }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(space = 4.dp)
@@ -175,30 +183,28 @@ fun ContributorItem(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun avatarPlaceholder(
+private fun AvatarPlaceholder(
     name: String,
     colorCreator: ColorCreator
-): Placeholder {
-    return placeholder {
-        val color = remember { colorCreator.generateColor() }
-        val onColor = remember { colorCreator.onColorFor(color) }
+) {
+    val color = remember { colorCreator.generateColor() }
+    val onColor = remember { colorCreator.onColorFor(color) }
 
-        Box(
-            contentAlignment = Alignment.Center,
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(64.dp)
+            .clip(CircleShape)
+            .background(color)
+            .padding(all = 12.dp)
+    ) {
+        Text(
+            text = name[0].uppercase(),
+            color = onColor,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(color)
-                .padding(all = 12.dp)
-        ) {
-            Text(
-                text = name[0].uppercase(),
-                color = onColor,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .wrapContentSize()
-            )
-        }
+                .wrapContentSize()
+        )
     }
 }

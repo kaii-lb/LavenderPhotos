@@ -128,7 +128,7 @@ fun AboutPage(
                     val item = contributors[it]
 
                     if (item is ContributorItem.Separator) item.title
-                    else (item as ContributorItem.Contributor).avatarUrl
+                    else (item as ContributorItem.Contributor).name
                 }
             ) { index ->
                 when (val item = contributors[index]) {

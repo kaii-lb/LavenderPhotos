@@ -3,8 +3,8 @@ package com.kaii.photos.data.datasources
 import android.content.Context
 import com.kaii.photos.R
 import com.kaii.photos.domain.about.ContributorItem
-import com.kaii.photos.domain.about.GithubContributorResponse
 import com.kaii.photos.domain.about.ContributorItem.Contributor
+import com.kaii.photos.domain.about.GithubContributorResponse
 import com.kaii.photos.domain.about.SocialButton
 import com.kaii.photos.domain.about.majorContributors
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +33,7 @@ class ContributorDataSource(
                 name = githubContributor.login,
                 description = R.string.contributors_community_member,
                 title = Contributor.Title.Contributor,
-                avatarUrl = githubContributor.avatarUrl,
+                avatarUrl = null,
                 contributions = githubContributor.contributions,
                 socials = listOf(
                     SocialButton(

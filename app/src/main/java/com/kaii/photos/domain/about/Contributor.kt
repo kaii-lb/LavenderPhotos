@@ -1,5 +1,6 @@
 package com.kaii.photos.domain.about
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -13,7 +14,7 @@ interface ContributorItem {
         val name: String,
         @param:StringRes val description: Int,
         val title: Title,
-        val avatarUrl: Any,
+        @param:DrawableRes val avatarUrl: Int?,
         val contributions: Int?,
         val socials: List<SocialButton>
     ) : ContributorItem {
@@ -28,7 +29,6 @@ interface ContributorItem {
 @Serializable
 data class GithubContributorResponse(
     val login: String,
-    @SerialName("avatar_url") val avatarUrl: String,
     @SerialName("html_url") val htmlUrl: String,
     val contributions: Int
 )
