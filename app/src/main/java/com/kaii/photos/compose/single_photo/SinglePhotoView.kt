@@ -476,27 +476,31 @@ private fun SinglePhotoViewCommon(
     }
 
     LaunchedEffect(editId(), items.itemCount > 0) {
-        if (items.itemCount <= 0) return@LaunchedEffect
+        if (items.itemCount <= 0 || editId() == null) return@LaunchedEffect
 
-        val end = (items.itemCount - 1).coerceAtMost(5)
-        for (i in 0..end) {
-            val item = items[i] as? PhotoLibraryUIModel.MediaImpl
+        repeat(3) {
+            val end = (items.itemCount - 1).coerceAtMost(5)
+            for (i in 0..end) {
+                val item = items[i] as? PhotoLibraryUIModel.MediaImpl
 
-            if (item?.item?.id == editId()) {
-                state.scrollToPage(i)
-                return@LaunchedEffect
+                if (item?.item?.id == editId()) {
+                    state.scrollToPage(i)
+                    return@LaunchedEffect
+                }
             }
-        }
 
-        val left = (currentIndex - 5).coerceAtLeast(0)
-        val right = (currentIndex + 5).coerceAtMost(items.itemCount - 1)
-        for (i in left..right) {
-            val item = items[i] as? PhotoLibraryUIModel.MediaImpl
+            val left = (currentIndex - 5).coerceAtLeast(0)
+            val right = (currentIndex + 5).coerceAtMost(items.itemCount - 1)
+            for (i in left..right) {
+                val item = items[i] as? PhotoLibraryUIModel.MediaImpl
 
-            if (item?.item?.id == editId()) {
-                state.scrollToPage(i)
-                break
+                if (item?.item?.id == editId()) {
+                    state.scrollToPage(i)
+                    return@LaunchedEffect
+                }
             }
+
+            delay(500.milliseconds) // wait to allow mediastore to update
         }
     }
 

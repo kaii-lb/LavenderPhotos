@@ -20,9 +20,11 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class EditorViewModel(
     context: Context,
@@ -162,6 +164,8 @@ class EditorViewModel(
             newId = result
             setNavProps(navController)
 
+            delay(500.milliseconds)
+
             if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
                 navController.popBackStack()
             }
@@ -199,6 +203,8 @@ class EditorViewModel(
 
             newId = result
             setNavProps(navController)
+
+            delay(500.milliseconds)
 
             if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
                 navController.popBackStack()
