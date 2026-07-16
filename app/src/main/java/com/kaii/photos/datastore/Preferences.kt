@@ -8,14 +8,12 @@ import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.preferences.SettingsBehaviourImpl
 import com.kaii.photos.datastore.preferences.SettingsDebuggingImpl
 import com.kaii.photos.datastore.preferences.SettingsDefaultTabsImpl
-import com.kaii.photos.datastore.preferences.SettingsEditingImpl
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPermissionsImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.datastore.preferences.SettingsStorageImpl
 import com.kaii.photos.datastore.preferences.SettingsVersionImpl
-import com.kaii.photos.datastore.preferences.SettingsVideoImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -43,16 +41,8 @@ class Settings(val context: Context, val scope: CoroutineScope) {
         SettingsStorageImpl(context, scope)
     }
 
-    val video by lazy {
-        SettingsVideoImpl(context, scope)
-    }
-
     val lookAndFeel by lazy {
         SettingsLookAndFeelImpl(context, scope)
-    }
-
-    val editing by lazy {
-        SettingsEditingImpl(context, scope)
     }
 
     val mainPhotosView by lazy {
@@ -72,6 +62,6 @@ class Settings(val context: Context, val scope: CoroutineScope) {
     }
 
     val behaviour by lazy {
-        SettingsBehaviourImpl(context, scope)
+        SettingsBehaviourImpl(context.datastore)
     }
 }

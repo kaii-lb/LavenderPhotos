@@ -43,7 +43,7 @@ class EditorViewModel(
         initialValue = false
     )
 
-    val overwriteByDefault = settings.editing.getOverwriteByDefault().stateIn(
+    val overwriteByDefault = settings.behaviour.getEditingOverwriteByDefault().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
@@ -109,7 +109,7 @@ class EditorViewModel(
             }
 
             launch {
-                settings.editing.getExitOnSave().collect {
+                settings.behaviour.getEditingExitOnSave().collect {
                     exitOnSave = it
                 }
             }

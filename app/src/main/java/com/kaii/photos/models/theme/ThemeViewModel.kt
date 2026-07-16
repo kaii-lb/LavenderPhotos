@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.presentation.ui.theme.LavenderThemes
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
-import com.kaii.photos.repositories.SettingsRepository
+import com.kaii.photos.repositories.ThemeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ThemeViewModel(
-    private val repo: SettingsRepository
+    private val repo: ThemeRepository
 ) : ViewModel() {
     val themes = LavenderThemes.Theme.entries
 

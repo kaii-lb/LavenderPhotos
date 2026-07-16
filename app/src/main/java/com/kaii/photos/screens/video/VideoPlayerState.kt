@@ -441,8 +441,8 @@ fun retainVideoPlayerState(
         VideoPlayerState(
             context = context,
             coroutineScope = coroutineScope,
-            muteOnStartFlow = settings.video.getMuteOnStart(),
-            autoPlayFlow = settings.video.getShouldAutoPlay(),
+            muteOnStartFlow = settings.behaviour.getMuteVideosOnStart(),
+            autoPlayFlow = settings.behaviour.getAutoPlayVideos(),
             loopFlow = settings.behaviour.getLoopVideos(),
             isOpenWithView = isOpenWithView,
             onControlsTimeout = onControlsTimeout,

@@ -97,6 +97,8 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.behaviour.BehaviourViewModel
+import com.kaii.photos.models.behaviour.BehaviourViewModelFactory
 import com.kaii.photos.models.contributors.ContributorViewModel
 import com.kaii.photos.models.contributors.ContributorViewModelFactory
 import com.kaii.photos.models.custom_album.CustomAlbumViewModel
@@ -752,7 +754,11 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Settings.MainPage.Behaviour> {
-                        BehaviourSettingsPage()
+                        val viewModel = viewModel<BehaviourViewModel>(
+                            factory = BehaviourViewModelFactory()
+                        )
+
+                        BehaviourSettingsPage(viewModel)
                     }
 
                     composable<Screens.Settings.MainPage.MemoryAndStorage> {

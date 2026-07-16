@@ -26,27 +26,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.compose.widgets.PreferencesThreeStateSwitchRow
+import com.kaii.photos.domain.settings.VideoLoopMode
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
+import com.kaii.photos.models.behaviour.BehaviourViewModel
 
 @Composable
 fun BehaviourSettingsPage(
+    viewModel: BehaviourViewModel,
     modifier: Modifier = Modifier
 ) {
-    val settings = PhotosApplication.appModule.settings
-
-    val shouldAutoPlay by settings.video.getShouldAutoPlay().collectAsStateWithLifecycle(initialValue = true)
-    val muteOnStart by settings.video.getMuteOnStart().collectAsStateWithLifecycle(initialValue = false)
-    val openVideosExternally by settings.behaviour.getOpenVideosExternally().collectAsStateWithLifecycle(initialValue = false)
-    val overwriteByDefault by settings.editing.getOverwriteByDefault().collectAsStateWithLifecycle(initialValue = false)
-    val exitOnSave by settings.editing.getExitOnSave().collectAsStateWithLifecycle(initialValue = false)
-    val exitImmediately by settings.behaviour.getExitImmediately().collectAsStateWithLifecycle(initialValue = false)
-    val loopVideos by settings.behaviour.getLoopVideos().collectAsStateWithLifecycle(initialValue = 0)
+    val exitImmediately by viewModel.exitImmediately.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val loopVideos by viewModel.loopVideos.collectAsStateWithLifecycle()
+    val shouldAutoPlay by viewModel.autoplayVideos.collectAsStateWithLifecycle()
+    val muteOnStart by viewModel.muteVideosOnStart.collectAsStateWithLifecycle()
+    val overwriteByDefault by viewModel.editingOverwriteByDefault.collectAsStateWithLifecycle()
+    val exitOnSave by viewModel.editingExitOnSave.collectAsStateWithLifecycle()
 
     BehaviourSettingsPageImpl(
         shouldAutoPlay = { shouldAutoPlay },
@@ -58,13 +58,13 @@ fun BehaviourSettingsPage(
         loopVideos = { loopVideos },
         navController = LocalNavController.current,
         modifier = modifier,
-        setShouldAutoPlay = settings.video::setShouldAutoPlay,
-        setMuteOnStart = settings.video::setMuteOnStart,
-        setOpenVideosExternally = settings.behaviour::setOpenVideosExternally,
-        setOverwriteByDefault = settings.editing::setOverwriteByDefault,
-        setExitOnSave = settings.editing::setExitOnSave,
-        setExitImmediately = settings.behaviour::setExitImmediately,
-        setLoopVideos = settings.behaviour::setLoopVideos
+        setShouldAutoPlay = viewModel::setAutoPlayVideos,
+        setMuteOnStart = viewModel::setMuteVideosOnStart,
+        setOpenVideosExternally = viewModel::setOpenVideosExternally,
+        setOverwriteByDefault = viewModel::setEditingOverwriteByDefault,
+        setExitOnSave = viewModel::setEditingExitOnSave,
+        setExitImmediately = viewModel::setExitImmediately,
+        setLoopVideos = viewModel::setLoopVideos
     )
 }
 
@@ -78,7 +78,7 @@ fun BehaviourSettingsPagePreview() {
         overwriteByDefault = { false },
         exitOnSave = { false },
         exitImmediately = { false },
-        loopVideos = { 0 },
+        loopVideos = { VideoLoopMode.Off },
         navController = rememberNavController(),
         modifier = Modifier,
         setShouldAutoPlay = {},
@@ -99,7 +99,7 @@ private fun BehaviourSettingsPageImpl(
     overwriteByDefault: () -> Boolean,
     exitOnSave: () -> Boolean,
     exitImmediately: () -> Boolean,
-    loopVideos: () -> Int,
+    loopVideos: () -> VideoLoopMode,
     navController: NavController,
     modifier: Modifier,
     setShouldAutoPlay: (value: Boolean) -> Unit,
@@ -108,7 +108,7 @@ private fun BehaviourSettingsPageImpl(
     setOverwriteByDefault: (value: Boolean) -> Unit,
     setExitOnSave: (value: Boolean) -> Unit,
     setExitImmediately: (value: Boolean) -> Unit,
-    setLoopVideos: (value: Int) -> Unit
+    setLoopVideos: (value: VideoLoopMode) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -131,19 +131,19 @@ private fun BehaviourSettingsPageImpl(
                 PreferencesThreeStateSwitchRow(
                     title =
                         when (loopVideos()) {
-                            0 -> stringResource(id = R.string.settings_behaviour_loop_never)
-                            1 -> stringResource(id = R.string.settings_behaviour_loop_under_30)
+                            VideoLoopMode.Off -> stringResource(id = R.string.settings_behaviour_loop_never)
+                            VideoLoopMode.Under30s -> stringResource(id = R.string.settings_behaviour_loop_under_30)
                             else -> stringResource(id = R.string.settings_behaviour_loop_always)
                         },
                     summary = stringResource(
                         id = when (loopVideos()) {
-                            0 -> R.string.settings_behaviour_loop_never_desc
-                            1 -> R.string.settings_behaviour_loop_under_30_desc
+                            VideoLoopMode.Off -> R.string.settings_behaviour_loop_never_desc
+                            VideoLoopMode.Under30s -> R.string.settings_behaviour_loop_under_30_desc
                             else -> R.string.settings_behaviour_loop_always_desc
                         }
                     ),
                     iconResID = R.drawable.palette,
-                    currentPosition = loopVideos(),
+                    currentPosition = loopVideos().ordinal,
                     trackIcons = listOf(
                         R.drawable.close,
                         R.drawable.replay_30,
@@ -151,7 +151,9 @@ private fun BehaviourSettingsPageImpl(
                     ),
                     position = RowPosition.Single,
                     showBackground = false,
-                    onStateChange = setLoopVideos
+                    onStateChange = { index ->
+                        setLoopVideos(VideoLoopMode.entries[index])
+                    }
                 )
             }
 
