@@ -677,4 +677,12 @@
     <string name="look_and_feel_style_night">Noite</string>
     <string name="look_and_feel_style_dynamic">Cores dinámicas</string>
     <string name="look_and_feel_style_dynamic_desc">Usar as cores do fondo de pantalla e do decorado do sistema</string>
+    <string name="export_settings_backup_save_load_header">Axustes da app</string>
+    <string name="export_settings_backup_save">Gardar datos da app</string>
+    <string name="export_settings_backup_save_desc">Exporta os axustes da app e os álbums a un ficheiro JSON que podes restablecer no futuro. Non garda o acceso a Immich ou multimedia protexido.</string>
+    <string name="export_settings_backup_save_success">Gardáronse os datos da app</string>
+    <string name="export_settings_backup_save_error">Non se puideron gardar os datos</string>
+    <string name="export_settings_backup_load">Cargar datos da app</string>
+    <string name="export_settings_backup_load_desc">Carga os axustes da app e os álbums desde un ficheiro JSON. Vai sobrescribir os axustes actuais.</string>
+    <string name="export_settings_backup_load_error">Non se puideron cargar os datos</string>
 </resources>
