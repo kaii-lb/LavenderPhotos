@@ -685,4 +685,7 @@
     <string name="export_settings_backup_load">Wczytaj dane aplikacji</string>
     <string name="export_settings_backup_load_desc">Ładuje ustawienia aplikacji i albumy z pliku JSON. Nadpisze wszelkie istniejące ustawienia.</string>
     <string name="export_settings_backup_load_error">Nie można wczytać danych</string>
+    <string name="navigation_tap_to_nav">Dotknij, aby nawigować</string>
+    <string name="navigation_tap_to_nav_desc">Dotknij krawędzi ekranu z lewej lub prawej strony, aby przełączać multimedia wstecz i w przód</string>
+    <string name="contributor_stacsk_desc">Zidentyfikowano problemy i zaproponowano liczne ulepszenia, aby wspomóc rozwój aplikacji</string>
 </resources>
