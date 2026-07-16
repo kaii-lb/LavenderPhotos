@@ -16,6 +16,9 @@ class BehaviourDataSource(
     fun getLoopVideos() = behaviour.getLoopVideos().map { VideoLoopMode.entries[it] }
     suspend fun setLoopVideos(mode: VideoLoopMode) = behaviour.setLoopVideos(mode.ordinal)
 
+    fun getTapToNav() = behaviour.getTapToNav()
+    suspend fun setTapToNav(active: Boolean) = behaviour.setTapToNav(active)
+
     fun getAutoPlayVideos() = behaviour.getAutoPlayVideos()
     suspend fun setAutoPlayVideos(active: Boolean) = behaviour.setAutoPlayVideos(active)
 

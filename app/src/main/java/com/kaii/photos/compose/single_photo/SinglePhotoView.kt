@@ -128,6 +128,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -152,6 +153,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -181,6 +183,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -205,6 +208,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -234,6 +238,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -258,6 +263,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -285,6 +291,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -309,6 +316,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -336,6 +344,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -360,6 +369,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -387,6 +397,7 @@ fun SinglePhotoView(
     val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -411,6 +422,7 @@ fun SinglePhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
@@ -440,6 +452,7 @@ private fun SinglePhotoViewCommon(
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: Boolean,
     useCache: Boolean,
+    useTapToNav: () -> Boolean,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
     onTagAdd: (name: String) -> Unit,
@@ -681,9 +694,10 @@ private fun SinglePhotoViewCommon(
                     window = window,
                     appBarsVisible = appBarsVisible,
                     scrollState = scrollState,
-                    blurViews = blurViews,
-                    useBlackBackground = useBlackBackground,
-                    useCache = useCache,
+                    blurViews = { blurViews },
+                    useBlackBackground = { useBlackBackground },
+                    useCache = { useCache },
+                    useTapToNav = useTapToNav,
                     swipeDownProgress = {
                         draggableState.progress
                     }

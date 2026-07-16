@@ -47,6 +47,7 @@ fun BehaviourSettingsPage(
     val muteOnStart by viewModel.muteVideosOnStart.collectAsStateWithLifecycle()
     val overwriteByDefault by viewModel.editingOverwriteByDefault.collectAsStateWithLifecycle()
     val exitOnSave by viewModel.editingExitOnSave.collectAsStateWithLifecycle()
+    val useTapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     BehaviourSettingsPageImpl(
         shouldAutoPlay = { shouldAutoPlay },
@@ -56,6 +57,7 @@ fun BehaviourSettingsPage(
         exitOnSave = { exitOnSave },
         exitImmediately = { exitImmediately },
         loopVideos = { loopVideos },
+        useTapToNav = { useTapToNav },
         navController = LocalNavController.current,
         modifier = modifier,
         setShouldAutoPlay = viewModel::setAutoPlayVideos,
@@ -64,7 +66,8 @@ fun BehaviourSettingsPage(
         setOverwriteByDefault = viewModel::setEditingOverwriteByDefault,
         setExitOnSave = viewModel::setEditingExitOnSave,
         setExitImmediately = viewModel::setExitImmediately,
-        setLoopVideos = viewModel::setLoopVideos
+        setLoopVideos = viewModel::setLoopVideos,
+        setUseTapToNav = viewModel::setUseTapToNav
     )
 }
 
@@ -79,6 +82,7 @@ fun BehaviourSettingsPagePreview() {
         exitOnSave = { false },
         exitImmediately = { false },
         loopVideos = { VideoLoopMode.Off },
+        useTapToNav = { false },
         navController = rememberNavController(),
         modifier = Modifier,
         setShouldAutoPlay = {},
@@ -87,7 +91,8 @@ fun BehaviourSettingsPagePreview() {
         setOverwriteByDefault = {},
         setExitOnSave = {},
         setExitImmediately = {},
-        setLoopVideos = {}
+        setLoopVideos = {},
+        setUseTapToNav = {}
     )
 }
 
@@ -100,6 +105,7 @@ private fun BehaviourSettingsPageImpl(
     exitOnSave: () -> Boolean,
     exitImmediately: () -> Boolean,
     loopVideos: () -> VideoLoopMode,
+    useTapToNav: () -> Boolean,
     navController: NavController,
     modifier: Modifier,
     setShouldAutoPlay: (value: Boolean) -> Unit,
@@ -108,7 +114,8 @@ private fun BehaviourSettingsPageImpl(
     setOverwriteByDefault: (value: Boolean) -> Unit,
     setExitOnSave: (value: Boolean) -> Unit,
     setExitImmediately: (value: Boolean) -> Unit,
-    setLoopVideos: (value: VideoLoopMode) -> Unit
+    setLoopVideos: (value: VideoLoopMode) -> Unit,
+    setUseTapToNav: (active: Boolean) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -240,6 +247,19 @@ private fun BehaviourSettingsPageImpl(
                     showBackground = false,
                     onRowClick = null,
                     onSwitchClick = setExitImmediately
+                )
+            }
+
+            item {
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.navigation_tap_to_nav),
+                    summary = stringResource(id = R.string.navigation_tap_to_nav_desc),
+                    iconResID = R.drawable.touch_app,
+                    checked = useTapToNav(),
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    onRowClick = null,
+                    onSwitchClick = setUseTapToNav
                 )
             }
         }

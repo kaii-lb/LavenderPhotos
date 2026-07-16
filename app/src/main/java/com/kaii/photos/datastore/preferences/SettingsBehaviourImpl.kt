@@ -13,6 +13,7 @@ class SettingsBehaviourImpl(
     private val exitImmediately = booleanPreferencesKey("behaviour_exit_immediately")
     private val openVideosExternally = booleanPreferencesKey("behaviour_open_videos_externally")
     private val loopVideos = intPreferencesKey("behaviour_loop_videos")
+    private val tapToNav = booleanPreferencesKey("behaviour_tap_to_nav")
     private val shouldAutoPlayKey = booleanPreferencesKey("video_should_autoplay")
     private val muteOnStartKey = booleanPreferencesKey("video_mute_on_start")
     private val overwriteByDefaultKey = booleanPreferencesKey("editing_overwrite_by_default")
@@ -55,6 +56,16 @@ class SettingsBehaviourImpl(
 
         datastore.edit {
             it[loopVideos] = value
+        }
+    }
+
+    fun getTapToNav() = datastore.data.map {
+        it[tapToNav] ?: false
+    }
+
+    suspend fun setTapToNav(active: Boolean) {
+        datastore.edit {
+            it[tapToNav] = active
         }
     }
 

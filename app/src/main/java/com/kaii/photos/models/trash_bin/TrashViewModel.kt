@@ -97,6 +97,12 @@ class TrashViewModel(
         initialValue = true
     )
 
+    val useTapToNav = settings.behaviour.getTapToNav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     private val repo = TrashRepository(
         db = db,
         client = apiClient,

@@ -16,6 +16,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
+import com.kaii.photos.compose.modifiers.tapOnScreenHalves
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
@@ -58,6 +60,7 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.screens.video.retainVideoPlayerState
+import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -74,9 +77,10 @@ fun HorizontalImageList(
     scrollState: SinglePhotoScrollState,
     window: Window,
     appBarsVisible: MutableState<Boolean>,
-    blurViews: Boolean,
-    useBlackBackground: Boolean,
-    useCache: Boolean,
+    blurViews: () -> Boolean,
+    useBlackBackground: () -> Boolean,
+    useCache: () -> Boolean,
+    useTapToNav: () -> Boolean,
     isSecuredMedia: Boolean = false,
     swipeDownProgress: () -> Float
 ) {
@@ -91,6 +95,8 @@ fun HorizontalImageList(
     )
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     HorizontalPager(
         state = state,
         verticalAlignment = Alignment.CenterVertically,
@@ -107,6 +113,20 @@ fun HorizontalImageList(
                 testTagsAsResourceId = true
             }
             .testTag("single_photo_horizontal_pager")
+            .tapOnScreenHalves(enabled = useTapToNav()) { isLeftSideTap ->
+                val targetPage = if (isLeftSideTap) {
+                    (state.targetPage - 1).coerceAtLeast(0)
+                } else {
+                    (state.targetPage + 1).coerceAtMost(state.pageCount - 1)
+                }
+
+                coroutineScope.launch {
+                    state.animateScrollToPage(
+                        page = targetPage,
+                        animationSpec = tween(durationMillis = 75)
+                    )
+                }
+            }
     ) { index ->
         if (items[index] == null || items[index] !is PhotoLibraryUIModel.MediaImpl) return@HorizontalPager
 
@@ -129,7 +149,7 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                if (blurViews) {
+                if (blurViews()) {
                     var targetAlpha by remember { mutableFloatStateOf(0f) }
                     val animatedAlpha by animateFloatAsState(
                         targetValue = targetAlpha,
@@ -172,7 +192,7 @@ fun HorizontalImageList(
                             .alpha(animatedAlpha)
                     ) {
                         it.signature(media.signature())
-                            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                            .diskCacheStrategy(if (useCache()) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                             .override(windowSize.width, windowSize.height)
                     }
                 }
@@ -185,15 +205,14 @@ fun HorizontalImageList(
                     appBarsVisible = appBarsVisible,
                     scrollState = scrollState,
                     window = window,
-                    blurViews = blurViews,
-                    useBlackBackground = useBlackBackground,
+                    blurViews = blurViews(),
+                    useBlackBackground = useBlackBackground(),
                     shouldPlay = {
                         state.currentPage == index
                     },
-                    useCache = useCache,
+                    useCache = useCache(),
                     modifier = Modifier
                         .fillMaxSize()
-                        // .transformable()
                         .graphicsLayer {
                             scaleX = 1f - swipeDownProgress() * 0.25f
                             scaleY = 1f - swipeDownProgress() * 0.25f
@@ -251,7 +270,7 @@ fun HorizontalImageList(
                         }
                 }
 
-                if (blurViews) {
+                if (blurViews()) {
                     var targetAlpha by remember { mutableFloatStateOf(0f) }
                     val animatedAlpha by animateFloatAsState(
                         targetValue = targetAlpha,
@@ -274,7 +293,7 @@ fun HorizontalImageList(
                             .alpha(animatedAlpha)
                     ) {
                         it.signature(media.signature())
-                            .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
+                            .diskCacheStrategy(if (useCache()) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
                             .override(windowSize.width, windowSize.height)
                     }
                 }
@@ -289,8 +308,8 @@ fun HorizontalImageList(
                         auth = { media.auth },
                         endpoint = { media.endpoint ?: "" },
                         shouldPlay = { state.currentPage == index },
-                        blurViews = blurViews,
-                        useBlackBackground = useBlackBackground,
+                        blurViews = blurViews(),
+                        useBlackBackground = useBlackBackground(),
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = glideModel,
@@ -298,7 +317,7 @@ fun HorizontalImageList(
                                 item = media.item,
                                 zoomableState = zoomableState,
                                 window = window,
-                                useCache = useCache,
+                                useCache = useCache(),
                                 appBarsVisible = appBarsVisible,
                                 modifier = modifier,
                                 disableSetBarVisibility = true
@@ -317,7 +336,7 @@ fun HorizontalImageList(
                         item = media.item,
                         zoomableState = zoomableState,
                         window = window,
-                        useCache = useCache,
+                        useCache = useCache(),
                         appBarsVisible = appBarsVisible,
                         isHidden = isSecuredMedia,
                         modifier = Modifier

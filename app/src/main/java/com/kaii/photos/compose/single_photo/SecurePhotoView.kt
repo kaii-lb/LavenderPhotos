@@ -253,6 +253,7 @@ fun SecurePhotoView(
         val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
         val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
         val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+        val useTapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
         Column(
             modifier = Modifier
@@ -269,9 +270,10 @@ fun SecurePhotoView(
                 appBarsVisible = appBarsVisible,
                 isSecuredMedia = true,
                 scrollState = scrollState,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground,
-                useCache = useCache,
+                blurViews = { blurViews },
+                useBlackBackground = { useBlackBackground },
+                useCache = { useCache },
+                useTapToNav = { useTapToNav },
                 swipeDownProgress = { draggableState.progress }
             )
         }

@@ -112,6 +112,7 @@ fun SingleTrashedPhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val useTapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
@@ -122,6 +123,7 @@ fun SingleTrashedPhotoView(
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = blurViews,
         useCache = useCache,
+        useTapToNav = { useTapToNav },
         process = viewModel::runAction
     )
 }
@@ -138,6 +140,7 @@ private fun SingleTrashedPhotoViewImpl(
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: Boolean,
     useCache: Boolean,
+    useTapToNav: () -> Boolean,
     process: (context: Context, action: GenericFileManager.Action) -> Unit
 ) {
     var currentIndex by rememberSaveable(startIndex) {
@@ -301,9 +304,10 @@ private fun SingleTrashedPhotoViewImpl(
             window = window,
             appBarsVisible = appBarsVisible,
             scrollState = scrollState,
-            blurViews = blurViews,
-            useBlackBackground = useBlackBackground,
-            useCache = useCache,
+            blurViews = { blurViews },
+            useBlackBackground = { useBlackBackground },
+            useCache = { useCache },
+            useTapToNav = useTapToNav,
             swipeDownProgress = { draggableState.progress }
         )
     }

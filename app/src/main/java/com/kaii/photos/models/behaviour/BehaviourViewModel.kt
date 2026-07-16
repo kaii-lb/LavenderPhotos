@@ -30,6 +30,12 @@ class BehaviourViewModel(
         initialValue = VideoLoopMode.Off
     )
 
+    val useTapToNav = dataSource.getTapToNav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5.seconds.inWholeMilliseconds),
+        initialValue = false
+    )
+
     val autoplayVideos = dataSource.getAutoPlayVideos().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5.seconds.inWholeMilliseconds),
@@ -69,6 +75,12 @@ class BehaviourViewModel(
     fun setLoopVideos(mode: VideoLoopMode) {
         viewModelScope.launch {
             dataSource.setLoopVideos(mode)
+        }
+    }
+
+    fun setUseTapToNav(active: Boolean) {
+        viewModelScope.launch {
+            dataSource.setTapToNav(active)
         }
     }
 

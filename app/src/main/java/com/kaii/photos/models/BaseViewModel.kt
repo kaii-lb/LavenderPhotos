@@ -137,6 +137,12 @@ abstract class BaseViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
+    val useTapToNav = settings.behaviour.getTapToNav().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     suspend fun getMediaCount() = repo.getMediaCount()
     suspend fun getMediaSize(): String {
         val bytes = repo.getMediaSize()

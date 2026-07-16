@@ -66,6 +66,8 @@
     <string name="navigation_favourites">Favourites</string>
     <string name="navigation_trash">Trash</string>
     <string name="navigation_away">Navigates to another page</string>
+    <string name="navigation_tap_to_nav">Tap To Navigate</string>
+    <string name="navigation_tap_to_nav_desc">Tap the very left or right sides of the screen to navigate back and forth between media</string>
 
     <!-- App -->
     <string name="app_name_full">Lavender Photos</string>
