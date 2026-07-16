@@ -119,10 +119,10 @@ fun SingleTrashedPhotoView(
         navController = LocalNavController.current,
         startIndex = index,
         window = window,
-        useBlackBackground = useBlackBackground,
+        useBlackBackground = { useBlackBackground },
         topBarDetailsFormat = topBarDetailsFormat,
-        blurViews = blurViews,
-        useCache = useCache,
+        blurViews = { blurViews },
+        useCache = { useCache },
         useTapToNav = { useTapToNav },
         process = viewModel::runAction
     )
@@ -136,10 +136,10 @@ private fun SingleTrashedPhotoViewImpl(
     navController: NavController,
     startIndex: Int,
     window: Window,
-    useBlackBackground: Boolean,
+    useBlackBackground: () -> Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
-    blurViews: Boolean,
-    useCache: Boolean,
+    blurViews: () -> Boolean,
+    useCache: () -> Boolean,
     useTapToNav: () -> Boolean,
     process: (context: Context, action: GenericFileManager.Action) -> Unit
 ) {
@@ -241,7 +241,7 @@ private fun SingleTrashedPhotoViewImpl(
         Column(
             modifier = Modifier
                 .padding(0.dp)
-                .background(if (useBlackBackground) Color.Black else MaterialTheme.colorScheme.background)
+                .background(if (useBlackBackground()) Color.Black else MaterialTheme.colorScheme.background)
                 .fillMaxSize(1f),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -304,9 +304,9 @@ private fun SingleTrashedPhotoViewImpl(
             window = window,
             appBarsVisible = appBarsVisible,
             scrollState = scrollState,
-            blurViews = { blurViews },
-            useBlackBackground = { useBlackBackground },
-            useCache = { useCache },
+            blurViews = blurViews,
+            useBlackBackground = useBlackBackground,
+            useCache = useCache,
             useTapToNav = useTapToNav,
             swipeDownProgress = { draggableState.progress }
         )
