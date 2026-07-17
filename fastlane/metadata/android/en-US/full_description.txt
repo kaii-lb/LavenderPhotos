@@ -1,20 +1,21 @@
-<i>Lavender Photos</i> is a no non-sense, smooth, and performant gallery app for Android.
+<h1><b>Lavender Photos</b></h1> is a no non-sense, stylish, and performant gallery app for Android.
 
-<b>Features:</b>
+<h1>Features</h1>
 <ul>
-<li>Browse all your photos smoothly, seperated by date</li>
-<li>Add and remove albums as you wish, no arbitrary or forced selections</li>
-<li>Search for an image by its name or date (in many formats!)</li>
-<li>Immich integration for safe and easy media backup</li>
-<li>Trash Bin that's sorted by recently trashed</li>
-<li>Full fledged favouriting system</li>
-<li>A selection system that doesn't suck</li>
-<li>Edit and personalize any photo or video, any time, without an internet connection (even works in landscape mode!)</li>
-<li>Secure sensitive photos in a encrypted medium, for safe keeping</li>
-<li>Find all the relevant information for a photo from one button click</li>
-<li>Privacy focused design, no chance of anything happening without your permission</li>
-<li>Copy and Move photos to albums easily</li>
-<li>Clean UI and smooth UX</li>
-<li>Customizable to your heart's content</li>
-<li>WAY more to come</li>
+    <li><b>Smooth Browsing:</b> Browse all your photos and videos smoothly, separated by date</li>
+    <li><b>Flexible Albums:</b> Add and remove albums as you wish, no arbitrary or forced selections</li>
+    <li><b>Smart Search:</b> Search for an image by its name, date or tag!</li>
+    <li><b>Cloud Backup:</b> Immich integration for safe and easy cloud media backup</li>
+    <li><b>Media Tagging:</b> Tagging system to properly organize media</li>
+    <li><b>Trash Bin:</b> Trash Bin that's sorted by recently trashed, so you don't lose track of what went where</li>
+    <li><b>Favourites System:</b> Full fledged favouriting system, compatible with Immich and other apps</li>
+    <li><b>Album Groups:</b> Create groups of albums for easy organization of your memories</li>
+    <li><b>Offline Editing:</b> Edit and personalize any photo or video, at any time, without an internet connection</li>
+    <li><b>Secure Folder:</b> Secure sensitive photos with bulletproof AES-256 encryption</li>
+    <li><b>Quick Info:</b> Find all the relevant information for a photo from one button click</li>
+    <li><b>Easy Management:</b> Copy and Move photos to albums easily, across storage mediums or even the cloud!</li>
+    <li><b>Modern Interface:</b> Clean UI, smooth UX and a playful interface</li>
+    <li><b>Privacy First:</b> No data is collected, no AI is trained, and no actions without permission</li>
+    <li><b>Heavily Customizable:</b> Change colors, behaviours, styles, and more</li>
+    <li><b>Future:</b> WAY more to come</li>
 </ul>
