@@ -128,7 +128,7 @@ private fun ThemePageImpl(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(id = R.string.settings_about),
+                        text = stringResource(id = R.string.look_and_feel_colors),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )

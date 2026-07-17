@@ -560,7 +560,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_app_language_desc">Change the app\'s display language. May require app restart. Current: %1$s</string>
     <string name="look_and_feel_palette">Color Palette</string>
     <string name="look_and_feel_palette_desc">Change the app\'s color scheme</string>
-    <string name="look_and_feel_colors">Colors &amp; Style</string>
+    <string name="look_and_feel_colors">Colors &amp; Styles</string>
     <string name="look_and_feel_colors_desc">Customize the app\'s look, change color palettes, and toggle dynamic theming</string>
     <string name="look_and_feel_style">App Style</string>
     <string name="look_and_feel_style_desc">Select the color style of the app</string>
