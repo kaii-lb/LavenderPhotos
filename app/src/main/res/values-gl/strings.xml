@@ -685,4 +685,7 @@
     <string name="export_settings_backup_load">Cargar datos da app</string>
     <string name="export_settings_backup_load_desc">Carga os axustes da app e os álbums desde un ficheiro JSON. Vai sobrescribir os axustes actuais.</string>
     <string name="export_settings_backup_load_error">Non se puideron cargar os datos</string>
+    <string name="navigation_tap_to_nav">Toca para navegar</string>
+    <string name="navigation_tap_to_nav_desc">Toca xusto no bordo dereito ou esquerdo da pantalla para ir adiante e atrás entre o multimedia</string>
+    <string name="contributor_stacsk_desc">Incidencias identificadas e suxestións de melloras para avanzar no desenvolvemento da app</string>
 </resources>
