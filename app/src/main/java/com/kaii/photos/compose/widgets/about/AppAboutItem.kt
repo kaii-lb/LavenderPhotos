@@ -145,6 +145,19 @@ fun AppAboutItem(
             Spacer(modifier = Modifier.weight(1f))
 
             FilledIconButton(
+                onClick = showNews,
+                shapes = IconButtonDefaults.shapes(
+                    shape = CircleShape,
+                    pressedShape = RoundedCornerShape(size = 10.dp)
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.newspaper),
+                    contentDescription = stringResource(id = R.string.news)
+                )
+            }
+
+            FilledIconButton(
                 onClick = {
                     val intent = Intent().apply {
                         action = Intent.ACTION_VIEW
@@ -161,26 +174,6 @@ fun AppAboutItem(
                 Icon(
                     painter = painterResource(id = R.drawable.code),
                     contentDescription = stringResource(id = R.string.app_repo)
-                )
-            }
-
-            FilledIconButton(
-                onClick = {
-                    val intent = Intent().apply {
-                        action = Intent.ACTION_VIEW
-                        data = "https://github.com/kaii-lb/LavenderPhotos/releases".toUri()
-                    }
-
-                    context.startActivity(intent)
-                },
-                shapes = IconButtonDefaults.shapes(
-                    shape = CircleShape,
-                    pressedShape = RoundedCornerShape(size = 10.dp)
-                )
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.download),
-                    contentDescription = stringResource(id = R.string.app_get)
                 )
             }
         }

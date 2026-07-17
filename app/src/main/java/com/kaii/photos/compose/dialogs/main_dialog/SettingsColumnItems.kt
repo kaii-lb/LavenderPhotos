@@ -12,19 +12,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.BugReportDialog
 import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.compose.widgets.news.NewsPopup
-import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.models.news.NewsViewModelFactory
 import com.kaii.photos.presentation.main_dialog.AboutLinkItems
 import com.kaii.photos.presentation.main_dialog.SettingsItems
 import kotlinx.coroutines.CoroutineScope
@@ -156,32 +151,6 @@ fun LazyListScope.settingsColumnItems(
             position = RowPosition.Bottom,
             onClick = {
                 showPrivacyPolicy = true
-            }
-        )
-    }
-
-    item {
-        val context = LocalContext.current
-        var showVersionInfoDialog by remember { mutableStateOf(false) }
-
-        if (showVersionInfoDialog) {
-            ComponentViewModelScope(key = "News Section") {
-                NewsPopup(
-                    viewModel = viewModel(
-                        factory = NewsViewModelFactory(context = context),
-                        viewModelStoreOwner = LocalViewModelStoreOwner.current!!
-                    ),
-                    onDismiss = { showVersionInfoDialog = false }
-                )
-            }
-        }
-
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.news),
-            icon = painterResource(id = R.drawable.newspaper),
-            position = RowPosition.Bottom,
-            onClick = {
-                showVersionInfoDialog = true
             }
         )
     }
