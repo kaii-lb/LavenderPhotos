@@ -192,6 +192,13 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="debugging_reset_scan_generation">Rescan Media</string>
     <string name="debugging_reset_scan_generation_desc">Goes over all media on device and adds it to the app\'s database. Use this if some images are not showing up</string>
     <string name="debugging_reset_scan_generation_loading">Scanning media…</string>
+    <string name="debugging_report_issue">Report an Issue</string>
+    <string name="debugging_report_issue_bug">Bug Report</string>
+    <string name="debugging_report_issue_bug_desc">Help fix an issue with the app</string>
+    <string name="debugging_report_issue_feature">Feature Request</string>
+    <string name="debugging_report_issue_feature_desc">Suggest a feature to add to this app</string>
+    <string name="debugging_report_issue_other">Other</string>
+    <string name="debugging_report_issue_other_desc">Report something else</string>
 
     <!-- Video -->
     <string name="video">Video</string>

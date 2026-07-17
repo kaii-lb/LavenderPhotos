@@ -1,4 +1,4 @@
-package com.kaii.photos.compose.dialogs
+package com.kaii.photos.compose.dialogs.main_dialog
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -17,9 +17,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,41 +31,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.user_action.ExplanationDialog
 import com.kaii.photos.compose.widgets.ExpressiveDialogRow
 import com.kaii.photos.compose.widgets.ExpressiveDialogRowWithAction
 import com.kaii.photos.compose.widgets.MainDialogUserInfo
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
-import com.kaii.photos.compose.widgets.news.NewsPopup
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.file_management.sync.ProgressManager
-import com.kaii.photos.helpers.ComponentViewModelScope
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
-import com.kaii.photos.models.news.NewsViewModelFactory
 import com.kaii.photos.permissions.auth.rememberSecureFolderAuthManager
-import com.kaii.photos.presentation.main_dialog.AboutLinkItems
-import com.kaii.photos.presentation.main_dialog.SettingsItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -80,14 +65,14 @@ fun MainDialog(
     extraSecureFolderEntry: () -> Boolean,
     immichInfo: () -> ImmichBasicInfo,
     modifier: Modifier = Modifier,
+    progressManager: ProgressManager = PhotosApplication.appModule.cloudProgressManager,
+    navController: NavController = LocalNavController.current,
     dismiss: suspend () -> Unit
 ) {
     // remove (weird) drag handle ripple
     CompositionLocalProvider(
         LocalRippleConfiguration provides null
     ) {
-        val progressManager = PhotosApplication.appModule.cloudProgressManager
-        val navController = LocalNavController.current
         val isLandscape by rememberDeviceOrientation()
 
         ModalBottomSheet(
@@ -252,179 +237,5 @@ fun MainDialog(
                 }
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-fun LazyListScope.settingsColumnItems(
-    navController: NavController,
-    coroutineScope: CoroutineScope,
-    dismiss: suspend () -> Unit
-) {
-    item {
-        PreferencesSeparatorText(
-            text = stringResource(id = R.string.settings)
-        )
-    }
-
-    itemsIndexed(
-        items = SettingsItems.entries
-    ) { index, item ->
-        ExpressiveDialogRow(
-            title = stringResource(id = item.title),
-            icon = painterResource(id = item.icon),
-            position =
-                when (index) {
-                    0 -> RowPosition.Top
-                    SettingsItems.entries.size - 1 -> RowPosition.Bottom
-                    else -> RowPosition.Middle
-                },
-            onClick = {
-                coroutineScope.launch {
-                    dismiss()
-                    navController.navigate(item.screen)
-                }
-            }
-        )
-    }
-
-    item {
-        PreferencesSeparatorText(
-            stringResource(id = R.string.settings_about_and_updates)
-        )
-    }
-
-    item {
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.settings_about),
-            icon = painterResource(id = R.drawable.info),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            position = RowPosition.Top,
-            onClick = {
-                coroutineScope.launch {
-                    dismiss()
-
-                    navController.navigate(Screens.Settings.Misc.AboutPage)
-                }
-            }
-        )
-    }
-
-    items(
-        items = AboutLinkItems.entries
-    ) { item ->
-        val context = LocalContext.current
-
-        ExpressiveDialogRow(
-            title = stringResource(id = item.title),
-            icon = painterResource(id = item.icon),
-            enabled = item.enabled,
-            containerColor = item.color,
-            position = RowPosition.Middle,
-            onClick = {
-                coroutineScope.launch {
-                    dismiss()
-                    context.startActivity(item.intent)
-                }
-            }
-        )
-    }
-
-    item {
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.updates),
-            icon = painterResource(id = R.drawable.update),
-            position = RowPosition.Bottom,
-            onClick = {
-                coroutineScope.launch {
-                    dismiss()
-                    navController.navigate(Screens.Settings.Misc.UpdatePage)
-                }
-            }
-        )
-    }
-
-    item {
-        PreferencesSeparatorText(
-            stringResource(id = R.string.immich_misc)
-        )
-    }
-
-    item {
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.licenses),
-            icon = painterResource(id = R.drawable.license),
-            position = RowPosition.Top,
-            onClick = {
-                coroutineScope.launch {
-                    dismiss()
-                    navController.navigate(Screens.Settings.Misc.LicensesPage)
-                }
-            }
-        )
-    }
-
-    item {
-        var showPrivacyPolicy by remember { mutableStateOf(false) }
-        if (showPrivacyPolicy) {
-            ExplanationDialog(
-                title = stringResource(id = R.string.privacy_policy_title),
-                explanation = stringResource(id = R.string.privacy_policy)
-            ) {
-                showPrivacyPolicy = false
-            }
-        }
-
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.privacy_policy_title),
-            icon = painterResource(id = R.drawable.privacy_policy),
-            position = RowPosition.Middle,
-            onClick = {
-                showPrivacyPolicy = true
-            }
-        )
-    }
-
-    item {
-        val context = LocalContext.current
-        var showVersionInfoDialog by remember { mutableStateOf(false) }
-
-        if (showVersionInfoDialog) {
-            ComponentViewModelScope(key = "News Section") {
-                NewsPopup(
-                    viewModel = viewModel(
-                        factory = NewsViewModelFactory(context = context),
-                        viewModelStoreOwner = LocalViewModelStoreOwner.current!!
-                    ),
-                    onDismiss = { showVersionInfoDialog = false }
-                )
-            }
-        }
-
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.news),
-            icon = painterResource(id = R.drawable.newspaper),
-            position = RowPosition.Bottom,
-            onClick = {
-                showVersionInfoDialog = true
-            }
-        )
-    }
-
-    item {
-        PreferencesSeparatorText(
-            text = stringResource(id = R.string.debugging_development)
-        )
-    }
-
-    item {
-        ExpressiveDialogRow(
-            title = stringResource(id = R.string.debugging),
-            icon = painterResource(id = R.drawable.bug_report),
-            position = RowPosition.Single,
-            onClick = {
-                navController.navigate(Screens.Settings.MainPage.Debugging)
-            }
-        )
     }
 }
