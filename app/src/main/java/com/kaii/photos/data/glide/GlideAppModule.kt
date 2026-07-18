@@ -9,6 +9,11 @@ import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.load.engine.cache.LruResourceCache
 import com.bumptech.glide.load.engine.cache.MemorySizeCalculator
 import com.bumptech.glide.module.AppGlideModule
+import com.caverock.androidsvg.SVG
+import com.kaii.photos.data.glide.svg.SvgDecoder
+import com.kaii.photos.data.glide.svg.SvgDrawable
+import com.kaii.photos.data.glide.svg.SvgDrawableTranscoder
+import com.kaii.photos.data.glide.svg.SvgEncoder
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.SecureInfo
 import java.io.InputStream
@@ -39,6 +44,23 @@ class GlideAppModule : AppGlideModule() {
             SecureInfo::class.java,
             InputStream::class.java,
             SecureModelLoader.Factory()
+        )
+
+        registry.register(
+            SVG::class.java,
+            SvgDrawable::class.java,
+            SvgDrawableTranscoder()
+        )
+
+        registry.append(
+            InputStream::class.java,
+            SVG::class.java,
+            SvgDecoder()
+        )
+
+        registry.append(
+            SVG::class.java,
+            SvgEncoder()
         )
     }
 }

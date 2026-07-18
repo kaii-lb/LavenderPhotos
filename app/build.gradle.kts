@@ -175,6 +175,8 @@ dependencies {
     implementation(libs.androidx.test.rules)
     implementation(libs.androidx.work.runtime.ktx)
 
+    implementation(libs.com.caverock.androidsvg)
+
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.collections.immutable)

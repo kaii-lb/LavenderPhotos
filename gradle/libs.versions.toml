@@ -22,6 +22,7 @@ androidx-test-rules = "1.7.0"
 androidx-test-uiautomator = "2.4.0"
 androidx-splashscreen = "1.2.0"
 androidx-work-runtime-ktx = "2.11.2"
+androidsvg = "1.4"
 baselineprofile = "1.5.0-alpha07"
 glide = "5.0.9"
 glide-compose = "1.0.0-beta10"
@@ -103,6 +104,8 @@ androidx-security-crypto = { module = "androidx.security:security-crypto", versi
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test-rules" }
 androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidx-test-uiautomator" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work-runtime-ktx" }
+
+com-caverock-androidsvg = { group = "com.caverock" , name = "androidsvg-aar", version.ref = "androidsvg" }
 
 glide-avif-integration = { module = "com.github.bumptech.glide:avif-integration", version.ref = "glide" }
 glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glide-compose" }

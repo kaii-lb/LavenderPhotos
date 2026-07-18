@@ -77,7 +77,7 @@ suspend fun getExifDataForMedia(
         val options = BitmapFactory.Options()
         options.inJustDecodeBounds = true
         BitmapFactory.decodeFile(absolutePath, options)
-        val resValue = run {
+        val resValue = try {
             if (options.outWidth == -1 && options.outHeight == -1) {
                 val metadataRetriever = MediaMetadataRetriever()
                 metadataRetriever.setDataSource(absolutePath)
@@ -89,17 +89,23 @@ suspend fun getExifDataForMedia(
             } else {
                 "${options.outWidth}x${options.outHeight}"
             }
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to load resolution. ${e.message}")
+            e.printStackTrace()
+            null
         }
 
-        list[MediaData.Resolution] = resValue
+        resValue?.let { list[MediaData.Resolution] = it }
 
-        list[MediaData.MegaPixels] = run {
-            val split = resValue.split("x")
-            val x = split[0].toInt()
-            val y = split[1].toInt()
+        resValue?.let {
+            list[MediaData.MegaPixels] = run {
+                val split = it.split("x")
+                val x = split[0].toInt()
+                val y = split[1].toInt()
 
-            round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
-        }.toString()
+                round((x * y) / 100000f) / 10f // divide by 1mil then multiply by 10, so divide by 100k
+            }.toString()
+        }
 
         inputStream.close()
 

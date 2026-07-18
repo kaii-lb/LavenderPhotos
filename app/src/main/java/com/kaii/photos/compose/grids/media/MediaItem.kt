@@ -147,26 +147,25 @@ fun MediaItem(
                 .scale(animatedItemScale)
                 .clip(RoundedCornerShape(animatedItemCornerRadius))
         ) {
+            val baseRequest = it.signature(item.signature())
+
             if (isSecureMedia) {
                 // never disk-cache decrypted secure thumbnails (plaintext at rest); bound the decode op to
                 // the requested size like the non-secure branch
-                val secureRequest = it.signature(item.signature())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                val secureRequest = baseRequest.diskCacheStrategy(DiskCacheStrategy.NONE)
+
                 if (thumbnailSettings().second != 0) secureRequest.override(thumbnailSettings().second)
                 else secureRequest
             } else if (thumbnailSettings().second == 0) {
-                it.signature(item.signature())
-                    .diskCacheStrategy(
-                        if (thumbnailSettings().first) DiskCacheStrategy.ALL
-                        else DiskCacheStrategy.NONE
-                    )
+                baseRequest.diskCacheStrategy(
+                    if (thumbnailSettings().first) DiskCacheStrategy.ALL
+                    else DiskCacheStrategy.NONE
+                )
             } else {
-                it.signature(item.signature())
-                    .diskCacheStrategy(
-                        if (thumbnailSettings().first) DiskCacheStrategy.ALL
-                        else DiskCacheStrategy.NONE
-                    )
-                    .override(thumbnailSettings().second)
+                baseRequest.diskCacheStrategy(
+                    if (thumbnailSettings().first) DiskCacheStrategy.ALL
+                    else DiskCacheStrategy.NONE
+                ).override(thumbnailSettings().second)
             }
         }
 
