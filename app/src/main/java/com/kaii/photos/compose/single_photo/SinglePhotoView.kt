@@ -12,8 +12,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,7 +48,12 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -69,6 +72,9 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
+import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
+import com.kaii.photos.compose.modifiers.singlePhotoProperties
+import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
@@ -99,7 +105,6 @@ import com.kaii.photos.permissions.favourites.rememberCloudFavouritesState
 import com.kaii.photos.permissions.favourites.rememberLocalFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -435,7 +440,7 @@ fun SinglePhotoView(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun SinglePhotoViewCommon(
@@ -546,6 +551,8 @@ private fun SinglePhotoViewCommon(
         scrollState.privacyMode
     }
 
+    val (firstFR, secondFR, thirdFR) = remember { FocusRequester.createRefs() }
+
     Scaffold(
         topBar = {
             SingleViewTopBar(
@@ -573,7 +580,11 @@ private fun SinglePhotoViewCommon(
                     }
                 },
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoTopBarProperties(
+                        draggableState = draggableState,
+                        firstFR = firstFR,
+                        secondFR = secondFR
+                    )
             )
         },
         bottomBar = {
@@ -615,7 +626,11 @@ private fun SinglePhotoViewCommon(
                 },
                 process = process,
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoBottomBarProperties(
+                        draggableState = draggableState,
+                        secondFR = secondFR,
+                        thirdFR = thirdFR
+                    )
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -671,7 +686,7 @@ private fun SinglePhotoViewCommon(
             modifier = Modifier
                 .padding(0.dp)
                 .background(if (useBlackBackground()) Color.Black else MaterialTheme.colorScheme.background)
-                .fillMaxSize(1f),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -684,29 +699,29 @@ private fun SinglePhotoViewCommon(
                 }
             }
 
-            Box(
+            HorizontalImageList(
+                items = items,
+                state = state,
+                window = window,
+                appBarsVisible = appBarsVisible,
+                scrollState = scrollState,
+                blurViews = blurViews,
+                useBlackBackground = useBlackBackground,
+                useCache = useCache,
+                useTapToNav = useTapToNav,
+                swipeDownProgress = {
+                    draggableState.progress
+                },
                 modifier = Modifier
-                    .anchoredDraggable(
-                        state = draggableState.state,
-                        orientation = Orientation.Vertical,
-                        flingBehavior = draggableState.flingBehavior
+                    .singlePhotoProperties(
+                        state = state,
+                        draggableState = draggableState,
+                        firstFR = firstFR,
+                        secondFR = secondFR,
+                        thirdFR = thirdFR,
+                        isVideo = { mediaItem.type == MediaType.Video }
                     )
-            ) {
-                HorizontalImageList(
-                    items = items,
-                    state = state,
-                    window = window,
-                    appBarsVisible = appBarsVisible,
-                    scrollState = scrollState,
-                    blurViews = blurViews,
-                    useBlackBackground = useBlackBackground,
-                    useCache = useCache,
-                    useTapToNav = useTapToNav,
-                    swipeDownProgress = {
-                        draggableState.progress
-                    }
-                )
-            }
+            )
         }
     }
 }

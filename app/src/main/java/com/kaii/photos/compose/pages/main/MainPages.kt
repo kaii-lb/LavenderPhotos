@@ -41,6 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -245,6 +250,35 @@ fun MainPages(
                         else scrollBehaviour.onPreFling(available)
                 }
             )
+            // handle keyboard/controller inputs
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                when (event.key) {
+                    Key.ButtonL2, Key.Q -> {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = (pagerState.currentPage - 1).coerceAtLeast(0),
+                                animationSpec = AnimationConstants.defaultSpring()
+                            )
+                        }
+                        true
+                    }
+
+                    Key.ButtonR2, Key.E -> {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(
+                                page = (pagerState.currentPage + 1).coerceAtMost(pagerState.pageCount - 1),
+                                animationSpec = AnimationConstants.defaultSpring()
+                            )
+                        }
+
+                        true
+                    }
+
+                    else -> false
+                }
+            }
     ) { padding ->
         AnimatedMediaTagManager(
             showTagDialog = showTagDialog,

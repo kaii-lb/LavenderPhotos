@@ -59,6 +59,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -77,6 +81,9 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
+import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
+import com.kaii.photos.compose.modifiers.singlePhotoProperties
+import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.file_management.managers.GenericFileManager
@@ -91,7 +98,6 @@ import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
-import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -201,6 +207,7 @@ private fun SingleTrashedPhotoViewImpl(
         scrollState.privacyMode
     }
 
+    val (firstFR, secondFR, thirdFR) = remember { FocusRequester.createRefs() }
     Scaffold(
         topBar = {
             SingleViewTopBar(
@@ -219,7 +226,11 @@ private fun SingleTrashedPhotoViewImpl(
                     }
                 },
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoTopBarProperties(
+                        draggableState = draggableState,
+                        firstFR = firstFR,
+                        secondFR = secondFR
+                    )
             )
         },
         bottomBar = {
@@ -232,7 +243,11 @@ private fun SingleTrashedPhotoViewImpl(
                 },
                 process = process,
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoBottomBarProperties(
+                        draggableState = draggableState,
+                        secondFR = secondFR,
+                        thirdFR = thirdFR
+                    )
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -308,7 +323,16 @@ private fun SingleTrashedPhotoViewImpl(
             useBlackBackground = useBlackBackground,
             useCache = useCache,
             useTapToNav = useTapToNav,
-            swipeDownProgress = { draggableState.progress }
+            swipeDownProgress = { draggableState.progress },
+            modifier = Modifier
+                .singlePhotoProperties(
+                    state = state,
+                    draggableState = draggableState,
+                    firstFR = firstFR,
+                    secondFR = secondFR,
+                    thirdFR = thirdFR,
+                    isVideo = { mediaItem.type == MediaType.Video }
+                )
         )
     }
 }

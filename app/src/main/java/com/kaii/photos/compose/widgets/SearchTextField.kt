@@ -49,7 +49,13 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -116,15 +122,18 @@ fun SearchTextField(
     onClearTags: () -> Unit,
     setSearchingForTags: (value: Boolean) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     BackHandler(
-        enabled = searchQuery().isNotEmpty()
+        enabled = searchQuery().isNotBlank()
     ) {
+        focusManager.clearFocus()
         onQueryChange("")
         onSearchModeChange(SearchMode.Name)
     }
 
     val resources = LocalResources.current
-    val keyboardController = LocalSoftwareKeyboardController.current
     val placeholdersList = remember(searchMode.nameId) {
         val month = Month.entries.random().name.toPascalCase()
         val day = DayOfWeek.entries.random().name.toPascalCase()
@@ -264,6 +273,14 @@ fun SearchTextField(
         ),
         shape = CircleShape,
         modifier = modifier
+            .onPreviewKeyEvent { event ->
+                if (event.key == Key.Escape && event.type == KeyEventType.KeyDown) {
+                    focusManager.clearFocus()
+                    true
+                } else {
+                    false
+                }
+            }
     )
 
     val keyboardVisible by rememberUpdatedState(WindowInsets.ime.getBottom(LocalDensity.current) > 0)

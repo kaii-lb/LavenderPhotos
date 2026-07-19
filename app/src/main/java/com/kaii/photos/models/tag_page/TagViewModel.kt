@@ -47,7 +47,6 @@ class TagViewModel(
         viewModelScope.launch {
             @OptIn(ExperimentalCoroutinesApi::class)
             mediaIds.flatMapLatest {
-                println("CHANGING MEDIA $it")
                 tagRepo.getAppliedTags(it)
             }.collect {
                 currentTags = it

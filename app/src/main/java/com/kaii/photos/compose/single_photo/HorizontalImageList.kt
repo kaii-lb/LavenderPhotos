@@ -81,8 +81,9 @@ fun HorizontalImageList(
     useBlackBackground: () -> Boolean,
     useCache: () -> Boolean,
     useTapToNav: () -> Boolean,
-    isSecuredMedia: Boolean = false,
-    swipeDownProgress: () -> Float
+    swipeDownProgress: () -> Float,
+    modifier: Modifier = Modifier,
+    isSecuredMedia: Boolean = false
 ) {
     val windowSize = LocalWindowInfo.current.containerSize / 4
 
@@ -90,7 +91,9 @@ fun HorizontalImageList(
         isOpenWithView = false,
         onPlaybackStateChanged = {},
         onControlsTimeout = {
-            appBarsVisible.value = false
+            val item = items[state.targetPage] as? PhotoLibraryUIModel.MediaImpl
+
+            if (item?.item?.type == MediaType.Video) appBarsVisible.value = false
         }
     )
 
@@ -107,8 +110,8 @@ fun HorizontalImageList(
         key = items.itemKey { it.itemKey() },
         snapPosition = SnapPosition.Center,
         userScrollEnabled = !scrollState.privacyMode && !scrollState.videoLock,
-        modifier = Modifier
-            .fillMaxHeight(1f)
+        modifier = modifier
+            .fillMaxHeight()
             .semantics {
                 testTagsAsResourceId = true
             }
@@ -222,7 +225,7 @@ fun HorizontalImageList(
         } else {
             Box(
                 modifier = Modifier
-                    .fillMaxSize(1f)
+                    .fillMaxSize()
             ) {
                 val glideModel = remember(media.item.uri) {
                     when {

@@ -14,11 +14,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -56,7 +54,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
@@ -79,6 +80,9 @@ import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
 import com.kaii.photos.compose.dialogs.SingleSecurePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
+import com.kaii.photos.compose.modifiers.singlePhotoProperties
+import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -93,7 +97,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.models.secure_folder.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
-import com.kaii.photos.presentation.single_photos_views.DismissDragState.Companion.barScaleModifier
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
@@ -209,6 +212,7 @@ fun SecurePhotoView(
         scrollState.privacyMode
     }
 
+    val (firstFR, secondFR, thirdFR) = remember { FocusRequester.createRefs() }
     Scaffold(
         topBar = {
             val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
@@ -225,7 +229,11 @@ fun SecurePhotoView(
                     showInfoDialog = true
                 },
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoTopBarProperties(
+                        draggableState = draggableState,
+                        firstFR = firstFR,
+                        secondFR = secondFR
+                    )
             )
         },
         bottomBar = {
@@ -244,7 +252,11 @@ fun SecurePhotoView(
                     )
                 },
                 modifier = Modifier
-                    .barScaleModifier(draggableState)
+                    .singlePhotoBottomBarProperties(
+                        draggableState = draggableState,
+                        secondFR = secondFR,
+                        thirdFR = thirdFR
+                    )
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -255,28 +267,28 @@ fun SecurePhotoView(
         val useCache by viewModel.useCache.collectAsStateWithLifecycle()
         val useTapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
 
-        Column(
+        HorizontalImageList(
+            items = items,
+            state = state,
+            window = window,
+            appBarsVisible = appBarsVisible,
+            isSecuredMedia = true,
+            scrollState = scrollState,
+            blurViews = { blurViews },
+            useBlackBackground = { useBlackBackground },
+            useCache = { useCache },
+            useTapToNav = { useTapToNav },
+            swipeDownProgress = { draggableState.progress },
             modifier = Modifier
-                .padding(0.dp)
-                .background(if (useBlackBackground) Color.Black else MaterialTheme.colorScheme.background)
-                .fillMaxSize(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            HorizontalImageList(
-                items = items,
-                state = state,
-                window = window,
-                appBarsVisible = appBarsVisible,
-                isSecuredMedia = true,
-                scrollState = scrollState,
-                blurViews = { blurViews },
-                useBlackBackground = { useBlackBackground },
-                useCache = { useCache },
-                useTapToNav = { useTapToNav },
-                swipeDownProgress = { draggableState.progress }
-            )
-        }
+                .singlePhotoProperties(
+                    state = state,
+                    draggableState = draggableState,
+                    firstFR = firstFR,
+                    secondFR = secondFR,
+                    thirdFR = thirdFR,
+                    isVideo = { currentMediaItem.item.type == MediaType.Video }
+                )
+        )
 
         if (showInfoDialog) {
             SingleSecurePhotoInfoDialog(
