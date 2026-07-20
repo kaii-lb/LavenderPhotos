@@ -688,4 +688,11 @@
     <string name="navigation_tap_to_nav">Toca para navegar</string>
     <string name="navigation_tap_to_nav_desc">Toca xusto no bordo dereito ou esquerdo da pantalla para ir adiante e atrás entre o multimedia</string>
     <string name="contributor_stacsk_desc">Incidencias identificadas e suxestións de melloras para avanzar no desenvolvemento da app</string>
+    <string name="debugging_report_issue">Informar dun problema</string>
+    <string name="debugging_report_issue_bug">Informe de fallo</string>
+    <string name="debugging_report_issue_bug_desc">Axuda a solucionar unha incidencia na app</string>
+    <string name="debugging_report_issue_feature">Solicitar nova función</string>
+    <string name="debugging_report_issue_feature_desc">Suxerir unha función nova para a app</string>
+    <string name="debugging_report_issue_other">Outra</string>
+    <string name="debugging_report_issue_other_desc">Informa doutro tema</string>
 </resources>
