@@ -74,7 +74,6 @@
     <string name="app_description">Privacy-first, performant, and stylish open-source gallery app</string>
     <string name="app_version">Version %1$s</string>
     <string name="app_repo">App\'s Repository</string>
-    <string name="app_get">Download this app</string>
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="privacy_policy">There isn\'t one! None of your data goes anywhere but this device. No AI is trained on it, no algorithms to harvest information, nothing. Lavender Photos has and always will be a privacy focused gallery app.</string>
     <string name="support">Support &amp; Donations</string>

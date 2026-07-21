@@ -369,7 +369,6 @@
     <string name="app_description">Конфіденційність на першому місці, продуктивний та стильний додаток галерея з відкритим кодом</string>
     <string name="app_version">Версія %1$s</string>
     <string name="app_repo">Сховище Додатку</string>
-    <string name="app_get">Завантажити цей додаток</string>
     <string name="secure_migrating_notice_desc">Захищена тека тепер зашифрована! Всі ваші фото тепер захищенні повністю і є недоторканими для будь-кого. Як запобіжний захід, копія ваших захищених фото тепер знаходиться в теці експорту, ви можете знайти її на сторінці альбомів або в Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports.</string>
     <string name="secure_restore_failed">Помилка при відновлені медіа</string>
     <string name="secure_share_media">Поділитись захищеним медіа</string>

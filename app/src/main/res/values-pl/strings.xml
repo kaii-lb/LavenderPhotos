@@ -526,7 +526,6 @@
     <string name="app_description">Aplikacja galerii open-source, która stawia na prywatność, jest wydajna i stylowa</string>
     <string name="app_version">Wersja %1$s</string>
     <string name="app_repo">Repozytorium aplikacji</string>
-    <string name="app_get">Pobierz tę aplikację</string>
     <string name="debugging_spawn_progress_snackbar">Wywołaj pasek postępu</string>
     <string name="debugging_spawn_progress_snackbar_desc">Wyświetla pasek postępu aktualizowany co sekundę przez 5 sekund</string>
     <string name="debugging_internals">Wewnętrzne</string>

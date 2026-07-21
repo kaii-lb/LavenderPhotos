@@ -526,7 +526,6 @@
     <string name="app_description">Aplikasi galeri open-source yang mengutamakan privasi, cepat, dan bergaya</string>
     <string name="app_version">Versi %1$s</string>
     <string name="app_repo">Repositori aplikasi</string>
-    <string name="app_get">Unduh aplikasi ini</string>
     <string name="debugging_spawn_progress_snackbar">Munculkan Snackbar Progres</string>
     <string name="debugging_spawn_progress_snackbar_desc">Menampilkan bilah progres terbatas dengan pembaruan progres setiap detik selama 5 detik</string>
     <string name="debugging_internals">Internal</string>

@@ -455,7 +455,6 @@
     <string name="albums_immich_not_backed_up">未备份</string>
     <string name="navigation_away">导航至另一页</string>
     <string name="app_repo">此应用的仓库</string>
-    <string name="app_get">下载本应用</string>
     <string name="app_version">版本号%1$s</string>
     <string name="secure_restore_failed">未能恢复媒体</string>
 </resources>

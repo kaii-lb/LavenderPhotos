@@ -277,7 +277,6 @@
     <string name="app_description">تطبيق معرض صور مفتوح المصدر، أنيق وسريع، يضع الخصوصية أولًا</string>
     <string name="app_version">الإصدار %1$s</string>
     <string name="app_repo">مستودع التطبيق</string>
-    <string name="app_get">تنزيل هذا التطبيق</string>
     <string name="updates_notice_desc"><![CDATA[
             <p>لا ينزّل محدّث التطبيق هذا ملفات APK. فهو يضع رابطًا إلى <a href="https://github.com/kaii-lb/LavenderPhotos/releases">إصدارات GitHub</a> فقط. وهذا
                 يعني أن ملفات APK هذه لا تخضع للفحص والاختبار الإضافيين اللذين تجريهما IzzyOnDroid أو F-Droid أو جهات أخرى.

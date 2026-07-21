@@ -526,7 +526,6 @@
     <string name="app_description">Aplicación de galería con código aberto, estilo, bo rendemento e que con privacidade</string>
     <string name="app_version">Versión %1$s</string>
     <string name="app_repo">Repositorio da app</string>
-    <string name="app_get">Descarga esta app</string>
     <string name="debugging_spawn_progress_snackbar">Spawn Progress Snackbar</string>
     <string name="debugging_spawn_progress_snackbar_desc">Mostra unha barra de progreso finita que se actualiza cada segundo durante 5 segundos</string>
     <string name="debugging_internals">Internos</string>

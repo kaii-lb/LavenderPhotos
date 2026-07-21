@@ -63,7 +63,6 @@
     <string name="app_description">App galleria open source veloce, elegante e progettata per la privacy</string>
     <string name="app_version">Versione %1$s</string>
     <string name="app_repo">Repository dell\'App</string>
-    <string name="app_get">Scarica quest\'app</string>
     <string name="privacy_policy_title">Informativa sulla privacy</string>
     <string name="privacy_policy">Nessuno dei tuoi dati lascerà mai questo dispositivo. Nessuna IA viene addestrata sui tuoi dati, nessun algoritmo viene usato per raccogliere informazioni. Lavender Photos è, e sarà sempre, un’app galleria incentrata sulla privacy.</string>
     <string name="support">Supporto e donazioni</string>

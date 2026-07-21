@@ -534,7 +534,6 @@
     <string name="app_description">Быстрое и стильное приложение-галерея с открытым исходным кодом, для которого конфиденциальность превыше всего</string>
     <string name="app_version">Версия %1$s</string>
     <string name="app_repo">Репозиторий приложения</string>
-    <string name="app_get">Скачать приложение</string>
     <string name="favourites_migration_in_progress_short">Выполняется</string>
     <string name="debugging_spawn_progress_snackbar">Показать панель прогресса</string>
     <string name="debugging_spawn_progress_snackbar_desc">Показывает ограниченную шкалу прогресса, обновляющуюся каждую секунду в течение 5 секунд</string>
