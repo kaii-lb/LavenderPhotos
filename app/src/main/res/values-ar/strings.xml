@@ -277,15 +277,7 @@
     <string name="app_description">تطبيق معرض صور مفتوح المصدر، أنيق وسريع، يضع الخصوصية أولًا</string>
     <string name="app_version">الإصدار %1$s</string>
     <string name="app_repo">مستودع التطبيق</string>
-    <string name="updates_notice_desc"><![CDATA[
-            <p>لا ينزّل محدّث التطبيق هذا ملفات APK. فهو يضع رابطًا إلى <a href="https://github.com/kaii-lb/LavenderPhotos/releases">إصدارات GitHub</a> فقط. وهذا
-                يعني أن ملفات APK هذه لا تخضع للفحص والاختبار الإضافيين اللذين تجريهما IzzyOnDroid أو F-Droid أو جهات أخرى.
-
-                <br><br>تكون الإصدارات المستضافة على GitHub دائمًا موقعة ومفحوصة ومتحققًا منها بواسطة المطور (kaii-lb)، لكن قرار استخدامها يعود إليك.
-
-                <br><br>لا يجري Lavender Photos تحديثات تلقائية مطلقًا، ولا يُحدّث إلا بعد موافقة صريحة من المستخدم.
-            </p>
-        ]]></string>
+    <string name="updates_notice_desc"><![CDATA["<p>لا ينزّل محدّث التطبيق هذا ملفات APK. فهو يضع رابطًا إلى <a href=\"https://github.com/kaii-lb/LavenderPhotos/releases\">إصدارات GitHub</a> فقط. وهذا\n                يعني أن ملفات APK هذه لا تخضع للفحص والاختبار الإضافيين اللذين تجريهما IzzyOnDroid أو F-Droid أو جهات أخرى.\n\n                <br><br>تكون الإصدارات المستضافة على GitHub دائمًا موقعة ومفحوصة ومتحققًا منها بواسطة المطور (kaii-lb)، لكن قرار استخدامها يعود إليك.\n\n                <br><br>لا يجري Lavender Photos تحديثات تلقائية مطلقًا، ولا يُحدّث إلا بعد موافقة صريحة من المستخدم.\n            </p>"]]></string>
     <string name="secure_migrating_notice">إشعار الترحيل</string>
     <string name="secure_restore_failed">تعذرت استعادة الوسائط</string>
     <string name="secure_share_media">مشاركة الوسائط المؤمنة</string>
@@ -489,7 +481,7 @@
     <string name="look_and_feel_app_language_desc">تغيير لغة عرض التطبيق. قد يتطلب ذلك إعادة تشغيله. الحالية: %1$s</string>
     <string name="look_and_feel_palette">لوحة الألوان</string>
     <string name="look_and_feel_palette_desc">تغيير نظام ألوان التطبيق</string>
-    <string name="look_and_feel_colors">الألوان والنمط</string>
+    <string name="look_and_feel_colors">الألوان والأنمط</string>
     <string name="look_and_feel_colors_desc">تخصيص مظهر التطبيق وتغيير لوحات الألوان وتبديل السمات الديناميكية</string>
     <string name="look_and_feel_style">نمط التطبيق</string>
     <string name="look_and_feel_style_desc">اختيار نمط ألوان التطبيق</string>
@@ -546,19 +538,7 @@
     <string name="immich_server">خادم Immich</string>
     <string name="immich_help_general">ما هذا؟</string>
     <string name="immich_help_general_desc">يسمح بنسخ الوسائط احتياطيًا إلى خادم Immich على مستوى الألبوم</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> هو حل مستضاف ذاتيًا لإدارة الصور ومقاطع الفيديو،
-            ويتيح لأي شخص استضافة خادم النسخ الاحتياطي السحابي الخاص به.
-            </p>
-            <h3 style="text-align:center;">كيفية الاستخدام؟<h3/>
-            <ul>
-                <li>استضف <a href="https://immich.app/">خادم Immich</a> بنفسك</li>
-                <li>حدد عنوان الخادم في Lavender Photos</li>
-                <li>سجل الدخول باستخدام حساب مستخدم Immich</li>
-                <li>انتقل إلى أي ألبوم وانقر على أيقونة السحابة</li>
-                <li>ابدأ نسخ صورك احتياطيًا!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["<p><a href=\"https://immich.app/\">Immich</a> هو حل مستضاف ذاتيًا لإدارة الصور ومقاطع الفيديو،\n            ويتيح لأي شخص استضافة خادم النسخ الاحتياطي السحابي الخاص به.\n            </p>\n            <h3 style=\"text-align:center;\">كيفية الاستخدام؟<h3/>\n            <ul>\n                <li>استضف <a href=\"https://immich.app/\">خادم Immich</a> بنفسك</li>\n                <li>حدد عنوان الخادم في Lavender Photos</li>\n                <li>سجل الدخول باستخدام حساب مستخدم Immich</li>\n                <li>انتقل إلى أي ألبوم وانقر على أيقونة السحابة</li>\n                <li>ابدأ نسخ صورك احتياطيًا!</li>\n            </ul>"]]></string>
     <string name="immich_server_url_invalid">عنوان URL غير صالح!</string>
     <string name="immich_misc">متفرقات</string>
     <string name="immich_server_online">متصل</string>
@@ -687,4 +667,11 @@
     <string name="navigation_tap_to_nav">الضغط للتصفح</string>
     <string name="navigation_tap_to_nav_desc">اضغط على اقصى حافة الشاشة للتنقل بين الصور</string>
     <string name="contributor_stacsk_desc">عثر على المشاكل و اقترح العديد من التحسينات لتطور التطبيق</string>
+    <string name="debugging_report_issue">الإبلاغ عن مشكلة</string>
+    <string name="debugging_report_issue_bug">خطأ</string>
+    <string name="debugging_report_issue_bug_desc">المساعدة على تصحيح خطأ في التطبيق</string>
+    <string name="debugging_report_issue_feature">طلب ميزة جديدة</string>
+    <string name="debugging_report_issue_feature_desc">اقتراح ميزة للاضافة الى تطبيق</string>
+    <string name="debugging_report_issue_other">غير</string>
+    <string name="debugging_report_issue_other_desc">ابلاغ عن شيئ اخر</string>
 </resources>
