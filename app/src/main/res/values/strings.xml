@@ -1,7 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Basic -->
     <string name="app_name">Photos</string>
-
     <!-- Albums -->
     <string name="albums">Albums</string>
     <string name="finding_albums_on_device">Finding albums…</string>
@@ -40,7 +40,6 @@
     <string name="albums_immich_not_backed_up">Not backed up</string>
     <string name="albums_rename_failure">Invalid album name</string>
     <string name="albums_search_for">Search for an album</string>
-
     <!-- Tabs -->
     <string name="tabs">Tabs</string>
     <string name="tabs_default">Default Tab</string>
@@ -55,7 +54,6 @@
     <string name="tabs_empty_params">Tab parameters cannot be empty</string>
     <string name="tabs_max_reached">Can\'t add more than 16 tabs</string>
     <string name="tabs_min_reached">At least one tab needs to exist</string>
-
     <!-- Navigation -->
     <string name="return_to_previous_page">Return to previous page</string>
     <string name="navigation">Navigation</string>
@@ -68,7 +66,6 @@
     <string name="navigation_away">Navigates to another page</string>
     <string name="navigation_tap_to_nav">Tap To Navigate</string>
     <string name="navigation_tap_to_nav_desc">Tap the very left or right sides of the screen to navigate back and forth between media</string>
-
     <!-- App -->
     <string name="app_name_full">Lavender Photos</string>
     <string name="app_description">Privacy-first, performant, and stylish open-source gallery app</string>
@@ -82,7 +79,6 @@
     <string name="licenses_extra">Extra Details</string>
     <string name="licenses_extra_desc">View more detailed information on licenses</string>
     <string name="special_thanks_to">Special thanks to:</string>
-
     <!-- Updates -->
     <string name="updates">Updates</string>
     <string name="updates_check">Check for Updates</string>
@@ -104,7 +100,6 @@
     <string name="updates_latest">Up to Date</string>
     <string name="updates_checking">Checking For Updates</string>
     <string name="updates_no_changelog">No Changelog Available</string>
-
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Locked Folder is a secure folder for your images and videos on this device.\nThe secured media is never uploaded anywhere and is always on-device, encrypted with a key unique to your device\'s password or fingerprint data.</string>
     <string name="locked_folder_help_bottom">The secured data cannot be restored if the password was forgotten or the fingerprint was removed.\nSecured items will be lost upon uninstall of the app, back them up accordingly.</string>
@@ -129,7 +124,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="secure_move_out">Move media out of Secure Folder?</string>
     <string name="secure_restore_failed">Failed restoring media</string>
     <string name="secure_share_media">Share secured media</string>
-
     <!-- Data and Backup -->
     <string name="export_unenc_backup">Export Unencrypted Backup</string>
     <string name="export_unenc_backup_desc">Exports a folder of all your secured items, unencrypted</string>
@@ -152,7 +146,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="export_settings_backup_load">Load App Data</string>
     <string name="export_settings_backup_load_desc">Loads the app settings and albums from a JSON file. Will overwrite any existing settings.</string>
     <string name="export_settings_backup_load_error">Couldn\'t load data</string>
-
     <!-- Favourites -->
     <string name="favourites">Favourites</string>
     <string name="favourites_add_this">Favourite this media</string>
@@ -166,7 +159,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="favourites_migration_done">Migration Done!</string>
     <string name="favourites_migration_declined">Permissions Declined!</string>
     <string name="favourites_migration_declined_desc">Lavender Photos cannot transfer your favourites from the old version if you don\'t allow it permissions to do so! This means you\'ll lose your previously favourited items.</string>
-
     <!-- Debugging -->
     <string name="debugging">Debugging</string>
     <string name="debugging_development">Development</string>
@@ -198,7 +190,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="debugging_report_issue_feature_desc">Suggest a feature to add to this app</string>
     <string name="debugging_report_issue_other">Other</string>
     <string name="debugging_report_issue_other_desc">Report something else</string>
-
     <!-- Video -->
     <string name="video">Video</string>
     <string name="video_auto_play">Auto Play Videos</string>
@@ -216,7 +207,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="video_open_externally">Open In External Player</string>
     <string name="video_open_externally_desc">Ask what to open videos with on tap from a grid</string>
     <string name="video_change_audio_track">Change the audio track of this video</string>
-
     <!-- Editing -->
     <string name="edit">Edit</string>
     <string name="editing">Editing</string>
@@ -260,7 +250,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_open_with_copying_image">Processing image…</string>
     <string name="editing_resolution_scale">Scale</string>
     <string name="editing_export_image_failed">Couldn\'t export photo</string>
-
     <!-- Editing Filters -->
     <string name="filter">Filter</string>
     <string name="filter_none">None</string>
@@ -307,7 +296,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="filter_shimmer_desc">don\'t jinx it</string>
     <string name="filter_select">Select</string>
     <string name="filter_selected">Selected</string>
-
     <!-- Video Editing -->
     <string name="editing_trim">Trim</string>
     <string name="editing_export_video_loading">Exporting Video…</string>
@@ -320,7 +308,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="editing_volume">Volume</string>
     <string name="editing_wilson">Speed</string>
     <string name="editing_fps">FPS</string>
-
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="settings_general">General</string>
@@ -358,14 +345,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="settings_sort_mode_month_taken">Month Taken</string>
     <string name="settings_sort_mode_date_taken_no_separators">Date Taken without separation</string>
     <string name="settings_sort_mode_date_modified_no_separators">Last Modified without separation</string>
-
     <!-- Trash -->
     <string name="trash_bin_short">Trash</string>
     <string name="trash_bin">Trash Bin</string>
     <string name="trash_empty">Empty trash bin?</string>
     <string name="trash_empty_desc">This deletes all items in the trash bin, this action cannot be undone</string>
     <string name="trash_empty_confirm">Empty Out</string>
-
     <!-- Permissions -->
     <string name="permissions">Permissions</string>
     <string name="permissions_media_manager">Media Manager</string>
@@ -398,7 +383,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="permissions_read_media_explanation">This permission is needed to find photos and videos on the device. Lavender Photos is very strict with what files it reads, and never shares or exploits this info.</string>
     <string name="permissions_manage_media_explanation">This permission is optional, but is highly recommended. Manage Media permission allows Lavender Photos to use Android\'s Content Resolver API to trash/delete/move/copy media, which makes the process much smoother and more interoperable with other apps.</string>
     <string name="permissions_explanation">Permission Explanation</string>
-
     <!-- Media -->
     <string name="media">Media</string>
     <string name="sort_indicator">Sort by indicator</string>
@@ -444,7 +428,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_is_cloud">This is a cloud only item</string>
     <string name="media_select_limit_reached">Selection limit reached!</string>
     <string name="media_sharing">Sharing…</string>
-
     <!-- Search -->
     <string name="search_photo_name">Search for a photo</string>
     <string name="search_photo_tag">Search for a tag</string>
@@ -454,14 +437,12 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="search_no_tags_found">No tags added yet…</string>
     <string name="search">Search</string>
     <string name="search_nothing_found">Nothing found</string>
-
     <!-- Explanations -->
     <string name="edit_desc">Lavender Photos edited file at %1$s</string>
     <string name="custom_album_remove_media">Remove</string>
     <string name="custom_album_remove_media_desc">Remove these items from the album?</string>
     <string name="action_cannot_be_undone">This action cannot be undone!</string>
     <string name="explanation_nothing_here">Nothing here…</string>
-
     <!-- Miscellaneous -->
     <string name="show_options">Show more options</string>
     <string name="set_as_wallpaper">Set as Wallpaper</string>
@@ -488,7 +469,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="metadata">Metadata</string>
     <string name="media_picker_processing_items">Processing items…</string>
     <string name="media_picker_processing_items_body">Processing %1$d out of %2$d</string>
-
     <!--  App Lock  -->
     <string name="app_lock">App Lock</string>
     <string name="app_lock_password">Set PIN</string>
@@ -502,7 +482,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="app_lock_confirm">Confirm your PIN</string>
     <string name="app_lock_submit">Submit PIN for checking</string>
     <string name="app_lock_backspace">Delete last input character</string>
-
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>
     <string name="bottom_sheets_freeform">Freeform</string>
@@ -515,7 +494,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="bottom_sheets_four_by_three">4:3</string>
     <string name="bottom_sheets_three_by_two">3:2</string>
     <string name="bottom_sheets_ratio_selected">This cropping ratio is selected</string>
-
     <!-- Error Views -->
     <string name="error_views_trash_empty">Trashed items show up here</string>
     <string name="error_views_trash_prefix">Trashed:</string>
@@ -526,7 +504,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>
     <string name="error_views_main_empty">Seems empty...</string>
-
     <!-- Look and Feel -->
     <string name="look_and_feel_styling_separator">Styling</string>
     <string name="look_and_feel_date_format">Date Format</string>
@@ -569,7 +546,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="look_and_feel_style_night">Night</string>
     <string name="look_and_feel_style_dynamic">Dynamic Colors</string>
     <string name="look_and_feel_style_dynamic_desc">Use colors from the device\'s wallpaper and system theme</string>
-
     <!-- Immich -->
     <string name="immich_title">Immich Backup</string>
     <string name="immich_account">Immich Account</string>
@@ -689,7 +665,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_share_album_other_links">Other links from this album</string>
     <string name="immich_share_album_delete_link">Delete this immich share link</string>
     <string name="immich_share_album_expires_at">Expires at: %s</string>
-
     <!--  Exif  -->
     <string name="exif_name">Name:</string>
     <string name="exif_path">Path:</string>
@@ -703,7 +678,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="exif_size">Size:</string>
     <string name="exif_date_changed_failed">Failed changing date</string>
     <string name="exif_date_changer_go_back">Go back to date picker</string>
-
     <!--  Privacy  -->
     <string name="privacy_scroll_mode">Privacy Mode</string>
     <string name="privacy_scroll_mode_enabled">Privacy Mode: Enabled</string>
@@ -711,7 +685,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="privacy_scroll_mode_prompt">Manage access to scrolling and actions</string>
     <string name="privacy_scroll_mode_fail">Failed to change privacy mode</string>
     <string name="privacy_scroll_mode_exit_tried">Privacy mode enabled</string>
-
     <!--  Startup Processing  -->
     <string name="startup_processing_indexing">Discovering…</string>
     <string name="startup_processing_info">This is a one-time operation.</string>
@@ -719,10 +692,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="startup_processing_explanation">Why the wait?</string>
     <string name="startup_processing_explanation_desc">Lavender Photos indexes media on your device to provide accurate dates, faster loading times, and better features. This is a <b>one-time</b> operation, and should take around <i>30s to 2mins</i> depending on how many items there are on your device. If you interrupt the processes, it will resume on the next launch.</string>
     <string name="startup_processing_skip">Skip</string>
-
     <!--  Main Dialog  -->
     <string name="main_dialog_greeting">Hi, %s!</string>
-
     <!--  Tags  -->
     <string name="tags_add">Add a tag!</string>
     <string name="tags_exists">Tag already exists!</string>
@@ -733,7 +704,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="tags_favourited_false">Favourite: No</string>
     <string name="tags">Tags</string>
     <string name="tags_delete">Delete tag \"%s\"?</string>
-
     <!--  Album Groups  -->
     <string name="album_group">Album Group</string>
     <string name="album_group_desc">Organize your albums</string>
@@ -744,7 +714,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="album_group_item_count">Sub-albums:</string>
     <string name="album_group_info">Album group info</string>
     <string name="album_group_show_add_dialog">Add albums to this group</string>
-
     <!--  News  -->
     <string name="news">News</string>
     <string name="news_note">Note: %1$s</string>
@@ -754,7 +723,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="news_category_fix">Fixes</string>
     <string name="news_version_latest">Latest</string>
     <string name="news_version_broken">Broken</string>
-
     <!--  Contributors  -->
     <string name="contributor">Contributor</string>
     <string name="contributor_major">Major Contributor</string>
