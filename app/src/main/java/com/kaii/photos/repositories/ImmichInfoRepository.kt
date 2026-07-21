@@ -3,7 +3,9 @@ package com.kaii.photos.repositories
 import android.content.Context
 import android.net.Uri
 import android.util.Patterns
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.domain.immich.ImmichServerInfo
@@ -33,7 +35,8 @@ class ImmichInfoRepository(
     private val serverClient: ServerClient,
     private val loginClient: LoginClient,
     private val userClient: UserClient,
-    private val settings: SettingsImmichImpl,
+    private val immichSettings: SettingsImmichImpl,
+    private val albumSettings: SettingsAlbumsListImpl,
     scope: CoroutineScope
 ) {
     private val _serverInfo = MutableStateFlow<ImmichServerInfo?>(null)
@@ -59,7 +62,7 @@ class ImmichInfoRepository(
 
     init {
         scope.launch {
-            settings.getImmichBasicInfo().collectLatest { info ->
+            immichSettings.getImmichBasicInfo().collectLatest { info ->
                 auth = info.auth
                 endpoint = info.endpoint
 
@@ -154,14 +157,14 @@ class ImmichInfoRepository(
         when (_userInfo.value) {
             is ImmichLoginState.LoggedIn -> {
                 val info = (_userInfo.value as ImmichLoginState.LoggedIn).user
-                settings.setUpdatedAt(date = info.updatedAt)
-                settings.setUsername(name = info.name)
+                immichSettings.setUpdatedAt(date = info.updatedAt)
+                immichSettings.setUsername(name = info.name)
                 _refreshChannel.trySend(OperationStatus.Successful)
             }
 
             is ImmichLoginState.LoggedOut -> {
                 _refreshChannel.trySend(OperationStatus.Failed)
-                settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
+                immichSettings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
             }
 
             else -> {
@@ -210,8 +213,17 @@ class ImmichInfoRepository(
             if (success) {
                 _userInfo.value = ImmichLoginState.LoggedOut
 
-                val info = settings.getImmichBasicInfo().first()
-                settings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = info.endpoint))
+                val info = immichSettings.getImmichBasicInfo().first()
+                immichSettings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = info.endpoint))
+
+                albumSettings.get().first().let { albums ->
+                    albumSettings.removeAll(
+                        albumIds = albums.mapNotNull { album ->
+                            if (album is AlbumType.Cloud) album.immichId
+                            else null
+                        }
+                    )
+                }
             }
         }
     }

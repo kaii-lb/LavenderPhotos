@@ -318,17 +318,9 @@ class MainActivity : ComponentActivity() {
                             factory = SearchViewModelFactory(context = context)
                         )
 
-                        val checkForUpdatesOnStartup by viewModel.checkUpdatesOnStartup.collectAsStateWithLifecycle()
-                        if (checkForUpdatesOnStartup) {
-                            val updaterViewModel = viewModel<UpdaterViewModel>(
-                                viewModelStoreOwner = storeOwner,
-                                factory = UpdaterViewModelFactory(context = context)
-                            )
-
-                            LaunchedEffect(Unit) {
-                                updaterViewModel.updateStateChannel.collectLatest { state ->
-                                    if (state != UpdateState.Available) return@collectLatest
-
+                        LaunchedEffect(Unit) {
+                            viewModel.updateStateChannel.collectLatest { updateState ->
+                                if (updateState == UpdateState.Available) {
                                     LavenderSnackbarController.pushEvent(
                                         event = LavenderSnackbarEvent.ActionEvent(
                                             message = resources.getString(R.string.updates_new_version_available),

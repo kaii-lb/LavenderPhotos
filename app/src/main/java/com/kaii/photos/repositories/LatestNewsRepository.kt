@@ -1,8 +1,8 @@
 package com.kaii.photos.repositories
 
 import com.kaii.photos.data.datasources.LatestNewsDataSource
-import com.kaii.photos.data.parsers.LnmParser
 import com.kaii.photos.data.parsers.HTMLToLnmParser
+import com.kaii.photos.data.parsers.LnmParser
 import com.kaii.photos.data.providers.AppVersionProvider
 import com.kaii.photos.domain.news.News
 
@@ -13,7 +13,6 @@ class LatestNewsRepository(
     private val versionProvider: AppVersionProvider
 ) {
     suspend fun getNews(): List<News> {
-
         val markdown = dataSource.fetch() ?: return emptyList()
         val lnm = hTMLToLnmParser.parse(markdown)
 

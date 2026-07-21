@@ -16,9 +16,11 @@ import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.domain.immich.ImmichLoginState
+import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.models.BaseViewModel
 import com.kaii.photos.repositories.HybridRepository
+import com.kaii.photos.repositories.LatestNewsRepository
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
@@ -28,11 +30,13 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -45,7 +49,8 @@ class MainGridViewModel(
     context: Context,
     override val scope: CoroutineScope = PhotosApplication.appModule.scope,
     override val apiClient: ApiClient = PhotosApplication.appModule.apiClient,
-    private val db: MediaDatabase = PhotosApplication.appModule.db
+    private val db: MediaDatabase = PhotosApplication.appModule.db,
+    private val latestNewsRepository: LatestNewsRepository
 ) : BaseViewModel() {
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
@@ -102,12 +107,6 @@ class MainGridViewModel(
         initialValue = false
     )
 
-    val checkUpdatesOnStartup = settings.versions.getCheckUpdatesOnStartup().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
-
     override val repo = HybridRepository(
         db = db,
         client = apiClient,
@@ -145,6 +144,9 @@ class MainGridViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val gridMediaFlow = repo.gridMediaFlow
 
+    private val _updateStateChannel = Channel<UpdateState>(1)
+    val updateStateChannel = _updateStateChannel.receiveAsFlow()
+
     init {
         viewModelScope.launch {
             launch {
@@ -155,10 +157,12 @@ class MainGridViewModel(
                     userClient.setEndpoint(it.endpoint)
                     userClient.setAuth(it.auth)
 
-                    val state = getLoginState()
-                    if (state is ImmichLoginState.LoggedIn) {
-                        settings.immich.setUsername(state.user.name)
-                        settings.immich.setUpdatedAt(state.user.updatedAt)
+                    if (it.endpoint.isNotBlank() && it.auth.isValid()) {
+                        val state = getLoginState()
+                        if (state is ImmichLoginState.LoggedIn) {
+                            settings.immich.setUsername(state.user.name)
+                            settings.immich.setUpdatedAt(state.user.updatedAt)
+                        }
                     }
                 }
             }
@@ -166,6 +170,20 @@ class MainGridViewModel(
             launch {
                 sortMode.collect {
                     selectionManager.setSortMode(it)
+                }
+            }
+
+            launch {
+                settings.versions.getCheckUpdatesOnStartup().collectLatest {
+                    if (!it) return@collectLatest
+
+                    _updateStateChannel.send(UpdateState.Loading)
+
+                    if (latestNewsRepository.hasUpdate()) {
+                        _updateStateChannel.send(UpdateState.Available)
+                    } else {
+                        _updateStateChannel.send(UpdateState.NotAvailable)
+                    }
                 }
             }
         }

@@ -189,6 +189,8 @@ class AlbumGridState(
     }
 
     private suspend fun updateImmich() = withContext(Dispatchers.IO) {
+        if (immichInfo.endpoint.isBlank() || !immichInfo.auth.isValid()) return@withContext
+
         val serverClient = ServerClient(
             client = apiClient,
             endpoint = immichInfo.endpoint,

@@ -6,11 +6,9 @@ import com.kaii.photos.data.providers.UpdaterParamProvider
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.repositories.LatestNewsRepository
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,9 +21,6 @@ class UpdaterViewModel(
 
     private val _updateState = MutableStateFlow(UpdateState.Loading)
     val updateState = _updateState.asStateFlow()
-
-    private val _updateStateChannel = Channel<UpdateState>(1)
-    val updateStateChannel = _updateStateChannel.receiveAsFlow()
 
     val showUpdateNotice = paramProvider.showUpdateNotice.stateIn(
         scope = viewModelScope,
@@ -46,8 +41,6 @@ class UpdaterViewModel(
             _updateState.value =
                 if (latestNewsRepository.hasUpdate()) UpdateState.Available
                 else UpdateState.NotAvailable
-
-            _updateStateChannel.trySend(_updateState.value)
         }
     }
 }

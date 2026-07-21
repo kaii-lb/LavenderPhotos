@@ -19,7 +19,7 @@ class LatestNewsDataSource {
             },
 
             failure = { error ->
-                Log.e(TAG, error.message.toString())
+                Log.e(TAG, "Failed to fetch latest news. ${error.message}")
                 error.printStackTrace()
 
                 return@withContext null
@@ -40,7 +40,7 @@ class LatestNewsDataSource {
             },
 
             failure = { error ->
-                Log.e(TAG, error.message.toString())
+                Log.e(TAG, "Failed to fetch latest version. ${error.message}")
                 error.printStackTrace()
 
                 return@withContext null

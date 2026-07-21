@@ -51,7 +51,8 @@ class ImmichInfoViewModel(
             endpoint = "",
             auth = Auth.None
         ),
-        settings = settings.immich,
+        immichSettings = settings.immich,
+        albumSettings = settings.albums,
         scope = viewModelScope
     )
 
