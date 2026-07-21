@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.helpers.TextStylingConstants
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagEditingPageTextField(
     value: () -> String,
