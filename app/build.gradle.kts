@@ -103,11 +103,11 @@ android {
         localeFilters.addAll(
             listOf(
                 "en", "ar", "ca", "cs", "da",
-                "de", "el", "es", "et", "fr",
-                "gl", "hy", "in", "it", "ja",
-                "kn", "pl", "pt", "pt-rBR", "ru",
-                "sv", "tr", "uk", "vl", "zh-rCN",
-                "zh-rTW", "eo", "sk"
+                "de", "el", "eo", "es", "et",
+                "fr", "gl", "hy", "in", "it",
+                "ja", "kn", "pl", "pt", "pt-rBR",
+                "ru", "sk", "sv", "tr", "uk",
+                "vi", "zh-rCN", "zh-rTW",
             )
         )
     }
