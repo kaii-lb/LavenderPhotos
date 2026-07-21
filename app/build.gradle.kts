@@ -79,18 +79,15 @@ android {
     }
 
     packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "/META-INF/DEPENDENCIES"
-            excludes += "/META-INF/LICENSE"
-            excludes += "/META-INF/LICENSE.txt"
-            excludes += "/META-INF/NOTICE"
-            excludes += "/META-INF/NOTICE.txt"
-            excludes += "/META-INF/*.kotlin_module"
-            excludes += "**/kotlin/**"
-            excludes += "**/*.txt"
-            excludes += "**/*.xml"
-        }
+        resources.excludes += setOf(
+            "/META-INF/{AL2.0,LGPL2.1}",
+            "/META-INF/DEPENDENCIES",
+            "/META-INF/LICENSE",
+            "/META-INF/LICENSE.txt",
+            "/META-INF/NOTICE",
+            "/META-INF/NOTICE.txt",
+            "/META-INF/*.kotlin_module"
+        )
 
         jniLibs {
             useLegacyPackaging = false
@@ -98,8 +95,10 @@ android {
     }
 
     androidResources {
+        @Suppress("UnstableApiUsage")
         generateLocaleConfig = true
 
+        @Suppress("UnstableApiUsage")
         localeFilters.addAll(
             listOf(
                 "en", "ar", "ca", "cs", "da",
@@ -124,8 +123,8 @@ baselineProfile {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.activity.ktx)
 
     implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.animation.graphics)
@@ -139,7 +138,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.unit)
     implementation(libs.androidx.navigation.compose)
 
-    implementation(libs.google.material)
     implementation(libs.google.zxing)
 
     implementation(libs.androidx.core.ktx)
