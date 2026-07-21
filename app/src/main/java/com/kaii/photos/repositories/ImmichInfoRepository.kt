@@ -192,6 +192,7 @@ class ImmichInfoRepository(
         auth = Auth.ApiKey(apiKey)
         serverClient.setAuth(auth)
         loginClient.setAuth(auth)
+        userClient.setAuth(auth)
 
         _operationChannel.trySend(OperationStatus.Loading)
         val state = getLoginState()
