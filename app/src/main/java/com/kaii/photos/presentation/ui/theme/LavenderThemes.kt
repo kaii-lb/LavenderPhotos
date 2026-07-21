@@ -35,11 +35,14 @@ object LavenderThemes {
     enum class Theme(val themeColors: ThemeColors) {
         Apple(themeColors = AppleColors),
         Butterfly(themeColors = ButterflyColors),
+        Mint(themeColors = MintColors),
         Cactus(themeColors = CactusColors),
         DragonFruit(themeColors = DragonFruitColors),
+        Apricot(themeColors = ApricotColors),
         Forest(themeColors = ForestColors),
         Lemon(themeColors = LemonColors),
-        Ocean(themeColors = OceanColors)
+        Ocean(themeColors = OceanColors),
+        Sunset(themeColors = SunsetColors)
     }
 
     @SuppressLint("NewApi")
