@@ -676,4 +676,15 @@
     <string name="contributors_separator_developer">Розробник</string>
     <string name="contributors_separator_major">Основні моменти</string>
     <string name="contributors_separator_contributors">Автори відкритого коду</string>
+    <string name="navigation_tap_to_nav">Натисніть для Навігації</string>
+    <string name="navigation_tap_to_nav_desc">Натисніть на край лівої або правої частини екрана щоб зробити переходи вперед і назад між медіа</string>
+    <string name="export_settings_backup_save_load_header">Налаштування Додатку</string>
+    <string name="export_settings_backup_save">Зберегти Дані Додатку</string>
+    <string name="export_settings_backup_save_desc">Експортує налаштування додатку та альбоми в JSON файл, для того щоб можна було відновити в майбутньому. Не зберігає Immich входи або захищені медіа.</string>
+    <string name="export_settings_backup_save_success">Зберегти дані додатку</string>
+    <string name="export_settings_backup_save_error">Неможливо зберегти дані</string>
+    <string name="export_settings_backup_load">Завантажити Дані Додатку</string>
+    <string name="export_settings_backup_load_desc">Завантажує налаштування додатку та альбоми з JSON файлу. Перезапише будь-які існуючі налаштування.</string>
+    <string name="export_settings_backup_load_error">Неможливо завантажити дані</string>
+    <string name="contributor_stacsk_desc">Виявлено проблеми та запропоновано багато покращень для просування розробки додатку</string>
 </resources>

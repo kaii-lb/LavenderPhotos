@@ -684,4 +684,7 @@
     <string name="export_settings_backup_load">تحميل بيانات التطبيق</string>
     <string name="export_settings_backup_load_desc">يحمل إعدادات التطبيق والألبومات من ملف JSON. سيؤدي هذا إلى الكتابة فوق الإعدادات الحالية.</string>
     <string name="export_settings_backup_load_error">تعذر تحميل البيانات</string>
+    <string name="navigation_tap_to_nav">الضغط للتصفح</string>
+    <string name="navigation_tap_to_nav_desc">اضغط على اقصى حافة الشاشة للتنقل بين الصور</string>
+    <string name="contributor_stacsk_desc">عثر على المشاكل و اقترح العديد من التحسينات لتطور التطبيق</string>
 </resources>

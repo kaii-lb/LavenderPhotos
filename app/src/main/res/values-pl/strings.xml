@@ -201,15 +201,7 @@
     <string name="error_views_secure_prefix">Zabezpieczono:</string>
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
-    <string name="updates_notice_desc"><![CDATA[
-            <p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href="https://github.com/kaii-lb/LavenderPhotos/releases">wydań w serwisie GitHub</a>. Oznacza
-                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne platformy.
-
-                <br><br>Kompilacje hostowane na GitHubie są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.
-
-                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.
-            </p>
-        ]]></string>
+    <string name="updates_notice_desc"><![CDATA["<p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href=\"https://github.com/kaii-lb/LavenderPhotos/releases\">wydań w serwisie GitHub</a>. Oznacza\n                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne platformy.\n\n                <br><br>Kompilacje hostowane na GitHubie są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.\n\n                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.\n            </p>"]]></string>
     <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
     <string name="current_run_logs">Aktualne dzienniki logów</string>
     <string name="log_file_non_existent">Jeszcze nie zapisano żadnego pliku loga.</string>
@@ -666,7 +658,7 @@
     <string name="explanation_nothing_here">Nic tu nie ma…</string>
     <string name="look_and_feel_palette">Paleta kolorów</string>
     <string name="look_and_feel_palette_desc">Zmień schemat kolorów aplikacji</string>
-    <string name="look_and_feel_colors">Kolory i styl</string>
+    <string name="look_and_feel_colors">Kolory i style</string>
     <string name="look_and_feel_colors_desc">Dostosuj wygląd aplikacji, zmień paletę kolorów i przełącz dynamiczne motywy</string>
     <string name="look_and_feel_style">Styl aplikacji</string>
     <string name="look_and_feel_style_desc">Wybierz styl kolorystyczny aplikacji</string>
@@ -684,4 +676,14 @@
     <string name="export_settings_backup_load">Wczytaj dane aplikacji</string>
     <string name="export_settings_backup_load_desc">Ładuje ustawienia aplikacji i albumy z pliku JSON. Nadpisze wszelkie istniejące ustawienia.</string>
     <string name="export_settings_backup_load_error">Nie można wczytać danych</string>
+    <string name="navigation_tap_to_nav">Dotknij, aby nawigować</string>
+    <string name="navigation_tap_to_nav_desc">Dotknij krawędzi ekranu z lewej lub prawej strony, aby przełączać multimedia wstecz i w przód</string>
+    <string name="contributor_stacsk_desc">Zidentyfikowano problemy i zaproponowano liczne ulepszenia, aby wspomóc rozwój aplikacji</string>
+    <string name="debugging_report_issue">Zgłoś problem</string>
+    <string name="debugging_report_issue_bug">Raport o błędzie</string>
+    <string name="debugging_report_issue_bug_desc">Pomóż rozwiązać problem z aplikacją</string>
+    <string name="debugging_report_issue_feature">Prośba o funkcję</string>
+    <string name="debugging_report_issue_feature_desc">Zaproponuj funkcję do dodania do tej aplikacji</string>
+    <string name="debugging_report_issue_other">Inne</string>
+    <string name="debugging_report_issue_other_desc">Zgłoś coś innego</string>
 </resources>

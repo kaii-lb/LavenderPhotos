@@ -666,7 +666,7 @@
     <string name="explanation_nothing_here">Nada aquí…</string>
     <string name="look_and_feel_palette">Paleta de color</string>
     <string name="look_and_feel_palette_desc">Cambiar el esquema de color de la aplicación</string>
-    <string name="look_and_feel_colors">Colores y Estilo</string>
+    <string name="look_and_feel_colors">Colores y Estilos</string>
     <string name="look_and_feel_colors_desc">Personalizar el aspecto de la aplicación, cambiar las paletas de colores y cambiar el diseño dinámico</string>
     <string name="look_and_feel_style">Estilo de la app</string>
     <string name="look_and_feel_style_desc">Seleccione el estilo de color de la aplicación</string>
@@ -676,4 +676,22 @@
     <string name="look_and_feel_style_night">Noche</string>
     <string name="look_and_feel_style_dynamic">Colores dinámicos</string>
     <string name="look_and_feel_style_dynamic_desc">Utilice colores del fondo de pantalla y el tema del sistema del dispositivo</string>
+    <string name="navigation_tap_to_nav">Toca Para Navegar</string>
+    <string name="navigation_tap_to_nav_desc">Toque los lados izquierdo o derecho de la pantalla para navegar hacia adelante y hacia atrás entre los elementos</string>
+    <string name="export_settings_backup_save_load_header">Configuración de la aplicación</string>
+    <string name="export_settings_backup_save">Guardar Datos de la Aplicación</string>
+    <string name="export_settings_backup_save_desc">Exporta la configuración de la aplicación y los álbumes a un archivo JSON para que puedan restaurarse más tarde. No guarda los inicios de sesión de Immich ni la multimedia asegurada.</string>
+    <string name="export_settings_backup_save_success">Datos guardados de la aplicación</string>
+    <string name="export_settings_backup_save_error">No se pudieron guardar los datos</string>
+    <string name="export_settings_backup_load">Cargar Datos de la Aplicación</string>
+    <string name="export_settings_backup_load_desc">Carga la configuración de la aplicación y los álbumes desde un archivo JSON. Sobrescribirá cualquier configuración existente.</string>
+    <string name="export_settings_backup_load_error">No se pudieron cargar datos</string>
+    <string name="debugging_report_issue">Reportar un Problema</string>
+    <string name="debugging_report_issue_bug">Reporte de Bug</string>
+    <string name="debugging_report_issue_bug_desc">Ayuda a solucionar un problema con la aplicación</string>
+    <string name="debugging_report_issue_feature">Solicitud de Función</string>
+    <string name="debugging_report_issue_feature_desc">Sugiera una función para agregar a esta aplicación</string>
+    <string name="debugging_report_issue_other">Otro</string>
+    <string name="debugging_report_issue_other_desc">Reportar algo más</string>
+    <string name="contributor_stacsk_desc">Identificó problemas y sugirió muchas mejoras para avanzar en el desarrollo de la aplicación</string>
 </resources>

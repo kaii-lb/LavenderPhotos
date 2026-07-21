@@ -176,7 +176,7 @@
     <string name="error_views_secure_prefix">Diamankan Pada</string>
     <string name="error_views_favourites_empty">Tambahkan memori berharga anda!</string>
     <string name="error_views_folder_non_existent">Folder tidak ada</string>
-    <string name="albums_custom">Album Kustom</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_remove">Hapus</string>
     <string name="albums_info">Info Album</string>
     <string name="albums_path">Jalur:</string>
@@ -189,7 +189,7 @@
     <string name="albums_item_count">Jumlah Item:</string>
     <string name="albums_name">Nama Album</string>
     <string name="albums_type">Jenis Album</string>
-    <string name="albums_folder">Album Folder</string>
+    <string name="albums_folder">Folder</string>
     <string name="albums_add_failed">Gagal menambahkan album :&lt;</string>
     <string name="tabs_navigate_to">Navigasi ke halaman %1$s</string>
     <string name="tabs_add">Tambahkan Tab</string>
@@ -663,4 +663,28 @@
     <string name="contributors_separator_developer">Pengembang</string>
     <string name="contributors_separator_major">Sorotan</string>
     <string name="contributors_separator_contributors">Kontributor open-source</string>
+    <string name="navigation_tap_to_nav">Ketuk untuk Bernavigasi</string>
+    <string name="navigation_tap_to_nav_desc">Ketuk sisi paling kiri atau kanan layar untuk berpindah maju dan mundur di antara media</string>
+    <string name="export_settings_backup_save_load_header">Pengaturan Aplikasi</string>
+    <string name="export_settings_backup_save">Simpan Data Aplikasi</string>
+    <string name="export_settings_backup_save_desc">Mengekspor pengaturan aplikasi dan album ke file JSON agar dapat dipulihkan nanti. Tidak menyimpan login Immich atau media yang diamankan.</string>
+    <string name="export_settings_backup_save_success">Data aplikasi tersimpan</string>
+    <string name="export_settings_backup_save_error">Tidak dapat menyimpan data</string>
+    <string name="export_settings_backup_load">Muat Data Aplikasi</string>
+    <string name="export_settings_backup_load_desc">Memuat pengaturan aplikasi dan album dari file JSON. Akan menimpa pengaturan yang sudah ada.</string>
+    <string name="export_settings_backup_load_error">Tidak dapat memuat data</string>
+    <string name="explanation_nothing_here">Tidak ada apa pun di sini…</string>
+    <string name="look_and_feel_palette">Palet Warna</string>
+    <string name="look_and_feel_palette_desc">Ubah skema warna aplikasi</string>
+    <string name="look_and_feel_colors">Warna &amp; Gaya</string>
+    <string name="look_and_feel_colors_desc">Sesuaikan tampilan aplikasi, ubah palet warna, dan aktifkan atau nonaktifkan tema dinamis</string>
+    <string name="look_and_feel_style">Gaya Aplikasi</string>
+    <string name="look_and_feel_style_desc">Pilih gaya warna aplikasi</string>
+    <string name="look_and_feel_style_system">Sistem</string>
+    <string name="look_and_feel_style_light">Terang</string>
+    <string name="look_and_feel_style_dark">Gelap</string>
+    <string name="look_and_feel_style_night">Malam</string>
+    <string name="look_and_feel_style_dynamic">Warna Dinamis</string>
+    <string name="look_and_feel_style_dynamic_desc">Gunakan warna dari wallpaper dan tema sistem perangkat</string>
+    <string name="contributor_stacsk_desc">Mengidentifikasi masalah dan menyarankan banyak peningkatan untuk memajukan pengembangan aplikasi</string>
 </resources>
