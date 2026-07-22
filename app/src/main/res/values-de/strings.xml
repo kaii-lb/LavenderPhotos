@@ -6,16 +6,16 @@
     <string name="albums_found">Alle Alben gefunden!</string>
     <string name="add_album">Album hinzufügen</string>
     <string name="direct_path_album">Pfad verwenden, um ein Album hinzuzufügen</string>
-    <string name="albums_main_list">Alle in Hauptansicht anzeigen</string>
+    <string name="albums_main_list">Hauptansicht der Alben</string>
     <string name="albums_auto_detect">Alben automatisch erkennen</string>
     <string name="albums_auto_detect_desc">Erkennt alle Ordner mit Medien auf diesem Gerät und fügt sie der Albenansicht hinzu</string>
     <string name="albums_clear_list">Alben-Liste leeren</string>
-    <string name="albums_clear_list_desc">Entferne alle nicht-essentielle Alben aus der Liste der Alben</string>
+    <string name="albums_clear_list_desc">Entfernt alle Albumgruppen und Ordner-Alben, außer benutzerdefinierte- und Cloud-Alben</string>
     <string name="albums_clear_list_done">Alben-Liste geleert</string>
     <string name="albums_media_sorting">Mediensortierung</string>
-    <string name="albums_media_sorting_desc">Stellt die Sortierung von Fotos und Videos auf Raster</string>
+    <string name="albums_media_sorting_desc">Stellt die Sortierung von Fotos und Videos auf Raster. Aktueller Modus: %1$s</string>
     <string name="albums_is_custom">Das ist ein benutzerdefiniertes Album</string>
-    <string name="albums_custom">Benutzerdefiniertes Album</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_non_existent">Keine solche Alben existieren</string>
     <string name="albums_remove_desc">Album von Liste entfernen</string>
     <string name="albums_info">Albuminformation</string>
@@ -23,7 +23,7 @@
     <string name="albums_item_count">Anzahl der Dateien:</string>
     <string name="albums_name">Albumname</string>
     <string name="albums_type">Albumtyp</string>
-    <string name="albums_folder">Ordner Album</string>
+    <string name="albums_folder">Ordner</string>
     <string name="albums_add_failed">Alben konnten nicht hinzugefügt werden :&lt;</string>
     <string name="tabs">Tabs</string>
     <string name="tabs_default">Standard Tab</string>
@@ -48,7 +48,7 @@
     <string name="updates_check_desc">Benachrichtigt über neue Version, wenn die App geöffnet. Installiert die Aktualisierung nicht automatisch</string>
     <string name="updates_whats_new">Neuerungen</string>
     <string name="updates_notice">Downloadinformation</string>
-    <string name="updates_new_version_available">Neue Version verfügbar!</string>
+    <string name="updates_new_version_available">Update verfügbar!</string>
     <string name="updates_latest">Auf dem neuesten Stand</string>
     <string name="updates_checking">Suche nach Aktualisierungen</string>
     <string name="locked_folder_help_top">Gesperrter Ordner ist ein sicherer Ordner für Ihre Bilder und Videos auf diesem Gerät.\nDie gesicherten Medien werden nie irgendwo hochgeladen und befinden sich immer auf dem Gerät, verschlüsselt mit einem Schlüssel, der nur mit dem Passwort oder den Fingerabdruckdaten Ihres Geräts verknüpft ist.</string>
@@ -322,4 +322,11 @@
     <string name="wallpaper_lockscreen">Sperrbildschirm</string>
     <string name="wallpaper_Both">Beide Bildschirme</string>
     <string name="wallpaper_scrollable">Scrollbar</string>
+    <string name="albums_is_cloud_linked">Dies ist ein Album in der Cloud</string>
+    <string name="albums_search_for">Suche nach einem Album</string>
+    <string name="navigation_tap_to_nav">Tippen zum Navigieren</string>
+    <string name="app_version">Version %1$s</string>
+    <string name="app_repo">Das Projektarchiv der App</string>
+    <string name="export_settings_backup_save_load_header">App-Einstellungen</string>
+    <string name="export_settings_backup_save">App-Daten speichern</string>
 </resources>
