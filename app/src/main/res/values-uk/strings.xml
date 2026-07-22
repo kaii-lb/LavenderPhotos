@@ -29,8 +29,8 @@
     <string name="support">Підтримати нас</string>
     <string name="updates_check">Перевірити оновлення</string>
     <string name="updates_check_desc">Повідомляє про нову версію під час відкриття застосунку. Оновлення не встановлюється автоматично</string>
-    <string name="settings_privacy">Приватність та безпека</string>
-    <string name="settings_look_and_feel">Оформлення та поведінка</string>
+    <string name="settings_privacy">Приватність &amp; Безпека</string>
+    <string name="settings_look_and_feel">Вигляд &amp; Відчуття</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_general">Загальні</string>
     <string name="settings">Налаштування</string>
@@ -89,7 +89,7 @@
     <string name="editing_overwrite_on_save_desc">Перезаписувати файл, а не зберігати копію при редагуванні медіа</string>
     <string name="editing_exit_on_save">Виходити після збереження</string>
     <string name="editing_exit_on_save_desc">Автоматично виходити з режиму редагування після збереження змін</string>
-    <string name="settings_memory_storage">Пам’ять та сховище</string>
+    <string name="settings_memory_storage">Пам\'ять &amp; Сховище</string>
     <string name="albums_clear_list">Очистити список альбомів</string>
     <string name="albums_is_custom">Це користувацький альбом</string>
     <string name="albums_custom">Альбом</string>
@@ -131,7 +131,7 @@
     <string name="settings_storage_thumbnails_clear_cache_desc">Очищає кеш мініатюр для звільнення пам’яті</string>
     <string name="settings_clear">Очистити</string>
     <string name="settings_clear_cache_desc">Це видалить увесь кеш мініатюр на цьому пристрої, звільняючи сховище. Завантаження мініатюр при наступному запуску триватиме довше.</string>
-    <string name="settings_about_and_updates">Про програму та оновлення</string>
+    <string name="settings_about_and_updates">Про Програму &amp; Оновлення</string>
     <string name="trash_empty">Очистити смітник?</string>
     <string name="trash_empty_desc">Це видаляє всі елементи з кошика, цю дію не можна скасувати</string>
     <string name="trash_empty_confirm">Очистити</string>
@@ -489,7 +489,7 @@
     <string name="look_and_feel_app_language_desc">Змінити мову відображення додатку. Може потребувати перезавантаження. Поточна: %1$s</string>
     <string name="look_and_feel_palette">Колірна Палітра</string>
     <string name="look_and_feel_palette_desc">Змінити колірну схему додатку</string>
-    <string name="look_and_feel_colors">Кольори та Стиль</string>
+    <string name="look_and_feel_colors">Кольори та Стилі</string>
     <string name="look_and_feel_colors_desc">Кастомізуйте вигляд додатку, змінюйте колірні палітри, та перемикайте динамічні теми</string>
     <string name="look_and_feel_style">Стиль Додатку</string>
     <string name="look_and_feel_style_desc">Обрати колірний стиль додатку</string>
@@ -687,4 +687,11 @@
     <string name="export_settings_backup_load_desc">Завантажує налаштування додатку та альбоми з JSON файлу. Перезапише будь-які існуючі налаштування.</string>
     <string name="export_settings_backup_load_error">Неможливо завантажити дані</string>
     <string name="contributor_stacsk_desc">Виявлено проблеми та запропоновано багато покращень для просування розробки додатку</string>
+    <string name="debugging_report_issue">Зробити звіт по Помилці</string>
+    <string name="debugging_report_issue_bug">Звіт по Помилці</string>
+    <string name="debugging_report_issue_bug_desc">Допоможіть полагодити помилку в додатку</string>
+    <string name="debugging_report_issue_feature">Запит на Функцію</string>
+    <string name="debugging_report_issue_feature_desc">Запропонувати функцію для додавання в цей додаток</string>
+    <string name="debugging_report_issue_other">Інше</string>
+    <string name="debugging_report_issue_other_desc">Звітувати щось інше</string>
 </resources>
