@@ -223,7 +223,7 @@
     <string name="error_views_favourites_empty">珍藏您最珍贵的回忆！</string>
     <string name="error_views_folder_non_existent">文件夹不存在</string>
     <string name="albums_main_list_desc_1">显示所选相册的媒体</string>
-    <string name="albums_main_list_desc_2">所选相册将不会在主照片界面中显示</string>
+    <string name="albums_main_list_desc_2">不从选择的相册显示媒体文件</string>
     <string name="albums_custom_desc">添加任意位置的媒体文件</string>
     <string name="albums_folder_desc">从文件夹加载媒体文件</string>
     <string name="albums_pin">置顶此相册</string>
