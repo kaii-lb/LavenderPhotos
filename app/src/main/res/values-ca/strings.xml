@@ -1,4 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fotos</string>
+    <string name="albums">Àlbums</string>
+    <string name="finding_albums_on_device">Buscant àlbums…</string>
+    <string name="albums_found">S\'han trobat tots els àlbums!</string>
+    <string name="add_album">Afegeix un àlbum</string>
+    <string name="direct_path_album">Utilitza un camí directe per afegir un àlbum</string>
+    <string name="albums_main_list">Àlbums de la vista principal</string>
+    <string name="albums_main_list_desc_1">Mostra el contingut multimèdia dels àlbums seleccionats</string>
+    <string name="albums_main_list_desc_2">Mostra el contingut multimèdia que no sigui dels àlbums seleccionats</string>
+    <string name="albums_auto_detect">Auto detecta els àlbums</string>
+    <string name="albums_auto_detect_desc">Detecta tots els directoris amb contingut multimèdia d\'aquest dispositiu, i els afegeix a la vista d\'àlbums</string>
+    <string name="albums_clear_list">Buida la llista d\'àlbums</string>
+    <string name="albums_clear_list_desc">Elimina tots els grups d\'àlbums i directoris d\'àlbums tot conservant els àlbums personalitzats i els del núvol</string>
+    <string name="albums_clear_list_done">S\'ha buidat la llista d\'àlbums</string>
+    <string name="albums_media_sorting">Ordenació del contingut multimèdia</string>
+    <string name="albums_media_sorting_desc">Estipula la ordenació de les fotos i vídeos en quadrícules. Mode actual: %1$s</string>
+    <string name="media_broken">Contingut multimèdia malmès</string>
+    <string name="media_share">Compartir</string>
+    <string name="media_delete">Eliminar</string>
+    <string name="media_delete_confirm">Esborrar aquest fitxer multimèdia?</string>
+    <string name="media_erase">Esborrar</string>
+    <string name="albums_is_custom">Aquest és un àlbum personalitzat</string>
+    <string name="albums_is_cloud">Aquest és un àlbum exclusiu del núvol</string>
+    <string name="albums_is_cloud_linked">Aquest és un àlbum enllaçat al núvol</string>
+    <string name="albums_custom">Àlbum</string>
+    <string name="albums_custom_desc">Afegeix qualsevol mitjà d\'arreu</string>
+    <string name="albums_folder_desc">Carregar mitjans d\'un directori</string>
+    <string name="albums_non_existent">No existeix cap àlbum així</string>
+    <string name="albums_remove">Suprimir</string>
+    <string name="albums_remove_desc">Suprimir l\'àlbum de la llista?</string>
+    <string name="albums_pin">Fixar aquest àlbum</string>
+    <string name="albums_unpin">Deixa de fixar aquest àlbum</string>
+    <string name="albums_info">Informació de l\'àlbum</string>
+    <string name="albums_path">Camí:</string>
+    <string name="albums_paths">Camins:</string>
+    <string name="albums_item_count">Recompte d\'elements:</string>
+    <string name="albums_name">Nom de l\'àlbum</string>
+    <string name="albums_type">Tipus d\'àlbum</string>
+    <string name="albums_folder">Directori</string>
 </resources>
