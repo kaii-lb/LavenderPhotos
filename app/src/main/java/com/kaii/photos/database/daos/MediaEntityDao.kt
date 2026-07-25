@@ -112,7 +112,7 @@ interface MediaDao {
     @Query(value = "SELECT EXISTS(SELECT 1 FROM media WHERE id = :id)")
     suspend fun exists(id: Long): Boolean
 
-    @Query(value = "SELECT * FROM media WHERE id IN (:ids)")
+    @Query(value = "SELECT * FROM media JOIN custom_items ON custom_items.id = media.id WHERE id IN (:ids)")
     suspend fun getMedia(ids: List<Long>): List<MediaStoreData>
 
     @Query(value = "SELECT * FROM media WHERE hash IN (:hashes) AND uri NOT LIKE '/api%'")

@@ -8,6 +8,8 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
@@ -88,14 +90,17 @@ class HybridFileManager(
         immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
-    ): Boolean {
+    ): Result<Unit, FileOperationError> {
         val immich = list.filter { it.immichUrl != null }
         val local = list.filter { !it.isCloud }
 
-        val otherSuccess = otherFileManager.setTrashed(context, local, trashed, albumId.takeIf { isCustom }, immichId, taskId, onItemDone)
-        val cloudSuccess = cloudFileManager.setTrashed(context, immich, trashed, albumId, immichId, taskId, onItemDone)
+        val otherResult = otherFileManager.setTrashed(context, local, trashed, albumId.takeIf { isCustom }, immichId, taskId, onItemDone)
+        val cloudResult = cloudFileManager.setTrashed(context, immich, trashed, albumId, immichId, taskId, onItemDone)
 
-        return otherSuccess && cloudSuccess
+        if (otherResult is Result.Error) return otherResult
+        if (cloudResult is Result.Error) return cloudResult
+
+        return Result.Success(Unit)
     }
 
     override suspend fun permanentlyDelete(
@@ -167,17 +172,17 @@ class HybridFileManager(
         taskId: Int?,
         origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
-    ): Boolean {
+    ): Result<Unit, FileOperationError> {
         val local = list.filter { !it.isCloud }
-        val otherSuccess = otherFileManager.moveItems(context, local, destination, preserveDate, taskId, origin.takeIf { isCustom }, onItemDone)
+        val otherResult = otherFileManager.moveItems(context, local, destination, preserveDate, taskId, origin.takeIf { isCustom }, onItemDone)
 
-        var immichSuccess = true
+        var cloudResult = true
         if (destination.immichId != null) {
             val immich = list.filter { it.isCloud }
-            immichSuccess = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone).size == immich.size
+            cloudResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone) is Result.Success
 
-            if (origin?.immichId != null && immichSuccess) {
-                immichSuccess = cloudFileManager.setTrashed(
+            if (origin?.immichId != null && cloudResult) {
+                cloudResult = cloudFileManager.setTrashed(
                     context = context,
                     list = immich,
                     trashed = true,
@@ -185,7 +190,7 @@ class HybridFileManager(
                     immichId = origin.immichId,
                     taskId = null,
                     onItemDone = {}
-                )
+                ) is Result.Success
             }
         }
 
@@ -193,7 +198,10 @@ class HybridFileManager(
             CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.immichId!!)
         }
 
-        return otherSuccess && immichSuccess
+        if (otherResult is Result.Error) return otherResult
+        if (!cloudResult) return Result.Error(FileOperationError.Failed)
+
+        return Result.Success(Unit)
     }
 
     override suspend fun copyItems(
@@ -204,13 +212,16 @@ class HybridFileManager(
         overrideDisplayName: ((displayName: String) -> String)?,
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
-    ): List<GenericFileManager.CopyResult> {
+    ): Result<List<GenericFileManager.CopyResult>, FileOperationError> {
         val immich = list.filter { it.isCloud }
         val local = list - immich.toSet()
 
         val otherResult = otherFileManager.copyItems(context, local, destination, preserveDate, overrideDisplayName, taskId, onItemDone)
-        val immichResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone)
+        val cloudResult = cloudFileManager.copyItems(context, immich, destination, preserveDate, null, taskId, onItemDone)
 
-        return otherResult + immichResult
+        if (otherResult is Result.Error) return otherResult
+        if (cloudResult is Result.Error) return Result.Error(FileOperationError.Failed)
+
+        return otherResult
     }
 }

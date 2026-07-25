@@ -1,18 +1,19 @@
 package com.kaii.photos.file_management.secure
 
-import android.content.Context
-import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 
 interface GenericSecureManager {
-    /** returns files to be permanently deleted */
+    /** returns file to be permanently deleted */
     suspend fun secure(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ): List<SelectionManager.SelectedItem>
+        mediaItem: MediaStoreData
+    ): Result<FileOperationItemMetadata, FileOperationError>
 
     /** return success state of the operation */
     suspend fun restore(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ): Boolean
+        media: PhotoLibraryUIModel.SecuredMedia
+    ): Result<Unit, FileOperationError>
 }

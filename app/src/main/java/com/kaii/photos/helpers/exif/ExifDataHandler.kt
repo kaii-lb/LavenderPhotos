@@ -18,14 +18,15 @@ import kotlin.time.Instant
 
 private const val TAG = "com.kaii.photos.helpers.ExifDataHandler"
 
+// TODO: suspend was removed from here, switch dispatcher properly elsewhere
 /** @param fallback in seconds */
 @OptIn(ExperimentalTime::class)
-suspend fun getExifDataForMedia(
+fun getExifDataForMedia(
     inputStream: InputStream,
     absolutePath: String,
     is24Hr: Boolean,
     fallback: Long
-): Map<MediaData, String> = withContext(Dispatchers.IO) {
+): Map<MediaData, String> {
     val list = emptyMap<MediaData, String?>().toMutableMap()
 
     val file = File(absolutePath)
@@ -109,7 +110,7 @@ suspend fun getExifDataForMedia(
 
         inputStream.close()
 
-        return@withContext list
+        return list
             .mapNotNull { (key, value) ->
                 if (value != null) key to value else null
             }
@@ -120,7 +121,7 @@ suspend fun getExifDataForMedia(
         Log.e(TAG, e.toString())
         e.printStackTrace()
 
-        return@withContext emptyMap()
+        return emptyMap()
     }
 }
 

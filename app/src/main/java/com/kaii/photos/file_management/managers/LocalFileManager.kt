@@ -1,7 +1,10 @@
 package com.kaii.photos.file_management.managers
 
 import android.app.RecoverableSecurityException
+import android.content.ContentProviderOperation
+import android.content.ContentValues
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.ui.util.fastMap
@@ -10,6 +13,8 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
@@ -17,6 +22,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
+
 
 class LocalFileManager(
     override val mediaDao: MediaDao,
@@ -38,8 +44,8 @@ class LocalFileManager(
         immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext true
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext Result.Success(Unit)
 
         if (albumId != null) {
             throw IllegalArgumentException("${LocalFileManager::class.simpleName} should not and does not handle per album media deletion!")
@@ -48,24 +54,53 @@ class LocalFileManager(
         val contentResolver = context.contentResolver
 
         return@withContext try {
-            val mediaUris = list.fastMap { it.uri.toUri() }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                MediaStore.canManageMedia(context)
+            ) {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.IS_TRASHED, trashed)
+                }
 
-            val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, trashed)
-            context.startIntentSender(pendingIntent.intentSender, null, 0, 0, 0)
+                list.chunked(500) { chunk ->
+                    val operations = ArrayList<ContentProviderOperation>()
+                    chunk.forEach { item ->
+                        val operation = ContentProviderOperation.newUpdate(item.uri.toUri())
+                            .withValues(contentValues)
+                            .build()
 
-            onItemDone(mediaUris.size)
+                        operations.add(operation)
+                    }
 
-            true
+                    contentResolver.applyBatch(MediaStore.AUTHORITY, operations)
+                }
+
+                onItemDone(list.size)
+
+                Result.Success(Unit)
+            } else {
+                val mediaUris = list.fastMap { it.uri.toUri() }
+                val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, trashed)
+
+                Result.Error(
+                    FileOperationError.NeedsRequest(
+                        pendingIntent = pendingIntent
+                    )
+                )
+            }
         } catch (securityException: RecoverableSecurityException) {
             val intentSender = securityException.userAction.actionIntent.intentSender
             context.startIntentSender(intentSender, null, 0, 0, 0)
 
-            true
+            Result.Error(
+                FileOperationError.RecoverableException(
+                    intentSender = intentSender
+                )
+            )
         } catch (e: Throwable) {
             Log.e(TAG, "Setting trashed $trashed on photo list failed.")
             e.printStackTrace()
 
-            false
+            Result.Error(FileOperationError.Failed)
         }
     }
 

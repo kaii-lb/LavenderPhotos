@@ -24,11 +24,8 @@ import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.toBasePath
 import com.kaii.photos.helpers.toRelativePath
 import com.kaii.photos.helpers.volumeName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.roundToLong
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 
@@ -39,16 +36,14 @@ const val LAVENDER_FILE_PROVIDER_AUTHORITY = "com.kaii.photos.LavenderPhotos.fil
 /** @param media the [MediaStoreData] to copy
  * @param destination the absolute path to copy [media] to */
 @OptIn(ExperimentalTime::class)
-suspend fun ContentResolver.insertMedia(
+fun ContentResolver.insertMedia(
     context: Context,
     media: MediaStoreData,
-    destination: String,
-    currentVolumes: Set<String>,
-    preserveDate: Boolean = false,
-    overrideDisplayName: String? = null,
-    onInsert: (origin: Uri, new: Uri) -> Unit // TODO: remove
-): Uri? = withContext(Dispatchers.IO) {
-    val volumeName = destination.volumeName(currentVolumes)
+    destination: String
+): Uri? {
+    val volumeName = destination.volumeName(
+        currentVolumes = MediaStore.getExternalVolumeNames(context)
+    )
 
     val relativeDestination = destination.toRelativePath()
     val storageContentUri = getStorageContentUri(
@@ -57,25 +52,21 @@ suspend fun ContentResolver.insertMedia(
         volumeName = volumeName
     )
 
-    if (preserveDate) {
-        setDateForMedia(
-            uri = media.uri.toUri(),
-            type = media.type,
-            dateTaken = media.dateTaken
-        )
-    }
+    setDateForMedia(
+        uri = media.uri.toUri(),
+        type = media.type,
+        dateTaken = media.dateTaken
+    )
 
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
-            put(MediaColumns.DISPLAY_NAME, overrideDisplayName ?: media.displayName)
+            put(MediaColumns.DISPLAY_NAME, media.displayName)
             put(MediaColumns.RELATIVE_PATH, relativeDestination)
             put(MediaColumns.MIME_TYPE, media.mimeType)
 
-            if (preserveDate) {
-                put(MediaColumns.DATE_TAKEN, media.dateTaken)
-                put(MediaColumns.DATE_MODIFIED, media.dateTaken)
-                put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
-            }
+            put(MediaColumns.DATE_TAKEN, media.dateTaken)
+            put(MediaColumns.DATE_MODIFIED, media.dateTaken)
+            put(MediaColumns.DATE_ADDED, media.dateTaken * 1000)
         }
 
         val newUri = insert(
@@ -83,24 +74,10 @@ suspend fun ContentResolver.insertMedia(
             contentValues
         )
 
-        newUri?.let { contentUri ->
-            onInsert(media.uri.toUri(), contentUri)
-
-            if (!preserveDate) { // change date to most recent
-                setDateForMedia(
-                    uri = contentUri,
-                    type = media.type,
-                    dateTaken = Clock.System.now().epochSeconds
-                )
-            }
-
-            return@withContext contentUri
-        }
-
-        return@withContext null
+        return newUri
     }
 
-    val fileName = overrideDisplayName ?: media.displayName.substringBeforeLast(".")
+    val fileName = media.displayName.substringBeforeLast(".")
     val fullUriPath = context.getExternalStorageContentUriFromAbsolutePath(destination, true)
 
     try {
@@ -111,30 +88,18 @@ suspend fun ContentResolver.insertMedia(
 
         if (createdFile == null) {
             Log.e(TAG, "Unable to create document file for directory $destination and file ${media.absolutePath} ${media.uri}")
-            return@withContext null
+            return null
         }
 
         val fileToBeSavedTo = DocumentFile.fromSingleUri(context, createdFile.uri)
 
-        fileToBeSavedTo?.let { savedToFile ->
-            onInsert(media.uri.toUri(), savedToFile.uri)
-
-            if (!preserveDate) { // change date to most recent
-                setDateForMedia(
-                    uri = savedToFile.uri,
-                    type = media.type,
-                    dateTaken = Clock.System.now().epochSeconds
-                )
-            }
-
-            return@withContext savedToFile.uri
-        }
+        return fileToBeSavedTo?.uri
     } catch (e: Throwable) {
         Log.e(TAG, "Couldn't copy media $media")
         e.printStackTrace()
     }
 
-    return@withContext null
+    return null
 }
 
 fun ContentResolver.copyUriToUri(from: Uri, to: Uri) {
@@ -326,10 +291,10 @@ fun ContentResolver.setDateForMedia(
     type: MediaType,
     dateTaken: Long,
     overwriteLastModified: Boolean = true
-) {
+): Boolean {
     if (uri.toString().startsWith("/api")) {
         Log.e(TAG, "Cannot operate on a cloud item!\nUri was $uri")
-        return
+        return false
     }
 
     try {
@@ -358,9 +323,13 @@ fun ContentResolver.setDateForMedia(
             },
             null
         )
+
+        return true
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
+
+        return false
     }
 }
 

@@ -25,6 +25,8 @@ import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.getMediaByIds
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
@@ -212,7 +214,7 @@ interface GenericFileManager {
         immichId: String?,
         taskId: Int? = null,
         onItemDone: (totaCount: Int) -> Unit
-    ): Boolean
+    ): Result<Unit, FileOperationError>
 
     suspend fun permanentlyDelete(
         context: Context,
@@ -349,7 +351,7 @@ interface GenericFileManager {
         taskId: Int? = null,
         origin: AlbumType? = null,
         onItemDone: (uri: String) -> Unit
-    ): Boolean
+    ): Result<Unit, FileOperationError>
 
     /** @param overrideDisplayName should not contain file extension */
     suspend fun copyItems(
@@ -360,14 +362,16 @@ interface GenericFileManager {
         overrideDisplayName: ((displayName: String) -> String)? = null,
         taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
-    ): List<CopyResult>
+    ): Result<List<CopyResult>, FileOperationError>
 
     suspend fun copyToCustom(
         context: Context,
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
-    ): List<CopyResult> = withContext(Dispatchers.IO) {
+    ): Result<List<CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext Result.Success(emptyList())
+
         customDao.upsertAll(
             items = list.fastMap {
                 CustomItem(
@@ -391,12 +395,12 @@ interface GenericFileManager {
             }
         }
 
-        return@withContext mediaItems.fastMap {
+        return@withContext Result.Success(mediaItems.fastMap {
             CopyResult(
                 id = it.id,
                 immichId = it.immichId
             )
-        }
+        })
     }
 
     /** @param onItemDone gives the uri of the current item copied */
@@ -407,7 +411,7 @@ interface GenericFileManager {
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
-    ) = withContext(Dispatchers.IO) {
+    ): Result<List<CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
         val contentResolver = context.contentResolver
 
         val items = mediaDao.getMediaByIds(list)
@@ -447,7 +451,7 @@ interface GenericFileManager {
             }
         }
 
-        return@withContext newItems.toList()
+        return@withContext Result.Success(newItems.toList())
     }
 
     /** @param destination is the immich album id */
@@ -458,7 +462,7 @@ interface GenericFileManager {
         destination: AlbumType.Cloud,
         taskId: Int? = null,
         onItemDone: (uri: String) -> Unit
-    ): List<CopyResult> = withContext(Dispatchers.IO) {
+    ): Result<List<CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
         val media = mediaDao.getMediaByIds(list)
 
         customDao.upsertAll(
@@ -485,7 +489,7 @@ interface GenericFileManager {
                     )
                 }
             )
-        )?.associateBy { it.id } ?: return@withContext emptyList()
+        )?.associateBy { it.id } ?: return@withContext Result.Error(FileOperationError.Failed)
 
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
@@ -572,6 +576,6 @@ interface GenericFileManager {
             )
         }
 
-        return@withContext total
+        return@withContext Result.Success(total)
     }
 }

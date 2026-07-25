@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.IntentSender
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
-import androidx.core.content.FileProvider
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
@@ -16,24 +15,21 @@ import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.getMediaByIds
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.helpers.appCloudFolderDir
-import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
-import io.github.kaii_lb.lavender.immichintegration.FileWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumUpdateDto
-import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -51,40 +47,7 @@ class CloudFileManager(
         context: Context,
         list: List<SelectionManager.SelectedItem>
     ): List<SelectionManager.SelectedItem> {
-        val names = mediaDao.getMediaByIds(list).associate { it.id to it.displayName }
 
-        return list.mapNotNull { item ->
-            val file = File(context.cacheDir, names[item.id]!!)
-
-            val checksumOriginal = calculateSha1Checksum(file = file)
-            val checksumCloud = assetClient.get(
-                id = Uuid.parse(item.immichId!!)
-            )?.checksum
-
-            val checksumMatch = checksumCloud == checksumOriginal
-
-            val uri = FileProvider.getUriForFile(
-                context,
-                LAVENDER_FILE_PROVIDER_AUTHORITY,
-                file
-            ).toString()
-
-            if (checksumMatch) {
-                item.copy(uri = uri)
-            } else {
-                assetClient.download(
-                    id = Uuid.parse(item.immichId!!),
-                    channel = FileWriteChannel(file = file)
-                ).let { success ->
-                    if (success) {
-                        item.copy(uri = uri)
-                    } else {
-                        file.delete()
-                        null
-                    }
-                }
-            }
-        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -94,46 +57,7 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         taskId: Int?
     ) = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext null
 
-        val taskId = taskId ?: syncTaskDao.insert(
-            task = SyncTask(
-                dateModified = Clock.System.now().epochSeconds,
-                status = SyncTaskStatus.Processing,
-                type = SyncTaskType.Favourite,
-                destination = favourite.toString()
-            )
-        ).toInt()
-
-        syncTaskDao.insert(
-            items = list.fastMap {
-                SyncTaskItem(
-                    mediaId = it.id,
-                    taskId = taskId
-                )
-            }
-        )
-
-        mediaDao.setFavouriteOnMedia(
-            ids = list.fastMap { it.id }.toSet(),
-            favourite = favourite
-        )
-
-        assetClient.favourite(
-            request = AssetFavouriteRequest(
-                ids = list.fastMap { Uuid.parse(it.immichId!!) },
-                isFavorite = favourite
-            )
-        ).let { success ->
-            syncTaskDao.updateTaskStatus(
-                id = taskId,
-                status =
-                    if (success) SyncTaskStatus.Synced
-                    else SyncTaskStatus.Waiting
-            )
-        }
-
-        null
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -145,8 +69,8 @@ class CloudFileManager(
         immichId: String?,
         taskId: Int?,
         onItemDone: (totaCount: Int) -> Unit
-    ) = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext true
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext Result.Success(Unit)
 
         if (!trashed) {
             throw IllegalArgumentException("Cannot restore files to albums!")
@@ -161,7 +85,7 @@ class CloudFileManager(
 
             onItemDone(list.size)
 
-            return@withContext true
+            return@withContext Result.Success(Unit)
         }
 
         val taskId = taskId ?: syncTaskDao.insert(
@@ -200,7 +124,8 @@ class CloudFileManager(
                     else SyncTaskStatus.Waiting
             )
 
-            return@withContext success
+            return@withContext if (success) Result.Success(Unit)
+            else Result.Error(FileOperationError.Failed)
         }
     }
 
@@ -321,7 +246,7 @@ class CloudFileManager(
         taskId: Int?,
         origin: AlbumType?,
         onItemDone: (uri: String) -> Unit
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
         throw NotImplementedError("Immich does not have this functionality.")
     }
 
@@ -334,8 +259,8 @@ class CloudFileManager(
         overrideDisplayName: ((displayName: String) -> String)?,
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
-    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
-        if (list.isEmpty()) return@withContext emptyList()
+    ): Result<List<GenericFileManager.CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
+        if (list.isEmpty()) return@withContext Result.Success(emptyList())
 
         return@withContext when (destination) {
             is AlbumType.Folder -> {
@@ -351,7 +276,7 @@ class CloudFileManager(
             }
 
             else -> {
-                emptyList()
+                Result.Error(FileOperationError.Failed)
             }
         }
     }
@@ -363,7 +288,7 @@ class CloudFileManager(
         destination: AlbumType.Cloud,
         taskId: Int?,
         onItemDone: (uri: String) -> Unit
-    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+    ): Result<List<GenericFileManager.CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
         val taskId = taskId ?: syncTaskDao.insert(
             task = SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
@@ -396,12 +321,12 @@ class CloudFileManager(
 
         list.forEach { onItemDone(it.uri) }
 
-        return@withContext list.fastMap {
+        return@withContext Result.Success(list.fastMap {
             GenericFileManager.CopyResult(
                 id = it.id,
                 immichId = it.immichId
             )
-        }
+        })
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -410,7 +335,7 @@ class CloudFileManager(
         list: List<SelectionManager.SelectedItem>,
         destination: AlbumType.Custom,
         onItemDone: (uri: String) -> Unit
-    ) = withContext(Dispatchers.IO) {
+    ): Result<List<GenericFileManager.CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
         val folder = appCloudFolderDir
 
         val album = AlbumType.Folder(
@@ -421,7 +346,7 @@ class CloudFileManager(
             paths = setOf(folder.absolutePath)
         )
 
-        val ids = copyToLocal(
+        val result = copyToLocal(
             context = context,
             list = list,
             preserveDate = true,
@@ -430,16 +355,17 @@ class CloudFileManager(
             onItemDone = onItemDone
         )
 
-        if (ids.isEmpty()) return@withContext emptyList()
+        if (result is Result.Error) return@withContext Result.Error(FileOperationError.Failed)
+        result as Result.Success
 
         var tries = 0
-        while (!mediaDao.exists(ids.last().id) && tries < 100) {
+        while (!mediaDao.exists(result.data.last().id) && tries < 100) {
             delay(500.milliseconds)
             tries += 1
         }
 
         customDao.upsertAll(
-            ids.fastMap { item ->
+            result.data.fastMap { item ->
                 CustomItem(
                     id = item.id,
                     album = destination.id
@@ -451,7 +377,7 @@ class CloudFileManager(
             CloudSyncWorker.immediateEnqueue(context = context, albumId = destination.id)
         }
 
-        return@withContext ids
+        return@withContext result
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -462,7 +388,7 @@ class CloudFileManager(
         preserveDate: Boolean,
         overrideDisplayName: ((displayName: String) -> String)?,
         onItemDone: (uri: String) -> Unit
-    ): List<GenericFileManager.CopyResult> = withContext(Dispatchers.IO) {
+    ): Result<List<GenericFileManager.CopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
         val contentResolver = context.contentResolver
 
         val mediaItems = mediaDao.getMediaByIds(list).associateBy { it.id }
@@ -521,6 +447,6 @@ class CloudFileManager(
             }
         }
 
-        return@withContext result
+        return@withContext Result.Success(result)
     }
 }
