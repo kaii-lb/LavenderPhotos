@@ -6,10 +6,10 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.file_management.sync.CloudCleanupHandler
-import com.kaii.photos.file_management.sync.CustomSyncHandler
-import com.kaii.photos.file_management.sync.LocalSyncHandler
 import com.kaii.photos.file_management.sync.ProgressManager
+import com.kaii.photos.file_management.sync.handlers.CloudCleanupHandler
+import com.kaii.photos.file_management.sync.handlers.CustomSyncHandler
+import com.kaii.photos.file_management.sync.handlers.LocalSyncHandler
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
