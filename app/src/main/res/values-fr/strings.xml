@@ -5,7 +5,7 @@
     <string name="add_album">Ajouter un album</string>
     <string name="albums">Albums</string>
     <string name="direct_path_album">Utiliser un chemin direct pour ajouter un album</string>
-    <string name="albums_main_list">Liste principale d\'albums</string>
+    <string name="albums_main_list">Vue principale des albums</string>
     <string name="albums_auto_detect">Détection automatique des albums</string>
     <string name="albums_auto_detect_desc">Détecte tours les dossiers de cet appareil qui contiennent des médias et les ajoute à la vue Albums</string>
     <string name="albums_name">Nom de l\'album</string>
@@ -145,7 +145,7 @@
     <string name="error_views_trash_prefix">Mis à la corbeille le</string>
     <string name="bottom_sheets_square">Carré</string>
     <string name="albums_clear_list">Effacer la liste d\'albums</string>
-    <string name="albums_clear_list_desc">Enlève tous les albums à l\'exception de Appareil Photo et Téléchargements</string>
+    <string name="albums_clear_list_desc">Enlève tous les groupes d\'albums et les dossiers-albums tout en gardant les albums personnalisés et/ou issus du cloud</string>
     <string name="albums_media_sorting">Tri des médias</string>
     <string name="albums_is_custom">Ceci est un album personnalisé</string>
     <string name="albums_custom">Album Personnalisé</string>
@@ -153,7 +153,7 @@
     <string name="albums_remove_desc">Retirer l\'album de la liste</string>
     <string name="albums_clear_list_done">Liste d\'albums effacée</string>
     <string name="albums_path">Chemin</string>
-    <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles</string>
+    <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles. Mode actuel : %1$s</string>
     <string name="albums_item_count">Nombre de médias</string>
     <string name="albums_non_existent">Aucun album de ce genre n\'existe</string>
     <string name="debugging">Déboguage</string>
@@ -214,8 +214,8 @@
     <string name="editing_highlights">Lumières</string>
     <string name="editing_overwrite">Sauvegarder</string>
     <string name="editing_white_point">Point blanc</string>
-    <string name="albums_main_list_desc_1">Les albums sélectionnés auront leurs photos affichées dans la vue principale des photos</string>
-    <string name="albums_main_list_desc_2">Les albums sélectionnés seront mis sur liste noire et ne pourront pas être affichés dans la vue principale des photos</string>
+    <string name="albums_main_list_desc_1">Afficher les médias des albums sélectionnés</string>
+    <string name="albums_main_list_desc_2">Afficher les médias non-présents des albums sélectionnés</string>
     <string name="albums_custom_desc">Ajoutez n\'importe quel média depuis n\'importe où</string>
     <string name="albums_folder_desc">Charger des médias à partir d\'un dossier</string>
     <string name="albums_pin">Épingler cet album</string>
@@ -223,4 +223,5 @@
     <string name="navigation_trash">Corbeille</string>
     <string name="translation">Traduction</string>
     <string name="licenses">Licenses</string>
+    <string name="albums_is_cloud">C\'est un album disponible uniquement sur le cloud</string>
 </resources>
