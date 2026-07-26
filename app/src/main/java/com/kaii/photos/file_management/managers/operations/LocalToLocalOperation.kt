@@ -1,7 +1,7 @@
 package com.kaii.photos.file_management.managers.operations
 
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.getMediaByIds
+import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationCopyResult
@@ -10,8 +10,9 @@ import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.gateways.AndroidMediaStoreGateway
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import javax.inject.Inject
 
-class LocalToLocalOperation(
+class LocalToLocalOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val gateway: AndroidMediaStoreGateway
 ) {
@@ -19,7 +20,7 @@ class LocalToLocalOperation(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType.Folder
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        val mediaItems = mediaDao.getMediaByIds(files)
+        val mediaItems = mediaDao.getMediaFromMetadata(files)
 
         val newItems = mutableListOf<FileOperationCopyResult>()
 

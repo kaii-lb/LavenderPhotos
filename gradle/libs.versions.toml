@@ -24,11 +24,13 @@ androidx-splashscreen = "1.2.0"
 androidx-work-runtime-ktx = "2.11.2"
 androidsvg = "1.4"
 baselineprofile = "1.5.0-alpha07"
+daggerHilt = "2.60.1"
 glide = "5.0.9"
 glide-compose = "1.0.0-beta10"
 glide-jxl-coder = "2.6.1"
 google-ksp-plugin = "2.3.4"
 google-zxing = "3.5.4"
+hilt = "1.4.0"
 junit-version = "4.13.2"
 kittinunf-fuel = "2.3.1"
 kotlin = "2.4.10"
@@ -106,6 +108,9 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 
 com-caverock-androidsvg = { group = "com.caverock" , name = "androidsvg-aar", version.ref = "androidsvg" }
 
+dagger-hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "daggerHilt" }
+dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "daggerHilt" }
+
 glide-avif-integration = { module = "com.github.bumptech.glide:avif-integration", version.ref = "glide" }
 glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glide-compose" }
 glide-jxl-coder = { module = "io.github.awxkee:jxl-coder-glide", version.ref = "glide-jxl-coder" }
@@ -114,6 +119,9 @@ glide-ktx = { module = "com.github.bumptech.glide:ktx", version.ref = "glide-com
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 
 google-zxing = { module = "com.google.zxing:core", version.ref = "google-zxing" }
+
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt" }
+hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt" }
 
 junit = { module = "junit:junit", version.ref = "junit-version" }
 
@@ -144,3 +152,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlin-parcelization = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "google-ksp-plugin" }
 mikepenz-aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "mikepenz-aboutlibraries-android-plugin" }
+dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "daggerHilt" }

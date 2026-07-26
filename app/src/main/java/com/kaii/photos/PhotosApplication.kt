@@ -12,6 +12,7 @@ import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.di.AppModule
 import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
+@HiltAndroidApp
 class PhotosApplication : Application() {
     companion object {
         lateinit var appModule: AppModule

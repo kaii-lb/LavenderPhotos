@@ -10,9 +10,10 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class CloudFavouriteOperation(
+class CloudFavouriteOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val syncTaskDao: SyncTaskDao,
     private val assetsClient: AssetsClient

@@ -17,8 +17,9 @@ import com.kaii.photos.file_management.managers.operations.RenameAlbumOperation
 import com.kaii.photos.helpers.exif.MediaData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import javax.inject.Inject
 
-class CustomFileManager(
+class CustomFileManager @Inject constructor(
     private val customDao: CustomEntityDao,
     private val gateway: MediaStoreGateway,
     private val copyOperation: LocalSourceCopyOperation,

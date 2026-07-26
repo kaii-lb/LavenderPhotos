@@ -2,8 +2,9 @@ package com.kaii.photos.file_management.managers.operations
 
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import javax.inject.Inject
 
-class LocalSourceCopyOperation(
+class LocalSourceCopyOperation @Inject constructor(
     private val toLocal: LocalToLocalOperation,
     private val toCustom: LocalToCustomOperation,
     private val toCloud: LocalToCloudOperation

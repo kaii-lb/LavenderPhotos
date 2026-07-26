@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.mikepenz.aboutlibraries.android)
+    alias(libs.plugins.dagger.hilt)
 }
 
 kotlin {
@@ -175,15 +176,19 @@ dependencies {
 
     implementation(libs.com.caverock.androidsvg)
 
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.dagger.hilt)
 
     implementation(libs.glide)
     implementation(libs.glide.avif.integration)
     implementation(libs.glide.compose)
     implementation(libs.glide.jxl.coder)
     implementation(libs.glide.ktx)
+
+    implementation(libs.hilt.work)
+
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.collections.immutable)
 
     implementation(libs.kittinunf.fuel)
     implementation(libs.kittinunf.fuel.json)
@@ -211,6 +216,8 @@ dependencies {
 
     ksp(libs.glide.ksp)
     ksp(libs.androidx.room.compiler)
+    ksp(libs.dagger.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     baselineProfile(project(":baselineprofile"))
 }

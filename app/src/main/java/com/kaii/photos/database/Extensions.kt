@@ -12,7 +12,7 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import kotlin.time.Clock
 
-suspend fun MediaDao.getMediaByIds(
+suspend fun MediaDao.getMediaFromMetadata(
     files: List<FileOperationItemMetadata>
 ) = files.chunked(500).flatMap { chunk ->
     this.getMedia(ids = chunk.fastMap { it.id })

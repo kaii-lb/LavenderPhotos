@@ -4,7 +4,7 @@ import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.database.getMediaByIds
+import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
@@ -22,9 +22,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class CloudSourceCopyOperation(
+class CloudSourceCopyOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val syncTaskDao: SyncTaskDao,
     private val gateway: AndroidMediaStoreGateway,
@@ -58,7 +59,7 @@ class CloudSourceCopyOperation(
             destination = destination.immichId,
             ids = files.fastMap { it.id }
         ) {
-            val mediaItems = mediaDao.getMediaByIds(files).associateBy { it.id }
+            val mediaItems = mediaDao.getMediaFromMetadata(files).associateBy { it.id }
 
             val semaphore = Semaphore(permits = 5)
 

@@ -10,9 +10,10 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class CloudDeleteOperation(
+class CloudDeleteOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
     private val syncTaskDao: SyncTaskDao,

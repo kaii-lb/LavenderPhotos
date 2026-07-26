@@ -18,7 +18,8 @@ enum class SyncTaskType {
     Upload,
     Favourite,
     RenameAlbum,
-    Copy
+    Copy,
+    Move
 }
 
 @Entity(tableName = "sync_tasks")

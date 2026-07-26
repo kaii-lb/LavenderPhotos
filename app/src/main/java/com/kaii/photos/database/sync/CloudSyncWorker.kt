@@ -1,6 +1,7 @@
 package com.kaii.photos.database.sync
 
 import android.content.Context
+import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -12,135 +13,55 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.kaii.photos.PhotosApplication
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.file_management.secure.LocalSecureManager
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
+import com.kaii.photos.domain.immich.SyncOutcome
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.milliseconds
 
-class CloudSyncWorker(
-    private val context: Context,
-    private val params: WorkerParameters
-) : CoroutineWorker(appContext = context, params = params) {
+@HiltWorker
+class CloudSyncWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val syncManager: CloudSyncManager
+) : CoroutineWorker(context, params) {
     companion object {
         const val ALBUM_ID = "ALBUM_ID"
 
         fun enqueue(context: Context) {
-            WorkManager.getInstance(context.applicationContext)
-                .enqueueUniquePeriodicWork(
-                    CloudSyncWorker::class.java.name,
-                    ExistingPeriodicWorkPolicy.KEEP,
-                    PeriodicWorkRequest
-                        .Builder(CloudSyncWorker::class, 1, TimeUnit.HOURS)
-                        .setConstraints(
-                            Constraints(
-                                requiredNetworkType = NetworkType.UNMETERED,
-                                requiresBatteryNotLow = true,
-                                requiresStorageNotLow = true
-                            )
-                        )
-                        .setBackoffCriteria(
-                            backoffDelay = 20,
-                            backoffPolicy = BackoffPolicy.EXPONENTIAL,
-                            timeUnit = TimeUnit.SECONDS
-                        )
-                        .build()
-                )
+            WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(
+                CloudSyncWorker::class.java.name,
+                ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequest.Builder(CloudSyncWorker::class, 1, TimeUnit.HOURS)
+                    .setConstraints(Constraints(requiredNetworkType = NetworkType.UNMETERED, requiresBatteryNotLow = true, requiresStorageNotLow = true))
+                    .setBackoffCriteria(backoffDelay = 20, backoffPolicy = BackoffPolicy.EXPONENTIAL, timeUnit = TimeUnit.SECONDS)
+                    .build()
+            )
         }
 
-        /** @param albumId if null syncs everything otherwise syncs that album only */
         fun immediateEnqueue(context: Context, albumId: String?): UUID {
             val request = OneTimeWorkRequest.Builder(CloudSyncWorker::class)
-                .setConstraints(
-                    Constraints(
-                        requiredNetworkType = NetworkType.UNMETERED,
-                        requiresBatteryNotLow = true,
-                        requiresStorageNotLow = true
-                    )
-                )
-                .apply {
-                    setInputData(
-                        Data.Builder()
-                            .putString(ALBUM_ID, albumId)
-                            .build()
-                    )
-                }
+                .setConstraints(Constraints(requiredNetworkType = NetworkType.UNMETERED, requiresBatteryNotLow = true, requiresStorageNotLow = true))
+                .setInputData(Data.Builder().putString(ALBUM_ID, albumId).build())
                 .build()
 
-            WorkManager.getInstance(context.applicationContext)
-                .enqueueUniqueWork(
-                    uniqueWorkName = CloudSyncWorker::class.java.name + "-immediate",
-                    existingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    request = request
-                )
-
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                CloudSyncWorker::class.java.name + "-immediate",
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                request
+            )
             return request.id
         }
     }
 
     override suspend fun doWork(): Result {
-        val db = MediaDatabase.getInstance(context.applicationContext)
-        val info = PhotosApplication.appModule.settings.immich.getImmichBasicInfo().first()
+        val albumId = inputData.getString(ALBUM_ID)
+        val outcome = if (albumId != null) syncManager.syncFor(albumId) else syncManager.syncUploads()
 
-        val assetsClient = AssetsClient(
-            endpoint = info.endpoint,
-            auth = info.auth,
-            client = PhotosApplication.appModule.apiClient
-        )
-        val albumsClient = AlbumsClient(
-            endpoint = info.endpoint,
-            auth = info.auth,
-            client = PhotosApplication.appModule.apiClient
-        )
-
-        val manager = CloudSyncManager(
-            taskDao = db.taskDao(),
-            context = context.applicationContext,
-            cloudFileManager = CloudFileManager(
-                mediaDao = db.mediaDao(),
-                customDao = db.customDao(),
-                syncTaskDao = db.taskDao(),
-                assetClient = assetsClient,
-                albumsClient = albumsClient
-            ),
-            localFileManager = LocalFileManager(
-                mediaDao = db.mediaDao(),
-                customDao = db.customDao(),
-                syncTaskDao = db.taskDao(),
-                assetClient = assetsClient,
-                albumsClient = albumsClient,
-                secureManager = LocalSecureManager(
-                    secureDao = db.securedItemEntityDao(),
-                    mediaDao = db.mediaDao()
-                )
-            ),
-            customFileManager = CustomFileManager(
-                mediaDao = db.mediaDao(),
-                customDao = db.customDao(),
-                syncTaskDao = db.taskDao(),
-                assetClient = assetsClient,
-                albumsClient = albumsClient,
-                secureManager = LocalSecureManager(
-                    secureDao = db.securedItemEntityDao(),
-                    mediaDao = db.mediaDao()
-                )
-            )
-        )
-
-        delay(1000.milliseconds)
-
-        val albumId = params.inputData.getString(ALBUM_ID)
-        if (albumId != null) {
-            manager.syncFor(albumId = albumId)
-        } else {
-            manager.syncUploads()
+        return when (outcome) {
+            SyncOutcome.Success -> Result.success()
+            SyncOutcome.TransientFailure -> Result.retry()
+            SyncOutcome.PermanentFailure -> Result.failure()
         }
-
-        return Result.success()
     }
 }

@@ -21,6 +21,8 @@ import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.exif.MediaData
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.coroutineScope
@@ -28,9 +30,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlin.time.Clock
 
-class HybridFileManager(
+class HybridFileManager @AssistedInject constructor(
     private val syncTaskDao: SyncTaskDao,
-    private val other: LocalSourceFileManager,
+    @Assisted private val other: LocalSourceFileManager,
     private val cloud: CloudFileManager,
 ) : Copy, Move, RenameFile, Trash, Delete, Secure, Share, Favourite, ExtractExif {
     override suspend fun copyFiles(
@@ -79,8 +81,9 @@ class HybridFileManager(
             SyncTask(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
-                type = SyncTaskType.Copy, // TODO: add move operation
-                destination = destination.id
+                type = SyncTaskType.Move,
+                destination = destination.id,
+                extraData = origin.immichId
             )
         ).toInt()
 

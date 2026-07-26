@@ -9,8 +9,9 @@ import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.gateways.CloudCacheGateway
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import javax.inject.Inject
 
-class LocalToCustomOperation(
+class LocalToCustomOperation @Inject constructor(
     private val customDao: CustomEntityDao,
     private val gateway: CloudCacheGateway
 ) {

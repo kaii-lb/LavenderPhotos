@@ -2,6 +2,8 @@ package com.kaii.photos.file_management.sync.operations
 
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.file_management.sync.types.SyncPlanner
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
@@ -26,8 +28,8 @@ class SyncAlbumOperation(
         originAlbumId: String,
         originImmichId: String,
         destinationPath: String
-    ): Unit = withContext(Dispatchers.IO) {
-        if (cloudMedia.isEmpty() && localMedia.isEmpty()) return@withContext
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        if (cloudMedia.isEmpty() && localMedia.isEmpty()) return@withContext Result.Error(FileOperationError.Failed)
 
         val cloudById = cloudMedia.associateBy { it.id }
         val (candidates, sideEffects) = resolveCandidates.execute(localMedia, cloudById)
@@ -37,9 +39,44 @@ class SyncAlbumOperation(
 
         plan.toLink.forEach { mediaDao.linkToImmich(id = it.localId, hash = it.hash, immichUrl = it.immichUrl) }
 
-        if (plan.toUpload.isNotEmpty()) upload.execute(plan.toUpload, originImmichId)
-        if (plan.toDownload.isNotEmpty()) download.execute(plan.toDownload, destinationPath)
-        if (sideEffects.toTrashLocal.isNotEmpty()) trashLocal.execute(sideEffects.toTrashLocal, originAlbumId)
-        if (sideEffects.toTrashCloud.isNotEmpty()) assetsClient.delete(ids = sideEffects.toTrashCloud.map { Uuid.parse(it) })
+        var result: Result<Unit, FileOperationError> = Result.Success(Unit)
+
+        if (plan.toUpload.isNotEmpty()) {
+            result = applyFailureOnly(result) {
+                upload.execute(plan.toUpload, originImmichId)
+            }
+        }
+
+        if (plan.toDownload.isNotEmpty()) {
+            result = applyFailureOnly(result) {
+                download.execute(plan.toDownload, destinationPath)
+            }
+        }
+
+        if (sideEffects.toTrashLocal.isNotEmpty()) {
+            result = applyFailureOnly(result) {
+                trashLocal.execute(sideEffects.toTrashLocal, originAlbumId)
+            }
+        }
+
+        if (sideEffects.toTrashCloud.isNotEmpty()) {
+            val success = assetsClient.delete(
+                ids = sideEffects.toTrashCloud.map {
+                    Uuid.parse(it)
+                }
+            )
+
+            if (!success) result = Result.Error(FileOperationError.Failed)
+        }
+
+        result
+    }
+
+    private suspend fun applyFailureOnly(
+        result: Result<Unit, FileOperationError>,
+        block: suspend () -> Result<Unit, FileOperationError>
+    ): Result<Unit, FileOperationError> {
+        return if (block() is Result.Success) result
+        else Result.Error(FileOperationError.Failed)
     }
 }

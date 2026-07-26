@@ -5,9 +5,10 @@ import com.kaii.photos.file_management.managers.gateways.CloudCacheGateway
 import com.kaii.photos.helpers.calculateSha1Checksum
 import io.github.kaii_lb.lavender.immichintegration.FileWriteChannel
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class CloudResolveShareableItemOperation(
+class CloudResolveShareableItemOperation @Inject constructor(
     private val assetClient: AssetsClient,
     private val cacheGateway: CloudCacheGateway
 ) {

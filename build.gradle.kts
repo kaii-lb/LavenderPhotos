@@ -8,4 +8,5 @@ plugins {
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.mikepenz.aboutlibraries.android) apply false
+    alias(libs.plugins.dagger.hilt) apply false
 }

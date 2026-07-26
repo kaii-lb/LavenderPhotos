@@ -8,9 +8,10 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class CloudTrashOperation(
+class CloudTrashOperation @Inject constructor(
     private val syncTaskDao: SyncTaskDao,
     private val customDao: CustomEntityDao,
     private val albumsClient: AlbumsClient,

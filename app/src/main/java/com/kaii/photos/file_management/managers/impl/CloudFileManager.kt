@@ -5,7 +5,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.database.getMediaByIds
+import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
@@ -45,10 +45,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-class CloudFileManager(
+class CloudFileManager @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
     private val syncTaskDao: SyncTaskDao,
@@ -94,7 +95,7 @@ class CloudFileManager(
     ): Result<List<FileOperationItemMetadata>, FileOperationError> = coroutineScope {
         if (files.isEmpty()) return@coroutineScope Result.Error(FileOperationError.Failed)
 
-        val names = mediaDao.getMediaByIds(files).associate { it.id to it.displayName }
+        val names = mediaDao.getMediaFromMetadata(files).associate { it.id to it.displayName }
 
         val semaphore = Semaphore(permits = 5)
 

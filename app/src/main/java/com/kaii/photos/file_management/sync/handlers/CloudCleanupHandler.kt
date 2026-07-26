@@ -7,9 +7,10 @@ import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetBu
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetUploadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 import kotlin.uuid.ExperimentalUuidApi
 
-class CloudCleanupHandler(
+class CloudCleanupHandler @Inject constructor(
     private val mediaDao: MediaDao,
     private val assetsClient: AssetsClient
 ) {

@@ -8,7 +8,7 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.database.getMediaByIds
+import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
@@ -35,10 +35,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import java.io.File
+import javax.inject.Inject
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-class LocalToCloudOperation(
+class LocalToCloudOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
     private val syncTaskDao: SyncTaskDao,
@@ -51,7 +52,7 @@ class LocalToCloudOperation(
         destination: AlbumType.Cloud,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        val media = mediaDao.getMediaByIds(files)
+        val media = mediaDao.getMediaFromMetadata(files)
 
         val result = syncTaskDao.track(
             existingTaskId = existingTaskId,

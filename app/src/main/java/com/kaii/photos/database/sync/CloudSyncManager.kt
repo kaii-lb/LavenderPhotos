@@ -1,203 +1,180 @@
 package com.kaii.photos.database.sync
 
-import android.content.Context
-import com.kaii.photos.PhotosApplication
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationCopyResult
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.domain.immich.SyncOutcome
+import com.kaii.photos.domain.mapTo
+import com.kaii.photos.file_management.managers.impl.CloudFileManager
+import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.file_management.sync.handlers.CloudCleanupHandler
-import com.kaii.photos.file_management.sync.handlers.CustomSyncHandler
-import com.kaii.photos.file_management.sync.handlers.LocalSyncHandler
-import com.kaii.photos.helpers.grid_management.SelectionManager
-import kotlinx.coroutines.Dispatchers
+import com.kaii.photos.file_management.sync.operations.SyncAllAlbumsOperation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class CloudSyncManager(
-    private val taskDao: SyncTaskDao,
-    private val context: Context,
+@Singleton
+class CloudSyncManager @Inject constructor(
+    private val syncTaskDao: SyncTaskDao,
+    private val albums: SettingsAlbumsListImpl,
     private val cloudFileManager: CloudFileManager,
     private val localFileManager: LocalFileManager,
-    customFileManager: CustomFileManager
+    private val resolveTaskItems: ResolveTaskItemsOperation,
+    private val syncAllAlbums: SyncAllAlbumsOperation,
+    private val cloudCleanup: CloudCleanupHandler,
+    private val progressManager: ProgressManager
 ) {
-    val appModule = PhotosApplication.appModule
-    private val progressManager = appModule.cloudProgressManager
+    suspend fun syncUploads(): SyncOutcome {
+        val unsynced = syncTaskDao.getUnsyncedTasks()
+        val itemsByTask = unsynced.associateWith { task -> syncTaskDao.getTaskItems(taskId = task.id) }
 
-    private val localSyncHandler = LocalSyncHandler(
-        fileManager = localFileManager,
-        progressManager = progressManager,
-        albums = appModule.settings.albums
-    )
-    private val customSyncHandler = CustomSyncHandler(
-        fileManager = customFileManager,
-        progressManager = progressManager,
-        albums = appModule.settings.albums
-    )
-    private val cloudCleanupHandler = CloudCleanupHandler(
-        mediaDao = cloudFileManager.mediaDao,
-        assetsClient = cloudFileManager.assetClient
-    )
+        progressManager.startTracking(totalItems = itemsByTask.values.sumOf { it.size })
 
-    suspend fun syncUploads() {
-        val unsynced = taskDao.getUnsyncedTasks()
-
-        val items = unsynced.associateWith { task ->
-            taskDao.getTaskItems(taskId = task.id)
+        val taskResults = itemsByTask.map { (task, taskItems) ->
+            val files = resolveTaskItems.execute(ids = taskItems.fastMap { it.id })
+            runTask(task, files)
         }
 
-        progressManager.startTracking(
-            totalItems = items.values.flatten().size
-        )
+        ensureTracking()
+        syncAllAlbums.execute()
+        progressManager.stopTracking()
 
-        items.forEach { (task, items) ->
-            when (task.type) {
-                SyncTaskType.Upload -> uploadTask(task, items)
-                SyncTaskType.Trash -> trashTask(task, items)
-                SyncTaskType.Favourite -> favouriteTask(task, items)
-                SyncTaskType.Delete -> deleteTask(task, items)
-                SyncTaskType.RenameAlbum -> renameAlbumTask(task)
-                SyncTaskType.Copy -> copyTask(task, items)
+        cloudCleanup.cleanUp()
+
+        return taskResults.toOutcome()
+    }
+
+    suspend fun syncFor(albumId: String): SyncOutcome {
+        val album = albums.get().first().find { it.id == albumId } ?: return SyncOutcome.PermanentFailure
+
+        ensureTracking()
+        val outcome = when (album) {
+            is AlbumType.Custom -> {
+                syncAllAlbums.executeOne(album)
             }
-        }
 
-        val albums = localSyncHandler.fetchCloudAlbums()
-
-        if (progressManager.state == ProgressManager.State.Idle) {
-            progressManager.startTracking(totalItems = 0)
-        }
-
-        albums.forEach { album ->
-            if (album is AlbumType.Custom) {
-                customSyncHandler.sync(context, album)
-            } else if (album is AlbumType.Folder) {
-                localSyncHandler.sync(context, album)
+            is AlbumType.Folder -> {
+                syncAllAlbums.executeOne(album)
             }
+
+            else -> Result.Success(Unit)
         }
 
         progressManager.stopTracking()
 
-        cloudCleanupHandler.cleanUp()
+        return if (outcome is Result.Success) SyncOutcome.Success else SyncOutcome.TransientFailure
     }
 
-    suspend fun syncFor(
-        albumId: String
-    ) {
-        val albums = localSyncHandler.fetchCloudAlbums()
-
-        val album = albums.find { it.id == albumId } ?: return
-
-        if (progressManager.state == ProgressManager.State.Idle) {
-            progressManager.startTracking(totalItems = 0)
-        }
-
-        if (album is AlbumType.Custom) {
-            customSyncHandler.sync(context, album)
-        } else if (album is AlbumType.Folder) {
-            localSyncHandler.sync(context, album)
-        }
-
-        progressManager.stopTracking()
+    private fun ensureTracking() {
+        if (progressManager.state == ProgressManager.State.Idle) progressManager.startTracking(totalItems = 0)
     }
 
-    private suspend fun uploadTask(
+    private suspend fun runTask(
         task: SyncTask,
-        items: List<SelectionManager.SelectedItem>
-    ) {
-        localFileManager.copyToCloud(
-            context = context,
-            list = items,
-            destination =
-                AlbumType.Cloud(
+        files: List<FileOperationItemMetadata>
+    ): Result<Unit, FileOperationError> = when (task.type) {
+        SyncTaskType.Upload -> collectAndReport(
+            flow = localFileManager.copyFiles(
+                files = files,
+                destination = AlbumType.Cloud(
                     id = task.destination!!,
                     name = "",
                     pinned = false
                 ),
-            taskId = task.id,
-            onItemDone = {
-                progressManager.increaseProgress()
-            }
+                existingTaskId = task.id
+            )
         )
-    }
 
-    private suspend fun trashTask(
-        task: SyncTask,
-        items: List<SelectionManager.SelectedItem>
-    ) {
-        cloudFileManager.setTrashed(
-            context = context,
-            list = items,
-            trashed = true,
-            albumId = task.destination,
+        SyncTaskType.Trash -> cloudFileManager.trashFile(
+            files,
+            isTrashed = true,
+            albumId = task.destination!!,
             immichId = task.destination,
-            taskId = task.id,
-            onItemDone = {
-                progressManager.increaseProgress()
-            }
-        )
-    }
+            existingTaskId = task.id
+        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
 
-    private suspend fun favouriteTask(
-        task: SyncTask,
-        items: List<SelectionManager.SelectedItem>
-    ) {
-        cloudFileManager.setFavourite(
-            context = context,
-            favourite = task.destination!!.toBoolean(),
-            list = items,
-            taskId = task.id
-        )
-    }
+        SyncTaskType.Favourite -> cloudFileManager.favouriteFile(
+            files = files,
+            isFavourite = task.destination!!.toBoolean(),
+            albumId = null,
+            immichId = null,
+            existingTaskId = task.id
+        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
 
-    private suspend fun deleteTask(
-        task: SyncTask,
-        items: List<SelectionManager.SelectedItem>
-    ) {
-        cloudFileManager.permanentlyDelete(
-            context = context,
-            list = items,
-            taskId = task.id
-        ).let {
-            if (it) {
-                progressManager.increaseProgressBy(amount = items.size)
-            }
+        SyncTaskType.Delete -> cloudFileManager.deleteFiles(
+            files = files,
+            albumId = task.destination!!,
+            existingTaskId = task.id
+        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
+
+        SyncTaskType.RenameAlbum -> {
+            val album = albums.get().first().first { it.id == task.destination }
+
+            cloudFileManager.renameAlbum(
+                album = album,
+                newName = task.extraData!!,
+                existingTaskId = task.id
+            )
+        }
+
+        SyncTaskType.Copy -> {
+            val album = albums.get().first().first { it.id == task.destination } as AlbumType.Cloud
+
+            collectAndReport(
+                flow = cloudFileManager.copyFiles(
+                    files = files,
+                    destination = album,
+                    existingTaskId = task.id
+                )
+            )
+        }
+
+        SyncTaskType.Move -> {
+            val album = albums.get().first().first { it.id == task.destination } as AlbumType.Cloud
+
+            collectAndReport(
+                flow = cloudFileManager.moveFiles(
+                    files = files,
+                    destination = album,
+                    existingTaskId = task.id,
+                    origin = AlbumType.Cloud(
+                        id = task.extraData!!,
+                        name = "",
+                        pinned = false
+                    )
+                )
+            )
         }
     }
 
-    private suspend fun renameAlbumTask(
-        task: SyncTask
-    ) = withContext(Dispatchers.IO) {
-        val album = appModule.settings.albums
-            .get()
-            .first()
-            .first { it.id == task.destination }
+    private suspend fun collectAndReport(
+        flow: Flow<FileOperationProgress<List<FileOperationCopyResult>>>
+    ): Result<Unit, FileOperationError> {
+        var result: Result<Unit, FileOperationError> = Result.Error(FileOperationError.Failed)
 
-        cloudFileManager.renameAlbum(
-            context = context,
-            album = album,
-            newName = task.extraData!!,
-            taskId = task.id
-        )
+        flow.collect { progress ->
+            when (progress) {
+                is FileOperationProgress.ItemDone -> progressManager.increaseProgress()
+                is FileOperationProgress.Finished -> result = progress.result.mapTo(Result.Success(Unit))
+            }
+        }
+
+        return result
     }
 
-    private suspend fun copyTask(
-        task: SyncTask,
-        items: List<SelectionManager.SelectedItem>
-    ) = withContext(Dispatchers.IO) {
-        val album = appModule.settings.albums
-            .get()
-            .first()
-            .first { it.id == task.destination }
-
-        cloudFileManager.copyToCloud(
-            context = context,
-            list = items,
-            destination = album as AlbumType.Cloud,
-            taskId = task.id,
-            onItemDone = {
-                progressManager.increaseProgress()
-            }
-        )
+    private fun List<Result<Unit, FileOperationError>>.toOutcome(): SyncOutcome = when {
+        any { it is Result.Error && it.error == FileOperationError.Failed } -> SyncOutcome.TransientFailure
+        all { it is Result.Success } -> SyncOutcome.Success
+        else -> SyncOutcome.PermanentFailure
     }
 }

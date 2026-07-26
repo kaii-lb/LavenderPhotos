@@ -18,8 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class LocalFileManager(
+class LocalFileManager @Inject constructor(
     private val mediaDao: MediaDao,
     private val gateway: MediaStoreGateway,
     private val renameAlbum: RenameAlbumOperation,
