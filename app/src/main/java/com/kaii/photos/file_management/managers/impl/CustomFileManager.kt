@@ -138,4 +138,16 @@ class CustomFileManager(
     override suspend fun getExifData(
         file: FileOperationItemMetadata
     ): Result<Map<MediaData, Any>, FileOperationError> = getExif.execute(file)
+
+    override suspend fun getMediaCount(
+        album: AlbumType
+    ): Int = customDao.countMediaInAlbum(
+        album = (album as AlbumType.Folder).id
+    )
+
+    override suspend fun getMediaSize(
+        album: AlbumType
+    ): Long = customDao.mediaSize(
+        album = (album as AlbumType.Folder).id
+    )
 }

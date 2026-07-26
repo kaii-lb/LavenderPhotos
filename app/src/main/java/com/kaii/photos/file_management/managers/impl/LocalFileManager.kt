@@ -1,6 +1,7 @@
 package com.kaii.photos.file_management.managers.impl
 
 import android.content.Intent
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationCopyResult
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 
 class LocalFileManager(
+    private val mediaDao: MediaDao,
     private val gateway: MediaStoreGateway,
     private val renameAlbum: RenameAlbumOperation,
     private val copyOperation: LocalSourceCopyOperation,
@@ -124,4 +126,16 @@ class LocalFileManager(
         immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = gateway.favourite(files, isFavourite)
+
+    override suspend fun getMediaCount(
+        album: AlbumType
+    ): Int = mediaDao.countMediaInPaths(
+        paths = (album as AlbumType.Folder).paths
+    )
+
+    override suspend fun getMediaSize(
+        album: AlbumType
+    ): Long = mediaDao.mediaSize(
+        paths = (album as AlbumType.Folder).paths
+    )
 }

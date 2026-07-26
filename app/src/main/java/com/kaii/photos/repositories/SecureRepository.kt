@@ -1,6 +1,7 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.FileObserver
@@ -10,19 +11,25 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.bumptech.glide.Glide
-import com.kaii.photos.PhotosApplication
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
-import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.SecureFileManager
+import com.kaii.photos.file_management.managers.traits.Delete
+import com.kaii.photos.file_management.managers.traits.ExtractExif
+import com.kaii.photos.file_management.managers.traits.Restore
+import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
@@ -34,10 +41,6 @@ import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,16 +59,16 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
-import kotlin.reflect.KClass
 
 class SecureRepository(
-    scope: CoroutineScope,
     context: Context,
+    private val scope: CoroutineScope,
+    private val fileManager: SecureFileManager,
+    private val secureDao: SecuredMediaItemEntityDao,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
-    info: Flow<ImmichBasicInfo>,
-    apiClient: ApiClient = PhotosApplication.appModule.apiClient
-) : BaseRepo {
+    info: Flow<ImmichBasicInfo>
+) : Delete, Share, ExtractExif, Restore {
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
 
@@ -119,29 +122,7 @@ class SecureRepository(
     ) : RoomQueryParams(sortMode, format, info)
 
     private val appContext = context.applicationContext
-    private val db = MediaDatabase.getInstance(appContext)
-    private val secureDao = db.securedItemEntityDao()
-
-    override val fileManager = SecureFileManager(
-        secureDao = secureDao,
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
-        assetClient = AssetsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = apiClient
-        ),
-        albumsClient = AlbumsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = apiClient
-        )
-    )
-
     private val secureFolder = File(appContext.appSecureFolderDir)
-
-    private val repoScope = scope
 
     // load() does a read-modify-write on items.value, so concurrent calls (init, the FileObserver firing
     // once per file during a batch secure, the post-verify reload) used to lost-update each other and
@@ -153,7 +134,7 @@ class SecureRepository(
     private var loadQueued = false
 
     private fun requestLoad(context: Context) {
-        repoScope.launch { runLoadCoalesced(context) }
+        scope.launch { runLoadCoalesced(context) }
     }
 
     private suspend fun runLoadCoalesced(context: Context) {
@@ -212,7 +193,7 @@ class SecureRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val mediaFlow = params.flatMapLatest { params ->
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -228,7 +209,7 @@ class SecureRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val gridMediaFlow = params.flatMapLatest { params ->
+    val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
@@ -490,34 +471,21 @@ class SecureRepository(
         }
     }
 
-    override suspend fun getMediaCount(): Int {
-        throw NotImplementedError("Cannot get media count in secure folder")
-    }
+    override suspend fun deleteFiles(
+        files: List<FileOperationItemMetadata>,
+        albumId: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
 
-    override suspend fun getMediaSize(): Long {
-        throw NotImplementedError("Cannot get media size in secure folder")
-    }
+    override suspend fun shareFiles(
+        files: List<FileOperationItemMetadata>
+    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
 
-    override fun allowedAlbumTypesFor(moving: Boolean): List<KClass<out AlbumType>> {
-        throw NotImplementedError("Cannot use this in secure folder")
-    }
+    override suspend fun getExifData(
+        file: FileOperationItemMetadata
+    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
 
-    override suspend fun renameAlbum(context: Context, newName: String) {
-        throw NotImplementedError("Cannot rename the secure folder")
-    }
-
-    override suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    override suspend fun restore(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ): Boolean = fileManager.restore(context, list)
-
-    override suspend fun share(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.share(context, list)
+    override suspend fun decryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Flow<FileOperationProgress<Unit>> = fileManager.decryptFiles(files)
 }

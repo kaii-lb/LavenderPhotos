@@ -6,9 +6,6 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTask
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.file_management.managers.CloudFileManager
-import com.kaii.photos.file_management.managers.CustomFileManager
-import com.kaii.photos.file_management.managers.LocalFileManager
 import com.kaii.photos.file_management.sync.CloudCleanupHandler
 import com.kaii.photos.file_management.sync.CustomSyncHandler
 import com.kaii.photos.file_management.sync.LocalSyncHandler

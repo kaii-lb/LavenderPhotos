@@ -1,6 +1,6 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.ui.util.fastMap
@@ -9,32 +9,31 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingSource
 import androidx.paging.cachedIn
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.file_management.managers.HybridFileManager
-import com.kaii.photos.file_management.secure.LocalSecureManager
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationCopyResult
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.file_management.managers.impl.HybridFileManager
+import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
@@ -63,14 +62,14 @@ enum class SearchMode(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
+    private val fileManager: HybridFileManager,
     private val taggedItemsDao: TaggedItemsDao,
-    db: MediaDatabase,
+    private val searchDao: SearchDao,
     scope: CoroutineScope,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
-    format: DisplayDateFormat,
-    client: ApiClient
-) : BaseRepo {
+    format: DisplayDateFormat
+) : BaseRepo, RenameFile {
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,
@@ -90,40 +89,6 @@ class SearchRepository(
             tags = emptySet()
         )
     )
-
-    private val searchDao = db.searchDao()
-
-    override val fileManager = HybridFileManager(
-        isCustom = false,
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
-        assetClient = AssetsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        ),
-        albumsClient = AlbumsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        ),
-        localSecureManager = LocalSecureManager(
-            secureDao = db.securedItemEntityDao(),
-            mediaDao = db.mediaDao()
-        )
-    )
-
-    init {
-        scope.launch {
-            params.mapLatest { it.info }
-                .distinctUntilChanged()
-                .collectLatest { info ->
-                    fileManager.setEndpoint(info.endpoint)
-                    fileManager.setAuth(info.auth)
-                }
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override val mediaFlow = params.flatMapLatest { details ->
@@ -196,25 +161,6 @@ class SearchRepository(
             info = info ?: snapshot.info,
             mode = mode ?: snapshot.mode
         )
-    }
-
-    override fun allowedAlbumTypesFor(
-        moving: Boolean
-    ) = fileManager.allowedAlbumTypesFor(
-        moving = moving,
-        current = AlbumType.Folder::class
-    )
-
-    override suspend fun getMediaCount(): Int {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
-
-    override suspend fun getMediaSize(): Long {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
-
-    override suspend fun renameAlbum(context: Context, newName: String) {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
     }
 
     private fun searchByDate(query: String): PagingSource<Int, MediaStoreData>? {
@@ -323,7 +269,7 @@ class SearchRepository(
         return DayOfWeek.entries
             .find { it.name == search }
             ?.let { day ->
-                val number = (day.isoDayNumber % 7).toString() // %6 since sunday = 0
+                val number = (day.isoDayNumber % 7).toString() // %6 since Sunday = 0
                 searchDao.searchByDay(day = number, dateModified = dateModified)
             }
     }
@@ -432,4 +378,52 @@ class SearchRepository(
             }
         }
     }
+
+    override suspend fun copyFiles(
+        files: List<FileOperationItemMetadata>,
+        destination: AlbumType,
+        existingTaskId: Int?
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.copyFiles(files, destination, existingTaskId)
+
+    override suspend fun moveFiles(
+        files: List<FileOperationItemMetadata>,
+        destination: AlbumType,
+        existingTaskId: Int?,
+        origin: AlbumType?
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.moveFiles(files, destination, existingTaskId, origin)
+
+    override suspend fun renameFile(
+        file: FileOperationItemMetadata,
+        newName: String
+    ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+
+    override suspend fun trashFile(
+        files: List<FileOperationItemMetadata>,
+        isTrashed: Boolean,
+        albumId: String,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+
+    override suspend fun deleteFiles(
+        files: List<FileOperationItemMetadata>,
+        albumId: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+
+    override suspend fun shareFiles(
+        files: List<FileOperationItemMetadata>
+    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+
+    override suspend fun favouriteFile(
+        files: List<FileOperationItemMetadata>,
+        isFavourite: Boolean,
+        albumId: String?,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.favouriteFile(files, isFavourite, albumId, immichId, existingTaskId)
+
+    override suspend fun getExifData(
+        file: FileOperationItemMetadata
+    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
 }

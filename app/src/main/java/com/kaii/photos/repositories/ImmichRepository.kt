@@ -1,29 +1,27 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
-import androidx.compose.ui.util.fastMap
+import android.content.Intent
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import androidx.room.withTransaction
-import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.database.entities.CustomItem
-import com.kaii.photos.database.entities.toExifData
+import com.kaii.photos.data.immich.RefreshCloudAlbumOperation
+import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.file_management.managers.CloudFileManager
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationCopyResult
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.file_management.managers.impl.CloudFileManager
+import com.kaii.photos.file_management.managers.traits.CountAndSize
+import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.toMediaStoreData
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,39 +31,18 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ImmichRepository(
-    private val album: AlbumType,
+    private val album: AlbumType.Cloud,
     private val scope: CoroutineScope,
-    private val db: MediaDatabase,
+    private val fileManager: CloudFileManager,
+    private val refreshOperation: RefreshCloudAlbumOperation,
+    private val customDao: CustomEntityDao,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
-    info: Flow<ImmichBasicInfo>,
-    client: ApiClient
-) : BaseRepo {
-    private val mediaDao = db.mediaDao()
-    private val customDao = db.customDao()
-
-    override val fileManager = CloudFileManager(
-        mediaDao = mediaDao,
-        customDao = customDao,
-        syncTaskDao = db.taskDao(),
-        assetClient = AssetsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        ),
-        albumsClient = AlbumsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        )
-    )
-
+    info: Flow<ImmichBasicInfo>
+) : BaseRepo, RenameAlbum, CountAndSize {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -109,81 +86,70 @@ class ImmichRepository(
         )
     }.cachedIn(scope)
 
-    fun refresh() = scope.launch(Dispatchers.IO) { refetch() }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private suspend fun refetch() {
-        val cloudAlbum = fileManager.albumsClient.get(
-            id = Uuid.parse(album.immichId!!),
-            withoutAssets = false
-        ) ?: return
-
-        val cloudAssets = fileManager.assetClient.getForAlbum(cloudAlbum.id) ?: return
-
-        val items =
-            cloudAssets.map { asset ->
-                asset.toMediaStoreData()
-            }
-
-        val mediaIds = customDao.getAllIdsIn(album = album.id).toSet()
-        val added = items.fastMap { it.id }.toSet() - mediaIds
-        val deleted = mediaIds - items.fastMap { it.id }.toSet()
-
-        db.withTransaction {
-            mediaDao.upsertAll(items = items)
-
-            customDao.deleteAll(ids = deleted, album = album.id)
-            customDao.upsertAll(items = added.map { CustomItem(id = it, album = album.id) })
-
-            db.exifDataDao().upsertAll(
-                items = cloudAssets.mapNotNull {
-                    it.exifInfo?.toExifData(
-                        mediaId = Uuid.parse(it.id).toLongs { a, _ -> a }
-                    )
-                }
-            )
-        }
-    }
+    suspend fun refresh() = refreshOperation.execute(
+        albumId = album.id,
+        immichId = album.immichId
+    )
 
     init {
         scope.launch {
-            info
-                .distinctUntilChanged()
-                .collectLatest { info ->
-                    fileManager.setEndpoint(info.endpoint)
-                    fileManager.setAuth(info.auth)
-                }
-
-            refresh()
+            info.distinctUntilChanged().collectLatest {
+                refresh()
+            }
         }
     }
 
-    override suspend fun getMediaCount(): Int = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().countMediaInAlbum(album = album.id)
-    }
+    override suspend fun copyFiles(
+        files: List<FileOperationItemMetadata>,
+        destination: AlbumType,
+        existingTaskId: Int?
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.copyFiles(files, destination, existingTaskId)
 
-    override suspend fun getMediaSize(): Long = withContext(Dispatchers.IO) {
-        return@withContext db.customDao().mediaSize(album = album.id)
-    }
-
-    override fun allowedAlbumTypesFor(
-        moving: Boolean
-    ) = fileManager.allowedAlbumTypesFor(
-        moving = moving,
-        current = AlbumType.Cloud::class
-    )
-
-    override suspend fun setTrashed(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean,
-        albumId: String?,
-        immichId: String?,
-        onItemDone: (totaCount: Int) -> Unit
-    ) = fileManager.setTrashed(context, list, trashed, albumId ?: album.id, immichId ?: album.immichId, null, onItemDone)
+    override suspend fun moveFiles(
+        files: List<FileOperationItemMetadata>,
+        destination: AlbumType,
+        existingTaskId: Int?,
+        origin: AlbumType?
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.moveFiles(files, destination, existingTaskId, origin)
 
     override suspend fun renameAlbum(
-        context: Context,
-        newName: String
-    ) = fileManager.renameAlbum(context, album, newName)
+        album: AlbumType,
+        newName: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.renameAlbum(album, newName, existingTaskId)
+
+    override suspend fun trashFile(
+        files: List<FileOperationItemMetadata>,
+        isTrashed: Boolean,
+        albumId: String,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+
+    override suspend fun deleteFiles(
+        files: List<FileOperationItemMetadata>,
+        albumId: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+
+    override suspend fun shareFiles(
+        files: List<FileOperationItemMetadata>
+    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+
+    override suspend fun favouriteFile(
+        files: List<FileOperationItemMetadata>,
+        isFavourite: Boolean,
+        albumId: String?,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.favouriteFile(files, isFavourite, albumId, immichId, existingTaskId)
+
+    override suspend fun getExifData(
+        file: FileOperationItemMetadata
+    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+
+    override suspend fun getMediaCount(album: AlbumType): Int = fileManager.getMediaCount(album)
+
+    override suspend fun getMediaSize(album: AlbumType): Long = fileManager.getMediaSize(album)
 }

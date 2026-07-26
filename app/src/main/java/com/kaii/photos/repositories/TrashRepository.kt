@@ -1,17 +1,18 @@
 package com.kaii.photos.repositories
 
-import android.content.Context
+import android.content.Intent
 import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.file_management.managers.LocalFileManager
-import com.kaii.photos.file_management.secure.LocalSecureManager
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
@@ -19,10 +20,6 @@ import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.TrashDataSource
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,43 +31,21 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.reflect.KClass
 
 class TrashRepository(
-    db: MediaDatabase,
-    client: ApiClient,
+    private val fileManager: LocalFileManager,
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>,
     private val dataSource: TrashDataSource
-) : BaseRepo {
+) {
     private data class Params(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,
         override val format: DisplayDateFormat,
         override val info: ImmichBasicInfo
     ) : RoomQueryParams(sortMode, format, info)
-
-    override val fileManager = LocalFileManager(
-        mediaDao = db.mediaDao(),
-        customDao = db.customDao(),
-        syncTaskDao = db.taskDao(),
-        assetClient = AssetsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        ),
-        albumsClient = AlbumsClient(
-            endpoint = "",
-            auth = Auth.None,
-            client = client
-        ),
-        secureManager = LocalSecureManager(
-            secureDao = db.securedItemEntityDao(),
-            mediaDao = db.mediaDao()
-        )
-    )
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
 
@@ -94,7 +69,7 @@ class TrashRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val mediaFlow = params.flatMapLatest { params ->
+    val mediaFlow = params.flatMapLatest { params ->
         Pager(
             config = PagingConfig(
                 pageSize = 50,
@@ -110,7 +85,7 @@ class TrashRepository(
     }.cachedIn(scope)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val gridMediaFlow = params.flatMapLatest { params ->
+    val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
             format = params.format
@@ -119,41 +94,19 @@ class TrashRepository(
 
     fun cancel() = dataSource.cancel()
 
-    override suspend fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) = fileManager.permanentlyDelete(context, list)
-
-    suspend fun deleteAll(
-        context: Context
-    ) = fileManager.permanentlyDelete(
-        context,
-        dataSource.query().fastMap {
-            SelectionManager.SelectedItem(
+    suspend fun deleteAll() = fileManager.deleteFiles(
+        files = dataSource.query().fastMap {
+            FileOperationItemMetadata(
                 id = it.id,
                 uri = it.uri,
                 immichUrl = it.immichUrl,
                 isImage = it.type == MediaType.Image,
-                parentPath = it.parentPath
+                absolutePath = it.absolutePath
             )
-        }
+        },
+        albumId = "",
+        existingTaskId = null
     )
-
-    override suspend fun getMediaCount(): Int {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
-
-    override suspend fun getMediaSize(): Long {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
-
-    override fun allowedAlbumTypesFor(moving: Boolean): List<KClass<out AlbumType>> {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
-
-    override suspend fun renameAlbum(context: Context, newName: String) {
-        throw IllegalAccessException("This cannot and should not be called in a search context.")
-    }
 
     suspend fun getItemsForDate(
         timestamp: Long,
@@ -179,4 +132,31 @@ class TrashRepository(
             )
         }.toMap()
     }
+
+    suspend fun trashFile(
+        files: List<FileOperationItemMetadata>,
+        isTrashed: Boolean,
+        albumId: String,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+
+    suspend fun deleteFiles(
+        files: List<FileOperationItemMetadata>,
+        albumId: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+
+    suspend fun shareFiles(
+        files: List<FileOperationItemMetadata>
+    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+
+    suspend fun getExifData(
+        file: FileOperationItemMetadata
+    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+
+    suspend fun renameFile(
+        file: FileOperationItemMetadata,
+        newName: String
+    ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
 }

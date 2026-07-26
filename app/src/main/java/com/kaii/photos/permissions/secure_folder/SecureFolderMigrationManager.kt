@@ -199,9 +199,8 @@ class SecureFolderMigrationManager(
         Log.d(TAG, "Encrypting secure folder media...")
         LocalSecureManager(
             secureDao = appDatabase.securedItemEntityDao(),
-            mediaDao = appDatabase.mediaDao()
+            context = context
         ).moveMediaToSecureFolder(
-            context = context,
             list = mediaItems,
             onDone = {
                 uris = emptyList()

@@ -6,10 +6,11 @@ import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
-import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
@@ -20,13 +21,13 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
 
-suspend fun List<SelectionManager.SelectedItem>.toSecureMedia(
+suspend fun List<FileOperationItemMetadata>.toSecureMedia(
     context: Context
 ): List<PhotoLibraryUIModel.SecuredMedia> = withContext(Dispatchers.IO) {
     val context = context.applicationContext
     val metadataRetriever = MediaMetadataRetriever()
     val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
-    val selectedPaths = fastMap { dao.getSecuredPathFromOriginalPath(originalPath = it.parentPath) }
+    val selectedPaths = fastMap { dao.getSecuredPathFromOriginalPath(originalPath = it.absolutePath) } // hack
 
     val secureFolderFiles = File(context.appSecureFolderDir).listFiles { file ->
         file.absolutePath in selectedPaths

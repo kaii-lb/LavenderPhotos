@@ -14,9 +14,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
-import com.kaii.photos.file_management.managers.CloudFileManager
-import com.kaii.photos.file_management.managers.CustomFileManager
-import com.kaii.photos.file_management.managers.LocalFileManager
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient

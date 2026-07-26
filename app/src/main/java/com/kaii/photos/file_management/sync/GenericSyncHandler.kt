@@ -7,8 +7,6 @@ import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
-import com.kaii.photos.file_management.managers.CustomFileManager
-import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType

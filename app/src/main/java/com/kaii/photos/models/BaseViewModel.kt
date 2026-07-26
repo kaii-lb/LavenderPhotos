@@ -11,7 +11,6 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.Settings
-import com.kaii.photos.file_management.managers.GenericFileManager
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode

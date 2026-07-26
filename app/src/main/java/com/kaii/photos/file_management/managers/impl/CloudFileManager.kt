@@ -22,6 +22,7 @@ import com.kaii.photos.file_management.managers.operations.CloudSourceCopyOperat
 import com.kaii.photos.file_management.managers.operations.CloudTrashOperation
 import com.kaii.photos.file_management.managers.operations.RenameAlbumOperation
 import com.kaii.photos.file_management.managers.traits.Copy
+import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.Favourite
@@ -59,7 +60,7 @@ class CloudFileManager(
     private val trash: CloudTrashOperation,
     private val delete: CloudDeleteOperation,
     private val favourite: CloudFavouriteOperation
-) : Copy, Move, Trash, Delete, Favourite, Share, RenameAlbum, ExtractExif {
+) : Copy, Move, Trash, Delete, Favourite, Share, RenameAlbum, ExtractExif, CountAndSize {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
@@ -222,4 +223,16 @@ class CloudFileManager(
             )
         )
     }
+
+    override suspend fun getMediaCount(
+        album: AlbumType
+    ): Int = customDao.countMediaInAlbum(
+        album = (album as AlbumType.Cloud).id
+    )
+
+    override suspend fun getMediaSize(
+        album: AlbumType
+    ): Long = customDao.mediaSize(
+        album = (album as AlbumType.Cloud).id
+    )
 }

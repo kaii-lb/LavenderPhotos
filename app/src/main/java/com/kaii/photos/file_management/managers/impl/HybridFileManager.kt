@@ -12,6 +12,14 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.traits.Copy
+import com.kaii.photos.file_management.managers.traits.Delete
+import com.kaii.photos.file_management.managers.traits.ExtractExif
+import com.kaii.photos.file_management.managers.traits.Favourite
+import com.kaii.photos.file_management.managers.traits.Move
+import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Secure
+import com.kaii.photos.file_management.managers.traits.Share
+import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.exif.MediaData
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ProducerScope
@@ -24,7 +32,7 @@ class HybridFileManager(
     private val syncTaskDao: SyncTaskDao,
     private val other: LocalSourceFileManager,
     private val cloud: CloudFileManager,
-) : LocalSourceFileManager {
+) : Copy, Move, RenameFile, Trash, Delete, Secure, Share, Favourite, ExtractExif {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
@@ -112,14 +120,6 @@ class HybridFileManager(
     ): Result<Unit, FileOperationError> =
         if (file.isCloud) throw IllegalArgumentException("This operation is not supported: Cannot rename individual cloud items!")
         else other.renameFile(file, newName)
-
-    override suspend fun renameAlbum(
-        album: AlbumType,
-        newName: String,
-        existingTaskId: Int?
-    ): Result<Unit, FileOperationError> =
-        if (album.immichId != null) cloud.renameAlbum(album, newName, existingTaskId)
-        else other.renameAlbum(album, newName, existingTaskId)
 
     override suspend fun trashFile(
         files: List<FileOperationItemMetadata>,

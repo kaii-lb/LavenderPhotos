@@ -3,7 +3,6 @@ package com.kaii.photos.file_management.sync
 import android.content.Context
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
-import com.kaii.photos.file_management.managers.LocalFileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi

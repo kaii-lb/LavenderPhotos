@@ -148,7 +148,6 @@ class LocalSecureManager(
      * returned as a to-delete list.
      */
     suspend fun moveMediaToSecureFolder(
-        context: Context,
         list: List<MediaStoreData>,
         onDone: () -> Unit
     ) = withContext(Dispatchers.IO) {
