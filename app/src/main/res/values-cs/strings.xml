@@ -670,4 +670,8 @@
     <string name="contributors_separator_developer">Vývojář</string>
     <string name="contributors_separator_major">Významní přispěvatelé</string>
     <string name="contributors_separator_contributors">Přispěvatelé open source</string>
+    <string name="settings_look_and_feel">Vzhled</string>
+    <string name="settings_privacy">Soukromí a zabezpečení</string>
+    <string name="settings_memory_storage">Paměť a úložiště</string>
+    <string name="settings_about_and_updates">O aplikaci a aktualizace</string>
 </resources>
