@@ -79,6 +79,8 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -92,16 +94,14 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.custom_album.CustomAlbumViewModel
-import com.kaii.photos.models.favourites_grid.FavouritesViewModel
-import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
-import com.kaii.photos.models.main_grid.MainGridViewModel
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
-import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.CustomAlbumViewModel
+import com.kaii.photos.models.FavouritesViewModel
+import com.kaii.photos.models.ImmichAlbumViewModel
+import com.kaii.photos.models.MainGridViewModel
+import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
-import com.kaii.photos.permissions.favourites.rememberCloudFavouritesState
-import com.kaii.photos.permissions.favourites.rememberLocalFavouritesState
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
@@ -166,7 +166,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -221,7 +221,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -276,7 +276,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -329,7 +329,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -382,7 +382,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -435,7 +435,7 @@ fun SinglePhotoView(
         setTagMediaId = tagViewModel::setMediaId,
         getExifData = viewModel::getExifData,
         allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-        process = viewModel::runAction
+        runAction = viewModel::runAction
     )
 }
 
@@ -465,7 +465,7 @@ private fun SinglePhotoViewCommon(
     setTagMediaId: (id: Long) -> Unit,
     getExifData: suspend (context: Context, media: MediaStoreData) -> Map<MediaData, String>,
     allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    process: (context: Context, action: GenericFileManager.Action) -> Any?
+    runAction: (action: FileOperationAction) -> Any?
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -623,7 +623,7 @@ private fun SinglePhotoViewCommon(
                         }
                     }
                 },
-                process = process,
+                runAction = runAction,
                 modifier = Modifier
                     .singlePhotoBottomBarProperties(
                         draggableState = draggableState,
@@ -664,7 +664,7 @@ private fun SinglePhotoViewCommon(
                 },
                 togglePrivacyMode = scrollState::togglePrivacyMode,
                 allowedAlbumsFor = allowedAlbumsFor,
-                process = process
+                runAction = runAction
             )
         }
 
@@ -736,7 +736,7 @@ private fun BottomBar(
     doNotTrash: Boolean,
     modifier: Modifier = Modifier,
     showEditingView: () -> Unit,
-    process: (context: Context, action: GenericFileManager.Action) -> Any?
+    runAction: (action: FileOperationAction) -> Any?
 ) {
     val context = LocalContext.current
 
@@ -833,16 +833,15 @@ private fun BottomBar(
                 IconButton(
                     onClick = {
                         val item = currentItem()
-                        process(
-                            context,
-                            GenericFileManager.Action.Share(
-                                list = listOf(
-                                    SelectionManager.SelectedItem(
+                        runAction(
+                            FileOperationAction.Share(
+                                files = listOf(
+                                    FileOperationItemMetadata(
                                         id = item.id,
                                         uri = item.uri,
+                                        absolutePath = item.absolutePath,
                                         immichUrl = item.immichUrl,
-                                        isImage = item.type == MediaType.Image,
-                                        parentPath = item.parentPath
+                                        isImage = item.type == MediaType.Image
                                     )
                                 )
                             )
@@ -859,16 +858,15 @@ private fun BottomBar(
                 val filePermissionManager = rememberFilePermissionManager(
                     onGranted = {
                         val item = currentItem()
-                        process(
-                            context,
-                            GenericFileManager.Action.Secure(
-                                list = listOf(
-                                    SelectionManager.SelectedItem(
+                        runAction(
+                            FileOperationAction.Secure(
+                                files = listOf(
+                                    FileOperationItemMetadata(
                                         id = item.id,
                                         uri = item.uri,
+                                        absolutePath = item.absolutePath,
                                         immichUrl = item.immichUrl,
-                                        isImage = item.type == MediaType.Image,
-                                        parentPath = item.parentPath
+                                        isImage = item.type == MediaType.Image
                                     )
                                 )
                             )
@@ -913,47 +911,51 @@ private fun BottomBar(
                     )
                 }
 
-                fun setFavourite(favourite: Boolean): PendingIntent? {
+                fun setFavourite(isFavourite: Boolean): PendingIntent? {
                     val item = currentItem()
-
-                    return process(
-                        context,
-                        GenericFileManager.Action.Favourite(
-                            list = listOf(
-                                SelectionManager.SelectedItem(
+                    runAction(
+                        FileOperationAction.Favourite(
+                            files = listOf(
+                                FileOperationItemMetadata(
                                     id = item.id,
                                     uri = item.uri,
+                                    absolutePath = item.absolutePath,
                                     immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image,
-                                    parentPath = item.parentPath
+                                    isImage = item.type == MediaType.Image
                                 )
                             ),
-                            favourite = favourite
+                            isFavourite = isFavourite,
+                            album = album()
                         )
-                    ) as? PendingIntent?
-                }
-
-                val favState = if (currentItem().isCloud) {
-                    rememberCloudFavouritesState(
-                        media = currentItem(),
-                        setFavourite = { setFavourite(it) }
-                    )
-                } else {
-                    rememberLocalFavouritesState(
-                        media = currentItem(),
-                        setFavourite = { setFavourite(it) }
                     )
                 }
 
                 val vibratorManager = rememberVibratorManager()
-                val isFavourited by favState.state.collectAsStateWithLifecycle()
+                val isFavourited = remember(currentItem()) {
+                    currentItem().favourited
+                }
 
                 IconButton(
                     onClick = {
                         coroutineScope.launch {
                             vibratorManager.vibrateShort()
 
-                            favState.favourite(favourite = !isFavourited)
+                            val item = currentItem()
+                            runAction(
+                                FileOperationAction.Favourite(
+                                    files = listOf(
+                                        FileOperationItemMetadata(
+                                            id = item.id,
+                                            uri = item.uri,
+                                            absolutePath = item.absolutePath,
+                                            immichUrl = item.immichUrl,
+                                            isImage = item.type == MediaType.Image
+                                        )
+                                    ),
+                                    isFavourite = !item.favourited,
+                                    album = album()
+                                )
+                            )
                         }
                     },
                     enabled = !privacyMode
@@ -963,34 +965,6 @@ private fun BottomBar(
                         contentDescription = stringResource(id = R.string.favourites_add_this)
                     )
                 }
-
-                // TODO: look into possibly sharing permission managers?
-                val trashFilePermissionManager = rememberFilePermissionManager(
-                    onGranted = {
-                        val item = currentItem()
-                        val list = listOf(
-                            SelectionManager.SelectedItem(
-                                id = item.id,
-                                uri = item.uri,
-                                immichUrl = item.immichUrl,
-                                isImage = item.type == MediaType.Image,
-                                parentPath = item.parentPath
-                            )
-                        )
-
-                        process(
-                            context,
-                            if (doNotTrash && !isCustom) {
-                                GenericFileManager.Action.Delete(list = list)
-                            } else {
-                                GenericFileManager.Action.Trash(
-                                    list = list,
-                                    trashed = true
-                                )
-                            }
-                        )
-                    }
-                )
 
                 var showDeleteDialog by remember { mutableStateOf(false) }
                 if (showDeleteDialog) {
@@ -1015,29 +989,30 @@ private fun BottomBar(
                         ),
                         action = {
                             val item = currentItem()
-                            val list = listOf(
-                                SelectionManager.SelectedItem(
+                            val files = listOf(
+                                FileOperationItemMetadata(
                                     id = item.id,
                                     uri = item.uri,
+                                    absolutePath = item.absolutePath,
                                     immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image,
-                                    parentPath = item.parentPath
+                                    isImage = item.type == MediaType.Image
                                 )
                             )
 
-                            if (item.isCloud) {
-                                process(
-                                    context,
-                                    GenericFileManager.Action.Trash(
-                                        list = list,
-                                        trashed = true
+                            runAction(
+                                if (doNotTrash && !isCustom) {
+                                    FileOperationAction.Delete(
+                                        files = files,
+                                        album = album()
                                     )
-                                )
-                            } else {
-                                trashFilePermissionManager.get(
-                                    uris = listOf(currentItem().uri.toUri())
-                                )
-                            }
+                                } else {
+                                    FileOperationAction.Trash(
+                                        files = files,
+                                        isTrashed = true,
+                                        album = album()
+                                    )
+                                }
+                            )
                         },
                         onDismiss = {
                             showDeleteDialog = false
@@ -1062,7 +1037,7 @@ private fun BottomBar(
                             )
 
                             if (item.isCloud) {
-                                process(
+                                runAction(
                                     context,
                                     GenericFileManager.Action.Trash(
                                         list = list,

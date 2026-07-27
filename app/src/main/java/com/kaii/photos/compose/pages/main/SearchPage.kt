@@ -31,7 +31,7 @@ import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.repositories.SearchMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

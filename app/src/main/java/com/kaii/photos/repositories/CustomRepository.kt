@@ -13,10 +13,11 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
-import com.kaii.photos.file_management.managers.impl.CustomFileManager
+import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -31,13 +32,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 @OptIn(ExperimentalCoroutinesApi::class)
 class CustomRepository(
     private val album: AlbumType,
-    private val fileManager: CustomFileManager,
+    private val fileManager: HybridFileManager,
     private val customDao: CustomEntityDao,
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
-) : BaseRepo, RenameFile, RenameAlbum, CountAndSize {
+) : BaseRepo, RenameFile, RenameAlbum, CountAndSize, Secure {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -99,19 +100,20 @@ class CustomRepository(
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = fileManager.renameAlbum(album, newName, existingTaskId)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -137,4 +139,8 @@ class CustomRepository(
         file: FileOperationItemMetadata,
         newName: String
     ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+
+    override suspend fun encryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Flow<FileOperationProgress<Unit>> = fileManager.encryptFiles(files)
 }

@@ -474,8 +474,9 @@ class SecureRepository(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>

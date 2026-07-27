@@ -68,7 +68,7 @@ class CloudFileManager @Inject constructor(
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = copyOperation.copyItems(files, destination, existingTaskId)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
@@ -79,8 +79,9 @@ class CloudFileManager @Inject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = delete.execute(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = delete.execute(files, immichId ?: albumId, existingTaskId)
 
     override suspend fun favouriteFile(
         files: List<FileOperationItemMetadata>,
@@ -208,7 +209,7 @@ class CloudFileManager @Inject constructor(
         val finalResult = when (val copied = copyResult) {
             is Result.Error, null -> copied ?: Result.Error(FileOperationError.Failed)
             is Result.Success -> {
-                trashFile(
+                trashFiles(
                     files = files,
                     isTrashed = true,
                     albumId = origin.id,

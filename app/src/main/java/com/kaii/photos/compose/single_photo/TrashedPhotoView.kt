@@ -307,7 +307,7 @@ private fun SingleTrashedPhotoViewImpl(
                     },
                     togglePrivacyMode = scrollState::togglePrivacyMode,
                     allowedAlbumsFor = { emptyList() },
-                    process = process
+                    runAction = process
                 )
             }
         }

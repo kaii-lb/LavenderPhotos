@@ -49,7 +49,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.models.secure_folder.SecureFolderViewModel
+import com.kaii.photos.models.SecureFolderViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File

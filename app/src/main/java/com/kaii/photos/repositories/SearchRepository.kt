@@ -22,6 +22,7 @@ import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -69,7 +70,7 @@ class SearchRepository(
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
-) : BaseRepo, RenameFile {
+) : BaseRepo, RenameFile, Secure {
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,
@@ -397,19 +398,20 @@ class SearchRepository(
         newName: String
     ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -426,4 +428,8 @@ class SearchRepository(
     override suspend fun getExifData(
         file: FileOperationItemMetadata
     ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+
+    override suspend fun encryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Flow<FileOperationProgress<Unit>> = fileManager.encryptFiles(files)
 }

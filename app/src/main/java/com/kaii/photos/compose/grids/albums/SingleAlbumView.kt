@@ -53,9 +53,9 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.vibrateShort
-import com.kaii.photos.models.custom_album.CustomAlbumViewModel
-import com.kaii.photos.models.immich_album.ImmichAlbumViewModel
-import com.kaii.photos.models.multi_album.MultiAlbumViewModel
+import com.kaii.photos.models.CustomAlbumViewModel
+import com.kaii.photos.models.ImmichAlbumViewModel
+import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import kotlinx.coroutines.delay

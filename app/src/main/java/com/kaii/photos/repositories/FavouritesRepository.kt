@@ -14,6 +14,7 @@ import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -33,7 +34,7 @@ class FavouritesRepository(
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
-) : BaseRepo, RenameFile {
+) : BaseRepo, RenameFile, Secure {
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,
@@ -83,17 +84,18 @@ class FavouritesRepository(
         origin: AlbumType?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.moveFiles(files, destination, existingTaskId, origin)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
 
@@ -117,4 +119,8 @@ class FavouritesRepository(
         file: FileOperationItemMetadata,
         newName: String
     ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+
+    override suspend fun encryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Flow<FileOperationProgress<Unit>> = fileManager.encryptFiles(files)
 }

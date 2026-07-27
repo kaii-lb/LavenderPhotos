@@ -6,6 +6,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.daos.TagDao
 import com.kaii.photos.database.entities.ExifDataDao
 import dagger.Module
 import dagger.Provides
@@ -37,4 +38,7 @@ object DatabaseModule {
 
     @Provides
     fun provideExifDataDao(db: MediaDatabase): ExifDataDao = db.exifDataDao()
+
+    @Provides
+    fun provideTagDao(db: MediaDatabase): TagDao = db.tagDao()
 }

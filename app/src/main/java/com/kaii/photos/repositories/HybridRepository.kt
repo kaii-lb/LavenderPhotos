@@ -3,7 +3,6 @@ package com.kaii.photos.repositories
 import android.content.Intent
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -13,13 +12,15 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
+import com.kaii.photos.file_management.managers.traits.CountAndSize
+import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,12 +31,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 class HybridRepository(
     private val mediaDao: MediaDao,
     private val fileManager: HybridFileManager,
-    scope: CoroutineScope,
     initialAlbum: AlbumType.Folder,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
     format: Flow<DisplayDateFormat>
-) : BaseRepo, RenameFile {
+) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize {
     private data class Params(
         val paths: Set<String>,
         override val sortMode: MediaItemSortMode,
@@ -70,7 +70,7 @@ class HybridRepository(
             auth = details.info.auth,
             endpoint = details.info.endpoint
         )
-    }.cachedIn(scope)
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val gridMediaFlow = params.flatMapLatest { details ->
@@ -78,7 +78,7 @@ class HybridRepository(
             sortMode = details.sortMode,
             format = details.format
         )
-    }.cachedIn(scope)
+    }
 
     fun changeAlbum(album: AlbumType.Folder) {
         this.album.value = album
@@ -97,19 +97,20 @@ class HybridRepository(
         origin: AlbumType?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.moveFiles(files, destination, existingTaskId, origin)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -131,4 +132,18 @@ class HybridRepository(
         file: FileOperationItemMetadata,
         newName: String
     ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+
+    override suspend fun renameAlbum(
+        album: AlbumType,
+        newName: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.renameAlbum(album, newName, existingTaskId)
+
+    override suspend fun encryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Flow<FileOperationProgress<Unit>> = fileManager.encryptFiles(files)
+
+    override suspend fun getMediaCount(album: AlbumType): Int = fileManager.getMediaCount(album)
+
+    override suspend fun getMediaSize(album: AlbumType): Long = fileManager.getMediaSize(album)
 }

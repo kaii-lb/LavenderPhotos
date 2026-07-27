@@ -59,7 +59,7 @@ class LocalFileManager @Inject constructor(
 
         when (val result = copyResult) {
             is Result.Success -> {
-                val newResult = deleteFiles(files, destination.id, existingTaskId)
+                val newResult = deleteFiles(files, destination.id, destination.immichId, existingTaskId)
 
                 send(
                     element = FileOperationProgress.Finished(
@@ -103,7 +103,7 @@ class LocalFileManager @Inject constructor(
         files: List<FileOperationItemMetadata>
     ): Result<Intent, FileOperationError> = gateway.share(files)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
@@ -117,6 +117,7 @@ class LocalFileManager @Inject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = gateway.delete(files)
 

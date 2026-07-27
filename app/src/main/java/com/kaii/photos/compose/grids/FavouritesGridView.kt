@@ -43,7 +43,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.models.favourites_grid.FavouritesViewModel
+import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import kotlinx.coroutines.flow.collectLatest

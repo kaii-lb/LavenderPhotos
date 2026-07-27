@@ -113,6 +113,7 @@ class SecureFileManager(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = try {
         files.forEach { item ->

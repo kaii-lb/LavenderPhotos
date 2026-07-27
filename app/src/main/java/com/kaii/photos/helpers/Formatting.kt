@@ -182,3 +182,11 @@ fun SharedLinkResponseDto.creationDate(context: Context): String? {
             )
         )
 }
+
+fun Long.formatAsBytes(): String {
+    if (this >= 1_000_000_000) {
+        return ((this.toDouble() / 1_000_000_0).toLong() / 100.0).toString() + " GB"
+    }
+
+    return ((this.toDouble() / 1_000_0).toLong() / 100.0).toString() + " MB"
+}

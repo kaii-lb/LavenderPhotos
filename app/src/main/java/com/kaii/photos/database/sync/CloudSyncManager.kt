@@ -95,7 +95,7 @@ class CloudSyncManager @Inject constructor(
             )
         )
 
-        SyncTaskType.Trash -> cloudFileManager.trashFile(
+        SyncTaskType.Trash -> cloudFileManager.trashFiles(
             files,
             isTrashed = true,
             albumId = task.destination!!,
@@ -114,6 +114,7 @@ class CloudSyncManager @Inject constructor(
         SyncTaskType.Delete -> cloudFileManager.deleteFiles(
             files = files,
             albumId = task.destination!!,
+            immichId = task.extraData!!,
             existingTaskId = task.id
         ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
 

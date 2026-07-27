@@ -12,10 +12,12 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.traits.Copy
+import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.Favourite
 import com.kaii.photos.file_management.managers.traits.Move
+import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.file_management.managers.traits.Share
@@ -34,7 +36,7 @@ class HybridFileManager @AssistedInject constructor(
     private val syncTaskDao: SyncTaskDao,
     @Assisted private val other: LocalSourceFileManager,
     private val cloud: CloudFileManager,
-) : Copy, Move, RenameFile, Trash, Delete, Secure, Share, Favourite, ExtractExif {
+) : Copy, Move, RenameFile, RenameAlbum, Trash, Delete, Secure, Share, Favourite, ExtractExif, CountAndSize {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
@@ -124,7 +126,34 @@ class HybridFileManager @AssistedInject constructor(
         if (file.isCloud) throw IllegalArgumentException("This operation is not supported: Cannot rename individual cloud items!")
         else other.renameFile(file, newName)
 
-    override suspend fun trashFile(
+    override suspend fun renameAlbum(
+        album: AlbumType,
+        newName: String,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> {
+        val sharedTaskId = existingTaskId ?: syncTaskDao.insert(
+            SyncTask(
+                dateModified = Clock.System.now().epochSeconds,
+                status = SyncTaskStatus.Processing,
+                type = SyncTaskType.Move,
+                destination = album.id,
+                extraData = album.immichId
+            )
+        ).toInt()
+
+        return coroutineScope {
+            mergeResults(
+                localCall = {
+                    other.renameAlbum(album, newName, sharedTaskId)
+                },
+                cloudCall = {
+                    cloud.renameAlbum(album, newName, sharedTaskId)
+                }
+            )
+        }
+    }
+
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
@@ -147,11 +176,11 @@ class HybridFileManager @AssistedInject constructor(
             mergeResults(
                 localCall = {
                     if (localFiles.isEmpty()) Result.Success(Unit)
-                    else other.trashFile(localFiles, isTrashed, albumId, null, sharedTaskId)
+                    else other.trashFiles(localFiles, isTrashed, albumId, null, sharedTaskId)
                 },
                 cloudCall = {
                     if (cloudFiles.isEmpty()) Result.Success(Unit)
-                    else cloud.trashFile(cloudFiles, isTrashed, albumId, immichId, sharedTaskId)
+                    else cloud.trashFiles(cloudFiles, isTrashed, albumId, immichId, sharedTaskId)
                 }
             )
         }
@@ -160,6 +189,7 @@ class HybridFileManager @AssistedInject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> {
         val localFiles = files.filter { it.isLocalOrLinked }
@@ -170,7 +200,8 @@ class HybridFileManager @AssistedInject constructor(
                 dateModified = Clock.System.now().epochSeconds,
                 status = SyncTaskStatus.Processing,
                 type = SyncTaskType.Delete,
-                destination = albumId
+                destination = albumId,
+                extraData = immichId
             )
         ).toInt()
 
@@ -178,11 +209,11 @@ class HybridFileManager @AssistedInject constructor(
             mergeResults(
                 localCall = {
                     if (localFiles.isEmpty()) Result.Success(Unit)
-                    else other.deleteFiles(localFiles, albumId, sharedTaskId)
+                    else other.deleteFiles(localFiles, albumId, immichId, sharedTaskId)
                 },
                 cloudCall = {
                     if (cloudFiles.isEmpty()) Result.Success(Unit)
-                    else cloud.deleteFiles(cloudFiles, albumId, sharedTaskId)
+                    else cloud.deleteFiles(cloudFiles, albumId, immichId, sharedTaskId)
                 }
             )
         }
@@ -277,5 +308,25 @@ class HybridFileManager @AssistedInject constructor(
         cloud.await().let { if (it is Result.Error) return@coroutineScope it }
 
         Result.Success(Unit)
+    }
+
+    override suspend fun getMediaCount(
+        album: AlbumType
+    ): Int = when (album) {
+        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+
+        is AlbumType.Cloud -> cloud.getMediaCount(album)
+
+        else -> other.getMediaCount(album)
+    }
+
+    override suspend fun getMediaSize(
+        album: AlbumType
+    ): Long = when (album) {
+        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+
+        is AlbumType.Cloud -> cloud.getMediaSize(album)
+
+        else -> other.getMediaSize(album)
     }
 }

@@ -11,6 +11,11 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.Delete
+import com.kaii.photos.file_management.managers.traits.ExtractExif
+import com.kaii.photos.file_management.managers.traits.RenameFile
+import com.kaii.photos.file_management.managers.traits.Share
+import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -39,7 +44,7 @@ class TrashRepository(
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>,
     private val dataSource: TrashDataSource
-) {
+) : Trash, Delete, Share, ExtractExif, RenameFile {
     private data class Params(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,
@@ -105,7 +110,8 @@ class TrashRepository(
             )
         },
         albumId = "",
-        existingTaskId = null
+        existingTaskId = null,
+        immichId = null
     )
 
     suspend fun getItemsForDate(
@@ -128,34 +134,35 @@ class TrashRepository(
                 uri = item.uri,
                 immichUrl = item.immichUrl,
                 isImage = item.type == MediaType.Image,
-                parentPath = item.parentPath
+                absolutePath = item.absolutePath
             )
         }.toMap()
     }
 
-    suspend fun trashFile(
+    override suspend fun deleteFiles(
+        files: List<FileOperationItemMetadata>,
+        albumId: String,
+        immichId: String?,
+        existingTaskId: Int?
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFile(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
-    suspend fun deleteFiles(
-        files: List<FileOperationItemMetadata>,
-        albumId: String,
-        existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
-
-    suspend fun shareFiles(
+    override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
     ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
 
-    suspend fun getExifData(
+    override suspend fun getExifData(
         file: FileOperationItemMetadata
     ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
 
-    suspend fun renameFile(
+    override suspend fun renameFile(
         file: FileOperationItemMetadata,
         newName: String
     ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)

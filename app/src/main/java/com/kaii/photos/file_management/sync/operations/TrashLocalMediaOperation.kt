@@ -16,7 +16,7 @@ class TrashLocalMediaOperation(
     ): Result<Unit, FileOperationError> {
         if (media.isEmpty()) return Result.Success(Unit)
 
-        return fileManager.trashFile(
+        return fileManager.trashFiles(
             files = media.map {
                 FileOperationItemMetadata(
                     id = it.id,

@@ -94,7 +94,7 @@ import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
-import com.kaii.photos.models.secure_folder.SecureFolderViewModel
+import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.immichintegration.Auth

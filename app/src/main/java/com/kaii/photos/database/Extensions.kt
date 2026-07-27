@@ -30,7 +30,8 @@ suspend fun <T> SyncTaskDao.track(
             dateModified = Clock.System.now().epochSeconds,
             status = SyncTaskStatus.Processing,
             type = type,
-            destination = destination
+            destination = destination,
+            extraData = destination
         )
     ).toInt()
 

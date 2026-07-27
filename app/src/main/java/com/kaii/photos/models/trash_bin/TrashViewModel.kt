@@ -1,35 +1,43 @@
 package com.kaii.photos.models.trash_bin
 
 import android.content.Context
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
-import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.Settings
+import com.kaii.photos.di.ApplicationScope
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.TopBarDetailsFormat
+import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.mediastore.TrashDataSource
+import com.kaii.photos.models.traits.DeleteImpl
+import com.kaii.photos.models.traits.RenameFileImpl
+import com.kaii.photos.models.traits.ShareImpl
+import com.kaii.photos.models.traits.TrashImpl
 import com.kaii.photos.repositories.TrashRepository
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TrashViewModel(
+@HiltViewModel
+class TrashViewModel @Inject constructor(
     context: Context,
-    datasource: TrashDataSource,
-    db: MediaDatabase = PhotosApplication.appModule.db,
-    apiClient: ApiClient = PhotosApplication.appModule.apiClient,
+    private val repo: TrashRepository,
     settings: Settings = PhotosApplication.appModule.settings,
-    private val scope: CoroutineScope = PhotosApplication.appModule.scope
-) : ViewModel() {
+    @param:ApplicationScope private val appScope: CoroutineScope
+) : ViewModel(), TrashImpl, DeleteImpl, ShareImpl, RenameFileImpl {
     val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -84,12 +92,6 @@ class TrashViewModel(
         initialValue = false
     )
 
-    val preserveDate = settings.permissions.getPreserveDateOnMove().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
-
     val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
@@ -102,18 +104,17 @@ class TrashViewModel(
         initialValue = false
     )
 
-    private val repo = TrashRepository(
-        db = db,
-        client = apiClient,
-        scope = viewModelScope,
-        sortMode = settings.photoGrid.getSortMode(),
-        format = settings.lookAndFeel.getDisplayDateFormat(),
-        info = settings.immich.getImmichBasicInfo(),
-        dataSource = datasource
-    )
-
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
+
+    private val progressChannel = Channel<FileOperationProgress<Unit>>(Channel.BUFFERED)
+    val fileOperationProgress = progressChannel.receiveAsFlow()
+
+    private val shareChannel = Channel<Result<Intent, FileOperationError>>()
+    val fileShareIntent = shareChannel.receiveAsFlow()
+
+    private val exifDataState = MutableStateFlow<Result<Map<MediaData, Any>, FileOperationError>>(Result.Error(FileOperationError.Failed))
+    val exifData = exifDataState.asStateFlow()
 
     val selectionManager = SelectionManager(
         sortMode = MediaItemSortMode.DateModified,
@@ -130,96 +131,24 @@ class TrashViewModel(
 
     fun cancel() = repo.cancel()
 
-    fun runAction(
-        context: Context,
-        action: GenericFileManager.Action
-    ) {
+    fun runAction(action: FileOperationAction) {
         when (action) {
-            is GenericFileManager.Action.Trash -> {
-                setTrash(
-                    context = context,
-                    list = action.list,
-                    trashed = action.trashed
-                )
+            is FileOperationAction.Trash -> repo.trashFiles(action.files, action.isTrashed, action.album, progressChannel, appScope)
+            is FileOperationAction.Delete -> repo.deleteFiles(action.files, action.album, progressChannel, appScope)
+            is FileOperationAction.RenameFile -> repo.renameFile(action.file, action.newName, progressChannel, appScope)
+            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, appScope)
+
+            is FileOperationAction.LoadExifData -> viewModelScope.launch {
+                exifDataState.value = repo.getExifData(action.file)
             }
 
-            is GenericFileManager.Action.Delete -> {
-                delete(
-                    context = context,
-                    list = action.list
-                )
-            }
-
-            is GenericFileManager.Action.Share -> {
-                share(
-                    context = context,
-                    list = action.list
-                )
-            }
+            else -> Unit
         }
     }
 
-    private fun setTrash(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>,
-        trashed: Boolean
-    ) {
-        scope.launch {
-            val percentage = mutableFloatStateOf(0f)
-            val body = mutableStateOf(
-                context.resources.getString(
-                    if (trashed) R.string.media_delete_snackbar_body
-                    else R.string.media_restoring_snackbar_body,
-                    0, list.size
-                )
-            )
-
-            LavenderSnackbarController.pushEvent(
-                LavenderSnackbarEvent.ProgressEvent(
-                    message = context.resources.getString(
-                        if (trashed) R.string.media_delete_snackbar_title
-                        else R.string.media_restoring_snackbar_title
-                    ),
-                    body = body,
-                    icon = R.drawable.delete,
-                    percentage = percentage
-                )
-            )
-
-            repo.setTrashed(context, list, trashed, null, null) {
-                percentage.floatValue = it.toFloat() / list.size
-                body.value = context.resources.getString(
-                    if (trashed) R.string.media_delete_snackbar_body
-                    else R.string.media_restoring_snackbar_body,
-                    it, list.size
-                )
-            }
-        }
-    }
-
-    private fun delete(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) {
-        scope.launch {
-            repo.delete(context, list)
-        }
-    }
-
-    private fun share(
-        context: Context,
-        list: List<SelectionManager.SelectedItem>
-    ) {
-        scope.launch {
-            repo.share(context, list)
-        }
-    }
-
-    fun deleteAll(
-        context: Context
-    ) {
-        scope.launch {
-            repo.deleteAll(context)
+    fun deleteAll() {
+        appScope.launch {
+            repo.deleteAll()
         }
     }
 }

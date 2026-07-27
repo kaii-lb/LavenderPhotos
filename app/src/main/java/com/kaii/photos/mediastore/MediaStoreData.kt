@@ -5,6 +5,7 @@ import android.provider.MediaStore
 import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
@@ -99,4 +100,13 @@ fun AssetResponseDto.toMediaStoreData() =
         size = exifInfo?.fileSizeInByte ?: 0L,
         favourited = isFavorite,
         duration = duration?.let { it / 1000 } // ms to s
+    )
+
+fun MediaStoreData.toFileOperationMetadata() =
+    FileOperationItemMetadata(
+        id = id,
+        uri = uri,
+        absolutePath = absolutePath,
+        isImage = type == MediaType.Image,
+        immichUrl = immichUrl
     )

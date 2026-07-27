@@ -72,8 +72,8 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.models.main_grid.MainGridViewModel
-import com.kaii.photos.models.search_page.SearchViewModel
+import com.kaii.photos.models.MainGridViewModel
+import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.setupNextScreen

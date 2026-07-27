@@ -59,7 +59,7 @@ class CustomFileManager @Inject constructor(
         when (val result = copyResult) {
             is Result.Success -> send(
                 element = FileOperationProgress.Finished(
-                    result = deleteFiles(files, destination.id, existingTaskId).mapTo(to = result)
+                    result = deleteFiles(files, destination.id, destination.immichId, existingTaskId).mapTo(to = result)
                 )
             )
 
@@ -74,7 +74,7 @@ class CustomFileManager @Inject constructor(
         newName: String
     ): Result<Unit, FileOperationError> = gateway.renameFile(file, newName)
 
-    override suspend fun trashFile(
+    override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
@@ -97,6 +97,7 @@ class CustomFileManager @Inject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> =
         when (val result = gateway.delete(files)) {
