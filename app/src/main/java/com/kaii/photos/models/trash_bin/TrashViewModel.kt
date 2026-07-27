@@ -113,7 +113,7 @@ class TrashViewModel @Inject constructor(
     private val shareChannel = Channel<Result<Intent, FileOperationError>>()
     val fileShareIntent = shareChannel.receiveAsFlow()
 
-    private val exifDataState = MutableStateFlow<Result<Map<MediaData, Any>, FileOperationError>>(Result.Error(FileOperationError.Failed))
+    private val exifDataState = MutableStateFlow<Result<Map<MediaData, String>, FileOperationError>>(Result.Error(FileOperationError.Failed))
     val exifData = exifDataState.asStateFlow()
 
     val selectionManager = SelectionManager(

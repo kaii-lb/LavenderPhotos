@@ -245,7 +245,7 @@ class SecureRepository(
                 uri = item.uri,
                 immichUrl = item.immichUrl,
                 isImage = item.type == MediaType.Image,
-                parentPath = item.parentPath
+                absolutePath = item.absolutePath
             )
         }.toMap()
 
@@ -484,7 +484,7 @@ class SecureRepository(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
 
     override suspend fun decryptFiles(
         files: List<FileOperationItemMetadata>

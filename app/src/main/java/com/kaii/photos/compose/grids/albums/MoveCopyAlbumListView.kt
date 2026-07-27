@@ -48,7 +48,6 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -59,7 +58,6 @@ fun MoveCopyAlbumListView(
     isMoving: () -> Boolean,
     selectedItemsList: List<SelectionManager.SelectedItem>,
     insetsPadding: WindowInsets,
-    allowedAlbumsFor: () -> List<KClass<out AlbumType>>,
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit,
     onClick: (album: AlbumType) -> Unit
@@ -77,10 +75,9 @@ fun MoveCopyAlbumListView(
     )
 
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(searchedForText, originalAlbumsList, selectedItemsList.lastOrNull(), allowedAlbumsFor(), isMoving()) {
+    LaunchedEffect(searchedForText, originalAlbumsList, selectedItemsList.lastOrNull(), isMoving()) {
         albumsList = originalAlbumsList.filter { album ->
             album.name.contains(searchedForText, true)
-                    && album.info.album::class in allowedAlbumsFor()
                     && if (isMoving()) album.id != currentAlbum().id else true
         }
 

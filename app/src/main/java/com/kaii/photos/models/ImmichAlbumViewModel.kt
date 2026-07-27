@@ -14,6 +14,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.ImmichRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -22,11 +23,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = ImmichAlbumViewModel.Factory::class)
-class ImmichAlbumViewModel @Inject constructor(
+class ImmichAlbumViewModel @AssistedInject constructor(
     @Assisted val selectionManager: SelectionManager,
     private val repo: ImmichRepository,
     @param:ApplicationScope private val appScope: CoroutineScope
@@ -45,7 +45,7 @@ class ImmichAlbumViewModel @Inject constructor(
     override val shareChannel = Channel<Result<Intent, FileOperationError>>()
     override val fileShareIntent = shareChannel.receiveAsFlow()
 
-    private val exifDataState = MutableStateFlow<Result<Map<MediaData, Any>, FileOperationError>>(Result.Error(FileOperationError.Failed))
+    private val exifDataState = MutableStateFlow<Result<Map<MediaData, String>, FileOperationError>>(Result.Error(FileOperationError.Failed))
     val exifData = exifDataState.asStateFlow()
 
     private val mediaCountState = MutableStateFlow(0)

@@ -11,6 +11,7 @@ import androidx.compose.ui.util.fastMapNotNull
 import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.epochToDayStart
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.MediaType
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -37,13 +38,22 @@ class SelectionManager(
         val uri: String,
         val immichUrl: String?,
         val isImage: Boolean,
-        val parentPath: String
+        val absolutePath: String
     ) {
         val immichId: String?
             get() = immichUrl?.split("/")?.dropLast(1)?.last()
 
         val isCloud: Boolean
             get() = uri.startsWith("/api")
+
+        fun toFileOperationMetadata() =
+            FileOperationItemMetadata(
+                id = id,
+                uri = uri,
+                absolutePath = absolutePath,
+                isImage = isImage,
+                immichUrl = immichUrl
+            )
     }
 
     private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
@@ -113,7 +123,7 @@ class SelectionManager(
                                 uri = it.item.uri,
                                 immichUrl = it.item.immichUrl,
                                 isImage = it.item.type == MediaType.Image,
-                                parentPath = it.item.parentPath
+                                absolutePath = it.item.absolutePath
                             )
                 }
 
@@ -164,7 +174,7 @@ class SelectionManager(
                             uri = it.uri,
                             immichUrl = it.immichUrl,
                             isImage = it.type == MediaType.Image,
-                            parentPath = it.parentPath
+                            absolutePath = it.absolutePath
                         )
             }
             snapshot[key] = snapshot[key]!!
@@ -277,14 +287,13 @@ class SelectionManager(
         val sections = _sections.toMutableList()
 
         val list = (snapshot[key] ?: emptyMap()) + mapOf(
-            item.id to
-                    SelectedItem(
-                        id = item.id,
-                        uri = item.uri,
-                        immichUrl = item.immichUrl,
-                        isImage = item.type == MediaType.Image,
-                        parentPath = item.parentPath
-                    )
+            item.id to SelectedItem(
+                id = item.id,
+                uri = item.uri,
+                immichUrl = item.immichUrl,
+                isImage = item.type == MediaType.Image,
+                absolutePath = item.absolutePath
+            )
         )
         snapshot[key] = list
 

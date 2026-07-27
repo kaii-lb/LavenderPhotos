@@ -103,19 +103,12 @@ fun FavouritesGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                val context = LocalContext.current
                 FavouritesViewBottomAppBar(
                     selectionManager = viewModel.selectionManager,
                     incomingIntent = incomingIntent,
                     confirmToDelete = { confirmToDelete },
                     doNotTrash = { doNotTrash },
-                    allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-                    process = { action ->
-                        viewModel.runAction(
-                            context = context,
-                            action = action
-                        )
-                    }
+                    runAction = viewModel::runAction
                 )
             }
         }

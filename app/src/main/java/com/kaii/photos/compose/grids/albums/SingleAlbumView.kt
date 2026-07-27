@@ -47,6 +47,7 @@ import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -61,7 +62,6 @@ import com.kaii.photos.models.tag_page.TagViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -121,6 +121,8 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
+    val mediaCount by viewModel.mediaCount.collectAsStateWithLifecycle()
+    val mediaSize by viewModel.mediaSize.collectAsStateWithLifecycle()
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
@@ -140,20 +142,14 @@ fun SingleAlbumView(
         vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
-        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
-        mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize,
+        mediaCount = { mediaCount },
+        mediaSize = { mediaSize },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { action ->
-            viewModel.runAction(
-                context = context,
-                action = action
-            )
-        }
+        runAction = viewModel::runAction
     )
 }
 
@@ -190,6 +186,8 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
+    val mediaCount by viewModel.mediaCount.collectAsStateWithLifecycle()
+    val mediaSize by viewModel.mediaSize.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -208,7 +206,6 @@ fun SingleAlbumView(
         }
     }
 
-    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
@@ -227,20 +224,14 @@ fun SingleAlbumView(
         vibrateOnClick = { vibrateOnClick },
         tags = { tags },
         selectedTags = { selectedTags },
-        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
-        mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize,
+        mediaCount = { mediaCount },
+        mediaSize = { mediaSize },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { action ->
-            viewModel.runAction(
-                context = context,
-                action = action
-            )
-        }
+        runAction = viewModel::runAction
     )
 }
 
@@ -277,6 +268,8 @@ fun SingleAlbumView(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
     val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
     val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
+    val mediaCount by viewModel.mediaCount.collectAsStateWithLifecycle()
+    val mediaSize by viewModel.mediaSize.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -295,7 +288,6 @@ fun SingleAlbumView(
         }
     }
 
-    val context = LocalContext.current
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         album = { dynamicAlbum!! },
@@ -314,20 +306,14 @@ fun SingleAlbumView(
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
         vibrateOnClick = { vibrateOnClick },
-        allowedAlbumsFor = { viewModel.allowedAlbumTypesFor(it) },
-        mediaCount = viewModel::getMediaCount,
-        albumSize = viewModel::getMediaSize,
+        mediaCount = { mediaCount },
+        mediaSize = { mediaSize },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        process = { action ->
-            viewModel.runAction(
-                context = context,
-                action = action
-            )
-        }
+        runAction = viewModel::runAction
     )
 }
 
@@ -349,18 +335,17 @@ private fun SingleAlbumViewCommon(
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
     vibrateOnClick: () -> Boolean,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     modifier: Modifier = Modifier,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
-    mediaCount: suspend () -> Int,
-    albumSize: suspend () -> String,
+    mediaCount: () -> Int,
+    mediaSize: () -> String,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
     removeAlbum: (id: String) -> Unit,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showInfoDialog by remember { mutableStateOf(false) }
@@ -372,13 +357,21 @@ private fun SingleAlbumViewCommon(
     if (showInfoDialog) {
         val vibratorManager = rememberVibratorManager()
 
+        LaunchedEffect(album()) {
+            runAction(
+                FileOperationAction.LoadMediaCountAndSize(
+                    album = album()
+                )
+            )
+        }
+
         AlbumInfoDialog(
             albumInfo = album,
             albums = albums,
             autoDetectAlbums = autoDetectAlbums,
             sheetState = sheetState,
             itemCount = mediaCount,
-            albumSize = albumSize,
+            albumSize = mediaSize,
             toggleSelectionMode = {
                 vibratorManager.vibrateShort()
                 selectionManager.enterSelectMode()
@@ -389,8 +382,11 @@ private fun SingleAlbumViewCommon(
             },
             editAlbum = editAlbum,
             renameAlbum = {
-                process(
-                    GenericFileManager.Action.RenameAlbum(newName = it)
+                runAction(
+                    FileOperationAction.RenameAlbum(
+                        album = album(),
+                        newName = it
+                    )
                 )
             },
             removeAlbum = {
@@ -447,8 +443,7 @@ private fun SingleAlbumViewCommon(
                     incomingIntent = incomingIntent,
                     confirmToDelete = confirmToDelete,
                     doNotTrash = doNotTrash,
-                    allowedAlbumsFor = allowedAlbumsFor,
-                    process = process
+                    process = runAction
                 )
             }
         }

@@ -66,10 +66,10 @@ import com.kaii.photos.compose.app_bars.SelectingBottomBarItems
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
 import com.kaii.photos.datastore.DefaultTabs
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -81,8 +81,7 @@ fun MainAppBottomBar(
     scrollBehaviour: FloatingToolbarScrollBehavior,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val state = rememberLazyListState(
         initialFirstVisibleItemIndex =
@@ -169,8 +168,7 @@ fun MainAppBottomBar(
                                         selectionManager = selectionManager,
                                         confirmToDelete = confirmToDelete,
                                         doNotTrash = doNotTrash,
-                                        allowedAlbumsFor = allowedAlbumsFor,
-                                        process = process
+                                        runAction = runAction
                                     )
                                 }
                             }

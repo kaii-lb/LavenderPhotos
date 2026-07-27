@@ -153,7 +153,7 @@ class CloudFileManager @Inject constructor(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> {
         val is24Hr = gateway.is24HrFormat()
 
         val media =

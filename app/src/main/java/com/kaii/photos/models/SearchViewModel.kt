@@ -52,7 +52,7 @@ class SearchViewModel @Inject constructor(
     override val shareChannel = Channel<Result<Intent, FileOperationError>>()
     override val fileShareIntent = shareChannel.receiveAsFlow()
 
-    private val exifDataState = MutableStateFlow<Result<Map<MediaData, Any>, FileOperationError>>(Result.Error(FileOperationError.Failed))
+    private val exifDataState = MutableStateFlow<Result<Map<MediaData, String>, FileOperationError>>(Result.Error(FileOperationError.Failed))
     val exifData = exifDataState.asStateFlow()
 
     val tags = searchManager.tags.stateIn(

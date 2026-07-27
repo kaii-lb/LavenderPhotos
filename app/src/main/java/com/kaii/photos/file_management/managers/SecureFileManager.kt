@@ -141,7 +141,7 @@ class SecureFileManager(
     // TODO: clean this up
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> {
         val threshold = 500
 
         val media = listOf(file).toSecureMedia(context = context).firstOrNull() ?: return Result.Error(FileOperationError.Failed)

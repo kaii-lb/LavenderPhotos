@@ -6,8 +6,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.kaii.photos.database.entities.SyncTask
-import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskItem
+import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.helpers.grid_management.SelectionManager
 
 @Dao
@@ -33,7 +33,7 @@ interface SyncTaskDao {
             "media.uri, " +
             "media.immichUrl, " +
             "CASE WHEN media.type = 'Image' THEN true ELSE false END as isImage, " +
-            "media.parentPath " +
+            "media.absolutePath " +
             "FROM sync_task_item " +
             "JOIN media ON media.id = sync_task_item.mediaId " +
             "WHERE taskId = :taskId"

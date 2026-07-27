@@ -1,6 +1,5 @@
 package com.kaii.photos.di
 
-import com.kaii.photos.database.transactions.TransactionRunner
 import com.kaii.photos.file_management.managers.gateways.AndroidMediaStoreGateway
 import com.kaii.photos.file_management.managers.gateways.AndroidMediaStoreGatewayImpl
 import com.kaii.photos.file_management.managers.gateways.CloudCacheGateway
@@ -30,8 +29,4 @@ abstract class GatewayBindingsModule {
     @Binds
     @Singleton
     abstract fun bindSyncWorkerGateway(impl: AndroidMediaStoreGatewayImpl): SyncWorkerGateway
-
-    @Binds
-    @Singleton
-    abstract fun bindTransactionRunner(impl: AndroidMediaStoreGatewayImpl): TransactionRunner
 }

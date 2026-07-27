@@ -15,7 +15,7 @@ fun Modifier.singlePhotoTopBarProperties(
 ) = this then Modifier
     .barScaleModifier(draggableState)
         .focusRequester(firstFR)
-        .focusProperties() {
+        .focusProperties {
             up = firstFR
             down = secondFR
         }

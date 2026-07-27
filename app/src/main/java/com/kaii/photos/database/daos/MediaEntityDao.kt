@@ -55,18 +55,7 @@ interface MediaDao {
     fun getAllFavourites(): List<MediaStoreData>
 
     @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
-                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
-                "from media WHERE " +
-                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
-                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath COLLATE NOCASE IN (:paths) LIMIT 2000"
-    )
-    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): Map<
-            @MapColumn(columnName = "keyId") Long,
-            SelectionManager.SelectedItem>
-
-    @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
@@ -77,7 +66,18 @@ interface MediaDao {
             SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, parentPath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
+                "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
+                "from media WHERE " +
+                "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
+                "BETWEEN :timestamp AND :timestamp+86400 AND parentPath COLLATE NOCASE IN (:paths) LIMIT 2000"
+    )
+    fun mediaInDateRange(timestamp: Long, paths: Set<String>, dateModified: Boolean): Map<
+            @MapColumn(columnName = "keyId") Long,
+            SelectionManager.SelectedItem>
+
+    @Query(
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
@@ -112,7 +112,7 @@ interface MediaDao {
     @Query(value = "SELECT EXISTS(SELECT 1 FROM media WHERE id = :id)")
     suspend fun exists(id: Long): Boolean
 
-    @Query(value = "SELECT * FROM media JOIN custom_items ON custom_items.id = media.id WHERE id IN (:ids)")
+    @Query(value = "SELECT * FROM media WHERE id IN (:ids)")
     suspend fun getMedia(ids: List<Long>): List<MediaStoreData>
 
     @Query(value = "SELECT * FROM media WHERE hash IN (:hashes) AND uri NOT LIKE '/api%'")

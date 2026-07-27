@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,7 +70,9 @@ import com.kaii.photos.compose.widgets.date_time.DateTimePicker
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
@@ -85,7 +88,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.reflect.KClass
 
 private const val TAG = "com.kaii.photos.compose.dialogs.SinglePhotoInfoDialogs"
 
@@ -93,14 +95,13 @@ private const val TAG = "com.kaii.photos.compose.dialogs.SinglePhotoInfoDialogs"
 @Composable
 fun SinglePhotoInfoDialog(
     mediaItem: () -> MediaStoreData,
-    mediaData: () -> Map<MediaData, String>,
+    mediaData: () -> Result<Map<MediaData, String>, FileOperationError>,
     sheetState: SheetState,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     runAction: (action: FileOperationAction) -> Any?
 ) {
     // remove (weird) drag handle ripple
@@ -141,13 +142,12 @@ fun SinglePhotoInfoDialog(
                     ) {
                         Content(
                             mediaItem = mediaItem,
-                            mediaData = mediaData,
+                            mediaDataResult = mediaData,
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             album = album,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode,
-                            allowedAlbumsFor = allowedAlbumsFor,
                             runAction = runAction
                         )
                     }
@@ -164,13 +164,12 @@ fun SinglePhotoInfoDialog(
                     ) {
                         Content(
                             mediaItem = mediaItem,
-                            mediaData = mediaData,
+                            mediaDataResult = mediaData,
                             showMoveCopyOptions = showMoveCopyOptions,
                             privacyMode = privacyMode,
                             album = album,
                             dismiss = dismiss,
                             togglePrivacyMode = togglePrivacyMode,
-                            allowedAlbumsFor = allowedAlbumsFor,
                             runAction = runAction
                         )
                     }
@@ -183,45 +182,14 @@ fun SinglePhotoInfoDialog(
 @Composable
 private fun Content(
     mediaItem: () -> MediaStoreData,
-    mediaData: () -> Map<MediaData, String>,
+    mediaDataResult: () -> Result<Map<MediaData, String>, FileOperationError>,
     showMoveCopyOptions: Boolean,
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    runAction: (action: FileOperationAction) -> Any?
+    runAction: (FileOperationAction) -> Any?
 ) {
-    val context = LocalContext.current
-
-    var location by remember { mutableStateOf("") }
-    LaunchedEffect(mediaData()) {
-        withContext(Dispatchers.IO) {
-            val latLong = mediaData()[MediaData.LatLong]?.split(' ') ?: return@withContext
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                Geocoder(context).getFromLocation(
-                    latLong[0].toDouble(),
-                    latLong[1].toDouble(),
-                    1
-                ) {
-                    it.firstOrNull()?.let { address ->
-                        location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
-                    }
-                }
-            } else {
-                @Suppress("deprecation")
-                Geocoder(context).getFromLocation(
-                    latLong[0].toDouble(),
-                    latLong[1].toDouble(),
-                    1
-                )?.firstOrNull()?.let { address ->
-                    location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
-                }
-            }
-        }
-    }
-
     Column(
         verticalArrangement = Arrangement.spacedBy(
             space = 8.dp,
@@ -255,7 +223,6 @@ private fun Content(
                     privacyMode = privacyMode,
                     album = album,
                     dismiss = dismiss,
-                    allowedAlbumsFor = allowedAlbumsFor,
                     runAction = runAction
                 )
             }
@@ -278,7 +245,6 @@ private fun Content(
                     privacyMode = privacyMode,
                     album = album,
                     dismiss = dismiss,
-                    allowedAlbumsFor = allowedAlbumsFor,
                     runAction = runAction
                 )
             }
@@ -318,183 +284,241 @@ private fun Content(
             )
         }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .weight(1f)
-                .clip(RoundedCornerShape(32.dp))
-        ) {
-            items(
-                items = mediaData().keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
-            ) { key ->
-                val data = mediaData()
-                val value = data[key]
-                val name = stringResource(id = key.description)
+        if (mediaDataResult() is Result.Success) {
+            MediaDataContent(
+                mediaDataResult = mediaDataResult,
+                mediaItem = mediaItem,
+                album = album,
+                privacyMode = privacyMode,
+                showConfirmEraseDialog = { showConfirmEraseDialog },
+                showDateTimePicker = { showDateTimePicker = true },
+                togglePrivacyMode = togglePrivacyMode,
+                toggleConfirmEraseDialog = { showConfirmEraseDialog = it }
+            )
+        }
+    }
+}
 
-                TallDialogInfoRow(
-                    title = name,
-                    info = value.toString(),
-                    icon = key.icon,
-                    position =
-                        if (data.keys.indexOf(key) == data.keys.size - 1 && location.isBlank())
-                            RowPosition.Bottom
-                        else if (data.keys.indexOf(key) == 0)
-                            RowPosition.Top
-                        else
-                            RowPosition.Middle,
-                    onClick = {
-                        if (key == MediaData.Date &&
-                            mediaItem().type == MediaType.Image &&
-                            album::class != AlbumType.Cloud::class &&
-                            !privacyMode()
-                        ) {
-                            showDateTimePicker = true
-                        } else {
-                            val clipboardManager =
-                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clipData = ClipData.newPlainText(name, value.toString())
-                            clipboardManager.setPrimaryClip(clipData)
-                        }
-                    },
-                    onLongClick = {
+@Composable
+private fun ColumnScope.MediaDataContent(
+    mediaDataResult: () -> Result<Map<MediaData, String>, FileOperationError>,
+    mediaItem: () -> MediaStoreData,
+    album: () -> AlbumType,
+    privacyMode: () -> Boolean,
+    showConfirmEraseDialog: () -> Boolean,
+    modifier: Modifier = Modifier,
+    showDateTimePicker: () -> Unit,
+    togglePrivacyMode: () -> Unit,
+    toggleConfirmEraseDialog: (visible: Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val mediaData by rememberUpdatedState((mediaDataResult() as Result.Success).data)
+
+    var location by remember { mutableStateOf("") }
+    LaunchedEffect(mediaData) {
+        withContext(Dispatchers.IO) {
+            val latLong = mediaData[MediaData.LatLong]?.split(' ') ?: return@withContext
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Geocoder(context).getFromLocation(
+                    latLong[0].toDouble(),
+                    latLong[1].toDouble(),
+                    1
+                ) {
+                    it.firstOrNull()?.let { address ->
+                        location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
+                    }
+                }
+            } else {
+                @Suppress("deprecation")
+                Geocoder(context).getFromLocation(
+                    latLong[0].toDouble(),
+                    latLong[1].toDouble(),
+                    1
+                )?.firstOrNull()?.let { address ->
+                    location = "${address.featureName}, ${address.thoroughfare}, ${address.subAdminArea}, ${address.countryName}"
+                }
+            }
+        }
+    }
+
+    val isLandscape by rememberDeviceOrientation()
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth(1f)
+            .weight(1f)
+            .clip(RoundedCornerShape(32.dp))
+    ) {
+        items(
+            items = mediaData.keys.filter { it != MediaData.LatLong }.toList() // we don't want to display straight up coordinates
+        ) { key ->
+            val value = mediaData[key]
+            val name = stringResource(id = key.description)
+
+            TallDialogInfoRow(
+                title = name,
+                info = value.toString(),
+                icon = key.icon,
+                position =
+                    if (mediaData.keys.indexOf(key) == mediaData.keys.size - 1 && location.isBlank())
+                        RowPosition.Bottom
+                    else if (mediaData.keys.indexOf(key) == 0)
+                        RowPosition.Top
+                    else
+                        RowPosition.Middle,
+                onClick = {
+                    if (key == MediaData.Date &&
+                        mediaItem().type == MediaType.Image &&
+                        album::class != AlbumType.Cloud::class &&
+                        !privacyMode()
+                    ) {
+                        showDateTimePicker()
+                    } else {
                         val clipboardManager =
                             context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clipData = ClipData.newPlainText(name, value.toString())
                         clipboardManager.setPrimaryClip(clipData)
                     }
-                )
-            }
-
-            if (location.isNotBlank()) {
-                item {
-                    TallDialogInfoRow(
-                        title = "Location:",
-                        info = location,
-                        icon = R.drawable.location,
-                        position = RowPosition.Bottom
-                    ) {
-                        val clipboardManager =
-                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clipData = ClipData.newPlainText("Location", location)
-                        clipboardManager.setPrimaryClip(clipData)
-                    }
-                }
-            }
-
-            if (isLandscape) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    TallDialogInfoRow(
-                        title = stringResource(id = if (privacyMode()) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
-                        info = "",
-                        icon = if (!privacyMode()) R.drawable.swipe else R.drawable.do_not_touch,
-                        position = RowPosition.Single
-                    ) {
-                        togglePrivacyMode()
-                    }
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    TallDialogInfoRow(
-                        title = stringResource(id = R.string.media_exif_erase),
-                        info = "",
-                        icon = R.drawable.error,
-                        position = RowPosition.Single,
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                        enabled = !privacyMode()
-                    ) {
-                        showConfirmEraseDialog = true
-                    }
-                }
-            }
-        }
-
-        val resources = LocalResources.current
-        val coroutineScope = rememberCoroutineScope()
-        val permissionState = rememberFilePermissionManager(
-            onGranted = {
-                PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
-                    try {
-                        eraseExifMedia(mediaItem().absolutePath)
-
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvent.MessageEvent(
-                                message = resources.getString(R.string.media_exif_done),
-                                icon = R.drawable.checkmark_thin,
-                                duration = SnackbarDuration.Short
-                            )
-                        )
-                    } catch (e: Throwable) {
-                        LavenderSnackbarController.pushEvent(
-                            LavenderSnackbarEvent.MessageEvent(
-                                message = resources.getString(R.string.media_exif_failed),
-                                icon = R.drawable.error_2,
-                                duration = SnackbarDuration.Short
-                            )
-                        )
-
-                        Log.e(
-                            TAG,
-                            "Failed erasing exif data for ${mediaItem().absolutePath}"
-                        )
-                        Log.e(TAG, e.toString())
-                        e.printStackTrace()
-                    }
-                }
-            },
-            onRejected = {
-                coroutineScope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvent.MessageEvent(
-                            message = resources.getString(R.string.permissions_needed),
-                            icon = R.drawable.error_2,
-                            duration = SnackbarDuration.Short
-                        )
-                    )
-                }
-            }
-        )
-
-        if (showConfirmEraseDialog) {
-            ConfirmationDialogWithBody(
-                title = stringResource(id = R.string.media_exif_erase),
-                body = stringResource(id = R.string.action_cannot_be_undone),
-                confirmButtonLabel = stringResource(id = R.string.media_erase),
-                action = {
-                    permissionState.get(uris = listOf(mediaItem().uri.toUri()))
                 },
-                onDismiss = {
-                    showConfirmEraseDialog = false
+                onLongClick = {
+                    val clipboardManager =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipData = ClipData.newPlainText(name, value.toString())
+                    clipboardManager.setPrimaryClip(clipData)
                 }
             )
         }
 
-        if (!isLandscape) {
-            TallDialogInfoRow(
-                title = stringResource(id = if (privacyMode()) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
-                info = "",
-                icon = if (!privacyMode()) R.drawable.swipe else R.drawable.do_not_touch,
-                position = RowPosition.Single
-            ) {
-                togglePrivacyMode()
-            }
-
-            TallDialogInfoRow(
-                title = stringResource(id = R.string.media_exif_erase),
-                info = "",
-                icon = R.drawable.error,
-                position = RowPosition.Single,
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError,
-                enabled = !privacyMode()
-            ) {
-                showConfirmEraseDialog = true
+        if (location.isNotBlank()) {
+            item {
+                TallDialogInfoRow(
+                    title = "Location:",
+                    info = location,
+                    icon = R.drawable.location,
+                    position = RowPosition.Bottom
+                ) {
+                    val clipboardManager =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipData = ClipData.newPlainText("Location", location)
+                    clipboardManager.setPrimaryClip(clipData)
+                }
             }
         }
+
+        if (isLandscape) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TallDialogInfoRow(
+                    title = stringResource(id = if (privacyMode()) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+                    info = "",
+                    icon = if (!privacyMode()) R.drawable.swipe else R.drawable.do_not_touch,
+                    position = RowPosition.Single,
+                    onClick = togglePrivacyMode
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TallDialogInfoRow(
+                    title = stringResource(id = R.string.media_exif_erase),
+                    info = "",
+                    icon = R.drawable.error,
+                    position = RowPosition.Single,
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                    enabled = !privacyMode(),
+                    onClick = {
+                        toggleConfirmEraseDialog(true)
+                    }
+                )
+            }
+        }
+    }
+
+    val resources = LocalResources.current
+    val coroutineScope = rememberCoroutineScope()
+    val permissionState = rememberFilePermissionManager(
+        onGranted = {
+            PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
+                try {
+                    eraseExifMedia(mediaItem().absolutePath)
+
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = resources.getString(R.string.media_exif_done),
+                            icon = R.drawable.checkmark_thin,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+                } catch (e: Throwable) {
+                    LavenderSnackbarController.pushEvent(
+                        LavenderSnackbarEvent.MessageEvent(
+                            message = resources.getString(R.string.media_exif_failed),
+                            icon = R.drawable.error_2,
+                            duration = SnackbarDuration.Short
+                        )
+                    )
+
+                    Log.e(
+                        TAG,
+                        "Failed erasing exif data for ${mediaItem().absolutePath}"
+                    )
+                    Log.e(TAG, e.toString())
+                    e.printStackTrace()
+                }
+            }
+        },
+        onRejected = {
+            coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = resources.getString(R.string.permissions_needed),
+                        icon = R.drawable.error_2,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            }
+        }
+    )
+
+    if (showConfirmEraseDialog()) {
+        ConfirmationDialogWithBody(
+            title = stringResource(id = R.string.media_exif_erase),
+            body = stringResource(id = R.string.action_cannot_be_undone),
+            confirmButtonLabel = stringResource(id = R.string.media_erase),
+            action = {
+                permissionState.get(uris = listOf(mediaItem().uri.toUri()))
+            },
+            onDismiss = {
+                toggleConfirmEraseDialog(false)
+            }
+        )
+    }
+
+    if (!isLandscape) {
+        TallDialogInfoRow(
+            title = stringResource(id = if (privacyMode()) R.string.privacy_scroll_mode_enabled else R.string.privacy_scroll_mode_disabled),
+            info = "",
+            icon = if (!privacyMode()) R.drawable.swipe else R.drawable.do_not_touch,
+            position = RowPosition.Single
+        ) {
+            togglePrivacyMode()
+        }
+
+        TallDialogInfoRow(
+            title = stringResource(id = R.string.media_exif_erase),
+            info = "",
+            icon = R.drawable.error,
+            position = RowPosition.Single,
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+            enabled = !privacyMode(),
+            onClick = {
+                toggleConfirmEraseDialog(true)
+            }
+        )
     }
 }
 
@@ -505,7 +529,6 @@ private fun RowScope.IconContent(
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     runAction: (action: FileOperationAction) -> Any?
 ) {
     IconContentImpl(
@@ -515,7 +538,6 @@ private fun RowScope.IconContent(
         album = album,
         modifier = Modifier.weight(1f),
         dismiss = dismiss,
-        allowedAlbumsFor = allowedAlbumsFor,
         runAction = runAction
     )
 }
@@ -527,7 +549,6 @@ private fun ColumnScope.IconContent(
     privacyMode: () -> Boolean,
     album: () -> AlbumType,
     dismiss: () -> Unit,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     runAction: (action: FileOperationAction) -> Any?
 ) {
     IconContentImpl(
@@ -537,7 +558,6 @@ private fun ColumnScope.IconContent(
         album = album,
         modifier = Modifier.weight(1f),
         dismiss = dismiss,
-        allowedAlbumsFor = allowedAlbumsFor,
         runAction = runAction
     )
 }
@@ -550,7 +570,6 @@ private fun IconContentImpl(
     album: () -> AlbumType,
     modifier: Modifier,
     dismiss: () -> Unit,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     runAction: (action: FileOperationAction) -> Any?
 ) {
     val file = remember(mediaItem()) { File(mediaItem().absolutePath) }
@@ -631,7 +650,7 @@ private fun IconContentImpl(
                     uri = mediaItem().uri,
                     immichUrl = mediaItem().immichUrl,
                     isImage = mediaItem().type == MediaType.Image,
-                    parentPath = mediaItem().parentPath
+                    absolutePath = mediaItem().absolutePath
                 )
             ),
             insetsPadding = WindowInsets.statusBars,
@@ -639,9 +658,6 @@ private fun IconContentImpl(
             clear = {},
             isMoving = { isMoving },
             currentAlbum = album,
-            allowedAlbumsFor = {
-                allowedAlbumsFor(isMoving)
-            },
             onClick = { destination ->
                 val item = mediaItem()
                 val files = listOf(

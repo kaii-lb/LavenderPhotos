@@ -251,7 +251,7 @@ class AndroidMediaStoreGatewayImpl(
 
     override fun getExifData(
         media: MediaStoreData
-    ): Result<Map<MediaData, Any>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> {
         val map = getExifDataForMedia(
             inputStream =
                 context.contentResolver.openInputStream(media.uri.toUri())

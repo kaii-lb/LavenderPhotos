@@ -30,7 +30,7 @@ interface CustomEntityDao {
     fun mediaSize(album: String): Long
 
     @Query(
-        value = "SELECT media.id as keyId, media.id, media.uri, media.immichUrl, media.parentPath, " +
+        value = "SELECT media.id as keyId, media.id, media.uri, media.immichUrl, media.absolutePath, " +
                 "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN custom_items ON media.id = custom_items.id " +

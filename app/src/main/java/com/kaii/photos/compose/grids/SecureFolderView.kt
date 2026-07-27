@@ -139,12 +139,7 @@ fun SecureFolderView(
                 SecureFolderViewBottomAppBar(
                     selectionManager = viewModel.selectionManager,
                     isGettingPermissions = isGettingPermissions,
-                    process = { action ->
-                        viewModel.runAction(
-                            context = context,
-                            action = action
-                        )
-                    }
+                    runAction = viewModel::runAction
                 )
             }
         },

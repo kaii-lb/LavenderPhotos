@@ -8,5 +8,5 @@ import com.kaii.photos.helpers.exif.MediaData
 interface ExtractExif {
     suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError>
+    ): Result<Map<MediaData, String>, FileOperationError>
 }

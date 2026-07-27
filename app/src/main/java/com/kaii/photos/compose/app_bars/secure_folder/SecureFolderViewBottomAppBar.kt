@@ -20,6 +20,9 @@ import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.LoadingDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -31,7 +34,7 @@ import kotlinx.coroutines.launch
 fun SecureFolderViewBottomAppBar(
     selectionManager: SelectionManager,
     isGettingPermissions: MutableState<Boolean>,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     IsSelectingBottomAppBar {
         val resources = LocalResources.current
@@ -51,9 +54,9 @@ fun SecureFolderViewBottomAppBar(
 
         IconButton(
             onClick = {
-                process(
-                    GenericFileManager.Action.Share(
-                        list = selectedItemsList
+                runAction(
+                    FileOperationAction.Share(
+                        files = selectedItemsList.toFileOperationMetadataItems()
                     )
                 )
             },
@@ -68,9 +71,9 @@ fun SecureFolderViewBottomAppBar(
         var showRestoreDialog by remember { mutableStateOf(false) }
         val restorePermissionState = rememberDirectoryPermissionManager(
             onGranted = {
-                process(
-                    GenericFileManager.Action.Restore(
-                        list = selectedItemsList
+                runAction(
+                    FileOperationAction.Restore(
+                        files = selectedItemsList.toFileOperationMetadataItems()
                     )
                 )
                 selectionManager.clear()
@@ -101,7 +104,7 @@ fun SecureFolderViewBottomAppBar(
                     isGettingPermissions.value = true
 
                     val directories = selectedItemsList.fastMapNotNull {
-                        it.parentPath.parent() // parentPath is originalPath with filename, not parent directory for secured items
+                        it.absolutePath.parent() // absolutePath is originalPath with filename, not parent directory for secured items
                     }.distinct().toSet()
 
                     restorePermissionState.start(directories = directories)
@@ -132,9 +135,10 @@ fun SecureFolderViewBottomAppBar(
                 body = stringResource(id = R.string.action_cannot_be_undone),
                 confirmButtonLabel = stringResource(id = R.string.media_delete),
                 action = {
-                    process(
-                        GenericFileManager.Action.Delete(
-                            list = selectedItemsList
+                    runAction(
+                        FileOperationAction.Delete(
+                            files = selectedItemsList.toFileOperationMetadataItems(),
+                            album = AlbumType.PlaceHolder
                         )
                     )
                     selectionManager.clear()

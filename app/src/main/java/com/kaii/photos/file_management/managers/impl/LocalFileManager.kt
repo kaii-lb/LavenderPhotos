@@ -91,7 +91,7 @@ class LocalFileManager @Inject constructor(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = withContext(Dispatchers.IO) {
+    ): Result<Map<MediaData, String>, FileOperationError> = withContext(Dispatchers.IO) {
         getExif.execute(file)
     }
 

@@ -1,8 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.text.format.DateFormat
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -64,7 +62,6 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -86,15 +83,17 @@ import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.trash_bin.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
@@ -103,7 +102,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -118,6 +116,7 @@ fun SingleTrashedPhotoView(
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val useTapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val mediaData by viewModel.exifData.collectAsStateWithLifecycle()
 
     SingleTrashedPhotoViewImpl(
         items = items,
@@ -129,7 +128,8 @@ fun SingleTrashedPhotoView(
         blurViews = { blurViews },
         useCache = { useCache },
         useTapToNav = { useTapToNav },
-        process = viewModel::runAction
+        mediaData = { mediaData },
+        runAction = viewModel::runAction
     )
 }
 
@@ -146,7 +146,8 @@ private fun SingleTrashedPhotoViewImpl(
     blurViews: () -> Boolean,
     useCache: () -> Boolean,
     useTapToNav: () -> Boolean,
-    process: (context: Context, action: GenericFileManager.Action) -> Unit
+    mediaData: () -> Result<Map<MediaData, String>, FileOperationError>,
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     var currentIndex by rememberSaveable(startIndex) {
         mutableIntStateOf(
@@ -172,24 +173,17 @@ private fun SingleTrashedPhotoViewImpl(
         items.itemCount
     }
 
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var showDialog by remember { mutableStateOf(false) }
     TrashDeleteDialog(
         showDialog = showDialog,
         onDelete = {
-            process(
-                context,
-                GenericFileManager.Action.Delete(
-                    list = listOf(
-                        SelectionManager.SelectedItem(
-                            id = mediaItem.id,
-                            uri = mediaItem.uri,
-                            immichUrl = mediaItem.immichUrl,
-                            isImage = mediaItem.type == MediaType.Image,
-                            parentPath = mediaItem.parentPath
-                        )
-                    )
+            runAction(
+                FileOperationAction.Delete(
+                    files = listOf(
+                        mediaItem.toFileOperationMetadata()
+                    ),
+                    album = AlbumType.PlaceHolder
                 )
             )
         },
@@ -240,7 +234,7 @@ private fun SingleTrashedPhotoViewImpl(
                 showDeleteDialog = {
                     showDialog = true
                 },
-                process = process,
+                runAction = runAction,
                 modifier = Modifier
                     .singlePhotoBottomBarProperties(
                         draggableState = draggableState,
@@ -275,26 +269,21 @@ private fun SingleTrashedPhotoViewImpl(
                 }
             }
 
-            var mediaData by remember { mutableStateOf<Map<MediaData, String>>(emptyMap()) }
             if (showInfoDialog) {
                 // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
                 LaunchedEffect(mediaItem) {
                     val item = items[currentIndex] as PhotoLibraryUIModel.MediaImpl
 
-                    mediaData =
-                        getExifDataForMedia(
-                            inputStream =
-                                context.contentResolver.openInputStream(item.item.uri.toUri())
-                                    ?: File(item.item.absolutePath).inputStream(),
-                            absolutePath = item.item.absolutePath,
-                            is24Hr = DateFormat.is24HourFormat(context),
-                            fallback = item.item.dateTaken
+                    runAction(
+                        FileOperationAction.LoadExifData(
+                            file = item.item.toFileOperationMetadata()
                         )
+                    )
                 }
 
                 SinglePhotoInfoDialog(
                     mediaItem = { mediaItem },
-                    mediaData = { mediaData },
+                    mediaData = mediaData,
                     sheetState = sheetState,
                     showMoveCopyOptions = false,
                     privacyMode = { scrollState.privacyMode },
@@ -306,8 +295,7 @@ private fun SingleTrashedPhotoViewImpl(
                         }
                     },
                     togglePrivacyMode = scrollState::togglePrivacyMode,
-                    allowedAlbumsFor = { emptyList() },
-                    runAction = process
+                    runAction = runAction
                 )
             }
         }
@@ -344,10 +332,8 @@ private fun BottomBar(
     privacyMode: Boolean,
     modifier: Modifier = Modifier,
     showDeleteDialog: () -> Unit,
-    process: (context: Context, action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
-    val context = LocalContext.current
-
     Box(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars)
@@ -379,17 +365,10 @@ private fun BottomBar(
                     FilledIconButton(
                         onClick = {
                             val item = item()
-                            process(
-                                context,
-                                GenericFileManager.Action.Share(
-                                    list = listOf(
-                                        SelectionManager.SelectedItem(
-                                            id = item.id,
-                                            uri = item.uri,
-                                            immichUrl = item.immichUrl,
-                                            isImage = item.type == MediaType.Image,
-                                            parentPath = item.parentPath
-                                        )
+                            runAction(
+                                FileOperationAction.Share(
+                                    files = listOf(
+                                        item.toFileOperationMetadata()
                                     )
                                 )
                             )
@@ -418,19 +397,13 @@ private fun BottomBar(
             ) {
                 val permissionManager = rememberFilePermissionManager(
                     onGranted = {
-                        process(
-                            context,
-                            GenericFileManager.Action.Trash(
-                                list = listOf(
-                                    SelectionManager.SelectedItem(
-                                        id = item().id,
-                                        uri = item().uri,
-                                        immichUrl = item().immichUrl,
-                                        isImage = item().type == MediaType.Image,
-                                        parentPath = item().parentPath
-                                    )
+                        runAction(
+                            FileOperationAction.Trash(
+                                files = listOf(
+                                    item().toFileOperationMetadata()
                                 ),
-                                trashed = false
+                                isTrashed = false,
+                                album = AlbumType.PlaceHolder
                             )
                         )
                     }

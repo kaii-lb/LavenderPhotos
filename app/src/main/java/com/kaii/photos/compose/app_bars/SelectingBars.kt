@@ -42,6 +42,8 @@ import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.compose.widgets.SelectViewTopBarLeftButtons
 import com.kaii.photos.compose.widgets.SelectViewTopBarRightButtons
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
@@ -49,7 +51,6 @@ import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,8 +110,7 @@ fun SelectingBottomBarItems(
     selectionManager: SelectionManager,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -120,9 +120,9 @@ fun SelectingBottomBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch(Dispatchers.IO) {
-                process(
-                    GenericFileManager.Action.Share(
-                        list = selectedItemsList
+                runAction(
+                    FileOperationAction.Share(
+                        files = selectedItemsList.toFileOperationMetadataItems()
                     )
                 )
             }
@@ -144,17 +144,14 @@ fun SelectingBottomBarItems(
         isMoving = { isMoving },
         currentAlbum = { albumInfo },
         insetsPadding = WindowInsets.statusBars,
-        allowedAlbumsFor = {
-            allowedAlbumsFor(isMoving)
-        },
         onClick = { album ->
-            process(
-                if (isMoving) GenericFileManager.Action.Move(
-                    list = selectedItemsList,
+            runAction(
+                if (isMoving) FileOperationAction.Move(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
                     origin = albumInfo,
                     destination = album
-                ) else GenericFileManager.Action.Copy(
-                    list = selectedItemsList,
+                ) else FileOperationAction.Copy(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
                     destination = album
                 )
             )
@@ -189,15 +186,17 @@ fun SelectingBottomBarItems(
 
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            process(
+            runAction(
                 if (doNotTrash()) {
-                    GenericFileManager.Action.Delete(
-                        list = selectedItemsList
+                    FileOperationAction.Delete(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        album = albumInfo
                     )
                 } else {
-                    GenericFileManager.Action.Trash(
-                        list = selectedItemsList,
-                        trashed = true
+                    FileOperationAction.Trash(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isTrashed = true,
+                        album = albumInfo
                     )
                 }
             )
@@ -228,10 +227,11 @@ fun SelectingBottomBarItems(
                 title = stringResource(id = R.string.custom_album_remove_media_desc),
                 confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media),
                 action = {
-                    process(
-                        GenericFileManager.Action.Trash(
-                            list = selectedItemsList,
-                            trashed = true
+                    runAction(
+                        FileOperationAction.Trash(
+                            files = selectedItemsList.toFileOperationMetadataItems(),
+                            isTrashed = true,
+                            album = albumInfo
                         )
                     )
 
@@ -253,10 +253,11 @@ fun SelectingBottomBarItems(
                     uris = selectedItemsList.fastMap { it.uri.toUri() }
                 )
             } else {
-                process(
-                    GenericFileManager.Action.Trash(
-                        list = selectedItemsList,
-                        trashed = true
+                runAction(
+                    FileOperationAction.Trash(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isTrashed = true,
+                        album = albumInfo
                     )
                 )
 
@@ -273,9 +274,9 @@ fun SelectingBottomBarItems(
 
     val filePermissionState = rememberFilePermissionManager(
         onGranted = {
-            process(
-                GenericFileManager.Action.Secure(
-                    list = selectedItemsList
+            runAction(
+                FileOperationAction.Secure(
+                    files = selectedItemsList.toFileOperationMetadataItems()
                 )
             )
             selectionManager.clear()

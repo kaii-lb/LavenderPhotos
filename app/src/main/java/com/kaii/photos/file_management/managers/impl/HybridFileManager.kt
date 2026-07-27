@@ -273,7 +273,7 @@ class HybridFileManager @AssistedInject constructor(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> =
+    ): Result<Map<MediaData, String>, FileOperationError> =
         if (file.isCloud) cloud.getExifData(file)
         else other.getExifData(file)
 

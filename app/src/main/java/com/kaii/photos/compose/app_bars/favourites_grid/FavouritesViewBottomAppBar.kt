@@ -22,10 +22,11 @@ import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.grids.albums.MoveCopyAlbumListView
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
-import kotlin.reflect.KClass
 
 @Composable
 fun FavouritesViewBottomAppBar(
@@ -33,8 +34,7 @@ fun FavouritesViewBottomAppBar(
     incomingIntent: Intent?,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
@@ -42,8 +42,7 @@ fun FavouritesViewBottomAppBar(
                 selectionManager = selectionManager,
                 confirmToDelete = confirmToDelete,
                 doNotTrash = doNotTrash,
-                allowedAlbumsFor = allowedAlbumsFor,
-                process = process
+                process = runAction
             )
         }
     } else {
@@ -61,8 +60,7 @@ fun FavouritesBottomAppBarItems(
     selectionManager: SelectionManager,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
-    process: (action: GenericFileManager.Action) -> Unit
+    process: (action: FileOperationAction) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -72,8 +70,8 @@ fun FavouritesBottomAppBarItems(
         onClick = {
             coroutineScope.launch {
                 process(
-                    GenericFileManager.Action.Share(
-                        list = selectedItemsList
+                    FileOperationAction.Share(
+                        files = selectedItemsList.toFileOperationMetadataItems()
                     )
                 )
             }
@@ -95,11 +93,10 @@ fun FavouritesBottomAppBarItems(
         clear = selectionManager::clear,
         isMoving = { false },
         currentAlbum = { AlbumType.PlaceHolder },
-        allowedAlbumsFor = { allowedAlbumsFor(false) },
         onClick = { album ->
             process(
-                GenericFileManager.Action.Copy(
-                    list = selectedItemsList,
+                FileOperationAction.Copy(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
                     destination = album
                 )
             )
@@ -127,9 +124,10 @@ fun FavouritesBottomAppBarItems(
             confirmButtonLabel = stringResource(id = R.string.custom_album_remove_media),
             action = {
                 process(
-                    GenericFileManager.Action.Favourite(
-                        list = selectedItemsList,
-                        favourite = false
+                    FileOperationAction.Favourite(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isFavourite = false,
+                        album = AlbumType.PlaceHolder
                     )
                 )
 
@@ -157,13 +155,15 @@ fun FavouritesBottomAppBarItems(
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             if (doNotTrash()) {
-                GenericFileManager.Action.Delete(
-                    list = selectedItemsList
+                FileOperationAction.Delete(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
+                    album = AlbumType.PlaceHolder
                 )
             } else {
-                GenericFileManager.Action.Trash(
-                    list = selectedItemsList,
-                    trashed = true
+                FileOperationAction.Trash(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
+                    isTrashed = true,
+                    album = AlbumType.PlaceHolder
                 )
             }
 

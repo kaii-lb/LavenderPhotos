@@ -130,8 +130,9 @@ class ImmichRepository(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
+        immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -147,7 +148,7 @@ class ImmichRepository(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
 
     override suspend fun getMediaCount(album: AlbumType): Int = fileManager.getMediaCount(album)
 

@@ -84,11 +84,13 @@ import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
@@ -118,11 +120,7 @@ fun SecurePhotoView(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
 
     val isGettingPermissions = rememberSaveable { mutableStateOf(false) }
-
-    // TODO: viewmodel this
-    val allowScreenCapture by PhotosApplication.appModule.settings.permissions
-        .getAllowSecureFolderScreenCapture()
-        .collectAsStateWithLifecycle(initialValue = false)
+    val allowScreenCapture by viewModel.allowScreenCapture.collectAsStateWithLifecycle()
 
     // apply/clear FLAG_SECURE reactively so toggling the setting takes effect immediately
     LaunchedEffect(allowScreenCapture) {
@@ -241,15 +239,7 @@ fun SecurePhotoView(
                 securedMedia = currentMediaItem,
                 privacyMode = scrollState.privacyMode,
                 isGettingPermissions = isGettingPermissions,
-                getMediaCount = {
-                    items.itemCount
-                },
-                process = { action ->
-                    viewModel.runAction(
-                        context = context,
-                        action = action
-                    )
-                },
+                runAction = viewModel::runAction,
                 modifier = Modifier
                     .singlePhotoBottomBarProperties(
                         draggableState = draggableState,
@@ -261,6 +251,12 @@ fun SecurePhotoView(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
+        LaunchedEffect(items.itemSnapshotList) {
+            if (items.itemCount == 0) {
+                navController.popBackStack()
+            }
+        }
+
         val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
         val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
         val useCache by viewModel.useCache.collectAsStateWithLifecycle()
@@ -310,30 +306,24 @@ private fun BottomBar(
     privacyMode: Boolean,
     isGettingPermissions: MutableState<Boolean>,
     modifier: Modifier = Modifier,
-    getMediaCount: () -> Int,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val context = LocalContext.current
 
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    val navController = LocalNavController.current
-    if (getMediaCount() == 0) {
-        navController.popBackStack()
-    }
-
     val permissionManager = rememberDirectoryPermissionManager(
         onGranted = {
-            process(
-                GenericFileManager.Action.Restore(
-                    list = listOf(
-                        SelectionManager.SelectedItem(
+            runAction(
+                FileOperationAction.Restore(
+                    files = listOf(
+                        FileOperationItemMetadata(
                             id = securedMedia.item.id,
                             uri = securedMedia.item.uri,
+                            absolutePath = securedMedia.item.parentPath, // hacky way to represent originalPath
                             immichUrl = securedMedia.item.immichUrl,
-                            isImage = securedMedia.item.type == MediaType.Image,
-                            parentPath = securedMedia.item.parentPath
+                            isImage = securedMedia.item.type == MediaType.Image
                         )
                     )
                 )
@@ -369,17 +359,18 @@ private fun BottomBar(
             body = stringResource(id = R.string.action_cannot_be_undone),
             confirmButtonLabel = stringResource(id = R.string.media_delete),
             action = {
-                process(
-                    GenericFileManager.Action.Delete(
-                        list = listOf(
-                            SelectionManager.SelectedItem(
+                runAction(
+                    FileOperationAction.Delete(
+                        files = listOf(
+                            FileOperationItemMetadata(
                                 id = securedMedia.item.id,
                                 uri = securedMedia.item.uri,
+                                absolutePath = securedMedia.item.parentPath,
                                 immichUrl = securedMedia.item.immichUrl,
-                                isImage = securedMedia.item.type == MediaType.Image,
-                                parentPath = securedMedia.item.parentPath,
+                                isImage = securedMedia.item.type == MediaType.Image
                             )
-                        )
+                        ),
+                        album = AlbumType.PlaceHolder
                     )
                 )
             },
@@ -419,15 +410,15 @@ private fun BottomBar(
                 floatingActionButton = {
                     FilledIconButton(
                         onClick = {
-                            process(
-                                GenericFileManager.Action.Share(
-                                    list = listOf(
-                                        SelectionManager.SelectedItem(
+                            runAction(
+                                FileOperationAction.Share(
+                                    files = listOf(
+                                        FileOperationItemMetadata(
                                             id = securedMedia.item.id,
                                             uri = securedMedia.item.uri,
+                                            absolutePath = securedMedia.item.parentPath,
                                             immichUrl = securedMedia.item.immichUrl,
-                                            isImage = securedMedia.item.type == MediaType.Image,
-                                            parentPath = securedMedia.item.parentPath
+                                            isImage = securedMedia.item.type == MediaType.Image
                                         )
                                     )
                                 )

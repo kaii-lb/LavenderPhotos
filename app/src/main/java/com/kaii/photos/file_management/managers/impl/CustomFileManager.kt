@@ -139,7 +139,7 @@ class CustomFileManager @Inject constructor(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = getExif.execute(file)
+    ): Result<Map<MediaData, String>, FileOperationError> = getExif.execute(file)
 
     override suspend fun getMediaCount(
         album: AlbumType

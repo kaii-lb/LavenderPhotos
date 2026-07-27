@@ -12,7 +12,7 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
-import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavouritesRepository(
     private val mediaDao: MediaDao,
-    private val fileManager: LocalFileManager,
+    private val fileManager: HybridFileManager,
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
@@ -97,7 +97,7 @@ class FavouritesRepository(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, existingTaskId)
+    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -113,7 +113,7 @@ class FavouritesRepository(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
 
     override suspend fun renameFile(
         file: FileOperationItemMetadata,

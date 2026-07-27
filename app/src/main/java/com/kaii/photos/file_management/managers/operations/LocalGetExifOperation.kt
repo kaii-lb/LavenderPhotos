@@ -15,7 +15,7 @@ class LocalGetExifOperation @Inject constructor(
 ) {
     suspend fun execute(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> {
         val media = mediaDao.getMediaFromMetadata(
             files = listOf(file)
         ).firstOrNull() ?: return Result.Error(FileOperationError.Failed)

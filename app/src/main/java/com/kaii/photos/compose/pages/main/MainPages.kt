@@ -199,7 +199,6 @@ fun MainPages(
                 enter = fadeIn() + slideInVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it },
                 exit = fadeOut() + slideOutVertically(animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()) { it }
             ) {
-                val context = LocalContext.current
                 MainAppBottomBar(
                     pagerState = pagerState,
                     selectionManager = viewModel.selectionManager,
@@ -208,13 +207,7 @@ fun MainPages(
                     scrollBehaviour = scrollBehaviour,
                     confirmToDelete = { confirmToDelete },
                     doNotTrash = { doNotTrash },
-                    allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-                    process = { action ->
-                        viewModel.runAction(
-                            context = context,
-                            action = action
-                        )
-                    }
+                    runAction = viewModel::runAction
                 )
             }
         },
@@ -486,7 +479,6 @@ fun MainPages(
             }
 
             if (incomingIntent != null) {
-                val context = LocalContext.current
                 val selectedItemsList by viewModel.selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
                 val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -512,13 +504,7 @@ fun MainPages(
                                 selectionManager = viewModel.selectionManager,
                                 confirmToDelete = { confirmToDelete },
                                 doNotTrash = { doNotTrash },
-                                allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
-                                process = { action ->
-                                    viewModel.runAction(
-                                        context = context,
-                                        action = action
-                                    )
-                                }
+                                runAction = viewModel::runAction
                             )
                         }
                     } else {

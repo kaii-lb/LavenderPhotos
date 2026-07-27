@@ -2,8 +2,6 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.PendingIntent
-import android.content.Context
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -79,14 +77,15 @@ import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
@@ -94,6 +93,7 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.CustomAlbumViewModel
 import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
@@ -113,7 +113,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -133,6 +132,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -160,12 +160,11 @@ fun SinglePhotoView(
         useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
+        exifData = { exifData },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -188,6 +187,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -215,12 +215,11 @@ fun SinglePhotoView(
         useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
+        exifData = { exifData },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -243,6 +242,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -270,12 +270,11 @@ fun SinglePhotoView(
         useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
+        exifData = { exifData },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -296,6 +295,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -323,12 +323,11 @@ fun SinglePhotoView(
         useTapToNav = { tapToNav },
         tags = { tags },
         selectedTags = { selectedTags },
+        exifData = { exifData },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -349,6 +348,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -375,13 +375,12 @@ fun SinglePhotoView(
         useCache = { useCache },
         useTapToNav = { tapToNav },
         tags = { tags },
+        exifData = { exifData },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -402,6 +401,7 @@ fun SinglePhotoView(
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useCache by viewModel.useCache.collectAsStateWithLifecycle()
     val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
 
     val tagViewModel = viewModel<TagViewModel>(
         factory = TagViewModelFactory(
@@ -428,13 +428,12 @@ fun SinglePhotoView(
         useCache = { useCache },
         useTapToNav = { tapToNav },
         tags = { tags },
+        exifData = { exifData },
         selectedTags = { selectedTags },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
         setTagMediaId = tagViewModel::setMediaId,
-        getExifData = viewModel::getExifData,
-        allowedAlbumsFor = viewModel::allowedAlbumTypesFor,
         runAction = viewModel::runAction
     )
 }
@@ -457,14 +456,13 @@ private fun SinglePhotoViewCommon(
     blurViews: () -> Boolean,
     useCache: () -> Boolean,
     useTapToNav: () -> Boolean,
+    exifData: () -> Result<Map<MediaData, String>, FileOperationError>,
     tags: () -> List<Tag>,
     selectedTags: () -> List<Tag>,
     onTagAdd: (name: String) -> Unit,
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     setTagMediaId: (id: Long) -> Unit,
-    getExifData: suspend (context: Context, media: MediaStoreData) -> Map<MediaData, String>,
-    allowedAlbumsFor: (moving: Boolean) -> List<KClass<out AlbumType>>,
     runAction: (action: FileOperationAction) -> Any?
 ) {
     val state = rememberPagerState(
@@ -596,6 +594,7 @@ private fun SinglePhotoViewCommon(
                 isCustom = album is AlbumType.Custom || album is AlbumType.Cloud,
                 confirmToDelete = confirmToDelete(),
                 doNotTrash = doNotTrash(),
+                album = { album },
                 showEditingView = {
                     coroutineScope.launch(Dispatchers.Main) {
                         setBarVisibility(
@@ -635,8 +634,6 @@ private fun SinglePhotoViewCommon(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor = MaterialTheme.colorScheme.onBackground
     ) { _ ->
-        var mediaData by remember { mutableStateOf(MediaData.Empty) }
-
         if (showInfoDialog) {
             // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
             LaunchedEffect(mediaItem) {
@@ -646,12 +643,16 @@ private fun SinglePhotoViewCommon(
 
                 item as PhotoLibraryUIModel.MediaImpl
 
-                mediaData = getExifData(context, item.item)
+                runAction(
+                    FileOperationAction.LoadExifData(
+                        file = item.item.toFileOperationMetadata()
+                    )
+                )
             }
 
             SinglePhotoInfoDialog(
                 mediaItem = { mediaItem },
-                mediaData = { mediaData },
+                mediaData = exifData,
                 showMoveCopyOptions = true,
                 sheetState = sheetState,
                 privacyMode = { scrollState.privacyMode },
@@ -663,7 +664,6 @@ private fun SinglePhotoViewCommon(
                     }
                 },
                 togglePrivacyMode = scrollState::togglePrivacyMode,
-                allowedAlbumsFor = allowedAlbumsFor,
                 runAction = runAction
             )
         }
@@ -734,12 +734,11 @@ private fun BottomBar(
     isCustom: Boolean,
     confirmToDelete: Boolean,
     doNotTrash: Boolean,
+    album: () -> AlbumType,
     modifier: Modifier = Modifier,
     showEditingView: () -> Unit,
     runAction: (action: FileOperationAction) -> Any?
 ) {
-    val context = LocalContext.current
-
     AnimatedVisibility(
         visible = visible,
         enter = scaleIn(
@@ -911,25 +910,6 @@ private fun BottomBar(
                     )
                 }
 
-                fun setFavourite(isFavourite: Boolean): PendingIntent? {
-                    val item = currentItem()
-                    runAction(
-                        FileOperationAction.Favourite(
-                            files = listOf(
-                                FileOperationItemMetadata(
-                                    id = item.id,
-                                    uri = item.uri,
-                                    absolutePath = item.absolutePath,
-                                    immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image
-                                )
-                            ),
-                            isFavourite = isFavourite,
-                            album = album()
-                        )
-                    )
-                }
-
                 val vibratorManager = rememberVibratorManager()
                 val isFavourited = remember(currentItem()) {
                     currentItem().favourited
@@ -1027,28 +1007,22 @@ private fun BottomBar(
                         } else {
                             val item = currentItem()
                             val list = listOf(
-                                SelectionManager.SelectedItem(
+                                FileOperationItemMetadata(
                                     id = item.id,
                                     uri = item.uri,
+                                    absolutePath = item.absolutePath,
                                     immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image,
-                                    parentPath = item.parentPath
+                                    isImage = item.type == MediaType.Image
                                 )
                             )
 
-                            if (item.isCloud) {
-                                runAction(
-                                    context,
-                                    GenericFileManager.Action.Trash(
-                                        list = list,
-                                        trashed = true
-                                    )
+                            runAction(
+                                FileOperationAction.Trash(
+                                    files = list,
+                                    isTrashed = true,
+                                    album = album()
                                 )
-                            } else {
-                                trashFilePermissionManager.get(
-                                    uris = listOf(currentItem().uri.toUri())
-                                )
-                            }
+                            )
                         }
                     },
                     enabled = !privacyMode

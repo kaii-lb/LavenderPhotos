@@ -129,7 +129,7 @@ class CustomRepository(
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, Any>, FileOperationError> = fileManager.getExifData(file)
+    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
 
     override suspend fun getMediaCount(album: AlbumType): Int = fileManager.getMediaCount(album)
 

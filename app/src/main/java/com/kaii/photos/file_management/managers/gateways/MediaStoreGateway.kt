@@ -59,7 +59,7 @@ interface MediaStoreGateway {
 
     fun getExifData(
         media: MediaStoreData
-    ): Result<Map<MediaData, Any>, FileOperationError>
+    ): Result<Map<MediaData, String>, FileOperationError>
 
     fun getWriteChannel(uri: Uri): WriteChannel
     fun getAssetSource(uri: Uri): AssetSource
