@@ -79,7 +79,15 @@
     <string name="updates_check_desc">Upozorní na novou verzi při otevření aplikace. Aktualizaci nenainstaluje automaticky</string>
     <string name="updates_whats_new">Co je nového</string>
     <string name="updates_notice">Upozornění ke stažení</string>
-    <string name="updates_notice_desc"><![CDATA["<p>Tento aktualizátor nestahuje soubory APK. Pouze odkazuje na <a href=\"https://github.com/kaii-lb/LavenderPhotos/releases\">verze na GitHubu</a>. Tyto\n                soubory APK proto neprocházejí dodatečnou kontrolou a testováním, které provádí IzzyOnDroid, F-Droid nebo jiné služby.\n\n                <br><br>Sestavení hostovaná na GitHubu jsou vždy podepsaná, zkontrolovaná a ověřená vývojářem (kaii-lb), ale je na vás, zda je chcete používat.\n\n                <br><br>Lavender Photos se nikdy neaktualizuje automaticky a aktualizuje se pouze s výslovným souhlasem uživatele.\n            </p>"]]></string>
+    <string name="updates_notice_desc"><![CDATA[
+            <p>Tento aktualizátor nestahuje soubory APK. Pouze odkazuje na <a href="https://github.com/kaii-lb/LavenderPhotos/releases">verze na GitHubu</a>. Tyto
+                soubory APK proto neprocházejí dodatečnou kontrolou a testováním, které provádí IzzyOnDroid, F-Droid nebo jiné služby.
+
+                <br><br>Sestavení hostovaná na GitHubu jsou vždy podepsaná, zkontrolovaná a ověřená vývojářem (kaii-lb), ale je na vás, zda je chcete používat.
+
+                <br><br>Lavender Photos se nikdy neaktualizuje automaticky a aktualizuje se pouze s výslovným souhlasem uživatele.
+            </p>
+        ]]></string>
     <string name="updates_new_version_available">Je dostupná aktualizace!</string>
     <string name="updates_latest">Aktuální verze</string>
     <string name="updates_checking">Kontrola aktualizací</string>
@@ -551,7 +559,19 @@
     <string name="immich_server">Server Immich</string>
     <string name="immich_help_general">Co to je?</string>
     <string name="immich_help_general_desc">Umožňuje zálohovat média na úrovni alb na server Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA["<p><a href=\"https://immich.app/\">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,\n            které komukoli umožňuje provozovat vlastní cloudový zálohovací server.\n            </p>\n            <h3 style=\"text-align:center;\">Jak ho používat?<h3/>\n            <ul>\n                <li>Provozujte vlastní <a href=\"https://immich.app/\">server Immich</a></li>\n                <li>V aplikaci Lavender Photos zadejte adresu serveru</li>\n                <li>Přihlaste se pomocí uživatelského účtu Immich</li>\n                <li>Přejděte do libovolného alba a klepněte na ikonu cloudu</li>\n                <li>Začněte zálohovat své fotografie!</li>\n            </ul>"]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+            <p><a href="https://immich.app/">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,
+            které komukoli umožňuje provozovat vlastní cloudový zálohovací server.
+            </p>
+            <h3 style="text-align:center;">Jak ho používat?<h3/>
+            <ul>
+                <li>Provozujte vlastní <a href="https://immich.app/">server Immich</a></li>
+                <li>V aplikaci Lavender Photos zadejte adresu serveru</li>
+                <li>Přihlaste se pomocí uživatelského účtu Immich</li>
+                <li>Přejděte do libovolného alba a klepněte na ikonu cloudu</li>
+                <li>Začněte zálohovat své fotografie!</li>
+            </ul>
+        ]]></string>
     <string name="immich_server_url_invalid">Neplatná URL!</string>
     <string name="immich_misc">Různé</string>
     <string name="immich_server_online">Online</string>
