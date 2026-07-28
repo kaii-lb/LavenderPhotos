@@ -6,7 +6,7 @@
     <string name="albums_found">已找到全部相册！</string>
     <string name="add_album">添加一个相册</string>
     <string name="direct_path_album">使用绝对路径添加相册</string>
-    <string name="albums_main_list">主页面全部显示</string>
+    <string name="albums_main_list">相册主视图</string>
     <string name="albums_auto_detect">自动识别相册</string>
     <string name="albums_auto_detect_desc">检测本设备上所有包含媒体文件的文件夹，并添加至相册视图</string>
     <string name="albums_clear_list">清除相册列表</string>
@@ -678,4 +678,12 @@
     <string name="contributors_community_member">社区成员</string>
     <string name="contributors_separator_developer">开发人员</string>
     <string name="contributors_separator_contributors">开源贡献者</string>
+    <string name="albums_is_cloud_linked">此相册为云端关联相册</string>
+    <string name="debugging_development">开发</string>
+    <string name="debugging_internals">内部参数</string>
+    <string name="settings_sort_mode_month_taken">拍摄月</string>
+    <string name="settings_sort_mode_date_taken_no_separators">拍摄日期（无分隔符）</string>
+    <string name="settings_sort_mode_date_modified_no_separators">最后更改（无分隔符）</string>
+    <string name="immich_share_album_customize_link">自定义链接属性</string>
+    <string name="news_category_feature">特性</string>
 </resources>
