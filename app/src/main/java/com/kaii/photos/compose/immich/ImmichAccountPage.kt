@@ -76,8 +76,8 @@ import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.domain.immich.ImmichServerInfo
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
+import com.kaii.photos.models.ImmichInfoViewModel
 import com.kaii.photos.models.OperationStatus
-import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UsageByUserDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAdminResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAvatarColor

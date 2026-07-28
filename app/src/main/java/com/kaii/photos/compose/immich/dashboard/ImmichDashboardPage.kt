@@ -51,8 +51,8 @@ import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.domain.immich.cleanUrl
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.ImmichInfoViewModel
 import com.kaii.photos.models.OperationStatus
-import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.launch

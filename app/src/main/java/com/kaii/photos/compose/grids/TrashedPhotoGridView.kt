@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,7 +39,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.TrashViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,14 +64,11 @@ fun TrashedPhotoGridView(
         modifier = Modifier
             .fillMaxSize(1f),
         topBar = {
-            val context = LocalContext.current
             val navController = LocalNavController.current
 
             TrashedPhotoGridViewTopBar(
                 selectionManager = viewModel.selectionManager,
-                deleteAll = {
-                    viewModel.deleteAll(context = context)
-                },
+                deleteAll = viewModel::deleteAll,
                 onBackClick = {
                     viewModel.cancel()
                     navController.popBackStack()
@@ -89,16 +85,10 @@ fun TrashedPhotoGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                val context = LocalContext.current
                 TrashedPhotoGridViewBottomBar(
                     selectionManager = viewModel.selectionManager,
                     incomingIntent = incomingIntent,
-                    process = { action ->
-                        viewModel.runAction(
-                            context = context,
-                            action = action
-                        )
-                    }
+                    runAction = viewModel::runAction
                 )
             }
         }

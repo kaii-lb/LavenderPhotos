@@ -21,10 +21,11 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import java.io.File
+import javax.inject.Inject
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-class UploadMediaOperation(
+class UploadMediaOperation @Inject constructor(
     private val gateway: MediaStoreGateway,
     private val mediaDao: MediaDao,
     private val assetsClient: AssetsClient,

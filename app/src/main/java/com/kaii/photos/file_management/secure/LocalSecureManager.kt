@@ -29,13 +29,15 @@ import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.repositories.SecureRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import javax.inject.Inject
 
-class LocalSecureManager(
+class LocalSecureManager @Inject constructor(
     private val secureDao: SecuredMediaItemEntityDao,
-    private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : GenericSecureManager {
     /** returns files to be permanently deleted */
     override suspend fun secure(

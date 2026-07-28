@@ -11,7 +11,6 @@ import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.search.SearchManager
 import com.kaii.photos.repositories.SearchMode
-import com.kaii.photos.repositories.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -25,9 +24,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val repo: SearchRepository,
-    private val searchManager: SearchManager,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    searchManagerFactory: SearchManager.Factory
 ) : BaseViewModel() {
     init {
         viewModelScope.launch {
@@ -42,6 +40,9 @@ class SearchViewModel @Inject constructor(
             immichInfo.collect { searchManager.update(info = it) }
         }
     }
+
+    private val searchManager = searchManagerFactory.create(scope = viewModelScope)
+    private val repo = searchManager.searchRepo
 
     val mediaFlow = searchManager.mediaFlow
     val gridMediaFlow = searchManager.gridMediaFlow

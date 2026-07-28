@@ -14,9 +14,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class DownloadMediaOperation(
+class DownloadMediaOperation @Inject constructor(
     private val gateway: MediaStoreGateway,
     private val mediaDao: MediaDao,
     private val assetsClient: AssetsClient,

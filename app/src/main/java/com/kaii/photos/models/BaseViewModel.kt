@@ -1,11 +1,11 @@
 package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
-import com.kaii.photos.database.MediaDatabase
+import com.kaii.photos.database.daos.CustomEntityDao
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.domain.Result
@@ -150,42 +150,35 @@ abstract class BaseViewModel(
     abstract fun runAction(action: FileOperationAction)
 
     fun createSelectionManager(
-        context: Context,
+        mediaDao: MediaDao,
         sortMode: MediaItemSortMode,
         paths: Set<String>
     ) = SelectionManager(
         sortMode = sortMode,
         scope = viewModelScope,
-        context = context,
-        getMediaInDate = { timestamp ->
-            val dao = MediaDatabase.getInstance(context).mediaDao()
-
+        getMediaInDate = { timestamp, sortMode ->
             if (paths.isEmpty()) {
                 // search
-                dao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+                mediaDao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
             } else {
-                dao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+                mediaDao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
             }
         }
     )
 
     fun createSelectionManager(
-        context: Context,
+        customDao: CustomEntityDao,
         sortMode: MediaItemSortMode,
         albumId: String
-    ) =
-        SelectionManager(
-            sortMode = sortMode,
-            scope = viewModelScope,
-            context = context,
-            getMediaInDate = { timestamp ->
-                val dao = MediaDatabase.getInstance(context).customDao()
-
-                dao.mediaInDateRange(
-                    timestamp = timestamp,
-                    album = albumId,
-                    dateModified = sortMode.isDateModified
-                )
-            }
-        )
+    ) = SelectionManager(
+        sortMode = sortMode,
+        scope = viewModelScope,
+        getMediaInDate = { timestamp, sortMode ->
+            customDao.mediaInDateRange(
+                timestamp = timestamp,
+                album = albumId,
+                dateModified = sortMode.isDateModified
+            )
+        }
+    )
 }

@@ -27,15 +27,17 @@ import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.kaii_lb.lavender.immichintegration.AssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import java.io.File
+import javax.inject.Inject
 
 interface AndroidMediaStoreGateway : MediaStoreGateway, CloudCacheGateway, SyncWorkerGateway
 
-class AndroidMediaStoreGatewayImpl(
-    private val context: Context
+class AndroidMediaStoreGatewayImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context
 ) : AndroidMediaStoreGateway {
     private val contentResolver = context.contentResolver
 

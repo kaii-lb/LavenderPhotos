@@ -1,6 +1,5 @@
 package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.MediaDao
@@ -13,7 +12,6 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.FavouritesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,20 +22,20 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavouritesViewModel @Inject constructor(
-    @ApplicationContext context: Context,
-    private val repo: FavouritesRepository,
     private val mediaDao: MediaDao,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    repoFactory: FavouritesRepository.Factory
 ) : BaseViewModel() {
+    private val repo = repoFactory.create(scope = viewModelScope)
+
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
     var selectionManager = SelectionManager(
         sortMode = sortMode.value,
         scope = viewModelScope,
-        context = context,
-        getMediaInDate = { timestamp ->
-            mediaDao.favMediaInDateRange(timestamp = timestamp, dateModified = sortMode.value.isDateModified)
+        getMediaInDate = { timestamp, sortMode ->
+            mediaDao.favMediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
         }
     )
         private set
@@ -57,9 +55,8 @@ class FavouritesViewModel @Inject constructor(
                 selectionManager = SelectionManager(
                     sortMode = it,
                     scope = viewModelScope,
-                    context = context,
-                    getMediaInDate = { timestamp ->
-                        mediaDao.favMediaInDateRange(timestamp = timestamp, dateModified = it.isDateModified)
+                    getMediaInDate = { timestamp, sortMode ->
+                        mediaDao.favMediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
                     }
                 )
             }

@@ -6,10 +6,11 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.file_management.sync.operations.SyncAlbumOperation
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import javax.inject.Inject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class LocalSyncHandler(
+class LocalSyncHandler @Inject constructor(
     private val syncAlbum: SyncAlbumOperation,
     private val mediaDao: MediaDao,
     private val assetsClient: AssetsClient

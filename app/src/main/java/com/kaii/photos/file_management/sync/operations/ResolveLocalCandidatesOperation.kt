@@ -8,8 +8,9 @@ import com.kaii.photos.helpers.calculateSha1Checksum
 import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import java.io.File
+import javax.inject.Inject
 
-class ResolveLocalCandidatesOperation(
+class ResolveLocalCandidatesOperation @Inject constructor(
     private val mediaDao: MediaDao
 ) {
     suspend fun execute(

@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -57,15 +58,16 @@ import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
-import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlin.reflect.typeOf
 
 private const val TAG = "com.kaii.photos.compose.open_with_view.OpenWithView"
 
+@AndroidEntryPoint
 class OpenWithView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -329,19 +331,20 @@ private fun InitSinglePhotoView(
     window: Window
 ) {
     val context = LocalContext.current
-    val multiAlbumViewModel: MultiAlbumViewModel = viewModel(
-        factory = MultiAlbumViewModelFactory(
-            context = context,
-            album = AlbumType.Folder(
-                id = "",
-                name = incomingData.parentPath.filename(),
-                paths = setOf(
-                    incomingData.parentPath
-                ),
-                pinned = false,
-                immichId = null
+    val multiAlbumViewModel: MultiAlbumViewModel = hiltViewModel<MultiAlbumViewModel, MultiAlbumViewModel.Factory>(
+        creationCallback = { factory ->
+            factory.create(
+                album = AlbumType.Folder(
+                    id = "",
+                    name = incomingData.parentPath.filename(),
+                    paths = setOf(
+                        incomingData.parentPath
+                    ),
+                    pinned = false,
+                    immichId = null
+                )
             )
-        )
+        }
     )
 
     val items = multiAlbumViewModel.mediaFlow.collectAsLazyPagingItems()

@@ -1,6 +1,5 @@
-package com.kaii.photos.models.trash_bin
+package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -33,10 +32,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TrashViewModel @Inject constructor(
-    context: Context,
-    private val repo: TrashRepository,
+    @param:ApplicationScope private val appScope: CoroutineScope,
     settings: Settings = PhotosApplication.appModule.settings,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    repoFactory: TrashRepository.Factory
 ) : ViewModel(), TrashImpl, DeleteImpl, ShareImpl, RenameFileImpl {
     val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
@@ -104,6 +102,8 @@ class TrashViewModel @Inject constructor(
         initialValue = false
     )
 
+    private val repo = repoFactory.create(scope = viewModelScope)
+
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
@@ -119,9 +119,8 @@ class TrashViewModel @Inject constructor(
     val selectionManager = SelectionManager(
         sortMode = MediaItemSortMode.DateModified,
         scope = viewModelScope,
-        context = context,
-        getMediaInDate = { timestamp ->
-            repo.getItemsForDate(timestamp, MediaItemSortMode.DateModified)
+        getMediaInDate = { timestamp, sortMode ->
+            repo.getItemsForDate(timestamp, sortMode)
         }
     )
 

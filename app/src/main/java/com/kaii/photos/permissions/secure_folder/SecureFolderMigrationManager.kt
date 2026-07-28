@@ -167,20 +167,18 @@ class SecureFolderMigrationManager(
                     uri = it.uri,
                     immichUrl = it.immichUrl,
                     isImage = it.type == MediaType.Image,
-                    parentPath = it.parentPath
+                    absolutePath = it.absolutePath
                 )
             },
             context = context,
             destination = context.appRestoredFilesDir,
-            overwriteDate = true,
             overrideDisplayName = { displayName ->
                 val extension = displayName.replaceBeforeLast(".", "")
 
                 val name = displayName.replace(extension, ".backup")
                 Log.d(TAG, "Final name of file is $name")
                 name
-            },
-            onSingleItemDone = { _ -> }
+            }
         )
 
         val path = context.appRestoredFilesDir

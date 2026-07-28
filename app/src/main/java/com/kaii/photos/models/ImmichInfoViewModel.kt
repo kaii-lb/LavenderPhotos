@@ -1,4 +1,4 @@
-package com.kaii.photos.models.immich_info_page
+package com.kaii.photos.models
 
 import android.content.Context
 import android.net.Uri
@@ -6,12 +6,13 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.datastore.Settings
+import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.repositories.ImmichInfoRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
@@ -23,13 +24,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
-class ImmichInfoViewModel(
-    apiClient: ApiClient = PhotosApplication.appModule.apiClient,
-    private val settings: Settings = PhotosApplication.appModule.settings
+@HiltViewModel
+class ImmichInfoViewModel @Inject constructor(
+    apiClient: ApiClient,
+    albums: SettingsAlbumsListImpl,
+    private val immich: SettingsImmichImpl
 ) : ViewModel() {
-    val info = settings.immich.getImmichBasicInfo().stateIn(
+    val info = immich.getImmichBasicInfo().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = ImmichBasicInfo.Empty
@@ -51,8 +55,8 @@ class ImmichInfoViewModel(
             endpoint = "",
             auth = Auth.None
         ),
-        immichSettings = settings.immich,
-        albumSettings = settings.albums,
+        immichSettings = immich,
+        albumSettings = albums,
         scope = viewModelScope
     )
 
@@ -88,7 +92,7 @@ class ImmichInfoViewModel(
         }
     }
 
-    fun setInfo(info: ImmichBasicInfo) = settings.immich.setImmichBasicInfo(info)
+    fun setInfo(info: ImmichBasicInfo) = immich.setImmichBasicInfo(info)
 
     fun refresh() {
         repo.refresh()

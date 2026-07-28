@@ -1,21 +1,16 @@
 package com.kaii.photos.helpers.grid_management
 
-import android.content.Context
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
-import com.kaii.photos.R
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.epochToDayStart
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.MediaType
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -29,8 +24,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class SelectionManager(
     private var sortMode: MediaItemSortMode,
     private val scope: CoroutineScope,
-    private val context: Context,
-    private val getMediaInDate: suspend (Long) -> Map<Long, SelectedItem>
+    private val getMediaInDate: suspend (Long, MediaItemSortMode) -> Map<Long, SelectedItem>
 ) {
     @Serializable
     data class SelectedItem(
@@ -97,15 +91,7 @@ class SelectionManager(
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
         if (_selection.values.sumOf { it.values.size } >= 2000) {
-            scope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvent.MessageEvent(
-                        message = context.resources.getString(R.string.media_select_limit_reached),
-                        icon = R.drawable.lists,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            }
+            // TODO: send a snackbar
 
             return@launch
         }
@@ -129,7 +115,7 @@ class SelectionManager(
 
                 snapshot[key] = ((snapshot[key] ?: emptyMap()) + media)
 
-                val maxCount = getMediaInDate(epochToDayStart(key)).size
+                val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
 
                 if (media.size == maxCount) {
                     sections.add(key)
@@ -179,7 +165,7 @@ class SelectionManager(
             }
             snapshot[key] = snapshot[key]!!
 
-            val maxCount = getMediaInDate(epochToDayStart(key)).size
+            val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
 
             if (snapshot[key]!!.size == maxCount) {
                 sections.add(key)
@@ -190,15 +176,7 @@ class SelectionManager(
 
         // hardcoded android limit for handling uris
         if (snapshot.values.sumOf { it.values.size } >= 2000) {
-            scope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvent.MessageEvent(
-                        message = context.resources.getString(R.string.media_select_limit_reached),
-                        icon = R.drawable.lists,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            }
+            // TODO: send a snackbar
 
             return@launch
         }
@@ -242,20 +220,12 @@ class SelectionManager(
             snapshot[timestamp] = emptyMap()
             sections.removeAll { it == timestamp }
         } else {
-            snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp))
+            snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp), sortMode)
 
             // hardcoded android limit for handling uris
-            if (snapshot[timestamp]!!.size >= 2000) {
-                scope.launch {
-                    LavenderSnackbarController.pushEvent(
-                        LavenderSnackbarEvent.MessageEvent(
-                            message = context.resources.getString(R.string.media_select_limit_reached),
-                            icon = R.drawable.lists,
-                            duration = SnackbarDuration.Short
-                        )
-                    )
-                }
-            }
+            // if (snapshot[timestamp]!!.size >= 2000) {
+            // TODO: send a snackbar
+            // }
 
             sections.add(timestamp)
         }
@@ -270,15 +240,7 @@ class SelectionManager(
     ) = scope.launch(Dispatchers.IO) {
         // hardcoded android limit for handling uris
         if (_selection.values.sumOf { it.values.size } >= 2000) {
-            scope.launch {
-                LavenderSnackbarController.pushEvent(
-                    LavenderSnackbarEvent.MessageEvent(
-                        message = context.resources.getString(R.string.media_select_limit_reached),
-                        icon = R.drawable.lists,
-                        duration = SnackbarDuration.Short
-                    )
-                )
-            }
+            // TODO: send a snackbar
 
             return@launch
         }
@@ -297,7 +259,7 @@ class SelectionManager(
         )
         snapshot[key] = list
 
-        val maxCount = getMediaInDate(epochToDayStart(key)).size
+        val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
 
         if (list.size == maxCount) {
             sections.add(key)

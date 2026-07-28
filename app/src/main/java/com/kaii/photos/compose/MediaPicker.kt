@@ -32,7 +32,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,8 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -72,14 +71,7 @@ import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
-import com.kaii.photos.models.custom_album.CustomAlbumViewModelFactory
-import com.kaii.photos.models.favourites_grid.FavouritesViewModelFactory
-import com.kaii.photos.models.immich_album.ImmichAlbumViewModelFactory
-import com.kaii.photos.models.main_grid.MainGridViewModelFactory
-import com.kaii.photos.models.multi_album.MultiAlbumViewModelFactory
-import com.kaii.photos.models.search_page.SearchViewModelFactory
-import com.kaii.photos.models.trash_bin.TrashViewModel
-import com.kaii.photos.models.trash_bin.TrashViewModelFactory
+import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
@@ -127,9 +119,6 @@ class MediaPicker : ComponentActivity() {
     private fun Content(
         incomingIntent: Intent
     ) {
-        val context = LocalContext.current
-        val searchViewModel: SearchViewModel = viewModel(factory = SearchViewModelFactory(context = context))
-
         val navController = LocalNavController.current
         NavHost(
             navController = navController,
@@ -177,13 +166,9 @@ class MediaPicker : ComponentActivity() {
                     setupNextScreen(window)
 
                     val deviceAlbums by PhotosApplication.appModule.albumGridState.albums.collectAsStateWithLifecycle()
-                    val storeOwner = remember(it) {
-                        navController.getBackStackEntry(Screens.MainPages)
-                    }
-                    val viewModel = viewModel<MainGridViewModel>(
-                        viewModelStoreOwner = storeOwner,
-                        factory = MainGridViewModelFactory(context = context)
-                    )
+
+                    val viewModel = hiltViewModel<MainGridViewModel>()
+                    val searchViewModel = hiltViewModel<SearchViewModel>()
 
                     MainPages(
                         viewModel = viewModel,
@@ -207,15 +192,10 @@ class MediaPicker : ComponentActivity() {
                     setupNextScreen(window)
 
                     val screen = it.toRoute<Screens.Album.GridView>()
-                    val storeOwner = remember(it) {
-                        navController.getBackStackEntry(Screens.Album)
-                    }
-                    val viewModel = viewModel<MultiAlbumViewModel>(
-                        viewModelStoreOwner = storeOwner,
-                        factory = MultiAlbumViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
+                    val viewModel = hiltViewModel<MultiAlbumViewModel, MultiAlbumViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(album = screen.album)
+                        }
                     )
 
                     SingleAlbumView(
@@ -238,11 +218,10 @@ class MediaPicker : ComponentActivity() {
 
                     val screen = it.toRoute<Screens.CustomAlbum.GridView>()
 
-                    val viewModel: CustomAlbumViewModel = viewModel(
-                        factory = CustomAlbumViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
+                    val viewModel = hiltViewModel<CustomAlbumViewModel, CustomAlbumViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(album = screen.album)
+                        }
                     )
 
                     SingleAlbumView(
@@ -259,10 +238,7 @@ class MediaPicker : ComponentActivity() {
                 composable<Screens.Favourites.GridView> {
                     setupNextScreen(window)
 
-                    val viewModel = viewModel<FavouritesViewModel>(
-                        factory = FavouritesViewModelFactory(context)
-                    )
-
+                    val viewModel = hiltViewModel<FavouritesViewModel>()
                     FavouritesGridView(
                         viewModel = viewModel,
                         incomingIntent = incomingIntent
@@ -280,11 +256,7 @@ class MediaPicker : ComponentActivity() {
                 composable<Screens.Trash.GridView> {
                     setupNextScreen(window)
 
-                    val trashViewModel = viewModel<TrashViewModel>(
-                        factory = TrashViewModelFactory(
-                            context = context
-                        )
-                    )
+                    val trashViewModel = hiltViewModel<TrashViewModel>()
 
                     TrashedPhotoGridView(
                         viewModel = trashViewModel,
@@ -304,11 +276,10 @@ class MediaPicker : ComponentActivity() {
                     setupNextScreen(window = window)
 
                     val screen = it.toRoute<Screens.Immich.GridView>()
-                    val viewModel = viewModel<ImmichAlbumViewModel>(
-                        factory = ImmichAlbumViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
+                    val viewModel = hiltViewModel<ImmichAlbumViewModel, ImmichAlbumViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(album = screen.album)
+                        }
                     )
 
                     SingleAlbumView(

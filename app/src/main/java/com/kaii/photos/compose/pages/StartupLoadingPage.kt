@@ -9,24 +9,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.compose.pages.main.MainGridView
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.models.MainGridViewModel
-import com.kaii.photos.models.main_grid.MainGridViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 
 @Composable
 fun StartupLoadingPage(
     startupManager: StartupManager
 ) {
-    val context = LocalContext.current
-
-    val mainGridViewModel = viewModel<MainGridViewModel>(factory = MainGridViewModelFactory(context = context))
+    val mainGridViewModel = hiltViewModel<MainGridViewModel>()
     val mainPhotosAlbums by mainGridViewModel.mainPhotosAlbums.collectAsStateWithLifecycle()
 
     var album by remember {

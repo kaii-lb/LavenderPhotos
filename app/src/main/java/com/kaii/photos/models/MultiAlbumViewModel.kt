@@ -1,17 +1,18 @@
 package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.formatAsBytes
 import com.kaii.photos.repositories.HybridRepository
@@ -19,7 +20,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,20 +29,27 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel(assistedFactory = MultiAlbumViewModel.Factory::class)
 class MultiAlbumViewModel @AssistedInject constructor(
-    @ApplicationContext context: Context,
+    private val mediaDao: MediaDao,
     @Assisted private val album: AlbumType.Folder,
-    private val repo: HybridRepository,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    repoFactory: HybridRepository.Factory,
+    other: LocalFileManager
 ) : BaseViewModel() {
     @AssistedFactory
     interface Factory {
         fun create(album: AlbumType.Folder): MultiAlbumViewModel
     }
 
+    private val repo = repoFactory.create(
+        scope = viewModelScope,
+        album = album,
+        other = other
+    )
+
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
-    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, album.paths))
+    var selectionManager by mutableStateOf(createSelectionManager(mediaDao, sortMode.value, album.paths))
         private set
 
     override val progressChannel = Channel<FileOperationProgress<Unit>>(Channel.BUFFERED)
@@ -70,12 +77,9 @@ class MultiAlbumViewModel @AssistedInject constructor(
         }
     }
 
-    fun changeAlbum(
-        context: Context,
-        album: AlbumType.Folder
-    ) {
+    fun changeAlbum(album: AlbumType.Folder) {
         repo.changeAlbum(album = album)
-        selectionManager = createSelectionManager(context.applicationContext, sortMode.value, album.paths)
+        selectionManager = createSelectionManager(mediaDao, sortMode.value, album.paths)
     }
 
     fun editAlbum(id: String, newInfo: AlbumType) {

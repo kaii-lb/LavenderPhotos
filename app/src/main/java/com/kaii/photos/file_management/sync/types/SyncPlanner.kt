@@ -2,9 +2,10 @@ package com.kaii.photos.file_management.sync.types
 
 import com.kaii.photos.database.entities.MediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class SyncPlanner {
+class SyncPlanner @Inject constructor() {
     fun plan(
         cloudMedia: List<AssetResponseDto>,
         candidates: List<LocalSyncCandidate>

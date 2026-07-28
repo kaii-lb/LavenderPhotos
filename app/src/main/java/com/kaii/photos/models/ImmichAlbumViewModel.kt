@@ -2,6 +2,7 @@ package com.kaii.photos.models
 
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
@@ -10,7 +11,6 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.formatAsBytes
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.repositories.ImmichRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -27,14 +27,22 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = ImmichAlbumViewModel.Factory::class)
 class ImmichAlbumViewModel @AssistedInject constructor(
-    @Assisted val selectionManager: SelectionManager,
-    private val repo: ImmichRepository,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    @Assisted album: AlbumType.Cloud,
+    customDao: CustomEntityDao,
+    repoFactory: ImmichRepository.Factory
 ) : BaseViewModel() {
     @AssistedFactory
     interface Factory {
-        fun create(selectionManager: SelectionManager): ImmichAlbumViewModel
+        fun create(album: AlbumType.Cloud): ImmichAlbumViewModel
     }
+
+    val selectionManager = createSelectionManager(customDao, sortMode.value, album.id)
+
+    private val repo = repoFactory.create(
+        scope = viewModelScope,
+        album = album
+    )
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow

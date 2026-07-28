@@ -18,6 +18,9 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
+import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
@@ -26,13 +29,13 @@ import kotlinx.coroutines.launch
 fun TrashedPhotoGridViewBottomBar(
     selectionManager: SelectionManager,
     incomingIntent: Intent?,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     if (incomingIntent == null) {
         IsSelectingBottomAppBar {
             TrashPhotoGridBottomBarItems(
                 selectionManager = selectionManager,
-                process = process
+                runAction = runAction
             )
         }
     } else {
@@ -48,7 +51,7 @@ fun TrashedPhotoGridViewBottomBar(
 @Composable
 fun TrashPhotoGridBottomBarItems(
     selectionManager: SelectionManager,
-    process: (action: GenericFileManager.Action) -> Unit
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -57,9 +60,9 @@ fun TrashPhotoGridBottomBarItems(
     IconButton(
         onClick = {
             coroutineScope.launch {
-                process(
-                    GenericFileManager.Action.Share(
-                        list = selectedItemsList
+                runAction(
+                    FileOperationAction.Share(
+                        files = selectedItemsList.toFileOperationMetadataItems()
                     )
                 )
             }
@@ -75,10 +78,11 @@ fun TrashPhotoGridBottomBarItems(
     var showRestoreDialog by remember { mutableStateOf(false) }
     val permissionState = rememberFilePermissionManager(
         onGranted = {
-            process(
-                GenericFileManager.Action.Trash(
-                    list = selectedItemsList,
-                    trashed = false
+            runAction(
+                FileOperationAction.Trash(
+                    files = selectedItemsList.toFileOperationMetadataItems(),
+                    isTrashed = false,
+                    album = AlbumType.PlaceHolder
                 )
             )
 
@@ -121,9 +125,10 @@ fun TrashPhotoGridBottomBarItems(
             body = stringResource(id = R.string.action_cannot_be_undone),
             confirmButtonLabel = stringResource(id = R.string.media_delete),
             action = {
-                process(
-                    GenericFileManager.Action.Delete(
-                        list = selectedItemsList
+                runAction(
+                    FileOperationAction.Delete(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        album = AlbumType.PlaceHolder
                     )
                 )
 

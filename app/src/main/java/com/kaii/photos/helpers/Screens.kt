@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 
 interface Screens {
     @Serializable
-    object Album {
+    object Album : Screens {
         @Serializable
         data class GridView(
             val album: AlbumType.Folder
@@ -20,7 +20,7 @@ interface Screens {
     }
 
     @Serializable
-    object Trash {
+    object Trash : Screens {
         @Serializable
         object GridView : Screens
 
@@ -31,7 +31,7 @@ interface Screens {
     }
 
     @Serializable
-    object Favourites {
+    object Favourites : Screens {
         @Serializable
         object GridView : Screens
 
@@ -45,7 +45,7 @@ interface Screens {
     }
 
     @Serializable
-    object SecureFolder {
+    object SecureFolder : Screens {
         @Serializable
         object GridView : Screens
 
@@ -69,7 +69,7 @@ interface Screens {
     ) : Screens
 
     @Serializable
-    object Immich {
+    object Immich : Screens {
         @Serializable
         object Dashboard: Screens
 
@@ -103,7 +103,7 @@ interface Screens {
     }
 
     @Serializable
-    object CustomAlbum {
+    object CustomAlbum : Screens {
         @Serializable
         data class GridView(
             val album: AlbumType.Custom

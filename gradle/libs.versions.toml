@@ -75,6 +75,8 @@ androidx-documentfile = { group = "androidx.documentfile", name = "documentfile"
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso-core" }
 androidx-graphics-shapes-android = { module = "androidx.graphics:graphics-shapes-android", version.ref = "androidx-shapes-android" }
 
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt" }
+
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
 androidx-junit-ktx = { module = "androidx.test.ext:junit-ktx", version.ref = "androidx-junit" }
 

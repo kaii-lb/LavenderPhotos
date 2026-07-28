@@ -8,6 +8,9 @@ import com.kaii.photos.data.immich.RefreshCloudAlbumOperation
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
+import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
+import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ImmichRepository(
@@ -43,6 +47,30 @@ class ImmichRepository(
     format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
 ) : BaseRepo, RenameAlbum, CountAndSize {
+    class Factory @Inject constructor(
+        private val customDao: CustomEntityDao,
+        private val refreshOperation: RefreshCloudAlbumOperation,
+        private val fileManager: CloudFileManager,
+        private val immich: SettingsImmichImpl,
+        private val photoGrid: SettingsPhotoGridImpl,
+        private val lookAndFeel: SettingsLookAndFeelImpl
+    ) {
+        fun create(
+            scope: CoroutineScope,
+            album: AlbumType.Cloud
+        ): ImmichRepository =
+            ImmichRepository(
+                album = album,
+                scope = scope,
+                fileManager = fileManager,
+                refreshOperation = refreshOperation,
+                customDao = customDao,
+                info = immich.getImmichBasicInfo(),
+                sortMode = photoGrid.getSortMode(),
+                format = lookAndFeel.getDisplayDateFormat()
+            )
+    }
+
     private val params = combine(info, sortMode, format) { info, sortMode, format ->
         RoomQueryParams(
             sortMode = sortMode,

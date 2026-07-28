@@ -4,9 +4,11 @@ import android.content.Context
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.daos.TagDao
+import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.database.entities.ExifDataDao
 import dagger.Module
 import dagger.Provides
@@ -41,4 +43,10 @@ object DatabaseModule {
 
     @Provides
     fun provideTagDao(db: MediaDatabase): TagDao = db.tagDao()
+
+    @Provides
+    fun provideTaggedItemsDao(db: MediaDatabase): TaggedItemsDao = db.taggedItemsDao()
+
+    @Provides
+    fun provideSearchDao(db: MediaDatabase): SearchDao = db.searchDao()
 }

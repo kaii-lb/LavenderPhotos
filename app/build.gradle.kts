@@ -149,6 +149,8 @@ dependencies {
 
     implementation(libs.androidx.graphics.shapes.android)
 
+    implementation(libs.androidx.hilt.navigation.compose)
+
     implementation(libs.androidx.junit.ktx)
 
     implementation(libs.androidx.lifecycle.runtime.ktx)

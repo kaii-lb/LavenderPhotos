@@ -4,8 +4,9 @@ import androidx.compose.ui.graphics.Color
 import com.kaii.photos.database.daos.TagDao
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.helpers.editing.random
+import javax.inject.Inject
 
-class TagRepository(
+class TagRepository @Inject constructor(
     private val dao: TagDao
 ) {
     val allTags = dao.getAll()

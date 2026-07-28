@@ -9,15 +9,30 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.repositories.SearchRepository
 import com.kaii.photos.repositories.TagRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import javax.inject.Inject
 
 class SearchManager(
-    private val searchRepo: SearchRepository,
+    val searchRepo: SearchRepository,
     private val tagRepo: TagRepository
 ) {
+    class Factory @Inject constructor(
+        private val repoFactory: SearchRepository.Factory,
+        private val tagRepo: TagRepository
+    ) {
+        fun create(
+            scope: CoroutineScope
+        ): SearchManager =
+            SearchManager(
+                searchRepo = repoFactory.create(scope),
+                tagRepo = tagRepo
+            )
+    }
+
     private val _searchQuery = MutableStateFlow("")
     private val _searchMode = MutableStateFlow(SearchMode.Name)
     private val _searchingForTags = MutableStateFlow(false)

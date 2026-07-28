@@ -1,6 +1,5 @@
 package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.data.immich.ImmichSessionManager
+import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -19,11 +19,11 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.domain.news.UpdateState
+import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.repositories.HybridRepository
 import com.kaii.photos.repositories.LatestNewsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -43,11 +43,12 @@ import kotlin.uuid.Uuid
 
 @HiltViewModel
 class MainGridViewModel @Inject constructor(
-    @ApplicationContext context: Context,
-    private val repo: HybridRepository,
+    private val mediaDao: MediaDao,
     private val latestNewsRepository: LatestNewsRepository,
     private val immichSessionManager: ImmichSessionManager,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    repoFactory: HybridRepository.Factory,
+    other: LocalFileManager
 ) : BaseViewModel() {
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
@@ -104,8 +105,20 @@ class MainGridViewModel @Inject constructor(
         initialValue = false
     )
 
-    var selectionManager by mutableStateOf(createSelectionManager(context.applicationContext, sortMode.value, mainPhotosAlbums.value))
+    var selectionManager by mutableStateOf(createSelectionManager(mediaDao, sortMode.value, mainPhotosAlbums.value))
         private set
+
+    private val repo = repoFactory.create(
+        scope = viewModelScope,
+        album = AlbumType.Folder(
+            id = "",
+            name = "",
+            pinned = false,
+            immichId = null,
+            paths = mainPhotosAlbums.value
+        ),
+        other = other
+    )
 
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
@@ -175,11 +188,10 @@ class MainGridViewModel @Inject constructor(
     }
 
     fun changeAlbum(
-        context: Context,
         paths: Set<String>
     ) {
         selectionManager.clear()
-        selectionManager = createSelectionManager(context.applicationContext, sortMode.value, paths)
+        selectionManager = createSelectionManager(mediaDao, sortMode.value, paths)
 
         if (paths.isEmpty()) return
 

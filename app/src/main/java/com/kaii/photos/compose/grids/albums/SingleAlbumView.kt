@@ -87,10 +87,8 @@ fun SingleAlbumView(
 
     if (dynamicAlbum == null) return
 
-    val context = LocalContext.current
     LaunchedEffect(dynamicAlbum) {
         viewModel.changeAlbum(
-            context = context,
             album = dynamicAlbum!!
         )
     }

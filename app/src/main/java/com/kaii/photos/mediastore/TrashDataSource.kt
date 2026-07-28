@@ -17,6 +17,7 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.parent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
@@ -24,13 +25,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.math.roundToLong
 
 private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
 /** Loads metadata from the media store for images and videos. */
-class TrashDataSource(
-    private val context: Context
+class TrashDataSource @Inject constructor(
+    @param:ApplicationContext private val context: Context
 ) {
     companion object {
         private val PROJECTION =

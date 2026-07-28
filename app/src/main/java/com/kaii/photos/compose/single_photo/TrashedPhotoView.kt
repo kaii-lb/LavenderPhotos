@@ -94,7 +94,7 @@ import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.toFileOperationMetadata
-import com.kaii.photos.models.trash_bin.TrashViewModel
+import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import kotlinx.coroutines.Dispatchers

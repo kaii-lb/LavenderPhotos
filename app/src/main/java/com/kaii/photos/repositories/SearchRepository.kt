@@ -15,12 +15,14 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.di.HybridFileManagerFactory
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
+import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
@@ -48,6 +50,7 @@ import kotlinx.datetime.number
 import kotlinx.datetime.onDay
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.plusYear
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
@@ -61,7 +64,6 @@ enum class SearchMode(
     Tag(nameId = R.string.search_by_tag)
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class SearchRepository(
     private val fileManager: HybridFileManager,
     private val taggedItemsDao: TaggedItemsDao,
@@ -71,6 +73,26 @@ class SearchRepository(
     sortMode: MediaItemSortMode,
     format: DisplayDateFormat
 ) : BaseRepo, RenameFile, Secure {
+    class Factory @Inject constructor(
+        private val searchDao: SearchDao,
+        private val taggedItemsDao: TaggedItemsDao,
+        private val fileManagerFactory: HybridFileManagerFactory,
+        private val other: LocalFileManager
+    ) {
+        fun create(
+            scope: CoroutineScope
+        ): SearchRepository =
+            SearchRepository(
+                fileManager = fileManagerFactory.create(other),
+                searchDao = searchDao,
+                taggedItemsDao = taggedItemsDao,
+                scope = scope,
+                info = ImmichBasicInfo.Empty,
+                sortMode = MediaItemSortMode.DateTaken,
+                format = DisplayDateFormat.Default
+            )
+    }
+
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,

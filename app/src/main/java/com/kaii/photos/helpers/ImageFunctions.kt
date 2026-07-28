@@ -6,7 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.compose.ui.util.fastMap
-import com.kaii.photos.database.entities.MediaStoreData
+import androidx.core.net.toUri
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getMediaStoreDataForIds
@@ -51,9 +51,7 @@ suspend fun copyImageListToPath(
     context: Context,
     list: List<SelectionManager.SelectedItem>,
     destination: String,
-    overwriteDate: Boolean,
-    overrideDisplayName: ((displayName: String) -> String)? = null,
-    onSingleItemDone: (media: MediaStoreData) -> Unit
+    overrideDisplayName: (originalName: String) -> String
 ): MutableList<Uri> = withContext(Dispatchers.IO) {
     val contentResolver = context.contentResolver
 
@@ -66,17 +64,13 @@ suspend fun copyImageListToPath(
     items.forEach { media ->
         contentResolver.insertMedia(
             context = context,
-            media = media,
-            destination = destination,
-            overrideDisplayName = if (overrideDisplayName != null) overrideDisplayName(media.displayName) else null,
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            preserveDate = overwriteDate,
-            onInsert = { original, new ->
-                contentResolver.copyUriToUri(original, new)
-                newUris.add(new)
-            }
+            media = media.copy(
+                displayName = overrideDisplayName(media.displayName)
+            ),
+            destination = destination
         )?.let {
-            onSingleItemDone(media)
+            contentResolver.copyUriToUri(media.uri.toUri(), it)
+            newUris.add(it)
         }
     }
 

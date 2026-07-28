@@ -15,6 +15,9 @@ import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
+import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
+import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -41,6 +44,7 @@ import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,6 +61,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import javax.inject.Inject
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
 
@@ -65,10 +70,32 @@ class SecureRepository(
     private val scope: CoroutineScope,
     private val fileManager: SecureFileManager,
     private val secureDao: SecuredMediaItemEntityDao,
+    info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>,
-    info: Flow<ImmichBasicInfo>
+    format: Flow<DisplayDateFormat>
 ) : Delete, Share, ExtractExif, Restore {
+    class Factory @Inject constructor(
+        @param:ApplicationContext private val context: Context,
+        private val secureDao: SecuredMediaItemEntityDao,
+        private val fileManager: SecureFileManager,
+        private val immich: SettingsImmichImpl,
+        private val photoGrid: SettingsPhotoGridImpl,
+        private val lookAndFeel: SettingsLookAndFeelImpl
+    ) {
+        fun create(
+            scope: CoroutineScope
+        ): SecureRepository =
+            SecureRepository(
+                context = context,
+                secureDao = secureDao,
+                scope = scope,
+                fileManager = fileManager,
+                info = immich.getImmichBasicInfo(),
+                sortMode = photoGrid.getSortMode(),
+                format = lookAndFeel.getDisplayDateFormat()
+            )
+    }
+
     companion object {
         private val TAG = SecureRepository::class.qualifiedName
 

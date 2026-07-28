@@ -7,6 +7,9 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.datastore.preferences.SettingsImmichImpl
+import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
+import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -36,15 +39,36 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class TrashRepository(
     private val fileManager: LocalFileManager,
+    private val dataSource: TrashDataSource,
     scope: CoroutineScope,
-    sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>,
-    private val dataSource: TrashDataSource
+    sortMode: Flow<MediaItemSortMode>,
+    format: Flow<DisplayDateFormat>
 ) : Trash, Delete, Share, ExtractExif, RenameFile {
+    class Factory @Inject constructor(
+        private val fileManager: LocalFileManager,
+        private val dataSource: TrashDataSource,
+        private val immich: SettingsImmichImpl,
+        private val photoGrid: SettingsPhotoGridImpl,
+        private val lookAndFeel: SettingsLookAndFeelImpl
+    ) {
+        fun create(
+            scope: CoroutineScope
+        ): TrashRepository =
+            TrashRepository(
+                fileManager = fileManager,
+                dataSource = dataSource,
+                scope = scope,
+                info = immich.getImmichBasicInfo(),
+                sortMode = photoGrid.getSortMode(),
+                format = lookAndFeel.getDisplayDateFormat()
+            )
+    }
+
     private data class Params(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,

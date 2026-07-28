@@ -10,9 +10,10 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class SyncAlbumOperation(
+class SyncAlbumOperation @Inject constructor(
     private val resolveCandidates: ResolveLocalCandidatesOperation,
     private val planner: SyncPlanner,
     private val upload: UploadMediaOperation,

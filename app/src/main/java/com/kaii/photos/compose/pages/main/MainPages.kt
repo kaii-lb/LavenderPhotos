@@ -340,7 +340,6 @@ fun MainPages(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            val context = LocalContext.current
             LaunchedEffect(pagerState.currentPage, tabList, mainPhotosPaths) {
                 if (tabList.isEmpty() || pagerState.currentPage !in tabList.indices) return@LaunchedEffect
 
@@ -349,21 +348,18 @@ fun MainPages(
                 when {
                     tab.isCustom -> {
                         viewModel.changeAlbum(
-                            context = context,
                             paths = tab.toAlbum().paths
                         )
                     }
 
                     tab == DefaultTabs.TabTypes.photos -> {
                         viewModel.changeAlbum(
-                            context = context,
                             paths = mainPhotosPaths
                         )
                     }
 
                     tab == DefaultTabs.TabTypes.search -> {
                         viewModel.changeAlbum(
-                            context = context,
                             paths = emptySet()
                         )
                     }

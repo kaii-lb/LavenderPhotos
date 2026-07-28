@@ -6,8 +6,9 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.mediastore.MediaType
+import javax.inject.Inject
 
-class TrashLocalMediaOperation(
+class TrashLocalMediaOperation @Inject constructor(
     private val fileManager: LocalFileManager
 ) {
     suspend fun execute(

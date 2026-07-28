@@ -1,6 +1,5 @@
 package com.kaii.photos.models
 
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.di.ApplicationScope
@@ -27,19 +26,19 @@ import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class SecureFolderViewModel @Inject constructor(
-    context: Context,
-    private val repo: SecureRepository,
-    @param:ApplicationScope private val appScope: CoroutineScope
+    @param:ApplicationScope private val appScope: CoroutineScope,
+    repoFactory: SecureRepository.Factory
 ) : BaseViewModel(), RestoreImpl {
+    private val repo = repoFactory.create(scope = viewModelScope)
+
     val mediaFlow = repo.mediaFlow
     val gridMediaFlow = repo.gridMediaFlow
 
     val selectionManager = SelectionManager(
         sortMode = MediaItemSortMode.DateModified,
         scope = viewModelScope,
-        context = context,
-        getMediaInDate = { timestamp ->
-            repo.getItemsForDate(timestamp, sortMode.value)
+        getMediaInDate = { timestamp, sortMode ->
+            repo.getItemsForDate(timestamp, sortMode)
         }
     )
 

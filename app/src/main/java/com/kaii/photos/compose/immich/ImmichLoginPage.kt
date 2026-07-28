@@ -66,8 +66,8 @@ import com.kaii.photos.compose.widgets.infiniteLoadingIndicator
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.models.ImmichInfoViewModel
 import com.kaii.photos.models.OperationStatus
-import com.kaii.photos.models.immich_info_page.ImmichInfoViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest

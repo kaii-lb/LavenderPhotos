@@ -24,22 +24,23 @@ import com.kaii.photos.helpers.grid_management.toSecureMedia
 import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import java.io.File
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
-class SecureFileManager(
-    private val context: Context,
+class SecureFileManager @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val secureDao: SecuredMediaItemEntityDao,
-    private val gateway: AndroidMediaStoreGateway
+    private val gateway: AndroidMediaStoreGateway,
+    private val secureManager: LocalSecureManager
 ) : Delete, Restore, Share, ExtractExif {
     companion object {
         private val TAG = SecureFileManager::class.qualifiedName
     }
-
-    private val secureManager = LocalSecureManager(secureDao, context)
 
     override suspend fun decryptFiles(
         files: List<FileOperationItemMetadata>

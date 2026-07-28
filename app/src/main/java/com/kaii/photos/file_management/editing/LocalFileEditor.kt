@@ -2,7 +2,6 @@ package com.kaii.photos.file_management.editing
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.material3.SnackbarDuration
@@ -122,17 +121,11 @@ open class LocalFileEditor(
 
         val newUri = context.contentResolver.insertMedia(
             context = context,
-            media = media,
-            destination = media.parentPath,
-            currentVolumes = MediaStore.getExternalVolumeNames(context),
-            preserveDate = true,
-            overrideDisplayName = media.displayName.replaceAfterLast(".", "mp4"),
-            onInsert = { _, new ->
-                context.contentResolver.copyUriToUri(
-                    from = result.newUri,
-                    to = new
-                )
-            }
+            media = media.copy(
+                displayName = media.displayName.replaceAfterLast(".", "mp4"),
+                mimeType = "video/mp4"
+            ),
+            destination = media.parentPath
         )
 
         if (newUri == null) {
@@ -148,6 +141,11 @@ open class LocalFileEditor(
 
             return@withContext null
         }
+
+        context.contentResolver.copyUriToUri(
+            from = result.newUri,
+            to = newUri
+        )
 
         val tempFile = File(result.tempPath!!)
         if (tempFile.exists()) tempFile.delete()
@@ -208,13 +206,13 @@ open class LocalFileEditor(
             if (!overwrite || isFromOpenWithView) {
                 context.contentResolver.insertMedia(
                     context = context,
-                    media = media,
+                    media = media.copy(
+                        displayName = media.displayName.replaceAfterLast(".", "jpeg"),
+                        mimeType = "image/jpeg"
+                    ),
                     destination = media.parentPath.ifBlank {
                         appCloudFolderDir.absolutePath
-                    },
-                    currentVolumes = MediaStore.getExternalVolumeNames(context),
-                    overrideDisplayName = media.displayName.replaceAfterLast(".", "jpeg"),
-                    onInsert = { _, _ -> }
+                    }
                 )
             } else {
                 media.uri.toUri()
