@@ -3,8 +3,9 @@ package com.kaii.photos.models
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.PhotosApplication
-import com.kaii.photos.datastore.Settings
+import com.kaii.photos.datastore.preferences.SettingsBehaviourImpl
+import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
+import com.kaii.photos.datastore.preferences.SettingsStorageImpl
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -33,70 +34,72 @@ import javax.inject.Inject
 @HiltViewModel
 class TrashViewModel @Inject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
-    settings: Settings = PhotosApplication.appModule.settings,
-    repoFactory: TrashRepository.Factory
+    repoFactory: TrashRepository.Factory,
+    lookAndFeel: SettingsLookAndFeelImpl,
+    behaviour: SettingsBehaviourImpl,
+    storage: SettingsStorageImpl
 ) : ViewModel(), TrashImpl, DeleteImpl, ShareImpl, RenameFileImpl {
-    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
+    val columnSize = lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = 3
     )
 
-    val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
+    val openVideosExternally = behaviour.getOpenVideosExternally().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
+    val cacheThumbnails = storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = true
     )
 
-    val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
+    val thumbnailSize = storage.getThumbnailSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = 256
     )
 
-    val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
+    val useRoundedCorners = lookAndFeel.getUseRoundedCorners().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = false
     )
 
-    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+    val useBlackBackground = lookAndFeel.getUseBlackBackgroundForViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
+    val blurViews = lookAndFeel.getBlurViews().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+    val topBarDetailsFormat = lookAndFeel.getTopBarDetailsFormat().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = TopBarDetailsFormat.FileName
     )
 
-    val useCache = settings.storage.getCacheThumbnails().stateIn(
+    val useCache = storage.getCacheThumbnails().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false
     )
 
-    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+    val vibrateOnClick = lookAndFeel.getVibrateOnMediaClick().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = true
     )
 
-    val useTapToNav = settings.behaviour.getTapToNav().stateIn(
+    val useTapToNav = behaviour.getTapToNav().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false

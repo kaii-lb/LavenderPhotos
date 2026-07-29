@@ -3,7 +3,6 @@ package com.kaii.photos.models
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -31,115 +30,151 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 
 abstract class BaseViewModel(
-    val settings: Settings = PhotosApplication.appModule.settings
+    protected val settings: Settings
 ) : ViewModel(), CopyImpl, MoveImpl, TrashImpl, DeleteImpl, FavouriteImpl, RenameFileImpl, RenameAlbumImpl, SecureImpl, ShareImpl {
-    val useBlackBackground = settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val useBlackBackground by lazy {
+        settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val confirmToDelete = settings.permissions.getConfirmToDelete().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val confirmToDelete by lazy {
+        settings.permissions.getConfirmToDelete().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val doNotTrash = settings.permissions.getDoNotTrash().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val doNotTrash by lazy {
+        settings.permissions.getDoNotTrash().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val columnSize = settings.lookAndFeel.getColumnSize().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = 3
-    )
+    val columnSize by lazy {
+        settings.lookAndFeel.getColumnSize().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = 3
+        )
+    }
 
-    val openVideosExternally = settings.behaviour.getOpenVideosExternally().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val openVideosExternally by lazy {
+        settings.behaviour.getOpenVideosExternally().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val cacheThumbnails = settings.storage.getCacheThumbnails().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
+    val cacheThumbnails by lazy {
+        settings.storage.getCacheThumbnails().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = true
+        )
+    }
 
-    val thumbnailSize = settings.storage.getThumbnailSize().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = 256
-    )
+    val thumbnailSize by lazy {
+        settings.storage.getThumbnailSize().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = 256
+        )
+    }
 
-    val useRoundedCorners = settings.lookAndFeel.getUseRoundedCorners().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val useRoundedCorners by lazy {
+        settings.lookAndFeel.getUseRoundedCorners().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val topBarDetailsFormat = settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = TopBarDetailsFormat.FileName
-    )
+    val topBarDetailsFormat by lazy {
+        settings.lookAndFeel.getTopBarDetailsFormat().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = TopBarDetailsFormat.FileName
+        )
+    }
 
-    val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val blurViews by lazy {
+        settings.lookAndFeel.getBlurViews().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val useCache = settings.storage.getCacheThumbnails().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val useCache by lazy {
+        settings.storage.getCacheThumbnails().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val autoDetectAlbums = settings.albums.getAutoDetect().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val autoDetectAlbums by lazy {
+        settings.albums.getAutoDetect().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
-    val vibrateOnClick = settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = true
-    )
+    val vibrateOnClick by lazy {
+        settings.lookAndFeel.getVibrateOnMediaClick().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = true
+        )
+    }
 
-    val albums = settings.albums.get().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList()
-    )
+    val allAlbums by lazy {
+        settings.albums.get().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
+    }
 
-    val displayDateFormat = settings.lookAndFeel.getDisplayDateFormat().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = DisplayDateFormat.Default
-    )
+    val displayDateFormat by lazy {
+        settings.lookAndFeel.getDisplayDateFormat().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = DisplayDateFormat.Default
+        )
+    }
 
-    val sortMode = settings.photoGrid.getSortMode().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = MediaItemSortMode.DateTaken
-    )
+    val sortMode by lazy {
+        settings.photoGrid.getSortMode().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = MediaItemSortMode.DateTaken
+        )
+    }
 
-    val immichInfo = settings.immich.getImmichBasicInfo().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = ImmichBasicInfo.Empty
-    )
+    val immichInfo by lazy {
+        settings.immich.getImmichBasicInfo().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = ImmichBasicInfo.Empty
+        )
+    }
 
-    val useTapToNav = settings.behaviour.getTapToNav().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
-        initialValue = false
-    )
+    val useTapToNav by lazy {
+        settings.behaviour.getTapToNav().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+            initialValue = false
+        )
+    }
 
     protected abstract val progressChannel: Channel<FileOperationProgress<Unit>>
     abstract val fileOperationProgress: Flow<FileOperationProgress<Unit>>

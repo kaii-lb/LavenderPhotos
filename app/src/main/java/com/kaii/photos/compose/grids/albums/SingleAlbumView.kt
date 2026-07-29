@@ -71,7 +71,7 @@ fun SingleAlbumView(
     incomingIntent: Intent? = null
 ) {
     val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
-    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.allAlbums.collectAsStateWithLifecycle()
 
     val navController = LocalNavController.current
     val dynamicAlbum by remember {
@@ -157,7 +157,7 @@ fun SingleAlbumView(
     viewModel: CustomAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.allAlbums.collectAsStateWithLifecycle()
 
     val navController = LocalNavController.current
     val dynamicAlbum by remember {
@@ -239,7 +239,7 @@ fun SingleAlbumView(
     viewModel: ImmichAlbumViewModel,
     incomingIntent: Intent? = null
 ) {
-    val allAlbums by viewModel.albums.collectAsStateWithLifecycle()
+    val allAlbums by viewModel.allAlbums.collectAsStateWithLifecycle()
 
     val navController = LocalNavController.current
     val dynamicAlbum by remember {

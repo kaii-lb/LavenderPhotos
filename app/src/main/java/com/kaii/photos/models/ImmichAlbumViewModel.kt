@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -30,8 +31,9 @@ class ImmichAlbumViewModel @AssistedInject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
     @Assisted album: AlbumType.Cloud,
     customDao: CustomEntityDao,
-    repoFactory: ImmichRepository.Factory
-) : BaseViewModel() {
+    repoFactory: ImmichRepository.Factory,
+    settings: Settings
+) : BaseViewModel(settings) {
     @AssistedFactory
     interface Factory {
         fun create(album: AlbumType.Cloud): ImmichAlbumViewModel

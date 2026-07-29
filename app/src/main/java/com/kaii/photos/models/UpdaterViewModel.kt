@@ -1,8 +1,8 @@
-package com.kaii.photos.models.updater
+package com.kaii.photos.models
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.data.providers.UpdaterParamProvider
+import com.kaii.photos.datastore.preferences.SettingsVersionImpl
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.repositories.LatestNewsRepository
@@ -11,10 +11,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UpdaterViewModel(
+class UpdaterViewModel @Inject constructor(
     private val latestNewsRepository: LatestNewsRepository,
-    paramProvider: UpdaterParamProvider
+    versions: SettingsVersionImpl
 ) : ViewModel() {
     private val _news = MutableStateFlow(emptyList<News>())
     val news = _news.asStateFlow()
@@ -22,7 +23,7 @@ class UpdaterViewModel(
     private val _updateState = MutableStateFlow(UpdateState.Loading)
     val updateState = _updateState.asStateFlow()
 
-    val showUpdateNotice = paramProvider.showUpdateNotice.stateIn(
+    val showUpdateNotice = versions.getShowUpdateNotice().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
         initialValue = false

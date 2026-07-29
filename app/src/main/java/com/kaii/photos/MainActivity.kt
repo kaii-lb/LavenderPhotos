@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -105,6 +106,7 @@ import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.models.TrashViewModel
+import com.kaii.photos.models.UpdaterViewModel
 import com.kaii.photos.models.behaviour.BehaviourViewModel
 import com.kaii.photos.models.behaviour.BehaviourViewModelFactory
 import com.kaii.photos.models.contributors.ContributorViewModel
@@ -118,8 +120,6 @@ import com.kaii.photos.models.permissions.PermissionsViewModel
 import com.kaii.photos.models.permissions.PermissionsViewModelFactory
 import com.kaii.photos.models.theme.ThemeViewModel
 import com.kaii.photos.models.theme.ThemeViewModelFactory
-import com.kaii.photos.models.updater.UpdaterViewModel
-import com.kaii.photos.models.updater.UpdaterViewModelFactory
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.rememberImmichBackupOptionsState
@@ -778,9 +778,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable<Screens.Settings.Misc.UpdatePage> {
-                        val viewModel = viewModel<UpdaterViewModel>(
-                            factory = UpdaterViewModelFactory(context)
-                        )
+                        val viewModel = hiltViewModel<UpdaterViewModel>()
 
                         val updateState by viewModel.updateState.collectAsStateWithLifecycle()
                         val news by viewModel.news.collectAsStateWithLifecycle()

@@ -23,7 +23,7 @@ object SessionModule {
         albumsClient: AlbumsClient,
         userClient: UserClient,
         loginClient: LoginClient,
-        appScope: CoroutineScope,
+        @ApplicationScope appScope: CoroutineScope,
         immich: SettingsImmichImpl
     ): ImmichSessionManager = ImmichSessionManager(
         assetsClient = assetsClient,

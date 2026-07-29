@@ -2,9 +2,11 @@ package com.kaii.photos.data.providers
 
 import android.content.Context
 import android.content.pm.PackageManager
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class AppVersionProvider(
-    private val context: Context
+class AppVersionProvider @Inject constructor(
+    @param:ApplicationContext private val context: Context
 ) {
     private val packageInfo by lazy {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {

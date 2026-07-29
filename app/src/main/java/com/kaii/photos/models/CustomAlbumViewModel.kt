@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -28,8 +29,9 @@ class CustomAlbumViewModel @AssistedInject constructor(
     @Assisted private val album: AlbumType.Custom,
     @param:ApplicationScope private val appScope: CoroutineScope,
     customDao: CustomEntityDao,
-    repoFactory: CustomRepository.Factory
-) : BaseViewModel() {
+    repoFactory: CustomRepository.Factory,
+    settings: Settings
+) : BaseViewModel(settings) {
     @AssistedFactory
     interface Factory {
         fun create(album: AlbumType.Custom): CustomAlbumViewModel

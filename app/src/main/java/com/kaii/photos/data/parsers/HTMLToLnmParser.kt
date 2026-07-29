@@ -1,6 +1,8 @@
 package com.kaii.photos.data.parsers
 
-class HTMLToLnmParser {
+import javax.inject.Inject
+
+class HTMLToLnmParser @Inject constructor() {
     fun parse(markdown: String): String {
         return markdown.lineSequence()
             .filter {

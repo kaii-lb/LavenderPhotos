@@ -11,9 +11,10 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import javax.inject.Inject
 import kotlin.uuid.Uuid
 
-class RefreshCloudAlbumOperation(
+class RefreshCloudAlbumOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
     private val exifDataDao: ExifDataDao,

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -33,8 +34,9 @@ class MultiAlbumViewModel @AssistedInject constructor(
     @Assisted private val album: AlbumType.Folder,
     @param:ApplicationScope private val appScope: CoroutineScope,
     repoFactory: HybridRepository.Factory,
-    other: LocalFileManager
-) : BaseViewModel() {
+    other: LocalFileManager,
+    settings: Settings
+) : BaseViewModel(settings) {
     @AssistedFactory
     interface Factory {
         fun create(album: AlbumType.Folder): MultiAlbumViewModel

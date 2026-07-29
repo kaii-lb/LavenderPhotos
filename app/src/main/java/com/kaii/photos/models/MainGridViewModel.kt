@@ -11,6 +11,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
@@ -48,8 +49,9 @@ class MainGridViewModel @Inject constructor(
     private val immichSessionManager: ImmichSessionManager,
     @param:ApplicationScope private val appScope: CoroutineScope,
     repoFactory: HybridRepository.Factory,
-    other: LocalFileManager
-) : BaseViewModel() {
+    other: LocalFileManager,
+    settings: Settings
+) : BaseViewModel(settings) {
     val mainPhotosAlbums =
         getMainPhotosAlbums().stateIn(
             scope = viewModelScope,

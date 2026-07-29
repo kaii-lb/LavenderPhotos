@@ -5,8 +5,9 @@ import com.kaii.photos.data.parsers.HTMLToLnmParser
 import com.kaii.photos.data.parsers.LnmParser
 import com.kaii.photos.data.providers.AppVersionProvider
 import com.kaii.photos.domain.news.News
+import javax.inject.Inject
 
-class LatestNewsRepository(
+class LatestNewsRepository @Inject constructor(
     private val dataSource: LatestNewsDataSource,
     private val hTMLToLnmParser: HTMLToLnmParser,
     private val lnmParser: LnmParser,
@@ -23,7 +24,7 @@ class LatestNewsRepository(
 
     suspend fun hasUpdate(): Boolean {
         val latestVersion = dataSource.getLatestVersion()
-            ?.replace("v" , "")
+            ?.replace("v", "")
             ?.replace(".", "")
             ?.toLong()
             ?: 0

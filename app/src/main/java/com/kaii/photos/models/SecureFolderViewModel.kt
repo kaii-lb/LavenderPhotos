@@ -2,6 +2,7 @@ package com.kaii.photos.models
 
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -27,8 +28,9 @@ import kotlin.time.Duration.Companion.seconds
 @HiltViewModel
 class SecureFolderViewModel @Inject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
-    repoFactory: SecureRepository.Factory
-) : BaseViewModel(), RestoreImpl {
+    repoFactory: SecureRepository.Factory,
+    settings: Settings
+) : BaseViewModel(settings), RestoreImpl {
     private val repo = repoFactory.create(scope = viewModelScope)
 
     val mediaFlow = repo.mediaFlow

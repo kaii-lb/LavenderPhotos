@@ -3,6 +3,7 @@ package com.kaii.photos.models
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -24,8 +25,9 @@ import javax.inject.Inject
 class FavouritesViewModel @Inject constructor(
     private val mediaDao: MediaDao,
     @param:ApplicationScope private val appScope: CoroutineScope,
-    repoFactory: FavouritesRepository.Factory
-) : BaseViewModel() {
+    repoFactory: FavouritesRepository.Factory,
+    settings: Settings
+) : BaseViewModel(settings) {
     private val repo = repoFactory.create(scope = viewModelScope)
 
     val mediaFlow = repo.mediaFlow

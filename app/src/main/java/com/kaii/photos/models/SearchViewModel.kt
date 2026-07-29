@@ -3,6 +3,7 @@ package com.kaii.photos.models
 import android.content.Intent
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.entities.Tag
+import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.ApplicationScope
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -25,8 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     @param:ApplicationScope private val appScope: CoroutineScope,
-    searchManagerFactory: SearchManager.Factory
-) : BaseViewModel() {
+    searchManagerFactory: SearchManager.Factory,
+    settings: Settings
+) : BaseViewModel(settings) {
     init {
         viewModelScope.launch {
             displayDateFormat.collect { searchManager.update(format = it) }

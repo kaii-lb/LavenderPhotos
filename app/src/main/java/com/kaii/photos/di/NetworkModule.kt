@@ -9,12 +9,17 @@ import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideApiClient(): ApiClient = PhotosApplication.appModule.apiClient
+
     @Provides
     @Singleton
     fun provideAssetsClient(
@@ -47,5 +52,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideApiClient(): ApiClient = PhotosApplication.appModule.apiClient
+    fun provideLoginClient(
+        apiClient: ApiClient
+    ): LoginClient = LoginClient(
+        endpoint = "",
+        auth = Auth.None,
+        client = apiClient
+    )
 }

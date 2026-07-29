@@ -2,8 +2,9 @@ package com.kaii.photos.data.parsers
 
 import android.util.Log
 import com.kaii.photos.domain.news.News
+import javax.inject.Inject
 
-class LnmParser {
+class LnmParser @Inject constructor() {
     companion object {
         private val TAG = LnmParser::class.qualifiedName
     }
