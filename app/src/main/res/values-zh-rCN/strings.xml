@@ -42,11 +42,11 @@
     <string name="app_name_full">薰衣草图库</string>
     <string name="privacy_policy_title">隐私协议</string>
     <string name="privacy_policy">绝对没有！您的数据仅存于此设备，不会传输至任何地方。不会用于训练AI，没有信息收集算法，绝无任何数据利用。薰衣草图库始终是专注隐私保护的相册应用。</string>
-    <string name="support">支持或捐赠</string>
+    <string name="support">支持与捐赠</string>
     <string name="updates">更新</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_check_desc">应用启动时检查新版本，需手动安装</string>
-    <string name="updates_whats_new">什么变化</string>
+    <string name="updates_whats_new">更新内容</string>
     <string name="updates_notice">下载提示</string>
     <string name="updates_notice_desc"><![CDATA[
             <p>本更新程序从 <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a> 下载 apk 安装包
@@ -54,7 +54,7 @@
 
                 <br><br>GitHub 上托管的版本始终由开发者 (kaii-lb) 进行签名、检查和验证，但是否使用这些版本由您自行决定。
 
-                <br><br>薰衣草图库从不自动更新，仅在有用户明确同意时才会执行更新。
+                <br><br>Lavender Photos 从不自动更新，仅在有用户明确同意时才会执行更新。
             </p>
         ]]></string>
     <string name="updates_new_version_available">有可用的更新！</string>
@@ -71,11 +71,11 @@
     <string name="exporting_backup">正在导出备份…</string>
     <string name="export_raw_backup">导出原始备份</string>
     <string name="export_raw_backup_desc">导出包含所有受保护项目的原始文件夹（无论是否加密）</string>
-    <string name="export_unenc_zip">导出备份为Zip</string>
-    <string name="export_unenc_zip_desc">导出一个包含所有受保护项目的zip文件</string>
+    <string name="export_unenc_zip">导出备份为 Zip 压缩包格式</string>
+    <string name="export_unenc_zip_desc">导出一个包含所有受保护项目的 zip 文件</string>
     <string name="export_fav_to_folder">导出到文件夹</string>
     <string name="export_fav_to_folder_desc">导出所有收藏的项目至文件夹</string>
-    <string name="export_fav_to_zip_desc">导出一个包含所有收藏项目的zip文件</string>
+    <string name="export_fav_to_zip_desc">导出一个包含所有收藏项目的 zip 文件</string>
     <string name="data_and_backup">数据与备份</string>
     <string name="favourites">收藏</string>
     <string name="favourites_add_this">收藏此媒体</string>
@@ -233,7 +233,7 @@
     <string name="licenses">许可证</string>
     <string name="licenses_extra">额外详情</string>
     <string name="licenses_extra_desc">查看许可证详情</string>
-    <string name="special_thanks_to">特别感谢：</string>
+    <string name="special_thanks_to">特别鸣谢：</string>
     <string name="secure_getting_file_info">正在获取文件信息…</string>
     <string name="secure_please_wait">请稍候…</string>
     <string name="editing_image">图片</string>
@@ -367,13 +367,13 @@
             <h3 style="text-align:center;">如何使用？<h3/>
             <ul>
                 <li>自托管一个 <a href="https://immich.app/  ">Immich 服务器</a></li>
-                <li>在薰衣草图库中指定服务器地址</li>
+                <li>在 Lavender Photos 中指定服务器地址</li>
                 <li>使用 Immich 用户账户登录</li>
                 <li>进入任意相册，点击云图标</li>
                 <li>开始备份你的照片！</li>
             </ul>
         ]]></string>
-    <string name="immich_server_url_invalid">URL无效！</string>
+    <string name="immich_server_url_invalid">Url 无效！</string>
     <string name="look_and_feel_rounded_corners">圆角缩略图</string>
     <string name="look_and_feel_rounded_corners_desc">网格缩略图使用圆角</string>
     <string name="immich_misc">其他</string>
@@ -412,9 +412,9 @@
     <string name="secure_migrating_notice_desc">安全文件夹已加密！您的所有照片现在完全安全，任何人都无法触碰。为谨慎起见，已在导出文件夹中保存了一份加密照片的副本，您可以在相册页面或路径 Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports 下找到。</string>
     <string name="secure_unlock">解锁安全文件夹</string>
     <string name="secure_unlock_desc">请使用您的生物识别信息解锁</string>
-    <string name="secure_unlock_failed">认证失败 :&lt;</string>
+    <string name="secure_unlock_failed">认证失败 :＜</string>
     <string name="secure_unlock_short">解锁文件夹</string>
-    <string name="secure_move_out">要将媒体移出安全文件夹吗？</string>
+    <string name="secure_move_out">要将媒体文件移出安全文件夹吗？</string>
     <string name="close">关闭</string>
     <string name="changelog_name">日志</string>
     <string name="exif_name">名称：</string>
@@ -424,11 +424,11 @@
     <string name="exif_device">设备：</string>
     <string name="exif_fnumber">光圈值：</string>
     <string name="exif_shutter_speed">快门速度：</string>
-    <string name="exif_mp">MP：</string>
+    <string name="exif_mp">MegaPixels：</string>
     <string name="exif_res">分辨率：</string>
     <string name="exif_size">大小：</string>
-    <string name="updates_no_changelog">没有可用的更新日志</string>
-    <string name="export_location">本地</string>
+    <string name="updates_no_changelog">无可用的更新日志</string>
+    <string name="export_location">位置</string>
     <string name="favourites_remove_this">从收藏中移除吗？</string>
     <string name="favourites_migration">收藏夹已更新！</string>
     <string name="favourites_migration_notice">收藏</string>
@@ -455,15 +455,15 @@
     <string name="albums_immich_not_backed_up">未备份</string>
     <string name="navigation_away">导航至另一页</string>
     <string name="app_repo">此应用的仓库</string>
-    <string name="app_version">版本号%1$s</string>
+    <string name="app_version">版本号 %1$s</string>
     <string name="secure_restore_failed">未能恢复媒体</string>
     <string name="albums_is_cloud">此相册仅限云端</string>
     <string name="navigation_tap_to_nav_desc">点击屏幕最左端或最右端可在媒体之间前后切换</string>
-    <string name="export_settings_backup_save_load_header">应用设置</string>
-    <string name="export_settings_backup_save">保存应用数据</string>
-    <string name="export_settings_backup_save_success">应用数据已保存</string>
+    <string name="export_settings_backup_save_load_header">软件设置</string>
+    <string name="export_settings_backup_save">保存软件数据</string>
+    <string name="export_settings_backup_save_success">软件数据已保存</string>
     <string name="export_settings_backup_save_error">无法保存数据</string>
-    <string name="export_settings_backup_load">加载应用数据</string>
+    <string name="export_settings_backup_load">加载软件数据</string>
     <string name="export_settings_backup_load_desc">从 JSON 文件中加载应用设置与相册。此操作将覆写任何现存的设置。</string>
     <string name="export_settings_backup_load_error">无法加载数据</string>
     <string name="debugging_reset_scan_generation">重新扫描媒体文件</string>
@@ -557,7 +557,7 @@
     <string name="immich_login_unreachable_desc">无法连接至服务器</string>
     <string name="immich_logout">登出</string>
     <string name="immich_logout_desc">从此设备上移除账户</string>
-    <string name="immich_auth_api_key">API 密钥</string>
+    <string name="immich_auth_api_key">Api 密钥</string>
     <string name="immich_auth_current_password">原密码</string>
     <string name="immich_auth_new_password">新密码</string>
     <string name="immich_auth_repeat_new_password">确认密码</string>
@@ -568,7 +568,7 @@
     <string name="immich_auth_password_current_blank">原密码不能为空</string>
     <string name="immich_auth_password_good_to_go">准备更改密码！</string>
     <string name="immich_auth_hide_password">显示 / 隐藏密码</string>
-    <string name="immich_auth_login_with_api_key">使用 API 密钥登录</string>
+    <string name="immich_auth_login_with_api_key">使用 Api 密钥登录</string>
     <string name="immich_auth_login_with_account">使用账户登录</string>
     <string name="immich_server_info_with_status">服务器：</string>
     <string name="immich_server_info_new_version_available">新版本可用：%1$s</string>
@@ -608,7 +608,7 @@
     <string name="album_group_delete">要删除此相册组吗？</string>
     <string name="album_group_info">相册组信息</string>
     <string name="album_group_show_add_dialog">向此组中添加相册</string>
-    <string name="news_github_issue_number">Github Issue: #%1$d</string>
+    <string name="news_github_issue_number">Github Issue：#%1$d</string>
     <string name="news_version_latest">最新</string>
     <string name="contributor">贡献者</string>
     <string name="immich_account_is_user">用户</string>
@@ -626,7 +626,7 @@
     <string name="immich_account_change_pfp_succeeeded">个人信息图片已更改！</string>
     <string name="immich_account_change_pfp_failed">无法更改个人信息图片</string>
     <string name="immich_account_create">创建账号</string>
-    <string name="look_and_feel_views">视觉</string>
+    <string name="look_and_feel_views">视图</string>
     <string name="immich_account_role">角色</string>
     <string name="immich_account_usage">账户使用情况</string>
     <string name="immich_album_item_description">向云备份中添加或从中删除此项</string>
@@ -657,7 +657,7 @@
     <string name="immich_share_album_create_link">创建链接</string>
     <string name="app_description">一款以隐私为先、性能出色且设计时尚的开源相册应用</string>
     <string name="secure_share_media">分享受保护的媒体文件</string>
-    <string name="export_settings_backup_save_desc">将应用设置与相册导出到一个 JSON 文件中，这样可以稍后恢复它们。不保存 Immich 登录状态或受保护的媒体文件。</string>
+    <string name="export_settings_backup_save_desc">将软件设置与相册导出到一个 JSON 文件中，这样可以稍后恢复它们。不保存 Immich 登录状态或受保护的媒体文件。</string>
     <string name="debugging_spawn_progress_snackbar">显示进度条</string>
     <string name="debugging_spawn_progress_snackbar_desc">显示一个进度条，进度每秒更新一次，持续 5 秒</string>
     <string name="debugging_report_issue_feature">功能请求</string>
@@ -686,4 +686,12 @@
     <string name="settings_sort_mode_date_modified_no_separators">最后更改（无分隔符）</string>
     <string name="immich_share_album_customize_link">自定义链接属性</string>
     <string name="news_category_feature">特性</string>
+    <string name="privacy_scroll_mode_prompt">管理滚动与操作的权限</string>
+    <string name="startup_processing_indexing">正在查找…</string>
+    <string name="startup_processing_explanation">为什么要等待？</string>
+    <string name="album_group_item_count">子相册：</string>
+    <string name="news_category_improvement">改善内容</string>
+    <string name="news_category_fix">故障解决</string>
+    <string name="news_version_broken">版本异常</string>
+    <string name="contributors_separator_major">突出贡献者</string>
 </resources>
