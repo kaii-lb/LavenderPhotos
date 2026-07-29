@@ -8,8 +8,10 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.gateways.AndroidMediaStoreGateway
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class LocalToLocalOperation @Inject constructor(
@@ -45,5 +47,5 @@ class LocalToLocalOperation @Inject constructor(
                 result = Result.Success(data = newItems.toList())
             )
         )
-    }
+    }.flowOn(Dispatchers.IO)
 }

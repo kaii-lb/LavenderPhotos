@@ -8,6 +8,8 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.uuid.Uuid
 
@@ -23,12 +25,12 @@ class CloudTrashOperation @Inject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> {
-        if (files.isEmpty()) return Result.Success(Unit)
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        if (files.isEmpty()) return@withContext Result.Success(Unit)
         if (!isTrashed) throw IllegalArgumentException("Cannot restore files to albums!")
-        if (immichId == null) return delete.execute(files, albumId, existingTaskId) // TODO: check existingTaskId if it works with the same id for two op types
+        if (immichId == null) return@withContext delete.execute(files, albumId, existingTaskId) // TODO: check existingTaskId if it works with the same id for two op types
 
-        return syncTaskDao.track(
+        syncTaskDao.track(
             existingTaskId = existingTaskId,
             type = SyncTaskType.Trash,
             destination = albumId,

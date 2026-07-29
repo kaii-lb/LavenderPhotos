@@ -29,6 +29,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -98,14 +99,14 @@ class LocalToCloudOperation @Inject constructor(
         }
 
         send(FileOperationProgress.Finished(result))
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun uploadOrLinkItem(
         mediaItem: MediaStoreData,
         hashes: Map<Long, String>,
         bulkCheck: Map<String, AssetBulkUploadCheckResult>,
         trashedItems: MutableList<Uuid>
-    ): FileOperationCopyResult {
+    ): FileOperationCopyResult = withContext(Dispatchers.IO) {
         val bulkResponse = bulkCheck[mediaItem.id.toString()]
 
         if (bulkResponse?.assetId != null) {
@@ -119,7 +120,7 @@ class LocalToCloudOperation @Inject constructor(
                 trashedItems.add(Uuid.parse(bulkResponse.assetId!!))
             }
 
-            return FileOperationCopyResult(
+            FileOperationCopyResult(
                 id = mediaItem.id,
                 immichId = mediaItem.immichId ?: bulkResponse.assetId
             )
@@ -142,7 +143,7 @@ class LocalToCloudOperation @Inject constructor(
                 )
             }
 
-            return FileOperationCopyResult(
+            FileOperationCopyResult(
                 id = mediaItem.id,
                 immichId = resp?.id?.toString()
             )

@@ -16,10 +16,12 @@ import com.kaii.photos.file_management.managers.gateways.AndroidMediaStoreGatewa
 import com.kaii.photos.helpers.appCloudFolderDir
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import javax.inject.Inject
@@ -110,7 +112,7 @@ class CloudSourceCopyOperation @Inject constructor(
         }
 
         send(element = FileOperationProgress.Finished(result))
-    }
+    }.flowOn(Dispatchers.IO)
 
     private fun copyToCloud(
         files: List<FileOperationItemMetadata>,
@@ -143,7 +145,7 @@ class CloudSourceCopyOperation @Inject constructor(
         }
 
         send(element = FileOperationProgress.Finished(result))
-    }
+    }.flowOn(Dispatchers.IO)
 
     private fun copyToCustom(
         files: List<FileOperationItemMetadata>,
@@ -184,5 +186,5 @@ class CloudSourceCopyOperation @Inject constructor(
 
             null -> send(element = FileOperationProgress.Finished(Result.Error(FileOperationError.Failed)))
         }
-    }
+    }.flowOn(Dispatchers.IO)
 }

@@ -10,6 +10,8 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.uuid.Uuid
 
@@ -22,12 +24,12 @@ class CloudFavouriteOperation @Inject constructor(
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> {
-        if (files.isEmpty()) return Result.Success(Unit)
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        if (files.isEmpty()) return@withContext Result.Success(Unit)
 
         val ids = files.fastMap { it.id }
 
-        return syncTaskDao.track(
+        syncTaskDao.track(
             existingTaskId = existingTaskId,
             type = SyncTaskType.Favourite,
             destination = null,

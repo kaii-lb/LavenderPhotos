@@ -5,13 +5,17 @@ import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
 import com.kaii.photos.file_management.secure.LocalSecureManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class LocalEncryptOperation @Inject constructor(
     private val mediaDao: MediaDao,
+    private val gateway: MediaStoreGateway,
     private val secureManager: LocalSecureManager
 ) {
     fun execute(
@@ -29,6 +33,8 @@ class LocalEncryptOperation @Inject constructor(
                     )
                 )
             } else {
+                gateway.delete(files)
+
                 emit(
                     value = FileOperationProgress.ItemDone(
                         uri = (result as Result.Success).data.uri
@@ -42,5 +48,5 @@ class LocalEncryptOperation @Inject constructor(
                 result = Result.Success(data = Unit)
             )
         )
-    }
+    }.flowOn(Dispatchers.IO)
 }

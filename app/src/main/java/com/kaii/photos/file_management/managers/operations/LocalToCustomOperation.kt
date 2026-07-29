@@ -7,8 +7,10 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.gateways.CloudCacheGateway
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class LocalToCustomOperation @Inject constructor(
@@ -41,5 +43,5 @@ class LocalToCustomOperation @Inject constructor(
                 )
             )
         )
-    }
+    }.flowOn(Dispatchers.IO)
 }
