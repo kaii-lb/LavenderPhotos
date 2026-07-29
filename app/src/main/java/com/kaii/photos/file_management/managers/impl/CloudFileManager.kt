@@ -34,13 +34,14 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumUpdateDto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -93,8 +94,8 @@ class CloudFileManager @Inject constructor(
 
     suspend fun getRawShareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<List<FileOperationItemMetadata>, FileOperationError> = coroutineScope {
-        if (files.isEmpty()) return@coroutineScope Result.Error(FileOperationError.Failed)
+    ): Result<List<FileOperationItemMetadata>, FileOperationError> = withContext(Dispatchers.IO) {
+        if (files.isEmpty()) return@withContext Result.Error(FileOperationError.Failed)
 
         val names = mediaDao.getMediaFromMetadata(files).associate { it.id to it.displayName }
 
@@ -111,7 +112,7 @@ class CloudFileManager @Inject constructor(
             }
         }.awaitAll()
 
-        return@coroutineScope Result.Success(data = cached.filterNotNull())
+        Result.Success(data = cached.filterNotNull())
     }
 
     override suspend fun shareFiles(
@@ -125,39 +126,41 @@ class CloudFileManager @Inject constructor(
         album: AlbumType,
         newName: String,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = syncTaskDao.track(
-        existingTaskId = existingTaskId,
-        type = SyncTaskType.RenameAlbum,
-        destination = album.id,
-        ids = emptyList()
-    ) {
-        val success = albumsClient.update(
-            id = Uuid.parse(album.id),
-            info = AlbumUpdateDto(
-                albumName = newName,
-                albumThumbnailAssetId = null,
-                description = null,
-                isActivityEnabled = null,
-                order = null
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        syncTaskDao.track(
+            existingTaskId = existingTaskId,
+            type = SyncTaskType.RenameAlbum,
+            destination = album.id,
+            ids = emptyList()
+        ) {
+            val success = albumsClient.update(
+                id = Uuid.parse(album.id),
+                info = AlbumUpdateDto(
+                    albumName = newName,
+                    albumThumbnailAssetId = null,
+                    description = null,
+                    isActivityEnabled = null,
+                    order = null
+                )
             )
-        )
 
-        if (success) {
-            renameAlbum.execute(album, newName)
+            if (success) {
+                renameAlbum.execute(album, newName)
 
-            Result.Success(Unit)
-        } else {
-            Result.Error(FileOperationError.Failed)
+                Result.Success(Unit)
+            } else {
+                Result.Error(FileOperationError.Failed)
+            }
         }
     }
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, String>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> = withContext(Dispatchers.IO) {
         val is24Hr = gateway.is24HrFormat()
 
         val media =
-            mediaDao.getMedia(ids = listOf(file.id)).firstOrNull() ?: return Result.Error(FileOperationError.Failed)
+            mediaDao.getMedia(ids = listOf(file.id)).firstOrNull() ?: return@withContext Result.Error(FileOperationError.Failed)
 
         val exifData = customDao.getExifData(id = file.id)?.let { exifData ->
             exifDataToMediaData(
@@ -187,7 +190,7 @@ class CloudFileManager @Inject constructor(
             )
         }
 
-        return Result.Success(data = exifData)
+        Result.Success(data = exifData)
     }
 
     override suspend fun moveFiles(
@@ -228,13 +231,17 @@ class CloudFileManager @Inject constructor(
 
     override suspend fun getMediaCount(
         album: AlbumType
-    ): Int = customDao.countMediaInAlbum(
-        album = (album as AlbumType.Cloud).id
-    )
+    ): Int = withContext(Dispatchers.IO) {
+        customDao.countMediaInAlbum(
+            album = (album as AlbumType.Cloud).id
+        )
+    }
 
     override suspend fun getMediaSize(
         album: AlbumType
-    ): Long = customDao.mediaSize(
-        album = (album as AlbumType.Cloud).id
-    )
+    ): Long = withContext(Dispatchers.IO) {
+        customDao.mediaSize(
+            album = (album as AlbumType.Cloud).id
+        )
+    }
 }

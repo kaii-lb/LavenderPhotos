@@ -29,6 +29,9 @@ class SearchViewModel @Inject constructor(
     searchManagerFactory: SearchManager.Factory,
     settings: Settings
 ) : BaseViewModel(settings) {
+    private val searchManager = searchManagerFactory.create(scope = viewModelScope)
+    private val repo = searchManager.searchRepo
+
     init {
         viewModelScope.launch {
             displayDateFormat.collect { searchManager.update(format = it) }
@@ -43,9 +46,6 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    private val searchManager = searchManagerFactory.create(scope = viewModelScope)
-    private val repo = searchManager.searchRepo
-
     val mediaFlow = searchManager.mediaFlow
     val gridMediaFlow = searchManager.gridMediaFlow
 
@@ -57,6 +57,7 @@ class SearchViewModel @Inject constructor(
 
     private val exifDataState = MutableStateFlow<Result<Map<MediaData, String>, FileOperationError>>(Result.Error(FileOperationError.Failed))
     val exifData = exifDataState.asStateFlow()
+
 
     val tags = searchManager.tags.stateIn(
         scope = viewModelScope,

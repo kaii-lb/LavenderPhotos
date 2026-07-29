@@ -15,8 +15,10 @@ import com.kaii.photos.file_management.managers.operations.LocalGetExifOperation
 import com.kaii.photos.file_management.managers.operations.LocalSourceCopyOperation
 import com.kaii.photos.file_management.managers.operations.RenameAlbumOperation
 import com.kaii.photos.helpers.exif.MediaData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CustomFileManager @Inject constructor(
@@ -143,13 +145,17 @@ class CustomFileManager @Inject constructor(
 
     override suspend fun getMediaCount(
         album: AlbumType
-    ): Int = customDao.countMediaInAlbum(
-        album = (album as AlbumType.Folder).id
-    )
+    ): Int = withContext(Dispatchers.IO) {
+        customDao.countMediaInAlbum(
+            album = (album as AlbumType.Folder).id
+        )
+    }
 
     override suspend fun getMediaSize(
         album: AlbumType
-    ): Long = customDao.mediaSize(
-        album = (album as AlbumType.Folder).id
-    )
+    ): Long = withContext(Dispatchers.IO) {
+        customDao.mediaSize(
+            album = (album as AlbumType.Folder).id
+        )
+    }
 }

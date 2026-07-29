@@ -33,9 +33,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -79,8 +77,8 @@ fun AlbumInfoDialog(
     autoDetectAlbums: () -> Boolean,
     sheetState: SheetState,
     modifier: Modifier = Modifier,
-    itemCount: suspend () -> Int,
-    albumSize: suspend () -> String,
+    itemCount: () -> Int,
+    albumSize: () -> String,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
     renameAlbum: (newName: String) -> Unit,
@@ -223,7 +221,7 @@ private fun IconContentHorizontal(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
-    itemCount: suspend () -> Int,
+    itemCount: () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -263,7 +261,7 @@ private fun IconContentVertical(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
-    itemCount: suspend () -> Int,
+    itemCount: () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -302,7 +300,7 @@ private fun IconContentImpl(
     albumInfo: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
-    itemCount: suspend () -> Int,
+    itemCount: () -> Int,
     modifier: Modifier = Modifier,
     toggleSelectionMode: () -> Unit,
     editAlbum: (id: String, newInfo: AlbumType) -> Unit,
@@ -516,8 +514,8 @@ private fun IconContentImpl(
 private fun InfoContent(
     albumInfo: () -> AlbumType,
     modifier: Modifier = Modifier,
-    itemCount: suspend () -> Int,
-    albumSize: suspend () -> String
+    itemCount: () -> Int,
+    albumSize: () -> String
 ) {
     LazyColumn(
         modifier = modifier
@@ -553,15 +551,10 @@ private fun InfoContent(
         item {
             val context = LocalContext.current
             val resources = LocalResources.current
-            var mediaCount by remember { mutableIntStateOf(0) }
-
-            LaunchedEffect(Unit) {
-                mediaCount = itemCount()
-            }
 
             TallDialogInfoRow(
                 title = stringResource(id = R.string.albums_item_count),
-                info = mediaCount.toString(),
+                info = itemCount().toString(),
                 icon = R.drawable.data,
                 position = RowPosition.Middle,
                 onClick = {
@@ -569,7 +562,7 @@ private fun InfoContent(
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clipData = ClipData.newPlainText(
                         resources.getString(R.string.albums_item_count),
-                        mediaCount.toString()
+                        itemCount().toString()
                     )
                     clipboardManager.setPrimaryClip(clipData)
                 }
@@ -600,15 +593,10 @@ private fun InfoContent(
         item {
             val context = LocalContext.current
             val resources = LocalResources.current
-            var size by remember { mutableStateOf("") }
-
-            LaunchedEffect(Unit) {
-                size = albumSize()
-            }
 
             TallDialogInfoRow(
                 title = stringResource(id = R.string.exif_size),
-                info = size,
+                info = albumSize(),
                 icon = R.drawable.storage,
                 position = RowPosition.Bottom,
                 onClick = {
@@ -616,7 +604,7 @@ private fun InfoContent(
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clipData = ClipData.newPlainText(
                         resources.getString(R.string.exif_size),
-                        size
+                        albumSize()
                     )
                     clipboardManager.setPrimaryClip(clipData)
                 }
