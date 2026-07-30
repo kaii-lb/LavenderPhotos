@@ -28,8 +28,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -39,6 +41,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -95,6 +98,7 @@ import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.NullableByteArrayNavType
+import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.CustomAlbumViewModel
 import com.kaii.photos.models.FavouritesViewModel
@@ -302,6 +306,19 @@ class MainActivity : ComponentActivity() {
                         val searchViewModel = it.sharedViewModel<SearchViewModel>(
                             screenScope = Screens.MainPages
                         )
+
+                        var lastDestination by remember { mutableStateOf(navController.currentDestination) }
+                        OnBackPressedEffect { destination ->
+                            val isFromSettings = lastDestination?.route?.startsWith(Screens.Settings::class.qualifiedName!!) == true
+                            val isFromImmich = lastDestination?.route?.startsWith(Screens.Immich.Dashboard::class.qualifiedName!!) == true
+                            val isMainGrid = destination.hasRoute(Screens.MainPages.MainGrid.GridView::class)
+
+                            if ((isFromSettings || isFromImmich) && isMainGrid) {
+                                navController.navigate(Screens.MainPages.MainGrid.SettingsDialog)
+                            }
+
+                            lastDestination = destination
+                        }
 
                         LaunchedEffect(Unit) {
                             viewModel.updateStateChannel.collectLatest { updateState ->
