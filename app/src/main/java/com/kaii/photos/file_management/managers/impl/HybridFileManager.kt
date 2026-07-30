@@ -89,8 +89,8 @@ class HybridFileManager @AssistedInject constructor(
             )
         ).toInt()
 
-        var localResult: Result<List<FileOperationCopyResult>, FileOperationError> = Result.Error(FileOperationError.Failed)
-        var cloudResult: Result<List<FileOperationCopyResult>, FileOperationError> = Result.Error(FileOperationError.Failed)
+        var localResult: Result<List<FileOperationCopyResult>, FileOperationError> = Result.Success(emptyList())
+        var cloudResult: Result<List<FileOperationCopyResult>, FileOperationError> = Result.Success(emptyList())
 
         if (localFiles.isNotEmpty()) {
             other.moveFiles(localFiles, destination, sharedTaskId, origin).collect { progress ->
@@ -144,10 +144,12 @@ class HybridFileManager @AssistedInject constructor(
         return coroutineScope {
             mergeResults(
                 localCall = {
-                    other.renameAlbum(album, newName, sharedTaskId)
+                    if (album is AlbumType.Cloud) Result.Success(Unit)
+                    else other.renameAlbum(album, newName, sharedTaskId)
                 },
                 cloudCall = {
-                    cloud.renameAlbum(album, newName, sharedTaskId)
+                    if (album.immichId == null) Result.Success(Unit)
+                    else cloud.renameAlbum(album, newName, sharedTaskId)
                 }
             )
         }

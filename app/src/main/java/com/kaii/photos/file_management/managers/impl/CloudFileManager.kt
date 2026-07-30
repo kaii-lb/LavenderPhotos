@@ -95,7 +95,7 @@ class CloudFileManager @Inject constructor(
     suspend fun getRawShareFiles(
         files: List<FileOperationItemMetadata>
     ): Result<List<FileOperationItemMetadata>, FileOperationError> = withContext(Dispatchers.IO) {
-        if (files.isEmpty()) return@withContext Result.Error(FileOperationError.Failed)
+        if (files.isEmpty()) return@withContext Result.Success(files)
 
         val names = mediaDao.getMediaFromMetadata(files).associate { it.id to it.displayName }
 

@@ -3,6 +3,7 @@ package com.kaii.photos.file_management.managers
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.FileProvider
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
@@ -22,6 +23,7 @@ import com.kaii.photos.helpers.getDecryptCacheForFile
 import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.grid_management.toSecureMedia
 import com.kaii.photos.helpers.secureThumbnailImage
+import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -100,7 +102,11 @@ class SecureFileManager @Inject constructor(
             cachedFiles.add(
                 FileOperationItemMetadata(
                     id = item.item.id,
-                    uri = item.item.uri,
+                    uri = FileProvider.getUriForFile(
+                        context,
+                        LAVENDER_FILE_PROVIDER_AUTHORITY,
+                        cachedFile
+                    ).toString(),
                     absolutePath = cachedFile.absolutePath,
                     isImage = item.item.type == MediaType.Image,
                     immichUrl = null

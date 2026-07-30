@@ -83,6 +83,7 @@ import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialogWithBody
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
@@ -96,8 +97,10 @@ import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getOriginalPath
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.Dispatchers
@@ -192,6 +195,19 @@ fun SecurePhotoView(
             }
         }
     }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = viewModel.fileShareIntent,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = {
+            viewModel.runAction(
+                FileOperationAction.Share(
+                    files = listOf(currentMediaItem.item.toFileOperationMetadata())
+                )
+            )
+        }
+    )
 
     LaunchedEffect(items.itemCount) {
         snapshotFlow { items.itemCount }.collectLatest {
@@ -318,12 +334,8 @@ private fun BottomBar(
             runAction(
                 FileOperationAction.Restore(
                     files = listOf(
-                        FileOperationItemMetadata(
-                            id = securedMedia.item.id,
-                            uri = securedMedia.item.uri,
+                        securedMedia.item.toFileOperationMetadata().copy(
                             absolutePath = securedMedia.item.parentPath, // hacky way to represent originalPath
-                            immichUrl = securedMedia.item.immichUrl,
-                            isImage = securedMedia.item.type == MediaType.Image
                         )
                     )
                 )

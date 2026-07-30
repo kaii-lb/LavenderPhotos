@@ -131,7 +131,7 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
                 val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, isTrashed)
 
                 Result.Error(
-                    FileOperationError.RecoverableException(
+                    FileOperationError.MediaStoreRequest(
                         intentSender = pendingIntent.intentSender
                     )
                 )
@@ -199,7 +199,7 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val pendingIntent = MediaStore.createFavoriteRequest(contentResolver, mediaUris, isFavourite)
 
             Result.Error(
-                FileOperationError.RecoverableException(
+                FileOperationError.MediaStoreRequest(
                     intentSender = pendingIntent.intentSender
                 )
             )
@@ -290,7 +290,7 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val pendingIntent = MediaStore.createDeleteRequest(contentResolver, mediaUris)
 
             Result.Error(
-                FileOperationError.RecoverableException(
+                FileOperationError.MediaStoreRequest(
                     intentSender = pendingIntent.intentSender
                 )
             )

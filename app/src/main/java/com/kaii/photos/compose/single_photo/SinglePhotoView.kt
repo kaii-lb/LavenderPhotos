@@ -2,6 +2,7 @@ package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.view.Window
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -73,6 +74,7 @@ import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.Tag
@@ -103,6 +105,7 @@ import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -110,9 +113,9 @@ import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -151,6 +154,7 @@ fun SinglePhotoView(
         editId = editId,
         album = album,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -206,6 +210,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -261,6 +266,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -314,6 +320,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -367,6 +374,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -420,6 +428,7 @@ fun SinglePhotoView(
         navController = LocalNavController.current,
         window = window,
         isOpenWithDefaultView = false,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -428,8 +437,8 @@ fun SinglePhotoView(
         useCache = { useCache },
         useTapToNav = { tapToNav },
         tags = { tags },
-        exifData = { exifData },
         selectedTags = { selectedTags },
+        exifData = { exifData },
         onTagAdd = tagViewModel::insertTag,
         onTagClick = tagViewModel::toggleTag,
         onTagDelete = tagViewModel::deleteTag,
@@ -449,6 +458,7 @@ private fun SinglePhotoViewCommon(
     navController: NavHostController,
     window: Window,
     isOpenWithDefaultView: Boolean,
+    shareFlow: Flow<Result<Intent, FileOperationError>>,
     useBlackBackground: () -> Boolean,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
@@ -511,16 +521,14 @@ private fun SinglePhotoViewCommon(
     var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
 
     LaunchedEffect(currentIndex, items, items.itemSnapshotList) {
-        withContext(Dispatchers.IO) {
-            mediaItem =
-                if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
-                    ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
-                } else {
-                    MediaStoreData.dummyItem
-                }
+        mediaItem =
+            if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
+                ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
+            } else {
+                MediaStoreData.dummyItem
+            }
 
-            setTagMediaId(mediaItem.id)
-        }
+        setTagMediaId(mediaItem.id)
     }
 
     LaunchedEffect(items.itemCount) {
@@ -531,6 +539,19 @@ private fun SinglePhotoViewCommon(
             }
         }
     }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = shareFlow,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = {
+            runAction(
+                FileOperationAction.Share(
+                    files = listOf(mediaItem.toFileOperationMetadata())
+                )
+            )
+        }
+    )
 
     BackHandler(
         enabled = isOpenWithDefaultView

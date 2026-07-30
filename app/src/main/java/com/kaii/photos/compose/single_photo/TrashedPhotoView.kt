@@ -1,6 +1,7 @@
 package com.kaii.photos.compose.single_photo
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.view.Window
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -81,6 +82,7 @@ import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
@@ -95,10 +97,12 @@ import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.TrashViewModel
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -123,6 +127,7 @@ fun SingleTrashedPhotoView(
         navController = LocalNavController.current,
         startIndex = index,
         window = window,
+        shareFlow = viewModel.fileShareIntent,
         useBlackBackground = { useBlackBackground },
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = { blurViews },
@@ -141,6 +146,7 @@ private fun SingleTrashedPhotoViewImpl(
     navController: NavController,
     startIndex: Int,
     window: Window,
+    shareFlow: Flow<Result<Intent, FileOperationError>>,
     useBlackBackground: () -> Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: () -> Boolean,
@@ -189,6 +195,19 @@ private fun SingleTrashedPhotoViewImpl(
         },
         onDismiss = {
             showDialog = false
+        }
+    )
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = shareFlow,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = {
+            runAction(
+                FileOperationAction.Share(
+                    files = listOf(mediaItem.toFileOperationMetadata())
+                )
+            )
         }
     )
 

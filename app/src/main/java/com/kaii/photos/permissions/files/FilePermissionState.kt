@@ -22,7 +22,7 @@ class FilePermissionsState(
     private val context: Context,
     private val onGranted: () -> Unit
 ) {
-    internal var launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>? = null
+    private var launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>? = null
 
     private fun createSenderRequest(uris: List<Uri>): IntentSenderRequest {
         val writeRequestIntent = MediaStore.createWriteRequest(
@@ -40,6 +40,10 @@ class FilePermissionsState(
             Process.myUid(),
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun setLauncher(launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>?) {
+        this.launcher = launcher
     }
 
     fun get(uris: List<Uri>) {
@@ -65,7 +69,9 @@ fun rememberFilePermissionManager(
         )
     }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
         if (result.resultCode == RESULT_OK || result.resultCode == RESULT_CANCELED) {
             onGranted()
         } else {
@@ -74,10 +80,10 @@ fun rememberFilePermissionManager(
     }
 
     DisposableEffect(launcher, state) {
-        state.launcher = launcher
+        state.setLauncher(launcher)
 
         onDispose {
-            state.launcher = null
+            state.setLauncher(null)
         }
     }
 
