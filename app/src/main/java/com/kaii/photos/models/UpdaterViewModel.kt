@@ -6,6 +6,7 @@ import com.kaii.photos.datastore.preferences.SettingsVersionImpl
 import com.kaii.photos.domain.news.News
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.repositories.LatestNewsRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class UpdaterViewModel @Inject constructor(
     private val latestNewsRepository: LatestNewsRepository,
     versions: SettingsVersionImpl
