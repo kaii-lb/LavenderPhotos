@@ -505,4 +505,6 @@
     <string name="media_picker_processing_items_body">Processant %1$d de %2$d</string>
     <string name="app_lock">Bloqueig de l\'aplicació</string>
     <string name="app_lock_password">Establir PIN</string>
+    <string name="app_lock_password_desc">Demana un PIN quan s\'inicia l\'aplicació. Un PIN buit treu el bloqueig</string>
+    <string name="app_lock_password_set">PIN actualitzat</string>
 </resources>
