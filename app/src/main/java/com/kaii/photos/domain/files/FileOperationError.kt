@@ -7,7 +7,8 @@ sealed interface FileOperationError : Error {
     object Failed : FileOperationError
 
     data class RecoverableException(
-        val intentSender: IntentSender
+        val intentSender: IntentSender,
+        val files: List<FileOperationItemMetadata>
     ) : FileOperationError
 
     data class MediaStoreRequest(

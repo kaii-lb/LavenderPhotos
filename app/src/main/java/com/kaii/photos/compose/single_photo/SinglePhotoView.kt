@@ -544,10 +544,10 @@ private fun SinglePhotoViewCommon(
     SharePhotoEffect(
         shareFlow = shareFlow,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        reShare = {
+        reShare = { files ->
             runAction(
                 FileOperationAction.Share(
-                    files = listOf(mediaItem.toFileOperationMetadata())
+                    files = files
                 )
             )
         }

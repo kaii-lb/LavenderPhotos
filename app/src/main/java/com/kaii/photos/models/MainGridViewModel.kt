@@ -8,6 +8,7 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.data.immich.ImmichSessionManager
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -45,6 +46,7 @@ import kotlin.uuid.Uuid
 @HiltViewModel
 class MainGridViewModel @Inject constructor(
     private val mediaDao: MediaDao,
+    private val taggedItemsDao: TaggedItemsDao,
     private val latestNewsRepository: LatestNewsRepository,
     private val immichSessionManager: ImmichSessionManager,
     @param:ApplicationScope private val appScope: CoroutineScope,
@@ -189,13 +191,10 @@ class MainGridViewModel @Inject constructor(
         } ?: ImmichLoginState.LoggedOut
     }
 
-    fun changeAlbum(
-        paths: Set<String>
-    ) {
+    fun changeAlbum(paths: Set<String>) {
         selectionManager.clear()
-        selectionManager = createSelectionManager(mediaDao, sortMode.value, paths)
 
-        if (paths.isEmpty()) return
+        selectionManager = createSelectionManager(mediaDao, sortMode.value, paths)
 
         repo.changeAlbum(
             album = AlbumType.Folder(
@@ -206,6 +205,16 @@ class MainGridViewModel @Inject constructor(
                 paths = paths
             )
         )
+    }
+
+    fun changeAlbumSearchWithoutTags() {
+        selectionManager.clear()
+        selectionManager = createSelectionManager(mediaDao, sortMode.value)
+    }
+
+    fun changeAlbumSearchWithTags(tagIds: List<Int>) {
+        selectionManager.clear()
+        selectionManager = createSelectionManager(taggedItemsDao, sortMode.value, tagIds)
     }
 
     fun setAlbumSortMode(sortMode: AlbumSortMode) = settings.albums.setSortMode(sortMode)

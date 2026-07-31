@@ -67,15 +67,19 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.main_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.main_bars.MainAppTopBar
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.setupNextScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -165,6 +169,19 @@ fun MainPages(
             delayOver = true
         }
     }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = viewModel.fileShareIntent,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = { files ->
+            viewModel.runAction(
+                FileOperationAction.Share(
+                    files = files
+                )
+            )
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -340,7 +357,11 @@ fun MainPages(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            LaunchedEffect(pagerState.currentPage, tabList, mainPhotosPaths) {
+            // TODO: find a cleaner way
+            val searchMode by searchViewModel.searchMode.collectAsStateWithLifecycle()
+            val searchTags by searchViewModel.selectedTags.collectAsStateWithLifecycle()
+
+            LaunchedEffect(pagerState.currentPage, tabList, mainPhotosPaths, searchMode, searchTags) {
                 if (tabList.isEmpty() || pagerState.currentPage !in tabList.indices) return@LaunchedEffect
 
                 val tab = tabList[pagerState.currentPage]
@@ -359,9 +380,11 @@ fun MainPages(
                     }
 
                     tab == DefaultTabs.TabTypes.search -> {
-                        viewModel.changeAlbum(
-                            paths = emptySet()
-                        )
+                        if (searchMode == SearchMode.Tag) {
+                            viewModel.changeAlbumSearchWithTags(tagIds = searchTags.map { it.id })
+                        } else {
+                            viewModel.changeAlbumSearchWithoutTags()
+                        }
                     }
 
                     else -> {}

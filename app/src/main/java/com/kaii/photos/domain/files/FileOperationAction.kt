@@ -2,7 +2,7 @@ package com.kaii.photos.domain.files
 
 import com.kaii.photos.datastore.AlbumType
 
-interface FileOperationAction {
+sealed interface FileOperationAction {
     data class Copy(
         val files: List<FileOperationItemMetadata>,
         val destination: AlbumType

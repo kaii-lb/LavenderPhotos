@@ -1,5 +1,7 @@
 package com.kaii.photos.domain.files
 
-enum class FilePermissionAction {
-    Share
+sealed interface FilePermissionAction {
+    data class Share(
+        val files: List<FileOperationItemMetadata>
+    ) : FilePermissionAction
 }

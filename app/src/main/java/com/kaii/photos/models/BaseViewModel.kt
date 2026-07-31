@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.TaggedItemsDao
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.domain.Result
@@ -192,12 +193,34 @@ abstract class BaseViewModel(
         sortMode = sortMode,
         scope = viewModelScope,
         getMediaInDate = { timestamp, sortMode ->
-            if (paths.isEmpty()) {
-                // search
-                mediaDao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
+            mediaDao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+        }
+    )
+
+    fun createSelectionManager(
+        taggedItemsDao: TaggedItemsDao,
+        sortMode: MediaItemSortMode,
+        tagIds: List<Int>
+    ) = SelectionManager(
+        sortMode = sortMode,
+        scope = viewModelScope,
+        getMediaInDate = { timestamp, sortMode ->
+            if (tagIds.isEmpty()) {
+                taggedItemsDao.mediaInDateRangeWithAnyTag(timestamp = timestamp, dateModified = sortMode.isDateModified)
             } else {
-                mediaDao.mediaInDateRange(timestamp = timestamp, paths = paths, dateModified = sortMode.isDateModified)
+                taggedItemsDao.mediaInDateRangeWithLotsOfTags(timestamp = timestamp, dateModified = sortMode.isDateModified, tagIds = tagIds)
             }
+        }
+    )
+
+    fun createSelectionManager(
+        mediaDao: MediaDao,
+        sortMode: MediaItemSortMode
+    ) = SelectionManager(
+        sortMode = sortMode,
+        scope = viewModelScope,
+        getMediaInDate = { timestamp, sortMode ->
+            mediaDao.mediaInDateRange(timestamp = timestamp, dateModified = sortMode.isDateModified)
         }
     )
 

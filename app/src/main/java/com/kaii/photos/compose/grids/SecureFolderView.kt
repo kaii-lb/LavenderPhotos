@@ -44,12 +44,15 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.models.SecureFolderViewModel
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -136,6 +139,19 @@ fun SecureFolderView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
+                val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+                SharePhotoEffect(
+                    shareFlow = viewModel.fileShareIntent,
+                    dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+                    reShare = { files ->
+                        viewModel.runAction(
+                            FileOperationAction.Share(
+                                files = files
+                            )
+                        )
+                    }
+                )
+
                 SecureFolderViewBottomAppBar(
                     selectionManager = viewModel.selectionManager,
                     isGettingPermissions = isGettingPermissions,

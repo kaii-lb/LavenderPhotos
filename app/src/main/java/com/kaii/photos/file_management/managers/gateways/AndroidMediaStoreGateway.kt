@@ -142,7 +142,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
             Result.Error(
                 FileOperationError.RecoverableException(
-                    intentSender = intentSender
+                    intentSender = intentSender,
+                    files = files
                 )
             )
         } catch (e: Throwable) {
@@ -164,7 +165,12 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         contentResolver.notifyChange(file.uri.toUri(), null)
         Result.Success(Unit)
     } catch (securityException: RecoverableSecurityException) {
-        Result.Error(FileOperationError.RecoverableException(securityException.userAction.actionIntent.intentSender))
+        Result.Error(
+            error = FileOperationError.RecoverableException(
+                intentSender = securityException.userAction.actionIntent.intentSender,
+                files = listOf(file)
+            )
+        )
     } catch (e: Throwable) {
         Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Failed to rename file! ${e.message}")
         e.printStackTrace()
@@ -210,7 +216,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
         Result.Error(
             FileOperationError.RecoverableException(
-                intentSender = intentSender
+                intentSender = intentSender,
+                files = files
             )
         )
     } catch (e: Throwable) {
@@ -301,7 +308,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
         Result.Error(
             FileOperationError.RecoverableException(
-                intentSender = intentSender
+                intentSender = intentSender,
+                files = files
             )
         )
     } catch (e: Throwable) {

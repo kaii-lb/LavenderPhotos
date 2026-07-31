@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.R
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FilePermissionAction
 import com.kaii.photos.permissions.files.DynamicActivityResultLauncher
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.Flow
 fun SharePhotoEffect(
     shareFlow: Flow<Result<Intent, FileOperationError>>,
     dynamicActivityResultLauncher: DynamicActivityResultLauncher,
-    reShare: () -> Unit
+    reShare: (files: List<FileOperationItemMetadata>) -> Unit
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -37,13 +38,16 @@ fun SharePhotoEffect(
                     }
 
                     is FileOperationError.RecoverableException -> {
-                        dynamicActivityResultLauncher.launch(error.intentSender, FilePermissionAction.Share)
+                        dynamicActivityResultLauncher.launch(
+                            intentSender = error.intentSender,
+                            action = FilePermissionAction.Share(files = result.error.files)
+                        )
 
-                        dynamicActivityResultLauncher.result.collect {
-                            if (it is Result.Error) {
+                        dynamicActivityResultLauncher.result.collect { launcherResult ->
+                            if (launcherResult is Result.Error) {
                                 isError = true
-                            } else if ((it as Result.Success).data == FilePermissionAction.Share) {
-                                reShare()
+                            } else if (launcherResult is Result.Success && launcherResult.data is FilePermissionAction.Share) {
+                                reShare(launcherResult.data.files)
                             }
                         }
                     }

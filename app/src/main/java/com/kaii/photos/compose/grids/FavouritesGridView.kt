@@ -39,13 +39,16 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewTopAppBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,6 +106,19 @@ fun FavouritesGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
+                val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+                SharePhotoEffect(
+                    shareFlow = viewModel.fileShareIntent,
+                    dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+                    reShare = { files ->
+                        viewModel.runAction(
+                            FileOperationAction.Share(
+                                files = files
+                            )
+                        )
+                    }
+                )
+
                 FavouritesViewBottomAppBar(
                     selectionManager = viewModel.selectionManager,
                     incomingIntent = incomingIntent,

@@ -200,10 +200,10 @@ fun SecurePhotoView(
     SharePhotoEffect(
         shareFlow = viewModel.fileShareIntent,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        reShare = {
+        reShare = { files ->
             viewModel.runAction(
                 FileOperationAction.Share(
-                    files = listOf(currentMediaItem.item.toFileOperationMetadata())
+                    files = files
                 )
             )
         }
