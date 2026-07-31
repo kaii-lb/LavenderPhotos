@@ -488,4 +488,21 @@
     <string name="download">Descarrega</string>
     <string name="upload">Carrega</string>
     <string name="metadata">Metadades</string>
+    <string name="settings_behaviour_loop_never_desc">La reproducció del vídeo s\'atura en arribar al final</string>
+    <string name="settings_behaviour_loop_under_30_desc">Tots els vídeos de menys de 30 segons es reproduiran en bucle infinit</string>
+    <string name="permissions_necessary_desc">Aquest permís és necessari per a la funcionalitat de l\'aplicació</string>
+    <string name="permissions_read_media_explanation">Aquest permís és necessari per trobar fotos i vídeos al dispositiu. Lavender Photos és molt estricte amb quins fitxers llegeix, i mai comparteix ni aprofita aquesta informació.</string>
+    <string name="permissions_explanation">Explicació dels permisos</string>
+    <string name="media">Contingut multimèdia</string>
+    <string name="sort_indicator">Ordenar per indicador</string>
+    <string name="sort_date">Data</string>
+    <string name="sort_name">Nom</string>
+    <string name="sort_custom">Personalitzat</string>
+    <string name="media_non_existent">Aquest contingut multimèdia no existeix!</string>
+    <string name="wallpaper_scrollable">Desplaçable</string>
+    <string name="drag_and_drop_data">Dades d\'arrossegar i deixar de Lavender Photos</string>
+    <string name="media_picker_processing_items">Processant elements…</string>
+    <string name="media_picker_processing_items_body">Processant %1$d de %2$d</string>
+    <string name="app_lock">Bloqueig de l\'aplicació</string>
+    <string name="app_lock_password">Establir PIN</string>
 </resources>
