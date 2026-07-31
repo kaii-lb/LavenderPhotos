@@ -329,4 +329,27 @@
     <string name="app_repo">Das Projektarchiv der App</string>
     <string name="export_settings_backup_save_load_header">App-Einstellungen</string>
     <string name="export_settings_backup_save">App-Daten speichern</string>
+    <string name="navigation_tap_to_nav_desc">Tippen Sie ganz links oder ganz rechts auf den Bildschirm, um zwischen den Medien hin und her zu wechseln.</string>
+    <string name="app_description">Eine Open-Source-Galerie-App, bei der Datenschutz an erster Stelle steht, die leistungsstark und stilvoll ist</string>
+    <string name="export_settings_backup_save_desc">Exportiert die App-Einstellungen und Alben in eine JSON-Datei, damit sie später wiederhergestellt werden können. Immich-Anmeldedaten und geschützte Medien werden dabei nicht gespeichert.</string>
+    <string name="export_settings_backup_save_success">Gespeicherte App-Daten</string>
+    <string name="export_settings_backup_save_error">Daten konnten nicht gespeichert werden</string>
+    <string name="export_settings_backup_load">App-Daten laden</string>
+    <string name="export_settings_backup_load_desc">Lädt die App-Einstellungen und Alben aus einer JSON-Datei. Vorhandene Einstellungen werden dabei überschrieben.</string>
+    <string name="export_settings_backup_load_error">Daten konnten nicht geladen werden</string>
+    <string name="debugging_spawn_progress_snackbar_desc">Zeigt einen endlichen Fortschrittsbalken an, dessen Fortschritt 5 Sekunden lang jede Sekunde aktualisiert wird.</string>
+    <string name="debugging_internals">Interne Abläufe</string>
+    <string name="debugging_reset_scan_generation">Medien erneut Scannen</string>
+    <string name="debugging_reset_scan_generation_desc">Durchsucht alle Medien auf dem Gerät und fügt sie der Datenbank der App hinzu. Verwenden Sie diese Funktion, wenn einige Bilder nicht angezeigt werden.</string>
+    <string name="debugging_reset_scan_generation_loading">Medien werden gescannt…</string>
+    <string name="debugging_report_issue">Einen Fehler melden</string>
+    <string name="debugging_report_issue_bug_desc">Hilf mit, ein Problem mit der App zu beheben</string>
+    <string name="debugging_report_issue_feature">Funktionswunsch</string>
+    <string name="debugging_report_issue_feature_desc">Schlage eine Funktion vor, die dieser App hinzugefügt werden soll</string>
+    <string name="debugging_report_issue_other">Andere</string>
+    <string name="debugging_report_issue_other_desc">Etwas anderes melden</string>
+    <string name="video_change_audio_track">Die Tonspur dieses Videos ändern</string>
+    <string name="editing_export_image_failed">Foto konnte nicht exportiert werden</string>
+    <string name="filter_film">Filmisch</string>
+    <string name="filter_vintage">Vintage</string>
 </resources>
