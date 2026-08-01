@@ -3,8 +3,6 @@ package com.kaii.photos.compose.dialogs
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.text.format.DateFormat
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,29 +49,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
-import com.kaii.photos.helpers.EncryptionManager
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
-import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
-import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getIv
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import kotlin.time.Duration.Companion.milliseconds
-
-private const val TAG = "com.kaii.photos.compose.dialogs.InfoDialogs"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SingleSecurePhotoInfoDialog(
-    currentMediaItem: PhotoLibraryUIModel.SecuredMedia,
+    exifData: () -> Result<Map<MediaData, String>, FileOperationError>,
     privacyMode: Boolean,
     dismiss: () -> Unit,
     togglePrivacyMode: () -> Unit
@@ -122,79 +109,6 @@ fun SingleSecurePhotoInfoDialog(
             }
 
             val context = LocalContext.current
-            var mediaData by remember {
-                mutableStateOf(
-                    emptyMap<MediaData, Any>()
-                )
-            }
-
-            LaunchedEffect(currentMediaItem) {
-                withContext(Dispatchers.IO) {
-                    val threshold = 500
-
-                    val file = if (currentMediaItem.item.type == MediaType.Video) {
-                        showLoadingDialog = true
-                        val originalFile = File(currentMediaItem.item.absolutePath)
-                        val cachedFile = getSecureDecryptedVideoFile(
-                            name = originalFile.name,
-                            context = context
-                        )
-
-                        if (cachedFile.length() < originalFile.length()) {
-                            while (cachedFile.length() + threshold < originalFile.length()) {
-                                delay(100.milliseconds)
-                            }
-
-                            cachedFile
-                        } else {
-                            cachedFile
-                        }
-                    } else {
-                        val originalFile = File(currentMediaItem.item.absolutePath)
-                        val cachedFile = getDecryptCacheForFile(
-                            file = originalFile,
-                            context = context
-                        )
-
-                        if (!cachedFile.exists()) {
-                            val iv = currentMediaItem.bytes?.getIv()
-
-                            if (iv == null) {
-                                Log.e(TAG, "IV for ${currentMediaItem.item.displayName} was null, aborting")
-                                return@withContext
-                            }
-                            EncryptionManager.decryptInputStream(
-                                inputStream = originalFile.inputStream(),
-                                outputStream = cachedFile.outputStream(),
-                                fileSize = originalFile.length(),
-                                iv = iv
-                            )
-
-                            cachedFile
-                        } else if (cachedFile.length() < originalFile.length()) {
-                            while (cachedFile.length() + threshold < originalFile.length()) {
-                                delay(100.milliseconds)
-                            }
-
-                            cachedFile
-                        } else {
-                            cachedFile
-                        }
-                    }
-
-                    showLoadingDialog = false
-                    mediaData = getExifDataForMedia(
-                        inputStream = file.inputStream(),
-                        absolutePath = file.absolutePath,
-                        is24Hr = DateFormat.is24HourFormat(context),
-                        fallback = currentMediaItem.item.dateModified
-                    ).toMutableMap().apply {
-                        set(MediaData.Path, currentMediaItem.item.parentPath)
-                        set(MediaData.Name, currentMediaItem.item.displayName)
-                    }
-                }
-            }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth(1f)
@@ -210,7 +124,10 @@ fun SingleSecurePhotoInfoDialog(
                     fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
+                val mediaData by rememberUpdatedState((exifData() as? Result.Success)?.data ?: MediaData.Empty)
 
                 LazyColumn(
                     modifier = Modifier

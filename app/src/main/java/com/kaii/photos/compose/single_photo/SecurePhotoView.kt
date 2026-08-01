@@ -309,8 +309,22 @@ fun SecurePhotoView(
         )
 
         if (showInfoDialog) {
+            LaunchedEffect(currentMediaItem) {
+                viewModel.runAction(
+                    FileOperationAction.LoadExifData(
+                        file = currentMediaItem.item
+                            .toFileOperationMetadata()
+                            .copy(
+                                absolutePath = currentMediaItem.item.parentPath, // hacky way to represent originalPath
+                            )
+                    )
+                )
+            }
+
+            val exifData by viewModel.exifData.collectAsStateWithLifecycle()
+
             SingleSecurePhotoInfoDialog(
-                currentMediaItem = currentMediaItem,
+                exifData = { exifData },
                 privacyMode = scrollState.privacyMode,
                 dismiss = {
                     showInfoDialog = false
@@ -341,9 +355,11 @@ private fun BottomBar(
             runAction(
                 FileOperationAction.Restore(
                     files = listOf(
-                        securedMedia.item.toFileOperationMetadata().copy(
-                            absolutePath = securedMedia.item.parentPath, // hacky way to represent originalPath
-                        )
+                        securedMedia.item
+                            .toFileOperationMetadata()
+                            .copy(
+                                absolutePath = securedMedia.item.parentPath, // hacky way to represent originalPath
+                            )
                     )
                 )
             )

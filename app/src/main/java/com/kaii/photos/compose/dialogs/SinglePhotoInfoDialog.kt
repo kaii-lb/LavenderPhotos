@@ -283,18 +283,16 @@ private fun Content(
             )
         }
 
-        if (mediaDataResult() is Result.Success) {
-            MediaDataContent(
-                mediaDataResult = mediaDataResult,
-                mediaItem = mediaItem,
-                album = album,
-                privacyMode = privacyMode,
-                showConfirmEraseDialog = { showConfirmEraseDialog },
-                showDateTimePicker = { showDateTimePicker = true },
-                togglePrivacyMode = togglePrivacyMode,
-                toggleConfirmEraseDialog = { showConfirmEraseDialog = it }
-            )
-        }
+        MediaDataContent(
+            mediaDataResult = mediaDataResult,
+            mediaItem = mediaItem,
+            album = album,
+            privacyMode = privacyMode,
+            showConfirmEraseDialog = { showConfirmEraseDialog },
+            showDateTimePicker = { showDateTimePicker = true },
+            togglePrivacyMode = togglePrivacyMode,
+            toggleConfirmEraseDialog = { showConfirmEraseDialog = it }
+        )
     }
 }
 
@@ -311,7 +309,7 @@ private fun ColumnScope.MediaDataContent(
     toggleConfirmEraseDialog: (visible: Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val mediaData by rememberUpdatedState((mediaDataResult() as Result.Success).data)
+    val mediaData by rememberUpdatedState((mediaDataResult() as? Result.Success)?.data ?: MediaData.Empty)
 
     var location by remember { mutableStateOf("") }
     LaunchedEffect(mediaData) {

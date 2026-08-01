@@ -26,6 +26,7 @@ import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.getMediaFromTrashId
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
@@ -289,6 +290,18 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
         return if (map.isEmpty()) Result.Error(FileOperationError.Failed)
         else Result.Success(data = map)
+    }
+
+    override fun getTrashMediaById(
+        id: Long
+    ): Result<MediaStoreData, FileOperationError> {
+        val result = getMediaFromTrashId(
+            id = id,
+            contentResolver = context.contentResolver
+        )
+
+        return if (result == null) Result.Error(FileOperationError.Failed)
+        else Result.Success(data = result)
     }
 
     override fun delete(

@@ -1,7 +1,6 @@
 package com.kaii.photos.file_management.managers.operations
 
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -18,10 +17,16 @@ class LocalGetExifOperation @Inject constructor(
     suspend fun execute(
         file: FileOperationItemMetadata
     ): Result<Map<MediaData, String>, FileOperationError> = withContext(Dispatchers.IO) {
-        val media = mediaDao.getMediaFromMetadata(
-            files = listOf(file)
-        ).firstOrNull() ?: return@withContext Result.Error(FileOperationError.Failed)
+        val media = mediaDao.getMediaFromId(id = file.id)
 
-        gateway.getExifData(media)
+        if (media != null) {
+            gateway.getExifData(media = media)
+        } else {
+            when (val result = gateway.getTrashMediaById(id = file.id)) {
+                is Result.Error -> Result.Error(FileOperationError.Failed)
+
+                is Result.Success -> gateway.getExifData(media = result.data)
+            }
+        }
     }
 }

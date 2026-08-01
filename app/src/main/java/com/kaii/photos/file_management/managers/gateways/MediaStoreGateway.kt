@@ -61,6 +61,10 @@ interface MediaStoreGateway {
         media: MediaStoreData
     ): Result<Map<MediaData, String>, FileOperationError>
 
+    fun getTrashMediaById(
+        id: Long
+    ): Result<MediaStoreData, FileOperationError>
+
     fun getWriteChannel(uri: Uri): WriteChannel
     fun getAssetSource(uri: Uri): AssetSource
 

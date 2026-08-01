@@ -578,7 +578,9 @@ private fun SinglePhotoViewCommon(
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
     var showInfoDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
-    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden
+    )
 
     val draggableState = rememberDismissSinglePhotoState {
         scrollState.privacyMode
@@ -673,15 +675,9 @@ private fun SinglePhotoViewCommon(
         if (showInfoDialog) {
             // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
             LaunchedEffect(mediaItem) {
-                if (items.itemCount <= 0) return@LaunchedEffect
-
-                val item = items[currentIndex]
-
-                item as PhotoLibraryUIModel.MediaImpl
-
                 runAction(
                     FileOperationAction.LoadExifData(
-                        file = item.item.toFileOperationMetadata()
+                        file = mediaItem.toFileOperationMetadata()
                     )
                 )
             }

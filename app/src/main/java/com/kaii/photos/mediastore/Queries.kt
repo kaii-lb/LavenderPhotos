@@ -1,7 +1,9 @@
 package com.kaii.photos.mediastore
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.MediaStore.Files.FileColumns
 import android.provider.MediaStore.MediaColumns
@@ -440,4 +442,94 @@ fun updateLatestGen(context: Context) {
     }
 
     syncManager.setGeneration(newGen)
+}
+
+fun getMediaFromTrashId(
+    id: Long,
+    contentResolver: ContentResolver
+): MediaStoreData? {
+    val bundle = Bundle()
+    bundle.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_ONLY)
+    bundle.putString(
+        ContentResolver.QUERY_ARG_SQL_SELECTION,
+        "${MediaColumns._ID} = ? AND ((${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_IMAGE}) OR (${FileColumns.MEDIA_TYPE} = ${FileColumns.MEDIA_TYPE_VIDEO}))"
+    )
+    bundle.putStringArray(
+        ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+        arrayOf(id.toString())
+    )
+
+    val projection = arrayOf(
+        MediaColumns._ID,
+        MediaColumns.DATA,
+        MediaColumns.DATE_TAKEN,
+        MediaColumns.DATE_EXPIRES,
+        MediaColumns.MIME_TYPE,
+        MediaColumns.DISPLAY_NAME,
+        FileColumns.MEDIA_TYPE,
+        MediaColumns.IS_TRASHED,
+        MediaColumns.SIZE,
+        MediaColumns.DURATION
+    )
+
+    val cursor = contentResolver.query(
+        MEDIA_STORE_FILE_URI,
+        projection,
+        bundle,
+        null
+    ) ?: return null
+
+    val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+    val absolutePathColNum =
+        cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+    val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
+    val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+    val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+    val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+    val dateExpiresColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_EXPIRES)
+    val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
+
+    if (cursor.moveToFirst()) {
+        // for each item since it changes for images vs videos
+        val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+
+        val id = cursor.getLong(idColNum)
+        val mimeType = cursor.getString(mimeTypeColNum)
+        val absolutePath = cursor.getString(absolutePathColNum)
+        val dateTaken = cursor.getLong(dateTakenColumn) / 1000
+        val dateExpires = cursor.getLong(dateExpiresColumn)
+        val displayName = cursor.getString(displayNameIndex)
+        val size = cursor.getLong(sizeColumn)
+        val duration = cursor.getLongOrNull(durationColumn)
+
+        val type =
+            if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+            else MediaType.Video
+
+        val uriParentPath =
+            if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        val uri = ContentUris.withAppendedId(uriParentPath, id)
+
+        val new =
+            MediaStoreData(
+                type = type,
+                id = id,
+                uri = uri.toString(),
+                mimeType = mimeType,
+                dateModified = dateExpires - (30 * 24 * 60 * 60),
+                dateTaken = dateTaken,
+                displayName = displayName,
+                absolutePath = absolutePath,
+                parentPath = absolutePath.parent(),
+                size = size,
+                immichUrl = null,
+                hash = null,
+                favourited = false,
+                duration = duration?.let { (it / 1000.0).roundToLong() }
+            )
+
+        return new
+    }
+
+    return null
 }

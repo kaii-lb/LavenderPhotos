@@ -243,8 +243,8 @@ private fun SingleTrashedPhotoViewImpl(
                 expandInfoDialog = {
                     coroutineScope.launch {
                         showInfoDialog = true
-                        delay(50.milliseconds)
-                        sheetState.partialExpand()
+                        delay(100.milliseconds)
+                        sheetState.show()
                     }
                 },
                 modifier = Modifier
@@ -301,11 +301,9 @@ private fun SingleTrashedPhotoViewImpl(
             if (showInfoDialog) {
                 // use mediaItem as key since we need to refresh this when the date/name/wtv changes not just index
                 LaunchedEffect(mediaItem) {
-                    val item = items[currentIndex] as PhotoLibraryUIModel.MediaImpl
-
                     runAction(
                         FileOperationAction.LoadExifData(
-                            file = item.item.toFileOperationMetadata()
+                            file = mediaItem.toFileOperationMetadata()
                         )
                     )
                 }
