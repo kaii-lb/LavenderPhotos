@@ -160,7 +160,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !selectedItemsList.isEmpty() && albumInfo !is AlbumType.Cloud
+        enabled = !selectedItemsList.isEmpty()
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),

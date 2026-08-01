@@ -20,12 +20,14 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 class CloudSourceCopyOperation @Inject constructor(
@@ -163,6 +165,8 @@ class CloudSourceCopyOperation @Inject constructor(
         destination: AlbumType.Custom,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        if (files.isEmpty()) return@channelFlow
+
         var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
 
         val tempFolder = AlbumType.Folder(
@@ -185,6 +189,15 @@ class CloudSourceCopyOperation @Inject constructor(
 
         when (val result = copyResult) {
             is Result.Success -> {
+                if (result.data.isEmpty()) {
+                    send(element = FileOperationProgress.Finished(Result.Error(FileOperationError.Failed)))
+                    return@channelFlow
+                }
+
+                while (mediaDao.getMediaFromId(id = result.data.first().id) == null) {
+                    delay(100.milliseconds)
+                }
+
                 toCustom.execute(
                     mediaIds = result.data.fastMap { it.id },
                     destination = destination

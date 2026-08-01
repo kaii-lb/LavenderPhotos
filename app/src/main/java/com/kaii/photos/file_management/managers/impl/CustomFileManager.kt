@@ -146,17 +146,15 @@ class CustomFileManager @Inject constructor(
             )
         )
 
-        val result = gateway.delete(files)
-
-        if (result is Result.Success) {
-            customDao.deleteAll(
-                ids = files.map { it.id }.toSet(),
-                album = albumId
-            )
-        }
+        customDao.deleteAll(
+            ids = files.map { it.id }.toSet(),
+            album = albumId
+        )
 
         emit(
-            value = FileOperationProgress.Finished(result)
+            value = FileOperationProgress.Finished(
+                result = Result.Success(Unit)
+            )
         )
     }.flowOn(Dispatchers.IO)
 

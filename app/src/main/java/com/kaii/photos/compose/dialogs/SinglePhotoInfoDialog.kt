@@ -676,7 +676,7 @@ private fun IconContentImpl(
                 isMoving = true
                 show.value = true
             },
-            enabled = !privacyMode() && !mediaItem().isCloud, // disable cut for cloud items
+            enabled = !privacyMode(),
             modifier = modifier
                 .height(48.dp)
         ) {
