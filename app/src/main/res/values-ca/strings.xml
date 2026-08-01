@@ -19,7 +19,7 @@
     <string name="media_broken">Contingut multimèdia malmès</string>
     <string name="media_share">Compartir</string>
     <string name="media_delete">Eliminar</string>
-    <string name="media_delete_confirm">Esborrar aquest fitxer multimèdia?</string>
+    <string name="media_delete_confirm">Vols esborrar aquest fitxer multimèdia?</string>
     <string name="media_erase">Esborrar</string>
     <string name="albums_is_custom">Aquest és un àlbum personalitzat</string>
     <string name="albums_is_cloud">Aquest és un àlbum exclusiu del núvol</string>
@@ -29,7 +29,7 @@
     <string name="albums_folder_desc">Carregar contingut multimèdia d\'un directori</string>
     <string name="albums_non_existent">No existeix cap àlbum així</string>
     <string name="albums_remove">Suprimir</string>
-    <string name="albums_remove_desc">Suprimir l\'àlbum de la llista?</string>
+    <string name="albums_remove_desc">Vols suprimir l\'àlbum de la llista?</string>
     <string name="albums_pin">Fixar aquest àlbum</string>
     <string name="albums_unpin">Deixa de fixar aquest àlbum</string>
     <string name="albums_info">Informació de l\'àlbum</string>
@@ -137,7 +137,7 @@
     <string name="filter_sepia">Sípia</string>
     <string name="filter_sepia_desc">sípia. Per això.</string>
     <string name="filter_bgr">BGR</string>
-    <string name="filter_bgr_desc">per què l\'utilitzes?</string>
+    <string name="filter_bgr_desc">per a què ho utilitzes?</string>
     <string name="filter_warm">Càlid</string>
     <string name="filter_warm_desc">sensació càlida</string>
     <string name="filter_cool">Fred</string>
@@ -163,7 +163,7 @@
     <string name="editing_export_video_failed">No s\'ha pogut exportar el vídeo</string>
     <string name="editing_exit_on_save_desc">Surt automàticament de la vista de l\'editor quan desis els canvis</string>
     <string name="editing_discard">Descartar</string>
-    <string name="editing_discard_desc">Descartar els canvis en curs?</string>
+    <string name="editing_discard_desc">Vols descartar els canvis en curs?</string>
     <string name="editing_exit">Sortir</string>
     <string name="editing_close_desc">Tanca la vista de l\'editor</string>
     <string name="editing_save">Desa\'n una còpia</string>
@@ -195,13 +195,13 @@
     <string name="contributors_separator_developer">Desenvolupador</string>
     <string name="tags_path">Camí: %s</string>
     <string name="tags">Etiquetes</string>
-    <string name="tags_delete">Esborrar l\'etiqueta \"%s\"?</string>
+    <string name="tags_delete">Vols esborrar l\'etiqueta \"%s\"?</string>
     <string name="album_group">Grup d\'àlbums</string>
     <string name="album_group_desc">Organitza els teus àlbums</string>
     <string name="album_group_name">Nom del grup</string>
     <string name="album_group_name_error">El nom no és vàlid!</string>
     <string name="album_group_dialog_name">Nom:</string>
-    <string name="album_group_delete">Esborrar aquest grup?</string>
+    <string name="album_group_delete">Vols esborrar aquest grup?</string>
     <string name="album_group_item_count">Sub-àlbums:</string>
     <string name="album_group_info">Informació del grup d\'àlbums</string>
     <string name="album_group_show_add_dialog">Afegir àlbums a aquest grup</string>
@@ -241,7 +241,7 @@
     <string name="export_settings_backup_load_error">No s\'han pogut carregar les dades</string>
     <string name="favourites">Preferits</string>
     <string name="favourites_add_this">Afegeix aquest contingut multimèdia als preferits</string>
-    <string name="favourites_remove_this">Eliminar dels preferits?</string>
+    <string name="favourites_remove_this">Ho vols eliminar dels preferits?</string>
     <string name="favourites_migration">S\'han renovat els preferits!</string>
     <string name="favourites_migration_notice">Preferits</string>
     <string name="favourites_migration_started">Ha començat la migració!</string>
@@ -312,7 +312,7 @@
     <string name="settings_navigation_exit_immediately">Sortir immediatament</string>
     <string name="trash_bin">Paperera</string>
     <string name="trash_bin_short">Brossa</string>
-    <string name="trash_empty">Buidar la paperera?</string>
+    <string name="trash_empty">Vols buidar la paperera?</string>
     <string name="trash_empty_desc">Elimina tots els elements que hi ha a la paperera, aquesta acció no es pot anul·lar</string>
     <string name="trash_empty_confirm">Buidar</string>
     <string name="permissions_do_not_trash">No utilitzis la paperera</string>
@@ -507,4 +507,24 @@
     <string name="app_lock_password">Establir PIN</string>
     <string name="app_lock_password_desc">Demana un PIN quan s\'inicia l\'aplicació. Un PIN buit treu el bloqueig</string>
     <string name="app_lock_password_set">PIN actualitzat</string>
+    <string name="previous_run_logs">Registres d\'execucions anteriors</string>
+    <string name="current_run_logs">Registres de l\'execució actual</string>
+    <string name="log_file_non_existent">Encara no s\'ha registrat cap fitxer de registre.</string>
+    <string name="debugging_spawn_loading_snackbar">Fes aparèixer una barra inferior de càrrega</string>
+    <string name="immich_logout_question_desc">Està segur que vols tancar la sessió d\'aquest compte?</string>
+    <string name="immich_help_general">Què és això?</string>
+    <string name="startup_processing_explanation">Per què l\'espera?</string>
+    <string name="debugging_spawn_loading_snackbar_desc">Depura les barres inferiors de Lavender cada vegada que Compose faci una estupidesa</string>
+    <string name="debugging_spawn_message_snackbar">Fes aparèixer un missatge a la barra inferior</string>
+    <string name="debugging_spawn_message_snackbar_desc">Com ara fer obsoleta una funció i no afegir-hi res equivalent :D</string>
+    <string name="debugging_spawn_progress_snackbar">Fes aparèixer una barra inferior de progrés</string>
+    <string name="debugging_spawn_progress_snackbar_desc">Mostra una barra de progrés finita, amb el progrés actualitzant-se cada segon durant 5 segons</string>
+    <string name="debugging_internals">Interns</string>
+    <string name="editing_highlights">Tocs de llum</string>
+    <string name="settings_storage_thumbnails_size">Les miniatures fan actualment %1$s píxels. Els valors més grans utilitzaran més %2$s</string>
+    <string name="settings_storage_thumbnails_max">Les miniatures es mostren amb la màxima resolució possible. Això utilitza la major quantitat %1$s</string>
+    <string name="settings_storage_thumbnails_clear_cache">Buida les miniatures de la memòria cau</string>
+    <string name="settings_storage_export_quality">Qualitat d\'exportació de l\'editor: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Els valors elevats comportaran mides d\'imatge majors.</string>
+    <string name="app_lock_submit">Envia el PIN per comprovar</string>
 </resources>
