@@ -407,4 +407,20 @@
     </string>
     <string name="immich_server_url_invalid">Geçersiz Url!</string>
     <string name="immich_misc">Çeşitli</string>
+    <string name="albums_remove">Albümü kaldır</string>
+    <string name="albums_immich_not_backed_up">Albüm yedeklenmedi</string>
+    <string name="albums_rename_failure">Geçersiz albüm adı</string>
+    <string name="navigation_photos">Fotoğraflar</string>
+    <string name="navigation_secure">Güvenlik</string>
+    <string name="navigation_albums">Albümler</string>
+    <string name="navigation_favourites">Favoriler</string>
+    <string name="navigation_trash">Çöp kutusu</string>
+    <string name="albums_is_cloud"></string>
+    <string name="navigation_tap_to_nav">Devam etmek için dokunun</string>
+    <string name="app_version">Sürüm%1$s</string>
+    <string name="app_repo">Uygulama deposu</string>
+    <string name="secure_export_failed">Yedekleme dışa aktarılamadı!</string>
+    <string name="secure_encryption_failed_no_permission">Fotoğrafları şifrelemek için izin gerekli</string>
+    <string name="secure_migrating">Taşınıyor</string>
+    <string name="secure_migrating_desc">Fotoğraflarınız yedekleniyor ve şifreleniyor, lütfen bekleyin…</string>
 </resources>
