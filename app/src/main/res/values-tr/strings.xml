@@ -415,7 +415,6 @@
     <string name="navigation_albums">Albümler</string>
     <string name="navigation_favourites">Favoriler</string>
     <string name="navigation_trash">Çöp kutusu</string>
-    <string name="albums_is_cloud"></string>
     <string name="navigation_tap_to_nav">Devam etmek için dokunun</string>
     <string name="app_version">Sürüm%1$s</string>
     <string name="app_repo">Uygulama deposu</string>
