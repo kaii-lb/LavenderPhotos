@@ -3,7 +3,7 @@
     <string name="app_name">Фотографии</string>
     <string name="albums">Альбомы</string>
     <string name="finding_albums_on_device">Поиск альбомов…</string>
-    <string name="albums_found">Все альбомы найдены!</string>
+    <string name="albums_found">Найдены все альбомы!</string>
     <string name="add_album">Добавить альбом</string>
     <string name="direct_path_album">Использовать прямой путь для добавления альбома</string>
     <string name="albums_main_list">Альбомы на главном экране</string>
@@ -27,7 +27,7 @@
     <string name="albums_add_failed">Не удалось добавить альбомы :&lt;</string>
     <string name="tabs">Вкладки</string>
     <string name="tabs_default">Вкладка по умолчанию</string>
-    <string name="tabs_default_desc">Lavender Photos автоматически откроет эту вкладку при запуске</string>
+    <string name="tabs_default_desc">При запуске Lavender Photos эта вкладка будет открываться автоматически</string>
     <string name="tabs_customize">Настроить вкладки</string>
     <string name="tabs_customize_desc">Изменить набор вкладок, доступных на нижней панели</string>
     <string name="tabs_navigate_to">Перейти на страницу «%1$s»</string>
@@ -479,7 +479,7 @@
     <string name="immich_server_not_loading">В этом альбоме нет медиафайлов или сервер недоступен</string>
     <string name="exif_date_changer_go_back">Вернуться к выбору даты</string>
     <string name="startup_processing_progress">Готово: %s</string>
-    <string name="albums_is_cloud">Это альбом только в облаке</string>
+    <string name="albums_is_cloud">Это альбом доступный только в облаке</string>
     <string name="albums_paths">Пути:</string>
     <string name="media_copy_snackbar_body">Копирование: %1$d из %2$d</string>
     <string name="media_move_snackbar_body">Перемещение: %1$d из %2$d</string>
@@ -525,7 +525,7 @@
     <string name="look_and_feel_language_selected">Этот язык выбран</string>
     <string name="look_and_feel_app_language">Язык приложения</string>
     <string name="albums_is_cloud_linked">Это альбом, связанный с облаком</string>
-    <string name="albums_immich_not_backed_up">Резервная копия не создана</string>
+    <string name="albums_immich_not_backed_up">Не создана резервная копия</string>
     <string name="app_description">Быстрое и стильное приложение-галерея с открытым исходным кодом, для которого конфиденциальность превыше всего</string>
     <string name="app_version">Версия %1$s</string>
     <string name="app_repo">Репозиторий приложения</string>
