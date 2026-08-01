@@ -88,7 +88,6 @@ fun FavouritesBottomAppBarItems(
 
     MoveCopyAlbumListView(
         show = show,
-        selectedItemsList = selectedItemsList,
         insetsPadding = WindowInsets.statusBars,
         clear = selectionManager::clear,
         isMoving = { false },

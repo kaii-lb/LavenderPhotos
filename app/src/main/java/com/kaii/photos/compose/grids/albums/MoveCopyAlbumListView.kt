@@ -46,7 +46,6 @@ import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -56,7 +55,6 @@ fun MoveCopyAlbumListView(
     show: MutableState<Boolean>,
     currentAlbum: () -> AlbumType,
     isMoving: () -> Boolean,
-    selectedItemsList: List<SelectionManager.SelectedItem>,
     insetsPadding: WindowInsets,
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit,
@@ -75,7 +73,7 @@ fun MoveCopyAlbumListView(
     )
 
     val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(searchedForText, originalAlbumsList, selectedItemsList.lastOrNull(), isMoving()) {
+    LaunchedEffect(searchedForText, originalAlbumsList, isMoving()) {
         albumsList = originalAlbumsList.filter { album ->
             album.name.contains(searchedForText, true)
                     && if (isMoving()) album.id != currentAlbum().id else true
@@ -178,7 +176,6 @@ fun MoveCopyAlbumListView(
                                     else -> RowPosition.Middle
                                 },
                             info = albumGridState::getImmichInfo,
-                            selectedItemsList = selectedItemsList,
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,

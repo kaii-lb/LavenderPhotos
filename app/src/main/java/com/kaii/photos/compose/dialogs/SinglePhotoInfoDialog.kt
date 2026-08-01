@@ -78,7 +78,6 @@ import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.eraseExifMedia
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.permissions.files.rememberFilePermissionManager
@@ -644,15 +643,6 @@ private fun IconContentImpl(
 
         MoveCopyAlbumListView(
             show = show,
-            selectedItemsList = listOf(
-                SelectionManager.SelectedItem(
-                    id = mediaItem().id,
-                    uri = mediaItem().uri,
-                    immichUrl = mediaItem().immichUrl,
-                    isImage = mediaItem().type == MediaType.Image,
-                    absolutePath = mediaItem().absolutePath
-                )
-            ),
             insetsPadding = WindowInsets.statusBars,
             dismissInfoDialog = dismiss,
             clear = {},

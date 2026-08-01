@@ -137,7 +137,6 @@ fun SelectingBottomBarItems(
     var isMoving by remember { mutableStateOf(false) }
     MoveCopyAlbumListView(
         show = show,
-        selectedItemsList = selectedItemsList,
         clear = selectionManager::clear,
         isMoving = { isMoving },
         currentAlbum = { albumInfo },

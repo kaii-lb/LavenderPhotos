@@ -90,6 +90,12 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
         contentResolver.copyUriToUri(media.uri.toUri(), newUri)
 
+        setDateForMedia(
+            uri = newUri,
+            dateTaken = media.dateTaken,
+            type = media.type
+        )
+
         val newId = newUri.toContentId(contentResolver = contentResolver, type = media.type)
 
         return if (newId != null) {

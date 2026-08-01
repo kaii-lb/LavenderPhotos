@@ -22,8 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastMapNotNull
-import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.R
@@ -33,47 +31,32 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.permissions.files.DirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 
 @Composable
 fun MoveCopyAlbumsListItem(
     album: AlbumGridState.Album.Single,
     position: RowPosition,
     info: () -> ImmichBasicInfo,
-    selectedItemsList: List<SelectionManager.SelectedItem>,
     show: MutableState<Boolean>,
     modifier: Modifier,
     dismissInfoDialog: () -> Unit,
     clear: () -> Unit,
     onClick: () -> Unit
 ) {
-    val filePermissionManager = rememberFilePermissionManager(
-        onGranted = {
-            onClick()
-
-            clear()
-            dismissInfoDialog()
-
-            show.value = false
-        }
-    )
-
     AlbumsListItemImpl(
         album = album,
         position = position,
         info = info,
         modifier = modifier,
         onDirPermissionGranted = {
-            filePermissionManager.get(
-                uris = selectedItemsList.fastMapNotNull { item ->
-                    item.uri.takeIf {
-                        !item.isCloud
-                    }?.toUri()
-                }
-            )
+            onClick()
+
+            clear()
+            dismissInfoDialog()
+
+            show.value = false
         }
     )
 }
