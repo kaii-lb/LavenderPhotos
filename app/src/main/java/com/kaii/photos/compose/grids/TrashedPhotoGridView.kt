@@ -65,10 +65,22 @@ fun TrashedPhotoGridView(
     }
 
     val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = viewModel.fileShareIntent,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = { files ->
+            viewModel.runAction(
+                FileOperationAction.Share(
+                    files = files
+                )
+            )
+        }
+    )
+
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        rerunAction = viewModel::runAction
+        runAction = viewModel::runAction
     )
 
     Scaffold(

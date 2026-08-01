@@ -103,7 +103,7 @@ class ImmichAlbumViewModel @AssistedInject constructor(
             is FileOperationAction.Delete -> repo.deleteFiles(action.files, action.album, progressChannel, appScope)
             is FileOperationAction.Favourite -> repo.favouriteFiles(action.files, action.isFavourite, action.album, progressChannel, appScope)
             is FileOperationAction.RenameAlbum -> repo.renameAlbum(action.album, action.newName, progressChannel, appScope)
-            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, appScope)
+            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
                 exifDataState.value = repo.getExifData(action.file)

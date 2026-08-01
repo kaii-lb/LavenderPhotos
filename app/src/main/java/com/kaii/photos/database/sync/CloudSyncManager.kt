@@ -7,7 +7,6 @@ import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
@@ -95,13 +94,15 @@ class CloudSyncManager @Inject constructor(
             )
         )
 
-        SyncTaskType.Trash -> cloudFileManager.trashFiles(
-            files,
-            isTrashed = true,
-            albumId = task.destination!!,
-            immichId = task.destination,
-            existingTaskId = task.id
-        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
+        SyncTaskType.Trash -> collectAndReport(
+            flow = cloudFileManager.trashFiles(
+                files = files,
+                isTrashed = true,
+                albumId = task.destination!!,
+                immichId = task.destination,
+                existingTaskId = task.id
+            )
+        )
 
         SyncTaskType.Favourite -> cloudFileManager.favouriteFile(
             files = files,
@@ -111,12 +112,14 @@ class CloudSyncManager @Inject constructor(
             existingTaskId = task.id
         ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
 
-        SyncTaskType.Delete -> cloudFileManager.deleteFiles(
-            files = files,
-            albumId = task.destination!!,
-            immichId = task.extraData!!,
-            existingTaskId = task.id
-        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
+        SyncTaskType.Delete -> collectAndReport(
+            flow = cloudFileManager.deleteFiles(
+                files = files,
+                albumId = task.destination!!,
+                immichId = task.extraData!!,
+                existingTaskId = task.id
+            )
+        )
 
         SyncTaskType.RenameAlbum -> {
             val album = albums.get().first().first { it.id == task.destination }
@@ -158,8 +161,8 @@ class CloudSyncManager @Inject constructor(
         }
     }
 
-    private suspend fun collectAndReport(
-        flow: Flow<FileOperationProgress<List<FileOperationCopyResult>>>
+    private suspend fun <T> collectAndReport(
+        flow: Flow<FileOperationProgress<T>>
     ): Result<Unit, FileOperationError> {
         var result: Result<Unit, FileOperationError> = Result.Error(FileOperationError.Failed)
 

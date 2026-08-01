@@ -17,17 +17,17 @@ interface TrashImpl {
         appScope: CoroutineScope
     ) {
         appScope.launch {
-            val result = trashFiles(
+            trashFiles(
                 files = files,
                 isTrashed = isTrashed,
                 albumId = album.id,
                 immichId = album.immichId,
                 existingTaskId = null
-            )
-
-            progressChannel.send(
-                element = FileOperationProgress.Finished(result = result)
-            )
+            ).collect { progress ->
+                progressChannel.send(
+                    element = progress.toGenericProgress()
+                )
+            }
         }
     }
 }

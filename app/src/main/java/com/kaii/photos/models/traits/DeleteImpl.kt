@@ -16,16 +16,16 @@ interface DeleteImpl {
         appScope: CoroutineScope
     ) {
         appScope.launch {
-            val result = deleteFiles(
+            deleteFiles(
                 files = files,
                 albumId = album.id,
                 immichId = album.immichId,
                 existingTaskId = null
-            )
-
-            progressChannel.send(
-                element = FileOperationProgress.Finished(result = result)
-            )
+            ).collect { progress ->
+                progressChannel.send(
+                    element = progress.toGenericProgress()
+                )
+            }
         }
     }
 }

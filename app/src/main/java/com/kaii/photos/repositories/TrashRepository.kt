@@ -1,6 +1,5 @@
 package com.kaii.photos.repositories
 
-import android.content.Intent
 import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -10,8 +9,6 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
-import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.Delete
@@ -20,7 +17,6 @@ import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
@@ -33,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -136,7 +133,7 @@ class TrashRepository(
         albumId = "",
         existingTaskId = null,
         immichId = null
-    )
+    ).collect()
 
     suspend fun getItemsForDate(
         timestamp: Long,
@@ -168,7 +165,7 @@ class TrashRepository(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+    ) = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
@@ -176,18 +173,18 @@ class TrashRepository(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
+    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+    ) = fileManager.shareFiles(files)
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
+    ) = fileManager.getExifData(file)
 
     override suspend fun renameFile(
         file: FileOperationItemMetadata,
         newName: String
-    ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+    ) = fileManager.renameFile(file, newName)
 }

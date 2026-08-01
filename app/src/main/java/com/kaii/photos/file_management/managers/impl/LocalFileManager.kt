@@ -9,6 +9,7 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.domain.mapTo
 import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
 import com.kaii.photos.file_management.managers.operations.LocalEncryptOperation
 import com.kaii.photos.file_management.managers.operations.LocalGetExifOperation
@@ -18,6 +19,7 @@ import com.kaii.photos.helpers.exif.MediaData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -39,6 +41,7 @@ class LocalFileManager @Inject constructor(
         existingTaskId = existingTaskId
     )
 
+    // TODO: this code is identical across all 3 file managers, unify it
     override suspend fun moveFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
@@ -53,10 +56,12 @@ class LocalFileManager @Inject constructor(
             existingTaskId = existingTaskId
         ).collect { progress ->
             when (progress) {
-                is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
-                    action = FileOperationAction.LongOperationType.Move,
-                    fileCount = files.size
-                ))
+                is FileOperationProgress.Started -> send(
+                    element = FileOperationProgress.Started(
+                        action = FileOperationAction.LongOperationType.Move,
+                        fileCount = files.size
+                    )
+                )
 
                 is FileOperationProgress.ItemDone -> send(progress)
 
@@ -64,23 +69,36 @@ class LocalFileManager @Inject constructor(
             }
         }
 
-        when (val result = copyResult) {
-            is Result.Success -> {
-                val newResult = deleteFiles(files, destination.id, destination.immichId, existingTaskId)
+        if (copyResult == null || copyResult is Result.Error) {
+            send(
+                element = FileOperationProgress.Finished(
+                    result = Result.Error((copyResult as Result.Error).error)
+                )
+            )
 
-                send(
-                    element = FileOperationProgress.Finished(
-                        result =
-                            if (newResult is Result.Success) result
-                            else Result.Error((newResult as Result.Error).error)
-                    )
+            return@channelFlow
+        }
+
+        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
+
+        deleteFiles(
+            files = files,
+            albumId = destination.id,
+            immichId = destination.immichId,
+            existingTaskId = existingTaskId
+        ).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                finalResult = progress.result.mapTo(
+                    to = copyResult as Result.Success
                 )
             }
-
-            is Result.Error -> send(element = FileOperationProgress.Finished(result))
-
-            null -> send(element = FileOperationProgress.Finished(Result.Error(FileOperationError.Failed)))
         }
+
+        send(
+            element = FileOperationProgress.Finished(
+                result = finalResult ?: Result.Error(FileOperationError.Failed)
+            )
+        )
     }
 
     override suspend fun renameFile(
@@ -108,7 +126,16 @@ class LocalFileManager @Inject constructor(
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = gateway.share(files)
+    ): Flow<FileOperationProgress<Intent>> = flow {
+        // no point in showing a snackbar for an instant operation
+        val result = gateway.share(files)
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = result
+            )
+        )
+    }
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
@@ -116,17 +143,47 @@ class LocalFileManager @Inject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = gateway.trash(
-        files = files,
-        isTrashed = isTrashed
-    )
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        emit(
+            value = FileOperationProgress.Started(
+                action =
+                    if (isTrashed) FileOperationAction.LongOperationType.TrashDelete
+                    else FileOperationAction.LongOperationType.TrashRestore,
+                fileCount = files.size
+            )
+        )
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = gateway.trash(
+                    files = files,
+                    isTrashed = isTrashed
+                )
+            )
+        )
+    }
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = gateway.delete(files)
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Delete,
+                fileCount = files.size
+            )
+        )
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = gateway.delete(
+                    files = files
+                )
+            )
+        )
+    }
 
     override suspend fun favouriteFile(
         files: List<FileOperationItemMetadata>,

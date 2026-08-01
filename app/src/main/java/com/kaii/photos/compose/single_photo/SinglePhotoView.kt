@@ -565,7 +565,7 @@ private fun SinglePhotoViewCommon(
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        rerunAction = runAction
+        runAction = runAction
     )
 
     BackHandler(

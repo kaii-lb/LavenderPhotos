@@ -44,11 +44,14 @@ import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
+import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -129,6 +132,7 @@ fun SingleAlbumView(
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
+        fileShareIntent = viewModel.fileShareIntent,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -152,7 +156,7 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        runAction = viewModel::runAction
+        runAction = viewModel::runAction,
     )
 }
 
@@ -212,6 +216,7 @@ fun SingleAlbumView(
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
+        fileShareIntent = viewModel.fileShareIntent,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -235,7 +240,7 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        runAction = viewModel::runAction
+        runAction = viewModel::runAction,
     )
 }
 
@@ -295,14 +300,13 @@ fun SingleAlbumView(
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
+        fileShareIntent = viewModel.fileShareIntent,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
         selectionManager = viewModel.selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
-        tags = { tags },
-        selectedTags = { selectedTags },
         columnSize = { columnSize },
         openVideosExternally = { openVideosExternally },
         cacheThumbnails = { cacheThumbnails },
@@ -311,6 +315,8 @@ fun SingleAlbumView(
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
         vibrateOnClick = { vibrateOnClick },
+        tags = { tags },
+        selectedTags = { selectedTags },
         mediaCount = { mediaCount },
         mediaSize = { mediaSize },
         onTagAdd = tagViewModel::insertTag,
@@ -318,7 +324,7 @@ fun SingleAlbumView(
         onTagDelete = tagViewModel::deleteTag,
         editAlbum = viewModel::editAlbum,
         removeAlbum = viewModel::removeAlbum,
-        runAction = viewModel::runAction
+        runAction = viewModel::runAction,
     )
 }
 
@@ -327,6 +333,7 @@ fun SingleAlbumView(
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     fileOperationProgress: Flow<FileOperationProgress<Unit>>,
+    fileShareIntent: Flow<Result<Intent, FileOperationError>>,
     album: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
@@ -412,10 +419,22 @@ private fun SingleAlbumViewCommon(
     }
 
     val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    SharePhotoEffect(
+        shareFlow = fileShareIntent,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        reShare = { files ->
+            runAction(
+                FileOperationAction.Share(
+                    files = files
+                )
+            )
+        }
+    )
+
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        rerunAction = runAction
+        runAction = runAction
     )
 
     var showTagDialog by remember { mutableStateOf(false) }

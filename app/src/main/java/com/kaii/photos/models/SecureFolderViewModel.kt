@@ -75,7 +75,7 @@ class SecureFolderViewModel @Inject constructor(
 
     override fun runAction(action: FileOperationAction) {
         when (action) {
-            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, appScope)
+            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
             is FileOperationAction.Delete -> repo.deleteFiles(action.files, action.album, progressChannel, appScope)
             is FileOperationAction.Restore -> repo.decryptFiles(action.files, progressChannel, appScope)
 

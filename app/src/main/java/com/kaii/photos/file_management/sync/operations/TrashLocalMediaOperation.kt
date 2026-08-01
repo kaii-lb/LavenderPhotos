@@ -4,6 +4,7 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.mediastore.MediaType
 import javax.inject.Inject
@@ -17,7 +18,9 @@ class TrashLocalMediaOperation @Inject constructor(
     ): Result<Unit, FileOperationError> {
         if (media.isEmpty()) return Result.Success(Unit)
 
-        return fileManager.trashFiles(
+        var result: Result<Unit, FileOperationError> = Result.Success(Unit)
+
+        fileManager.trashFiles(
             files = media.map {
                 FileOperationItemMetadata(
                     id = it.id,
@@ -31,6 +34,12 @@ class TrashLocalMediaOperation @Inject constructor(
             albumId = albumId,
             immichId = null,
             existingTaskId = null
-        )
+        ).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                result = progress.result
+            }
+        }
+
+        return result
     }
 }

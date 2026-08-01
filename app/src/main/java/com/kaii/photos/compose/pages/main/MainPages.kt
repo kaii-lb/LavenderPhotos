@@ -187,7 +187,7 @@ fun MainPages(
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        rerunAction = viewModel::runAction
+        runAction = viewModel::runAction
     )
 
     Scaffold(

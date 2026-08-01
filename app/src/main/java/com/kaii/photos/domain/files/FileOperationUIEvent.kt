@@ -16,5 +16,10 @@ sealed interface FileOperationUIEvent {
         val intentSender: IntentSender
     ) : FileOperationUIEvent
 
+    data class LaunchDynamicResultIntent(
+        val intentSender: IntentSender,
+        val action: FileOperationAction
+    ) : FileOperationUIEvent
+
     data object ShowFailureSnackbar : FileOperationUIEvent
 }

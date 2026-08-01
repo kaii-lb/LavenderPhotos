@@ -138,7 +138,7 @@ class TrashViewModel @Inject constructor(
             is FileOperationAction.Trash -> repo.trashFiles(action.files, action.isTrashed, action.album, progressChannel, appScope)
             is FileOperationAction.Delete -> repo.deleteFiles(action.files, action.album, progressChannel, appScope)
             is FileOperationAction.RenameFile -> repo.renameFile(action.file, action.newName, progressChannel, appScope)
-            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, appScope)
+            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
                 exifDataState.value = repo.getExifData(action.file)

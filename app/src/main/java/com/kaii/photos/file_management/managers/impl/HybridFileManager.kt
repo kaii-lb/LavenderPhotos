@@ -12,6 +12,7 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.domain.mapTo
 import com.kaii.photos.file_management.managers.traits.Copy
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.Delete
@@ -43,6 +44,13 @@ class HybridFileManager @AssistedInject constructor(
         destination: AlbumType,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        send(
+            element = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Copy,
+                fileCount = files.size
+            )
+        )
+
         val (localFiles, cloudFiles) = files.partition { it.isLocalOrLinked }
 
         val sharedTaskId = existingTaskId ?: syncTaskDao.insert(
@@ -61,10 +69,10 @@ class HybridFileManager @AssistedInject constructor(
             val localResult = localDeferred.await()
             val cloudResult = cloudDeferred.await()
 
-            val combined = when {
-                localResult is Result.Error -> localResult
-                cloudResult is Result.Error -> cloudResult
-                else -> Result.Success((localResult as Result.Success).data + (cloudResult as Result.Success).data)
+            val combined = localResult.mapTo { l ->
+                cloudResult.mapTo { c ->
+                    Result.Success(l.data + c.data)
+                }
             }
 
             send(FileOperationProgress.Finished(combined))
@@ -111,7 +119,7 @@ class HybridFileManager @AssistedInject constructor(
         }
 
         if (cloudFiles.isNotEmpty() && origin.immichId != null) {
-            cloud.moveFiles(localFiles, destination, sharedTaskId, origin).collect { progress ->
+            cloud.moveFiles(cloudFiles, destination, sharedTaskId, origin).collect { progress ->
                 when (progress) {
                     is FileOperationProgress.Started -> Unit
                     is FileOperationProgress.ItemDone -> send(progress)
@@ -120,10 +128,10 @@ class HybridFileManager @AssistedInject constructor(
             }
         }
 
-        val combined = when {
-            localResult is Result.Error -> localResult
-            cloudResult is Result.Error -> cloudResult
-            else -> Result.Success((localResult as Result.Success).data + (cloudResult as Result.Success).data)
+        val combined = localResult.mapTo { l ->
+            cloudResult.mapTo { c ->
+                Result.Success(l.data + c.data)
+            }
         }
 
         send(element = FileOperationProgress.Finished(result = combined))
@@ -171,9 +179,18 @@ class HybridFileManager @AssistedInject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> {
+    ): Flow<FileOperationProgress<Unit>> = channelFlow {
         val localFiles = files.filter { it.isLocalOrLinked }
         val cloudFiles = files.filter { it.isCloudOrLinked }
+
+        send(
+            element = FileOperationProgress.Started(
+                action =
+                    if (isTrashed) FileOperationAction.LongOperationType.TrashDelete
+                    else FileOperationAction.LongOperationType.TrashRestore,
+                fileCount = files.size
+            )
+        )
 
         val sharedTaskId = existingTaskId ?: syncTaskDao.insert(
             SyncTask(
@@ -184,18 +201,14 @@ class HybridFileManager @AssistedInject constructor(
             )
         ).toInt()
 
-        return coroutineScope {
-            mergeResults(
-                localCall = {
-                    if (localFiles.isEmpty()) Result.Success(Unit)
-                    else other.trashFiles(localFiles, isTrashed, albumId, null, sharedTaskId)
-                },
-                cloudCall = {
-                    if (cloudFiles.isEmpty()) Result.Success(Unit)
-                    else cloud.trashFiles(cloudFiles, isTrashed, albumId, immichId, sharedTaskId)
-                }
-            )
-        }
+        val result = runSplitUnitOperation(
+            localFiles = localFiles,
+            cloudFiles = cloudFiles,
+            localCall = { other.trashFiles(it, isTrashed, albumId, null, sharedTaskId) },
+            cloudCall = { cloud.trashFiles(it, isTrashed, albumId, immichId, sharedTaskId) }
+        )
+
+        send(FileOperationProgress.Finished(result = result))
     }
 
     override suspend fun deleteFiles(
@@ -203,9 +216,16 @@ class HybridFileManager @AssistedInject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> {
+    ): Flow<FileOperationProgress<Unit>> = channelFlow {
         val localFiles = files.filter { it.isLocalOrLinked }
         val cloudFiles = files.filter { it.isCloudOrLinked }
+
+        send(
+            element = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Delete,
+                fileCount = files.size
+            )
+        )
 
         val sharedTaskId = existingTaskId ?: syncTaskDao.insert(
             SyncTask(
@@ -217,18 +237,14 @@ class HybridFileManager @AssistedInject constructor(
             )
         ).toInt()
 
-        return coroutineScope {
-            mergeResults(
-                localCall = {
-                    if (localFiles.isEmpty()) Result.Success(Unit)
-                    else other.deleteFiles(localFiles, albumId, immichId, sharedTaskId)
-                },
-                cloudCall = {
-                    if (cloudFiles.isEmpty()) Result.Success(Unit)
-                    else cloud.deleteFiles(cloudFiles, albumId, immichId, sharedTaskId)
-                }
-            )
-        }
+        val result = runSplitUnitOperation(
+            localFiles = localFiles,
+            cloudFiles = cloudFiles,
+            localCall = { other.deleteFiles(it, albumId, immichId, sharedTaskId) },
+            cloudCall = { cloud.deleteFiles(it, albumId, immichId, sharedTaskId) }
+        )
+
+        send(FileOperationProgress.Finished(result = result))
     }
 
     override suspend fun encryptFiles(
@@ -239,15 +255,55 @@ class HybridFileManager @AssistedInject constructor(
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> {
+    ): Flow<FileOperationProgress<Intent>> = channelFlow {
         val (cloudFiles, localFiles) = files.partition { it.isCloud }
 
-        val cachedCloudFiles = when (val result = cloud.getRawShareFiles(cloudFiles)) {
-            is Result.Error -> return Result.Error(result.error)
-            is Result.Success -> result.data
+        val cachedCloudFiles = mutableListOf<FileOperationItemMetadata>()
+
+        if (cloudFiles.isNotEmpty()) {
+            cloud.getRawShareFiles(cloudFiles).collect { progress ->
+                when (progress) {
+                    is FileOperationProgress.Started -> send(
+                        element = FileOperationProgress.Started(
+                            action = progress.action,
+                            fileCount = progress.fileCount
+                        )
+                    )
+
+                    is FileOperationProgress.ItemDone -> {
+                        send(
+                            element = FileOperationProgress.ItemDone(
+                                uri = progress.uri
+                            )
+                        )
+                    }
+
+                    is FileOperationProgress.Finished -> {
+                        when (val result = progress.result) {
+                            is Result.Error -> {
+                                send(
+                                    element = FileOperationProgress.Finished(
+                                        result = Result.Error(
+                                            error = result.error
+                                        )
+                                    )
+                                )
+                            }
+
+                            is Result.Success -> {
+                                cachedCloudFiles.addAll(elements = result.data)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        return other.shareFiles(localFiles + cachedCloudFiles)
+        other.shareFiles(localFiles + cachedCloudFiles).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                send(element = progress)
+            }
+        }
     }
 
     override suspend fun favouriteFile(
@@ -289,6 +345,26 @@ class HybridFileManager @AssistedInject constructor(
         if (file.isCloud) cloud.getExifData(file)
         else other.getExifData(file)
 
+    override suspend fun getMediaCount(
+        album: AlbumType
+    ): Int = when (album) {
+        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+
+        is AlbumType.Cloud -> cloud.getMediaCount(album)
+
+        else -> other.getMediaCount(album)
+    }
+
+    override suspend fun getMediaSize(
+        album: AlbumType
+    ): Long = when (album) {
+        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+
+        is AlbumType.Cloud -> cloud.getMediaSize(album)
+
+        else -> other.getMediaSize(album)
+    }
+
     private suspend fun ProducerScope<FileOperationProgress<List<FileOperationCopyResult>>>.collectCopy(
         manager: Copy,
         files: List<FileOperationItemMetadata>,
@@ -301,7 +377,7 @@ class HybridFileManager @AssistedInject constructor(
 
         manager.copyFiles(files, destination, taskId).collect { progress ->
             when (progress) {
-                is FileOperationProgress.Started -> send(progress)
+                is FileOperationProgress.Started -> Unit
                 is FileOperationProgress.ItemDone -> send(progress)
                 is FileOperationProgress.Finished -> result = progress.result
             }
@@ -323,23 +399,62 @@ class HybridFileManager @AssistedInject constructor(
         Result.Success(Unit)
     }
 
-    override suspend fun getMediaCount(
-        album: AlbumType
-    ): Int = when (album) {
-        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+    private suspend fun ProducerScope<FileOperationProgress<Unit>>.runSplitUnitOperation(
+        localFiles: List<FileOperationItemMetadata>,
+        cloudFiles: List<FileOperationItemMetadata>,
+        localCall: suspend (List<FileOperationItemMetadata>) -> Flow<FileOperationProgress<Unit>>,
+        cloudCall: suspend (List<FileOperationItemMetadata>) -> Flow<FileOperationProgress<Unit>>,
+    ): Result<Unit, FileOperationError> {
+        val doneMap = (localFiles + cloudFiles).associate {
+            it.uri to false
+        }.toMutableMap()
 
-        is AlbumType.Cloud -> cloud.getMediaCount(album)
+        var localResult: Result<Unit, FileOperationError>? = null
+        if (localFiles.isEmpty()) {
+            localResult = Result.Success(Unit)
+        } else {
+            localCall(localFiles).collect { progress ->
+                when (progress) {
+                    is FileOperationProgress.ItemDone -> {
+                        if (doneMap[progress.uri] != true) {
+                            send(progress)
 
-        else -> other.getMediaCount(album)
-    }
+                            doneMap[progress.uri] = true
+                        }
+                    }
 
-    override suspend fun getMediaSize(
-        album: AlbumType
-    ): Long = when (album) {
-        AlbumType.PlaceHolder -> throw IllegalArgumentException("Cannot get media count for PlaceHolder album!")
+                    is FileOperationProgress.Finished -> localResult = progress.result
+                    else -> Unit
+                }
+            }
+        }
 
-        is AlbumType.Cloud -> cloud.getMediaSize(album)
+        var cloudResult: Result<Unit, FileOperationError>? = null
+        if (cloudFiles.isEmpty()) {
+            cloudResult = Result.Success(Unit)
+        } else {
+            cloudCall(cloudFiles).collect { progress ->
+                when (progress) {
+                    is FileOperationProgress.ItemDone -> {
+                        if (progress.uri.startsWith("/api")) {
+                            if (doneMap[progress.uri] != true) {
+                                send(progress)
 
-        else -> other.getMediaSize(album)
+                                doneMap[progress.uri] = true
+                            }
+                        }
+                    }
+
+                    is FileOperationProgress.Finished -> cloudResult = progress.result
+                    else -> Unit
+                }
+            }
+        }
+
+        return if (localResult != null && cloudResult != null) {
+            localResult.mapTo(cloudResult)
+        } else {
+            Result.Error(FileOperationError.Failed)
+        }
     }
 }

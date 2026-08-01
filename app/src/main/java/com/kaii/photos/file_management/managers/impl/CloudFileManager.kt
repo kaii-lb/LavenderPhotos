@@ -40,6 +40,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -76,14 +78,14 @@ class CloudFileManager @Inject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = trash.execute(files, isTrashed, albumId, immichId, existingTaskId)
+    ): Flow<FileOperationProgress<Unit>> = trash.execute(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = delete.execute(files, immichId ?: albumId, existingTaskId)
+    ): Flow<FileOperationProgress<Unit>> = delete.execute(files, immichId ?: albumId, existingTaskId)
 
     override suspend fun favouriteFile(
         files: List<FileOperationItemMetadata>,
@@ -93,10 +95,25 @@ class CloudFileManager @Inject constructor(
         existingTaskId: Int?
     ): Result<Unit, FileOperationError> = favourite.execute(files, isFavourite, existingTaskId)
 
-    suspend fun getRawShareFiles(
+    fun getRawShareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<List<FileOperationItemMetadata>, FileOperationError> = withContext(Dispatchers.IO) {
-        if (files.isEmpty()) return@withContext Result.Success(files)
+    ): Flow<FileOperationProgress<List<FileOperationItemMetadata>>> = channelFlow {
+        send(
+            element = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Share,
+                fileCount = files.size
+            )
+        )
+
+        if (files.isEmpty()) {
+            send(
+                element = FileOperationProgress.Finished(
+                    result = Result.Success(files)
+                )
+            )
+
+            return@channelFlow
+        }
 
         val names = mediaDao.getMediaFromMetadata(files).associate { it.id to it.displayName }
 
@@ -105,22 +122,45 @@ class CloudFileManager @Inject constructor(
         val cached = files.map { item ->
             async {
                 semaphore.withPermit {
-                    cloudResolveShareable.execute(
+                    val result = cloudResolveShareable.execute(
                         item = item,
                         fileName = names[item.id]!!
                     )
+
+                    if (result != null) {
+                        send(
+                            element = FileOperationProgress.ItemDone(
+                                uri = result.uri
+                            )
+                        )
+                    }
+
+                    result
                 }
             }
         }.awaitAll()
 
-        Result.Success(data = cached.filterNotNull())
-    }
+        send(
+            element = FileOperationProgress.Finished(
+                result = Result.Success(
+                    data = cached.filterNotNull()
+                )
+            )
+        )
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = when (val result = getRawShareFiles(files)) {
-        is Result.Error -> Result.Error(result.error)
-        is Result.Success -> gateway.share(files = result.data)
+    ): Flow<FileOperationProgress<Intent>> = getRawShareFiles(files).map { progress ->
+        when (progress) {
+            is FileOperationProgress.Started -> FileOperationProgress.Started(progress.action, progress.fileCount)
+            is FileOperationProgress.ItemDone -> FileOperationProgress.ItemDone(progress.uri)
+            is FileOperationProgress.Finished -> FileOperationProgress.Finished(
+                result = progress.result.mapTo {
+                    gateway.share(files = it.data)
+                }
+            )
+        }
     }
 
     override suspend fun renameAlbum(
@@ -203,34 +243,54 @@ class CloudFileManager @Inject constructor(
         requireNotNull(origin) { "${CloudFileManager::class.simpleName} cannot move without an origin" }
 
         var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
-        copyFiles(files, destination, existingTaskId).collect { progress ->
+
+        copyFiles(
+            files = files,
+            destination = destination,
+            existingTaskId = existingTaskId
+        ).collect { progress ->
             when (progress) {
-                is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
-                    action = FileOperationAction.LongOperationType.Move,
-                    fileCount = files.size
-                ))
+                is FileOperationProgress.Started -> send(
+                    element = FileOperationProgress.Started(
+                        action = FileOperationAction.LongOperationType.Move,
+                        fileCount = files.size
+                    )
+                )
 
                 is FileOperationProgress.ItemDone -> send(progress)
                 is FileOperationProgress.Finished -> copyResult = progress.result
             }
         }
 
-        val finalResult = when (val copied = copyResult) {
-            is Result.Error, null -> copied ?: Result.Error(FileOperationError.Failed)
-            is Result.Success -> {
-                trashFiles(
-                    files = files,
-                    isTrashed = true,
-                    albumId = origin.id,
-                    immichId = origin.immichId,
-                    existingTaskId = existingTaskId
-                ).mapTo(copied)
+        if (copyResult == null || copyResult is Result.Error) {
+            send(
+                element = FileOperationProgress.Finished(
+                    result = Result.Error((copyResult as Result.Error).error)
+                )
+            )
+
+            return@channelFlow
+        }
+
+        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
+
+        trashFiles(
+            files = files,
+            isTrashed = true,
+            albumId = origin.id,
+            immichId = origin.immichId,
+            existingTaskId = existingTaskId
+        ).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                finalResult = progress.result.mapTo(
+                    to = copyResult as Result.Success
+                )
             }
         }
 
         send(
             element = FileOperationProgress.Finished(
-                result = finalResult
+                result = finalResult ?: Result.Error(FileOperationError.Failed)
             )
         )
     }

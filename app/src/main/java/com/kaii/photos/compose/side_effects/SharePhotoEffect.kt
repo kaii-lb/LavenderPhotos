@@ -15,6 +15,7 @@ import com.kaii.photos.permissions.files.DynamicActivityResultLauncher
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun SharePhotoEffect(
@@ -43,12 +44,17 @@ fun SharePhotoEffect(
                             action = result.error.action
                         )
 
-                        dynamicActivityResultLauncher.result.collect { launcherResult ->
-                            if (launcherResult is Result.Error) {
-                                isError = true
-                            } else if (launcherResult is Result.Success && launcherResult.data is FileOperationAction.Share) {
-                                reShare(launcherResult.data.files)
-                            }
+                        val launcherResult = dynamicActivityResultLauncher.result.first { launcherResult ->
+                            val successCase = launcherResult is Result.Success && launcherResult.data is FileOperationAction.Share
+                            val errorCase = launcherResult is Result.Error && launcherResult.error.action is FileOperationAction.Share
+
+                            successCase || errorCase
+                        }
+
+                        if (launcherResult is Result.Error) {
+                            isError = true
+                        } else if (launcherResult is Result.Success) {
+                            reShare((launcherResult.data as FileOperationAction.Share).files)
                         }
                     }
                 }

@@ -141,12 +141,11 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
                 )
             }
         } catch (securityException: RecoverableSecurityException) {
-            val intentSender = securityException.userAction.actionIntent.intentSender
-            context.startIntentSender(intentSender, null, 0, 0, 0)
+            Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Setting trashed $isTrashed on photo list failed. ${securityException.message}")
 
             Result.Error(
                 FileOperationError.RecoverableException(
-                    intentSender = intentSender,
+                    intentSender = securityException.userAction.actionIntent.intentSender,
                     action = FileOperationAction.Trash(
                         files = files,
                         isTrashed = isTrashed,
@@ -222,12 +221,9 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             )
         }
     } catch (securityException: RecoverableSecurityException) {
-        val intentSender = securityException.userAction.actionIntent.intentSender
-        context.startIntentSender(intentSender, null, 0, 0, 0)
-
         Result.Error(
             FileOperationError.RecoverableException(
-                intentSender = intentSender,
+                intentSender = securityException.userAction.actionIntent.intentSender,
                 action = FileOperationAction.Favourite(
                     files = files,
                     isFavourite = isFavourite,
@@ -318,12 +314,9 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             )
         }
     } catch (securityException: RecoverableSecurityException) {
-        val intentSender = securityException.userAction.actionIntent.intentSender
-        context.startIntentSender(intentSender, null, 0, 0, 0)
-
         Result.Error(
             FileOperationError.RecoverableException(
-                intentSender = intentSender,
+                intentSender = securityException.userAction.actionIntent.intentSender,
                 action = FileOperationAction.Delete(
                     files = files,
                     album = AlbumType.PlaceHolder

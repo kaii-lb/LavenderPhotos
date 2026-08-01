@@ -20,7 +20,7 @@ class FileOperationSnackbarInfoProvider(
             resources.getString(R.string.media_move_snackbar_body, current, total)
         }
 
-        FileOperationAction.LongOperationType.Trash -> {
+        FileOperationAction.LongOperationType.TrashDelete -> {
             resources.getString(R.string.media_delete_snackbar_body, current, total)
         }
 
@@ -36,7 +36,7 @@ class FileOperationSnackbarInfoProvider(
             resources.getString(R.string.media_secure_snackbar_body, current, total)
         }
 
-        FileOperationAction.LongOperationType.Restore -> {
+        FileOperationAction.LongOperationType.Restore, FileOperationAction.LongOperationType.TrashRestore -> {
             resources.getString(R.string.media_restore_snackbar_body, current, total)
         }
     }
@@ -52,7 +52,7 @@ class FileOperationSnackbarInfoProvider(
             resources.getString(R.string.media_move_snackbar_title)
         }
 
-        FileOperationAction.LongOperationType.Trash -> {
+        FileOperationAction.LongOperationType.TrashDelete -> {
             resources.getString(R.string.media_delete_snackbar_title)
         }
 
@@ -68,7 +68,7 @@ class FileOperationSnackbarInfoProvider(
             resources.getString(R.string.media_secure_snackbar_title)
         }
 
-        FileOperationAction.LongOperationType.Restore -> {
+        FileOperationAction.LongOperationType.Restore, FileOperationAction.LongOperationType.TrashRestore -> {
             resources.getString(R.string.media_restore_snackbar_title)
         }
     }
@@ -84,8 +84,12 @@ class FileOperationSnackbarInfoProvider(
             R.drawable.cut
         }
 
-        FileOperationAction.LongOperationType.Trash -> {
+        FileOperationAction.LongOperationType.TrashDelete -> {
             R.drawable.delete
+        }
+
+        FileOperationAction.LongOperationType.TrashRestore -> {
+            R.drawable.untrash
         }
 
         FileOperationAction.LongOperationType.Delete -> {

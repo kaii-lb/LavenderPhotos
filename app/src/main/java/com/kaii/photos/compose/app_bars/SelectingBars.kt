@@ -32,7 +32,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastDistinctBy
-import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastMapNotNull
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,7 +47,6 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -184,27 +182,6 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val permissionState = rememberFilePermissionManager(
-        onGranted = {
-            runAction(
-                if (doNotTrash()) {
-                    FileOperationAction.Delete(
-                        files = selectedItemsList.toFileOperationMetadataItems(),
-                        album = albumInfo
-                    )
-                } else {
-                    FileOperationAction.Trash(
-                        files = selectedItemsList.toFileOperationMetadataItems(),
-                        isTrashed = true,
-                        album = albumInfo
-                    )
-                }
-            )
-
-            selectionManager.clear()
-        }
-    )
-
     var showDeleteDialog by remember { mutableStateOf(false) }
     if (albumInfo is AlbumType.Folder) {
         if (showDeleteDialog) {
@@ -212,9 +189,22 @@ fun SelectingBottomBarItems(
                 title = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
                 confirmButtonLabel = stringResource(id = R.string.media_delete),
                 action = {
-                    permissionState.get(
-                        uris = selectedItemsList.fastMap { it.uri.toUri() }
+                    runAction(
+                        if (doNotTrash()) {
+                            FileOperationAction.Delete(
+                                files = selectedItemsList.toFileOperationMetadataItems(),
+                                album = albumInfo
+                            )
+                        } else {
+                            FileOperationAction.Trash(
+                                files = selectedItemsList.toFileOperationMetadataItems(),
+                                isTrashed = true,
+                                album = albumInfo
+                            )
+                        }
                     )
+
+                    selectionManager.clear()
                 },
                 onDismiss = {
                     showDeleteDialog = false
@@ -248,17 +238,20 @@ fun SelectingBottomBarItems(
         onClick = {
             if (confirmToDelete()) {
                 showDeleteDialog = true
-            } else if (albumInfo is AlbumType.Folder) {
-                permissionState.get(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() }
-                )
             } else {
                 runAction(
-                    FileOperationAction.Trash(
-                        files = selectedItemsList.toFileOperationMetadataItems(),
-                        isTrashed = true,
-                        album = albumInfo
-                    )
+                    if (doNotTrash()) {
+                        FileOperationAction.Delete(
+                            files = selectedItemsList.toFileOperationMetadataItems(),
+                            album = albumInfo
+                        )
+                    } else {
+                        FileOperationAction.Trash(
+                            files = selectedItemsList.toFileOperationMetadataItems(),
+                            isTrashed = true,
+                            album = albumInfo
+                        )
+                    }
                 )
 
                 selectionManager.clear()
@@ -272,22 +265,15 @@ fun SelectingBottomBarItems(
         )
     }
 
-    val filePermissionState = rememberFilePermissionManager(
+    val dirPermissionManager = rememberDirectoryPermissionManager(
         onGranted = {
             runAction(
                 FileOperationAction.Secure(
                     files = selectedItemsList.toFileOperationMetadataItems()
                 )
             )
-            selectionManager.clear()
-        }
-    )
 
-    val dirPermissionManager = rememberDirectoryPermissionManager(
-        onGranted = {
-            filePermissionState.get(
-                uris = selectedItemsList.map { it.uri.toUri() }
-            )
+            selectionManager.clear()
         }
     )
 

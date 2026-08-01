@@ -7,11 +7,15 @@ import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.database.track
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import kotlin.uuid.Uuid
 
@@ -21,16 +25,23 @@ class CloudDeleteOperation @Inject constructor(
     private val syncTaskDao: SyncTaskDao,
     private val assetsClient: AssetsClient
 ) {
-    suspend fun execute(
+    fun execute(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
-        if (files.isEmpty()) return@withContext Result.Success(Unit)
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        if (files.isEmpty()) return@flow
+
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Delete,
+                fileCount = files.size
+            )
+        )
 
         val ids = files.fastMap { it.id }
 
-        syncTaskDao.track(
+        val result = syncTaskDao.track(
             existingTaskId = existingTaskId,
             type = SyncTaskType.Delete,
             destination = albumId,
@@ -47,5 +58,11 @@ class CloudDeleteOperation @Inject constructor(
             if (success) Result.Success(Unit)
             else Result.Error(FileOperationError.Failed)
         }
-    }
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = result
+            )
+        )
+    }.flowOn(Dispatchers.IO)
 }

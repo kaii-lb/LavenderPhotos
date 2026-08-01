@@ -1,6 +1,5 @@
 package com.kaii.photos.repositories
 
-import android.content.Intent
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -11,17 +10,12 @@ import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
-import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileOperationCopyResult
-import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
-import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
@@ -102,14 +96,14 @@ class FavouritesRepository(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
         existingTaskId: Int?
-    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.copyFiles(files, destination, existingTaskId)
+    ) = fileManager.copyFiles(files, destination, existingTaskId)
 
     override suspend fun moveFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
         existingTaskId: Int?,
         origin: AlbumType?
-    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = fileManager.moveFiles(files, destination, existingTaskId, origin)
+    ) = fileManager.moveFiles(files, destination, existingTaskId, origin)
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
@@ -117,18 +111,18 @@ class FavouritesRepository(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
+    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+    ) = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+    ) = fileManager.shareFiles(files)
 
     override suspend fun favouriteFile(
         files: List<FileOperationItemMetadata>,
@@ -136,18 +130,18 @@ class FavouritesRepository(
         albumId: String?,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.favouriteFile(files, isFavourite, albumId, immichId, existingTaskId)
+    ) = fileManager.favouriteFile(files, isFavourite, albumId, immichId, existingTaskId)
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
+    ) = fileManager.getExifData(file)
 
     override suspend fun renameFile(
         file: FileOperationItemMetadata,
         newName: String
-    ): Result<Unit, FileOperationError> = fileManager.renameFile(file, newName)
+    ) = fileManager.renameFile(file, newName)
 
     override suspend fun encryptFiles(
         files: List<FileOperationItemMetadata>
-    ): Flow<FileOperationProgress<Unit>> = fileManager.encryptFiles(files)
+    ) = fileManager.encryptFiles(files)
 }

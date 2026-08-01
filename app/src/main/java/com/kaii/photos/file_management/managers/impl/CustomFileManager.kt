@@ -19,6 +19,8 @@ import com.kaii.photos.helpers.exif.MediaData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -64,17 +66,36 @@ class CustomFileManager @Inject constructor(
             }
         }
 
-        when (val result = copyResult) {
-            is Result.Success -> send(
+        if (copyResult == null || copyResult is Result.Error) {
+            send(
                 element = FileOperationProgress.Finished(
-                    result = deleteFiles(files, destination.id, destination.immichId, existingTaskId).mapTo(to = result)
+                    result = Result.Error((copyResult as Result.Error).error)
                 )
             )
 
-            is Result.Error -> send(element = FileOperationProgress.Finished(result))
-
-            null -> send(element = FileOperationProgress.Finished(Result.Error(FileOperationError.Failed)))
+            return@channelFlow
         }
+
+        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
+
+        deleteFiles(
+            files = files,
+            albumId = destination.id,
+            immichId = destination.immichId,
+            existingTaskId = existingTaskId
+        ).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                finalResult = progress.result.mapTo(
+                    to = copyResult as Result.Success
+                )
+            }
+        }
+
+        send(
+            element = FileOperationProgress.Finished(
+                result = finalResult ?: Result.Error(FileOperationError.Failed)
+            )
+        )
     }
 
     override suspend fun renameFile(
@@ -88,38 +109,56 @@ class CustomFileManager @Inject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> =
-        when (val result = gateway.trash(files, isTrashed)) {
-            is Result.Error -> result
-
-            is Result.Success -> {
-                customDao.deleteAll(
-                    ids = files.map { it.id }.toSet(),
-                    album = albumId
-                )
-
-                result
-            }
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        check(isTrashed) {
+            "Physically impossible to restore files into a custom album"
         }
+
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.TrashDelete,
+                fileCount = files.size
+            )
+        )
+
+        customDao.deleteAll(
+            ids = files.map { it.id }.toSet(),
+            album = albumId
+        )
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = Result.Success(Unit)
+            )
+        )
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> =
-        when (val result = gateway.delete(files)) {
-            is Result.Error -> result
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Delete,
+                fileCount = files.size
+            )
+        )
 
-            is Result.Success -> {
-                customDao.deleteAll(
-                    ids = files.map { it.id }.toSet(),
-                    album = albumId
-                )
+        val result = gateway.delete(files)
 
-                result
-            }
+        if (result is Result.Success) {
+            customDao.deleteAll(
+                ids = files.map { it.id }.toSet(),
+                album = albumId
+            )
         }
+
+        emit(
+            value = FileOperationProgress.Finished(result)
+        )
+    }.flowOn(Dispatchers.IO)
 
     override suspend fun encryptFiles(
         files: List<FileOperationItemMetadata>
@@ -127,7 +166,16 @@ class CustomFileManager @Inject constructor(
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = gateway.share(files)
+    ): Flow<FileOperationProgress<Intent>> = flow {
+        // no point in showing a snackbar for an instant operation
+        val result = gateway.share(files)
+
+        emit(
+            value = FileOperationProgress.Finished(
+                result = result
+            )
+        )
+    }
 
     override suspend fun renameAlbum(
         album: AlbumType,

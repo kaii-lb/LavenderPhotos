@@ -1,7 +1,6 @@
 package com.kaii.photos.repositories
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.os.FileObserver
@@ -18,10 +17,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
-import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
-import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.SecureFileManager
 import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
@@ -32,7 +28,6 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
-import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
@@ -503,17 +498,17 @@ class SecureRepository(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+    ) = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> = fileManager.shareFiles(files)
+    ) = fileManager.shareFiles(files)
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, String>, FileOperationError> = fileManager.getExifData(file)
+    ) = fileManager.getExifData(file)
 
     override suspend fun decryptFiles(
         files: List<FileOperationItemMetadata>
-    ): Flow<FileOperationProgress<Unit>> = fileManager.decryptFiles(files)
+    ) = fileManager.decryptFiles(files)
 }

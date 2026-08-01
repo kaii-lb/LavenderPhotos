@@ -31,6 +31,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import java.io.File
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
@@ -71,12 +72,27 @@ class SecureFileManager @Inject constructor(
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
-    ): Result<Intent, FileOperationError> {
+    ): Flow<FileOperationProgress<Intent>> = flow {
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Share,
+                fileCount = files.size
+            )
+        )
+
         val cachedFiles = emptyList<FileOperationItemMetadata>().toMutableList()
         val items = files.toSecureMedia(context = context)
 
         items.forEach { item ->
-            val iv = item.bytes?.getIv() ?: return Result.Error(FileOperationError.Failed)
+            val iv = item.bytes?.getIv() ?: run {
+                emit(
+                    value = FileOperationProgress.Finished(
+                        result = Result.Error(FileOperationError.Failed)
+                    )
+                )
+
+                return@flow
+            }
 
             val originalFile = File(item.item.absolutePath)
             val cachedFile =
@@ -104,23 +120,35 @@ class SecureFileManager @Inject constructor(
                 }
             }
 
+            val cachedUri = FileProvider.getUriForFile(
+                context,
+                LAVENDER_FILE_PROVIDER_AUTHORITY,
+                cachedFile
+            ).toString()
+
             cachedFile.deleteOnExit()
             cachedFiles.add(
                 FileOperationItemMetadata(
                     id = item.item.id,
-                    uri = FileProvider.getUriForFile(
-                        context,
-                        LAVENDER_FILE_PROVIDER_AUTHORITY,
-                        cachedFile
-                    ).toString(),
+                    uri = cachedUri,
                     absolutePath = cachedFile.absolutePath,
                     isImage = item.item.type == MediaType.Image,
                     immichUrl = null
                 )
             )
+
+            emit(
+                value = FileOperationProgress.ItemDone(
+                    uri = cachedUri
+                )
+            )
         }
 
-        return gateway.share(files = cachedFiles)
+        emit(
+            value = FileOperationProgress.Finished(
+                result = gateway.share(files = cachedFiles)
+            )
+        )
     }
 
     override suspend fun deleteFiles(
@@ -128,27 +156,50 @@ class SecureFileManager @Inject constructor(
         albumId: String,
         immichId: String?,
         existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = try {
-        files.forEach { item ->
-            val file = File(
-                context.appSecureFolderDir,
-                item.uri.substringAfterLast("/") // filename
+    ): Flow<FileOperationProgress<Unit>> = flow {
+        try {
+            emit(
+                value = FileOperationProgress.Started(
+                    action = FileOperationAction.LongOperationType.Delete,
+                    fileCount = files.size
+                )
             )
 
-            file.delete()
-            val thumbnail = file.secureThumbnailImage(context)
-            thumbnail.delete()
+            files.forEach { item ->
+                val file = File(
+                    context.appSecureFolderDir,
+                    item.uri.substringAfterLast("/") // filename
+                )
 
-            secureDao.deleteEntityBySecuredPath(securedPath = file.absolutePath)
-            secureDao.deleteEntityBySecuredPath(securedPath = thumbnail.absolutePath)
+                file.delete()
+                val thumbnail = file.secureThumbnailImage(context)
+                thumbnail.delete()
+
+                secureDao.deleteEntityBySecuredPath(securedPath = file.absolutePath)
+                secureDao.deleteEntityBySecuredPath(securedPath = thumbnail.absolutePath)
+
+                emit(
+                    value = FileOperationProgress.ItemDone(
+                        uri = item.uri
+                    )
+                )
+            }
+
+            emit(
+                value = FileOperationProgress.Finished(
+                    result = Result.Success(Unit)
+                )
+            )
+        } catch (e: Throwable) {
+            Log.e(TAG, e.toString())
+            e.printStackTrace()
+
+            emit(
+                value = FileOperationProgress.Finished(
+                    result = Result.Error(FileOperationError.Failed)
+                )
+            )
         }
-
-        Result.Success(Unit)
-    } catch (e: Throwable) {
-        Log.e(TAG, e.toString())
-        e.printStackTrace()
-
-        Result.Error(FileOperationError.Failed)
     }
 
     // TODO: clean this up

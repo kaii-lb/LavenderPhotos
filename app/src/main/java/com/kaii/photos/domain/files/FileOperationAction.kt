@@ -62,7 +62,7 @@ sealed interface FileOperationAction {
     ) : FileOperationAction
 
     enum class LongOperationType {
-        Copy, Move, Trash, Delete,
-        Share, Secure, Restore
+        Copy, Move, TrashDelete, TrashRestore,
+        Delete, Share, Secure, Restore
     }
 }

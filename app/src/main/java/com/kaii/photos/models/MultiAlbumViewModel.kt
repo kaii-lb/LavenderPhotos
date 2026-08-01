@@ -101,7 +101,7 @@ class MultiAlbumViewModel @AssistedInject constructor(
             is FileOperationAction.Favourite -> repo.favouriteFiles(action.files, action.isFavourite, action.album, progressChannel, appScope)
             is FileOperationAction.RenameFile -> repo.renameFile(action.file, action.newName, progressChannel, appScope)
             is FileOperationAction.RenameAlbum -> repo.renameAlbum(action.album, action.newName, progressChannel, appScope)
-            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, appScope)
+            is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
             is FileOperationAction.Secure -> repo.encryptFiles(action.files, progressChannel, appScope)
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
