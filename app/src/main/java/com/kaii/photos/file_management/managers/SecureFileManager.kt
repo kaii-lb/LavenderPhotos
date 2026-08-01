@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
@@ -49,6 +50,11 @@ class SecureFileManager @Inject constructor(
     ): Flow<FileOperationProgress<Unit>> = channelFlow {
         val media = files.toSecureMedia(context = context)
         var result: Result<Unit, FileOperationError> = Result.Success(Unit)
+
+        send(element = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Secure,
+            fileCount = files.size
+        ))
 
         media.forEach {
             result = secureManager.restore(media = it)

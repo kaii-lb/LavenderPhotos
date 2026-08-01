@@ -55,7 +55,6 @@
     <string name="locked_folder_help_bottom">Die gesicherten Daten können nicht wiederhergestellt werden, wenn das Passwort vergessen wurde oder der Fingerabdruck entfernt wurde.\nGesicherte Elemente gehen bei der Deinstallation der App verloren, sichere diese daher entsprechend.</string>
     <string name="secure_folder">Sicherer Ordner</string>
     <string name="secure_processing">Warte einen Moment, bis die Medien verarbeitet sind</string>
-    <string name="secure_encrypting">Entschlüssle Dateien</string>
     <string name="secure_decrypting">Verschlüssle Dateien</string>
     <string name="export_unenc_backup">Unverschlüsselte Sicherung exportieren</string>
     <string name="export_unenc_backup_desc">Exportiert einen Ordner mit all Ihren gesicherten Objekten, unverschlüsselt</string>
@@ -289,7 +288,6 @@
     <string name="albums_paths">Pfade:</string>
     <string name="albums_immich_not_backed_up">Nicht gesichert</string>
     <string name="albums_rename_failure">Ungültiger Albumname</string>
-    <string name="secure_share_media">Gesicherte Medien teilen</string>
     <string name="favourites_migration_in_progress_short">Vorgang läuft</string>
     <string name="debugging_development">Entwicklung</string>
     <string name="filter_vibrant_desc">Das Leben ist gut</string>
@@ -312,7 +310,6 @@
     <string name="permissions_manage_media">Medien verwalten</string>
     <string name="permissions_manage_media_desc">Optionale Berechtigung. Wird fürs schnellere in den Papierkorb verschieben und Löschen benutzt</string>
     <string name="media_is_raw">Dies ist ein RAW Bild</string>
-    <string name="media_select_limit_reached">Auswahllimit erreicht!</string>
     <string name="search_photo_name">Nach einem Foto suchen</string>
     <string name="search_photo_tag">Nach einem Label suchen</string>
     <string name="action_cannot_be_undone">Diese Aktion ist unwiderruflich!</string>

@@ -84,7 +84,6 @@
     <string name="locked_folder_help_bottom">I dati protetti non possono essere ripristinati se la password viene dimenticata o se l’impronta digitale viene rimossa.\nGli elementi protetti andranno persi dopo la disinstallazione dell’app: esegui un backup di conseguenza.</string>
     <string name="secure_folder">Cartella Protetta</string>
     <string name="secure_processing">Attendi mentre questo media viene elaborato</string>
-    <string name="secure_encrypting">Cifratura dei file</string>
     <string name="secure_decrypting">Decrittazione dei file</string>
     <string name="secure_getting_file_info">Recupero informazione file…</string>
     <string name="secure_please_wait">Attendi…</string>
@@ -111,7 +110,6 @@
     <string name="secure_unlock_short">Sblocca cartella</string>
     <string name="secure_move_out">Spostare media fuori dalla cartella protetta?</string>
     <string name="secure_restore_failed">Impossibile ripristinare il file</string>
-    <string name="secure_share_media">Condividi media protetto</string>
     <string name="export_unenc_backup">Esporta Backup non crittografati</string>
     <string name="export_unenc_backup_desc">Esporta una cartella con tutti gli elementi protetti, non crittografati.</string>
     <string name="exporting_backup">Esportazione Backup…</string>

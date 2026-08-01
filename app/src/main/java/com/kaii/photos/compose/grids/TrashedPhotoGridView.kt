@@ -34,6 +34,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.trash_grid.TrashedPhotoGridViewBottomBar
 import com.kaii.photos.compose.app_bars.trash_grid.TrashedPhotoGridViewTopBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
@@ -63,6 +64,13 @@ fun TrashedPhotoGridView(
         if (destination.hasRoute(Screens.MainPages::class)) viewModel.cancel()
     }
 
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = viewModel.fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = viewModel::runAction
+    )
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f),
@@ -88,7 +96,6 @@ fun TrashedPhotoGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
                 SharePhotoEffect(
                     shareFlow = viewModel.fileShareIntent,
                     dynamicActivityResultLauncher = dynamicActivityResultLauncher,

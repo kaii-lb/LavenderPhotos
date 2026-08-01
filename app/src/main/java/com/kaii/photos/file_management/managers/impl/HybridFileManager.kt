@@ -7,6 +7,7 @@ import com.kaii.photos.database.entities.SyncTaskStatus
 import com.kaii.photos.database.entities.SyncTaskType
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -78,6 +79,13 @@ class HybridFileManager @AssistedInject constructor(
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
         requireNotNull(origin) { "HybridFileManager cannot move without an origin" }
 
+        send(
+            element = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Move,
+                fileCount = files.size
+            )
+        )
+
         val (cloudFiles, localFiles) = files.partition { it.isCloud }
         val sharedTaskId = existingTaskId ?: syncTaskDao.insert(
             SyncTask(
@@ -95,6 +103,7 @@ class HybridFileManager @AssistedInject constructor(
         if (localFiles.isNotEmpty()) {
             other.moveFiles(localFiles, destination, sharedTaskId, origin).collect { progress ->
                 when (progress) {
+                    is FileOperationProgress.Started -> Unit
                     is FileOperationProgress.ItemDone -> send(progress)
                     is FileOperationProgress.Finished -> localResult = progress.result
                 }
@@ -104,6 +113,7 @@ class HybridFileManager @AssistedInject constructor(
         if (cloudFiles.isNotEmpty() && origin.immichId != null) {
             cloud.moveFiles(localFiles, destination, sharedTaskId, origin).collect { progress ->
                 when (progress) {
+                    is FileOperationProgress.Started -> Unit
                     is FileOperationProgress.ItemDone -> send(progress)
                     is FileOperationProgress.Finished -> cloudResult = progress.result
                 }
@@ -291,6 +301,7 @@ class HybridFileManager @AssistedInject constructor(
 
         manager.copyFiles(files, destination, taskId).collect { progress ->
             when (progress) {
+                is FileOperationProgress.Started -> send(progress)
                 is FileOperationProgress.ItemDone -> send(progress)
                 is FileOperationProgress.Finished -> result = progress.result
             }

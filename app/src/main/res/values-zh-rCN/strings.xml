@@ -64,7 +64,6 @@
     <string name="locked_folder_help_bottom">如果忘记密码或移除指纹，加密数据将无法恢复。\n卸载应用后，已加密的项目会丢失，请进行相应备份。</string>
     <string name="secure_folder">安全文件夹</string>
     <string name="secure_processing">正在处理媒体，请稍候</string>
-    <string name="secure_encrypting">正在加密文件</string>
     <string name="secure_decrypting">正在解密文件</string>
     <string name="export_unenc_backup">导出未加密的备份</string>
     <string name="export_unenc_backup_desc">导出一个包含所有受保护项目的未加密文件夹</string>

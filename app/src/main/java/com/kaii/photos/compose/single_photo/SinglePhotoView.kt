@@ -74,6 +74,7 @@ import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.MediaStoreData
@@ -83,6 +84,7 @@ import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
@@ -155,6 +157,7 @@ fun SinglePhotoView(
         album = album,
         isOpenWithDefaultView = isOpenWithDefaultView,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -211,6 +214,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -267,6 +271,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = isOpenWithDefaultView,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -321,6 +326,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = false,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -375,6 +381,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = false,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -429,6 +436,7 @@ fun SinglePhotoView(
         window = window,
         isOpenWithDefaultView = false,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         confirmToDelete = { confirmToDelete },
         doNotTrash = { doNotTrash },
@@ -459,6 +467,7 @@ private fun SinglePhotoViewCommon(
     window: Window,
     isOpenWithDefaultView: Boolean,
     shareFlow: Flow<Result<Intent, FileOperationError>>,
+    fileOperationProgress: Flow<FileOperationProgress<Unit>>,
     useBlackBackground: () -> Boolean,
     confirmToDelete: () -> Boolean,
     doNotTrash: () -> Boolean,
@@ -473,7 +482,7 @@ private fun SinglePhotoViewCommon(
     onTagClick: (tag: Tag) -> Unit,
     onTagDelete: (tag: Tag) -> Unit,
     setTagMediaId: (id: Long) -> Unit,
-    runAction: (action: FileOperationAction) -> Any?
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val state = rememberPagerState(
         initialPage = startIndex
@@ -551,6 +560,12 @@ private fun SinglePhotoViewCommon(
                 )
             )
         }
+    )
+
+    FileOperationProgressEffect(
+        operationFlow = fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = runAction
     )
 
     BackHandler(

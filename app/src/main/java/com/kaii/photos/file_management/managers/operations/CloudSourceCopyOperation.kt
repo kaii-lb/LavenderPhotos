@@ -8,6 +8,7 @@ import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -41,7 +42,7 @@ class CloudSourceCopyOperation @Inject constructor(
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> =
         when (destination) {
-            is AlbumType.Folder -> download(files, destination, existingTaskId)
+            is AlbumType.Folder -> copyToLocal(files, destination, existingTaskId)
 
             is AlbumType.Custom -> copyToCustom(files, destination, existingTaskId)
 
@@ -50,11 +51,16 @@ class CloudSourceCopyOperation @Inject constructor(
             else -> throw IllegalArgumentException("Cannot copy files to a placeholder album!")
         }
 
-    private fun download(
+    private fun copyToLocal(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType.Folder,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        send(element = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Copy,
+            fileCount = files.size
+        ))
+
         val result = syncTaskDao.track(
             existingTaskId = existingTaskId,
             type = SyncTaskType.Copy,
@@ -119,6 +125,11 @@ class CloudSourceCopyOperation @Inject constructor(
         destination: AlbumType.Cloud,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        send(element = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Copy,
+            fileCount = files.size
+        ))
+
         val result = syncTaskDao.track(
             existingTaskId = existingTaskId,
             type = SyncTaskType.Copy,
@@ -162,9 +173,12 @@ class CloudSourceCopyOperation @Inject constructor(
             paths = setOf(appCloudFolderDir.absolutePath)
         )
 
-        download(files, tempFolder, existingTaskId).collect { progress ->
+        copyToLocal(files, tempFolder, existingTaskId).collect { progress ->
             when (progress) {
+                is FileOperationProgress.Started -> send(element = progress)
+
                 is FileOperationProgress.ItemDone -> send(element = progress)
+
                 is FileOperationProgress.Finished -> copyResult = progress.result
             }
         }

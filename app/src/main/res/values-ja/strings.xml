@@ -69,7 +69,6 @@
     <string name="tabs_min_reached">少なくとも 1 つのタブが必要です</string>
     <string name="updates_notice">ダウンロードのお知らせ</string>
     <string name="secure_processing">このメディアを処理中です</string>
-    <string name="secure_encrypting">ファイルの暗号化</string>
     <string name="secure_decrypting">ファイルの復号化</string>
     <string name="export_unenc_backup">暗号化されていないバックアップをエクスポートします</string>
     <string name="export_unenc_backup_desc">セキュアなすべての項目を暗号化せずにフォルダにエクスポートします</string>

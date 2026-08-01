@@ -82,12 +82,14 @@ import com.kaii.photos.compose.dialogs.TrashDeleteDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
@@ -128,6 +130,7 @@ fun SingleTrashedPhotoView(
         startIndex = index,
         window = window,
         shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
         useBlackBackground = { useBlackBackground },
         topBarDetailsFormat = topBarDetailsFormat,
         blurViews = { blurViews },
@@ -147,6 +150,7 @@ private fun SingleTrashedPhotoViewImpl(
     startIndex: Int,
     window: Window,
     shareFlow: Flow<Result<Intent, FileOperationError>>,
+    fileOperationProgress: Flow<FileOperationProgress<Unit>>,
     useBlackBackground: () -> Boolean,
     topBarDetailsFormat: TopBarDetailsFormat,
     blurViews: () -> Boolean,
@@ -209,6 +213,12 @@ private fun SingleTrashedPhotoViewImpl(
                 )
             )
         }
+    )
+
+    FileOperationProgressEffect(
+        operationFlow = fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = runAction
     )
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)

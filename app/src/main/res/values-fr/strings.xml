@@ -29,7 +29,6 @@
     <string name="updates_notice">Notification de téléchargement</string>
     <string name="updates_latest">Dernière version déjà installée</string>
     <string name="secure_folder">Dossier Sécurisé</string>
-    <string name="secure_encrypting">Fichiers en cours d\'encryptage</string>
     <string name="export_unenc_backup">Exporter une sauvegarde décryptée</string>
     <string name="export_unenc_backup_desc">Exporte un dossier contenant tous vos médias sécurisés, décryptés</string>
     <string name="exporting_backup">Exportation de la sauvegarde…</string>

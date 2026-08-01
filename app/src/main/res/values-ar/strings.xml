@@ -55,7 +55,6 @@
     <string name="locked_folder_help_bottom">لا يمكن استعادة البيانات المؤمنة إذا نسيت كلمة المرور أو أُزيلت بصمة الإصبع.\nستُفقد العناصر المؤمنة عند إلغاء تثبيت التطبيق، لذا أنشئ نسخة احتياطية منها.</string>
     <string name="secure_folder">المجلد الآمن</string>
     <string name="secure_processing">انتظر ريثما تتم معالجة هذه الوسائط</string>
-    <string name="secure_encrypting">جارٍ تشفير الملفات</string>
     <string name="secure_decrypting">جارٍ فك تشفير الملفات</string>
     <string name="export_unenc_backup">تصدير نسخة احتياطية غير مشفرة</string>
     <string name="export_unenc_backup_desc">يصدر مجلدًا يحتوي على جميع عناصرك المؤمنة دون تشفير</string>
@@ -280,7 +279,6 @@
     <string name="updates_notice_desc"><![CDATA["<p>لا ينزّل محدّث التطبيق هذا ملفات APK. فهو يضع رابطًا إلى <a href=\"https://github.com/kaii-lb/LavenderPhotos/releases\">إصدارات GitHub</a> فقط. وهذا\n                يعني أن ملفات APK هذه لا تخضع للفحص والاختبار الإضافيين اللذين تجريهما IzzyOnDroid أو F-Droid أو جهات أخرى.\n\n                <br><br>تكون الإصدارات المستضافة على GitHub دائمًا موقعة ومفحوصة ومتحققًا منها بواسطة المطور (kaii-lb)، لكن قرار استخدامها يعود إليك.\n\n                <br><br>لا يجري Lavender Photos تحديثات تلقائية مطلقًا، ولا يُحدّث إلا بعد موافقة صريحة من المستخدم.\n            </p>"]]></string>
     <string name="secure_migrating_notice">إشعار الترحيل</string>
     <string name="secure_restore_failed">تعذرت استعادة الوسائط</string>
-    <string name="secure_share_media">مشاركة الوسائط المؤمنة</string>
     <string name="debugging_development">التطوير</string>
     <string name="debugging_spawn_loading_snackbar_desc">تصحيح أشرطة إشعارات Lavender عندما يقرر Compose فعل شيء غبي</string>
     <string name="debugging_spawn_message_snackbar">إظهار شريط إشعار برسالة</string>
@@ -392,18 +390,14 @@
     <string name="media_copy_snackbar_title">جارٍ نسخ العناصر…</string>
     <string name="media_move_snackbar_title">جارٍ نقل العناصر…</string>
     <string name="media_delete_snackbar_title">جارٍ حذف العناصر…</string>
-    <string name="media_restoring_snackbar_title">جارٍ استعادة العناصر…</string>
     <string name="media_copy_snackbar_body">جارٍ نسخ %1$d من أصل %2$d</string>
     <string name="media_move_snackbar_body">جارٍ نقل %1$d من أصل %2$d</string>
     <string name="media_delete_snackbar_body">جارٍ حذف %1$d من أصل %2$d</string>
-    <string name="media_restoring_snackbar_body">جارٍ استعادة %1$d من أصل %2$d</string>
     <string name="media_tools">الأدوات</string>
     <string name="media_information">المعلومات</string>
     <string name="media_is_raw">هذه صورة RAW</string>
     <string name="media_is_gif">هذه صورة GIF</string>
     <string name="media_is_cloud">هذا عنصر سحابي فقط</string>
-    <string name="media_select_limit_reached">تم بلوغ حد التحديد!</string>
-    <string name="media_sharing">جارٍ المشاركة…</string>
     <string name="search_photo_tag">البحث عن وسم</string>
     <string name="search_by_name">الاسم</string>
     <string name="search_by_date">التاريخ</string>

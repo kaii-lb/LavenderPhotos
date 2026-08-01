@@ -8,9 +8,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.R
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
-import com.kaii.photos.domain.files.FilePermissionAction
 import com.kaii.photos.permissions.files.DynamicActivityResultLauncher
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
@@ -40,13 +40,13 @@ fun SharePhotoEffect(
                     is FileOperationError.RecoverableException -> {
                         dynamicActivityResultLauncher.launch(
                             intentSender = error.intentSender,
-                            action = FilePermissionAction.Share(files = result.error.files)
+                            action = result.error.action
                         )
 
                         dynamicActivityResultLauncher.result.collect { launcherResult ->
                             if (launcherResult is Result.Error) {
                                 isError = true
-                            } else if (launcherResult is Result.Success && launcherResult.data is FilePermissionAction.Share) {
+                            } else if (launcherResult is Result.Success && launcherResult.data is FileOperationAction.Share) {
                                 reShare(launcherResult.data.files)
                             }
                         }

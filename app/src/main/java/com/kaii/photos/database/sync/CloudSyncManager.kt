@@ -165,6 +165,7 @@ class CloudSyncManager @Inject constructor(
 
         flow.collect { progress ->
             when (progress) {
+                is FileOperationProgress.Started -> Unit
                 is FileOperationProgress.ItemDone -> progressManager.increaseProgress()
                 is FileOperationProgress.Finished -> result = progress.result.mapTo(Result.Success(Unit))
             }

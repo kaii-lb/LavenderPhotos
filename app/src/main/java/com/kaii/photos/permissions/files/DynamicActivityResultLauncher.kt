@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FilePermissionAction
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FilePermissionError
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -19,9 +19,9 @@ import java.util.LinkedList
 
 class DynamicActivityResultLauncher {
     private var launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>? = null
-    private val queue = LinkedList<FilePermissionAction>()
+    private val queue = LinkedList<FileOperationAction>()
 
-    private val _resultChannel = Channel<Result<FilePermissionAction, FilePermissionError>>()
+    private val _resultChannel = Channel<Result<FileOperationAction, FilePermissionError>>()
     val result = _resultChannel.receiveAsFlow()
 
     fun setLauncher(launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>?) {
@@ -30,7 +30,7 @@ class DynamicActivityResultLauncher {
 
     fun launch(
         intentSender: IntentSender,
-        action: FilePermissionAction
+        action: FileOperationAction
     ) {
         queue.add(action)
         launcher?.launch(

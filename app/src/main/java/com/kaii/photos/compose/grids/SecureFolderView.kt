@@ -44,6 +44,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewBottomAppBar
 import com.kaii.photos.compose.app_bars.secure_folder.SecureFolderViewTopAppBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.datastore.AlbumType
@@ -119,6 +120,13 @@ fun SecureFolderView(
         }
     }
 
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = viewModel.fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = viewModel::runAction
+    )
+
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
     Scaffold(
@@ -139,7 +147,6 @@ fun SecureFolderView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
                 SharePhotoEffect(
                     shareFlow = viewModel.fileShareIntent,
                     dynamicActivityResultLauncher = dynamicActivityResultLauncher,

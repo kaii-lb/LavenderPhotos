@@ -103,7 +103,6 @@
     <string name="tabs_min_reached">Має бути хоча б одна вкладка</string>
     <string name="updates_notice">Сповіщення про завантаження</string>
     <string name="updates_checking">Перевірка наявності оновлень</string>
-    <string name="secure_encrypting">Шифрування файлів</string>
     <string name="secure_decrypting">Розшифрування файлів</string>
     <string name="file_is_a_video">Файл є відео</string>
     <string name="video_lock_screen">Блокування екрану від випадкових дотиків</string>
@@ -371,7 +370,6 @@
     <string name="app_repo">Сховище Додатку</string>
     <string name="secure_migrating_notice_desc">Захищена тека тепер зашифрована! Всі ваші фото тепер захищенні повністю і є недоторканими для будь-кого. Як запобіжний захід, копія ваших захищених фото тепер знаходиться в теці експорту, ви можете знайти її на сторінці альбомів або в Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports.</string>
     <string name="secure_restore_failed">Помилка при відновлені медіа</string>
-    <string name="secure_share_media">Поділитись захищеним медіа</string>
     <string name="debugging_development">Розробка</string>
     <string name="debugging_spawn_progress_snackbar">Панель Прогресу Появи</string>
     <string name="debugging_spawn_progress_snackbar_desc">Відображати скінчену панель прогресу з прогресом який оновлюється кожні 5 секунд</string>
@@ -402,16 +400,12 @@
     <string name="media_copy_snackbar_title">Копіювання елементів…</string>
     <string name="media_move_snackbar_title">Переміщення елементів…</string>
     <string name="media_delete_snackbar_title">Видалення елементів…</string>
-    <string name="media_restoring_snackbar_title">Відновлення елементів…</string>
     <string name="media_copy_snackbar_body">Копіювання %1$d з %2$d</string>
     <string name="media_move_snackbar_body">Переміщення %1$d з %2$d</string>
     <string name="media_delete_snackbar_body">Видалення %1$d з %2$d</string>
-    <string name="media_restoring_snackbar_body">Відновлення %1$d з %2$d</string>
     <string name="media_is_raw">Це є RAW зображенням</string>
     <string name="media_is_gif">Це є GIF</string>
     <string name="media_is_cloud">Це є тільки хмарним елементом</string>
-    <string name="media_select_limit_reached">Досягнуто ліміту вибору!</string>
-    <string name="media_sharing">Обмін…</string>
     <string name="search_photo_tag">Пошук по тегу</string>
     <string name="search_by_name">Назва</string>
     <string name="search_by_date">Дата</string>

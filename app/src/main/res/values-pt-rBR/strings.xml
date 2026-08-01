@@ -76,7 +76,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="locked_folder_help_bottom">Os dados protegdidos não podem ser recuperados se a senha for esquecida ou a biometria for removida.</string>
     <string name="secure_folder">Diretório Protegido</string>
     <string name="secure_processing">Aguarde enquanto a mídia é processada</string>
-    <string name="secure_encrypting">Criptografando Arquivos</string>
     <string name="secure_decrypting">Descriptografando Arquivos</string>
     <string name="secure_getting_file_info">Obtendo informações do arquivo…</string>
     <string name="secure_please_wait">Por favor aguarde…</string>

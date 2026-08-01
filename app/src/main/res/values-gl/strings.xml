@@ -86,7 +86,6 @@
     <string name="locked_folder_help_bottom">Os datos protexidos non se poden restablecer se esqueces o contrasinal ou se retira a impresión dactilar.\nOs elementos protexidos vanse perder se desinstalas a app, fai copia de apoio para evitalo.</string>
     <string name="secure_folder">Cartafol Protexido</string>
     <string name="secure_processing">Agarda mentras se procesa o multimedia</string>
-    <string name="secure_encrypting">Cifrando os ficheiros</string>
     <string name="secure_decrypting">Descifrando os ficheiros</string>
     <string name="secure_getting_file_info">Obtendo info do ficheiro…</string>
     <string name="secure_please_wait">Agarda…</string>
@@ -461,9 +460,7 @@
     <string name="albums_rename_failure">Nome de álbum non válido</string>
     <string name="navigation_away">Vai a outra páxina</string>
     <string name="secure_restore_failed">Fallou o restablecemento</string>
-    <string name="secure_share_media">Compartir multimedia seguro</string>
     <string name="debugging_development">Desenvolvemento</string>
-    <string name="media_select_limit_reached">Acadouse o límite de selección!</string>
     <string name="search_photo_tag">Buscar unha etiqueta</string>
     <string name="search_by_name">Nome</string>
     <string name="search_by_date">Data</string>
@@ -515,11 +512,9 @@
     <string name="media_copy_snackbar_title">Copiando elementos…</string>
     <string name="media_move_snackbar_title">Movendo elementos…</string>
     <string name="media_delete_snackbar_title">Eliminando elementos…</string>
-    <string name="media_restoring_snackbar_title">Restablecendo elementos…</string>
     <string name="media_copy_snackbar_body">Copiando %1$d de %2$d</string>
     <string name="media_move_snackbar_body">Movendo %1$d de %2$d</string>
     <string name="media_delete_snackbar_body">Eliminando %1$d de %2$d</string>
-    <string name="media_restoring_snackbar_body">Restablecendo %1$d de %2$d</string>
     <string name="look_and_feel_vibrate_on_media_click">Vibrar ao premer</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Prodúcese unha pequena vibración ao tocar nun elemento multimedia.</string>
     <string name="albums_is_cloud_linked">Este é un álbum conectado á nube</string>
@@ -551,7 +546,6 @@
     <string name="permissions_allow_secure_folder_screen_capture_desc">Permitir capturas de pantalla, gravación da pantalla e compartir a pantalla cando o Cartafol Protexido está aberto. O contido protexido podería tamén aparecer na vista previa das apps. Non o actives para mantelo protexido</string>
     <string name="media_is_gif">Isto é un GIF</string>
     <string name="media_is_cloud">Isto é un elemento exclusivo na nube</string>
-    <string name="media_sharing">Compartindo…</string>
     <string name="search">Buscar</string>
     <string name="search_nothing_found">Non atopamos nada</string>
     <string name="refresh">Actualizar</string>

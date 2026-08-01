@@ -4,6 +4,7 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
@@ -22,6 +23,11 @@ class LocalToLocalOperation @Inject constructor(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType.Folder
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        send(element = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Copy,
+            fileCount = files.size
+        ))
+
         val mediaItems = mediaDao.getMediaFromMetadata(files)
 
         val newItems = mutableListOf<FileOperationCopyResult>()

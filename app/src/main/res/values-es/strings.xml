@@ -64,7 +64,6 @@
     <string name="locked_folder_help_bottom">Los datos protegidos no se pueden restaurar si se olvidó la contraseña o se eliminó la huella digital.\nLos elementos protegidos se perderán al desinstalar la app, haga una copia de seguridad de ellos en consecuencia.</string>
     <string name="secure_folder">Carpeta Segura</string>
     <string name="secure_processing">Aguanta mientras se procesa este medio</string>
-    <string name="secure_encrypting">Cifrado de Archivos</string>
     <string name="secure_decrypting">Descifrando Archivos</string>
     <string name="export_unenc_backup">Exportar Copia de Seguridad Sin Cifrar</string>
     <string name="export_unenc_backup_desc">Exporta una carpeta de todos sus elementos protegidos, sin cifrar</string>
@@ -440,7 +439,6 @@
     <string name="navigation_away">Navega a otra página</string>
     <string name="updates_no_changelog">No Hay Registro de Cambios Disponible</string>
     <string name="secure_restore_failed">Error al restaurar medios</string>
-    <string name="secure_share_media">Compartir medios protegidos</string>
     <string name="export_location">Ubicación</string>
     <string name="favourites_remove_this">Eliminar de favoritos?</string>
     <string name="favourites_migration">¡Favoritos ha sido renovado!</string>
@@ -455,7 +453,6 @@
     <string name="debugging_development">Desarrollo</string>
     <string name="permissions_grant_long">Conceder Permiso</string>
     <string name="media_is_raw">Esta es una imagen RAW</string>
-    <string name="media_select_limit_reached">¡Límite de selección alcanzado!</string>
     <string name="search_photo_tag">Buscar por una etiqueta</string>
     <string name="search_by_name">Nombre</string>
     <string name="search_by_date">Fecha</string>
@@ -515,11 +512,9 @@
     <string name="media_copy_snackbar_title">Copiando elementos…</string>
     <string name="media_move_snackbar_title">Moviendo elementos…</string>
     <string name="media_delete_snackbar_title">Eliminando elementos…</string>
-    <string name="media_restoring_snackbar_title">Restaurando elementos…</string>
     <string name="media_copy_snackbar_body">Copiando %1$d de %2$d</string>
     <string name="media_move_snackbar_body">Moviendo %1$d de %2$d</string>
     <string name="media_delete_snackbar_body">Eliminando %1$d de %2$d</string>
-    <string name="media_restoring_snackbar_body">Restaurando %1$d de %2$d</string>
     <string name="look_and_feel_vibrate_on_media_click">Vibrar al hacer clic</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Si tocas un elemento multimedia genera una vibración breve.</string>
     <string name="albums_is_cloud_linked">Este es un álbum vinculado a la nube</string>
@@ -546,7 +541,6 @@
     <string name="permissions_allow_secure_folder_screen_capture_desc">Permitir capturas de pantalla, grabación de pantalla y uso compartido de pantalla mientras la carpeta segura está abierta. El contenido seguro también puede aparecer en la vista previa de aplicaciones recientes. Déjalo apagado para mantenerlo protegido</string>
     <string name="media_is_gif">Este es un GIF</string>
     <string name="media_is_cloud">Este es un elemento solo en la nube</string>
-    <string name="media_sharing">Compartiendo…</string>
     <string name="search">Buscar</string>
     <string name="search_nothing_found">No se ha encontrado nada</string>
     <string name="refresh">Refrescar</string>

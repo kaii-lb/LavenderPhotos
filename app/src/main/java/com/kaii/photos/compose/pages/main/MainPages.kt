@@ -67,6 +67,7 @@ import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.compose.app_bars.main_bars.MainAppBottomBar
 import com.kaii.photos.compose.app_bars.main_bars.MainAppTopBar
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
@@ -181,6 +182,12 @@ fun MainPages(
                 )
             )
         }
+    )
+
+    FileOperationProgressEffect(
+        operationFlow = viewModel.fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = viewModel::runAction
     )
 
     Scaffold(

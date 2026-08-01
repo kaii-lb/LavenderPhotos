@@ -43,11 +43,13 @@ import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
 import com.kaii.photos.compose.dialogs.AlbumInfoDialog
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -59,7 +61,9 @@ import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -124,6 +128,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
+        fileOperationProgress = viewModel.fileOperationProgress,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -206,6 +211,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
+        fileOperationProgress = viewModel.fileOperationProgress,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -288,6 +294,7 @@ fun SingleAlbumView(
 
     SingleAlbumViewCommon(
         pagingItems = pagingItems,
+        fileOperationProgress = viewModel.fileOperationProgress,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -319,6 +326,7 @@ fun SingleAlbumView(
 @Composable
 private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
+    fileOperationProgress: Flow<FileOperationProgress<Unit>>,
     album: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
@@ -402,6 +410,13 @@ private fun SingleAlbumViewCommon(
             }
         )
     }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = runAction
+    )
 
     var showTagDialog by remember { mutableStateOf(false) }
     Scaffold(

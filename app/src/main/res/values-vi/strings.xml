@@ -54,7 +54,6 @@
     <string name="locked_folder_help_bottom">Dữ liệu đã mã hóa không thể khôi phục nếu quên mật khẩu hoặc bị xóa vân tay.</string>
     <string name="secure_folder">Thư mục mã hóa</string>
     <string name="secure_processing">Hãy đợi trong khi ảnh &amp; video được mã hóa</string>
-    <string name="secure_encrypting">Đang mã hóa tập tin</string>
     <string name="secure_decrypting">Đang giải mã tập tin</string>
     <string name="secure_getting_file_info">Đang lấy thông tin tập tin…</string>
     <string name="secure_please_wait">Vui lòng đợi…</string>
@@ -250,7 +249,6 @@
     <string name="favourites_migration_none">Không có tệp để di chuyển</string>
     <string name="secure_migrating">Đang di chuyển</string>
     <string name="secure_migrating_notice">Báo cáo di chuyển</string>
-    <string name="secure_share_media">Chia sẻ tập tin bảo mật</string>
     <string name="favourites_migration_in_progress_short">Đang Trong Quá Trình</string>
     <string name="favourites_migration_done">Di Chuyển Thành Công!</string>
     <string name="favourites_migration_declined">Quyền truy cập bị từ chối!</string>

@@ -55,7 +55,6 @@
     <string name="locked_folder_help_bottom">Защищённые данные нельзя восстановить, если пароль забыт или отпечаток пальца удалён.\nПри удалении приложения защищённые элементы будут потеряны, поэтому заранее создайте их резервную копию.</string>
     <string name="secure_folder">Защищённая папка</string>
     <string name="secure_processing">Подождите, пока обрабатывается этот медиафайл</string>
-    <string name="secure_encrypting">Шифрование файлов</string>
     <string name="secure_decrypting">Расшифровка файлов</string>
     <string name="export_unenc_backup">Экспортировать незашифрованную резервную копию</string>
     <string name="export_unenc_backup_desc">Экспортирует папку со всеми защищёнными элементами в незашифрованном виде</string>
@@ -463,8 +462,6 @@
     <string name="media_copy_snackbar_title">Копирование элементов…</string>
     <string name="media_move_snackbar_title">Перемещение элементов…</string>
     <string name="media_delete_snackbar_title">Удаление элементов…</string>
-    <string name="media_restoring_snackbar_title">Восстановление элементов…</string>
-    <string name="media_select_limit_reached">Достигнут предел количества выбранных элементов!</string>
     <string name="search_by_name">Название</string>
     <string name="search_by_date">Дата</string>
     <string name="search_by_tag">Метка</string>
@@ -487,7 +484,6 @@
     <string name="media_copy_snackbar_body">Копирование: %1$d из %2$d</string>
     <string name="media_move_snackbar_body">Перемещение: %1$d из %2$d</string>
     <string name="media_delete_snackbar_body">Удаление: %1$d из %2$d</string>
-    <string name="media_restoring_snackbar_body">Восстановление: %1$d из %2$d</string>
     <string name="immich_login_unreachable">Сервер недоступен</string>
     <string name="startup_processing_info">Это однократная операция.</string>
     <string name="startup_processing_explanation">Почему нужно ждать?</string>
@@ -515,7 +511,6 @@
     <string name="next">Далее</string>
     <string name="search_photo_tag">Поиск метки</string>
     <string name="settings_storage_export_quality">Качество экспорта из редактора: %d%%</string>
-    <string name="secure_share_media">Поделиться защищёнными медиафайлами</string>
     <string name="navigation_away">Переход на другую страницу</string>
     <string name="search">Поиск</string>
     <string name="search_nothing_found">Ничего не найдено</string>
@@ -560,7 +555,6 @@
     <string name="permissions_allow_secure_folder_screen_capture_desc">Разрешить снимки экрана, запись экрана и демонстрацию экрана, пока открыта защищённая папка. Защищённое содержимое также может отображаться в окне недавних приложений. Оставьте параметр выключенным, чтобы сохранить защиту</string>
     <string name="media_is_gif">Это GIF-изображение</string>
     <string name="media_is_cloud">Этот элемент хранится только в облаке</string>
-    <string name="media_sharing">Отправка…</string>
     <string name="explanation_nothing_here">Здесь ничего нет…</string>
     <string name="management">Управление</string>
     <string name="metadata">Метаданные</string>

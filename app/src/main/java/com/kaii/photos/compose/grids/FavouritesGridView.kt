@@ -39,6 +39,7 @@ import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewBottomAppBar
 import com.kaii.photos.compose.app_bars.favourites_grid.FavouritesViewTopAppBar
 import com.kaii.photos.compose.grids.media.PhotoGrid
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.compose.widgets.tags.AnimatedMediaTagManager
@@ -76,6 +77,13 @@ fun FavouritesGridView(
         }
     }
 
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = viewModel.fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        rerunAction = viewModel::runAction
+    )
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f)
@@ -106,7 +114,6 @@ fun FavouritesGridView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
                 SharePhotoEffect(
                     shareFlow = viewModel.fileShareIntent,
                     dynamicActivityResultLauncher = dynamicActivityResultLauncher,

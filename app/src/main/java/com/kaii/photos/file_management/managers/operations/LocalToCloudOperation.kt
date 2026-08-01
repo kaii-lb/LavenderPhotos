@@ -12,6 +12,7 @@ import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -53,6 +54,11 @@ class LocalToCloudOperation @Inject constructor(
         destination: AlbumType.Cloud,
         existingTaskId: Int?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        send(element = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Copy,
+            fileCount = files.size
+        ))
+
         val media = mediaDao.getMediaFromMetadata(files)
 
         val result = syncTaskDao.track(

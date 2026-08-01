@@ -84,7 +84,6 @@
     <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>
     <string name="secure_folder">Güvenli Klasör</string>
     <string name="secure_processing">Bu medya işlenirken bekleyin</string>
-    <string name="secure_encrypting">Dosyalar Şifreleniyor</string>
     <string name="secure_decrypting">Dosyaların Şifresi Çözülüyor</string>
     <string name="secure_getting_file_info">Dosya bilgileri alınıyor…</string>
     <string name="secure_please_wait">Lütfen bekleyin…</string>

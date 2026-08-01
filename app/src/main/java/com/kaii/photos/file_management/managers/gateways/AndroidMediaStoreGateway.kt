@@ -15,7 +15,9 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.CloudSyncWorker
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -123,6 +125,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
                         operations.add(operation)
                     }
+
+                    contentResolver.applyBatch(MediaStore.AUTHORITY, operations)
                 }
 
                 Result.Success(Unit)
@@ -143,7 +147,11 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             Result.Error(
                 FileOperationError.RecoverableException(
                     intentSender = intentSender,
-                    files = files
+                    action = FileOperationAction.Trash(
+                        files = files,
+                        isTrashed = isTrashed,
+                        album = AlbumType.PlaceHolder
+                    )
                 )
             )
         } catch (e: Throwable) {
@@ -168,7 +176,10 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         Result.Error(
             error = FileOperationError.RecoverableException(
                 intentSender = securityException.userAction.actionIntent.intentSender,
-                files = listOf(file)
+                action = FileOperationAction.RenameFile(
+                    file = file,
+                    newName = newName
+                )
             )
         )
     } catch (e: Throwable) {
@@ -217,7 +228,11 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         Result.Error(
             FileOperationError.RecoverableException(
                 intentSender = intentSender,
-                files = files
+                action = FileOperationAction.Favourite(
+                    files = files,
+                    isFavourite = isFavourite,
+                    album = AlbumType.PlaceHolder
+                )
             )
         )
     } catch (e: Throwable) {
@@ -309,7 +324,10 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         Result.Error(
             FileOperationError.RecoverableException(
                 intentSender = intentSender,
-                files = files
+                action = FileOperationAction.Delete(
+                    files = files,
+                    album = AlbumType.PlaceHolder
+                )
             )
         )
     } catch (e: Throwable) {

@@ -54,7 +54,6 @@
     <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
     <string name="updates_notice">Teade allalaadimise kohta</string>
     <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
-    <string name="secure_encrypting">Failid on krüptimisel</string>
     <string name="secure_decrypting">Failid on dekrüptimisel</string>
     <string name="export_unenc_backup">Ekspordi krüptimata varukoopia</string>
     <string name="favourites">Lemmikud</string>
@@ -261,7 +260,6 @@
     <string name="secure_unlock_short">Ava lukustus</string>
     <string name="secure_move_out">Kas tõstad meediumi turvakaustast välja?</string>
     <string name="secure_restore_failed">Meediumi taastamine ei õnnestunud</string>
-    <string name="secure_share_media">Jaga turvatud meediumi</string>
     <string name="secure_unlock_failed">Autentimine ei õnnestunud :&lt;</string>
     <string name="media_secure_confirm">Kas tõsta selle multimeediafaili turvakausta?</string>
     <string name="paths_should_be_relative">Asukoht peab olema suhteline</string>

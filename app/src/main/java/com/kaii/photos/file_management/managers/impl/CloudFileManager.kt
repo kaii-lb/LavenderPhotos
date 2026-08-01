@@ -9,6 +9,7 @@ import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.track
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -204,6 +205,11 @@ class CloudFileManager @Inject constructor(
         var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
         copyFiles(files, destination, existingTaskId).collect { progress ->
             when (progress) {
+                is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
+                    action = FileOperationAction.LongOperationType.Move,
+                    fileCount = files.size
+                ))
+
                 is FileOperationProgress.ItemDone -> send(progress)
                 is FileOperationProgress.Finished -> copyResult = progress.result
             }

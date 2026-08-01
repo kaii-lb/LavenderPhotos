@@ -60,4 +60,9 @@ sealed interface FileOperationAction {
     data class LoadMediaCountAndSize(
         val album: AlbumType
     ) : FileOperationAction
+
+    enum class LongOperationType {
+        Copy, Move, Trash, Delete,
+        Share, Secure, Restore
+    }
 }

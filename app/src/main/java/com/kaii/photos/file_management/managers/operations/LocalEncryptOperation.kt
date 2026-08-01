@@ -3,6 +3,7 @@ package com.kaii.photos.file_management.managers.operations
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
@@ -22,6 +23,11 @@ class LocalEncryptOperation @Inject constructor(
         files: List<FileOperationItemMetadata>
     ): Flow<FileOperationProgress<Unit>> = flow {
         val media = mediaDao.getMediaFromMetadata(files)
+
+        emit(value = FileOperationProgress.Started(
+            action = FileOperationAction.LongOperationType.Secure,
+            fileCount = files.size
+        ))
 
         media.forEach { item ->
             val result = secureManager.secure(mediaItem = item)

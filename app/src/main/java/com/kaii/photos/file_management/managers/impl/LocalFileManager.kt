@@ -4,6 +4,7 @@ import android.content.Intent
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -52,7 +53,13 @@ class LocalFileManager @Inject constructor(
             existingTaskId = existingTaskId
         ).collect { progress ->
             when (progress) {
+                is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
+                    action = FileOperationAction.LongOperationType.Move,
+                    fileCount = files.size
+                ))
+
                 is FileOperationProgress.ItemDone -> send(progress)
+
                 is FileOperationProgress.Finished -> copyResult = progress.result
             }
         }

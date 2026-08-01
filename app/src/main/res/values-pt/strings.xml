@@ -88,7 +88,6 @@
     <string name="updates_new_version_available">Nova versão disponível!</string>
     <string name="updates_latest">Já está na versão mais recente</string>
     <string name="updates_checking">A procurar por atualizações</string>
-    <string name="secure_encrypting">Criptografando Ficheiros</string>
     <string name="secure_decrypting">Descriptografando Ficheiros</string>
     <string name="secure_getting_file_info">Obtendo informações do ficheiro…</string>
     <string name="secure_please_wait">Por favor aguarde…</string>
@@ -287,7 +286,6 @@
     <string name="media_copy_snackbar_title">A copiar elementos…</string>
     <string name="media_move_snackbar_title">A mover elementos…</string>
     <string name="media_delete_snackbar_title">A apagar elementos…</string>
-    <string name="media_restoring_snackbar_title">A restaurar elementos…</string>
     <string name="media_tools">Ferramentas</string>
     <string name="media_information">Informação</string>
     <string name="search_photo_name">Procurar por uma foto</string>
