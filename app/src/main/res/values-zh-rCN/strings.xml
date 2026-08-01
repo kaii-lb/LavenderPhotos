@@ -492,15 +492,11 @@
     <string name="media_copy_snackbar_title">正在复制项…</string>
     <string name="media_move_snackbar_title">正在移动项…</string>
     <string name="media_delete_snackbar_title">正在删除项…</string>
-    <string name="media_restoring_snackbar_title">正在恢复项…</string>
     <string name="media_copy_snackbar_body">正在从 %2$d 中复制 %1$d</string>
     <string name="media_move_snackbar_body">正在从 %2$d 中移动 %1$d</string>
     <string name="media_delete_snackbar_body">正在从 %2$d 中删除 %1$d</string>
-    <string name="media_restoring_snackbar_body">正在从 %2$d 中恢复 %1$d</string>
     <string name="media_is_gif">这是 GIF 动图</string>
     <string name="media_is_cloud">此项仅限云端</string>
-    <string name="media_select_limit_reached">已达到选择上限！</string>
-    <string name="media_sharing">正在分享…</string>
     <string name="search_photo_tag">搜索标签</string>
     <string name="search_by_name">名称</string>
     <string name="search_by_date">日期</string>
@@ -655,7 +651,6 @@
     <string name="immich_share_album_empty">相册为空！</string>
     <string name="immich_share_album_create_link">创建链接</string>
     <string name="app_description">一款以隐私为先、性能出色且设计时尚的开源相册应用</string>
-    <string name="secure_share_media">分享受保护的媒体文件</string>
     <string name="export_settings_backup_save_desc">将软件设置与相册导出到一个 JSON 文件中，这样可以稍后恢复它们。不保存 Immich 登录状态或受保护的媒体文件。</string>
     <string name="debugging_spawn_progress_snackbar">显示进度条</string>
     <string name="debugging_spawn_progress_snackbar_desc">显示一个进度条，进度每秒更新一次，持续 5 秒</string>

@@ -73,9 +73,7 @@
     <string name="secure_processing">Espereu mentre es processa aquest contingut multimèdia</string>
     <string name="secure_move_out">Vols treure el contingut multimèdia del directori protegit?</string>
     <string name="secure_restore_failed">Error restaurant el contingut multimèdia</string>
-    <string name="secure_share_media">Compartir el contingut multimèdia protegit</string>
     <string name="secure_folder">Directori protegit</string>
-    <string name="secure_encrypting">Xifrat de fitxers</string>
     <string name="secure_decrypting">Desxifrat de fitxers</string>
     <string name="secure_getting_file_info">Obtenint la informació del fitxer…</string>
     <string name="secure_please_wait">Si us plau, espereu…</string>
@@ -123,7 +121,7 @@
     <string name="editing_export_image_failed">No s\'ha pogut exportar la foto</string>
     <string name="filter">Filtre</string>
     <string name="filter_none">Cap</string>
-    <string name="filter_none_desc">perquè... qui els necessita?</string>
+    <string name="filter_none_desc">perquè… qui els necessita?</string>
     <string name="filter_inverted">Invertit</string>
     <string name="filter_inverted_desc">tot al revés!</string>
     <string name="filter_vibrant">Intens</string>
@@ -372,18 +370,14 @@
     <string name="media_copy_snackbar_title">Copiant elements…</string>
     <string name="media_move_snackbar_title">Movent elements…</string>
     <string name="media_delete_snackbar_title">Esborrant elements…</string>
-    <string name="media_restoring_snackbar_title">Restaurant elements…</string>
     <string name="media_copy_snackbar_body">Copiant %1$d de %2$d</string>
     <string name="media_move_snackbar_body">Movent %1$d de %2$d</string>
     <string name="media_delete_snackbar_body">Eliminant %1$d de %2$d</string>
-    <string name="media_restoring_snackbar_body">Restaurant %1$d de %2$d</string>
     <string name="media_tools">Eines</string>
     <string name="media_information">Informació</string>
     <string name="media_is_raw">És una imatge RAW</string>
     <string name="media_is_gif">És un GIF</string>
     <string name="media_is_cloud">És un element només del núvol</string>
-    <string name="media_select_limit_reached">S\'ha arribat al límit de selecció!</string>
-    <string name="media_sharing">Compartint…</string>
     <string name="search_photo_name">Cerca una foto</string>
     <string name="search_photo_tag">Cerca una etiqueta</string>
     <string name="search_by_name">Nom</string>
@@ -424,7 +418,7 @@
     <string name="error_views_secure_prefix">Protegit:</string>
     <string name="error_views_favourites_empty">Afegeix-hi els teus records més preuats!</string>
     <string name="error_views_folder_non_existent">El directori no existeix</string>
-    <string name="error_views_main_empty">Sembla buit...</string>
+    <string name="error_views_main_empty">Sembla buit…</string>
     <string name="look_and_feel_date_format">Format de data</string>
     <string name="look_and_feel_styling_separator">Estil</string>
     <string name="look_and_feel_image_details_format">Format dels detalls de la imatge</string>

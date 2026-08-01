@@ -96,7 +96,6 @@
     <string name="locked_folder_help_bottom">Zabezpečená data nelze obnovit, pokud zapomenete heslo nebo odstraníte otisk prstu.\nZabezpečené položky se po odinstalování aplikace ztratí, proto je náležitě zálohujte.</string>
     <string name="secure_folder">Zabezpečená složka</string>
     <string name="secure_processing">Počkejte, než se toto médium zpracuje</string>
-    <string name="secure_encrypting">Šifrování souborů</string>
     <string name="secure_decrypting">Dešifrování souborů</string>
     <string name="secure_getting_file_info">Získávání informací o souboru…</string>
     <string name="secure_please_wait">Čekejte…</string>
@@ -112,7 +111,6 @@
     <string name="secure_unlock_short">Odemknout složku</string>
     <string name="secure_move_out">Přesunout média ze zabezpečené složky?</string>
     <string name="secure_restore_failed">Obnovení médií se nezdařilo</string>
-    <string name="secure_share_media">Sdílet zabezpečená média</string>
     <string name="export_unenc_backup">Exportovat nezašifrovanou zálohu</string>
     <string name="export_unenc_backup_desc">Exportuje složku se všemi zabezpečenými položkami v nezašifrované podobě</string>
     <string name="exporting_backup">Export zálohy…</string>
@@ -389,18 +387,14 @@
     <string name="media_copy_snackbar_title">Kopírování položek…</string>
     <string name="media_move_snackbar_title">Přesouvání položek…</string>
     <string name="media_delete_snackbar_title">Odstraňování položek…</string>
-    <string name="media_restoring_snackbar_title">Obnovování položek…</string>
     <string name="media_copy_snackbar_body">Kopírování %1$d z %2$d</string>
     <string name="media_move_snackbar_body">Přesouvání %1$d z %2$d</string>
     <string name="media_delete_snackbar_body">Odstraňování %1$d z %2$d</string>
-    <string name="media_restoring_snackbar_body">Obnovování %1$d z %2$d</string>
     <string name="media_tools">Nástroje</string>
     <string name="media_information">Informace</string>
     <string name="media_is_raw">Toto je obrázek RAW</string>
     <string name="media_is_gif">Toto je GIF</string>
     <string name="media_is_cloud">Toto je položka pouze v cloudu</string>
-    <string name="media_select_limit_reached">Byl dosažen limit výběru!</string>
-    <string name="media_sharing">Sdílení…</string>
     <string name="search_photo_name">Hledat fotografii</string>
     <string name="search_photo_tag">Hledat štítek</string>
     <string name="search_by_name">Název</string>
