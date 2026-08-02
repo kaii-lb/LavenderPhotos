@@ -60,10 +60,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
@@ -429,7 +429,12 @@ fun AnimatedLoginIcon(
             )
         } else {
             IconButton(
-                onClick = onClick
+                onClick = onClick,
+                modifier = Modifier
+                    .semantics {
+                        testTagsAsResourceId = true
+                        testTag = "main_dialog_button"
+                    }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.settings),
@@ -437,10 +442,6 @@ fun AnimatedLoginIcon(
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(24.dp)
-                        .semantics {
-                            testTagsAsResourceId = true
-                        }
-                        .testTag("main_dialog_button")
                 )
             }
         }
