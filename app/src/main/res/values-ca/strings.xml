@@ -244,15 +244,17 @@
     <string name="favourites_migration_notice">Preferits</string>
     <string name="favourites_migration_started">Ha començat la migració!</string>
     <string name="favourites_migration_none">No hi ha elements per migrar</string>
-    <string name="updates_notice_desc"><![CDATA[
-<p>Aquest actualitzador NO descarrega fitxers APK. Només enllaça a <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>.
-Això significa que aquests APK no passen pels processos de revisió i proves addicionals realitzats a IzzyOnDroid, F-Droid o d'altres.
+    <string name="updates_notice_desc">
+        <![CDATA[
+            <p>Aquest actualitzador NO descarrega fitxers APK. Només enllaça a <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>.
+            Això significa que aquests APK no passen pels processos de revisió i proves addicionals realitzats a IzzyOnDroid, F-Droid o d\'altres.
 
-Les compilacions allotjades a GitHub estan sempre signades, comprovades i verificades pel desenvolupador (kaii-lb), però utilitzar-les depèn de tu.
+            Les compilacions allotjades a GitHub estan sempre signades, comprovades i verificades pel desenvolupador (kaii-lb), però utilitzar-les depèn de tu.
 
-Lavender Photos no mai s'actualitza automàticament, i només s'actualitza amb el consentiment explícit de l'usuari.
-</p>
-        ]]></string>
+            Lavender Photos no mai s\'actualitza automàticament, i només s\'actualitza amb el consentiment explícit de l\'usuari.
+            </p>
+        ]]>
+    </string>
     <string name="favourites_migration_declined_desc">Lavender Photos no pot transferir els teus preferits des de la versió antiga si no li dones els permisos per fer-ho! Això significa que perdràs els elements que s\'havien marcat com a preferits.</string>
     <string name="debugging">Depuració</string>
     <string name="debugging_development">Desenvolupament</string>
@@ -600,19 +602,21 @@ Lavender Photos no mai s'actualitza automàticament, i només s'actualitza amb e
     <string name="immich_server_offline">Fora de línia</string>
     <string name="immich_server_unreachable">No s\'ha pogut fer ping al servidor!</string>
     <string name="immich_help_general_desc">Permet còpies de recolzament del contingut multimèdia a nivell d\'àlbum, a un servidor Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> és una solució autoallotjada d'emmagatzematge de fotos i vídeos,
+    <string name="immich_help_detailed_desc">
+        <![CDATA[
+            <p><a href="https://immich.app/">Immich</a> és una solució autoallotjada d\'emmagatzematge de fotos i vídeos,
             que permet a tothom allotjar el seu propi servidor de recolzament al núvol.
             </p>
-            <h3 style="text-align:center;">Com s'utilitza?<h3/>
+            <h3 style="text-align:center;">Com s\'utilitza?<h3/>
             <ul>
                 <li>Autoallotja un <a href="https://immich.app/">servidor Immich</a></li>
-                <li>Especifica l'adreça del servidor a Lavender Photos</li>
-                <li>Inicia sessió utilitzant un compte d'usuari d'Immich</li>
+                <li>Especifica l\'adreça del servidor a Lavender Photos</li>
+                <li>Inicia sessió utilitzant un compte d\'usuari d\'Immich</li>
                 <li>Vés a qualsevol àlbum, i clica a la icona del núvol</li>
                 <li>Comença a fer còpies de recolzament de les teves fotografies!</li>
             </ul>
-        ]]></string>
+        ]]>
+    </string>
     <string name="immich_server_not_loading">Aquest àlbum no té contingut multimèdia, o el servidor és inaccessible</string>
     <string name="immich_account_username">Nom d\'usuari</string>
     <string name="immich_account_role">Càrrec</string>
