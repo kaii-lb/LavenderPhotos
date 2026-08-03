@@ -17,8 +17,7 @@ interface RenameAlbumImpl {
         appScope.launch {
             val result = renameAlbum(
                 album = album,
-                newName = newName,
-                existingTaskId = null
+                newName = newName
             )
 
             progressChannel.send(

@@ -19,8 +19,7 @@ interface DeleteImpl {
             deleteFiles(
                 files = files,
                 albumId = album.id,
-                immichId = album.immichId,
-                existingTaskId = null
+                immichId = album.immichId
             ).collect { progress ->
                 progressChannel.send(
                     element = progress.toGenericProgress()

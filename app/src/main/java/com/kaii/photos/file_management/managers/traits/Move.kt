@@ -10,7 +10,6 @@ interface Move {
     suspend fun moveFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
-        existingTaskId: Int?,
         origin: AlbumType?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>>
 }

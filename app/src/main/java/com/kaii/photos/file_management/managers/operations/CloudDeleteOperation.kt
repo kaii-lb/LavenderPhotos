@@ -3,9 +3,8 @@ package com.kaii.photos.file_management.managers.operations
 import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.database.track
+import com.kaii.photos.database.entities.SyncOperation
+import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
@@ -22,13 +21,12 @@ import kotlin.uuid.Uuid
 class CloudDeleteOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
-    private val syncTaskDao: SyncTaskDao,
-    private val assetsClient: AssetsClient
+    private val assetsClient: AssetsClient,
+    private val recorder: SyncTaskRecorder
 ) {
     fun execute(
         files: List<FileOperationItemMetadata>,
-        albumId: String,
-        existingTaskId: Int?
+        albumId: String
     ): Flow<FileOperationProgress<Unit>> = flow {
         if (files.isEmpty()) return@flow
 
@@ -41,28 +39,32 @@ class CloudDeleteOperation @Inject constructor(
 
         val ids = files.fastMap { it.id }
 
-        val result = syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.Delete,
-            destination = albumId,
-            ids = ids
-        ) {
-            mediaDao.deleteAll(ids = ids.toSet())
-            customDao.deleteAll(ids = ids.toSet(), album = albumId)
+        recorder.record(
+            operation = SyncOperation.Delete(
+                sourceAlbumId = albumId
+            ),
+            mediaIds = ids,
+            immichIds = files.associate { it.id to it.immichId },
+            applyLocally = {
+                mediaDao.deleteAll(ids = ids.toSet())
+                customDao.deleteAll(ids = ids.toSet(), album = albumId)
+            },
+            attemptRemote = {
+                val targets = files.mapNotNull { it.immichId }
 
-            val success = assetsClient.delete(
-                ids = files.fastMap { Uuid.parse(it.immichId!!) },
-                force = false
-            )
+                if (targets.isEmpty()) {
+                    Result.Success(Unit)
+                } else {
+                    val success = assetsClient.delete(ids = targets.map { Uuid.parse(it) }, force = false)
+                    if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
+                }
+            }
+        )
 
-            if (success) Result.Success(Unit)
-            else Result.Error(FileOperationError.Failed)
+        files.forEach {
+            emit(FileOperationProgress.ItemDone(uri = it.uri))
         }
 
-        emit(
-            value = FileOperationProgress.Finished(
-                result = result
-            )
-        )
+        emit(FileOperationProgress.Finished(result = Result.Success(Unit)))
     }.flowOn(Dispatchers.IO)
 }

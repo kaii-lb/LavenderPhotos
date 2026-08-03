@@ -18,8 +18,7 @@ interface CopyImpl {
         appScope.launch {
             copyFiles(
                 files = files,
-                destination = destination,
-                existingTaskId = null
+                destination = destination
             ).collect { progress ->
                 progressChannel.send(
                     element = progress.toGenericProgress()

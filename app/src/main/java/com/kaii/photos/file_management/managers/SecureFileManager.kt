@@ -154,8 +154,7 @@ class SecureFileManager @Inject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Flow<FileOperationProgress<Unit>> = flow {
         try {
             emit(

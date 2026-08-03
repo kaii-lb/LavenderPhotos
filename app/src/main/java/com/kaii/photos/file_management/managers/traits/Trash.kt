@@ -9,7 +9,6 @@ interface Trash {
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Flow<FileOperationProgress<Unit>>
 }

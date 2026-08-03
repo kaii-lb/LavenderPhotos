@@ -34,26 +34,22 @@ class CustomFileManager @Inject constructor(
 ) : LocalSourceFileManager {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
+        destination: AlbumType
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = copyOperation.copyFiles(
         files = files,
-        destination = destination,
-        existingTaskId = existingTaskId
+        destination = destination
     )
 
     override suspend fun moveFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
-        existingTaskId: Int?,
         origin: AlbumType?
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
         var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
 
         copyOperation.copyFiles(
             files = files,
-            destination = destination,
-            existingTaskId = existingTaskId
+            destination = destination
         ).collect { progress ->
             when (progress) {
                 is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
@@ -81,8 +77,7 @@ class CustomFileManager @Inject constructor(
         deleteFiles(
             files = files,
             albumId = destination.id,
-            immichId = destination.immichId,
-            existingTaskId = existingTaskId
+            immichId = destination.immichId
         ).collect { progress ->
             if (progress is FileOperationProgress.Finished) {
                 finalResult = progress.result.mapTo(
@@ -107,8 +102,7 @@ class CustomFileManager @Inject constructor(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Flow<FileOperationProgress<Unit>> = flow {
         check(isTrashed) {
             "Physically impossible to restore files into a custom album"
@@ -136,8 +130,7 @@ class CustomFileManager @Inject constructor(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Flow<FileOperationProgress<Unit>> = flow {
         emit(
             value = FileOperationProgress.Started(
@@ -177,8 +170,7 @@ class CustomFileManager @Inject constructor(
 
     override suspend fun renameAlbum(
         album: AlbumType,
-        newName: String,
-        existingTaskId: Int?
+        newName: String
     ): Result<Unit, FileOperationError> = Result.Success(
         data = renameAlbum.execute(album, newName)
     )
@@ -187,8 +179,7 @@ class CustomFileManager @Inject constructor(
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean,
         albumId: String?,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Result<Unit, FileOperationError> = gateway.favourite(files, isFavourite)
 
     override suspend fun getExifData(

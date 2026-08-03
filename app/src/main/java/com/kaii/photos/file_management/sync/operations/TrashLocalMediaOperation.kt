@@ -32,8 +32,7 @@ class TrashLocalMediaOperation @Inject constructor(
             },
             isTrashed = true,
             albumId = albumId,
-            immichId = null,
-            existingTaskId = null
+            immichId = null
         ).collect { progress ->
             if (progress is FileOperationProgress.Finished) {
                 result = progress.result

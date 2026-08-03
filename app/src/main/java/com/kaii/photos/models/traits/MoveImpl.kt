@@ -20,7 +20,6 @@ interface MoveImpl {
             moveFiles(
                 files = files,
                 destination = destination,
-                existingTaskId = null,
                 origin = origin
             ).collect { progress ->
                 progressChannel.send(

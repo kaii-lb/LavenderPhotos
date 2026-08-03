@@ -30,6 +30,7 @@ import com.kaii.photos.database.migrations.Migration10To11
 import com.kaii.photos.database.migrations.Migration12To13
 import com.kaii.photos.database.migrations.Migration14To15
 import com.kaii.photos.database.migrations.Migration16To17
+import com.kaii.photos.database.migrations.Migration20To21
 import com.kaii.photos.database.migrations.Migration3to4
 import com.kaii.photos.database.migrations.Migration4to5
 import com.kaii.photos.database.migrations.Migration9To10
@@ -47,7 +48,7 @@ import com.kaii.photos.database.migrations.Migration9To10
             ExifData::class,
             SyncTaskItem::class
         ],
-    version = 20,
+    version = 21,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -94,7 +95,8 @@ abstract class MediaDatabase : RoomDatabase() {
                         Migration10To11(),
                         Migration12To13(),
                         Migration14To15(appContext),
-                        Migration16To17(appContext)
+                        Migration16To17(appContext),
+                        Migration20To21()
                     )
                     enableMultiInstanceInvalidation()
                     fallbackToDestructiveMigrationOnDowngrade(false)

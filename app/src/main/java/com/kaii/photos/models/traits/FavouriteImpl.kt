@@ -21,8 +21,7 @@ interface FavouriteImpl {
                 files = files,
                 isFavourite = isFavourite,
                 albumId = album.id,
-                immichId = album.immichId,
-                existingTaskId = null
+                immichId = album.immichId
             )
 
             progressChannel.send(

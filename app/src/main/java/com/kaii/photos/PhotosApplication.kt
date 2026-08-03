@@ -4,6 +4,8 @@ import android.app.Application
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -23,23 +25,32 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltAndroidApp
-class PhotosApplication : Application() {
+class PhotosApplication : Application(), Configuration.Provider {
     companion object {
         lateinit var appModule: AppModule
     }
 
+    @Inject lateinit var localAppModule: AppModule
+    @Inject lateinit var workerFactory : HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            appModule = AppModule(applicationContext)
+        appModule = localAppModule
 
+        CoroutineScope(Dispatchers.IO).launch {
             // try to migrate from an older datastore system on app startup
-            appModule.settings.albums.migrate()
-            appModule.settings.permissions.migrate()
+            localAppModule.settings.albums.migrate()
+            localAppModule.settings.permissions.migrate()
 
             registerContentObserver()
 

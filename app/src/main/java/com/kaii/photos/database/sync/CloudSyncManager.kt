@@ -1,56 +1,80 @@
 package com.kaii.photos.database.sync
 
-import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.SyncTaskDao
+import com.kaii.photos.database.entities.SyncOperation
 import com.kaii.photos.database.entities.SyncTask
-import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.entities.SyncTaskItem
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
-import com.kaii.photos.domain.files.FileOperationItemMetadata
-import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.domain.immich.SyncOutcome
-import com.kaii.photos.domain.mapTo
-import com.kaii.photos.file_management.managers.impl.CloudFileManager
-import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.operations.LocalToCloudOperation
 import com.kaii.photos.file_management.sync.ProgressManager
 import com.kaii.photos.file_management.sync.handlers.CloudCleanupHandler
 import com.kaii.photos.file_management.sync.operations.SyncAllAlbumsOperation
-import kotlinx.coroutines.flow.Flow
+import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumUpdateDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetFavouriteRequest
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.uuid.Uuid
 
 @Singleton
 class CloudSyncManager @Inject constructor(
     private val syncTaskDao: SyncTaskDao,
     private val albums: SettingsAlbumsListImpl,
-    private val cloudFileManager: CloudFileManager,
-    private val localFileManager: LocalFileManager,
-    private val resolveTaskItems: ResolveTaskItemsOperation,
+    private val albumsClient: AlbumsClient,
+    private val assetsClient: AssetsClient,
+    private val localToCloud: LocalToCloudOperation,
     private val syncAllAlbums: SyncAllAlbumsOperation,
     private val cloudCleanup: CloudCleanupHandler,
     private val progressManager: ProgressManager
 ) {
     suspend fun syncUploads(): SyncOutcome {
         val unsynced = syncTaskDao.getUnsyncedTasks()
-        val itemsByTask = unsynced.associateWith { task -> syncTaskDao.getTaskItems(taskId = task.id) }
 
-        progressManager.startTracking(totalItems = itemsByTask.values.sumOf { it.size })
+        val itemsByTaskId = if (unsynced.isEmpty()) {
+            emptyMap()
+        } else {
+            syncTaskDao.getTaskItemRowsForTasks(unsynced.map { it.id }).groupBy { it.taskId }
+        }
 
-        val taskResults = itemsByTask.map { (task, taskItems) ->
-            val files = resolveTaskItems.execute(ids = taskItems.fastMap { it.id })
-            runTask(task, files)
+        progressManager.startTracking(totalItems = itemsByTaskId.values.sumOf { it.size })
+
+        var anyFailure = false
+
+        for (task in unsynced) {
+            val items = itemsByTaskId[task.id].orEmpty()
+
+            val result = try {
+                runTask(task, items)
+            } catch (_: Throwable) {
+                Result.Error(FileOperationError.Failed)
+            }
+
+            when (result) {
+                is Result.Success -> syncTaskDao.markSynced(task.id)
+                is Result.Error -> {
+                    syncTaskDao.markFailedAttempt(task.id, result.error.toString())
+                    anyFailure = true
+                }
+            }
+
+            progressManager.increaseProgressBy(items.size)
         }
 
         ensureTracking()
+
         syncAllAlbums.execute()
         progressManager.stopTracking()
 
         cloudCleanup.cleanUp()
+        syncTaskDao.pruneSyncedTasks()
 
-        return taskResults.toOutcome()
+        return if (anyFailure) SyncOutcome.TransientFailure else SyncOutcome.Success
     }
 
     suspend fun syncFor(albumId: String): SyncOutcome {
@@ -58,14 +82,8 @@ class CloudSyncManager @Inject constructor(
 
         ensureTracking()
         val outcome = when (album) {
-            is AlbumType.Custom -> {
-                syncAllAlbums.executeOne(album)
-            }
-
-            is AlbumType.Folder -> {
-                syncAllAlbums.executeOne(album)
-            }
-
+            is AlbumType.Custom -> syncAllAlbums.executeOne(album)
+            is AlbumType.Folder -> syncAllAlbums.executeOne(album)
             else -> Result.Success(Unit)
         }
 
@@ -80,106 +98,94 @@ class CloudSyncManager @Inject constructor(
 
     private suspend fun runTask(
         task: SyncTask,
-        files: List<FileOperationItemMetadata>
-    ): Result<Unit, FileOperationError> = when (task.type) {
-        SyncTaskType.Upload -> collectAndReport(
-            flow = localFileManager.copyFiles(
-                files = files,
-                destination = AlbumType.Cloud(
-                    id = task.destination!!,
-                    name = "",
-                    pinned = false
-                ),
-                existingTaskId = task.id
-            )
-        )
-
-        SyncTaskType.Trash -> collectAndReport(
-            flow = cloudFileManager.trashFiles(
-                files = files,
-                isTrashed = true,
-                albumId = task.destination!!,
-                immichId = task.destination,
-                existingTaskId = task.id
-            )
-        )
-
-        SyncTaskType.Favourite -> cloudFileManager.favouriteFile(
-            files = files,
-            isFavourite = task.destination!!.toBoolean(),
-            albumId = null,
-            immichId = null,
-            existingTaskId = task.id
-        ).also { if (it is Result.Success) progressManager.increaseProgressBy(files.size) }
-
-        SyncTaskType.Delete -> collectAndReport(
-            flow = cloudFileManager.deleteFiles(
-                files = files,
-                albumId = task.destination!!,
-                immichId = task.extraData!!,
-                existingTaskId = task.id
-            )
-        )
-
-        SyncTaskType.RenameAlbum -> {
-            val album = albums.get().first().first { it.id == task.destination }
-
-            cloudFileManager.renameAlbum(
-                album = album,
-                newName = task.extraData!!,
-                existingTaskId = task.id
-            )
+        items: List<SyncTaskItem>
+    ): Result<Unit, FileOperationError> {
+        val immichIds = items.mapNotNull {
+            it.immichId
+        }.map {
+            Uuid.parse(it)
         }
 
-        SyncTaskType.Copy -> {
-            val album = albums.get().first().first { it.id == task.destination } as AlbumType.Cloud
+        return when (val operation = task.operation) {
+            is SyncOperation.Upload -> {
+                val files = syncTaskDao.getTaskItemsWithLocalFile(task.id)
 
-            collectAndReport(
-                flow = cloudFileManager.copyFiles(
+                if (files.isEmpty()) return Result.Success(Unit)
+
+                when (val result = localToCloud.uploadAndLink(
                     files = files,
-                    destination = album,
-                    existingTaskId = task.id
+                    destinationAlbumId = operation.destinationAlbumId
+                )) {
+                    is Result.Success -> Result.Success(Unit)
+                    is Result.Error -> Result.Error(result.error)
+                }
+            }
+
+            is SyncOperation.AddToAlbum -> {
+                if (immichIds.isEmpty()) return Result.Success(Unit)
+
+                val success = albumsClient.addAssets(
+                    albumId = Uuid.parse(operation.destinationAlbumId),
+                    assetIds = immichIds
                 )
-            )
-        }
 
-        SyncTaskType.Move -> {
-            val album = albums.get().first().first { it.id == task.destination } as AlbumType.Cloud
+                if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
+            }
 
-            collectAndReport(
-                flow = cloudFileManager.moveFiles(
-                    files = files,
-                    destination = album,
-                    existingTaskId = task.id,
-                    origin = AlbumType.Cloud(
-                        id = task.extraData!!,
-                        name = "",
-                        pinned = false
+            is SyncOperation.RemoveFromAlbum -> {
+                if (immichIds.isEmpty()) return Result.Success(Unit)
+
+                val success = albumsClient.removeAssets(
+                    albumId = Uuid.parse(operation.immichAlbumId),
+                    assetIds = immichIds
+                )
+
+                if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
+            }
+
+            is SyncOperation.Delete -> {
+                if (immichIds.isEmpty()) return Result.Success(Unit)
+
+                val success = assetsClient.delete(
+                    ids = immichIds,
+                    force = false
+                )
+
+                if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
+            }
+
+            is SyncOperation.SetFavourite -> {
+                if (immichIds.isEmpty()) return Result.Success(Unit)
+
+                val success = assetsClient.favourite(
+                    request = AssetFavouriteRequest(
+                        ids = immichIds, isFavorite
+                        = operation.isFavourite
                     )
                 )
-            )
-        }
-    }
 
-    private suspend fun <T> collectAndReport(
-        flow: Flow<FileOperationProgress<T>>
-    ): Result<Unit, FileOperationError> {
-        var result: Result<Unit, FileOperationError> = Result.Error(FileOperationError.Failed)
+                if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
+            }
 
-        flow.collect { progress ->
-            when (progress) {
-                is FileOperationProgress.Started -> Unit
-                is FileOperationProgress.ItemDone -> progressManager.increaseProgress()
-                is FileOperationProgress.Finished -> result = progress.result.mapTo(Result.Success(Unit))
+            is SyncOperation.RenameAlbum -> {
+                val album = albums.get().first().firstOrNull { it.id == operation.albumLocalId }
+                    ?: return Result.Error(FileOperationError.Failed)
+
+                val immichId = album.immichId ?: return Result.Success(Unit)
+
+                val success = albumsClient.update(
+                    id = Uuid.parse(immichId),
+                    info = AlbumUpdateDto(
+                        albumName = operation.newName,
+                        albumThumbnailAssetId = null,
+                        description = null,
+                        isActivityEnabled = null,
+                        order = null
+                    )
+                )
+
+                if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
             }
         }
-
-        return result
-    }
-
-    private fun List<Result<Unit, FileOperationError>>.toOutcome(): SyncOutcome = when {
-        any { it is Result.Error && it.error == FileOperationError.Failed } -> SyncOutcome.TransientFailure
-        all { it is Result.Success } -> SyncOutcome.Success
-        else -> SyncOutcome.PermanentFailure
     }
 }

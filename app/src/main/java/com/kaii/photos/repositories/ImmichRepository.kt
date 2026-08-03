@@ -124,37 +124,32 @@ class ImmichRepository(
 
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
-    ) = fileManager.copyFiles(files, destination, existingTaskId)
+        destination: AlbumType
+    ) = fileManager.copyFiles(files, destination)
 
     override suspend fun moveFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType,
-        existingTaskId: Int?,
         origin: AlbumType?
-    ) = fileManager.moveFiles(files, destination, existingTaskId, origin)
+    ) = fileManager.moveFiles(files, destination, origin)
 
     override suspend fun renameAlbum(
         album: AlbumType,
-        newName: String,
-        existingTaskId: Int?
-    ) = fileManager.renameAlbum(album, newName, existingTaskId)
+        newName: String
+    ) = fileManager.renameAlbum(album, newName)
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
+        immichId: String?
+    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ) = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+        immichId: String?
+    ) = fileManager.deleteFiles(files, albumId, immichId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
@@ -164,9 +159,8 @@ class ImmichRepository(
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean,
         albumId: String?,
-        immichId: String?,
-        existingTaskId: Int?
-    ) = fileManager.favouriteFile(files, isFavourite, albumId, immichId, existingTaskId)
+        immichId: String?
+    ) = fileManager.favouriteFile(files, isFavourite, albumId, immichId)
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata

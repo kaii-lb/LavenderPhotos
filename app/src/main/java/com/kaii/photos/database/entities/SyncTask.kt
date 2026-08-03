@@ -2,32 +2,21 @@ package com.kaii.photos.database.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.serialization.Serializable
-
-@Serializable
-enum class SyncTaskStatus {
-    Waiting,
-    Processing,
-    Synced
-}
-
-@Serializable
-enum class SyncTaskType {
-    Delete,
-    Trash,
-    Upload,
-    Favourite,
-    RenameAlbum,
-    Copy,
-    Move
-}
+import androidx.room.TypeConverters
 
 @Entity(tableName = "sync_tasks")
+@TypeConverters(SyncOperationConverters::class)
 data class SyncTask(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val dateModified: Long,
+    val createdAt: Long,
     val status: SyncTaskStatus,
-    val type: SyncTaskType,
-    val destination: String?,
-    val extraData: String? = null
-)
+    val operation: SyncOperation,
+    val isRemoval: Boolean,
+    val attempts: Int = 0,
+    val lastError: String? = null
+) {
+    companion object {
+        const val MAX_ATTEMPTS = 6
+    }
+}
+

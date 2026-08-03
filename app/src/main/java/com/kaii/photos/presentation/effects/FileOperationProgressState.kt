@@ -60,24 +60,30 @@ class FileOperationState(
 
                 is FileOperationProgress.Finished -> {
                     when (val result = progress.result) {
-                        is Result.Error -> when (val error = result.error) {
-                            FileOperationError.Failed -> isError = true
+                        is Result.Error -> {
+                            eventsChannel.send(
+                                element = FileOperationUIEvent.ShowFailureSnackbar
+                            )
 
-                            is FileOperationError.MediaStoreRequest -> {
-                                eventsChannel.send(
-                                    element = FileOperationUIEvent.RequestIntentSender(
-                                        intentSender = error.intentSender
-                                    )
-                                )
-                            }
+                            when (val error = result.error) {
+                                FileOperationError.Failed -> isError = true
 
-                            is FileOperationError.RecoverableException -> {
-                                eventsChannel.send(
-                                    element = FileOperationUIEvent.LaunchDynamicResultIntent(
-                                        intentSender = error.intentSender,
-                                        action = error.action
+                                is FileOperationError.MediaStoreRequest -> {
+                                    eventsChannel.send(
+                                        element = FileOperationUIEvent.RequestIntentSender(
+                                            intentSender = error.intentSender
+                                        )
                                     )
-                                )
+                                }
+
+                                is FileOperationError.RecoverableException -> {
+                                    eventsChannel.send(
+                                        element = FileOperationUIEvent.LaunchDynamicResultIntent(
+                                            intentSender = error.intentSender,
+                                            action = error.action
+                                        )
+                                    )
+                                }
                             }
                         }
 

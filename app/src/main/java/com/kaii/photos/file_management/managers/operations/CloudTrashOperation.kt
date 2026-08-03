@@ -1,9 +1,9 @@
 package com.kaii.photos.file_management.managers.operations
 
+import androidx.compose.ui.util.fastMap
 import com.kaii.photos.database.daos.CustomEntityDao
-import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.SyncTaskType
-import com.kaii.photos.database.track
+import com.kaii.photos.database.entities.SyncOperation
+import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
@@ -18,18 +18,17 @@ import javax.inject.Inject
 import kotlin.uuid.Uuid
 
 class CloudTrashOperation @Inject constructor(
-    private val syncTaskDao: SyncTaskDao,
     private val customDao: CustomEntityDao,
     private val albumsClient: AlbumsClient,
-    private val delete: CloudDeleteOperation
+    private val delete: CloudDeleteOperation,
+    private val recorder: SyncTaskRecorder
 ) {
     fun execute(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ): Flow<FileOperationProgress<Unit>> = flow<FileOperationProgress<Unit>> {
+        immichId: String?
+    ): Flow<FileOperationProgress<Unit>> = flow {
         check(isTrashed) {
             "Cannot restore files to cloud albums!!"
         }
@@ -37,10 +36,7 @@ class CloudTrashOperation @Inject constructor(
         if (files.isEmpty()) return@flow
 
         if (immichId == null) {
-            delete.execute(files, albumId, existingTaskId).collect {
-                emit(value = it)
-            }
-
+            delete.execute(files, albumId).collect { emit(it) }
             return@flow
         }
 
@@ -51,27 +47,42 @@ class CloudTrashOperation @Inject constructor(
             )
         )
 
-        val result = syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.Trash,
-            destination = albumId,
-            ids = files.map { it.id }
-        ) {
-            customDao.deleteAll(ids = files.map { it.id }.toSet(), album = immichId)
+        val ids = files.fastMap { it.id }
 
-            val success = albumsClient.removeAssets(
-                albumId = Uuid.parse(immichId),
-                assetIds = files.map { Uuid.parse(it.immichId!!) }
-            )
+        recorder.record(
+            operation = SyncOperation.RemoveFromAlbum(
+                sourceAlbumId = albumId,
+                immichAlbumId = immichId
+            ),
+            mediaIds = ids,
+            immichIds = files.associate { it.id to it.immichId },
+            applyLocally = {
+                customDao.deleteAll(
+                    ids = ids.toSet(),
+                    album = immichId
+                )
+            },
+            attemptRemote = {
+                val targets = files.mapNotNull { it.immichId }
 
-            if (success) Result.Success(Unit)
-            else Result.Error(FileOperationError.Failed)
+                if (targets.isEmpty()) {
+                    Result.Success(Unit)
+                } else {
+                    val success = albumsClient.removeAssets(
+                        albumId = Uuid.parse(immichId),
+                        assetIds = targets.map { Uuid.parse(it) }
+                    )
+
+                    if (success) Result.Success(Unit)
+                    else Result.Error(FileOperationError.Failed)
+                }
+            }
+        )
+
+        files.forEach {
+            emit(FileOperationProgress.ItemDone(uri = it.uri))
         }
 
-        emit(
-            value = FileOperationProgress.Finished(
-                result = result
-            )
-        )
+        emit(FileOperationProgress.Finished(result = Result.Success(Unit)))
     }.flowOn(Dispatchers.IO)
 }

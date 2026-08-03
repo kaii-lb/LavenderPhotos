@@ -8,7 +8,6 @@ interface Delete {
     suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Flow<FileOperationProgress<Unit>>
 }

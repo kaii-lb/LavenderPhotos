@@ -16,6 +16,8 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.chunkLoadMediaData
 import com.kaii.photos.mediastore.getAllMediaStoreIds
 import com.kaii.photos.mediastore.updateLatestGen
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -26,9 +28,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "com.kaii.photos.database.sync.FirstTimeSyncWorker"
 
-class FirstTimeSyncWorker(
-    private val context: Context,
-    params: WorkerParameters
+class FirstTimeSyncWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted params: WorkerParameters
 ) : CoroutineWorker(appContext = context, params = params) {
     companion object {
         const val PROGRESS = "PROGRESS"

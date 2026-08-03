@@ -9,7 +9,6 @@ interface Favourite {
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean,
         albumId: String?,
-        immichId: String?,
-        existingTaskId: Int?
+        immichId: String?
     ): Result<Unit, FileOperationError>
 }

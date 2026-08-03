@@ -1,15 +1,13 @@
 package com.kaii.photos.file_management.managers.operations
 
-import androidx.compose.ui.util.fastMap
 import androidx.core.net.toUri
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.entities.SyncOperation
 import com.kaii.photos.database.getMediaFromMetadata
-import com.kaii.photos.database.track
+import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -44,70 +42,104 @@ import kotlin.uuid.Uuid
 class LocalToCloudOperation @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
-    private val syncTaskDao: SyncTaskDao,
     private val gateway: MediaStoreGateway,
     private val assetsClient: AssetsClient,
-    private val albumsClient: AlbumsClient
+    private val albumsClient: AlbumsClient,
+    private val recorder: SyncTaskRecorder
 ) {
     fun execute(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType.Cloud,
-        existingTaskId: Int?
+        destination: AlbumType.Cloud
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        send(element = FileOperationProgress.Started(
-            action = FileOperationAction.LongOperationType.Copy,
-            fileCount = files.size
-        ))
+        send(FileOperationProgress.Started(action = FileOperationAction.LongOperationType.Copy, fileCount = files.size))
+
+        if (files.isEmpty()) {
+            send(FileOperationProgress.Finished(Result.Success(emptyList())))
+            return@channelFlow
+        }
 
         val media = mediaDao.getMediaFromMetadata(files)
 
-        val result = syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.Copy,
-            destination = destination.immichId,
-            ids = media.fastMap { it.id }
-        ) {
-            customDao.upsertAll(items = media.map { CustomItem(id = it.id, album = destination.id) })
+        val results = recorder.record(
+            operation = SyncOperation.Upload(
+                destinationAlbumId = destination.immichId
+            ),
+            mediaIds = media.map { it.id },
+            applyLocally = {
+                customDao.upsertAll(
+                    items = media.map {
+                        CustomItem(
+                            id = it.id,
+                            album = destination.id
+                        )
+                    })
 
-            val hashes = withContext(Dispatchers.IO) {
-                media.associate { it.id to (it.hash ?: calculateSha1Checksum(File(it.absolutePath))) }
-            }
-
-            val bulkCheck = assetsClient.check(
-                assets = AssetBulkUploadCheckDto(
-                    assets = media.map { AssetBulkUploadCheckItem(checksum = hashes[it.id]!!, id = it.id.toString()) }
-                )
-            )?.associateBy { it.id } ?: return@track Result.Error(FileOperationError.Failed)
-
-            val semaphore = Semaphore(permits = 5)
-            val trashedItems = mutableListOf<Uuid>()
-
-            val total = media.map { mediaItem ->
-                async {
-                    semaphore.withPermit {
-                        val itemResult = uploadOrLinkItem(mediaItem, hashes, bulkCheck, trashedItems)
-
-                        send(FileOperationProgress.ItemDone(uri = mediaItem.uri))
-
-                        itemResult
-                    }
+                media.map {
+                    FileOperationCopyResult(
+                        id = it.id,
+                        immichId = it.immichId
+                    )
                 }
-            }.awaitAll()
+            },
+            attemptRemote = {
+                when (val result = uploadAndLink(files = files, destinationAlbumId = destination.immichId)) {
+                    is Result.Success -> Result.Success(Unit)
+                    is Result.Error -> Result.Error(result.error)
+                }
+            }
+        )
 
-            assetsClient.restore(ids = trashedItems)
-
-            val success = albumsClient.addAssets(
-                albumId = Uuid.parse(destination.immichId),
-                assetIds = total.fastMap { Uuid.parse(it.immichId!!) }
-            )
-
-            if (success) Result.Success(total) else Result.Error(FileOperationError.Failed)
+        media.forEach {
+            send(FileOperationProgress.ItemDone(uri = it.uri))
         }
 
-        send(FileOperationProgress.Finished(result))
+        send(FileOperationProgress.Finished(Result.Success(results)))
     }.flowOn(Dispatchers.IO)
 
-    suspend fun uploadOrLinkItem(
+    suspend fun uploadAndLink(
+        files: List<FileOperationItemMetadata>,
+        destinationAlbumId: String
+    ): Result<List<FileOperationCopyResult>, FileOperationError> = withContext(Dispatchers.IO) {
+        val media = mediaDao.getMediaFromMetadata(files)
+
+        if (media.isEmpty()) return@withContext Result.Success(emptyList())
+
+        val hashes = media.associate {
+            it.id to (it.hash ?: calculateSha1Checksum(File(it.absolutePath)))
+        }
+
+        val bulkCheck = assetsClient.check(
+            assets = AssetBulkUploadCheckDto(
+                assets = media.map {
+                    AssetBulkUploadCheckItem(
+                        checksum = hashes[it.id]!!,
+                        id = it.id.toString()
+                    )
+                })
+        )?.associateBy { it.id } ?: return@withContext Result.Error(FileOperationError.Failed)
+
+        val semaphore = Semaphore(permits = 5)
+        val trashedItems = mutableListOf<Uuid>()
+
+        val total = media.map { mediaItem ->
+            async {
+                semaphore.withPermit {
+                    uploadOrLinkItem(mediaItem, hashes, bulkCheck, trashedItems)
+                }
+            }
+        }.awaitAll()
+
+        assetsClient.restore(ids = trashedItems)
+
+        val success = albumsClient.addAssets(
+            albumId = Uuid.parse(destinationAlbumId),
+            assetIds = total.mapNotNull { it.immichId }.map { Uuid.parse(it) }
+        )
+
+        if (success) Result.Success(total) else Result.Error(FileOperationError.Failed)
+    }
+
+    private suspend fun uploadOrLinkItem(
         mediaItem: MediaStoreData,
         hashes: Map<Long, String>,
         bulkCheck: Map<String, AssetBulkUploadCheckResult>,

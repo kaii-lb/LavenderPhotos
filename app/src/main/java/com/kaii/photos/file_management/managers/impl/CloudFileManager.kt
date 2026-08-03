@@ -3,10 +3,9 @@ package com.kaii.photos.file_management.managers.impl
 import android.content.Intent
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.entities.SyncOperation
 import com.kaii.photos.database.getMediaFromMetadata
-import com.kaii.photos.database.track
+import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -56,44 +55,99 @@ import kotlin.uuid.Uuid
 class CloudFileManager @Inject constructor(
     private val mediaDao: MediaDao,
     private val customDao: CustomEntityDao,
-    private val syncTaskDao: SyncTaskDao,
     private val albumsClient: AlbumsClient,
     private val gateway: MediaStoreGateway,
     private val copyOperation: CloudSourceCopyOperation,
-    private val renameAlbum: RenameAlbumOperation,
+    private val renameAlbumOperation: RenameAlbumOperation,
     private val cloudResolveShareable: CloudResolveShareableItemOperation,
     private val trash: CloudTrashOperation,
     private val delete: CloudDeleteOperation,
-    private val favourite: CloudFavouriteOperation
+    private val favourite: CloudFavouriteOperation,
+    private val recorder: SyncTaskRecorder
 ) : Copy, Move, Trash, Delete, Favourite, Share, RenameAlbum, ExtractExif, CountAndSize {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
-    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = copyOperation.copyItems(files, destination, existingTaskId)
+        destination: AlbumType
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = copyOperation.copyItems(files, destination)
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ): Flow<FileOperationProgress<Unit>> = trash.execute(files, isTrashed, albumId, immichId, existingTaskId)
+        immichId: String?
+    ): Flow<FileOperationProgress<Unit>> = trash.execute(files, isTrashed, albumId, immichId)
 
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ): Flow<FileOperationProgress<Unit>> = delete.execute(files, immichId ?: albumId, existingTaskId)
+        immichId: String?
+    ): Flow<FileOperationProgress<Unit>> = delete.execute(files, immichId ?: albumId)
 
     override suspend fun favouriteFile(
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean,
         albumId: String?,
-        immichId: String?,
-        existingTaskId: Int?
-    ): Result<Unit, FileOperationError> = favourite.execute(files, isFavourite, existingTaskId)
+        immichId: String?
+    ): Result<Unit, FileOperationError> = favourite.execute(files, isFavourite)
+
+    override suspend fun moveFiles(
+        files: List<FileOperationItemMetadata>,
+        destination: AlbumType,
+        origin: AlbumType?
+    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
+        requireNotNull(origin) {
+            "${CloudFileManager::class.simpleName} cannot move without an origin"
+        }
+
+        var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
+
+        copyFiles(files = files, destination = destination).collect { progress ->
+            when (progress) {
+                is FileOperationProgress.Started -> send(
+                    element = FileOperationProgress.Started(
+                        action = FileOperationAction.LongOperationType.Move,
+                        fileCount = files.size
+                    )
+                )
+
+                is FileOperationProgress.ItemDone -> send(progress)
+
+                is FileOperationProgress.Finished -> copyResult = progress.result
+            }
+        }
+
+        val copied = copyResult
+        if (copied !is Result.Success) {
+            send(
+                element = FileOperationProgress.Finished(
+                    result = copied ?: Result.Error(
+                        FileOperationError.Failed
+                    )
+                )
+            )
+
+            return@channelFlow
+        }
+
+        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
+
+        trashFiles(
+            files = files,
+            isTrashed = true,
+            albumId = origin.id,
+            immichId = origin.immichId
+        ).collect { progress ->
+            if (progress is FileOperationProgress.Finished) {
+                finalResult = progress.result.mapTo(to = copied)
+            }
+        }
+
+        send(
+            element = FileOperationProgress.Finished(
+                result = finalResult ?: Result.Error(FileOperationError.Failed)
+            )
+        )
+    }
 
     fun getRawShareFiles(
         files: List<FileOperationItemMetadata>
@@ -165,34 +219,40 @@ class CloudFileManager @Inject constructor(
 
     override suspend fun renameAlbum(
         album: AlbumType,
-        newName: String,
-        existingTaskId: Int?
+        newName: String
     ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
-        syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.RenameAlbum,
-            destination = album.id,
-            ids = emptyList()
-        ) {
-            val success = albumsClient.update(
-                id = Uuid.parse(album.id),
-                info = AlbumUpdateDto(
-                    albumName = newName,
-                    albumThumbnailAssetId = null,
-                    description = null,
-                    isActivityEnabled = null,
-                    order = null
-                )
-            )
+        val immichId = album.immichId
 
-            if (success) {
-                renameAlbum.execute(album, newName)
-
+        recorder.record(
+            operation = SyncOperation.RenameAlbum(
+                albumLocalId = album.id,
+                newName = newName
+            ),
+            mediaIds = emptyList(),
+            applyLocally = {
+                renameAlbumOperation.execute(album, newName)
                 Result.Success(Unit)
-            } else {
-                Result.Error(FileOperationError.Failed)
+            },
+            attemptRemote = {
+                if (immichId == null) {
+                    Result.Success(Unit)
+                } else {
+                    val success = albumsClient.update(
+                        id = Uuid.parse(immichId),
+                        info = AlbumUpdateDto(
+                            albumName = newName,
+                            albumThumbnailAssetId = null,
+                            description = null,
+                            isActivityEnabled = null,
+                            order = null
+                        )
+                    )
+
+                    if (success) Result.Success(Unit)
+                    else Result.Error(FileOperationError.Failed)
+                }
             }
-        }
+        )
     }
 
     override suspend fun getExifData(
@@ -232,67 +292,6 @@ class CloudFileManager @Inject constructor(
         }
 
         Result.Success(data = exifData)
-    }
-
-    override suspend fun moveFiles(
-        files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?,
-        origin: AlbumType?
-    ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        requireNotNull(origin) { "${CloudFileManager::class.simpleName} cannot move without an origin" }
-
-        var copyResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
-
-        copyFiles(
-            files = files,
-            destination = destination,
-            existingTaskId = existingTaskId
-        ).collect { progress ->
-            when (progress) {
-                is FileOperationProgress.Started -> send(
-                    element = FileOperationProgress.Started(
-                        action = FileOperationAction.LongOperationType.Move,
-                        fileCount = files.size
-                    )
-                )
-
-                is FileOperationProgress.ItemDone -> send(progress)
-                is FileOperationProgress.Finished -> copyResult = progress.result
-            }
-        }
-
-        if (copyResult == null || copyResult is Result.Error) {
-            send(
-                element = FileOperationProgress.Finished(
-                    result = Result.Error((copyResult as Result.Error).error)
-                )
-            )
-
-            return@channelFlow
-        }
-
-        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
-
-        trashFiles(
-            files = files,
-            isTrashed = true,
-            albumId = origin.id,
-            immichId = origin.immichId,
-            existingTaskId = existingTaskId
-        ).collect { progress ->
-            if (progress is FileOperationProgress.Finished) {
-                finalResult = progress.result.mapTo(
-                    to = copyResult as Result.Success
-                )
-            }
-        }
-
-        send(
-            element = FileOperationProgress.Finished(
-                result = finalResult ?: Result.Error(FileOperationError.Failed)
-            )
-        )
     }
 
     override suspend fun getMediaCount(

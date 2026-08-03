@@ -131,7 +131,6 @@ class TrashRepository(
             )
         },
         albumId = "",
-        existingTaskId = null,
         immichId = null
     ).collect()
 
@@ -163,17 +162,15 @@ class TrashRepository(
     override suspend fun deleteFiles(
         files: List<FileOperationItemMetadata>,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ) = fileManager.deleteFiles(files, albumId, immichId, existingTaskId)
+        immichId: String?
+    ) = fileManager.deleteFiles(files, albumId, immichId)
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
-        immichId: String?,
-        existingTaskId: Int?
-    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId, existingTaskId)
+        immichId: String?
+    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId)
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>

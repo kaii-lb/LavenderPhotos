@@ -1,11 +1,12 @@
 package com.kaii.photos.file_management.managers.operations
 
 import androidx.compose.ui.util.fastMap
+import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
-import com.kaii.photos.database.daos.SyncTaskDao
-import com.kaii.photos.database.entities.SyncTaskType
+import com.kaii.photos.database.entities.CustomItem
+import com.kaii.photos.database.entities.SyncOperation
 import com.kaii.photos.database.getMediaFromMetadata
-import com.kaii.photos.database.track
+import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
@@ -32,138 +33,133 @@ import kotlin.uuid.Uuid
 
 class CloudSourceCopyOperation @Inject constructor(
     private val mediaDao: MediaDao,
-    private val syncTaskDao: SyncTaskDao,
+    private val customDao: CustomEntityDao,
     private val gateway: AndroidMediaStoreGateway,
     private val assetsClient: AssetsClient,
     private val albumsClient: AlbumsClient,
-    private val toCustom: LocalToCustomOperation
+    private val toCustom: LocalToCustomOperation,
+    private val recorder: SyncTaskRecorder
 ) {
     fun copyItems(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
+        destination: AlbumType
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> =
         when (destination) {
-            is AlbumType.Folder -> copyToLocal(files, destination, existingTaskId)
+            is AlbumType.Folder -> copyToLocal(files, destination)
 
-            is AlbumType.Custom -> copyToCustom(files, destination, existingTaskId)
+            is AlbumType.Custom -> copyToCustom(files, destination)
 
-            is AlbumType.Cloud -> copyToCloud(files, destination, existingTaskId)
+            is AlbumType.Cloud -> copyToCloud(files, destination)
 
             else -> throw IllegalArgumentException("Cannot copy files to a placeholder album!")
         }
 
+    // TODO: add a task for this to download to local later but show result immediately
     private fun copyToLocal(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType.Folder,
-        existingTaskId: Int?
+        destination: AlbumType.Folder
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        send(element = FileOperationProgress.Started(
-            action = FileOperationAction.LongOperationType.Copy,
-            fileCount = files.size
-        ))
+        send(FileOperationProgress.Started(action = FileOperationAction.LongOperationType.Copy, fileCount = files.size))
 
-        val result = syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.Copy,
-            destination = destination.immichId,
-            ids = files.fastMap { it.id }
-        ) {
-            val mediaItems = mediaDao.getMediaFromMetadata(files).associateBy { it.id }
+        val mediaItems = mediaDao.getMediaFromMetadata(files).associateBy { it.id }
+        val semaphore = Semaphore(permits = 5)
 
-            val semaphore = Semaphore(permits = 5)
+        val result = files.map { item ->
+            async {
+                semaphore.withPermit {
+                    val media = mediaItems[item.id]!!
+                    var newId = 0L
 
-            val result = files.map { item ->
-                async {
-                    semaphore.withPermit {
-                        val media = mediaItems[item.id]!!
-
-                        var newId = 0L
-                        destination.paths.forEach { path ->
-                            val newUri = when (val inserted = gateway.insertMedia(media, path)) {
-                                is Result.Success -> inserted.data
-                                is Result.Error -> return@async null
-                            }
-
-                            when (val result = gateway.getContentId(newUri, media.type)) {
-                                is Result.Error -> return@async null
-                                is Result.Success -> newId = result.data
-                            }
-
-                            val downloaded = assetsClient.download(
-                                id = Uuid.parse(item.immichId!!),
-                                channel = gateway.getWriteChannel(newUri)
-                            )
-
-                            if (!downloaded) return@async null
-
-                            gateway.setDateForMedia(
-                                uri = newUri,
-                                type = media.type,
-                                dateTaken = media.dateTaken
-                            )
+                    destination.paths.forEach { path ->
+                        val newUri = when (val inserted = gateway.insertMedia(media, path)) {
+                            is Result.Success -> inserted.data
+                            is Result.Error -> return@async null
                         }
 
-                        send(element = FileOperationProgress.ItemDone(uri = item.uri))
+                        when (val contentId = gateway.getContentId(newUri, media.type)) {
+                            is Result.Error -> return@async null
+                            is Result.Success -> newId = contentId.data
+                        }
 
-                        FileOperationCopyResult(
-                            id = newId,
-                            immichId = item.immichId
+                        val downloaded = assetsClient.download(
+                            id = Uuid.parse(item.immichId!!),
+                            channel = gateway.getWriteChannel(newUri)
+                        )
+
+                        if (!downloaded) return@async null
+
+                        gateway.setDateForMedia(
+                            uri = newUri,
+                            type = media.type,
+                            dateTaken = media.dateTaken
                         )
                     }
+
+                    send(FileOperationProgress.ItemDone(uri = item.uri))
+                    FileOperationCopyResult(id = newId, immichId = item.immichId)
                 }
-            }.awaitAll().filterNotNull()
+            }
+        }.awaitAll().filterNotNull()
 
-            gateway.enqueueSyncWorker(albumId = destination.id)
+        gateway.enqueueSyncWorker(albumId = destination.id)
 
-            Result.Success(result)
-        }
-
-        send(element = FileOperationProgress.Finished(result))
+        send(
+            element = FileOperationProgress.Finished(
+                result =
+                    if (result.isNotEmpty() || files.isEmpty()) Result.Success(result)
+                    else Result.Error(FileOperationError.Failed
+                    )
+            )
+        )
     }.flowOn(Dispatchers.IO)
 
     private fun copyToCloud(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType.Cloud,
-        existingTaskId: Int?
+        destination: AlbumType.Cloud
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
-        send(element = FileOperationProgress.Started(
-            action = FileOperationAction.LongOperationType.Copy,
-            fileCount = files.size
-        ))
+        send(FileOperationProgress.Started(action = FileOperationAction.LongOperationType.Copy, fileCount = files.size))
 
-        val result = syncTaskDao.track(
-            existingTaskId = existingTaskId,
-            type = SyncTaskType.Copy,
-            destination = destination.immichId,
-            ids = files.fastMap { it.id }
-        ) {
-            val success = albumsClient.addAssets(
-                albumId = Uuid.parse(destination.immichId),
-                assetIds = files.fastMap { Uuid.parse(it.immichId!!) }
-            )
-
-            if (success) {
-                Result.Success(
-                    data = files.map { file ->
-                        FileOperationCopyResult(
-                            id = file.id,
-                            immichId = file.immichId
-                        )
-                    }
-                )
-            } else {
-                Result.Error(FileOperationError.Failed)
-            }
+        if (files.isEmpty()) {
+            send(FileOperationProgress.Finished(Result.Success(emptyList())))
+            return@channelFlow
         }
 
-        send(element = FileOperationProgress.Finished(result))
+        val media = mediaDao.getMediaFromMetadata(files)
+
+        val results = recorder.record(
+            operation = SyncOperation.AddToAlbum(
+                destinationAlbumId = destination.immichId
+            ),
+            mediaIds = media.map { it.id },
+            immichIds = files.associate { it.id to it.immichId },
+            applyLocally = {
+                customDao.upsertAll(items = media.map { CustomItem(id = it.id, album = destination.id) })
+                files.map { FileOperationCopyResult(id = it.id, immichId = it.immichId) }
+            },
+            attemptRemote = {
+                val targets = files.mapNotNull { it.immichId }
+
+                if (targets.isEmpty()) {
+                    Result.Success(Unit)
+                } else {
+                    val success = albumsClient.addAssets(
+                        albumId = Uuid.parse(destination.immichId),
+                        assetIds = targets.map { Uuid.parse(it) }
+                    )
+
+                    if (success) Result.Success(Unit)
+                    else Result.Error(FileOperationError.Failed)
+                }
+            }
+        )
+
+        files.forEach { send(FileOperationProgress.ItemDone(uri = it.uri)) }
+        send(FileOperationProgress.Finished(Result.Success(results)))
     }.flowOn(Dispatchers.IO)
 
     private fun copyToCustom(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType.Custom,
-        existingTaskId: Int?
+        destination: AlbumType.Custom
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>> = channelFlow {
         if (files.isEmpty()) return@channelFlow
 
@@ -177,7 +173,7 @@ class CloudSourceCopyOperation @Inject constructor(
             paths = setOf(appCloudFolderDir.absolutePath)
         )
 
-        copyToLocal(files, tempFolder, existingTaskId).collect { progress ->
+        copyToLocal(files, tempFolder).collect { progress ->
             when (progress) {
                 is FileOperationProgress.Started -> send(element = progress)
 

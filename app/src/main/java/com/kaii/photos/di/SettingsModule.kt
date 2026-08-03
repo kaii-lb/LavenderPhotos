@@ -1,6 +1,6 @@
 package com.kaii.photos.di
 
-import com.kaii.photos.PhotosApplication
+import android.content.Context
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.preferences.SettingsBehaviourImpl
@@ -14,7 +14,9 @@ import com.kaii.photos.file_management.sync.ProgressManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 
 @Module
@@ -22,41 +24,53 @@ import javax.inject.Singleton
 object SettingsModule {
     @Provides
     @Singleton
-    fun provideSettings(): Settings = PhotosApplication.appModule.settings
+    fun provideSettings(
+        @ApplicationContext context: Context,
+        @ApplicationScope scope: CoroutineScope
+    ): Settings = Settings(
+        context = context,
+        scope = scope
+    )
 
     @Provides
     @Singleton
-    fun provideProgressManager(): ProgressManager = PhotosApplication.appModule.cloudProgressManager
+    fun provideProgressManager(
+        @ApplicationScope scope: CoroutineScope,
+        settings: SettingsImmichImpl
+    ): ProgressManager = ProgressManager(
+        scope = scope,
+        settings = settings
+    )
 
     @Provides
     @Singleton
-    fun provideSettingsAlbumsList(): SettingsAlbumsListImpl = PhotosApplication.appModule.settings.albums
+    fun provideSettingsAlbumsList(settings: Settings): SettingsAlbumsListImpl = settings.albums
 
     @Provides
     @Singleton
-    fun provideSettingsImmichImpl(): SettingsImmichImpl = PhotosApplication.appModule.settings.immich
+    fun provideSettingsImmichImpl(settings: Settings): SettingsImmichImpl = settings.immich
 
     @Provides
     @Singleton
-    fun provideSettingsPhotoGridImpl(): SettingsPhotoGridImpl = PhotosApplication.appModule.settings.photoGrid
+    fun provideSettingsPhotoGridImpl(settings: Settings): SettingsPhotoGridImpl = settings.photoGrid
 
     @Provides
     @Singleton
-    fun provideSettingsLookAndFeelImpl(): SettingsLookAndFeelImpl = PhotosApplication.appModule.settings.lookAndFeel
+    fun provideSettingsLookAndFeelImpl(settings: Settings): SettingsLookAndFeelImpl = settings.lookAndFeel
 
     @Provides
     @Singleton
-    fun provideSettingsBehaviourImpl(): SettingsBehaviourImpl = PhotosApplication.appModule.settings.behaviour
+    fun provideSettingsBehaviourImpl(settings: Settings): SettingsBehaviourImpl = settings.behaviour
 
     @Provides
     @Singleton
-    fun provideSettingsStorageImpl(): SettingsStorageImpl = PhotosApplication.appModule.settings.storage
+    fun provideSettingsStorageImpl(settings: Settings): SettingsStorageImpl = settings.storage
 
     @Provides
     @Singleton
-    fun provideSettingsPermissionsImpl(): SettingsPermissionsImpl = PhotosApplication.appModule.settings.permissions
+    fun provideSettingsPermissionsImpl(settings: Settings): SettingsPermissionsImpl = settings.permissions
 
     @Provides
     @Singleton
-    fun provideSettingsVersionImpl(): SettingsVersionImpl = PhotosApplication.appModule.settings.versions
+    fun provideSettingsVersionImpl(settings: Settings): SettingsVersionImpl = settings.versions
 }

@@ -7,7 +7,6 @@ import com.kaii.photos.domain.files.FileOperationError
 interface RenameAlbum {
     suspend fun renameAlbum(
         album: AlbumType,
-        newName: String,
-        existingTaskId: Int?
+        newName: String
     ): Result<Unit, FileOperationError>
 }

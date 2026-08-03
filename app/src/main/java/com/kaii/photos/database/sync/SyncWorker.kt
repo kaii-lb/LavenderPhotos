@@ -2,19 +2,23 @@ package com.kaii.photos.database.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.hilt.work.HiltWorker
 import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.getAllMediaStoreIds
 import com.kaii.photos.mediastore.loadMediaDataDelta
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlin.time.Clock
 
 private const val TAG = "com.kaii.photos.database.sync.SyncWorker"
 
-class SyncWorker(
-    private val context: Context,
-    params: WorkerParameters
+@HiltWorker
+class SyncWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted params: WorkerParameters
 ) : CoroutineWorker(appContext = context, params = params) {
     override suspend fun doWork(): Result {
         val startTime = Clock.System.now()

@@ -6,31 +6,23 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
-import com.kaii.photos.BuildConfig
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.createAlbumGridState
 import com.kaii.photos.file_management.sync.ProgressManager
-import io.github.kaii_lb.lavender.immichintegration.clients.buildApiClient
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.SupervisorJob
+import javax.inject.Inject
 
 @OptIn(UnstableApi::class)
-class AppModule(
-    context: Context
+class AppModule @Inject constructor(
+    @ApplicationContext context: Context,
+    val settings: Settings,
+    val apiClient: ApiClient,
+    @param:ApplicationScope val scope: CoroutineScope,
+    val db: MediaDatabase
 ) {
-    val settings by lazy {
-        Settings(context.applicationContext, MainScope())
-    }
-
-    val apiClient by lazy {
-        buildApiClient(debugMode = BuildConfig.DEBUG)
-    }
-
-    val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
     val albumGridState by lazy {
         createAlbumGridState(
             context = context,
@@ -52,9 +44,5 @@ class AppModule(
             scope = scope,
             settings = settings.immich
         )
-    }
-
-    val db by lazy {
-        MediaDatabase.getInstance(context.applicationContext)
     }
 }

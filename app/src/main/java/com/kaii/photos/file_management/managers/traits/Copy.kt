@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 interface Copy {
     suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
+        destination: AlbumType
     ): Flow<FileOperationProgress<List<FileOperationCopyResult>>>
 }

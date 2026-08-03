@@ -11,14 +11,13 @@ class LocalSourceCopyOperation @Inject constructor(
 ) {
     fun copyFiles(
         files: List<FileOperationItemMetadata>,
-        destination: AlbumType,
-        existingTaskId: Int?
+        destination: AlbumType
     ) = when (destination) {
         is AlbumType.Folder -> toLocal.execute(files = files, destination = destination)
 
         is AlbumType.Custom -> toCustom.execute(mediaIds = files.map { it.id }, destination = destination)
 
-        is AlbumType.Cloud -> toCloud.execute(files = files, destination = destination, existingTaskId = existingTaskId)
+        is AlbumType.Cloud -> toCloud.execute(files = files, destination = destination)
 
         else -> throw IllegalArgumentException("Cannot copy files to a placeholder album!")
     }
