@@ -459,7 +459,7 @@
     <string name="search_by_tag">Tag</string>
     <string name="search_no_tags_found">Nie dodano jeszcze żadnych tagów…</string>
     <string name="management">Zarządzanie</string>
-    <string name="error_views_main_empty">Wydaje się pusto…</string>
+    <string name="error_views_main_empty">Wygląda pusto…</string>
     <string name="look_and_feel_views">Widoki</string>
     <string name="look_and_feel_views_blur">Rozmycie tła</string>
     <string name="look_and_feel_views_blur_desc">Wypełnij tło rozmytą wersją bieżącego obrazu</string>
@@ -500,13 +500,13 @@
     <string name="error">Błąd!</string>
     <string name="exif_date_changer_go_back">Wróć do selektora dat</string>
     <string name="albums_is_cloud">Album dostępny wyłącznie w chmurze</string>
-    <string name="media_snackbar_operation_failed">Synchronizacja nieudana!</string>
+    <string name="media_snackbar_operation_failed">Operacja nieudana!</string>
     <string name="media_copy_snackbar_title">Kopiowanie elementów…</string>
     <string name="media_move_snackbar_title">Przenoszenie elementów…</string>
     <string name="media_delete_snackbar_title">Usuwanie elementów…</string>
-    <string name="media_copy_snackbar_body">Kopiowanie %1$d z %2$d</string>
-    <string name="media_move_snackbar_body">Przenoszenie %1$d z %2$d</string>
-    <string name="media_delete_snackbar_body">Usuwanie %1$d z %2$d</string>
+    <string name="media_copy_snackbar_body">Skopiowano %1$d z %2$d</string>
+    <string name="media_move_snackbar_body">Przeniesiono %1$d z %2$d</string>
+    <string name="media_delete_snackbar_body">Usunięto %1$d z %2$d</string>
     <string name="look_and_feel_vibrate_on_media_click">Wibracje po kliknięciu</string>
     <string name="look_and_feel_vibrate_on_media_click_desc">Stuknięcie w element multimedialny powoduje krótką wibrację.</string>
     <string name="albums_is_cloud_linked">To album połączony z chmurą</string>
@@ -680,4 +680,11 @@
     <string name="debugging_report_issue_feature_desc">Zaproponuj funkcję do dodania do tej aplikacji</string>
     <string name="debugging_report_issue_other">Inne</string>
     <string name="debugging_report_issue_other_desc">Zgłoś coś innego</string>
+    <string name="media_share_failed">Udostępnianie multimediów nie powiodło się!</string>
+    <string name="media_secure_snackbar_title">Zabezpieczanie elementów…</string>
+    <string name="media_restore_snackbar_title">Przywracanie elementów…</string>
+    <string name="media_share_snackbar_title">Udostępnianie elementów…</string>
+    <string name="media_share_snackbar_body">Udostępniono %1$d z %2$d</string>
+    <string name="media_secure_snackbar_body">Zabezpieczono %1$d z %2$d</string>
+    <string name="media_restore_snackbar_body">Przywrócono %1$d z %2$d</string>
 </resources>

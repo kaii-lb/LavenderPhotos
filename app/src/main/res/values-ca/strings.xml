@@ -15,7 +15,7 @@
     <string name="albums_clear_list_desc">Elimina tots els grups d\'àlbums i directoris d\'àlbums tot conservant els àlbums personalitzats i els del núvol</string>
     <string name="albums_clear_list_done">S\'ha buidat la llista d\'àlbums</string>
     <string name="albums_media_sorting">Ordenació del contingut multimèdia</string>
-    <string name="albums_media_sorting_desc">Estipula la ordenació de les fotos i vídeos en quadrícules. Mode actual: %1$s</string>
+    <string name="albums_media_sorting_desc">Estipula la ordenació de les fotos i vídeos en graelles. Mode actual: %1$s</string>
     <string name="media_broken">Contingut multimèdia malmès</string>
     <string name="media_share">Compartir</string>
     <string name="media_delete">Eliminar</string>
@@ -244,7 +244,15 @@
     <string name="favourites_migration_notice">Preferits</string>
     <string name="favourites_migration_started">Ha començat la migració!</string>
     <string name="favourites_migration_none">No hi ha elements per migrar</string>
-    <string name="updates_notice_desc"><![CDATA[<p>Aquest actualitzador NO descarrega fitxers APK. Només enllaça a <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>.\nAixò significa que aquests APK no passen pels processos de revisió i proves addicionals realitzats a IzzyOnDroid, F-Droid o d\'altres.\n\nLes compilacions allotjades a GitHub estan sempre signades, comprovades i verificades pel desenvolupador (kaii-lb), però utilitzar-les depèn de tu.\n\nLavender Photos no mai s\'actualitza automàticament, i només s\'actualitza amb el consentiment explícit de l\'usuari.\n</p>]]></string>
+    <string name="updates_notice_desc"><![CDATA[
+<p>Aquest actualitzador NO descarrega fitxers APK. Només enllaça a <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>.
+Això significa que aquests APK no passen pels processos de revisió i proves addicionals realitzats a IzzyOnDroid, F-Droid o d'altres.
+
+Les compilacions allotjades a GitHub estan sempre signades, comprovades i verificades pel desenvolupador (kaii-lb), però utilitzar-les depèn de tu.
+
+Lavender Photos no mai s'actualitza automàticament, i només s'actualitza amb el consentiment explícit de l'usuari.
+</p>
+        ]]></string>
     <string name="favourites_migration_declined_desc">Lavender Photos no pot transferir els teus preferits des de la versió antiga si no li dones els permisos per fer-ho! Això significa que perdràs els elements que s\'havien marcat com a preferits.</string>
     <string name="debugging">Depuració</string>
     <string name="debugging_development">Desenvolupament</string>
@@ -285,7 +293,7 @@
     <string name="video_play_toggle">Canvia entre reproducció i pausa d\'aquest vídeo</string>
     <string name="video_decrypting">Desxifrant el vídeo, espereu</string>
     <string name="video_open_externally">Obre amb un reproductor extern</string>
-    <string name="video_open_externally_desc">Pregunta amb què s\'obriran els vídeos quan es toquin des d\'una quadrícula</string>
+    <string name="video_open_externally_desc">Pregunta amb què s\'obriran els vídeos quan es toquin des d\'una graella</string>
     <string name="video_change_audio_track">Canvia la pista d\'àudio d\'aquest vídeo</string>
     <string name="edit">Edita</string>
     <string name="editing">Editant</string>
@@ -431,7 +439,7 @@
     <string name="look_and_feel_date_format_datetime_taken">Data i hora de captura</string>
     <string name="look_and_feel_column_size">Amplada de columna: %1$d</string>
     <string name="look_and_feel_album_column_size">Amplada de la columna d\'àlbum: %1$d</string>
-    <string name="look_and_feel_grids">Quadrícula</string>
+    <string name="look_and_feel_grids">Graelles</string>
     <string name="look_and_feel_use_black_background">Fons negre per a la vista del contingut multimèdia</string>
     <string name="look_and_feel_use_black_background_desc">El fons del visor d\'imatges o el reproductor de vídeos serà negre</string>
     <string name="look_and_feel_nav">Navegació</string>
@@ -521,4 +529,97 @@
     <string name="settings_storage_export_quality">Qualitat d\'exportació de l\'editor: %d%%</string>
     <string name="settings_storage_export_quality_warn">Els valors elevats comportaran mides d\'imatge majors.</string>
     <string name="app_lock_submit">Envia el PIN per comprovar</string>
+    <string name="debugging_reset_scan_generation_desc">Examina tot el contingut multimèdia del dispositiu i l\'afegeix a la base de dades de l\'aplicació. Utilitza-ho si algunes imatges no apareixen</string>
+    <string name="permissions_media_manager_desc">Accions llençar a la paperera/eliminar/copiar/moure més ràpides i millors</string>
+    <string name="permissions_manage_media_explanation">Aquest permís és opcional, però altament recomanat. Gestionar permisos del contingut multimèdia permet a Lavender Photos utilitzar l\'API de resolució de continguts d\'Android per llençar a la paperera/eliminar/moure/copiar els continguts, que fa el procés molt més fluït i transversal amb altres aplicacions.</string>
+    <string name="media_share_failed">Ha fallat la compartició del contingut multimèdia!</string>
+    <string name="media_secure_snackbar_title">Protegint elements…</string>
+    <string name="media_restore_snackbar_title">Restaurant elements…</string>
+    <string name="media_share_snackbar_title">Compartint elements…</string>
+    <string name="media_share_snackbar_body">Compartit %1$d de %2$d</string>
+    <string name="media_secure_snackbar_body">Protegit %1$d de %2$d</string>
+    <string name="media_restore_snackbar_body">Restaurat %1$d de %2$d</string>
+    <string name="app_lock_backspace">Elimina el darrer caràcter introduït</string>
+    <string name="bottom_sheets_enter_text">Escriu text</string>
+    <string name="bottom_sheets_freeform">Forma lliure</string>
+    <string name="bottom_sheets_square">Quadrat</string>
+    <string name="bottom_sheets_image_ratio">Proporció d\'imatge</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (horizontal)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (vertical)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+    <string name="bottom_sheets_ratio_selected">Aquesta proporció de retall està seleccionada</string>
+    <string name="error_views_album_empty">Aquest àlbum està buit</string>
+    <string name="error_views_search_not_found">No s\'ha trobat cap coincidència</string>
+    <string name="look_and_feel_extra_secure_nav">Accés extra a la carpeta protegida</string>
+    <string name="look_and_feel_extra_secure_nav_desc">Mostra una opció per accedir a la carpeta protegida des del menú principal de l\'aplicació</string>
+    <string name="look_and_feel_rounded_corners">Arrodoneix les cantonades de les miniatures</string>
+    <string name="look_and_feel_rounded_corners_desc">Arrodoneix les cantonades de les miniatures a les graelles de fotos</string>
+    <string name="look_and_feel_views">Vistes</string>
+    <string name="look_and_feel_views_blur">Desenfoc del fons</string>
+    <string name="look_and_feel_views_blur_desc">Omple el fons amb una versió desenfocada de la imatge actual</string>
+    <string name="look_and_feel_vibrate_on_media_click">Vibra en clicar</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">Quan es toqui un contingut multimèdia farà una breu vibració.</string>
+    <string name="look_and_feel_language">Idioma</string>
+    <string name="look_and_feel_language_selected">Aquest és l\'idioma escollit</string>
+    <string name="look_and_feel_app_language">Idioma de l\'aplicació</string>
+    <string name="look_and_feel_app_language_desc">Canvia l\'idioma de visualització de l\'aplicació. Pot necessitar que reiniciïs l\'aplicació. Actualment: %1$s</string>
+    <string name="look_and_feel_palette">Paleta de colors</string>
+    <string name="look_and_feel_palette_desc">Canvia l\'esquema de colors de l\'aplicació</string>
+    <string name="immich_email">Correu electrònic:</string>
+    <string name="immich_state_unknown">Desconegut</string>
+    <string name="immich_auth_password">Contrasenya</string>
+    <string name="immich_auth_email">Correu electrònic</string>
+    <string name="immich_auth_api_key">Clau API</string>
+    <string name="immich_auth_current_password">Contrasenya actual</string>
+    <string name="immich_auth_new_password">Nova contrasenya</string>
+    <string name="immich_auth_repeat_new_password">Repeteix la contrasenya</string>
+    <string name="immich_auth_show_password">Mostra la contrasenya</string>
+    <string name="immich_auth_password_same_as_old">La nova contrasenya no pot ser igual que l\'actual</string>
+    <string name="immich_auth_password_do_not_match">Les noves contrasenyes no coincideixen</string>
+    <string name="immich_auth_password_too_short">La contrasenya ha de tenir 8 caràcters com a mínim</string>
+    <string name="immich_auth_password_current_blank">La contrasenya actual no pot estar buida</string>
+    <string name="immich_auth_password_good_to_go">Preparat per canviar la contrasenya!</string>
+    <string name="immich_auth_hide_password">Mostra o amaga la contrasenya</string>
+    <string name="immich_auth_login_with_api_key">Inicia la sessió amb la clau API</string>
+    <string name="immich_auth_login_with_account">Inicia la sessió amb un compte</string>
+    <string name="immich_uuid">UUID Immich:</string>
+    <string name="immich_server_info_with_status">Servidor:</string>
+    <string name="immich_server_info_desc">Versió: %1$s. Compilació: %2$s</string>
+    <string name="immich_server_info_new_version_available">Nova versió disponible: %1$s</string>
+    <string name="immich_server_storage">Emmagatzematge al servidor</string>
+    <string name="immich_server_storage_desc">%1$s de %2$s utilitzat</string>
+    <string name="immich_server_storage_desc_detailed">%1$s GB de %2$s GB utilitzats</string>
+    <string name="immich_server_info_failed">Les dades no estan disponibles</string>
+    <string name="immich_server">Servidor Immich</string>
+    <string name="immich_server_url_invalid">La Url no és vàlida!</string>
+    <string name="immich_misc">Miscel·lània</string>
+    <string name="immich_server_online">En línia</string>
+    <string name="immich_server_offline">Fora de línia</string>
+    <string name="immich_server_unreachable">No s\'ha pogut fer ping al servidor!</string>
+    <string name="immich_help_general_desc">Permet còpies de recolzament del contingut multimèdia a nivell d\'àlbum, a un servidor Immich</string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+            <p><a href="https://immich.app/">Immich</a> és una solució autoallotjada d'emmagatzematge de fotos i vídeos,
+            que permet a tothom allotjar el seu propi servidor de recolzament al núvol.
+            </p>
+            <h3 style="text-align:center;">Com s'utilitza?<h3/>
+            <ul>
+                <li>Autoallotja un <a href="https://immich.app/">servidor Immich</a></li>
+                <li>Especifica l'adreça del servidor a Lavender Photos</li>
+                <li>Inicia sessió utilitzant un compte d'usuari d'Immich</li>
+                <li>Vés a qualsevol àlbum, i clica a la icona del núvol</li>
+                <li>Comença a fer còpies de recolzament de les teves fotografies!</li>
+            </ul>
+        ]]></string>
+    <string name="immich_server_not_loading">Aquest àlbum no té contingut multimèdia, o el servidor és inaccessible</string>
+    <string name="immich_account_username">Nom d\'usuari</string>
+    <string name="immich_account_role">Càrrec</string>
+    <string name="privacy_scroll_mode">Mode de privacitat</string>
+    <string name="privacy_scroll_mode_enabled">Mode de privacitat: Activat</string>
+    <string name="privacy_scroll_mode_disabled">Mode de privacitat: Desactivat</string>
+    <string name="privacy_scroll_mode_prompt">Gestiona l\'accés al desplaçament i accions</string>
+    <string name="privacy_scroll_mode_fail">Ha fallat el canvi de mode de privacitat</string>
+    <string name="privacy_scroll_mode_exit_tried">Mode de privacitat activat</string>
 </resources>
