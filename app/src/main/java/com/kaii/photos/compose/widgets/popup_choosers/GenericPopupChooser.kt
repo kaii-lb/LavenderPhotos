@@ -6,13 +6,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -52,15 +49,12 @@ fun <T> GenericPopupChooser(
     ModalBottomSheet(
         sheetState = sheetState,
         tonalElevation = 16.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         properties = ModalBottomSheetProperties(
             shouldDismissOnBackPress = true
         ),
         containerColor = MaterialTheme.colorScheme.background,
         onDismissRequest = onDismiss,
-        contentWindowInsets = {
-            WindowInsets.safeContent.add(WindowInsets(bottom = 8.dp))
-        },
         modifier = modifier
             .statusBarsPadding()
     ) {
