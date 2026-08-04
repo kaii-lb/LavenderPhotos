@@ -573,7 +573,7 @@
     <string name="look_and_feel_app_language_desc">Изменить язык интерфейса приложения. Может потребоваться перезапуск. Текущий язык: %1$s</string>
     <string name="look_and_feel_palette">Цветовая палитра</string>
     <string name="look_and_feel_palette_desc">Изменить цветовую схему приложения</string>
-    <string name="look_and_feel_colors">Цвета и стиль</string>
+    <string name="look_and_feel_colors">Цвета и стили</string>
     <string name="look_and_feel_colors_desc">Настройте внешний вид приложения, измените цветовые палитры и включите или выключите динамическую тему</string>
     <string name="look_and_feel_style">Стиль приложения</string>
     <string name="look_and_feel_style_desc">Выберите цветовой стиль приложения</string>
@@ -670,4 +670,8 @@
     <string name="contributors_separator_developer">Разработчик</string>
     <string name="contributors_separator_major">Особый вклад</string>
     <string name="contributors_separator_contributors">Участники проекта с открытым исходным кодом</string>
+    <string name="export_settings_backup_save_load_header">Настройки приложения</string>
+    <string name="export_settings_backup_save">Сохранить Данные Приложения</string>
+    <string name="debugging_report_issue_other">Другое</string>
+    <string name="navigation_tap_to_nav">Нажмите для навигации</string>
 </resources>
