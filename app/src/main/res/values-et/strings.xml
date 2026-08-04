@@ -10,7 +10,7 @@
     <string name="privacy_policy_title">Andmekaitse - ja privaatsusreeglid</string>
     <string name="error_views_folder_non_existent">Kausta pole olemas</string>
     <string name="albums_media_sorting">Meedia järjestamine</string>
-    <string name="albums_media_sorting_desc">Määrab fotode ja videote järjestuse ruudustikus</string>
+    <string name="albums_media_sorting_desc">Määrab fotode ja videote järjestuse ruudustikus. Hetkel on kasutusel: %1$s</string>
     <string name="tabs_add">Lisa vahekaart</string>
     <string name="tabs_name">Vahekaardi nimi</string>
     <string name="tabs_albums_incl">Sealhulgas albumid</string>
@@ -23,7 +23,7 @@
     <string name="updates_check">Kontrolli uuendusi</string>
     <string name="updates_check_desc">Teavitab rakenduse avamisel uuenduse olemasolust, kuid ei paigalda seda</string>
     <string name="updates_whats_new">Mida on meil uut</string>
-    <string name="updates_new_version_available">Saadaval on uus versioon!</string>
+    <string name="updates_new_version_available">Saadaval on rakenduse uuendus!</string>
     <string name="updates_latest">Sa kasutad juba viimast versiooni</string>
     <string name="updates_checking">Kontrollin uuendusi</string>
     <string name="error_views_album_empty">See album on tühi</string>
@@ -50,7 +50,7 @@
     <string name="tabs_navigate_to">Mine lehele: %1$s</string>
     <string name="albums_non_existent">Selliseid albumeid ei leidu</string>
     <string name="albums_add_failed">Albumite hulka lisamine ei õnnestunud :&lt;</string>
-    <string name="albums_folder">Albumkaust</string>
+    <string name="albums_folder">Kaust</string>
     <string name="privacy_policy">Seda tegelikult pole! Sinu andmed ei lahku selle rakenduse kaudu siit nutiseadmest. Seda ei kasutata tehisaru koolitamiseks ning meil pole algoritme teabe rehitsemiseks, tõesti mitte midagi. Lavender Photos on alati olnud privaatsuskeskne galeriirakendus.</string>
     <string name="updates_notice">Teade allalaadimise kohta</string>
     <string name="secure_processing">Palun oota, kuni meedium on töötlemisel</string>
@@ -163,7 +163,7 @@
     <string name="navigation_away">Liigud muule lehele</string>
     <string name="albums_is_custom">See on kohandatud album</string>
     <string name="albums_is_cloud">See on vaid pilvepõhine album</string>
-    <string name="albums_custom">Kohandatud album</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_custom_desc">Lisa multimeediat ükspuha mis allikast</string>
     <string name="albums_folder_desc">Laadi multimeediat kaustast</string>
     <string name="licenses_extra">Täiendavad üksikasjad</string>
@@ -300,4 +300,18 @@
     <string name="look_and_feel_date_format_datetime_taken">Pildistamise kuupäev ja aeg</string>
     <string name="look_and_feel_column_size">Veeru suurus: %1$d</string>
     <string name="look_and_feel_album_column_size">Albumi veeru suurus: %1$d</string>
+    <string name="albums_is_cloud_linked">See on pilvega seotud album</string>
+    <string name="albums_search_for">Otsi albumit</string>
+    <string name="app_version">Versioon %1$s</string>
+    <string name="app_repo">Rakenduse lähtekoodihoidla</string>
+    <string name="export_settings_backup_save_load_header">Rakenduse seadistused</string>
+    <string name="export_settings_backup_save">Salvesta rakenduse andmed</string>
+    <string name="export_settings_backup_save_success">Rakenduse andmed on salvestatud</string>
+    <string name="export_settings_backup_save_error">Andmete salvestamine ei õnnestunud</string>
+    <string name="export_settings_backup_load">Laadi rakenduse andmed</string>
+    <string name="export_settings_backup_load_error">Andmete laadimine ei õnnestunud</string>
+    <string name="debugging_reset_scan_generation">Skaneeri meedium uuesti</string>
+    <string name="debugging_reset_scan_generation_loading">Skaneerin meediumit…</string>
+    <string name="debugging_report_issue">Teata veast või probleemist</string>
+    <string name="debugging_report_issue_bug">Veateade</string>
 </resources>
