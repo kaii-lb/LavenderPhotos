@@ -564,8 +564,7 @@ private fun SinglePhotoViewCommon(
 
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        runAction = runAction
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher
     )
 
     BackHandler(
@@ -886,7 +885,7 @@ private fun BottomBar(
                     )
                 }
 
-                val filePermissionManager = rememberFilePermissionManager(
+                val dirPermissionManager = rememberDirectoryPermissionManager(
                     onGranted = {
                         val item = currentItem()
                         runAction(
@@ -901,14 +900,6 @@ private fun BottomBar(
                                     )
                                 )
                             )
-                        )
-                    }
-                )
-
-                val dirPermissionManager = rememberDirectoryPermissionManager(
-                    onGranted = {
-                        filePermissionManager.get(
-                            uris = listOf(currentItem().uri.toUri())
                         )
                     }
                 )

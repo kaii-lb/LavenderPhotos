@@ -69,7 +69,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.paging.compose.LazyPagingItems
@@ -100,7 +99,6 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -217,8 +215,7 @@ private fun SingleTrashedPhotoViewImpl(
 
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        runAction = runAction
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher
     )
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)
@@ -422,26 +419,20 @@ private fun BottomBar(
                 modifier = Modifier
                     .windowInsetsPadding(windowInsets)
             ) {
-                val permissionManager = rememberFilePermissionManager(
-                    onGranted = {
-                        runAction(
-                            FileOperationAction.Trash(
-                                files = listOf(
-                                    item().toFileOperationMetadata()
-                                ),
-                                isTrashed = false,
-                                album = AlbumType.PlaceHolder
-                            )
-                        )
-                    }
-                )
-
                 Row(
                     modifier = Modifier
                         .wrapContentWidth()
                         .clip(CircleShape)
                         .clickable(enabled = !privacyMode) {
-                            permissionManager.get(uris = listOf(item().uri.toUri()))
+                            runAction(
+                                FileOperationAction.Trash(
+                                    files = listOf(
+                                        item().toFileOperationMetadata()
+                                    ),
+                                    isTrashed = false,
+                                    album = AlbumType.PlaceHolder
+                                )
+                            )
                         }
                         .padding(horizontal = 8.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

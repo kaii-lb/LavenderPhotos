@@ -50,22 +50,41 @@ class SecureFileManager @Inject constructor(
         files: List<FileOperationItemMetadata>
     ): Flow<FileOperationProgress<Unit>> = channelFlow {
         val media = files.toSecureMedia(context = context)
-        var result: Result<Unit, FileOperationError> = Result.Success(Unit)
 
-        send(element = FileOperationProgress.Started(
-            action = FileOperationAction.LongOperationType.Secure,
-            fileCount = files.size
-        ))
+        send(
+            element = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Secure,
+                fileCount = files.size
+            )
+        )
+
+        var operationError: FileOperationError? = null
 
         media.forEach {
-            result = secureManager.restore(media = it)
+            when (val result = secureManager.restore(media = it)) {
+                is Result.Error -> {
+                    if (operationError == null || operationError == FileOperationError.Failed) {
+                        operationError = result.error
+                    }
 
-            send(element = FileOperationProgress.ItemDone(uri = it.item.uri))
+                    Log.e(TAG, "Restoring ${it.item.uri} failed: ${result.error}")
+                }
+
+                is Result.Success -> Unit
+            }
+
+            send(
+                element = FileOperationProgress.ItemDone(
+                    uri = it.item.uri
+                )
+            )
         }
 
         send(
             element = FileOperationProgress.Finished(
-                result = result
+                result =
+                    if (operationError == null) Result.Success(Unit)
+                    else Result.Error(operationError)
             )
         )
     }

@@ -436,6 +436,8 @@ private fun ColumnScope.MediaDataContent(
 
     val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
+
+    // TODO: move to file managers
     val permissionState = rememberFilePermissionManager(
         onGranted = {
             PhotosApplication.appModule.scope.launch(Dispatchers.IO) {

@@ -135,8 +135,7 @@ fun SecureFolderView(
 
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        runAction = viewModel::runAction
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher
     )
 
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()

@@ -1,5 +1,6 @@
 package com.kaii.photos.file_management.managers.gateways
 
+import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.ContentProviderOperation
 import android.content.ContentValues
@@ -10,13 +11,13 @@ import android.os.Build
 import android.provider.MediaStore
 import android.text.format.DateFormat
 import android.util.Log
-import androidx.compose.ui.util.fastMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.BatchModificationResult
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
@@ -36,6 +37,7 @@ import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import java.io.File
 import javax.inject.Inject
+import kotlin.reflect.KClass
 
 interface AndroidMediaStoreGateway : MediaStoreGateway, CloudCacheGateway, SyncWorkerGateway
 
@@ -114,63 +116,51 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
     override fun trash(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean
-    ): Result<Unit, FileOperationError> =
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                MediaStore.canManageMedia(context)
-            ) {
+    ): Result<Unit, FileOperationError> = try {
+        if (files.isEmpty()) return Result.Success(Unit)
+
+        val result =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && MediaStore.canManageMedia(context)) {
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.IS_TRASHED, isTrashed)
                 }
 
-                files.chunked(500) { chunk ->
-                    val operations = ArrayList<ContentProviderOperation>()
-                    chunk.forEach { item ->
-                        val operation = ContentProviderOperation.newUpdate(item.uri.toUri())
-                            .withValues(contentValues)
-                            .build()
-
-                        operations.add(operation)
+                applyBatchedModification(
+                    files = files,
+                    operation = { uri ->
+                        ContentProviderOperation.newUpdate(uri).withValues(contentValues).build()
+                    },
+                    applyIndividual = { uri ->
+                        contentResolver.update(uri, contentValues, null)
                     }
-
-                    contentResolver.applyBatch(MediaStore.AUTHORITY, operations)
-                }
-
-                Result.Success(Unit)
+                )
             } else {
-                val mediaUris = files.fastMap { it.uri.toUri() }
-                val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, isTrashed)
-
-                Result.Error(
-                    FileOperationError.RecoverableException(
-                        intentSender = pendingIntent.intentSender,
-                        action = FileOperationAction.Trash(
-                            files = files,
-                            isTrashed = isTrashed,
-                            album = AlbumType.PlaceHolder
-                        )
-                    )
+                BatchModificationResult(
+                    needsPermission = files,
+                    failed = emptyList()
                 )
             }
-        } catch (securityException: RecoverableSecurityException) {
-            Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Setting trashed $isTrashed on photo list failed. ${securityException.message}")
 
-            Result.Error(
-                FileOperationError.RecoverableException(
-                    intentSender = securityException.userAction.actionIntent.intentSender,
-                    action = FileOperationAction.Trash(
-                        files = files,
-                        isTrashed = isTrashed,
-                        album = AlbumType.PlaceHolder
-                    )
+        resolveModificationResult(
+            result = result,
+            operationName = FileOperationAction.Trash::class,
+            buildRequest = { uris ->
+                MediaStore.createTrashRequest(contentResolver, uris, isTrashed)
+            },
+            buildAction = { files ->
+                FileOperationAction.Trash(
+                    files = files,
+                    isTrashed = isTrashed,
+                    album = AlbumType.PlaceHolder
                 )
-            )
-        } catch (e: Throwable) {
-            Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Setting trashed $isTrashed on photo list failed. ${e.message}")
-            e.printStackTrace()
+            }
+        )
+    } catch (e: Throwable) {
+        Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Setting trashed $isTrashed on photo list failed. ${e.message}")
+        e.printStackTrace()
 
-            Result.Error(FileOperationError.Failed)
-        }
+        Result.Error(FileOperationError.Failed)
+    }
 
     override fun renameFile(
         file: FileOperationItemMetadata,
@@ -203,50 +193,43 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         files: List<FileOperationItemMetadata>,
         isFavourite: Boolean
     ): Result<Unit, FileOperationError> = try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            MediaStore.canManageMedia(context)
-        ) {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.IS_FAVORITE, isFavourite)
-            }
+        if (files.isEmpty()) return Result.Success(Unit)
 
-            files.chunked(500) { chunk ->
-                val operations = ArrayList<ContentProviderOperation>()
-                chunk.forEach { item ->
-                    val operation = ContentProviderOperation.newUpdate(item.uri.toUri())
-                        .withValues(contentValues)
-                        .build()
-
-                    operations.add(operation)
+        val result =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && MediaStore.canManageMedia(context)) {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.IS_FAVORITE, isFavourite)
                 }
+
+                applyBatchedModification(
+                    files = files,
+                    operation = { uri ->
+                        ContentProviderOperation.newUpdate(uri).withValues(contentValues).build()
+                    },
+                    applyIndividual = { uri ->
+                        contentResolver.update(uri, contentValues, null)
+                    }
+                )
+            } else {
+                BatchModificationResult(
+                    needsPermission = files,
+                    failed = emptyList()
+                )
             }
 
-            Result.Success(Unit)
-        } else {
-            val mediaUris = files.fastMap { it.uri.toUri() }
-            val pendingIntent = MediaStore.createFavoriteRequest(contentResolver, mediaUris, isFavourite)
-
-            Result.Error(
-                FileOperationError.RecoverableException(
-                    intentSender = pendingIntent.intentSender,
-                    action = FileOperationAction.Favourite(
-                        files = files,
-                        isFavourite = isFavourite,
-                        album = AlbumType.PlaceHolder
-                    )
-                )
-            )
-        }
-    } catch (securityException: RecoverableSecurityException) {
-        Result.Error(
-            FileOperationError.RecoverableException(
-                intentSender = securityException.userAction.actionIntent.intentSender,
-                action = FileOperationAction.Favourite(
+        resolveModificationResult(
+            result = result,
+            operationName = FileOperationAction.Favourite::class,
+            buildRequest = { uris ->
+                MediaStore.createFavoriteRequest(contentResolver, uris, isFavourite)
+            },
+            buildAction = { files ->
+                FileOperationAction.Favourite(
                     files = files,
                     isFavourite = isFavourite,
                     album = AlbumType.PlaceHolder
                 )
-            )
+            }
         )
     } catch (e: Throwable) {
         Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Setting favourite $isFavourite on photo list failed. ${e.message}")
@@ -317,44 +300,36 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
     override fun delete(
         files: List<FileOperationItemMetadata>
     ): Result<Unit, FileOperationError> = try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            MediaStore.canManageMedia(context)
-        ) {
-            files.chunked(500) { chunk ->
-                val operations = ArrayList<ContentProviderOperation>()
-                chunk.forEach { item ->
-                    operations.add(
-                        ContentProviderOperation.newDelete(item.uri.toUri()).build()
-                    )
-                }
+        if (files.isEmpty()) return Result.Success(Unit)
 
-                contentResolver.applyBatch(MediaStore.AUTHORITY, operations)
+        val result =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && MediaStore.canManageMedia(context)) {
+                applyBatchedModification(
+                    files = files,
+                    operation = { uri -> ContentProviderOperation.newDelete(uri).build() },
+                    applyIndividual = { uri ->
+                        contentResolver.delete(uri, null, null)
+                    }
+                )
+            } else {
+                BatchModificationResult(
+                    needsPermission = files,
+                    failed = emptyList()
+                )
             }
 
-            Result.Success(Unit)
-        } else {
-            val mediaUris = files.fastMap { it.uri.toUri() }
-            val pendingIntent = MediaStore.createDeleteRequest(contentResolver, mediaUris)
-
-            Result.Error(
-                FileOperationError.RecoverableException(
-                    intentSender = pendingIntent.intentSender,
-                    action = FileOperationAction.Delete(
-                        files = files,
-                        album = AlbumType.PlaceHolder
-                    )
-                )
-            )
-        }
-    } catch (securityException: RecoverableSecurityException) {
-        Result.Error(
-            FileOperationError.RecoverableException(
-                intentSender = securityException.userAction.actionIntent.intentSender,
-                action = FileOperationAction.Delete(
+        resolveModificationResult(
+            result = result,
+            operationName = FileOperationAction.Delete::class,
+            buildRequest = { uris ->
+                MediaStore.createDeleteRequest(contentResolver, uris)
+            },
+            buildAction = { files ->
+                FileOperationAction.Delete(
                     files = files,
                     album = AlbumType.PlaceHolder
                 )
-            )
+            }
         )
     } catch (e: Throwable) {
         Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Deleting photo list failed. ${e.message}")
@@ -375,4 +350,82 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
     override fun getAssetSource(uri: Uri): AssetSource = UriAssetSource(context, uri)
 
     override fun is24HrFormat(): Boolean = DateFormat.is24HourFormat(context)
+
+    /** tries applying [operation] to a batch of [files] (chunked by 500 for the mediastore limit)
+     * and if that fails applies per-item using [applyIndividual] */
+    private fun applyBatchedModification(
+        files: List<FileOperationItemMetadata>,
+        operation: (Uri) -> ContentProviderOperation,
+        applyIndividual: (Uri) -> Unit
+    ): BatchModificationResult {
+        val needsPermission = mutableListOf<FileOperationItemMetadata>()
+        val failed = mutableListOf<FileOperationItemMetadata>()
+
+        files.chunked(500).forEach { chunk ->
+            val chunkApplied = try {
+                val operations = ArrayList<ContentProviderOperation>(chunk.size)
+                chunk.forEach { item ->
+                    operations.add(operation(item.uri.toUri()))
+                }
+
+                contentResolver.applyBatch(MediaStore.AUTHORITY, operations)
+
+                true
+            } catch (e: Throwable) {
+                Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Batched update of ${chunk.size} item(s) failed, retrying individually. ${e.message}")
+
+                false
+            }
+
+            if (!chunkApplied) {
+                chunk.forEach { item ->
+                    try {
+                        applyIndividual(item.uri.toUri())
+                    } catch (_: RecoverableSecurityException) {
+                        needsPermission.add(item)
+                    } catch (e: Throwable) {
+                        Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Updating ${item.uri} individually failed. ${e.message}")
+                        e.printStackTrace()
+
+                        failed.add(item)
+                    }
+                }
+            }
+        }
+
+        return BatchModificationResult(
+            needsPermission = needsPermission,
+            failed = failed
+        )
+    }
+
+    /** creates a `MediaStore.create[Write/Favourite/Delete]Request` from [result]
+     * and transforms said [BatchModificationResult] to a [Result]
+     * by the emptiness of `result.needsPermission` and `result.failed` */
+    private fun resolveModificationResult(
+        result: BatchModificationResult,
+        operationName: KClass<out FileOperationAction>,
+        buildRequest: (List<Uri>) -> PendingIntent,
+        buildAction: (List<FileOperationItemMetadata>) -> FileOperationAction
+    ): Result<Unit, FileOperationError> = when {
+        result.needsPermission.isNotEmpty() -> try {
+            val pendingIntent = buildRequest(result.needsPermission.map { it.uri.toUri() })
+
+            Result.Error(
+                FileOperationError.RecoverableException(
+                    intentSender = pendingIntent.intentSender,
+                    action = buildAction(result.needsPermission)
+                )
+            )
+        } catch (e: Throwable) {
+            Log.e(AndroidMediaStoreGatewayImpl::class.qualifiedName, "Could not build a consent request for ${operationName.simpleName}. ${e.message}")
+            e.printStackTrace()
+
+            Result.Error(FileOperationError.Failed)
+        }
+
+        result.failed.isNotEmpty() -> Result.Error(FileOperationError.Failed)
+
+        else -> Result.Success(Unit)
+    }
 }

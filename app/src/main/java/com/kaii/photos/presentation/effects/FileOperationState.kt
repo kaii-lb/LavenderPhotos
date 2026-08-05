@@ -23,33 +23,50 @@ class FileOperationState(
     private val eventsChannel = Channel<FileOperationUIEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
 
+    private var totalFileCount = 0
+    private var currentFileCount = 0
+    private var currentAction: FileOperationAction.LongOperationType? = null
+    private val snackbarBody = mutableStateOf("")
+    private val snackbarProgress = mutableFloatStateOf(0f)
+
+    fun resetAction() {
+        currentAction = null
+    }
+
+    fun markSucceeded() {
+        currentFileCount = totalFileCount
+
+        if (currentAction != null) {
+            snackbarProgress.floatValue = 1f
+            snackbarBody.value = infoProvider.getBodyFor(currentAction!!, currentFileCount, totalFileCount)
+        }
+
+        resetAction()
+    }
+
     suspend fun observe(operationFlow: Flow<FileOperationProgress<Unit>>) {
-        var totalFileCount = 0
-        var currentFileCount = 0
-        var currentAction: FileOperationAction.LongOperationType? = null
-        val snackbarBody = mutableStateOf("")
-        val snackbarProgress = mutableFloatStateOf(0f)
-
         operationFlow.collect { progress ->
-            var isError = false
-
             when (progress) {
                 is FileOperationProgress.Started -> {
                     currentFileCount = 0
                     totalFileCount = progress.fileCount
-                    currentAction = progress.action
 
                     snackbarBody.value = infoProvider.getBodyFor(progress.action, currentFileCount, totalFileCount)
                     snackbarProgress.floatValue = 0f
 
-                    eventsChannel.send(
-                        element = FileOperationUIEvent.ShowProgressSnackbar(
-                            message = infoProvider.getMessageFor(currentAction),
-                            icon = infoProvider.getIconFor(currentAction),
-                            body = snackbarBody,
-                            progress = snackbarProgress
+                    // only show a new snackbar if the current one isn't of the same operation type
+                    if (currentAction != progress.action) {
+                        currentAction = progress.action
+
+                        eventsChannel.send(
+                            element = FileOperationUIEvent.ShowProgressSnackbar(
+                                message = infoProvider.getMessageFor(progress.action),
+                                icon = infoProvider.getIconFor(progress.action),
+                                body = snackbarBody,
+                                progress = snackbarProgress
+                            )
                         )
-                    )
+                    }
                 }
 
                 is FileOperationProgress.ItemDone -> {
@@ -61,12 +78,14 @@ class FileOperationState(
                 is FileOperationProgress.Finished -> {
                     when (val result = progress.result) {
                         is Result.Error -> {
-                            eventsChannel.send(
-                                element = FileOperationUIEvent.ShowFailureSnackbar
-                            )
-
                             when (val error = result.error) {
-                                FileOperationError.Failed -> isError = true
+                                FileOperationError.Failed -> {
+                                    eventsChannel.send(
+                                        element = FileOperationUIEvent.ShowFailureSnackbar
+                                    )
+
+                                    resetAction()
+                                }
 
                                 is FileOperationError.RecoverableException -> {
                                     eventsChannel.send(
@@ -79,22 +98,9 @@ class FileOperationState(
                             }
                         }
 
-                        is Result.Success -> {
-                            currentFileCount = totalFileCount
-
-                            if (currentAction != null) {
-                                snackbarProgress.floatValue = 1f
-                                snackbarBody.value = infoProvider.getBodyFor(currentAction, currentFileCount, totalFileCount)
-                            }
-                        }
+                        is Result.Success -> markSucceeded()
                     }
                 }
-            }
-
-            if (isError) {
-                eventsChannel.send(
-                    element = FileOperationUIEvent.ShowFailureSnackbar
-                )
             }
         }
     }

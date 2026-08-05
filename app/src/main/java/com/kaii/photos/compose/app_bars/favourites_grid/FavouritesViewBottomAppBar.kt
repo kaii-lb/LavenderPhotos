@@ -13,8 +13,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.util.fastMap
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -25,7 +23,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -151,33 +148,26 @@ fun FavouritesBottomAppBarItems(
     }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val permissionState = rememberFilePermissionManager(
-        onGranted = {
-            if (doNotTrash()) {
-                FileOperationAction.Delete(
-                    files = selectedItemsList.toFileOperationMetadataItems(),
-                    album = AlbumType.PlaceHolder
-                )
-            } else {
-                FileOperationAction.Trash(
-                    files = selectedItemsList.toFileOperationMetadataItems(),
-                    isTrashed = true,
-                    album = AlbumType.PlaceHolder
-                )
-            }
-
-            selectionManager.clear()
-        }
-    )
 
     if (showDeleteDialog) {
         ConfirmationDialog(
             title = stringResource(id = if (doNotTrash()) R.string.media_delete_permanently_confirm else R.string.media_trash_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_delete),
             action = {
-                permissionState.get(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() }
-                )
+                if (doNotTrash()) {
+                    FileOperationAction.Delete(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        album = AlbumType.PlaceHolder
+                    )
+                } else {
+                    FileOperationAction.Trash(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isTrashed = true,
+                        album = AlbumType.PlaceHolder
+                    )
+                }
+
+                selectionManager.clear()
             },
             onDismiss = {
                 showDeleteDialog = false
@@ -190,9 +180,20 @@ fun FavouritesBottomAppBarItems(
             if (confirmToDelete()) {
                 showDeleteDialog = true
             } else {
-                permissionState.get(
-                    uris = selectedItemsList.fastMap { it.uri.toUri() }
-                )
+                if (doNotTrash()) {
+                    FileOperationAction.Delete(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        album = AlbumType.PlaceHolder
+                    )
+                } else {
+                    FileOperationAction.Trash(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isTrashed = true,
+                        album = AlbumType.PlaceHolder
+                    )
+                }
+
+                selectionManager.clear()
             }
         },
         enabled = selectedItemsList.isNotEmpty()

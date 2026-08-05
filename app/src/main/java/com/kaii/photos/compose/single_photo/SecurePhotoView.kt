@@ -212,8 +212,7 @@ fun SecurePhotoView(
 
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-        runAction = viewModel::runAction
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher
     )
 
     LaunchedEffect(items.itemCount) {

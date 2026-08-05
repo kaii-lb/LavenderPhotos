@@ -11,7 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.R
 import com.kaii.photos.compose.MediaPickerConfirmButton
@@ -22,7 +21,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,28 +74,21 @@ fun TrashPhotoGridBottomBarItems(
     }
 
     var showRestoreDialog by remember { mutableStateOf(false) }
-    val permissionState = rememberFilePermissionManager(
-        onGranted = {
-            runAction(
-                FileOperationAction.Trash(
-                    files = selectedItemsList.toFileOperationMetadataItems(),
-                    isTrashed = false,
-                    album = AlbumType.PlaceHolder
-                )
-            )
-
-            selectionManager.clear()
-        }
-    )
 
     if (showRestoreDialog) {
         ConfirmationDialog(
             title = stringResource(id = R.string.media_restore_confirm),
             confirmButtonLabel = stringResource(id = R.string.media_restore),
             action = {
-                permissionState.get(
-                    uris = selectedItemsList.map { it.uri.toUri() }
+                runAction(
+                    FileOperationAction.Trash(
+                        files = selectedItemsList.toFileOperationMetadataItems(),
+                        isTrashed = false,
+                        album = AlbumType.PlaceHolder
+                    )
                 )
+
+                selectionManager.clear()
             },
             onDismiss = {
                 showRestoreDialog = false

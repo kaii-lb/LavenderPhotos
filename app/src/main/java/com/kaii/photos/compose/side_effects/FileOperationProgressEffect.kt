@@ -6,7 +6,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.R
 import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.domain.files.FileOperationUIEvent
 import com.kaii.photos.permissions.files.DynamicActivityResultLauncher
@@ -19,8 +18,7 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun FileOperationProgressEffect(
     operationFlow: Flow<FileOperationProgress<Unit>>,
-    dynamicActivityResultLauncher: DynamicActivityResultLauncher,
-    runAction: (action: FileOperationAction) -> Unit
+    dynamicActivityResultLauncher: DynamicActivityResultLauncher
 ) {
     val resources = LocalResources.current
     val state = rememberFileOperationProgressState()
@@ -67,6 +65,7 @@ fun FileOperationProgressEffect(
                     }
 
                     if (launcherResult is Result.Error) {
+                        state.resetAction()
                         LavenderSnackbarController.pushEvent(
                             event = LavenderSnackbarEvent.MessageEvent(
                                 message = resources.getString(R.string.media_snackbar_operation_failed),
@@ -75,7 +74,7 @@ fun FileOperationProgressEffect(
                             )
                         )
                     } else if (launcherResult is Result.Success) {
-                        runAction(launcherResult.data)
+                        state.markSucceeded()
                     }
                 }
             }

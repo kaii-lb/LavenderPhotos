@@ -43,7 +43,7 @@ class DynamicActivityResultLauncher {
     suspend fun onResult(resultCode: Int) {
         val action = queue.remove()
 
-        if (resultCode == Activity.RESULT_OK || resultCode == Activity.RESULT_CANCELED) {
+        if (resultCode == Activity.RESULT_OK) {
             _resultChannel.send(
                 element = Result.Success(action)
             )
