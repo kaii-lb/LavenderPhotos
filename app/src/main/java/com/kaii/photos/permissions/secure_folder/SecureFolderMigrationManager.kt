@@ -22,10 +22,10 @@ import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.copyImageListToPath
 import com.kaii.photos.helpers.filename
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
 import com.kaii.photos.mediastore.getUriFromAbsolutePath
+import com.kaii.photos.mediastore.toSelectedItem
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -162,13 +162,7 @@ class SecureFolderMigrationManager(
         Log.d(TAG, "Creating a backup of the secure folder media...")
         copyImageListToPath(
             list = mediaItems.fastMap {
-                SelectionManager.SelectedItem(
-                    id = it.id,
-                    uri = it.uri,
-                    immichUrl = it.immichUrl,
-                    isImage = it.type == MediaType.Image,
-                    absolutePath = it.absolutePath
-                )
+                it.toSelectedItem()
             },
             context = context,
             destination = context.appRestoredFilesDir,

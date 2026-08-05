@@ -53,7 +53,7 @@ class SecureFileManager @Inject constructor(
 
         send(
             element = FileOperationProgress.Started(
-                action = FileOperationAction.LongOperationType.Secure,
+                action = FileOperationAction.LongOperationType.Restore,
                 fileCount = files.size
             )
         )
@@ -152,7 +152,8 @@ class SecureFileManager @Inject constructor(
                     uri = cachedUri,
                     absolutePath = cachedFile.absolutePath,
                     isImage = item.item.type == MediaType.Image,
-                    immichUrl = null
+                    immichUrl = null,
+                    parentPath = item.item.parentPath
                 )
             )
 

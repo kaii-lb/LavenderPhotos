@@ -18,12 +18,12 @@ import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.TrashDataSource
+import com.kaii.photos.mediastore.toFileOperationMetadata
+import com.kaii.photos.mediastore.toSelectedItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -122,13 +122,7 @@ class TrashRepository(
 
     suspend fun deleteAll() = fileManager.deleteFiles(
         files = dataSource.query().fastMap {
-            FileOperationItemMetadata(
-                id = it.id,
-                uri = it.uri,
-                immichUrl = it.immichUrl,
-                isImage = it.type == MediaType.Image,
-                absolutePath = it.absolutePath
-            )
+            it.toFileOperationMetadata()
         },
         albumId = "",
         immichId = null
@@ -149,13 +143,7 @@ class TrashRepository(
 
             key in timestamp..(timestamp + 86400)
         }.associate { item ->
-            item.id to SelectionManager.SelectedItem(
-                id = item.id,
-                uri = item.uri,
-                immichUrl = item.immichUrl,
-                isImage = item.type == MediaType.Image,
-                absolutePath = item.absolutePath
-            )
+            item.id to item.toSelectedItem()
         }.toMap()
     }
 

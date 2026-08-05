@@ -27,7 +27,7 @@ suspend fun List<FileOperationItemMetadata>.toSecureMedia(
     val context = context.applicationContext
     val metadataRetriever = MediaMetadataRetriever()
     val dao = MediaDatabase.getInstance(context).securedItemEntityDao()
-    val selectedPaths = fastMap { dao.getSecuredPathFromOriginalPath(originalPath = it.absolutePath) } // hack
+    val selectedPaths = fastMap { dao.getSecuredPathFromOriginalPath(originalPath = it.parentPath) }
 
     val secureFolderFiles = File(context.appSecureFolderDir).listFiles { file ->
         file.absolutePath in selectedPaths

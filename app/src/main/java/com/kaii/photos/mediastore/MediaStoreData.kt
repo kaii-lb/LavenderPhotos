@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.helpers.grid_management.SelectionManager
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetType
@@ -107,6 +108,17 @@ fun MediaStoreData.toFileOperationMetadata() =
         id = id,
         uri = uri,
         absolutePath = absolutePath,
+        parentPath = parentPath,
+        isImage = type == MediaType.Image,
+        immichUrl = immichUrl
+    )
+
+fun MediaStoreData.toSelectedItem() =
+    SelectionManager.SelectedItem(
+        id = id,
+        uri = uri,
+        absolutePath = absolutePath,
+        parentPath = parentPath,
         isImage = type == MediaType.Image,
         immichUrl = immichUrl
     )

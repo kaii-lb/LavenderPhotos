@@ -83,7 +83,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
-import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.PhotoGridConstants
@@ -862,18 +861,9 @@ private fun BottomBar(
             ) {
                 IconButton(
                     onClick = {
-                        val item = currentItem()
                         runAction(
                             FileOperationAction.Share(
-                                files = listOf(
-                                    FileOperationItemMetadata(
-                                        id = item.id,
-                                        uri = item.uri,
-                                        absolutePath = item.absolutePath,
-                                        immichUrl = item.immichUrl,
-                                        isImage = item.type == MediaType.Image
-                                    )
-                                )
+                                files = listOf(currentItem().toFileOperationMetadata())
                             )
                         )
                     },
@@ -887,18 +877,9 @@ private fun BottomBar(
 
                 val dirPermissionManager = rememberDirectoryPermissionManager(
                     onGranted = {
-                        val item = currentItem()
                         runAction(
                             FileOperationAction.Secure(
-                                files = listOf(
-                                    FileOperationItemMetadata(
-                                        id = item.id,
-                                        uri = item.uri,
-                                        absolutePath = item.absolutePath,
-                                        immichUrl = item.immichUrl,
-                                        isImage = item.type == MediaType.Image
-                                    )
-                                )
+                                files = listOf(currentItem().toFileOperationMetadata())
                             )
                         )
                     }
@@ -946,15 +927,7 @@ private fun BottomBar(
                             val item = currentItem()
                             runAction(
                                 FileOperationAction.Favourite(
-                                    files = listOf(
-                                        FileOperationItemMetadata(
-                                            id = item.id,
-                                            uri = item.uri,
-                                            absolutePath = item.absolutePath,
-                                            immichUrl = item.immichUrl,
-                                            isImage = item.type == MediaType.Image
-                                        )
-                                    ),
+                                    files = listOf(item.toFileOperationMetadata()),
                                     isFavourite = !item.favourited,
                                     album = album()
                                 )
@@ -991,16 +964,7 @@ private fun BottomBar(
                                 }
                         ),
                         action = {
-                            val item = currentItem()
-                            val files = listOf(
-                                FileOperationItemMetadata(
-                                    id = item.id,
-                                    uri = item.uri,
-                                    absolutePath = item.absolutePath,
-                                    immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image
-                                )
-                            )
+                            val files = listOf(currentItem().toFileOperationMetadata())
 
                             runAction(
                                 if (doNotTrash && !isCustom) {
@@ -1028,16 +992,7 @@ private fun BottomBar(
                         if (confirmToDelete) {
                             showDeleteDialog = true
                         } else {
-                            val item = currentItem()
-                            val list = listOf(
-                                FileOperationItemMetadata(
-                                    id = item.id,
-                                    uri = item.uri,
-                                    absolutePath = item.absolutePath,
-                                    immichUrl = item.immichUrl,
-                                    isImage = item.type == MediaType.Image
-                                )
-                            )
+                            val list = listOf(currentItem().toFileOperationMetadata())
 
                             runAction(
                                 FileOperationAction.Trash(

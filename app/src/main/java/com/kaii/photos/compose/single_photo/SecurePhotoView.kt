@@ -88,7 +88,6 @@ import com.kaii.photos.compose.side_effects.SharePhotoEffect
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
-import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -311,11 +310,7 @@ fun SecurePhotoView(
             LaunchedEffect(currentMediaItem) {
                 viewModel.runAction(
                     FileOperationAction.LoadExifData(
-                        file = currentMediaItem.item
-                            .toFileOperationMetadata()
-                            .copy(
-                                absolutePath = currentMediaItem.item.parentPath, // hacky way to represent originalPath
-                            )
+                        file = currentMediaItem.item.toFileOperationMetadata()
                     )
                 )
             }
@@ -354,11 +349,7 @@ private fun BottomBar(
             runAction(
                 FileOperationAction.Restore(
                     files = listOf(
-                        securedMedia.item
-                            .toFileOperationMetadata()
-                            .copy(
-                                absolutePath = securedMedia.item.parentPath, // hacky way to represent originalPath
-                            )
+                        securedMedia.item.toFileOperationMetadata()
                     )
                 )
             )
@@ -396,13 +387,7 @@ private fun BottomBar(
                 runAction(
                     FileOperationAction.Delete(
                         files = listOf(
-                            FileOperationItemMetadata(
-                                id = securedMedia.item.id,
-                                uri = securedMedia.item.uri,
-                                absolutePath = securedMedia.item.parentPath,
-                                immichUrl = securedMedia.item.immichUrl,
-                                isImage = securedMedia.item.type == MediaType.Image
-                            )
+                            securedMedia.item.toFileOperationMetadata()
                         ),
                         album = AlbumType.PlaceHolder
                     )
@@ -447,13 +432,7 @@ private fun BottomBar(
                             runAction(
                                 FileOperationAction.Share(
                                     files = listOf(
-                                        FileOperationItemMetadata(
-                                            id = securedMedia.item.id,
-                                            uri = securedMedia.item.uri,
-                                            absolutePath = securedMedia.item.parentPath,
-                                            immichUrl = securedMedia.item.immichUrl,
-                                            isImage = securedMedia.item.type == MediaType.Image
-                                        )
+                                        securedMedia.item.toFileOperationMetadata()
                                     )
                                 )
                             )

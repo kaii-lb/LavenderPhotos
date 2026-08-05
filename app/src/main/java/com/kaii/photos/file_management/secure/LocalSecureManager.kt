@@ -28,6 +28,7 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.insertMedia
 import com.kaii.photos.mediastore.setDateForMedia
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.repositories.SecureRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -118,13 +119,7 @@ class LocalSecureManager @Inject constructor(
             }
 
             Result.Success(
-                FileOperationItemMetadata(
-                    id = mediaItem.id,
-                    uri = mediaItem.uri,
-                    absolutePath = mediaItem.absolutePath,
-                    isImage = mediaItem.type == MediaType.Image,
-                    immichUrl = mediaItem.immichUrl
-                )
+                data = mediaItem.toFileOperationMetadata()
             )
         } catch (e: Throwable) {
             Log.e(LocalSecureManager::class.qualifiedName, e.toString())

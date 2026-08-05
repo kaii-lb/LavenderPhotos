@@ -73,7 +73,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationError
-import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.exif.MediaData
@@ -649,16 +648,7 @@ private fun IconContentImpl(
             isMoving = { isMoving },
             currentAlbum = album,
             onClick = { destination ->
-                val item = mediaItem()
-                val files = listOf(
-                    FileOperationItemMetadata(
-                        id = item.id,
-                        uri = item.uri,
-                        absolutePath = item.absolutePath,
-                        immichUrl = item.immichUrl,
-                        isImage = item.type == MediaType.Image
-                    )
-                )
+                val files = listOf(mediaItem().toFileOperationMetadata())
 
                 runAction(
                     if (isMoving) FileOperationAction.Move(

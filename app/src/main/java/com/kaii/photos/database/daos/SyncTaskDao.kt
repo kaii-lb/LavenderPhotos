@@ -47,6 +47,7 @@ interface SyncTaskDao {
                 "media.uri, " +
                 "media.absolutePath, " +
                 "media.immichUrl, " +
+                "media.parentPath, " +
                 "CASE WHEN media.type = 'Image' THEN true ELSE false END as isImage " +
                 "FROM sync_task_item " +
                 "JOIN media ON media.id = sync_task_item.mediaId " +

@@ -79,7 +79,7 @@ interface TaggedItemsDao {
     fun getAllDateModified(): PagingSource<Int, MediaStoreData>
 
     @Query(
-        value = "SELECT DISTINCT media.id as keyId, media.id, media.uri, media.immichUrl, media.absolutePath, " +
+        value = "SELECT DISTINCT media.id as keyId, media.id, media.uri, media.immichUrl, media.absolutePath, media.parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN tagged_items ON tagged_items.mediaId = media.id " +
@@ -91,7 +91,7 @@ interface TaggedItemsDao {
             SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT DISTINCT media.id as keyId, media.id, media.uri, media.immichUrl, media.absolutePath, " +
+        value = "SELECT DISTINCT media.id as keyId, media.id, media.uri, media.immichUrl, media.absolutePath, media.parentPath, " +
                 "CASE WHEN media.type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "FROM media " +
                 "JOIN tagged_items ON tagged_items.mediaId = media.id " +

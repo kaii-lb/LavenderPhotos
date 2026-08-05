@@ -3,10 +3,9 @@ package com.kaii.photos.file_management.sync.operations
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
-import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import javax.inject.Inject
 
 class TrashLocalMediaOperation @Inject constructor(
@@ -22,13 +21,7 @@ class TrashLocalMediaOperation @Inject constructor(
 
         fileManager.trashFiles(
             files = media.map {
-                FileOperationItemMetadata(
-                    id = it.id,
-                    uri = it.uri,
-                    absolutePath = it.absolutePath,
-                    isImage = it.type == MediaType.Image,
-                    immichUrl = it.immichUrl
-                )
+                it.toFileOperationMetadata()
             },
             isTrashed = true,
             albumId = albumId,

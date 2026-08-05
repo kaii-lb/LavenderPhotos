@@ -5,7 +5,8 @@ data class FileOperationItemMetadata(
     val uri: String,
     val absolutePath: String,
     val isImage: Boolean,
-    val immichUrl: String?
+    val immichUrl: String?,
+    val parentPath: String
 ) {
     val immichId: String?
         get() = immichUrl?.split("/")?.dropLast(1)?.last()

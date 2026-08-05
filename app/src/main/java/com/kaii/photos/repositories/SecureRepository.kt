@@ -29,7 +29,6 @@ import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.paging.SecuredListPagingSource
 import com.kaii.photos.helpers.paging.mapToSecuredMedia
@@ -39,6 +38,7 @@ import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
+import com.kaii.photos.mediastore.toSelectedItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -260,15 +260,7 @@ class SecureRepository(
 
             key in timestamp..(timestamp + 86400)
         }.associate { media ->
-            val item = media.item
-
-            item.id to SelectionManager.SelectedItem(
-                id = item.id,
-                uri = item.uri,
-                immichUrl = item.immichUrl,
-                isImage = item.type == MediaType.Image,
-                absolutePath = item.absolutePath
-            )
+            media.item.id to media.item.toSelectedItem()
         }.toMap()
 
     private suspend fun load(context: Context) = withContext(Dispatchers.IO) {

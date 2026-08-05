@@ -3,10 +3,9 @@ package com.kaii.photos.file_management.sync.operations
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationError
-import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
 import com.kaii.photos.file_management.sync.ProgressManager
-import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.mediastore.toMediaStoreData
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.async
@@ -77,12 +76,8 @@ class DownloadMediaOperation @Inject constructor(
         if (!downloaded) {
             gateway.delete(
                 files = listOf(
-                    FileOperationItemMetadata(
-                        id = item.id,
+                    item.toFileOperationMetadata().copy(
                         uri = inserted.toString(),
-                        absolutePath = item.absolutePath,
-                        isImage = item.type == MediaType.Image,
-                        immichUrl = item.immichUrl
                     )
                 )
             )

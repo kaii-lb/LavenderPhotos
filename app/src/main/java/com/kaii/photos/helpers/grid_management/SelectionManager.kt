@@ -32,7 +32,8 @@ class SelectionManager(
         val uri: String,
         val immichUrl: String?,
         val isImage: Boolean,
-        val absolutePath: String
+        val absolutePath: String,
+        val parentPath: String
     ) {
         val immichId: String?
             get() = immichUrl?.split("/")?.dropLast(1)?.last()
@@ -46,7 +47,8 @@ class SelectionManager(
                 uri = uri,
                 absolutePath = absolutePath,
                 isImage = isImage,
-                immichUrl = immichUrl
+                immichUrl = immichUrl,
+                parentPath = parentPath
             )
     }
 
@@ -109,7 +111,8 @@ class SelectionManager(
                                 uri = it.item.uri,
                                 immichUrl = it.item.immichUrl,
                                 isImage = it.item.type == MediaType.Image,
-                                absolutePath = it.item.absolutePath
+                                absolutePath = it.item.absolutePath,
+                                parentPath = it.item.parentPath
                             )
                 }
 
@@ -160,7 +163,8 @@ class SelectionManager(
                             uri = it.uri,
                             immichUrl = it.immichUrl,
                             isImage = it.type == MediaType.Image,
-                            absolutePath = it.absolutePath
+                            absolutePath = it.absolutePath,
+                            parentPath = it.parentPath
                         )
             }
             snapshot[key] = snapshot[key]!!
@@ -254,7 +258,8 @@ class SelectionManager(
                 uri = item.uri,
                 immichUrl = item.immichUrl,
                 isImage = item.type == MediaType.Image,
-                absolutePath = item.absolutePath
+                absolutePath = item.absolutePath,
+                parentPath = item.parentPath
             )
         )
         snapshot[key] = list

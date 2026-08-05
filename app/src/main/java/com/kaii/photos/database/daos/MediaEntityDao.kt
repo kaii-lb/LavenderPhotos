@@ -55,7 +55,7 @@ interface MediaDao {
     fun getAllFavourites(): List<MediaStoreData>
 
     @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
@@ -66,7 +66,7 @@ interface MediaDao {
             SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
@@ -77,7 +77,7 @@ interface MediaDao {
             SelectionManager.SelectedItem>
 
     @Query(
-        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, " +
+        value = "SELECT id as keyId, id, uri, immichUrl, absolutePath, parentPath, " +
                 "CASE WHEN type = 'Image' THEN 1 ELSE 0 END as isImage " +
                 "from media WHERE " +
                 "CASE WHEN :dateModified = 1 THEN dateModified ELSE dateTaken END " +
