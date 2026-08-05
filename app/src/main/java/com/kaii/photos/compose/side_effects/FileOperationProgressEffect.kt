@@ -3,7 +3,6 @@ package com.kaii.photos.compose.side_effects
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.R
 import com.kaii.photos.domain.Result
@@ -23,7 +22,6 @@ fun FileOperationProgressEffect(
     dynamicActivityResultLauncher: DynamicActivityResultLauncher,
     runAction: (action: FileOperationAction) -> Unit
 ) {
-    val context = LocalContext.current
     val resources = LocalResources.current
     val state = rememberFileOperationProgressState()
 
@@ -53,10 +51,6 @@ fun FileOperationProgressEffect(
                             duration = SnackbarDuration.Short
                         )
                     )
-                }
-
-                is FileOperationUIEvent.RequestIntentSender -> {
-                    context.startIntentSender(event.intentSender, null, 0, 0, 0)
                 }
 
                 is FileOperationUIEvent.LaunchDynamicResultIntent -> {

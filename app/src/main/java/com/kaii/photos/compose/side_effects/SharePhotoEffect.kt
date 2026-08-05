@@ -34,10 +34,6 @@ fun SharePhotoEffect(
                 is Result.Error -> when (val error = result.error) {
                     FileOperationError.Failed -> isError = true
 
-                    is FileOperationError.MediaStoreRequest -> {
-                        context.startIntentSender(error.intentSender, null, 0, 0, 0)
-                    }
-
                     is FileOperationError.RecoverableException -> {
                         dynamicActivityResultLauncher.launch(
                             intentSender = error.intentSender,
@@ -60,7 +56,12 @@ fun SharePhotoEffect(
                 }
 
                 is Result.Success -> {
-                    context.startActivity(result.data)
+                    context.startActivity(
+                        Intent.createChooser(
+                            result.data,
+                            resources.getString(R.string.media_share)
+                        )
+                    )
                 }
             }
 

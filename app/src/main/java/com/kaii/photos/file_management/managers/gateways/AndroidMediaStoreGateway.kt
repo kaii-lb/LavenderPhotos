@@ -142,8 +142,13 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
                 val pendingIntent = MediaStore.createTrashRequest(contentResolver, mediaUris, isTrashed)
 
                 Result.Error(
-                    FileOperationError.MediaStoreRequest(
-                        intentSender = pendingIntent.intentSender
+                    FileOperationError.RecoverableException(
+                        intentSender = pendingIntent.intentSender,
+                        action = FileOperationAction.Trash(
+                            files = files,
+                            isTrashed = isTrashed,
+                            album = AlbumType.PlaceHolder
+                        )
                     )
                 )
             }
@@ -222,8 +227,13 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val pendingIntent = MediaStore.createFavoriteRequest(contentResolver, mediaUris, isFavourite)
 
             Result.Error(
-                FileOperationError.MediaStoreRequest(
-                    intentSender = pendingIntent.intentSender
+                FileOperationError.RecoverableException(
+                    intentSender = pendingIntent.intentSender,
+                    action = FileOperationAction.Favourite(
+                        files = files,
+                        isFavourite = isFavourite,
+                        album = AlbumType.PlaceHolder
+                    )
                 )
             )
         }
@@ -327,8 +337,12 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val pendingIntent = MediaStore.createDeleteRequest(contentResolver, mediaUris)
 
             Result.Error(
-                FileOperationError.MediaStoreRequest(
-                    intentSender = pendingIntent.intentSender
+                FileOperationError.RecoverableException(
+                    intentSender = pendingIntent.intentSender,
+                    action = FileOperationAction.Delete(
+                        files = files,
+                        album = AlbumType.PlaceHolder
+                    )
                 )
             )
         }

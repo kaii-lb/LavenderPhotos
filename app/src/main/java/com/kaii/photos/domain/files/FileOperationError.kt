@@ -10,8 +10,4 @@ sealed interface FileOperationError : Error {
         val intentSender: IntentSender,
         val action: FileOperationAction
     ) : FileOperationError
-
-    data class MediaStoreRequest(
-        val intentSender: IntentSender
-    ) : FileOperationError
 }

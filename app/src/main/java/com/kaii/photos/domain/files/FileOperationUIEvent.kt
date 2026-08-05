@@ -5,6 +5,8 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 
 sealed interface FileOperationUIEvent {
+    data object ShowFailureSnackbar : FileOperationUIEvent
+
     data class ShowProgressSnackbar(
         val message: String,
         val icon: Int,
@@ -12,14 +14,8 @@ sealed interface FileOperationUIEvent {
         val progress: MutableFloatState,
     ) : FileOperationUIEvent
 
-    data class RequestIntentSender(
-        val intentSender: IntentSender
-    ) : FileOperationUIEvent
-
     data class LaunchDynamicResultIntent(
         val intentSender: IntentSender,
         val action: FileOperationAction
     ) : FileOperationUIEvent
-
-    data object ShowFailureSnackbar : FileOperationUIEvent
 }

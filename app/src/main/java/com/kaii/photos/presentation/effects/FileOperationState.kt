@@ -68,14 +68,6 @@ class FileOperationState(
                             when (val error = result.error) {
                                 FileOperationError.Failed -> isError = true
 
-                                is FileOperationError.MediaStoreRequest -> {
-                                    eventsChannel.send(
-                                        element = FileOperationUIEvent.RequestIntentSender(
-                                            intentSender = error.intentSender
-                                        )
-                                    )
-                                }
-
                                 is FileOperationError.RecoverableException -> {
                                     eventsChannel.send(
                                         element = FileOperationUIEvent.LaunchDynamicResultIntent(
