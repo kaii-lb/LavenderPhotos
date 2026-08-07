@@ -396,13 +396,13 @@
     <string name="settings_sort_mode_date_modified_no_separators">Востаннє Модифіковано без розділення</string>
     <string name="permissions_allow_secure_folder_screen_capture">Дозволити зйомку екрана в Захищеній Теці</string>
     <string name="permissions_allow_secure_folder_screen_capture_desc">Дозволяти робити знімки екрана, запис екрана та функцією поділитись екраном під час того коли Захищена Тека відкрита. Захищений контент також може з\'явитись на попередньому відображені додатку. Залиште вимкненим щоб тримати його захищеним</string>
-    <string name="media_snackbar_operation_failed">Помилка при Синхронізації!</string>
+    <string name="media_snackbar_operation_failed">Помилка Операції!</string>
     <string name="media_copy_snackbar_title">Копіювання елементів…</string>
     <string name="media_move_snackbar_title">Переміщення елементів…</string>
     <string name="media_delete_snackbar_title">Видалення елементів…</string>
-    <string name="media_copy_snackbar_body">Копіювання %1$d з %2$d</string>
-    <string name="media_move_snackbar_body">Переміщення %1$d з %2$d</string>
-    <string name="media_delete_snackbar_body">Видалення %1$d з %2$d</string>
+    <string name="media_copy_snackbar_body">Скопійовано %1$d з %2$d</string>
+    <string name="media_move_snackbar_body">Переміщено %1$d з %2$d</string>
+    <string name="media_delete_snackbar_body">Видалено %1$d з %2$d</string>
     <string name="media_is_raw">Це є RAW зображенням</string>
     <string name="media_is_gif">Це є GIF</string>
     <string name="media_is_cloud">Це є тільки хмарним елементом</string>
@@ -451,7 +451,7 @@
     <string name="bottom_sheets_five_by_four">5:4</string>
     <string name="bottom_sheets_four_by_three">4:3</string>
     <string name="bottom_sheets_three_by_two">3:2</string>
-    <string name="error_views_main_empty">Видається порожнім...</string>
+    <string name="error_views_main_empty">Видається порожнім…</string>
     <string name="look_and_feel_styling_separator">Дизайн</string>
     <string name="look_and_feel_date_format">Формат Дати</string>
     <string name="look_and_feel_image_details_format">Формат Подробиць Зображення</string>
@@ -688,4 +688,11 @@
     <string name="debugging_report_issue_feature_desc">Запропонувати функцію для додавання в цей додаток</string>
     <string name="debugging_report_issue_other">Інше</string>
     <string name="debugging_report_issue_other_desc">Звітувати щось інше</string>
+    <string name="media_share_failed">Помилка при поширені медіа!</string>
+    <string name="media_secure_snackbar_title">Іде захист елементів…</string>
+    <string name="media_restore_snackbar_title">Відновлення елементів…</string>
+    <string name="media_share_snackbar_title">Поширення елементів…</string>
+    <string name="media_share_snackbar_body">Поширено %1$d з %2$d</string>
+    <string name="media_secure_snackbar_body">Захищено %1$d з %2$d</string>
+    <string name="media_restore_snackbar_body">Відновлено %1$d з %2$d</string>
 </resources>
