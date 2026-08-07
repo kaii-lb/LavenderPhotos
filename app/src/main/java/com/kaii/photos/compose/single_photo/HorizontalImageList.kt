@@ -44,6 +44,7 @@ import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.secureThumbnailImage
+import com.kaii.photos.helpers.secureVideoThumbnailImage
 import com.kaii.photos.mediastore.ImmichInfo
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo
@@ -137,6 +138,32 @@ fun HorizontalImageList(
 
         val media = items[index] as PhotoLibraryUIModel.MediaImpl
 
+        val glideModel = remember(media.item.uri) {
+            when {
+                isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
+                    SecureInfo(
+                        iv = bytes.getIv(),
+                        absolutePath = File(media.item.absolutePath).let {
+                            if (media.item.type == MediaType.Video) it.secureVideoThumbnailImage(context).absolutePath
+                            else it.secureThumbnailImage(context).absolutePath
+                        },
+                        key = media.signature()
+                    )
+                }
+
+                media.item.isCloud -> ImmichInfo(
+                    thumbnail = media.item.immichThumbnail!!,
+                    original = media.item.immichUrl!!,
+                    hash = media.item.hash!!,
+                    auth = media.auth,
+                    endpoint = media.endpoint!!,
+                    useThumbnail = false
+                )
+
+                else -> media.item.uri
+            }
+        }
+
         if (media.item.type == MediaType.Video) {
             Box(
                 modifier = Modifier
@@ -144,26 +171,7 @@ fun HorizontalImageList(
             ) {
                 if (blurViews()) {
                     BlurredBackdrop(
-                        model = when {
-                            isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
-                                SecureInfo(
-                                    iv = bytes.getThumbnailIv(),
-                                    absolutePath = File(media.item.absolutePath).secureThumbnailImage(context).absolutePath,
-                                    key = media.signature()
-                                )
-                            }
-
-                            media.item.isCloud -> ImmichInfo(
-                                thumbnail = media.item.immichThumbnail!!,
-                                original = media.item.immichUrl!!,
-                                hash = media.item.hash!!,
-                                auth = media.auth,
-                                endpoint = media.endpoint!!,
-                                useThumbnail = false
-                            )
-
-                            else -> media.item.uri
-                        },
+                        model = glideModel,
                         signature = media::signature,
                         useCache = useCache
                     )
@@ -207,29 +215,6 @@ fun HorizontalImageList(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                val glideModel = remember(media.item.uri) {
-                    when {
-                        isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
-                            SecureInfo(
-                                iv = bytes.getIv(),
-                                absolutePath = media.item.absolutePath,
-                                key = media.signature()
-                            )
-                        }
-
-                        media.item.isCloud -> ImmichInfo(
-                            thumbnail = media.item.immichThumbnail!!,
-                            original = media.item.immichUrl!!,
-                            hash = media.item.hash!!,
-                            auth = media.auth,
-                            endpoint = media.endpoint!!,
-                            useThumbnail = false
-                        )
-
-                        else -> media.item.uri
-                    }
-                }
-
                 // cheap base layer for the secure viewer: the small pre-stored encrypted thumbnail (same
                 // model the grid uses, so it's likely already in glide's memory cache). gated on a ready
                 // (non-zero) iv and an existing file; null -> the full-file model is used as the base
