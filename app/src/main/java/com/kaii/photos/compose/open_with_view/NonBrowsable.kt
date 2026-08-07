@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +67,7 @@ import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
-import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
@@ -135,7 +136,7 @@ fun OpenWithContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val zoomableState = rememberGlideZoomableState()
-            val motionPhoto = rememberMotionPhoto(uri = uri)
+            val motionPhoto = rememberMotionPhotoState()
 
             if (type == MediaType.Video) {
                 VideoPlayer(
@@ -157,7 +158,14 @@ fun OpenWithContent(
                         .fillMaxSize()
                 )
             } else {
-                if (motionPhoto.isMotionPhoto.value) {
+                LaunchedEffect(Unit) {
+                    motionPhoto.getFor(
+                        uri = uri.toString(),
+                        type = type
+                    )
+                }
+
+                if (motionPhoto.isMotionPhoto) {
                     MotionPhotoView(
                         item = MediaStoreData.dummyItem.copy(
                             uri = uri.toString()

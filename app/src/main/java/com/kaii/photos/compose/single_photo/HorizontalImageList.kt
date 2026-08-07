@@ -1,7 +1,6 @@
 package com.kaii.photos.compose.single_photo
 
 import android.view.Window
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -14,30 +13,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
@@ -47,9 +39,8 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.modifiers.tapOnScreenHalves
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.SingleViewConstants
-import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.scrolling.SinglePhotoScrollState
 import com.kaii.photos.helpers.secureThumbnailImage
@@ -60,7 +51,9 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.screens.video.retainVideoPlayerState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -85,8 +78,7 @@ fun HorizontalImageList(
     modifier: Modifier = Modifier,
     isSecuredMedia: Boolean = false
 ) {
-    val windowSize = LocalWindowInfo.current.containerSize / 4
-
+    val motionPhoto = rememberMotionPhotoState()
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = false,
         onPlaybackStateChanged = {},
@@ -145,27 +137,13 @@ fun HorizontalImageList(
 
         val media = items[index] as PhotoLibraryUIModel.MediaImpl
 
-        val motionPhoto = rememberMotionPhoto(uri = media.item.uri.toUri())
-
         if (media.item.type == MediaType.Video) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
                 if (blurViews()) {
-                    var targetAlpha by remember { mutableFloatStateOf(0f) }
-                    val animatedAlpha by animateFloatAsState(
-                        targetValue = targetAlpha,
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.DURATION
-                        )
-                    )
-
-                    LaunchedEffect(Unit) {
-                        targetAlpha = 0.5f
-                    }
-
-                    GlideImage(
+                    BlurredBackdrop(
                         model = when {
                             isSecuredMedia -> (media as PhotoLibraryUIModel.SecuredMedia).bytes?.let { bytes ->
                                 SecureInfo(
@@ -186,18 +164,9 @@ fun HorizontalImageList(
 
                             else -> media.item.uri
                         },
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        loading = placeholder(R.drawable.broken_image),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .blur(48.dp)
-                            .alpha(animatedAlpha)
-                    ) {
-                        it.signature(media.signature())
-                            .diskCacheStrategy(if (useCache()) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-                            .override(windowSize.width, windowSize.height)
-                    }
+                        signature = media::signature,
+                        useCache = useCache
+                    )
                 }
 
                 VideoPlayer(
@@ -223,6 +192,17 @@ fun HorizontalImageList(
                 )
             }
         } else {
+            LaunchedEffect(state.settledPage) {
+                if (state.settledPage == index) {
+                    motionPhoto.getFor(
+                        uri = media.item.uri,
+                        type = media.item.type
+                    )
+                } else {
+                    motionPhoto.reset()
+                }
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -253,55 +233,37 @@ fun HorizontalImageList(
                 // cheap base layer for the secure viewer: the small pre-stored encrypted thumbnail (same
                 // model the grid uses, so it's likely already in glide's memory cache). gated on a ready
                 // (non-zero) iv and an existing file; null -> the full-file model is used as the base
-                val glideThumbnailModel = remember(media) {
-                    if (!isSecuredMedia) null
+                val glideThumbnailModel by produceState<SecureInfo?>(null) {
+                    this.value = if (!isSecuredMedia) null
                     else (media as PhotoLibraryUIModel.SecuredMedia).bytes
                         ?.takeIf { it.size >= 32 }
                         ?.getThumbnailIv()
                         ?.takeIf { iv -> iv.any { b -> b.toInt() != 0 } }
                         ?.let { thumbIv ->
                             val thumbFile = File(media.item.absolutePath).secureThumbnailImage(context)
-                            if (thumbFile.exists()) {
-                                SecureInfo(
-                                    iv = thumbIv,
-                                    absolutePath = thumbFile.absolutePath,
-                                    key = media.signature()
-                                )
-                            } else {
-                                null
+                            withContext(Dispatchers.IO) {
+                                if (thumbFile.exists()) {
+                                    SecureInfo(
+                                        iv = thumbIv,
+                                        absolutePath = thumbFile.absolutePath,
+                                        key = media.signature()
+                                    )
+                                } else {
+                                    null
+                                }
                             }
                         }
                 }
 
                 if (blurViews()) {
-                    var targetAlpha by remember { mutableFloatStateOf(0f) }
-                    val animatedAlpha by animateFloatAsState(
-                        targetValue = targetAlpha,
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.DURATION
-                        )
-                    )
-
-                    LaunchedEffect(Unit) {
-                        targetAlpha = 0.5f
-                    }
-
-                    GlideImage(
+                    BlurredBackdrop(
                         model = glideModel,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .blur(48.dp)
-                            .alpha(animatedAlpha)
-                    ) {
-                        it.signature(media.signature())
-                            .diskCacheStrategy(if (useCache()) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-                            .override(windowSize.width, windowSize.height)
-                    }
+                        signature = media::signature,
+                        useCache = useCache
+                    )
                 }
 
-                if (motionPhoto.isMotionPhoto.value) {
+                if (motionPhoto.isMotionPhoto) {
                     MotionPhotoView(
                         item = media.item,
                         state = videoPlayerState,

@@ -5,16 +5,17 @@ import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.exifinterface.media.ExifInterface
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
-import kotlinx.coroutines.CoroutineScope
+import com.kaii.photos.mediastore.MediaType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.serializer
 import nl.adaptivity.xmlutil.ExperimentalXmlUtilApi
 import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
@@ -27,30 +28,38 @@ private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
 
 // TODO: support secure folder
 @OptIn(UnstableApi::class)
-class MotionPhoto(
-    val uri: Uri,
-    private val context: Context,
-    coroutineScope: CoroutineScope
+class MotionPhotoState(
+    private val context: Context
 ) {
-    var isMotionPhoto = mutableStateOf(false)
+    var isMotionPhoto by mutableStateOf(false)
+        private set
 
-    init {
-        coroutineScope.launch(Dispatchers.IO) {
-            val xmp = getXmpData()
+    fun reset() {
+        isMotionPhoto = false
+    }
 
-            if (xmp != null) {
-                isMotionPhoto.value = xmp.rdf.description.motionPhoto == 1
-            }
+    suspend fun getFor(
+        uri: String,
+        type: MediaType
+    ) = withContext(Dispatchers.IO) {
+        if (type == MediaType.Video || uri.startsWith("/api")) {
+            isMotionPhoto = false
+            return@withContext
+        }
+
+        val xmp = getXmpData(uri.toUri())
+
+        isMotionPhoto = if (xmp != null) {
+            xmp.rdf.description.motionPhoto == 1
+        } else {
+            false
         }
     }
 
     @Suppress("DEPRECATION")
     @kotlin.OptIn(ExperimentalXmlUtilApi::class)
-    private fun getXmpData(): XmpMeta? {
+    private fun getXmpData(uri: Uri): XmpMeta? {
         try {
-            val isVideo = MimeTypes.isVideo(context.contentResolver.getType(uri))
-            if (isVideo) return null
-
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
             val exifInterface = ExifInterface(inputStream)
 
@@ -90,17 +99,12 @@ class MotionPhoto(
 }
 
 @Composable
-fun rememberMotionPhoto(
-    uri: Uri
-): MotionPhoto {
+fun rememberMotionPhotoState(): MotionPhotoState {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
-    return remember {
-        MotionPhoto(
-            uri = uri,
-            context = context,
-            coroutineScope = coroutineScope
+    return remember(context) {
+        MotionPhotoState(
+            context = context
         )
     }
 }

@@ -89,7 +89,7 @@ import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
-import com.kaii.photos.helpers.motion_photo.rememberMotionPhoto
+import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.rememberVibratorManager
@@ -901,12 +901,19 @@ private fun BottomBar(
                     )
                 }
 
-                val motionPhoto = rememberMotionPhoto(uri = currentItem().uri.toUri())
+                val motionPhoto = rememberMotionPhotoState()
+                LaunchedEffect(currentItem().uri) {
+                    motionPhoto.getFor(
+                        uri = currentItem().uri,
+                        type = currentItem().type
+                    )
+                }
+
                 IconButton(
                     onClick = {
                         showMoveToSecureFolderDialog = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto.value && !privacyMode && !currentItem().isCloud
+                    enabled = !motionPhoto.isMotionPhoto && !privacyMode && !currentItem().isCloud
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),
