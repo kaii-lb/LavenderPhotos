@@ -7,7 +7,6 @@ import androidx.paging.cachedIn
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
-import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
@@ -16,7 +15,6 @@ import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.managers.traits.Trash
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
@@ -24,6 +22,7 @@ import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.mediastore.TrashDataSource
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.mediastore.toSelectedItem
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,22 +35,23 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.TimeZone
 import javax.inject.Inject
 
 class TrashRepository(
     private val fileManager: LocalFileManager,
     private val dataSource: TrashDataSource,
     scope: CoroutineScope,
+    dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
-    sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>
+    sortMode: Flow<MediaItemSortMode>
 ) : Trash, Delete, Share, ExtractExif, RenameFile {
     class Factory @Inject constructor(
         private val fileManager: LocalFileManager,
         private val dataSource: TrashDataSource,
+        private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
-        private val photoGrid: SettingsPhotoGridImpl,
-        private val lookAndFeel: SettingsLookAndFeelImpl
+        private val photoGrid: SettingsPhotoGridImpl
     ) {
         fun create(
             scope: CoroutineScope
@@ -60,28 +60,27 @@ class TrashRepository(
                 fileManager = fileManager,
                 dataSource = dataSource,
                 scope = scope,
+                dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
-                sortMode = photoGrid.getSortMode(),
-                format = lookAndFeel.getDisplayDateFormat()
+                sortMode = photoGrid.getSortMode()
             )
     }
 
     private data class Params(
         val items: List<MediaStoreData>,
         override val sortMode: MediaItemSortMode,
-        override val format: DisplayDateFormat,
         override val info: ImmichBasicInfo
-    ) : RoomQueryParams(sortMode, format, info)
+    ) : RoomQueryParams(sortMode, info)
 
     private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
 
     private val items = MutableStateFlow(emptyList<MediaStoreData>())
+    private val timeZone = TimeZone.getDefault()
 
-    private val params = combine(info, sortMode, format, items) { info, sortMode, format, items ->
+    private val params = combine(info, sortMode, items) { info, sortMode, items ->
         Params(
             items = items,
             sortMode = sortMode,
-            format = format,
             info = info
         )
     }
@@ -114,7 +113,7 @@ class TrashRepository(
     val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
-            format = params.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 
@@ -136,9 +135,9 @@ class TrashRepository(
 
         allTrashItems.filter { item ->
             val key = when {
-                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
-                sortMode.isDateModified -> item.getDateModifiedDay()
-                else -> item.getDateTakenDay()
+                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken(timeZone)
+                sortMode.isDateModified -> item.getDateModifiedDay(timeZone)
+                else -> item.getDateTakenDay(timeZone)
             }
 
             key in timestamp..(timestamp + 86400)

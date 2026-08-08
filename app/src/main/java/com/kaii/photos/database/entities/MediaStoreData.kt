@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey
 import com.kaii.photos.mediastore.MediaType
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 @Immutable
 @Entity(
@@ -82,15 +83,15 @@ data class MediaStoreData(
 
     /** gets the date taken in days (no hours/minutes/seconds/milliseconds) */
     /** it is returned in unix epoch seconds*/
-    fun getDateTakenDay() = epochToDayStart(timestamp = dateTaken)
+    fun getDateTakenDay(timeZone: TimeZone) = epochToDayStart(timestamp = dateTaken, timeZone = timeZone)
 
     /** gets the date modified in days (no hours/minutes/seconds/milliseconds) */
     /** it is returned in unix epoch seconds*/
-    fun getDateModifiedDay() = epochToDayStart(timestamp = dateModified)
+    fun getDateModifiedDay(timeZone: TimeZone) = epochToDayStart(timestamp = dateModified, timeZone = timeZone)
 
     /** gets the date taken in months (no days/hours/minutes/seconds/milliseconds) */
     /** it is returned in unix epoch seconds*/
-    fun getMonthTaken(): Long {
+    fun getMonthTaken(timeZone: TimeZone): Long {
         val calendar = Calendar.getInstance(Locale.ENGLISH).apply {
             timeInMillis = dateTaken * 1000
             set(Calendar.DAY_OF_MONTH, 1) // months don't start with day numbered 0 :|
@@ -98,6 +99,8 @@ data class MediaStoreData(
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
+
+            this.timeZone = timeZone
         }
 
         return calendar.timeInMillis / 1000
@@ -105,4 +108,14 @@ data class MediaStoreData(
 }
 
 /** @param timestamp should be in seconds */
-fun epochToDayStart(timestamp: Long) = timestamp - (timestamp % 86400)
+fun epochToDayStart(timestamp: Long, timeZone: TimeZone): Long {
+    val secondsPerDay = 86400L
+
+    val timezoneOffset = timeZone.getOffset(timestamp * 1000L) / 1000L
+
+    val localSeconds = timestamp + timezoneOffset
+
+    val localMidnight = (localSeconds / secondsPerDay) * secondsPerDay
+
+    return localMidnight - timezoneOffset
+}

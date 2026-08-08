@@ -4,12 +4,12 @@ import androidx.paging.PagingData
 import androidx.paging.insertSeparators
 import androidx.paging.map
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.helpers.DisplayDateFormat
-import com.kaii.photos.helpers.formatDate
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.TimeZone
 
 fun Flow<PagingData<MediaStoreData>>.mapToMedia(
     auth: Auth,
@@ -26,8 +26,10 @@ fun Flow<PagingData<MediaStoreData>>.mapToMedia(
 
 fun Flow<PagingData<PhotoLibraryUIModel>>.mapToSeparatedMedia(
     sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    dateFormatter: LocalizedDateFormatter
 ) = this.map { pagingData ->
+    val tz = TimeZone.getDefault()
+
     pagingData.insertSeparators { before, after ->
         before as PhotoLibraryUIModel.MediaImpl?
         after as PhotoLibraryUIModel.MediaImpl?
@@ -42,37 +44,29 @@ fun Flow<PagingData<PhotoLibraryUIModel>>.mapToSeparatedMedia(
             }
 
             sortMode == MediaItemSortMode.MonthTaken -> {
-                beforeDate = before?.item?.getMonthTaken()
-                afterDate = after?.item?.getMonthTaken()
+                beforeDate = before?.item?.getMonthTaken(tz)
+                afterDate = after?.item?.getMonthTaken(tz)
             }
 
             sortMode.isDateModified -> {
-                beforeDate = before?.item?.getDateModifiedDay()
-                afterDate = after?.item?.getDateModifiedDay()
+                beforeDate = before?.item?.getDateModifiedDay(tz)
+                afterDate = after?.item?.getDateModifiedDay(tz)
             }
 
             else -> {
-                beforeDate = before?.item?.getDateTakenDay()
-                afterDate = after?.item?.getDateTakenDay()
+                beforeDate = before?.item?.getDateTakenDay(tz)
+                afterDate = after?.item?.getDateTakenDay(tz)
             }
         }
 
         when {
             beforeDate == null && afterDate != null -> PhotoLibraryUIModel.Section(
-                title = formatDate(
-                    timestamp = afterDate,
-                    sortBy = sortMode,
-                    format = format
-                ),
+                title = dateFormatter.formatDay(afterDate),
                 timestamp = afterDate
             )
 
             beforeDate != afterDate && afterDate != null -> PhotoLibraryUIModel.Section(
-                title = formatDate(
-                    timestamp = afterDate,
-                    sortBy = sortMode,
-                    format = format
-                ),
+                title = dateFormatter.formatDay(afterDate),
                 timestamp = afterDate
             )
 

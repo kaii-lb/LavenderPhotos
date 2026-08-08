@@ -7,7 +7,6 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
-import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -15,10 +14,10 @@ import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -30,18 +29,18 @@ import javax.inject.Inject
 class FavouritesRepository(
     private val mediaDao: MediaDao,
     private val fileManager: HybridFileManager,
+    dateFormatter: LocalizedDateFormatter,
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
-    sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>
+    sortMode: Flow<MediaItemSortMode>
 ) : BaseRepo, RenameFile, Secure {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
         private val localFileManager: LocalFileManager,
+        private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
-        private val photoGrid: SettingsPhotoGridImpl,
-        private val lookAndFeel: SettingsLookAndFeelImpl
+        private val photoGrid: SettingsPhotoGridImpl
     ) {
         fun create(
             scope: CoroutineScope
@@ -50,16 +49,15 @@ class FavouritesRepository(
                 mediaDao = mediaDao,
                 fileManager = fileManagerFactory.create(localFileManager),
                 scope = scope,
+                dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
-                sortMode = photoGrid.getSortMode(),
-                format = lookAndFeel.getDisplayDateFormat()
+                sortMode = photoGrid.getSortMode()
             )
     }
 
-    private val params = combine(info, sortMode, format) { info, sortMode, format ->
+    private val params = combine(info, sortMode) { info, sortMode ->
         RoomQueryParams(
             sortMode = sortMode,
-            format = format,
             info = info
         )
     }
@@ -88,7 +86,7 @@ class FavouritesRepository(
     override val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = params.sortMode,
-            format = params.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 

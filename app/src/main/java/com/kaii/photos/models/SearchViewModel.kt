@@ -34,10 +34,6 @@ class SearchViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            displayDateFormat.collect { searchManager.update(format = it) }
-        }
-
-        viewModelScope.launch {
             sortMode.collect { searchManager.update(sortMode = it) }
         }
 

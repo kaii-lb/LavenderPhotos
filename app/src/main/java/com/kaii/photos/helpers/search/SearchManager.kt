@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshotFlow
 import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.repositories.SearchRepository
@@ -63,10 +62,9 @@ class SearchManager(
 
     fun update(
         sortMode: MediaItemSortMode? = null,
-        format: DisplayDateFormat? = null,
         info: ImmichBasicInfo? = null,
         mode: SearchMode? = null
-    ) = searchRepo.update(sortMode, format, info, mode)
+    ) = searchRepo.update(sortMode, info, mode)
 
     fun setSearchMode(mode: SearchMode) {
         _searchMode.value = mode

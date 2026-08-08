@@ -7,7 +7,6 @@ import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
-import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
 import com.kaii.photos.domain.files.FileOperationItemMetadata
@@ -17,10 +16,10 @@ import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,16 +33,16 @@ class HybridRepository(
     private val fileManager: HybridFileManager,
     scope: CoroutineScope,
     initialAlbum: AlbumType.Folder,
+    dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
-    sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>
+    sortMode: Flow<MediaItemSortMode>
 ) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
+        private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
-        private val photoGrid: SettingsPhotoGridImpl,
-        private val lookAndFeel: SettingsLookAndFeelImpl
+        private val photoGrid: SettingsPhotoGridImpl
     ) {
         fun create(
             scope: CoroutineScope,
@@ -55,25 +54,23 @@ class HybridRepository(
                 fileManager = fileManagerFactory.create(other),
                 scope = scope,
                 initialAlbum = album,
+                dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
-                sortMode = photoGrid.getSortMode(),
-                format = lookAndFeel.getDisplayDateFormat()
+                sortMode = photoGrid.getSortMode()
             )
     }
 
     private data class Params(
         val paths: Set<String>,
         override val sortMode: MediaItemSortMode,
-        override val format: DisplayDateFormat,
         override val info: ImmichBasicInfo
-    ) : RoomQueryParams(sortMode, format, info)
+    ) : RoomQueryParams(sortMode, info)
 
     private val album = MutableStateFlow(initialAlbum)
-    private val params = combine(info, sortMode, format, album) { info, sortMode, format, album ->
+    private val params = combine(info, sortMode, album) { info, sortMode, album ->
         Params(
             paths = album.paths,
             sortMode = sortMode,
-            format = format,
             info = info
         )
     }
@@ -101,7 +98,7 @@ class HybridRepository(
     override val gridMediaFlow = params.flatMapLatest { details ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = details.sortMode,
-            format = details.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 

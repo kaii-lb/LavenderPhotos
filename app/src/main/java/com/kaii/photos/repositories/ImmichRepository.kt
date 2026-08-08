@@ -8,16 +8,15 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
-import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.CloudFileManager
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,17 +36,17 @@ class ImmichRepository(
     private val fileManager: CloudFileManager,
     private val refreshOperation: RefreshCloudAlbumOperation,
     private val customDao: CustomEntityDao,
+    dateFormatter: LocalizedDateFormatter,
     sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>,
     info: Flow<ImmichBasicInfo>
 ) : BaseRepo, RenameAlbum, CountAndSize {
     class Factory @Inject constructor(
         private val customDao: CustomEntityDao,
         private val refreshOperation: RefreshCloudAlbumOperation,
         private val fileManager: CloudFileManager,
+        private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
-        private val photoGrid: SettingsPhotoGridImpl,
-        private val lookAndFeel: SettingsLookAndFeelImpl
+        private val photoGrid: SettingsPhotoGridImpl
     ) {
         fun create(
             scope: CoroutineScope,
@@ -59,16 +58,15 @@ class ImmichRepository(
                 fileManager = fileManager,
                 refreshOperation = refreshOperation,
                 customDao = customDao,
+                dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
-                sortMode = photoGrid.getSortMode(),
-                format = lookAndFeel.getDisplayDateFormat()
+                sortMode = photoGrid.getSortMode()
             )
     }
 
-    private val params = combine(info, sortMode, format) { info, sortMode, format ->
+    private val params = combine(info, sortMode) { info, sortMode ->
         RoomQueryParams(
             sortMode = sortMode,
-            format = format,
             info = info
         )
     }.stateIn(
@@ -76,7 +74,6 @@ class ImmichRepository(
         started = SharingStarted.Eagerly,
         initialValue = RoomQueryParams(
             sortMode = MediaItemSortMode.DateTaken,
-            format = DisplayDateFormat.Default,
             info = ImmichBasicInfo.Empty
         )
     )
@@ -104,7 +101,7 @@ class ImmichRepository(
     override val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = params.sortMode,
-            format = params.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 

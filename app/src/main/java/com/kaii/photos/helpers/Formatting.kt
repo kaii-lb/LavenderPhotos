@@ -7,9 +7,10 @@ import com.kaii.photos.R
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.pow
@@ -21,7 +22,7 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class)
 fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFormat): String {
-    return if (timestamp != 0L) {
+    return if (timestamp > 0L) {
         val dateFormat =
             if (sortBy == MediaItemSortMode.MonthTaken) {
                 DateTimeFormatter.ofPattern("MMMM yyyy")
@@ -29,11 +30,10 @@ fun formatDate(timestamp: Long, sortBy: MediaItemSortMode, format: DisplayDateFo
                 format.format
             }
 
-        Instant.fromEpochSeconds(timestamp)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-            .toJavaLocalDate()
-            .format(dateFormat)
+        LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochSecond(timestamp),
+            ZoneId.systemDefault()
+        ).format(dateFormat)
     } else {
         "Pretend there is a date here"
     }

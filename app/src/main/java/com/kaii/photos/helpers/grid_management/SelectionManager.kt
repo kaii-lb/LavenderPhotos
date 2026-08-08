@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import java.util.TimeZone
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -51,6 +52,8 @@ class SelectionManager(
                 parentPath = parentPath
             )
     }
+
+    private val timeZone = TimeZone.getDefault()
 
     private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
     val selection = snapshotFlow { _selection.values.flatMap { it.values } }
@@ -118,7 +121,7 @@ class SelectionManager(
 
                 snapshot[key] = ((snapshot[key] ?: emptyMap()) + media)
 
-                val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
+                val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
 
                 if (media.size == maxCount) {
                     sections.add(key)
@@ -169,7 +172,7 @@ class SelectionManager(
             }
             snapshot[key] = snapshot[key]!!
 
-            val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
+            val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
 
             if (snapshot[key]!!.size == maxCount) {
                 sections.add(key)
@@ -197,13 +200,13 @@ class SelectionManager(
         }
 
     private fun getMediaKey(item: MediaStoreData) = when {
-        sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
+        sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken(timeZone)
 
-        sortMode.isDateModified -> item.getDateModifiedDay()
+        sortMode.isDateModified -> item.getDateModifiedDay(timeZone)
 
         // sortMode.isDisabled -> 0 // seems to cause animation state issues
 
-        else -> item.getDateTakenDay()
+        else -> item.getDateTakenDay(timeZone)
     }
 
     private fun toggleMedia(item: MediaStoreData) {
@@ -224,7 +227,7 @@ class SelectionManager(
             snapshot[timestamp] = emptyMap()
             sections.removeAll { it == timestamp }
         } else {
-            snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp), sortMode)
+            snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp, timeZone), sortMode)
 
             // hardcoded android limit for handling uris
             // if (snapshot[timestamp]!!.size >= 2000) {
@@ -264,7 +267,7 @@ class SelectionManager(
         )
         snapshot[key] = list
 
-        val maxCount = getMediaInDate(epochToDayStart(key), sortMode).size
+        val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
 
         if (list.size == maxCount) {
             sections.add(key)

@@ -20,11 +20,11 @@ import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -64,13 +64,14 @@ class SearchRepository(
     scope: CoroutineScope,
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
-    format: DisplayDateFormat
+    dateFormatter: LocalizedDateFormatter
 ) : BaseRepo, RenameFile, Secure {
     class Factory @Inject constructor(
         private val searchDao: SearchDao,
         private val taggedItemsDao: TaggedItemsDao,
         private val fileManagerFactory: HybridFileManagerFactory,
-        private val other: LocalFileManager
+        private val other: LocalFileManager,
+        private val dateFormatter: LocalizedDateFormatter
     ) {
         fun create(
             scope: CoroutineScope
@@ -82,14 +83,13 @@ class SearchRepository(
                 scope = scope,
                 info = ImmichBasicInfo.Empty,
                 sortMode = MediaItemSortMode.DateTaken,
-                format = DisplayDateFormat.Default
+                dateFormatter = dateFormatter
             )
     }
 
     private data class RoomQueryParams(
         val query: String,
         val sortMode: MediaItemSortMode,
-        val format: DisplayDateFormat,
         val info: ImmichBasicInfo,
         val mode: SearchMode,
         val tags: Set<Tag>
@@ -99,7 +99,6 @@ class SearchRepository(
         value = RoomQueryParams(
             query = "",
             sortMode = sortMode,
-            format = format,
             info = info,
             mode = SearchMode.Name,
             tags = emptySet()
@@ -149,7 +148,7 @@ class SearchRepository(
     override val gridMediaFlow = params.flatMapLatest { details ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = details.sortMode,
-            format = details.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 
@@ -166,14 +165,12 @@ class SearchRepository(
 
     fun update(
         sortMode: MediaItemSortMode?,
-        format: DisplayDateFormat?,
         info: ImmichBasicInfo?,
         mode: SearchMode?
     ) {
         val snapshot = params.value
         params.value = snapshot.copy(
             sortMode = sortMode ?: snapshot.sortMode,
-            format = format ?: snapshot.format,
             info = info ?: snapshot.info,
             mode = mode ?: snapshot.mode
         )

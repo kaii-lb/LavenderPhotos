@@ -15,7 +15,6 @@ import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.entities.SecuredItemEntity
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
-import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.SecureFileManager
@@ -23,7 +22,6 @@ import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.Restore
 import com.kaii.photos.file_management.managers.traits.Share
-import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.SecureIvRecovery
 import com.kaii.photos.helpers.appRestoredFilesDir
@@ -39,6 +37,7 @@ import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.toSelectedItem
+import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +55,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.util.TimeZone
 import javax.inject.Inject
 import kotlin.io.path.Path
 import kotlin.math.roundToLong
@@ -65,17 +65,17 @@ class SecureRepository(
     private val scope: CoroutineScope,
     private val fileManager: SecureFileManager,
     private val secureDao: SecuredMediaItemEntityDao,
+    dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
-    sortMode: Flow<MediaItemSortMode>,
-    format: Flow<DisplayDateFormat>
+    sortMode: Flow<MediaItemSortMode>
 ) : Delete, Share, ExtractExif, Restore {
     class Factory @Inject constructor(
         @param:ApplicationContext private val context: Context,
         private val secureDao: SecuredMediaItemEntityDao,
         private val fileManager: SecureFileManager,
+        private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
-        private val photoGrid: SettingsPhotoGridImpl,
-        private val lookAndFeel: SettingsLookAndFeelImpl
+        private val photoGrid: SettingsPhotoGridImpl
     ) {
         fun create(
             scope: CoroutineScope
@@ -85,9 +85,9 @@ class SecureRepository(
                 secureDao = secureDao,
                 scope = scope,
                 fileManager = fileManager,
+                dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
-                sortMode = photoGrid.getSortMode(),
-                format = lookAndFeel.getDisplayDateFormat()
+                sortMode = photoGrid.getSortMode()
             )
     }
 
@@ -139,12 +139,12 @@ class SecureRepository(
     private data class Params(
         val items: List<PhotoLibraryUIModel.SecuredMedia>,
         override val sortMode: MediaItemSortMode,
-        override val format: DisplayDateFormat,
         override val info: ImmichBasicInfo
-    ) : RoomQueryParams(sortMode, format, info)
+    ) : RoomQueryParams(sortMode, info)
 
     private val appContext = context.applicationContext
     private val secureFolder = File(appContext.appSecureFolderDir)
+    private val timeZone = TimeZone.getDefault()
 
     // load() does a read-modify-write on items.value, so concurrent calls (init, the FileObserver firing
     // once per file during a batch secure, the post-verify reload) used to lost-update each other and
@@ -186,11 +186,10 @@ class SecureRepository(
     private val _fileList = MutableStateFlow(secureFolder.listFiles())
 
     private val items = MutableStateFlow(emptyList<PhotoLibraryUIModel.SecuredMedia>())
-    private val params = combine(info, sortMode, format, items) { info, sortMode, format, items ->
+    private val params = combine(info, sortMode, items) { info, sortMode, items ->
         Params(
             items = items,
             sortMode = sortMode,
-            format = format,
             info = info
         )
     }.stateIn(
@@ -199,7 +198,6 @@ class SecureRepository(
         initialValue = Params(
             items = emptyList(),
             sortMode = MediaItemSortMode.DateTaken,
-            format = DisplayDateFormat.Default,
             info = ImmichBasicInfo.Empty
         )
     )
@@ -234,7 +232,7 @@ class SecureRepository(
     val gridMediaFlow = params.flatMapLatest { params ->
         mediaFlow.mapToSeparatedMedia(
             sortMode = if (params.sortMode.isDisabled) MediaItemSortMode.DisabledLastModified else MediaItemSortMode.DateModified,
-            format = params.format
+            dateFormatter = dateFormatter
         )
     }.cachedIn(scope)
 
@@ -253,9 +251,9 @@ class SecureRepository(
         items.value.filter { media ->
             val item = media.item
             val key = when {
-                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken()
-                sortMode.isDateModified -> item.getDateModifiedDay()
-                else -> item.getDateTakenDay()
+                sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken(timeZone)
+                sortMode.isDateModified -> item.getDateModifiedDay(timeZone)
+                else -> item.getDateTakenDay(timeZone)
             }
 
             key in timestamp..(timestamp + 86400)
