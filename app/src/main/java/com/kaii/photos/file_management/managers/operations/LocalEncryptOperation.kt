@@ -34,6 +34,7 @@ class LocalEncryptOperation @Inject constructor(
         )
 
         var operationError: FileOperationError? = null
+        val filesToBeDeleted = mutableListOf<FileOperationItemMetadata>()
 
         media.forEach { item ->
             when (val secureResult = secureManager.secure(mediaItem = item)) {
@@ -46,34 +47,39 @@ class LocalEncryptOperation @Inject constructor(
                 }
 
                 is Result.Success -> {
-                    val originalItem = secureResult.data
-                    val deleteResult = gateway.delete(listOf(originalItem))
-
-                    if (deleteResult is Result.Error) {
-                        if (operationError == null || operationError == FileOperationError.Failed) {
-                            operationError = deleteResult.error
-                        }
-
-                        Log.e(
-                            LocalEncryptOperation::class.qualifiedName,
-                            "Deleting original ${originalItem.uri} after securing it failed: ${deleteResult.error}"
-                        )
-                    }
+                    filesToBeDeleted.add(secureResult.data)
 
                     emit(
                         value = FileOperationProgress.ItemDone(
-                            uri = originalItem.uri
+                            uri = item.uri
                         )
                     )
                 }
             }
         }
 
+        if (operationError != null) {
+            emit(
+                value = FileOperationProgress.Finished(
+                    result = Result.Error(operationError)
+                )
+            )
+
+            return@flow
+        }
+
+        val deleteResult = gateway.delete(filesToBeDeleted)
+
+        if (deleteResult is Result.Error) {
+            Log.e(
+                LocalEncryptOperation::class.qualifiedName,
+                "Deleting original files after securing them failed: ${deleteResult.error}"
+            )
+        }
+
         emit(
             value = FileOperationProgress.Finished(
-                result =
-                    if (operationError == null) Result.Success(data = Unit)
-                    else Result.Error(operationError)
+                result = deleteResult
             )
         )
     }.flowOn(Dispatchers.IO)

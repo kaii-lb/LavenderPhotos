@@ -104,7 +104,7 @@ fun SecureFolderViewBottomAppBar(
                     isGettingPermissions.value = true
 
                     val directories = selectedItemsList.fastMapNotNull {
-                        it.absolutePath.parent() // absolutePath is originalPath with filename, not parent directory for secured items
+                        it.parentPath.parent() // parentPath is the original absolute path for secured items
                     }.distinct().toSet()
 
                     restorePermissionState.start(directories = directories)

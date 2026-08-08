@@ -90,13 +90,11 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.PhotoGridConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.getOriginalPath
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
@@ -339,8 +337,6 @@ private fun BottomBar(
     modifier: Modifier = Modifier,
     runAction: (action: FileOperationAction) -> Unit
 ) {
-    val context = LocalContext.current
-
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -353,6 +349,8 @@ private fun BottomBar(
                     )
                 )
             )
+
+            isGettingPermissions.value = false
         },
         onRejected = {
             isGettingPermissions.value = false
@@ -368,7 +366,7 @@ private fun BottomBar(
 
                 permissionManager.start(
                     directories = setOf(
-                        securedMedia.bytes?.getOriginalPath()?.parent() ?: context.appRestoredFilesDir
+                        securedMedia.item.parentPath.parent() // parentPath is the original absolute path for secured items\
                     )
                 )
             },

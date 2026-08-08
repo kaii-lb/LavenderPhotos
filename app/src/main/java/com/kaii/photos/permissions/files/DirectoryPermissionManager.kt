@@ -2,6 +2,7 @@ package com.kaii.photos.permissions.files
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -21,31 +22,53 @@ class DirectoryPermissionManager(
     private var running = false
     private val directories = mutableListOf<String>()
 
-    internal fun getDirPermission(
-        directory: String
-    ) {
-        val uri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath = directory, trimDoc = false)
+    private fun getDirPermission(directory: String) {
+        val launcher = launcher
 
-        launcher!!.launch(uri)
-    }
-
-    internal fun fetch() {
-        if (!running) return
-        getDirPermission(directory = directories.first())
-    }
-
-    internal fun step(success: Boolean) {
-        if (directories.isEmpty() && success) {
-            running = false
-            onGranted()
-        } else if (!success) {
+        if (launcher == null) {
+            Log.e(DirectoryPermissionManager::class.qualifiedName, "getDirPermission: launcher is null, aborting")
             running = false
             onFailed()
+            return
         }
+
+        val uri = context.getExternalStorageContentUriFromAbsolutePath(absolutePath = directory, trimDoc = false)
+        launcher.launch(uri)
     }
 
-    internal fun success() {
+    private fun fetch() {
+        if (!running) return
+
+        val next = directories.firstOrNull() ?: run {
+            running = false
+            onGranted()
+            return
+        }
+
+        getDirPermission(directory = next)
+    }
+
+    internal fun onLauncherResult(success: Boolean) {
+        if (!running || directories.isEmpty()) {
+            running = false
+            onFailed()
+            return
+        }
+
+        if (!success) {
+            running = false
+            onFailed()
+            return
+        }
+
         directories.removeAt(0)
+
+        if (directories.isEmpty()) {
+            running = false
+            onGranted()
+        } else {
+            fetch()
+        }
     }
 
     fun start(directories: Set<String>) {
@@ -59,6 +82,8 @@ class DirectoryPermissionManager(
         }
 
         if (directories.all { it.isBlank() }) throw IllegalArgumentException("Cannot get directory permissions for directories with blank paths!")
+
+        val directories = directories.filter { it.isNotEmpty() }
 
         val previous = context.contentResolver.persistedUriPermissions
         val persisted = directories.all { path ->
@@ -97,23 +122,13 @@ fun rememberDirectoryPermissionManager(
     }
 
     val launcher = createPersistablePermissionLauncher(
-        onGranted = { _ ->
-            state.success()
-            state.step(success = true)
-            state.fetch()
-        },
-
-        onFailure = {
-            state.step(success = false)
-        }
+        onGranted = { _ -> state.onLauncherResult(success = true) },
+        onFailure = { state.onLauncherResult(success = false) }
     )
 
     DisposableEffect(launcher, state) {
         state.launcher = launcher
-
-        onDispose {
-            state.launcher = null
-        }
+        onDispose { state.launcher = null }
     }
 
     return state

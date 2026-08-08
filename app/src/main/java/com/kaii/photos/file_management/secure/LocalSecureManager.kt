@@ -62,12 +62,7 @@ class LocalSecureManager @Inject constructor(
             // set last modified so item shows up in correct place in locked folder
             fileToBeHidden.setLastModified(lastModified)
 
-            context.contentResolver.setDateForMedia(
-                uri = mediaItem.uri.toUri(),
-                type = mediaItem.type,
-                dateTaken = mediaItem.dateTaken,
-                overwriteLastModified = false
-            )
+            // TODO: set date taken on media
 
             // encrypt file data and write to secure folder path
             iv =
@@ -297,6 +292,8 @@ class LocalSecureManager @Inject constructor(
         } catch (e: Throwable) {
             Log.e(LocalSecureManager::class.qualifiedName, e.toString())
             e.printStackTrace()
+            tempFile.delete()
+            return@withContext Result.Error(FileOperationError.Failed)
         }
 
         val originalUri = FileProvider.getUriForFile(
