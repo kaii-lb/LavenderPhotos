@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
@@ -38,6 +40,7 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.modifiers.tapOnScreenHalves
 import com.kaii.photos.compose.videoplayer.VideoPlayer
+import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
@@ -80,6 +83,13 @@ fun HorizontalImageList(
     isSecuredMedia: Boolean = false
 ) {
     val motionPhoto = rememberMotionPhotoState()
+
+    val playerView = rememberPlayerView(
+        useTextureView = false,
+        blurViews = blurViews(),
+        useBlackBackground = useBlackBackground()
+    )
+
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = false,
         onPlaybackStateChanged = {},
@@ -89,6 +99,19 @@ fun HorizontalImageList(
             if (item?.item?.type == MediaType.Video) appBarsVisible.value = false
         }
     )
+
+    val playerSlot = remember {
+        movableContentOf {
+            AndroidView(
+                factory = {
+                    playerView
+                },
+                update = {
+                    videoPlayerState.linkPlayerView(it)
+                }
+            )
+        }
+    }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -185,8 +208,6 @@ fun HorizontalImageList(
                     appBarsVisible = appBarsVisible,
                     scrollState = scrollState,
                     window = window,
-                    blurViews = blurViews(),
-                    useBlackBackground = useBlackBackground(),
                     shouldPlay = {
                         state.currentPage == index
                     },
@@ -196,7 +217,10 @@ fun HorizontalImageList(
                         .graphicsLayer {
                             scaleX = 1f - swipeDownProgress() * 0.25f
                             scaleY = 1f - swipeDownProgress() * 0.25f
-                        }
+                        },
+                    playerSlot = {
+                        if (state.settledPage == index) playerSlot()
+                    }
                 )
             }
         } else {

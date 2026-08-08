@@ -207,15 +207,16 @@ class VideoPlayerState(
     ) {
         if (isReleased) return
 
+        val immichUrl = item.immichVideoUrl?.takeIf { item.isCloud }?.let { endpoint + it }
+        val uri = immichUrl ?: item.uri
+
+        if (currentSource == uri) return
+
         this.loopMode = if (loop) 2 else 0
         this.shouldPlay = shouldPlay
         this.audioTracks.clear()
 
         pause()
-
-        val immichUrl = item.immichVideoUrl?.takeIf { item.isCloud }?.let { endpoint + it }
-        val uri = immichUrl ?: item.uri
-        if (currentSource == uri) return
 
         videoTitle = item.displayName
 

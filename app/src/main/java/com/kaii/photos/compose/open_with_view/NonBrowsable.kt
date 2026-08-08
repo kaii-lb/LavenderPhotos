@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.PhotosApplication
@@ -60,6 +62,7 @@ import com.kaii.photos.compose.single_photo.GlideView
 import com.kaii.photos.compose.single_photo.MotionPhotoView
 import com.kaii.photos.compose.single_photo.rememberGlideZoomableState
 import com.kaii.photos.compose.videoplayer.VideoPlayer
+import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
@@ -98,6 +101,12 @@ fun OpenWithContent(
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = true)
 
+    val playerView = rememberPlayerView(
+        useTextureView = false,
+        blurViews = blurViews,
+        useBlackBackground = useBlackBackground
+    )
+
     val videoPlayerState = retainVideoPlayerState(
         isOpenWithView = true,
         onPlaybackStateChanged = {},
@@ -105,6 +114,19 @@ fun OpenWithContent(
             appBarsVisible.value = false
         }
     )
+
+    val playerSlot = remember {
+        movableContentOf {
+            AndroidView(
+                factory = {
+                    playerView
+                },
+                update = {
+                    videoPlayerState.linkPlayerView(it)
+                }
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -150,12 +172,11 @@ fun OpenWithContent(
                     scrollState = scrollState,
                     window = window,
                     shouldPlay = { true },
-                    blurViews = blurViews,
-                    useBlackBackground = useBlackBackground,
                     isOpenWithView = true,
                     useCache = false,
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxSize(),
+                    playerSlot = playerSlot
                 )
             } else {
                 LaunchedEffect(Unit) {

@@ -53,7 +53,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.net.toUri
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -85,11 +84,10 @@ fun VideoPlayer(
     scrollState: SinglePhotoScrollState,
     window: Window,
     shouldPlay: () -> Boolean,
-    blurViews: Boolean,
-    useBlackBackground: Boolean,
     useCache: Boolean,
     modifier: Modifier = Modifier,
-    isOpenWithView: Boolean = false
+    isOpenWithView: Boolean = false,
+    playerSlot: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     var securedMediaProgress by remember { mutableFloatStateOf(0f) }
@@ -131,11 +129,10 @@ fun VideoPlayer(
                 scrollState = scrollState,
                 window = window,
                 shouldPlay = shouldPlay,
-                blurViews = blurViews,
-                useBlackBackground = useBlackBackground,
                 useCache = useCache,
                 modifier = modifier,
-                isOpenWithView = isOpenWithView
+                isOpenWithView = isOpenWithView,
+                playerSlot = playerSlot
             )
         }
     }
@@ -150,11 +147,10 @@ private fun VideoPlayerUI(
     scrollState: SinglePhotoScrollState,
     window: Window,
     shouldPlay: () -> Boolean,
-    blurViews: Boolean,
-    useBlackBackground: Boolean,
     useCache: Boolean,
     modifier: Modifier = Modifier,
-    isOpenWithView: Boolean = false
+    isOpenWithView: Boolean = false,
+    playerSlot: @Composable () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -177,13 +173,18 @@ private fun VideoPlayerUI(
                 if (state.isPlaying && shouldPlay()) {
                     Modifier.keepScreenOn()
                 } else Modifier.Companion
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Crossfade(
-            targetState = shouldPlay(),
-            animationSpec = tween(
-                durationMillis = AnimationConstants.DURATION_LONG,
-                delayMillis = AnimationConstants.DURATION
+        playerSlot()
+
+        AnimatedVisibility(
+            visible = !shouldPlay(),
+            exit = fadeOut(
+                tween(
+                    durationMillis = AnimationConstants.DURATION_LONG,
+                    delayMillis = AnimationConstants.DURATION
+                )
             ),
             modifier = Modifier
                 .fillMaxSize()
@@ -194,36 +195,17 @@ private fun VideoPlayerUI(
                     translationY = -transformableState.offset.y * transformableState.scale,
                     transformOrigin = TransformOrigin(0f, 0f)
                 )
-        ) { visible ->
-            if (visible) {
-                val playerView = rememberPlayerView(
-                    useTextureView = false,
-                    blurViews = blurViews,
-                    useBlackBackground = useBlackBackground
-                )
-
-                AndroidView(
-                    factory = {
-                        playerView
-                    },
-                    update = {
-                        state.linkPlayerView(it)
-                    },
-                    modifier = modifier
-                        .align(Alignment.Center)
-                )
-            } else {
-                GlideImage(
-                    model = item.uri.toUri(),
-                    contentScale = ContentScale.Fit,
-                    contentDescription = null,
-                    loading = placeholder(R.drawable.broken_image),
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    it.signature(item.signature())
-                        .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
-                }
+        ) {
+            GlideImage(
+                model = item.uri.toUri(),
+                contentScale = ContentScale.Fit,
+                contentDescription = null,
+                loading = placeholder(R.drawable.broken_image),
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                it.signature(item.signature())
+                    .diskCacheStrategy(if (useCache) DiskCacheStrategy.ALL else DiskCacheStrategy.NONE)
             }
         }
 
@@ -253,22 +235,13 @@ private fun VideoPlayerUI(
             doubleTapDisplayTimeMillis = 0
         }
 
-        LaunchedEffect(isLandscape) {
+        LaunchedEffect(state.controlsVisible, isLandscape) {
             setBarVisibility(
-                visible = !isLandscape,
+                visible = state.controlsVisible || !isLandscape,
                 window = window
             ) {
                 appBarsVisible.value = it
                 if (!isLandscape) state.controlsVisible = it
-            }
-        }
-
-        LaunchedEffect(state.controlsVisible) {
-            setBarVisibility(
-                visible = state.controlsVisible,
-                window = window
-            ) {
-                appBarsVisible.value = it
             }
         }
 
