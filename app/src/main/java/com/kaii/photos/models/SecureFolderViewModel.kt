@@ -62,6 +62,10 @@ class SecureFolderViewModel @Inject constructor(
 
     override fun onCleared() {
         repo.detachFileObserver()
+
+        appScope.launch {
+            repo.clearCaches()
+        }
     }
 
     override val progressChannel = Channel<FileOperationProgress<Unit>>(Channel.BUFFERED)
@@ -81,6 +85,10 @@ class SecureFolderViewModel @Inject constructor(
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
                 exifDataState.value = repo.getExifData(action.file)
+            }
+
+            is FileOperationAction.ClearSecureFolderCaches -> appScope.launch {
+                repo.clearCaches()
             }
 
             else -> Unit

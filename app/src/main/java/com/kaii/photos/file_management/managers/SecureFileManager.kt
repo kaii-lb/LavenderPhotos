@@ -20,18 +20,20 @@ import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
-import com.kaii.photos.helpers.getDecryptCacheForFile
-import com.kaii.photos.helpers.getSecureDecryptedVideoFile
 import com.kaii.photos.helpers.grid_management.toSecureMedia
+import com.kaii.photos.helpers.secureDecryptCacheFile
+import com.kaii.photos.helpers.secureDecryptVideoFile
 import com.kaii.photos.helpers.secureThumbnailImage
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.getIv
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
@@ -116,9 +118,9 @@ class SecureFileManager @Inject constructor(
             val originalFile = File(item.item.absolutePath)
             val cachedFile =
                 if (item.item.type == MediaType.Video) {
-                    getSecureDecryptedVideoFile(originalFile.name, context)
+                    originalFile.secureDecryptVideoFile(context)
                 } else {
-                    getDecryptCacheForFile(originalFile, context)
+                    originalFile.secureDecryptCacheFile(context)
                 }
 
             if (!cachedFile.exists()) {
@@ -224,17 +226,14 @@ class SecureFileManager @Inject constructor(
     // TODO: clean this up
     override suspend fun getExifData(
         file: FileOperationItemMetadata
-    ): Result<Map<MediaData, String>, FileOperationError> {
+    ): Result<Map<MediaData, String>, FileOperationError> = withContext(Dispatchers.IO) {
         val threshold = 500
 
-        val media = listOf(file).toSecureMedia(context = context).firstOrNull() ?: return Result.Error(FileOperationError.Failed)
+        val media = listOf(file).toSecureMedia(context = context).firstOrNull() ?: return@withContext Result.Error(FileOperationError.Failed)
+        val originalFile = File(file.absolutePath)
 
         val decryptedFile = if (!file.isImage) {
-            val originalFile = File(file.absolutePath)
-            val cachedFile = getSecureDecryptedVideoFile(
-                name = originalFile.name,
-                context = context
-            )
+            val cachedFile = originalFile.secureDecryptVideoFile(context)
 
             if (cachedFile.length() < originalFile.length()) {
                 while (cachedFile.length() + threshold < originalFile.length()) {
@@ -246,18 +245,14 @@ class SecureFileManager @Inject constructor(
                 cachedFile
             }
         } else {
-            val originalFile = File(file.absolutePath)
-            val cachedFile = getDecryptCacheForFile(
-                file = originalFile,
-                context = context
-            )
+            val cachedFile = originalFile.secureDecryptCacheFile(context)
 
             if (!cachedFile.exists()) {
                 val iv = media.bytes?.getIv()
 
                 if (iv == null) {
                     Log.e(TAG, "IV for ${media.item.displayName} was null, aborting")
-                    return Result.Error(FileOperationError.Failed)
+                    return@withContext Result.Error(FileOperationError.Failed)
                 }
 
                 EncryptionManager.decryptInputStream(
@@ -279,16 +274,20 @@ class SecureFileManager @Inject constructor(
             }
         }
 
+        val dateTaken = secureDao.getDateTakenFor(securedPath = file.absolutePath)
+
         val mediaData = getExifDataForMedia(
             inputStream = decryptedFile.inputStream(),
             absolutePath = decryptedFile.absolutePath,
             is24Hr = gateway.is24HrFormat(),
-            fallback = media.item.dateModified
+            fallback = dateTaken ?: media.item.dateModified
         ).toMutableMap().apply {
             set(MediaData.Path, media.item.parentPath)
             set(MediaData.Name, media.item.displayName)
         }
 
-        return Result.Success(data = mediaData)
+        return@withContext Result.Success(data = mediaData)
     }
+
+    override suspend fun clearCaches() = secureManager.clearCaches()
 }

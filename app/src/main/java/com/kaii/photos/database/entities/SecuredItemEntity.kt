@@ -8,7 +8,8 @@ import androidx.room.PrimaryKey
 data class SecuredItemEntity (
 	@PrimaryKey val originalPath: String,
     @ColumnInfo(name = "secured_path") val securedPath: String,
-    @ColumnInfo(name = "iv") val iv: ByteArray
+    @ColumnInfo(name = "iv") val iv: ByteArray,
+    @ColumnInfo(name = "date_taken") val dateTaken: Long? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -19,6 +20,7 @@ data class SecuredItemEntity (
         if (originalPath != other.originalPath) return false
         if (securedPath != other.securedPath) return false
         if (!iv.contentEquals(other.iv)) return false
+        if (dateTaken != other.dateTaken) return false
 
         return true
     }
@@ -27,6 +29,7 @@ data class SecuredItemEntity (
         var result = originalPath.hashCode()
         result = 31 * result + securedPath.hashCode()
         result = 31 * result + iv.contentHashCode()
+        result = 31 * result + dateTaken.hashCode()
         return result
     }
 }

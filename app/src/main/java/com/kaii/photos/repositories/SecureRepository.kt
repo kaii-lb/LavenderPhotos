@@ -110,6 +110,10 @@ class SecureRepository(
             val (encrypted, thumbnailIv) = EncryptionManager.encryptBytes(byteOutputStream.toByteArray())
 
             val secureThumbnail = file.secureThumbnailImage(context)
+
+            // delete old IVs since we are adding a new one
+            dao.deleteEntityBySecuredPath(secureThumbnail.absolutePath)
+
             try {
                 // use{} flushes and closes the stream; the old bare .let{} leaked the fd and a
                 // never-flushed buffered stream could drop the trailing bytes. keep the size split:
@@ -400,6 +404,7 @@ class SecureRepository(
             } else {
                 addVideoThumbnail(file, context)
             }
+
             generatedAny = true
         }
 
@@ -428,15 +433,20 @@ class SecureRepository(
             iv = iv
         )
 
-        val thumbnail = Glide
-            .with(context)
-            .asBitmap()
-            .load(bytes)
-            .override(512)
-            .submit()
-            .get()
+        try {
+            val thumbnail = Glide
+                .with(context)
+                .asBitmap()
+                .load(bytes)
+                .override(512)
+                .submit()
+                .get()
 
-        addEncryptedThumbnail(context, thumbnail, file, secureDao)
+            addEncryptedThumbnail(context, thumbnail, file, secureDao)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to add thumbnail ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     /**
@@ -500,4 +510,6 @@ class SecureRepository(
     override suspend fun decryptFiles(
         files: List<FileOperationItemMetadata>
     ) = fileManager.decryptFiles(files)
+
+    override suspend fun clearCaches() = fileManager.clearCaches()
 }

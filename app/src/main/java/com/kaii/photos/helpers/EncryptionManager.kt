@@ -251,10 +251,7 @@ object EncryptionManager {
         Log.d(TAG, "trying to decrypt video $absolutePath")
 
         val original = File(absolutePath)
-        val destination = getSecureDecryptedVideoFile(
-            name = original.name,
-            context = context
-        )
+        val destination = original.secureDecryptVideoFile(context)
 
         // reject unusable IVs early: a wrong-length IV throws InvalidAlgorithmParameterException at
         // Cipher.init(), and an all-zero IV is this app's not-ready/corrupt sentinel (it would decode

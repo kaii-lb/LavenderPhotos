@@ -28,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -51,12 +50,8 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
-import com.kaii.photos.helpers.appSecureVideoCacheDir
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +59,6 @@ fun SecureFolderView(
     window: Window,
     viewModel: SecureFolderViewModel
 ) {
-    val context = LocalContext.current
     val navController = LocalNavController.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
@@ -94,11 +88,9 @@ fun SecureFolderView(
                         if (navController.currentBackStackEntry?.destination?.hasRoute(Screens.SecureFolder.SinglePhoto::class) != true
                             && !isGettingPermissions.value
                         ) {
-                            if (event == Lifecycle.Event.ON_DESTROY) PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
-                                File(context.appSecureVideoCacheDir).listFiles()?.forEach {
-                                    it.delete()
-                                }
-                            }
+                            if (event == Lifecycle.Event.ON_DESTROY) viewModel.runAction(
+                                FileOperationAction.ClearSecureFolderCaches
+                            )
 
                             window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                             navController.popBackStack(route = Screens.MainPages.MainGrid.GridView::class, inclusive = false)

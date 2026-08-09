@@ -6,4 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface Restore {
     suspend fun decryptFiles(files: List<FileOperationItemMetadata>): Flow<FileOperationProgress<Unit>>
+
+    suspend fun clearCaches()
 }

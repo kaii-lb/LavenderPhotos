@@ -17,6 +17,9 @@ interface SecuredMediaItemEntityDao {
     @Query(value = "SELECT secured_path FROM secureditementity WHERE originalPath = :originalPath")
     fun getSecuredPathFromOriginalPath(originalPath: String): String?
 
+    @Query(value = "SELECT date_taken FROM secureditementity WHERE secured_path = :securedPath")
+    fun getDateTakenFor(securedPath: String): Long?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEntity(vararg entity: SecuredItemEntity)
 

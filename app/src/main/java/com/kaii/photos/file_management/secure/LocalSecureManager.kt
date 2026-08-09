@@ -15,6 +15,9 @@ import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.EncryptionManager
 import com.kaii.photos.helpers.appRestoredFilesDir
 import com.kaii.photos.helpers.appSecureFolderDir
+import com.kaii.photos.helpers.appSecureThumbnailCacheDir
+import com.kaii.photos.helpers.appSecureVideoCacheDir
+import com.kaii.photos.helpers.exif.setDateTakenForMedia
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.helpers.permanentlyDeletePhotoList
@@ -48,22 +51,24 @@ class LocalSecureManager @Inject constructor(
         val metadataRetriever = MediaMetadataRetriever()
 
         val fileToBeHidden = File(mediaItem.absolutePath)
+
         // reuse this original's existing secured path if it's already been secured (re-secure after
         // a cancelled delete), so we overwrite one file + REPLACE one row instead of orphaning the
         // first ciphertext. only dedup the name for a genuinely new original colliding on disk
         val destinationFile = secureDao.getSecuredPathFromOriginalPath(mediaItem.absolutePath)
             ?.let { File(it) }
             ?: uniqueSecureDestination(context, fileToBeHidden.name)
+
         val copyToPath = destinationFile.absolutePath
+
         // only set to ByteArray(0) if the encryption itself failed; keep null initially so we
         // don't overwrite a valid iv when a later step (thumbnail generation) throws
         var iv: ByteArray? = null
+
         try {
-            context.contentResolver.setDateForMedia(
-                uri = mediaItem.uri.toUri(),
-                type = mediaItem.type,
-                dateTaken = mediaItem.dateTaken,
-                overwriteLastModified = true
+            setDateTakenForMedia(
+                file = fileToBeHidden,
+                dateTaken = mediaItem.dateTaken
             )
 
             // encrypt file data and write to secure folder path
@@ -78,7 +83,8 @@ class LocalSecureManager @Inject constructor(
                 SecuredItemEntity(
                     originalPath = mediaItem.absolutePath,
                     securedPath = copyToPath,
-                    iv = iv
+                    iv = iv,
+                    dateTaken = mediaItem.dateTaken
                 )
             )
 
@@ -131,7 +137,8 @@ class LocalSecureManager @Inject constructor(
                 SecuredItemEntity(
                     originalPath = mediaItem.absolutePath,
                     securedPath = copyToPath,
-                    iv = iv ?: ByteArray(0)
+                    iv = iv ?: ByteArray(0),
+                    dateTaken = mediaItem.dateTaken
                 )
             )
 
@@ -199,7 +206,8 @@ class LocalSecureManager @Inject constructor(
                     SecuredItemEntity(
                         originalPath = mediaItem.absolutePath,
                         securedPath = copyToPath,
-                        iv = iv
+                        iv = iv,
+                        dateTaken = mediaItem.dateTaken
                     )
                 )
 
@@ -254,7 +262,8 @@ class LocalSecureManager @Inject constructor(
                     SecuredItemEntity(
                         originalPath = mediaItem.absolutePath,
                         securedPath = copyToPath,
-                        iv = iv ?: ByteArray(0)
+                        iv = iv ?: ByteArray(0),
+                        dateTaken = mediaItem.dateTaken
                     )
                 )
             }
@@ -336,6 +345,21 @@ class LocalSecureManager @Inject constructor(
             e.printStackTrace()
 
             Result.Error(FileOperationError.Failed)
+        }
+    }
+
+    suspend fun clearCaches() {
+        withContext(Dispatchers.IO) {
+            File(context.appSecureVideoCacheDir).listFiles()?.forEach {
+                it.delete()
+            }
+
+            // don't delete thumbnails, only decrypt caches
+            File(context.appSecureThumbnailCacheDir).listFiles { _, name ->
+                name.substringBeforeLast(".").endsWith("-decrypt")
+            }?.forEach {
+                it.delete()
+            }
         }
     }
 }

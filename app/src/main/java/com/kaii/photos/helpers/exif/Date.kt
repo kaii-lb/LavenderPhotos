@@ -10,6 +10,7 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.offsetIn
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import java.io.File
 import java.io.FileDescriptor
 import java.io.InputStream
 import kotlin.time.Clock
@@ -91,55 +92,68 @@ fun getDateTakenForMedia(
 }
 
 /** @param dateTaken is in seconds since epoch */
-@OptIn(ExperimentalTime::class)
 fun setDateTakenForMedia(fd: FileDescriptor, dateTaken: Long) {
     try {
-        val exifInterface = ExifInterface(fd)
-
-        val newDateString =
-            Instant.fromEpochSeconds(dateTaken)
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-                .format(
-                    LocalDateTime.Format {
-                        year()
-                        char(':')
-                        monthNumber()
-                        char(':')
-                        day()
-                        char(' ')
-                        hour()
-                        char(':')
-                        minute()
-                        char(':')
-                        second()
-                    }
-                )
-
-        Log.d(TAG, "NEW DATE STRING $newDateString")
-
-        exifInterface.setAttribute(
-            ExifInterface.TAG_DATETIME,
-            newDateString
-        )
-
-        exifInterface.setAttribute(
-            ExifInterface.TAG_DATETIME_ORIGINAL,
-            newDateString
-        )
-
-        exifInterface.setAttribute(
-            ExifInterface.TAG_OFFSET_TIME,
-            Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
-        )
-
-        exifInterface.setAttribute(
-            ExifInterface.TAG_OFFSET_TIME_ORIGINAL,
-            Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
-        )
-
-        exifInterface.saveAttributes()
+        ExifInterface(fd).setDateTaken(dateTaken)
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
     }
+}
+
+/** @param dateTaken is in seconds since epoch */
+fun setDateTakenForMedia(file: File, dateTaken: Long) {
+    try {
+        ExifInterface(file).setDateTaken(dateTaken)
+    } catch (e: Throwable) {
+        Log.e(TAG, e.toString())
+        e.printStackTrace()
+    }
+}
+
+private fun ExifInterface.setDateTaken(
+    dateTaken: Long
+) {
+    val newDateString =
+        Instant.fromEpochSeconds(dateTaken)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(
+                LocalDateTime.Format {
+                    year()
+                    char(':')
+                    monthNumber()
+                    char(':')
+                    day()
+                    char(' ')
+                    hour()
+                    char(':')
+                    minute()
+                    char(':')
+                    second()
+                }
+            )
+
+    Log.d(TAG, "NEW DATE STRING $newDateString")
+
+    setAttribute(
+        ExifInterface.TAG_DATETIME,
+        newDateString
+    )
+
+    setAttribute(
+        ExifInterface.TAG_DATETIME_ORIGINAL,
+        newDateString
+    )
+
+    setAttribute(
+        ExifInterface.TAG_OFFSET_TIME,
+        Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
+    )
+
+    setAttribute(
+        ExifInterface.TAG_OFFSET_TIME_ORIGINAL,
+        Clock.System.now().offsetIn(TimeZone.currentSystemDefault()).format(UtcOffset.Formats.ISO)
+    )
+
+    saveAttributes()
 }

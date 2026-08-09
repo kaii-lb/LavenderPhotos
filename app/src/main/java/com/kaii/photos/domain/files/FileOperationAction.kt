@@ -65,6 +65,8 @@ sealed interface FileOperationAction {
         val album: AlbumType
     ) : FileOperationAction
 
+    object ClearSecureFolderCaches : FileOperationAction
+
     enum class LongOperationType {
         Copy, Move, TrashDelete, TrashRestore,
         Delete, Share, Secure, Restore

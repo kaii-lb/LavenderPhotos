@@ -6,6 +6,9 @@ import android.media.MediaMetadataRetriever
 import android.util.Log
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.entities.SecuredItemEntity
+import com.kaii.photos.helpers.SecureIvRecovery.constantsFor
+import com.kaii.photos.helpers.SecureIvRecovery.ivProducesValidHeader
+import com.kaii.photos.helpers.SecureIvRecovery.recover
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
@@ -53,7 +56,8 @@ object SecureIvRecovery {
                 originalPath = dao.getOriginalPathFromSecuredPath(securedFile.absolutePath)
                     ?: securedFile.absolutePath,
                 securedPath = securedFile.absolutePath,
-                iv = iv
+                iv = iv,
+                dateTaken = securedFile.lastModified() / 1000
             )
         )
         return iv
