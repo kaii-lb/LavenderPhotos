@@ -201,7 +201,7 @@ class CustomFileManager @Inject constructor(
         album: AlbumType
     ): Int = withContext(Dispatchers.IO) {
         customDao.countMediaInAlbum(
-            album = (album as AlbumType.Folder).id
+            album = album.id
         )
     }
 
@@ -209,7 +209,7 @@ class CustomFileManager @Inject constructor(
         album: AlbumType
     ): Long = withContext(Dispatchers.IO) {
         customDao.mediaSize(
-            album = (album as AlbumType.Folder).id
+            album = album.id
         )
     }
 }
