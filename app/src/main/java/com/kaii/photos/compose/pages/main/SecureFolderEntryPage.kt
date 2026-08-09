@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +47,9 @@ import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.permissions.secure_folder.rememberSecureFolderManager
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -111,10 +114,17 @@ fun SecureFolderEntryPage() {
         }
     )
 
+    var alreadyChecked by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
+        if (alreadyChecked) return@LaunchedEffect
+
+        delay(2000.milliseconds)
+
         if (secureFolderManager.needsMigrationFromOld() || secureFolderManager.needsMigrationFromUnencrypted()) {
             showExplanationForMigration = true
         }
+
+        alreadyChecked = true
     }
 
     if (migrating) {
