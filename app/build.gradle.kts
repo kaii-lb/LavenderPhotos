@@ -29,8 +29,8 @@ android {
         applicationId = "com.kaii.photos"
         minSdk = 30
         targetSdk = 37
-        versionCode = 207
-        versionName = "v2.0.7"
+        versionCode = 208
+        versionName = "v2.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
