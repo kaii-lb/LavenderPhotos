@@ -92,7 +92,8 @@ fun FavouritesGridView(
 
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = viewModel::runAction
     )
 
     Scaffold(

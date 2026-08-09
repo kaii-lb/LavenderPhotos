@@ -78,7 +78,7 @@ class FileOperationState(
                 is FileOperationProgress.Finished -> {
                     when (val result = progress.result) {
                         is Result.Error -> {
-                            when (val error = result.error) {
+                            when (result.error) {
                                 FileOperationError.Failed -> {
                                     eventsChannel.send(
                                         element = FileOperationUIEvent.ShowFailureSnackbar
@@ -88,12 +88,22 @@ class FileOperationState(
                                 }
 
                                 is FileOperationError.RecoverableException -> {
-                                    eventsChannel.send(
-                                        element = FileOperationUIEvent.LaunchDynamicResultIntent(
-                                            intentSender = error.intentSender,
-                                            action = error.action
-                                        )
-                                    )
+                                    val element = when (val error = result.error) {
+                                        is FileOperationError.RecoverableException.RequiresConsentOnly ->
+                                            FileOperationUIEvent.LaunchDynamicResultIntent.IntentOnly(
+                                                intentSender = error.intentSender,
+                                                action = error.action
+                                            )
+
+                                        is FileOperationError.RecoverableException.RequiresFollowUp ->
+                                            FileOperationUIEvent.LaunchDynamicResultIntent.IntentWithFollowUpAction(
+                                                intentSender = error.intentSender,
+                                                action = error.action,
+                                                followUpAction = error.followUpAction
+                                            )
+                                    }
+
+                                    eventsChannel.send(element = element)
                                 }
                             }
                         }

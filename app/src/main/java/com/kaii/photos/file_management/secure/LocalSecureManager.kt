@@ -59,10 +59,12 @@ class LocalSecureManager @Inject constructor(
         // don't overwrite a valid iv when a later step (thumbnail generation) throws
         var iv: ByteArray? = null
         try {
-            // set last modified so item shows up in correct place in locked folder
-            fileToBeHidden.setLastModified(lastModified)
-
-            // TODO: set date taken on media
+            context.contentResolver.setDateForMedia(
+                uri = mediaItem.uri.toUri(),
+                type = mediaItem.type,
+                dateTaken = mediaItem.dateTaken,
+                overwriteLastModified = true
+            )
 
             // encrypt file data and write to secure folder path
             iv =
@@ -79,6 +81,9 @@ class LocalSecureManager @Inject constructor(
                     iv = iv
                 )
             )
+
+            // set last modified so item shows up in correct place in locked folder
+            destinationFile.setLastModified(lastModified)
 
             if (mediaItem.type == MediaType.Video) {
                 metadataRetriever.setDataSource(context, mediaItem.uri.toUri())

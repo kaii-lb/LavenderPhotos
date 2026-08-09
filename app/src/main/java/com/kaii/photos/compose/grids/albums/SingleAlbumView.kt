@@ -433,7 +433,8 @@ private fun SingleAlbumViewCommon(
 
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = runAction
     )
 
     var showTagDialog by remember { mutableStateOf(false) }

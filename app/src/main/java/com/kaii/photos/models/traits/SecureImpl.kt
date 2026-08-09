@@ -8,6 +8,20 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 interface SecureImpl {
+    fun <T : Secure> T.prepareEncryptFiles(
+        files: List<FileOperationItemMetadata>,
+        progressChannel: Channel<FileOperationProgress<Unit>>,
+        appScope: CoroutineScope
+    ) {
+        appScope.launch {
+            progressChannel.send(
+                element = FileOperationProgress.Finished(
+                    result = prepareEncryptFiles(files)
+                )
+            )
+        }
+    }
+
     fun <T : Secure> T.encryptFiles(
         files: List<FileOperationItemMetadata>,
         progressChannel: Channel<FileOperationProgress<Unit>>,

@@ -79,7 +79,8 @@ fun TrashedPhotoGridView(
 
     FileOperationProgressEffect(
         operationFlow = viewModel.fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = viewModel::runAction
     )
 
     Scaffold(

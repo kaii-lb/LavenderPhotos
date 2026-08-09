@@ -14,8 +14,19 @@ sealed interface FileOperationUIEvent {
         val progress: MutableFloatState,
     ) : FileOperationUIEvent
 
-    data class LaunchDynamicResultIntent(
-        val intentSender: IntentSender,
+    sealed interface LaunchDynamicResultIntent : FileOperationUIEvent {
+        val intentSender: IntentSender
         val action: FileOperationAction
-    ) : FileOperationUIEvent
+
+        data class IntentOnly(
+            override val intentSender: IntentSender,
+            override val action: FileOperationAction
+        ) : LaunchDynamicResultIntent
+
+        data class IntentWithFollowUpAction(
+            override val intentSender: IntentSender,
+            override val action: FileOperationAction,
+            val followUpAction: FileOperationAction
+        ) : LaunchDynamicResultIntent
+    }
 }

@@ -6,8 +6,19 @@ import com.kaii.photos.domain.Error
 sealed interface FileOperationError : Error {
     object Failed : FileOperationError
 
-    data class RecoverableException(
-        val intentSender: IntentSender,
+    sealed interface RecoverableException : FileOperationError {
+        val intentSender: IntentSender
         val action: FileOperationAction
-    ) : FileOperationError
+
+        data class RequiresConsentOnly(
+            override val intentSender: IntentSender,
+            override val action: FileOperationAction
+        ) : RecoverableException
+
+        data class RequiresFollowUp(
+            override val intentSender: IntentSender,
+            override val action: FileOperationAction,
+            val followUpAction: FileOperationAction
+        ) : RecoverableException
+    }
 }

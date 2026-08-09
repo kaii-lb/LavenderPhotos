@@ -52,12 +52,6 @@ fun ContentResolver.insertMedia(
         volumeName = volumeName
     )
 
-    setDateForMedia(
-        uri = media.uri.toUri(),
-        type = media.type,
-        dateTaken = media.dateTaken
-    )
-
     if (storageContentUri != null && volumeName == MediaStore.VOLUME_EXTERNAL) {
         val contentValues = ContentValues().apply {
             put(MediaColumns.DISPLAY_NAME, media.displayName)

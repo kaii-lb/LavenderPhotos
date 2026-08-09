@@ -151,6 +151,10 @@ class CustomRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
+    override fun prepareEncryptFiles(
+        files: List<FileOperationItemMetadata>
+    ) = fileManager.prepareEncryptFiles(files)
+
     override suspend fun getExifData(
         file: FileOperationItemMetadata
     ) = fileManager.getExifData(file)

@@ -175,7 +175,7 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         Result.Success(Unit)
     } catch (securityException: RecoverableSecurityException) {
         Result.Error(
-            error = FileOperationError.RecoverableException(
+            error = FileOperationError.RecoverableException.RequiresConsentOnly(
                 intentSender = securityException.userAction.actionIntent.intentSender,
                 action = FileOperationAction.RenameFile(
                     file = file,
@@ -351,6 +351,12 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
 
     override fun is24HrFormat(): Boolean = DateFormat.is24HourFormat(context)
 
+    override fun createWriteRequest(files: List<FileOperationItemMetadata>): PendingIntent =
+        MediaStore.createWriteRequest(
+            contentResolver,
+            files.map { it.uri.toUri() }
+        )
+
     /** tries applying [operation] to a batch of [files] (chunked by 500 for the mediastore limit)
      * and if that fails applies per-item using [applyIndividual] */
     private fun applyBatchedModification(
@@ -412,7 +418,7 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val pendingIntent = buildRequest(result.needsPermission.map { it.uri.toUri() })
 
             Result.Error(
-                FileOperationError.RecoverableException(
+                FileOperationError.RecoverableException.RequiresConsentOnly(
                     intentSender = pendingIntent.intentSender,
                     action = buildAction(result.needsPermission)
                 )

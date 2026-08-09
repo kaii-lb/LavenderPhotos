@@ -215,7 +215,8 @@ private fun SingleTrashedPhotoViewImpl(
 
     FileOperationProgressEffect(
         operationFlow = fileOperationProgress,
-        dynamicActivityResultLauncher = dynamicActivityResultLauncher
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = runAction
     )
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = false)

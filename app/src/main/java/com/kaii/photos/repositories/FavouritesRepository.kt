@@ -137,4 +137,8 @@ class FavouritesRepository(
     override suspend fun encryptFiles(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
+
+    override fun prepareEncryptFiles(
+        files: List<FileOperationItemMetadata>
+    ) = fileManager.prepareEncryptFiles(files)
 }

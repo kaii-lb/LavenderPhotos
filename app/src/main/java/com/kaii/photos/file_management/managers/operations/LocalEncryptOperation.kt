@@ -24,14 +24,14 @@ class LocalEncryptOperation @Inject constructor(
     fun execute(
         files: List<FileOperationItemMetadata>
     ): Flow<FileOperationProgress<Unit>> = flow {
-        val media = mediaDao.getMediaFromMetadata(files)
-
         emit(
             value = FileOperationProgress.Started(
                 action = FileOperationAction.LongOperationType.Secure,
                 fileCount = files.size
             )
         )
+
+        val media = mediaDao.getMediaFromMetadata(files)
 
         var operationError: FileOperationError? = null
         val filesToBeDeleted = mutableListOf<FileOperationItemMetadata>()

@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.R
 import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.domain.files.FileOperationUIEvent
 import com.kaii.photos.permissions.files.DynamicActivityResultLauncher
@@ -18,7 +19,8 @@ import kotlinx.coroutines.flow.first
 @Composable
 fun FileOperationProgressEffect(
     operationFlow: Flow<FileOperationProgress<Unit>>,
-    dynamicActivityResultLauncher: DynamicActivityResultLauncher
+    dynamicActivityResultLauncher: DynamicActivityResultLauncher,
+    runAction: (action: FileOperationAction) -> Unit
 ) {
     val resources = LocalResources.current
     val state = rememberFileOperationProgressState()
@@ -74,7 +76,15 @@ fun FileOperationProgressEffect(
                             )
                         )
                     } else if (launcherResult is Result.Success) {
-                        state.markSucceeded()
+                        when (event) {
+                            is FileOperationUIEvent.LaunchDynamicResultIntent.IntentOnly -> {
+                                state.markSucceeded()
+                            }
+
+                            is FileOperationUIEvent.LaunchDynamicResultIntent.IntentWithFollowUpAction -> {
+                                runAction(event.followUpAction)
+                            }
+                        }
                     }
                 }
             }

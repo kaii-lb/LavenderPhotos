@@ -159,6 +159,10 @@ class HybridRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
+    override fun prepareEncryptFiles(
+        files: List<FileOperationItemMetadata>
+    ) = fileManager.prepareEncryptFiles(files)
+
     override suspend fun getMediaCount(album: AlbumType) = fileManager.getMediaCount(album)
 
     override suspend fun getMediaSize(album: AlbumType) = fileManager.getMediaSize(album)

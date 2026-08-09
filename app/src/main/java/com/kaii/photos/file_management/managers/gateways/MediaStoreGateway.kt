@@ -1,5 +1,6 @@
 package com.kaii.photos.file_management.managers.gateways
 
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
 import com.kaii.photos.database.entities.MediaStoreData
@@ -69,4 +70,6 @@ interface MediaStoreGateway {
     fun getAssetSource(uri: Uri): AssetSource
 
     fun is24HrFormat(): Boolean
+
+    fun createWriteRequest(files: List<FileOperationItemMetadata>): PendingIntent
 }

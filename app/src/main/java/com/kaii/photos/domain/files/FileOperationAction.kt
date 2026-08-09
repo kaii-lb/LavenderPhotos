@@ -45,6 +45,10 @@ sealed interface FileOperationAction {
         val files: List<FileOperationItemMetadata>
     ) : FileOperationAction
 
+    data class PrepareSecure(
+        val files: List<FileOperationItemMetadata>
+    ) : FileOperationAction
+
     data class Secure(
         val files: List<FileOperationItemMetadata>
     ) : FileOperationAction

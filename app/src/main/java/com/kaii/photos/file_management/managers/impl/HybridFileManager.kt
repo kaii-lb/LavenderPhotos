@@ -193,6 +193,13 @@ class HybridFileManager @AssistedInject constructor(
         if (files.any { it.isCloud }) throw IllegalArgumentException("This operation is not supported: Cannot secure cloud items!")
         else other.encryptFiles(files)
 
+    override fun prepareEncryptFiles(
+        files: List<FileOperationItemMetadata>
+    ): Result<Unit, FileOperationError> =
+        if (files.any { it.isCloud }) throw IllegalArgumentException("This operation is not supported: Cannot secure cloud items!")
+        else other.prepareEncryptFiles(files)
+
+
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>
     ): Flow<FileOperationProgress<Intent>> = channelFlow {
