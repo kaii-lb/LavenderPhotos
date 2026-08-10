@@ -5,7 +5,34 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.0.7 date=16-07-2026 status=Latest
+# version=v2.1.0 date=10-08-2026 status=Latest
+    + category=Features
+        - title=Significantly improve speed and reliability of file management
+        - issueNumber=000282 title=Added SVG display support
+        - issueNumber=000283 title=Add basic controller and keyboard support
+        - title=Added 3 new themes
+        - title=Add Vietnamese language support
+
+    + category=Improvements
+        - title=Add 'Bug Report' button in settings dialog
+        - title=Move 'News' button to about page
+        - title=Update translations for Arabic, Polish, Indonesian, Galician, Ukrainian, Spanish, Catalan, German, Simplified Chinese, Czech, French, Russian, Estonian, and Turkish
+        - title=Update baseline profile for faster app startup
+        - issueNumber=000287 title=Optimize blurred background rendering
+        - issueNumber=000287 title=Optimize videoplayer loading
+
+    + category=Fixes
+        - title=Fix incorrect title for 'Colors & Styles' page
+        - issueNumber=000262 title=Fix inability to login with Immich API key
+        - issueNumber=000118 title=Fix Immich server being unreachable when using Tailscale
+        - issueNumber=000145 title=Remove localhost ping when not using Immich
+        - issueNumber=000288 title=Properly go back to settings dialog from a settings page
+        - title=Fix some settings dialogs having too much padding
+        - title=Fix secure folder crash when attempting to restore an image
+        - title=Display proper date in grids (was one day too early)
+        - title=Display proper date taken for secured items in photo info dialog
+
+# version=v2.0.7 date=16-07-2026
     + category=Features
         - title=Added 'stacsk' to major contributors
         - title=Updated translations for Arabic, Polish, Galician, and Simplified Chinese
