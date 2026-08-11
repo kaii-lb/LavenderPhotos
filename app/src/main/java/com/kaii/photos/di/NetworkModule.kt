@@ -13,6 +13,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import io.github.kaii_lb.lavender.immichintegration.clients.buildApiClient
 import javax.inject.Singleton
@@ -66,6 +67,16 @@ object NetworkModule {
     fun provideLoginClient(
         apiClient: ApiClient
     ): LoginClient = LoginClient(
+        endpoint = "",
+        auth = Auth.None,
+        client = apiClient
+    )
+
+    @Provides
+    @Singleton
+    fun provideServerClient(
+        apiClient: ApiClient
+    ): ServerClient = ServerClient(
         endpoint = "",
         auth = Auth.None,
         client = apiClient

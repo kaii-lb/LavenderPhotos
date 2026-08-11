@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** TODO: refactor to use [com.kaii.photos.data.immich.ImmichSessionManager] **/
 class ImmichInfoRepository(
     private val serverClient: ServerClient,
     private val loginClient: LoginClient,
@@ -66,14 +65,6 @@ class ImmichInfoRepository(
             immichSettings.getImmichBasicInfo().collectLatest { info ->
                 auth = info.auth
                 endpoint = info.endpoint
-
-                serverClient.setAuth(info.auth)
-                loginClient.setAuth(info.auth)
-                userClient.setAuth(info.auth)
-
-                serverClient.setEndpoint(info.endpoint)
-                loginClient.setEndpoint(info.endpoint)
-                userClient.setEndpoint(info.endpoint)
 
                 refresh()
             }

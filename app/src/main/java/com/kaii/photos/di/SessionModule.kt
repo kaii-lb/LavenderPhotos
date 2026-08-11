@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
@@ -23,12 +24,14 @@ object SessionModule {
         albumsClient: AlbumsClient,
         userClient: UserClient,
         loginClient: LoginClient,
+        serverClient: ServerClient,
         @ApplicationScope appScope: CoroutineScope,
         immich: SettingsImmichImpl
     ): ImmichSessionManager = ImmichSessionManager(
         assetsClient = assetsClient,
         albumsClient = albumsClient,
         userClient = userClient,
+        serverClient = serverClient,
         info = immich.getImmichBasicInfo(),
         appScope = appScope,
         loginClient = loginClient

@@ -4,6 +4,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
+import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +19,7 @@ class ImmichSessionManager(
     val albumsClient: AlbumsClient,
     val userClient: UserClient,
     val loginClient: LoginClient,
+    val serverClient: ServerClient,
     private val info: Flow<ImmichBasicInfo>,
     appScope: CoroutineScope
 ) {
@@ -40,6 +42,9 @@ class ImmichSessionManager(
 
                 loginClient.setEndpoint(info.endpoint)
                 loginClient.setAuth(info.auth)
+
+                serverClient.setEndpoint(info.endpoint)
+                serverClient.setAuth(info.auth)
             }
         }
     }

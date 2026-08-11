@@ -14,7 +14,6 @@ import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.repositories.ImmichInfoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
@@ -29,8 +28,10 @@ import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class ImmichInfoViewModel @Inject constructor(
-    apiClient: ApiClient,
     albums: SettingsAlbumsListImpl,
+    loginClient: LoginClient,
+    userClient: UserClient,
+    serverClient: ServerClient,
     private val immich: SettingsImmichImpl
 ) : ViewModel() {
     val info = immich.getImmichBasicInfo().stateIn(
@@ -39,22 +40,10 @@ class ImmichInfoViewModel @Inject constructor(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    val repo = ImmichInfoRepository(
-        serverClient = ServerClient(
-            client = apiClient,
-            endpoint = "",
-            auth = Auth.None
-        ),
-        loginClient = LoginClient(
-            client = apiClient,
-            endpoint = "",
-            auth = Auth.None
-        ),
-        userClient = UserClient(
-            client = apiClient,
-            endpoint = "",
-            auth = Auth.None
-        ),
+    private val repo = ImmichInfoRepository(
+        loginClient = loginClient,
+        userClient = userClient,
+        serverClient = serverClient,
         immichSettings = immich,
         albumSettings = albums,
         scope = viewModelScope
