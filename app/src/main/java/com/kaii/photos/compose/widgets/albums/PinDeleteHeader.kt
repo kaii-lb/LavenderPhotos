@@ -80,30 +80,27 @@ fun LazyGridScope.pinDeleteHeader(
                 targetValue =
                     when (sortableGridState.deleteAlbumState) {
                         SortableGridState.DeleteAlbumState.Deleting -> MaterialTheme.colorScheme.primary
-                        SortableGridState.DeleteAlbumState.NotAllowed -> MaterialTheme.colorScheme.error
                         else -> Color.Transparent
                     },
                 animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
             )
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
-                    .clip(CircleShape)
-                    .background(deleteAlbumColor)
-                    .padding(vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(
-                        id =
-                            if (sortableGridState.deleteAlbumState == SortableGridState.DeleteAlbumState.NotAllowed) R.drawable.block
-                            else removeAlbumIcon
-                    ),
-                    contentDescription = stringResource(id = R.string.albums_remove),
-                    tint = MaterialTheme.colorScheme.contentColorFor(deleteAlbumColor)
-                )
+            if (sortableGridState.deleteAlbumState != SortableGridState.DeleteAlbumState.Hidden) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                        .clip(CircleShape)
+                        .background(deleteAlbumColor)
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = removeAlbumIcon),
+                        contentDescription = stringResource(id = R.string.albums_remove),
+                        tint = MaterialTheme.colorScheme.contentColorFor(deleteAlbumColor)
+                    )
+                }
             }
         }
     }
