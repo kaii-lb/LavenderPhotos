@@ -62,6 +62,7 @@ class HybridRepository(
 
     private data class Params(
         val paths: Set<String>,
+        val showNested: Boolean,
         override val sortMode: MediaItemSortMode,
         override val info: ImmichBasicInfo
     ) : RoomQueryParams(sortMode, info)
@@ -70,6 +71,7 @@ class HybridRepository(
     private val params = combine(info, sortMode, album) { info, sortMode, album ->
         Params(
             paths = album.paths,
+            showNested = album.showNested,
             sortMode = sortMode,
             info = info
         )
@@ -85,8 +87,13 @@ class HybridRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (details.sortMode.isDateModified) mediaDao.getPagedMediaDateModified(paths = details.paths)
-                else mediaDao.getPagedMediaDateTaken(paths = details.paths)
+                if (details.showNested) {
+                    if (details.sortMode.isDateModified) mediaDao.getPagedMediaDateModifiedByPathPrefix(paths = details.paths)
+                    else mediaDao.getPagedMediaDateTakenByPathPrefix(paths = details.paths)
+                } else {
+                    if (details.sortMode.isDateModified) mediaDao.getPagedMediaDateModified(paths = details.paths)
+                    else mediaDao.getPagedMediaDateTaken(paths = details.paths)
+                }
             }
         ).flow.mapToMedia(
             auth = details.info.auth,

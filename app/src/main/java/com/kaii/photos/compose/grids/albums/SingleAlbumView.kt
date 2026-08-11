@@ -41,7 +41,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.compose.ViewProperties
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewBottomBar
 import com.kaii.photos.compose.app_bars.album_view.SingleAlbumViewTopBar
-import com.kaii.photos.compose.dialogs.AlbumInfoDialog
+import com.kaii.photos.compose.dialogs.album_info.AlbumInfoDialog
 import com.kaii.photos.compose.grids.media.PhotoGrid
 import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.side_effects.SharePhotoEffect

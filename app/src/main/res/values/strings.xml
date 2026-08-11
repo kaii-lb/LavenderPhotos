@@ -41,6 +41,7 @@
     <string name="albums_immich_not_backed_up">Not backed up</string>
     <string name="albums_rename_failure">Invalid album name</string>
     <string name="albums_search_for">Search for an album</string>
+    <string name="albums_toggle_nested_display">Show nested media</string>
 
     <!-- Tabs -->
     <string name="tabs">Tabs</string>

@@ -6,8 +6,11 @@ import androidx.room.Insert
 import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Transaction
 import androidx.room.Upsert
+import androidx.sqlite.db.SimpleSQLiteQuery
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -26,6 +29,27 @@ interface MediaDao {
     @Query(value = "SELECT * FROM media WHERE parentPath COLLATE NOCASE IN (:paths) ORDER BY dateModified DESC")
     fun getPagedMediaDateModified(paths: Set<String>): PagingSource<Int, MediaStoreData>
 
+    @RawQuery(observedEntities = [MediaStoreData::class])
+    fun getPagedMediaByPathPrefixRaw(query: SupportSQLiteQuery): PagingSource<Int, MediaStoreData>
+
+    fun getPagedMediaDateTakenByPathPrefix(paths: Set<String>): PagingSource<Int, MediaStoreData> =
+        getPagedMediaByPathPrefixRaw(
+            query = buildPathPrefixQuery(
+                select = "SELECT *",
+                paths = paths,
+                isDateModified = false
+            )
+        )
+
+    fun getPagedMediaDateModifiedByPathPrefix(paths: Set<String>): PagingSource<Int, MediaStoreData> =
+        getPagedMediaByPathPrefixRaw(
+            query = buildPathPrefixQuery(
+                select = "SELECT *",
+                paths = paths,
+                isDateModified = true
+            )
+        )
+
     @Query(value = "SELECT * FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     fun getMediaInPaths(paths: Set<String>): List<MediaStoreData>
 
@@ -34,6 +58,31 @@ interface MediaDao {
 
     @Query(value = "SELECT SUM(size) FROM media WHERE parentPath COLLATE NOCASE IN (:paths)")
     fun mediaSize(paths: Set<String>): Long
+
+    @RawQuery(observedEntities = [MediaStoreData::class])
+    fun countMediaInPathsPrefixesRaw(query: SupportSQLiteQuery): Int
+
+    fun countMediaInPathsPrefixes(paths: Set<String>): Int =
+        countMediaInPathsPrefixesRaw(
+            query = buildPathPrefixQuery(
+                select = "SELECT COUNT(id)",
+                paths = paths,
+                isDateModified = true
+            )
+        )
+
+    @RawQuery(observedEntities = [MediaStoreData::class])
+    fun mediaSizeByPathPrefixRaw(query: SupportSQLiteQuery): Long
+
+    @RawQuery(observedEntities = [MediaStoreData::class])
+    fun mediaSizeByPathPrefixes(paths: Set<String>): Long =
+        mediaSizeByPathPrefixRaw(
+            query = buildPathPrefixQuery(
+                select = "SELECT SUM(size)",
+                paths = paths,
+                isDateModified = true
+            )
+        )
 
     @Query(value = "SELECT * from media ORDER BY dateTaken DESC")
     fun getAllMediaDateTaken(): Flow<List<MediaStoreData>>
@@ -277,4 +326,28 @@ interface MediaDao {
 
     @Query(value = "DELETE FROM media WHERE id IN (:ids)")
     suspend fun deleteAll(ids: Set<Long>)
+
+    // TODO: look into optimizing this somehow for numerous nested folders (50+ subfolders, etc)
+    private fun buildPathPrefixQuery(
+        select: String,
+        paths: Set<String>,
+        isDateModified: Boolean
+    ): SupportSQLiteQuery {
+        require(paths.isNotEmpty())
+
+        val args = ArrayList<Any?>(paths.size * 2)
+        val where = paths.joinToString(" OR ") { raw ->
+            val path = raw.trimEnd('/')
+            args.add(path)
+            args.add(path.escapeLikeWildcards() + "/%")
+            "(parentPath COLLATE NOCASE = ? OR parentPath COLLATE NOCASE LIKE ? ESCAPE '\\')"
+        }
+
+        val orderByColumn = if (isDateModified) "dateModified" else "dateTaken"
+        val sql = "$select FROM media WHERE $where ORDER BY $orderByColumn DESC"
+        return SimpleSQLiteQuery(sql, args.toTypedArray())
+    }
+
+    private fun String.escapeLikeWildcards(): String =
+        replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 }

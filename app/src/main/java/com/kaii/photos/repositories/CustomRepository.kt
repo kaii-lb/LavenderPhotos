@@ -22,10 +22,12 @@ import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
 import com.kaii.photos.presentation.ui.LocalizedDateFormatter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -162,4 +164,8 @@ class CustomRepository(
     override suspend fun getMediaCount(album: AlbumType) = fileManager.getMediaCount(album)
 
     override suspend fun getMediaSize(album: AlbumType) = fileManager.getMediaSize(album)
+
+    suspend fun removeRelatedRows(albumId: String) = withContext(Dispatchers.Default) {
+        customDao.deleteAlbum(album = albumId)
+    }
 }

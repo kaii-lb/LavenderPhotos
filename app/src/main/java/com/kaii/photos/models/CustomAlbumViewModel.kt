@@ -75,7 +75,10 @@ class CustomAlbumViewModel @AssistedInject constructor(
     }
 
     fun removeAlbum(id: String) {
-        settings.albums.remove(id)
+        viewModelScope.launch {
+            settings.albums.remove(id)
+            repo.removeRelatedRows(id)
+        }
     }
 
     override fun runAction(action: FileOperationAction) {

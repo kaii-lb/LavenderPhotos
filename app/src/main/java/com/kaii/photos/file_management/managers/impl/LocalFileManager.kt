@@ -196,16 +196,32 @@ class LocalFileManager @Inject constructor(
     override suspend fun getMediaCount(
         album: AlbumType
     ): Int = withContext(Dispatchers.IO) {
-        mediaDao.countMediaInPaths(
-            paths = (album as AlbumType.Folder).paths
-        )
+        album as AlbumType.Folder
+
+        if (album.showNested) {
+            mediaDao.countMediaInPathsPrefixes(
+                paths = album.paths
+            )
+        } else {
+            mediaDao.countMediaInPaths(
+                paths = album.paths
+            )
+        }
     }
 
     override suspend fun getMediaSize(
         album: AlbumType
     ): Long = withContext(Dispatchers.IO) {
-        mediaDao.mediaSize(
-            paths = (album as AlbumType.Folder).paths
-        )
+        album as AlbumType.Folder
+
+        if (album.showNested) {
+            mediaDao.mediaSizeByPathPrefixes(
+                paths = album.paths
+            )
+        } else {
+            mediaDao.mediaSize(
+                paths = album.paths
+            )
+        }
     }
 }
