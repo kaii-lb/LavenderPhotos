@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kaii.photos.R
 import com.kaii.photos.reorderable_lists.SortableGridState
@@ -47,45 +49,47 @@ fun LazyGridScope.pinDeleteHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(space = 8.dp)
         ) {
-            val pinAlbumColor by animateColorAsState(
-                targetValue =
-                    when (sortableGridState.pinAlbumState) {
-                        SortableGridState.PinAlbumState.Pinning -> MaterialTheme.colorScheme.primary
-                        else -> Color.Transparent
-                    },
-                animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-            )
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
-                    .clip(CircleShape)
-                    .background(pinAlbumColor)
-                    .padding(vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(
-                        id =
-                            if (sortableGridState.selectedItem?.pinned == true) R.drawable.keep_off
-                            else R.drawable.keep
-                    ),
-                    contentDescription = stringResource(id = R.string.albums_pin),
-                    tint = MaterialTheme.colorScheme.contentColorFor(pinAlbumColor)
+            if (sortableGridState.pinAlbumState != SortableGridState.ActionState.Hidden) {
+                val pinAlbumColor by animateColorAsState(
+                    targetValue =
+                        when (sortableGridState.pinAlbumState) {
+                            SortableGridState.ActionState.Active -> MaterialTheme.colorScheme.primary
+                            else -> Color.Transparent
+                        },
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
                 )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                        .clip(CircleShape)
+                        .background(pinAlbumColor)
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id =
+                                if (sortableGridState.selectedItem?.pinned == true) R.drawable.keep_off
+                                else R.drawable.keep
+                        ),
+                        contentDescription = stringResource(id = R.string.albums_pin),
+                        tint = MaterialTheme.colorScheme.contentColorFor(pinAlbumColor)
+                    )
+                }
             }
 
-            val deleteAlbumColor by animateColorAsState(
-                targetValue =
-                    when (sortableGridState.deleteAlbumState) {
-                        SortableGridState.DeleteAlbumState.Deleting -> MaterialTheme.colorScheme.primary
-                        else -> Color.Transparent
-                    },
-                animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
-            )
+            if (sortableGridState.deleteAlbumState != SortableGridState.ActionState.Hidden) {
+                val deleteAlbumColor by animateColorAsState(
+                    targetValue =
+                        when (sortableGridState.deleteAlbumState) {
+                            SortableGridState.ActionState.Active -> MaterialTheme.colorScheme.primary
+                            else -> Color.Transparent
+                        },
+                    animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+                )
 
-            if (sortableGridState.deleteAlbumState != SortableGridState.DeleteAlbumState.Hidden) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -101,6 +105,17 @@ fun LazyGridScope.pinDeleteHeader(
                         tint = MaterialTheme.colorScheme.contentColorFor(deleteAlbumColor)
                     )
                 }
+            }
+
+            if (sortableGridState.deleteAlbumState == SortableGridState.ActionState.Hidden
+                && sortableGridState.pinAlbumState == SortableGridState.ActionState.Hidden
+            ) {
+                Text(
+                    text = stringResource(id = R.string.no_actions_available),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
             }
         }
     }

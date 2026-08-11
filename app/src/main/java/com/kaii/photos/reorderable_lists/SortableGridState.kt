@@ -45,15 +45,10 @@ class SortableGridState(
     private val toggleAlbumPin: (album: AlbumGridState.Album) -> Unit,
     private val deleteAlbum: (album: AlbumGridState.Album) -> Unit
 ) {
-    enum class DeleteAlbumState {
+    enum class ActionState {
         Unselected,
-        Deleting,
+        Active,
         Hidden
-    }
-
-    enum class PinAlbumState {
-        Unselected,
-        Pinning
     }
 
     private val defaultScale = 1f
@@ -74,9 +69,9 @@ class SortableGridState(
     var itemScale by mutableFloatStateOf(1f)
         private set
 
-    var deleteAlbumState by mutableStateOf(DeleteAlbumState.Hidden)
+    var deleteAlbumState by mutableStateOf(ActionState.Hidden)
         private set
-    var pinAlbumState by mutableStateOf(PinAlbumState.Unselected)
+    var pinAlbumState by mutableStateOf(ActionState.Unselected)
         private set
 
     fun onDragStart(offset: Offset) {
@@ -101,6 +96,7 @@ class SortableGridState(
                     selectedItem = albums()[index]
                     itemScale = selectedScale
 
+                    pinAlbumState = getPinAlbumState(false)
                     deleteAlbumState = getDeleteAlbumState(selectedItem, false)
 
                     var itemCenter = item.offset.toOffset() + item.size.center.toOffset()
@@ -153,22 +149,27 @@ class SortableGridState(
                 offset = targetItem.offset.toOffset(),
                 size = targetItem.size.toSize().copy(
                     width =
-                        if (deleteAlbumState == DeleteAlbumState.Hidden) targetItem.size.width.toFloat()
-                        else targetItem.size.width / 2f
+                        when {
+                            sortMode() == AlbumSortMode.Custom -> 0f
+
+                            deleteAlbumState == ActionState.Hidden -> targetItem.size.width.toFloat()
+
+                            else -> targetItem.size.width / 2f
+                        }
                 )
             )
 
             if (rect.contains(change.position)) {
-                pinAlbumState = PinAlbumState.Pinning
+                pinAlbumState = getPinAlbumState(true)
                 deleteAlbumState = getDeleteAlbumState(selectedItem, false)
             } else {
-                pinAlbumState = PinAlbumState.Unselected
+                pinAlbumState = getPinAlbumState(false)
                 deleteAlbumState = getDeleteAlbumState(selectedItem, true)
             }
 
             return
         } else {
-            pinAlbumState = PinAlbumState.Unselected
+            pinAlbumState = getPinAlbumState(false)
             deleteAlbumState = getDeleteAlbumState(selectedItem, false)
         }
 
@@ -203,18 +204,18 @@ class SortableGridState(
         itemOffset = Offset.Zero
         itemScale = defaultScale
         scrollSpeed = 0f
-        pinAlbumState = PinAlbumState.Unselected
-        deleteAlbumState = DeleteAlbumState.Hidden
+        pinAlbumState = ActionState.Hidden
+        deleteAlbumState = ActionState.Hidden
     }
 
     fun onDragEnd() {
-        if (pinAlbumState == PinAlbumState.Pinning && selectedItem != null) {
+        if (pinAlbumState == ActionState.Active && selectedItem != null) {
             toggleAlbumPin(selectedItem!!)
             onDragCancel()
             return
         }
 
-        if (deleteAlbumState == DeleteAlbumState.Deleting && selectedItem != null) {
+        if (deleteAlbumState == ActionState.Active && selectedItem != null) {
             deleteAlbum(selectedItem!!)
             onDragCancel()
             return
@@ -251,32 +252,37 @@ class SortableGridState(
         itemOffset += Offset(x = 0f, y = scrolledBy)
     }
 
+    private fun getPinAlbumState(inBounds: Boolean): ActionState {
+        if (sortMode() == AlbumSortMode.Custom) return ActionState.Hidden
+
+        return if (inBounds) ActionState.Active
+        else ActionState.Unselected
+    }
+
     private fun getDeleteAlbumState(
         album: AlbumGridState.Album?,
         inBounds: Boolean
-    ): DeleteAlbumState {
-        if (album == null) return DeleteAlbumState.Unselected
+    ): ActionState {
+        if (album == null) return ActionState.Unselected
 
         if (album is AlbumGridState.Album.Group) {
-            return if (inBounds) DeleteAlbumState.Deleting
-            else DeleteAlbumState.Unselected
+            return if (inBounds) ActionState.Active
+            else ActionState.Unselected
         }
 
         val albumType = (album as AlbumGridState.Album.Single).info.album
 
-        println("ALBUMMMMM ${albumType is AlbumType.Custom} ")
-
         if (albumType is AlbumType.Custom) {
-            return if (inBounds) DeleteAlbumState.Deleting
-            else DeleteAlbumState.Unselected
+            return if (inBounds) ActionState.Active
+            else ActionState.Unselected
         }
 
         if (albumType !is AlbumType.Cloud && !autoDetect()) {
-            return if (inBounds) DeleteAlbumState.Deleting
-            else DeleteAlbumState.Unselected
+            return if (inBounds) ActionState.Active
+            else ActionState.Unselected
         }
 
-        return DeleteAlbumState.Hidden
+        return ActionState.Hidden
     }
 }
 
