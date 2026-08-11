@@ -7,8 +7,6 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
@@ -50,7 +48,7 @@ class StartupManager(
 
     private val permissionQueue = mutableStateListOf<String>()
 
-    var state = State.MissingPermissions
+    var state = State.Successful
         private set
 
     init {
@@ -100,6 +98,8 @@ class StartupManager(
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                     permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
 
+        println("PERMS CHECK $manageMedia $permissionQueue")
+
         return permissionQueue.isEmpty() || manageMedia
     }
 
@@ -107,14 +107,11 @@ class StartupManager(
         val permsGranted = checkPermissions()
         val needsIndexing = SyncManager(context.applicationContext).getGeneration() <= 0
 
+        println("PERMS $permsGranted $needsIndexing ${permsGranted && !needsIndexing}")
+
         when {
             permsGranted && !needsIndexing -> {
-                WorkManager.getInstance(context)
-                    .enqueueUniqueWork(
-                        SyncWorker::class.java.name,
-                        ExistingWorkPolicy.REPLACE,
-                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                    )
+                SyncWorker.start(context)
 
                 state = State.Successful
             }

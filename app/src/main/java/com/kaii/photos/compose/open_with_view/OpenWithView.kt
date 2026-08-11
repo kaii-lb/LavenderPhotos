@@ -48,6 +48,7 @@ import com.kaii.photos.compose.single_photo.SinglePhotoView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
+import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
@@ -355,11 +356,19 @@ private fun InitSinglePhotoView(
         }
     }
 
+    val syncManager = remember {
+        SyncManager(context)
+    }
+
     LaunchedEffect(index, items.loadState) {
         if (index != null && !items.loadState.isIdle) return@LaunchedEffect
 
-        SyncManager(context).setGeneration(0)
-        FirstTimeSyncWorker.start(context)
+        if (syncManager.getGeneration() > 0) {
+            SyncWorker.start(context)
+        } else {
+            syncManager.setGeneration(0)
+            FirstTimeSyncWorker.start(context)
+        }
     }
 
     if (index != null) {

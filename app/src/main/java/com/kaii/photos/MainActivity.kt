@@ -50,8 +50,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.MemoryCategory
 import com.kaii.photos.compose.app_bars.lavenderEdgeToEdge
@@ -198,6 +196,8 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal
                 ) {
+                    println("PERMS STARTUP ${startupManager.state}")
+
                     SetContentForActivity(
                         startupManager = startupManager,
                         settings = settings,
@@ -972,12 +972,7 @@ class MainActivity : ComponentActivity() {
                 delay(2000.milliseconds) // so it isn't immediate on startup
 
                 // run work manager immediately after user navigates back to app
-                WorkManager.getInstance(applicationContext)
-                    .enqueueUniqueWork(
-                        SyncWorker::class.java.name,
-                        ExistingWorkPolicy.REPLACE,
-                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                    )
+                SyncWorker.start(applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
             }
         }
     }

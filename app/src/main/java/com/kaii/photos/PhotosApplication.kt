@@ -7,8 +7,6 @@ import android.os.Looper
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
@@ -35,7 +33,7 @@ class PhotosApplication : Application(), Configuration.Provider {
     }
 
     @Inject lateinit var localAppModule: AppModule
-    @Inject lateinit var workerFactory : HiltWorkerFactory
+    @Inject lateinit var workerFactory: HiltWorkerFactory
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -97,12 +95,7 @@ class PhotosApplication : Application(), Configuration.Provider {
             flow.debounce(
                 timeout = 300.milliseconds
             ).collect {
-                WorkManager.getInstance(applicationContext)
-                    .enqueueUniqueWork(
-                        SyncWorker::class.java.name,
-                        ExistingWorkPolicy.APPEND_OR_REPLACE,
-                        OneTimeWorkRequest.Builder(SyncWorker::class).build()
-                    )
+                SyncWorker.start(applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
             }
         }
     }

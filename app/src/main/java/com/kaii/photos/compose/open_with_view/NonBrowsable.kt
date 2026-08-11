@@ -94,10 +94,14 @@ fun OpenWithContent(
     val appBarsVisible = remember { mutableStateOf(true) }
     val context = LocalContext.current
 
-    val mimeType = context.contentResolver.getType(uri) ?: "image/*"
-    val type =
+    val mimeType = remember(uri) {
+        context.contentResolver.getType(uri) ?: "image/*"
+    }
+
+    val type = remember(mimeType) {
         if (mimeType.contains("image")) MediaType.Image
         else MediaType.Video
+    }
 
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = true)
 

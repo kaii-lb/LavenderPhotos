@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.room.withTransaction
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.mediastore.getAllMediaStoreIds
@@ -20,6 +23,20 @@ class SyncWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters
 ) : CoroutineWorker(appContext = context, params = params) {
+    companion object {
+        fun start(
+            context: Context,
+            workPolicy: ExistingWorkPolicy = ExistingWorkPolicy.REPLACE
+        ) {
+            WorkManager.getInstance(context.applicationContext)
+                .enqueueUniqueWork(
+                    SyncWorker::class.java.name,
+                    workPolicy,
+                    OneTimeWorkRequest.Builder(SyncWorker::class).build()
+                )
+        }
+    }
+
     override suspend fun doWork(): Result {
         val startTime = Clock.System.now()
 
