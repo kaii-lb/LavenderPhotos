@@ -106,6 +106,7 @@ fun ScreenLock(
                     if (navController.currentDestination?.hasRoute(Screens.MainPages::class) == true
                         || navController.previousBackStackEntry == null
                     ) {
+                        settings.setPrivacyModeActive(active = false)
                         navController.navigate(Screens.MainPages) {
                             popUpTo(Screens.Startup.ScreenLock) {
                                 inclusive = true

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -70,6 +71,7 @@ import com.kaii.photos.compose.immich.share_link_page.ImmichShareLinkPage
 import com.kaii.photos.compose.pages.AboutPage
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
 import com.kaii.photos.compose.pages.PermissionHandler
+import com.kaii.photos.compose.pages.PrivacyModeActivePage
 import com.kaii.photos.compose.pages.ScreenLock
 import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
@@ -105,6 +107,7 @@ import com.kaii.photos.models.ImmichInfoViewModel
 import com.kaii.photos.models.MainDialogViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.PrivacyModeActiveViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.models.TrashViewModel
@@ -154,24 +157,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         var isCheckingCredentials = true
-        var isAppLocked = false
-
         splashScreen.setKeepOnScreenCondition { isCheckingCredentials }
 
         Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
 
         val settings = PhotosApplication.appModule.settings
-        val startupManager = StartupManager(context = applicationContext)
+        val startupManager = StartupManager(
+            context = applicationContext,
+            settings = settings.permissions
+        )
 
         lifecycleScope.launch(Dispatchers.IO) {
             startupManager.checkState()
 
-            val password = settings.permissions.getPassword().first()
-            isAppLocked = password != null
             isCheckingCredentials = false
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PhotosApplication.appModule.settings.permissions.setIsMediaManager(
+                settings.permissions.setIsMediaManager(
                     MediaStore.canManageMedia(applicationContext)
                 )
             }
@@ -196,7 +198,7 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal
                 ) {
-                    println("PERMS STARTUP ${startupManager.state}")
+                    Log.d(MainActivity::class.qualifiedName, "APP STARTUP STATE ${startupManager.state}")
 
                     SetContentForActivity(
                         startupManager = startupManager,
@@ -204,12 +206,10 @@ class MainActivity : ComponentActivity() {
                         startupPage =
                             when (startupManager.state) {
                                 StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
-
                                 StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
-
-                                else if (isAppLocked) -> Screens.Startup.ScreenLock
-
-                                else -> Screens.MainPages
+                                StartupManager.State.PasswordLocked -> Screens.Startup.ScreenLock
+                                StartupManager.State.PrivacyModeActive -> Screens.Startup.PrivacyModeActive
+                                StartupManager.State.Unlocked -> Screens.MainPages
                             }
                     )
                 }
@@ -285,6 +285,14 @@ class MainActivity : ComponentActivity() {
                 composable<Screens.Startup.ScreenLock> {
                     ScreenLock(
                         action = ExpressivePINFieldState.Action.Unlock
+                    )
+                }
+
+                composable<Screens.Startup.PrivacyModeActive> {
+                    val viewModel = hiltViewModel<PrivacyModeActiveViewModel>()
+
+                    PrivacyModeActivePage(
+                        viewModel = viewModel
                     )
                 }
 

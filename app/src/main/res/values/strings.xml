@@ -715,6 +715,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="privacy_scroll_mode_prompt">Manage access to scrolling and actions</string>
     <string name="privacy_scroll_mode_fail">Failed to change privacy mode</string>
     <string name="privacy_scroll_mode_exit_tried">Privacy mode enabled</string>
+    <string name="privacy_authenticate">Authenticate</string>
+    <string name="privacy_scroll_mode_last_active">Privacy Mode Active</string>
+    <string name="privacy_scroll_mode_last_active_desc">Privacy mode was left active when the application was last closed. Please use your password or biometrics to proceed.</string>
 
     <!--  Startup Processing  -->
     <string name="startup_processing_indexing">Discovering…</string>

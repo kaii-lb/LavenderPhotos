@@ -186,7 +186,7 @@ fun ProcessingPage(startupManager: StartupManager) {
                     clickableItem(
                         onClick = {
                             startupManager.skipIndexing()
-                            if (startupManager.state == StartupManager.State.Successful) {
+                            if (startupManager.state == StartupManager.State.Unlocked) {
                                 navController.navigate(Screens.MainPages) {
                                     popUpTo(route = Screens.Startup.ProcessingPage::class) {
                                         inclusive = true

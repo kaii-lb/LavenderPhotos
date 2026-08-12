@@ -11,18 +11,23 @@ import androidx.work.WorkManager
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
+import com.kaii.photos.datastore.preferences.SettingsPermissionsImpl
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 private const val TAG = "com.kaii.photos.permissions.StartupState"
 
 class StartupManager(
-    private val context: Context
+    private val context: Context,
+    private val settings: SettingsPermissionsImpl
 ) {
     enum class State {
         MissingPermissions,
         NeedsIndexing,
-        Successful
+        PasswordLocked,
+        PrivacyModeActive,
+        Unlocked
     }
 
     private var launchedFirstTimSyncWorker = false
@@ -48,7 +53,7 @@ class StartupManager(
 
     private val permissionQueue = mutableStateListOf<String>()
 
-    var state = State.Successful
+    var state = State.Unlocked
         private set
 
     init {
@@ -106,24 +111,30 @@ class StartupManager(
     suspend fun checkState() = withContext(Dispatchers.IO) {
         val permsGranted = checkPermissions()
         val needsIndexing = SyncManager(context.applicationContext).getGeneration() <= 0
+        val hasPassword = settings.getPassword().first() != null
+        val privacyModeActive = settings.getPrivacyModeActive().first()
 
-        println("PERMS $permsGranted $needsIndexing ${permsGranted && !needsIndexing}")
+        Log.d(StartupManager::class.qualifiedName, "PERMS $permsGranted $needsIndexing ${permsGranted && !needsIndexing}")
 
-        when {
-            permsGranted && !needsIndexing -> {
+        state = when {
+            !permsGranted -> State.MissingPermissions
+
+            needsIndexing -> State.NeedsIndexing
+
+            privacyModeActive -> State.PrivacyModeActive
+
+            hasPassword -> State.PasswordLocked
+
+            else -> {
                 SyncWorker.start(context)
 
-                state = State.Successful
+                State.Unlocked
             }
-
-            permsGranted -> state = State.NeedsIndexing
-
-            else -> state = State.MissingPermissions
         }
     }
 
     fun skipIndexing() {
-        state = State.Successful
+        state = State.Unlocked
     }
 
     suspend fun launchFirstTimeSyncWorker(

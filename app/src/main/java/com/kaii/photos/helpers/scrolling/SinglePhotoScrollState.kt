@@ -13,8 +13,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
+import com.kaii.photos.datastore.preferences.SettingsPermissionsImpl
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +24,8 @@ import kotlinx.coroutines.launch
 
 class SinglePhotoScrollState(
     private val coroutineScope: CoroutineScope,
-    private val context: Context
+    private val context: Context,
+    private val settings: SettingsPermissionsImpl
 ) {
     var privacyMode by mutableStateOf(false)
         private set
@@ -42,6 +45,8 @@ class SinglePhotoScrollState(
             super.onAuthenticationSucceeded(result)
 
             privacyMode = !privacyMode
+
+            settings.setPrivacyModeActive(privacyMode)
         }
 
         override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
@@ -83,7 +88,8 @@ fun retainSinglePhotoScrollState(
     val state = retain(isOpenWithView) {
         SinglePhotoScrollState(
             coroutineScope = coroutineScope,
-            context = context
+            context = context,
+            settings = PhotosApplication.appModule.settings.permissions
         )
     }
 

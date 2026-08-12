@@ -21,6 +21,7 @@ class SettingsPermissionsImpl(
     private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
     private val passwordKey = byteArrayPreferencesKey("permissions_password_key")
     private val saltKey = byteArrayPreferencesKey("permissions_password_salt_key")
+    private val privacyModeKey = booleanPreferencesKey("permissions_privacy_mode_key")
 
     suspend fun migrate() {
         context.datastore.edit { data ->
@@ -119,6 +120,16 @@ class SettingsPermissionsImpl(
     fun setSalt(salt: ByteArray?) = scope.launch {
         context.datastore.edit {
             it[saltKey] = salt ?: ByteArray(0)
+        }
+    }
+
+    fun getPrivacyModeActive() = context.datastore.data.map { data ->
+        data[privacyModeKey] ?: false
+    }
+
+    fun setPrivacyModeActive(active: Boolean) = scope.launch {
+        context.datastore.edit {
+            it[privacyModeKey] = active
         }
     }
 }

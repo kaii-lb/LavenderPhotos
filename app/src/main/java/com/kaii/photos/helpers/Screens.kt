@@ -233,6 +233,9 @@ interface Screens {
 
         @Serializable
         object ScreenLock : Screens
+
+        @Serializable
+        object PrivacyModeActive : Screens
     }
 
     @Serializable

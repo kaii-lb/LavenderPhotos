@@ -15,6 +15,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathMeasure
@@ -28,9 +29,10 @@ import com.kaii.photos.helpers.AnimationConstants
 fun Modifier.infiniteLoadingIndicator(
     strokeWidth: Dp = 4.dp,
     padding: Dp = 8.dp,
+    loadingIndicatorColor: Color? = null,
     loading: () -> Boolean
 ) = composed {
-    val loadingIndicatorColor = MaterialTheme.colorScheme.primary
+    val loadingIndicatorColor = loadingIndicatorColor ?: MaterialTheme.colorScheme.primary
     val infiniteTransition = rememberInfiniteTransition()
     val phaseRatio by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -99,6 +101,9 @@ fun Modifier.infiniteLoadingIndicator(
                     )
                 )
             }
-            .padding(horizontal = animatedPadding.coerceAtLeast(0.dp), vertical = padding)
+            .padding(
+                horizontal = animatedPadding.coerceAtLeast(0.dp),
+                vertical = animatedPadding.coerceAtLeast(0.dp)
+            )
     )
 }
