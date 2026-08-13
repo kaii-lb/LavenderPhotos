@@ -16,7 +16,7 @@
     <string name="tabs_customize_desc">Change les onglets disponibles dans la barre du bas</string>
     <string name="tabs_confirm">Ajouter l\'onglet</string>
     <string name="tabs_empty_params">Les paramètres de l\'onglet ne peuvent être vides</string>
-    <string name="tabs_max_reached">Impossible d\'ajouter plus de 5 onglets</string>
+    <string name="tabs_max_reached">Impossible d\'ajouter plus de 16 onglets</string>
     <string name="tabs_min_reached">Il faut au moins 1 onglet</string>
     <string name="return_to_previous_page">Retourner à la page précédente</string>
     <string name="app_name_full">Lavender Photos</string>
@@ -39,7 +39,7 @@
     <string name="favourites">Favoris</string>
     <string name="favourites_add_this">Mettre ce média en Favoris</string>
     <string name="albums_found">Tous les albums trouvés !</string>
-    <string name="albums_folder">Dossier de l\'album</string>
+    <string name="albums_folder">Dossier</string>
     <string name="privacy_policy">Il n\'y en a pas ! Aucune de vos données ne sort de cet appareil. Aucune IA n\'est entraînée sur vos données, aucun algorithme ne récolte vos informations, rien. Lavender Photos a toujours été et sera toujours une appli de galerie photo qui privilégie la confidentialité.</string>
     <string name="secure_processing">Merci d\'attendre pendant que le média est traité</string>
     <string name="updates_new_version_available">Nouvelle version disponible !</string>
@@ -47,9 +47,9 @@
     <string name="updates_notice_desc"><![CDATA[\n            &lt;p&gt;Cet outil de mise à jour télécharge des apks depuis les &lt;a href=\"https ://github.com/kaii-lb/LavenderPhotos/releases\"&gt;GitHub Releases&lt;/a&gt; ce qui\n                veut dire qu\'ils ne passent pas par les processus de tests réalisés sur IzzyOnDroid, F-Droid ou ailleurs.\n\n                &lt;br&gt;&lt;br&gt;Les éditions du logiciel hébergées sur GitHub sont toujours signées et vérifiées par le développeur (kaii-lb), mais c\'est à vous de voir si vous voulez les utiliser ou non.\n\n                &lt;br&gt;&lt;br&gt;Lavender Photos ne fait jamais de mise à automatique, et ne se mets à jour qu\'avec votre accord explicite.\n            <&lt>/p>;\n        ]]></string>
     <string name="export_fav_to_folder">Exporter une sauvegarde dans un dossier</string>
     <string name="locked_folder_help_top">Le Dossier-Cadenas est un dossier sécurisé pour vos images et vidéos sur cet appareil.\nLes médias sécurisés ne sont jamais téléversés nulle part et restent toujours sur l\'appareil, encryptés avec une clé unique propre au mot de passe de votre ou aux données d\'empreinte digitales de votre appareil.</string>
-    <string name="locked_folder_help_bottom">Les données sécurisées ne peuvent pas être récupérées si le mot de passe est oublié ou si l\'empreinte digitale est retirée de l\'appareil.</string>
+    <string name="locked_folder_help_bottom">Les données sécurisées ne peuvent pas être récupérées si le mot de passe est oublié ou si l\'empreinte digitale est retirée de l\'appareil.\nLes éléments sécurisés seront perdus lors de la désinstallation du programme, sauvegardez-les en conséquence.</string>
     <string name="albums_type">Type d\'album</string>
-    <string name="tabs_navigate_to">Ouvrir la page %s$1</string>
+    <string name="tabs_navigate_to">Accédez à la page %1$s</string>
     <string name="tabs_albums_incl">Albums inclus</string>
     <string name="tabs_add">Ajouter un onglet</string>
     <string name="tabs_customize">Personnaliser les onglets</string>
@@ -81,14 +81,14 @@
     <string name="media_share">Partager</string>
     <string name="media_delete_confirm">Supprimer ce média ?</string>
     <string name="media_secure">Sécurisé</string>
-    <string name="media_secure_confirm">Déplacer cet %1$s vers le Dossier Sécurisé ?</string>
+    <string name="media_secure_confirm">Déplacer ce média vers Secure Folder ?</string>
     <string name="media_delete_permanently_confirm">Supprimer définitivement ce média ?</string>
     <string name="media_cancel">Annuler</string>
     <string name="media_restore">Restaurer</string>
     <string name="media_move">Déplacer</string>
     <string name="media_rename">Renommer</string>
     <string name="media_select">Sélectionner</string>
-    <string name="media_exif_erase">Effacer les données EXIF ?</string>
+    <string name="media_exif_erase">Effacer les données EXIF</string>
     <string name="media_exif_done">Données EXIF effacées</string>
     <string name="media_exif_failed">Échec de la suppression des données EXIF</string>
     <string name="media_okay">D\'acc</string>
@@ -141,19 +141,19 @@
     <string name="bottom_sheets_ratio_selected">Ce format de découpe est sélectionné</string>
     <string name="error_views_trash_empty">Les médias mis à la corbeille apparaissent ici</string>
     <string name="bottom_sheets_image_ratio">Format d\'image</string>
-    <string name="error_views_trash_prefix">Mis à la corbeille le</string>
+    <string name="error_views_trash_prefix">Mis à la corbeille :</string>
     <string name="bottom_sheets_square">Carré</string>
     <string name="albums_clear_list">Effacer la liste d\'albums</string>
     <string name="albums_clear_list_desc">Enlève tous les groupes d\'albums et les dossiers-albums tout en gardant les albums personnalisés et/ou issus du cloud</string>
     <string name="albums_media_sorting">Tri des médias</string>
     <string name="albums_is_custom">Ceci est un album personnalisé</string>
-    <string name="albums_custom">Album Personnalisé</string>
+    <string name="albums_custom">Album</string>
     <string name="albums_info">Infos sur l\'album</string>
-    <string name="albums_remove_desc">Retirer l\'album de la liste</string>
+    <string name="albums_remove_desc">Retirer l\'album de la liste ?</string>
     <string name="albums_clear_list_done">Liste d\'albums effacée</string>
-    <string name="albums_path">Chemin</string>
+    <string name="albums_path">Chemin :</string>
     <string name="albums_media_sorting_desc">Le tri des photos et des vidéos sera fait en grilles. Mode actuel : %1$s</string>
-    <string name="albums_item_count">Nombre de médias</string>
+    <string name="albums_item_count">Nombre de médias :</string>
     <string name="albums_non_existent">Aucun album de ce genre n\'existe</string>
     <string name="debugging">Déboguage</string>
     <string name="logs">Rapports d\'erreur</string>
@@ -223,4 +223,8 @@
     <string name="translation">Traduction</string>
     <string name="licenses">Licenses</string>
     <string name="albums_is_cloud">C\'est un album disponible uniquement sur le cloud</string>
+    <string name="albums_paths">Chemins :</string>
+    <string name="albums_remove">Retirer</string>
+    <string name="albums_rename_failure">Nom d\'album invalide</string>
+    <string name="albums_search_for">Rechercher un album</string>
 </resources>
