@@ -687,4 +687,6 @@
     <string name="media_share_snackbar_body">Udostępniono %1$d z %2$d</string>
     <string name="media_secure_snackbar_body">Zabezpieczono %1$d z %2$d</string>
     <string name="media_restore_snackbar_body">Przywrócono %1$d z %2$d</string>
+    <string name="albums_toggle_nested_display">Pokaż zagnieżdżone multimedia</string>
+    <string name="no_actions_available">Brak dostępnych działań</string>
 </resources>
