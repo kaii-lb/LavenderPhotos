@@ -383,13 +383,13 @@
     <string name="media_erase">Vymazat</string>
     <string name="media_confirm">Potvrdit</string>
     <string name="media_okay">OK</string>
-    <string name="media_snackbar_operation_failed">Synchronizace se nezdařila!</string>
+    <string name="media_snackbar_operation_failed">Operace se nezdařila!</string>
     <string name="media_copy_snackbar_title">Kopírování položek…</string>
     <string name="media_move_snackbar_title">Přesouvání položek…</string>
     <string name="media_delete_snackbar_title">Odstraňování položek…</string>
-    <string name="media_copy_snackbar_body">Kopírování %1$d z %2$d</string>
-    <string name="media_move_snackbar_body">Přesouvání %1$d z %2$d</string>
-    <string name="media_delete_snackbar_body">Odstraňování %1$d z %2$d</string>
+    <string name="media_copy_snackbar_body">Zkopírováno %1$d z %2$d</string>
+    <string name="media_move_snackbar_body">Přesunuto %1$d z %2$d</string>
+    <string name="media_delete_snackbar_body">Odstraněno %1$d z %2$d</string>
     <string name="media_tools">Nástroje</string>
     <string name="media_information">Informace</string>
     <string name="media_is_raw">Toto je obrázek RAW</string>
@@ -688,4 +688,16 @@
     <string name="settings_privacy">Soukromí a zabezpečení</string>
     <string name="settings_memory_storage">Paměť a úložiště</string>
     <string name="settings_about_and_updates">O aplikaci a aktualizace</string>
+    <string name="albums_toggle_nested_display">Zobrazit média ve vnořených složkách</string>
+    <string name="media_share_failed">Sdílení médií se nezdařilo!</string>
+    <string name="media_secure_snackbar_title">Zabezpečování položek…</string>
+    <string name="media_restore_snackbar_title">Obnovování položek…</string>
+    <string name="media_share_snackbar_title">Sdílení položek…</string>
+    <string name="media_share_snackbar_body">Sdíleno %1$d z %2$d</string>
+    <string name="media_secure_snackbar_body">Zabezpečeno %1$d z %2$d</string>
+    <string name="media_restore_snackbar_body">Obnoveno %1$d z %2$d</string>
+    <string name="no_actions_available">Nejsou k dispozici žádné akce</string>
+    <string name="privacy_authenticate">Ověřit totožnost</string>
+    <string name="privacy_scroll_mode_last_active">Režim soukromí je aktivní</string>
+    <string name="privacy_scroll_mode_last_active_desc">Režim soukromí zůstal při posledním ukončení aplikace aktivní. Pro pokračování použijte heslo nebo biometrické ověření.</string>
 </resources>
