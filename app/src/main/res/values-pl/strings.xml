@@ -522,7 +522,7 @@
     <string name="video_change_audio_track">Zmień ścieżkę audio tego filmu</string>
     <string name="editing_export_image_failed">Nie udało się wyeksportować zdjęcia</string>
     <string name="editing_export_video_uploading">Przesyłanie wideo…</string>
-    <string name="settings_about">O</string>
+    <string name="settings_about">O aplikacji</string>
     <string name="settings_behaviour_loop_never">Nigdy nie zapętlaj filmów</string>
     <string name="settings_behaviour_loop_under_30">Zapętlaj poniżej 30s</string>
     <string name="settings_behaviour_loop_always">Zapętlaj filmy</string>
@@ -687,4 +687,9 @@
     <string name="media_share_snackbar_body">Udostępniono %1$d z %2$d</string>
     <string name="media_secure_snackbar_body">Zabezpieczono %1$d z %2$d</string>
     <string name="media_restore_snackbar_body">Przywrócono %1$d z %2$d</string>
+    <string name="albums_toggle_nested_display">Pokaż zagnieżdżone multimedia</string>
+    <string name="no_actions_available">Brak dostępnych działań</string>
+    <string name="privacy_authenticate">Uwierzytelnij</string>
+    <string name="privacy_scroll_mode_last_active">Tryb prywatności aktywny</string>
+    <string name="privacy_scroll_mode_last_active_desc">Tryb prywatności był aktywny podczas ostatniego zamknięcia aplikacji. Aby kontynuować, użyj hasła lub danych biometrycznych.</string>
 </resources>

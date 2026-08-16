@@ -699,4 +699,6 @@
     <string name="contributor_tyrypyrking_desc">Va millorar els sistemes de xifrat segur i els processos de recuperació de fitxers</string>
     <string name="contributor_stacsk_desc">Va identificar problemes i va suggerir moltes millores per fer avançar el desenvolupament de l\'aplicació</string>
     <string name="contributors_community_member">Membre de la comunitat</string>
+    <string name="albums_toggle_nested_display">Mostra contingut multimèdia imbricat</string>
+    <string name="no_actions_available">No hi ha accions disponibles</string>
 </resources>
