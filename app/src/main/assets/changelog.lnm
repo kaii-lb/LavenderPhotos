@@ -5,7 +5,20 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.1.0 date=10-08-2026 status=Latest
+# version=v2.1.1 date=17-08-2026 status=Latest
+    + category=Features
+        - issueNumber=000293 title=Ask for password when closing and opening app while 'Privacy Mode' is active
+        - issueNumber=000292 title=Add nested display option for folders (shows all media in all subfolders of the folder)
+        - title=Respect requested select mode for Media Picker (single vs multiselect mode)
+
+    + category=Improvements
+        - title=Make it clearer when an album can be pinned or deleted via gestures
+
+    + category=Fixes
+        - issueNumber=000295 title=Fix crash when using Media Picker
+        - issueNumber=000294 title=Fix video player controls not hiding
+
+# version=v2.1.0 date=10-08-2026
     + category=Features
         - title=Significantly improve speed and reliability of file management
         - issueNumber=000282 title=Added SVG display support
