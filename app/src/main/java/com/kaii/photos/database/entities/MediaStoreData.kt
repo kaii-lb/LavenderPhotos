@@ -20,6 +20,10 @@ import java.util.TimeZone
         Index(
             value = ["parentPath", "dateModified"],
             orders = [Index.Order.ASC, Index.Order.DESC]
+        ),
+        Index(
+            value = ["parentPath", "dateTaken"],
+            orders = [Index.Order.ASC, Index.Order.DESC]
         )
     ]
 )
