@@ -237,11 +237,11 @@ private fun VideoPlayerUI(
 
         LaunchedEffect(state.controlsVisible, isLandscape) {
             setBarVisibility(
-                visible = state.controlsVisible || !isLandscape,
+                visible = state.controlsVisible,
                 window = window
             ) {
                 appBarsVisible.value = it
-                if (!isLandscape) state.controlsVisible = it
+                state.controlsVisible = it
             }
         }
 
