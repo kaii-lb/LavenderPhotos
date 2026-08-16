@@ -505,7 +505,6 @@ fun MainPages(
             }
 
             if (incomingIntent != null) {
-                val selectedItemsList by viewModel.selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
                 val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
                 AnimatedContent(
@@ -536,7 +535,7 @@ fun MainPages(
                     } else {
                         MediaPickerConfirmButton(
                             incomingIntent = incomingIntent,
-                            items = { selectedItemsList }
+                            selectionManager = viewModel.selectionManager
                         )
                     }
                 }

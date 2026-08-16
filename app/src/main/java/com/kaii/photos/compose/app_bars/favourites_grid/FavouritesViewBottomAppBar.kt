@@ -43,11 +43,9 @@ fun FavouritesViewBottomAppBar(
             )
         }
     } else {
-        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
-
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            items = { selectedItemsList }
+            selectionManager = selectionManager
         )
     }
 }

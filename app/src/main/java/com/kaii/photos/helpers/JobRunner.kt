@@ -45,6 +45,6 @@ class JobDebouncer(
 fun rememberSingleJobRunner(): SingleJobRunner {
     val coroutineScope = rememberCoroutineScope()
     return remember {
-        SingleJobRunner(coroutineScope)
+        SingleJobRunner(coroutineScope, coroutineScope.coroutineContext)
     }
 }

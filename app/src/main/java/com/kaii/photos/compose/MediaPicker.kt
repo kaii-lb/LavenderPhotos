@@ -32,6 +32,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -76,11 +77,15 @@ import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
+import dagger.hilt.android.AndroidEntryPoint
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
 
+@AndroidEntryPoint
 class MediaPicker : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,7 +114,10 @@ class MediaPicker : ComponentActivity() {
                 ) {
                     window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
-                    Content(incomingIntent = incomingIntent)
+                    val snackbarHostState = remember { LavenderSnackbarHostState() }
+                    LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
+                        Content(incomingIntent = incomingIntent)
+                    }
                 }
             }
         }
@@ -304,9 +312,10 @@ class MediaPicker : ComponentActivity() {
 @Composable
 fun MediaPickerConfirmButton(
     incomingIntent: Intent,
-    items: () -> List<SelectionManager.SelectedItem>
+    selectionManager: SelectionManager
 ) {
     val state = retainMediaPickerState(incomingIntent)
+    val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
 
     BackHandler(
         enabled = state.isLoading,
@@ -328,19 +337,21 @@ fun MediaPickerConfirmButton(
         Button(
             onClick = {
                 runner.run {
-                    val itemCount = items().size
+                    val itemCount = selectedItemsList.size
 
                     val body = mutableStateOf(resources.getString(R.string.media_picker_processing_items_body, 0, itemCount))
                     val percentage = mutableFloatStateOf(0f)
 
-                    LavenderSnackbarController.pushEvent(
-                        event = LavenderSnackbarEvent.ProgressEvent(
-                            message = resources.getString(R.string.media_picker_processing_items),
-                            body = body,
-                            icon = R.drawable.data,
-                            percentage = percentage
+                    launch {
+                        LavenderSnackbarController.pushEvent(
+                            event = LavenderSnackbarEvent.ProgressEvent(
+                                message = resources.getString(R.string.media_picker_processing_items),
+                                body = body,
+                                icon = R.drawable.data,
+                                percentage = percentage
+                            )
                         )
-                    )
+                    }
 
                     launch {
                         // kinda funky state management but wtv
@@ -351,16 +362,16 @@ fun MediaPickerConfirmButton(
                     }
 
                     state.shareWithApp(
-                        items = items()
+                        items = selectedItemsList
                     )
 
-                    percentage.floatValue = 1f
+                    // percentage.floatValue = 1f
                     (context as Activity).finish()
                 }
             },
             shape = CircleShape,
             elevation = ButtonDefaults.elevatedButtonElevation(),
-            enabled = items().isNotEmpty(),
+            enabled = selectedItemsList.isNotEmpty() && !state.isLoading,
             modifier = Modifier
                 .width(160.dp)
                 .height(52.dp)

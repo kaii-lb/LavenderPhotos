@@ -2,8 +2,6 @@ package com.kaii.photos.compose.app_bars.album_view
 
 import android.content.Intent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kaii.photos.compose.MediaPickerConfirmButton
 import com.kaii.photos.compose.app_bars.IsSelectingBottomAppBar
 import com.kaii.photos.compose.app_bars.SelectingBottomBarItems
@@ -31,11 +29,9 @@ fun SingleAlbumViewBottomBar(
             )
         }
     } else {
-        val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
-
         MediaPickerConfirmButton(
             incomingIntent = incomingIntent,
-            items = { selectedItemsList }
+            selectionManager = selectionManager
         )
     }
 }
