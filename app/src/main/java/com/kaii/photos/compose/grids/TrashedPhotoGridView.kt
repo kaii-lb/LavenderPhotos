@@ -44,6 +44,7 @@ import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.screens.isMultiSelect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,6 +171,7 @@ fun TrashedPhotoGridView(
                 viewProperties = ViewProperties.Trash,
                 selectionManager = viewModel.selectionManager,
                 isMediaPicker = incomingIntent != null,
+                isSingleSelectMode = incomingIntent?.isMultiSelect != true,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
                 cacheThumbnails = { cacheThumbnails },

@@ -54,6 +54,7 @@ class SelectionManager(
     }
 
     private val timeZone = TimeZone.getDefault()
+    private var singleSelectMode = false
 
     private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
     val selection = snapshotFlow { _selection.values.flatMap { it.values } }
@@ -67,7 +68,9 @@ class SelectionManager(
     val count = selection.map { it.size }.debounce(25.milliseconds)
 
     fun toggle(item: PhotoLibraryUIModel) {
+
         if (item is PhotoLibraryUIModel.MediaImpl) {
+            if (singleSelectMode) clear()
             toggleMedia(item = item.item)
         } else if (item is PhotoLibraryUIModel.Section) {
             toggleSection(timestamp = item.timestamp)
@@ -89,6 +92,10 @@ class SelectionManager(
         _selection = emptyMap()
         _sections = emptyList()
         manualEnable = false
+    }
+
+    fun setSingleSelectModeActive(active: Boolean) {
+        singleSelectMode = active
     }
 
     fun addAll(
@@ -227,7 +234,16 @@ class SelectionManager(
             snapshot[timestamp] = emptyMap()
             sections.removeAll { it == timestamp }
         } else {
-            snapshot[timestamp] = getMediaInDate(epochToDayStart(timestamp, timeZone), sortMode)
+            val media = getMediaInDate(epochToDayStart(timestamp, timeZone), sortMode)
+
+            if (singleSelectMode && media.isNotEmpty()) {
+                val first = media.maxBy { it.value.id } // hacky way to find the first item, not always guaranteed
+                snapshot[timestamp] = mapOf(
+                    first.key to first.value
+                )
+            } else {
+                snapshot[timestamp] = media
+            }
 
             // hardcoded android limit for handling uris
             // if (snapshot[timestamp]!!.size >= 2000) {

@@ -42,7 +42,8 @@ import kotlin.time.Duration.Companion.milliseconds
 fun SearchPage(
     viewModel: SearchViewModel,
     selectionManager: SelectionManager,
-    isMediaPicker: Boolean
+    isMediaPicker: Boolean,
+    isSingleSelectMode: Boolean
 ) {
     val gridState = rememberLazyGridState()
 
@@ -74,6 +75,7 @@ fun SearchPage(
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
+                isSingleSelectMode = isSingleSelectMode,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
                 cacheThumbnails = { cacheThumbnails },

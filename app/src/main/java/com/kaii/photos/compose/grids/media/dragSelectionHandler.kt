@@ -47,8 +47,11 @@ fun Modifier.dragSelectionHandler(
     gridState: LazyGridState,
     isDragSelecting: MutableState<Boolean>,
     context: Context,
-    thumbnailSettings: Pair<Boolean, Int>
+    thumbnailSettings: Pair<Boolean, Int>,
+    enabled: Boolean
 ) = composed {
+    if (!enabled) return@composed this
+
     val localDensity = LocalDensity.current
     val resources = LocalResources.current
     val view = LocalView.current

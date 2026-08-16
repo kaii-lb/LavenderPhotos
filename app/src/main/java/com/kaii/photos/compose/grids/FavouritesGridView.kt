@@ -50,6 +50,7 @@ import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.screens.isMultiSelect
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -202,6 +203,7 @@ fun FavouritesGridView(
                 selectionManager = viewModel.selectionManager,
                 viewProperties = ViewProperties.Favourites,
                 isMediaPicker = incomingIntent != null,
+                isSingleSelectMode = incomingIntent?.isMultiSelect != true,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
                 cacheThumbnails = { cacheThumbnails },

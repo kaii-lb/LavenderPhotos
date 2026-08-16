@@ -33,6 +33,10 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+val Intent.isMultiSelect: Boolean
+    get() = getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+            || action == Intent.ACTION_OPEN_DOCUMENT
+
 class MediaPickerState(
     private val context: Context,
     private val incomingIntent: Intent,
@@ -116,9 +120,7 @@ class MediaPickerState(
 
         val activity = context as Activity
 
-        if (incomingIntent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-            || incomingIntent.action == Intent.ACTION_OPEN_DOCUMENT
-        ) {
+        if (incomingIntent.isMultiSelect) {
             val resultIntent = Intent().apply {
                 putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

@@ -81,6 +81,7 @@ import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import com.kaii.photos.repositories.SearchMode
+import com.kaii.photos.screens.isMultiSelect
 import com.kaii.photos.setupNextScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -427,6 +428,7 @@ fun MainPages(
                             album = { tab.toAlbum() },
                             selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
+                            isSingleSelectMode = incomingIntent?.isMultiSelect != true,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
                             cacheThumbnails = { cacheThumbnails },
@@ -450,6 +452,7 @@ fun MainPages(
                             album = { tab.copy(albumPaths = mainPhotosPaths).toAlbum() },
                             selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
+                            isSingleSelectMode = incomingIntent?.isMultiSelect != true,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
                             cacheThumbnails = { cacheThumbnails },
@@ -490,7 +493,8 @@ fun MainPages(
                         SearchPage(
                             viewModel = searchViewModel,
                             selectionManager = viewModel.selectionManager,
-                            isMediaPicker = incomingIntent != null
+                            isMediaPicker = incomingIntent != null,
+                            isSingleSelectMode = incomingIntent?.isMultiSelect != true
                         )
                     }
 

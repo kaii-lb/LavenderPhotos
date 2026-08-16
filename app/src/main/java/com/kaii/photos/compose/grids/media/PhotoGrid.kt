@@ -69,6 +69,7 @@ fun PhotoGrid(
     useRoundedCorners: () -> Boolean,
     vibrateOnClick: () -> Boolean,
     isMediaPicker: Boolean = false,
+    isSingleSelectMode: Boolean = false,
     isMainPage: Boolean = false,
     state: LazyGridState = rememberLazyGridState()
 ) {
@@ -88,6 +89,7 @@ fun PhotoGrid(
                 gridState = state,
                 album = album,
                 isMediaPicker = isMediaPicker,
+                isSingleSelectMode = isSingleSelectMode,
                 isMainPage = isMainPage,
                 columnSize = columnSize,
                 openVideosExternally = openVideosExternally,
@@ -115,6 +117,7 @@ private fun DeviceMedia(
     gridState: LazyGridState,
     album: () -> AlbumType,
     isMediaPicker: Boolean,
+    isSingleSelectMode: Boolean,
     isMainPage: Boolean,
     columnSize: () -> Int,
     openVideosExternally: () -> Boolean,
@@ -178,7 +181,8 @@ private fun DeviceMedia(
                     pagingItems = pagingItems,
                     isDragSelecting = isDragSelecting,
                     context = context,
-                    thumbnailSettings = Pair(cacheThumbnails(), thumbnailSize())
+                    thumbnailSettings = Pair(cacheThumbnails(), thumbnailSize()),
+                    enabled = !isSingleSelectMode
                 )
         ) {
             items(

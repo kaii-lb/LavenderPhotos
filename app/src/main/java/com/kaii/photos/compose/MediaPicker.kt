@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +75,7 @@ import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
+import com.kaii.photos.screens.isMultiSelect
 import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
@@ -316,6 +318,12 @@ fun MediaPickerConfirmButton(
 ) {
     val state = retainMediaPickerState(incomingIntent)
     val selectedItemsList by selectionManager.selection.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    LaunchedEffect(incomingIntent) {
+        selectionManager.setSingleSelectModeActive(
+            active = !incomingIntent.isMultiSelect
+        )
+    }
 
     BackHandler(
         enabled = state.isLoading,
