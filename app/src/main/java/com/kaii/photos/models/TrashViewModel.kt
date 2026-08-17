@@ -3,6 +3,7 @@ package com.kaii.photos.models
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.preferences.SettingsBehaviourImpl
 import com.kaii.photos.datastore.preferences.SettingsLookAndFeelImpl
 import com.kaii.photos.datastore.preferences.SettingsStorageImpl
@@ -150,7 +151,13 @@ class TrashViewModel @Inject constructor(
 
     fun deleteAll() {
         appScope.launch {
-            repo.deleteAll()
+            val files = repo.getAllFiles()
+            repo.deleteFiles(
+                files = files,
+                album = AlbumType.PlaceHolder,
+                progressChannel = progressChannel,
+                appScope = appScope
+            )
         }
     }
 }

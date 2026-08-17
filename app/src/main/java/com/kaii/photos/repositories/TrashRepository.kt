@@ -28,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -119,13 +118,11 @@ class TrashRepository(
 
     fun cancel() = dataSource.cancel()
 
-    suspend fun deleteAll() = fileManager.deleteFiles(
-        files = dataSource.query().fastMap {
+    suspend fun getAllFiles() = withContext(Dispatchers.IO) {
+        dataSource.query().fastMap {
             it.toFileOperationMetadata()
-        },
-        albumId = "",
-        immichId = null
-    ).collect()
+        }
+    }
 
     suspend fun getItemsForDate(
         timestamp: Long,

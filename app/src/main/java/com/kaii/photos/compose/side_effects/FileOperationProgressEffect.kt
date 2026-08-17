@@ -31,6 +31,8 @@ fun FileOperationProgressEffect(
 
     LaunchedEffect(state.events) {
         state.events.collect { event ->
+            println("TRASH RESULT $event")
+
             when (event) {
                 is FileOperationUIEvent.ShowProgressSnackbar -> {
                     LavenderSnackbarController.pushEvent(
