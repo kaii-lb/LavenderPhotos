@@ -692,4 +692,9 @@
     <string name="media_share_snackbar_body">Поширено %1$d з %2$d</string>
     <string name="media_secure_snackbar_body">Захищено %1$d з %2$d</string>
     <string name="media_restore_snackbar_body">Відновлено %1$d з %2$d</string>
+    <string name="albums_toggle_nested_display">Відобразити вкладені медіафайли</string>
+    <string name="no_actions_available">Недоступно ніяких дій</string>
+    <string name="privacy_authenticate">Аутентифікуватись</string>
+    <string name="privacy_scroll_mode_last_active">Приватний Режим Активний</string>
+    <string name="privacy_scroll_mode_last_active_desc">Приватний режим був залишений коли додаток був останнього разу закритий. Будь-ласка використайте свій пароль або біометрику для продовження.</string>
 </resources>
