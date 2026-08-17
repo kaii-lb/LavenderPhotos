@@ -428,7 +428,7 @@ fun MainPages(
                             album = { tab.toAlbum() },
                             selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
-                            isSingleSelectMode = incomingIntent?.isMultiSelect != true,
+                            isMultiSelectMode = incomingIntent.isMultiSelect,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
                             cacheThumbnails = { cacheThumbnails },
@@ -452,7 +452,7 @@ fun MainPages(
                             album = { tab.copy(albumPaths = mainPhotosPaths).toAlbum() },
                             selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
-                            isSingleSelectMode = incomingIntent?.isMultiSelect != true,
+                            isMultiSelectMode = incomingIntent.isMultiSelect,
                             columnSize = { columnSize },
                             openVideosExternally = { openVideosExternally },
                             cacheThumbnails = { cacheThumbnails },
@@ -494,7 +494,7 @@ fun MainPages(
                             viewModel = searchViewModel,
                             selectionManager = viewModel.selectionManager,
                             isMediaPicker = incomingIntent != null,
-                            isSingleSelectMode = incomingIntent?.isMultiSelect != true
+                            isMultiSelectMode = incomingIntent.isMultiSelect
                         )
                     }
 

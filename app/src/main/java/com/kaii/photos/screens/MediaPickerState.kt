@@ -33,9 +33,9 @@ import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-val Intent.isMultiSelect: Boolean
-    get() = getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-            || action == Intent.ACTION_OPEN_DOCUMENT
+val Intent?.isMultiSelect: Boolean
+    get() = this == null ||
+            (getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false) || action == Intent.ACTION_OPEN_DOCUMENT)
 
 class MediaPickerState(
     private val context: Context,

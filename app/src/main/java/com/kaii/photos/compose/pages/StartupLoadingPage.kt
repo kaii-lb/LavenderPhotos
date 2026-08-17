@@ -52,7 +52,7 @@ fun StartupLoadingPage(
                 album = { album },
                 selectionManager = mainGridViewModel.selectionManager,
                 isMediaPicker = false,
-                isSingleSelectMode = false,
+                isMultiSelectMode = false,
                 columnSize = { 3 },
                 openVideosExternally = { false },
                 cacheThumbnails = { true },

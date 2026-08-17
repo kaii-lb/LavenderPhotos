@@ -219,7 +219,10 @@ fun SecureFolderView(
                 cacheThumbnails = { cacheThumbnails },
                 thumbnailSize = { thumbnailSize },
                 useRoundedCorners = { useRoundedCorners },
-                vibrateOnClick = { vibrateOnClick }
+                vibrateOnClick = { vibrateOnClick },
+                isMediaPicker = false,
+                isMultiSelectMode = true,
+                isMainPage = false
             )
         }
     }

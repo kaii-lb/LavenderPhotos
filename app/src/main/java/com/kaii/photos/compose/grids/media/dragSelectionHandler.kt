@@ -50,7 +50,7 @@ fun Modifier.dragSelectionHandler(
     thumbnailSettings: Pair<Boolean, Int>,
     enabled: Boolean
 ) = composed {
-    if (!enabled) return@composed this
+    if (!enabled) return@composed Modifier
 
     val localDensity = LocalDensity.current
     val resources = LocalResources.current

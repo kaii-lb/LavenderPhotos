@@ -43,7 +43,7 @@ fun SearchPage(
     viewModel: SearchViewModel,
     selectionManager: SelectionManager,
     isMediaPicker: Boolean,
-    isSingleSelectMode: Boolean
+    isMultiSelectMode: Boolean
 ) {
     val gridState = rememberLazyGridState()
 
@@ -75,7 +75,7 @@ fun SearchPage(
                 state = gridState,
                 isMainPage = true,
                 isMediaPicker = isMediaPicker,
-                isSingleSelectMode = isSingleSelectMode,
+                isMultiSelectMode = isMultiSelectMode,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
                 cacheThumbnails = { cacheThumbnails },
