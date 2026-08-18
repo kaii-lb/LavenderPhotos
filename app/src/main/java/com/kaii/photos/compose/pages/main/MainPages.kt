@@ -99,15 +99,13 @@ fun MainPages(
     refreshAlbums: suspend () -> Unit
 ) {
     val defaultTab by viewModel.defaultTab.collectAsStateWithLifecycle()
-
     val originalTabList by viewModel.tabList.collectAsStateWithLifecycle()
+
     val tabList by remember {
         derivedStateOf {
-            originalTabList.let { tabs ->
-                if (incomingIntent != null) {
-                    tabs.fastFilter { it != DefaultTabs.TabTypes.secure }
-                } else tabs
-            }
+            if (incomingIntent != null) {
+                originalTabList.fastFilter { it != DefaultTabs.TabTypes.secure }
+            } else originalTabList
         }
     }
 
@@ -118,8 +116,19 @@ fun MainPages(
     val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
 
     val pagerState = rememberPagerState(
-        initialPage = if (tabList.indexOf(defaultTab) == -1) 0 else tabList.indexOf(defaultTab)
+        initialPage = tabList.indices.first
     ) { tabList.size }
+
+    // TODO: find a better way to do this
+    var alreadySetStartupTab by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(tabList) {
+        if (alreadySetStartupTab) return@LaunchedEffect
+
+        if (defaultTab in tabList) {
+            pagerState.scrollToPage(tabList.indexOf(defaultTab))
+            alreadySetStartupTab = true
+        }
+    }
 
     val coroutineScope = rememberCoroutineScope()
     val windowWidth = LocalWindowInfo.current.containerSize.width.toFloat()
@@ -228,7 +237,6 @@ fun MainPages(
                     pagerState = pagerState,
                     selectionManager = viewModel.selectionManager,
                     tabs = tabList,
-                    defaultTab = { defaultTab },
                     scrollBehaviour = scrollBehaviour,
                     confirmToDelete = { confirmToDelete },
                     doNotTrash = { doNotTrash },
@@ -528,7 +536,6 @@ fun MainPages(
                             MainAppBottomBar(
                                 pagerState = pagerState,
                                 tabs = tabList,
-                                defaultTab = { defaultTab },
                                 scrollBehaviour = scrollBehaviour,
                                 selectionManager = viewModel.selectionManager,
                                 confirmToDelete = { confirmToDelete },

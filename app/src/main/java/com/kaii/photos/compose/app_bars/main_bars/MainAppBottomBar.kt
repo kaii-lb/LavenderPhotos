@@ -65,7 +65,6 @@ import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.SelectingBottomBarItems
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.BottomBarTab
-import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.grid_management.SelectionManager
@@ -76,7 +75,6 @@ import kotlinx.coroutines.launch
 fun MainAppBottomBar(
     pagerState: PagerState,
     tabs: List<BottomBarTab>,
-    defaultTab: () -> BottomBarTab,
     selectionManager: SelectionManager,
     scrollBehaviour: FloatingToolbarScrollBehavior,
     confirmToDelete: () -> Boolean,
@@ -84,10 +82,7 @@ fun MainAppBottomBar(
     runAction: (action: FileOperationAction) -> Unit
 ) {
     val state = rememberLazyListState(
-        initialFirstVisibleItemIndex =
-            tabs.indexOf(
-                if (defaultTab() == DefaultTabs.TabTypes.secure || defaultTab() !in tabs) tabs.first() else defaultTab()
-            )
+        initialFirstVisibleItemIndex = pagerState.currentPage
     )
 
     val currentTab by retain {
