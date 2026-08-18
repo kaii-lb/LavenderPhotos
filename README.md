@@ -10,6 +10,7 @@
   [![Static Badge](https://img.shields.io/badge/Koltin-100%25-green?style=for-the-badge)](https://kotlinlang.org/)
 
   [![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapt.izzysoft.de%2Ffdroid%2Fapi%2Fv1%2Fpackages%2Fcom.kaii.photos&query=%24.packages%5B0%5D.versionName&style=for-the-badge&label=IzzyOnDroid&color=blue)](https://apt.izzysoft.de/fdroid/index/apk/com.kaii.photos)
+  [![F-Droid Version](https://img.shields.io/f-droid/v/com.kaii.photos?style=for-the-badge)](https://f-droid.org/en/packages/com.kaii.photos/)
 </div>
 
 # Features
