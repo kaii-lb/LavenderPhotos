@@ -82,9 +82,6 @@
     <string name="logs">Registros</string>
     <string name="record_logs">Registro de Registros</string>
     <string name="record_logs_desc">Almacene registros para depuración. Toque para ver.</string>
-    <string name="choose_logs">Elegir Registros</string>
-    <string name="previous_run_logs">Registros de ejecuciones anteriores</string>
-    <string name="current_run_logs">Registros de la ejecución actual</string>
     <string name="log_file_non_existent">Aún no se ha registrado ningún archivo de registro.</string>
     <string name="album_add_path">Agregar Ruta de Álbumes</string>
     <string name="album_add">Añadir álbum</string>

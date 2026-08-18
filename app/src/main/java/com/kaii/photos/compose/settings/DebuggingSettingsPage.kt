@@ -1,6 +1,5 @@
 package com.kaii.photos.compose.settings
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
@@ -18,7 +17,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,27 +31,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
-import com.kaii.photos.compose.dialogs.SelectableButtonListDialog
 import com.kaii.photos.compose.dialogs.user_action.TextEntryDialog
-import com.kaii.photos.compose.widgets.CheckBoxButtonRow
 import com.kaii.photos.compose.widgets.PreferencesRow
 import com.kaii.photos.compose.widgets.PreferencesSeparatorText
 import com.kaii.photos.compose.widgets.PreferencesSwitchRow
 import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.baseInternalStorageDirectory
-import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
@@ -65,6 +58,9 @@ import kotlin.uuid.Uuid
 
 @Composable
 fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val coroutineScope = rememberCoroutineScope()
     val settings = PhotosApplication.appModule.settings
     val shouldRecordLogs by settings.debugging.getRecordLogs().collectAsStateWithLifecycle(initialValue = false)
 
@@ -73,7 +69,30 @@ fun DebuggingSettingsPage(modifier: Modifier = Modifier) {
         navController = LocalNavController.current,
         modifier = modifier,
         setRecordLogs = settings.debugging::setRecordLogs,
-        addAlbum = { settings.albums.add(listOf(it)) }
+        addAlbum = { settings.albums.add(listOf(it)) },
+        shareLogs = {
+            val intent = PhotosApplication.appModule.logManager.getShareIntent()
+
+            if (!shouldRecordLogs) coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = resources.getString(R.string.record_logs_off),
+                        icon = R.drawable.no_log,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            } else if (intent == null) coroutineScope.launch {
+                LavenderSnackbarController.pushEvent(
+                    LavenderSnackbarEvent.MessageEvent(
+                        message = resources.getString(R.string.log_file_non_existent),
+                        icon = R.drawable.no_log,
+                        duration = SnackbarDuration.Short
+                    )
+                )
+            } else {
+                context.startActivity(intent)
+            }
+        }
     )
 }
 
@@ -85,7 +104,8 @@ private fun DebuggingSettingsPagePreview() {
         navController = rememberNavController(),
         modifier = Modifier,
         setRecordLogs = {},
-        addAlbum = {}
+        addAlbum = {},
+        shareLogs = {}
     )
 }
 
@@ -96,7 +116,8 @@ private fun DebuggingSettingsPageImpl(
     navController: NavController,
     modifier: Modifier,
     setRecordLogs: (value: Boolean) -> Unit,
-    addAlbum: (album: AlbumType) -> Unit
+    addAlbum: (album: AlbumType) -> Unit,
+    shareLogs: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -116,10 +137,6 @@ private fun DebuggingSettingsPageImpl(
             }
 
             item {
-                val context = LocalContext.current
-                val coroutineScope = rememberCoroutineScope()
-                val showLogTypeDialog = remember { mutableStateOf(false) }
-
                 PreferencesSwitchRow(
                     title = stringResource(id = R.string.record_logs),
                     summary = stringResource(id = R.string.record_logs_desc),
@@ -127,84 +144,9 @@ private fun DebuggingSettingsPageImpl(
                     checked = shouldRecordLogs(),
                     position = RowPosition.Single,
                     showBackground = false,
-                    onRowClick = {
-                        showLogTypeDialog.value = !showLogTypeDialog.value
-                    },
+                    onRowClick = { shareLogs() },
                     onSwitchClick = setRecordLogs
                 )
-
-                if (showLogTypeDialog.value) {
-                    val logManager = remember { LogManager(context = context) }
-                    val chosenPaths = remember { mutableStateListOf(logManager.previousLogPath) }
-                    val noLogFile = stringResource(id = R.string.log_file_non_existent)
-
-                    SelectableButtonListDialog(
-                        title = stringResource(id = R.string.choose_logs),
-                        showDialog = showLogTypeDialog,
-                        buttons = {
-                            CheckBoxButtonRow(
-                                text = stringResource(id = R.string.previous_run_logs),
-                                checked = logManager.previousLogPath in chosenPaths
-                            ) {
-                                if (logManager.previousLogPath !in chosenPaths) chosenPaths.add(
-                                    logManager.previousLogPath
-                                )
-                                else chosenPaths.remove(logManager.previousLogPath)
-                            }
-
-                            CheckBoxButtonRow(
-                                text = stringResource(id = R.string.current_run_logs),
-                                checked = logManager.currentLogPath in chosenPaths
-                            ) {
-                                if (logManager.currentLogPath !in chosenPaths) chosenPaths.add(
-                                    logManager.currentLogPath
-                                )
-                                else chosenPaths.remove(logManager.currentLogPath)
-                            }
-                        },
-                        onConfirm = {
-                            val existing = chosenPaths.filter {
-                                val exists = File(it).exists()
-
-                                if (!exists) {
-                                    coroutineScope.launch {
-                                        LavenderSnackbarController.pushEvent(
-                                            LavenderSnackbarEvent.MessageEvent(
-                                                message = noLogFile,
-                                                icon = R.drawable.no_log,
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        )
-                                    }
-                                }
-
-                                exists
-                            }
-
-                            if (existing.isNotEmpty()) {
-                                val intent = Intent().apply {
-                                    action = Intent.ACTION_SEND_MULTIPLE
-                                    type = "text/plain"
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-
-                                val fileUris = ArrayList(
-                                    existing.map {
-                                        FileProvider.getUriForFile(
-                                            context,
-                                            LAVENDER_FILE_PROVIDER_AUTHORITY,
-                                            File(it)
-                                        )
-                                    }
-                                )
-
-                                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
-
-                                context.startActivity(Intent.createChooser(intent, null))
-                            }
-                        }
-                    )
-                }
             }
 
             item {

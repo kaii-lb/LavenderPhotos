@@ -139,9 +139,6 @@
     <string name="logs">Log</string>
     <string name="record_logs">Salva Log</string>
     <string name="record_logs_desc">Salva i log per il debug. Tocca per visualizzarli.</string>
-    <string name="choose_logs">Scegli Log</string>
-    <string name="previous_run_logs">Ultimi Log</string>
-    <string name="current_run_logs">Log correnti</string>
     <string name="log_file_non_existent">Nessun log registrato finora.</string>
     <string name="album_add_path">Aggiungi percorso album</string>
     <string name="album_add">Aggiungi album</string>

@@ -2,11 +2,14 @@ package com.kaii.photos
 
 import android.app.Application
 import android.database.ContentObserver
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
+import com.kaii.photos.data.logging.CrashHandler
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
@@ -21,6 +24,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -45,15 +49,40 @@ class PhotosApplication : Application(), Configuration.Provider {
 
         appModule = localAppModule
 
-        CoroutineScope(Dispatchers.IO).launch {
+        localAppModule.scope.launch(Dispatchers.IO) {
+            Thread.setDefaultUncaughtExceptionHandler(
+                CrashHandler(
+                    context = applicationContext,
+                    defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+                )
+            )
+
             // try to migrate from an older datastore system on app startup
             localAppModule.settings.albums.migrate()
             localAppModule.settings.permissions.migrate()
 
-            registerContentObserver()
+            val shouldRecordLogs = localAppModule.settings.debugging.getRecordLogs().first()
+            if (shouldRecordLogs) {
+                localAppModule.logManager.startRecording()
+            }
+
+            val hasClearedCache = localAppModule.settings.versions.getHasClearedGlideCache().first()
+            if (!hasClearedCache) {
+                localAppModule.settings.storage.clearThumbnailCache()
+                localAppModule.settings.versions.setHasClearedGlideCache(true)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                localAppModule.settings.permissions.setIsMediaManager(
+                    MediaStore.canManageMedia(applicationContext)
+                )
+            }
 
             delay(2000.milliseconds)
             CloudSyncWorker.enqueue(applicationContext)
+
+            // run infinitely while app is open
+            registerContentObserver()
         }
     }
 
@@ -91,12 +120,10 @@ class PhotosApplication : Application(), Configuration.Provider {
             }
         }
 
-        launch {
-            flow.debounce(
-                timeout = 300.milliseconds
-            ).collect {
-                SyncWorker.start(applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
-            }
+        flow.debounce(
+            timeout = 300.milliseconds
+        ).collect {
+            SyncWorker.start(applicationContext, ExistingWorkPolicy.APPEND_OR_REPLACE)
         }
     }
 }

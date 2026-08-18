@@ -63,9 +63,6 @@
     <string name="logs">Logid</string>
     <string name="record_logs">Salvesta logisid</string>
     <string name="record_logs_desc">Salvesta logid veaotsingu eesmärgil. Vaatamiseks klõpsi.</string>
-    <string name="choose_logs">Vali logid</string>
-    <string name="previous_run_logs">Eelmise käivituse logid</string>
-    <string name="current_run_logs">Selle käivituse logid</string>
     <string name="log_file_non_existent">Ühtegi logifaili pole veel salvestatud.</string>
     <string name="album_add_path">Lisa albumite asukoht</string>
     <string name="album_add">Lisa album</string>

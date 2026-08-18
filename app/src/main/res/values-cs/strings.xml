@@ -148,9 +148,6 @@
     <string name="logs">Protokoly</string>
     <string name="record_logs">Zaznamenávat protokoly</string>
     <string name="record_logs_desc">Ukládat protokoly pro ladění. Klepnutím je zobrazíte.</string>
-    <string name="choose_logs">Vybrat protokoly</string>
-    <string name="previous_run_logs">Protokoly předchozího spuštění</string>
-    <string name="current_run_logs">Protokoly aktuálního spuštění</string>
     <string name="log_file_non_existent">Zatím není zaznamenán žádný soubor protokolu.</string>
     <string name="album_add_path">Přidat cestu k albům</string>
     <string name="album_add">Přidat album</string>

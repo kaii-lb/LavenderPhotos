@@ -276,7 +276,6 @@
     <string name="export_settings_backup_load_desc">Carrega la configuració i àlbums de l\'aplicació d\'un fitxer JSON. Sobreescriurà qualsevol configuració existent.</string>
     <string name="record_logs">Registrar diaris</string>
     <string name="record_logs_desc">Desar els diaris per a depuració. Toca per veure.</string>
-    <string name="choose_logs">Escollir els diaris</string>
     <string name="debugging_reset_scan_generation_loading">Escanejant contingut multimèdia…</string>
     <string name="debugging_report_issue">Informa d\'un problema</string>
     <string name="debugging_report_issue_bug">Informa d\'un error</string>
@@ -511,8 +510,6 @@
     <string name="app_lock_password">Establir PIN</string>
     <string name="app_lock_password_desc">Demana un PIN quan s\'inicia l\'aplicació. Un PIN buit treu el bloqueig</string>
     <string name="app_lock_password_set">PIN actualitzat</string>
-    <string name="previous_run_logs">Registres d\'execucions anteriors</string>
-    <string name="current_run_logs">Registres de l\'execució actual</string>
     <string name="log_file_non_existent">Encara no s\'ha registrat cap fitxer de registre.</string>
     <string name="debugging_spawn_loading_snackbar">Fes aparèixer una barra inferior de càrrega</string>
     <string name="immich_logout_question_desc">Està segur que vols tancar la sessió d\'aquest compte?</string>

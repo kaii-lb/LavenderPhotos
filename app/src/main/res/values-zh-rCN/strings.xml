@@ -82,9 +82,6 @@
     <string name="logs">日志</string>
     <string name="record_logs">记录日志</string>
     <string name="record_logs_desc">存储日志用于调试，点击查看。</string>
-    <string name="choose_logs">选择日志</string>
-    <string name="previous_run_logs">上次运行的日志</string>
-    <string name="current_run_logs">当前运行的日志</string>
     <string name="log_file_non_existent">目前尚未记录任何日志文件。</string>
     <string name="album_add_path">添加相册路径</string>
     <string name="album_add">添加相册</string>

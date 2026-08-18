@@ -107,9 +107,6 @@
     <string name="logs">Günlükler</string>
     <string name="record_logs">Günlükleri Kaydet</string>
     <string name="record_logs_desc">Hata ayıklama için günlükleri saklayın. Görüntülemek için dokunun.</string>
-    <string name="choose_logs">Günlükleri Seç</string>
-    <string name="previous_run_logs">Önceki çalıştırmanın günlükleri</string>
-    <string name="current_run_logs">Mevcut çalıştırmanın günlükleri</string>
     <string name="log_file_non_existent">Henüz bir günlük dosyası kaydedilmedi.</string>
     <string name="album_add_path">Albüm Yolu Ekle</string>
     <string name="album_add">Albüm ekle</string>

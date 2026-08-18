@@ -127,9 +127,6 @@
     <string name="logs">Rexistros</string>
     <string name="record_logs">Gravar rexistros</string>
     <string name="record_logs_desc">Gardar rexistros para depurar. Toca para ver.</string>
-    <string name="choose_logs">Seleccionar rexistros</string>
-    <string name="previous_run_logs">Rexistros da execución anterior</string>
-    <string name="current_run_logs">Rexistros da execución actual</string>
     <string name="log_file_non_existent">Aínda non hai ningún ficheiro de rexistro.</string>
     <string name="album_add_path">Engadir rutas dos álbums</string>
     <string name="album_add">Engadir álbum</string>

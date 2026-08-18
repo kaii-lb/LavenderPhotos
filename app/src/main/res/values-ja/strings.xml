@@ -78,9 +78,6 @@
     <string name="favourites_add_this">メディアをお気に入りに追加</string>
     <string name="debugging">デバッグ</string>
     <string name="record_logs_desc">デバッグ用のログを保存します。タップして表示します。</string>
-    <string name="choose_logs">ログを選択</string>
-    <string name="previous_run_logs">前回の実行ログ</string>
-    <string name="current_run_logs">現在の実行ログ</string>
     <string name="log_file_non_existent">現時点でログファイルは記録されていません。</string>
     <string name="album_add_path">アルバムのパスを追加</string>
     <string name="album_add">アルバムに追加</string>

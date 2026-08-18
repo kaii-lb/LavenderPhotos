@@ -2,4 +2,5 @@
 	<external-path name="files" path ="/Android/media/com.kaii.photos" />
 	<files-path name="secure" path="/secure_folder" />
 	<cache-path name="cache" path="." />
+	<external-path name="files" path ="/Android/data/com.kaii.photos/files/" />
 </paths>

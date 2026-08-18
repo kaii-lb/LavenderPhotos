@@ -1,9 +1,7 @@
 package com.kaii.photos
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
 import android.view.Window
 import android.view.WindowManager
@@ -92,11 +90,9 @@ import com.kaii.photos.compose.single_photo.SingleTrashedPhotoView
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.Settings
 import com.kaii.photos.di.sharedViewModel
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.AnimationConstants
-import com.kaii.photos.helpers.LogManager
 import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
@@ -140,7 +136,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -169,14 +164,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             startupManager.checkState()
-
             isCheckingCredentials = false
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                settings.permissions.setIsMediaManager(
-                    MediaStore.canManageMedia(applicationContext)
-                )
-            }
         }
 
         setContent {
@@ -202,7 +190,6 @@ class MainActivity : ComponentActivity() {
 
                     SetContentForActivity(
                         startupManager = startupManager,
-                        settings = settings,
                         startupPage =
                             when (startupManager.state) {
                                 StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
@@ -222,29 +209,12 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun SetContentForActivity(
         startupManager: StartupManager,
-        settings: Settings,
         startupPage: Screens
     ) {
         window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
 
         val context = LocalContext.current
         navController = LocalNavController.current
-
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
-                val canRecordLogs = settings.debugging.getRecordLogs().first()
-                if (canRecordLogs) {
-                    val logManager = LogManager(context = context)
-                    logManager.startRecording()
-                }
-
-                val hasClearedCache = settings.versions.getHasClearedGlideCache().first()
-                if (!hasClearedCache) {
-                    settings.storage.clearThumbnailCache()
-                    settings.versions.setHasClearedGlideCache(true)
-                }
-            }
-        }
 
         val snackbarHostState = remember { LavenderSnackbarHostState() }
         val coroutineScope = rememberCoroutineScope()

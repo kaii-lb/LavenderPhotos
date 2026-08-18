@@ -73,9 +73,6 @@
     <string name="logs">Журналы</string>
     <string name="record_logs">Записывать журналы</string>
     <string name="record_logs_desc">Сохранять журналы для отладки. Нажмите, чтобы просмотреть.</string>
-    <string name="choose_logs">Выберите журнал</string>
-    <string name="previous_run_logs">Журналы предыдущего запуска</string>
-    <string name="current_run_logs">Журналы текущего запуска</string>
     <string name="log_file_non_existent">Файл журнала пока не записан.</string>
     <string name="album_add_path">Добавить путь к альбомам</string>
     <string name="album_add">Добавить альбом</string>

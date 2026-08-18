@@ -69,9 +69,6 @@
     <string name="logs">Логи</string>
     <string name="record_logs">Записувати логи</string>
     <string name="record_logs_desc">Зберігає логи для налагодження. Натисніть, щоб переглянути.</string>
-    <string name="choose_logs">Оберіть логи</string>
-    <string name="previous_run_logs">Логи попереднього запуску</string>
-    <string name="current_run_logs">Логи поточного запуску</string>
     <string name="log_file_non_existent">Жоден файл логів ще не записано.</string>
     <string name="debugging_spawn_loading_snackbar">Показати сповіщення завантаження</string>
     <string name="debugging_loading">Налагодження…</string>

@@ -148,9 +148,6 @@
     <string name="logs">السجلات</string>
     <string name="record_logs">سجل السجلات</string>
     <string name="record_logs_desc">خزّن السجلات للتصحيح. انقر للعرض.</string>
-    <string name="choose_logs">اختر السجلات</string>
-    <string name="previous_run_logs">سجلات التشغيل السابقة</string>
-    <string name="current_run_logs">سجلات التشغيل الحالية</string>
     <string name="permissions_needed">مطلوب إذن</string>
     <string name="media">وسائط</string>
     <string name="sort_indicator">فرز حسب المؤشر</string>

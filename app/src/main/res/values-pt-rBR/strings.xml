@@ -96,9 +96,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="logs">Registros</string>
     <string name="record_logs">Guardar Registros</string>
     <string name="record_logs_desc">Armazena registros para depuração. Toque para ver.</string>
-    <string name="choose_logs">Escolher Registros</string>
-    <string name="previous_run_logs">Registros de execuções anteriores</string>
-    <string name="current_run_logs">Registros da Execução Atual</string>
     <string name="log_file_non_existent">Nenhum arquivo de registro foi gravado ainda.</string>
     <string name="album_add_path">Adicionar Caminhos de Álbuns</string>
     <string name="album_add">Adicionar Álbum</string>

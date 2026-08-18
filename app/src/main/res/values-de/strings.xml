@@ -95,8 +95,6 @@
     <string name="logs">Logs</string>
     <string name="record_logs">Logs aufzeichnen</string>
     <string name="record_logs_desc">Logs zur Fehlersuche speichern. Zum Anzeigen tippen.</string>
-    <string name="choose_logs">Logs wählen</string>
-    <string name="previous_run_logs">Logs vorheriger Durchläufe</string>
     <string name="log_file_non_existent">Bisher wurde keine Log-Datei aufgezeichnet.</string>
     <string name="album_add_path">Albumpfad hinzufügen</string>
     <string name="album_add">Album hinzufügen</string>
@@ -189,7 +187,6 @@
     <string name="filter_inverted">Invertiert</string>
     <string name="filter_inverted_desc">Alles ist umgedreht</string>
     <string name="filter_vibrant">Vibrant</string>
-    <string name="current_run_logs">Protokolle des aktuellen Durchlaufs</string>
     <string name="debugging_spawn_loading_snackbar">Snackbar-Menü wird geladen</string>
     <string name="debugging_spawn_loading_snackbar_desc">Debuggen Sie Lavender Snackbars, wenn Compose beschließt, etwas Dummes zu tun</string>
     <string name="debugging_loading">Fehlersuche…</string>

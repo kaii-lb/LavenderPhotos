@@ -74,8 +74,6 @@
     <string name="logs">Nhật ký</string>
     <string name="record_logs">Ghi chép nhật ký</string>
     <string name="record_logs_desc">Lưu trữ nhật ký dùng để gỡ lỗi. Nhấn để xem.</string>
-    <string name="choose_logs">Chọn nhật ký</string>
-    <string name="previous_run_logs">Nhật ký các lần sử dụng trước đó</string>
     <string name="log_file_non_existent">Chưa có tập tin nhật ký được ghi lại cho đến hiện tại.</string>
     <string name="album_add_path">Thêm đường dẫn các album</string>
     <string name="album_add">Thêm album</string>
@@ -101,7 +99,6 @@
     <string name="albums_item_count">Số lượng tập tin:</string>
     <string name="tabs_albums_incl">Album được bao gồm</string>
     <string name="updates_notice">Thông báo tải xuống</string>
-    <string name="current_run_logs">Nhật ký lần chạy hiện tại của SpaceBetween</string>
     <string name="debugging_spawn_loading_snackbar_desc">Gỡ lỗi Snackbars của Lavender lúc nào bạn muốn làm gì đó ngu ngốc</string>
     <string name="debugging_spawn_message_snackbar">Sinh ra thanh thông báo Snackbar</string>
     <string name="debugging_spawn_message_snackbar_desc">Giống như loại đi một tính năng mà không thêm tính năng tương đương :D</string>

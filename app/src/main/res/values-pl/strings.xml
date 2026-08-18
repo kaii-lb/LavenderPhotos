@@ -72,7 +72,6 @@
     <string name="logs">Logi</string>
     <string name="record_logs">Rejestry logów</string>
     <string name="record_logs_desc">Przechowuj logi do debugowania. Dotknij, aby wyświetlić.</string>
-    <string name="choose_logs">Wybierz logi</string>
     <string name="album_add_path">Dodaj ścieżkę albumów</string>
     <string name="album_add">Dodaj album</string>
     <string name="album_add_path_placeholder">Pobrane/Filmy</string>
@@ -201,8 +200,6 @@
     <string name="error_views_favourites_empty">Dodaj swoje najcenniejsze wspomnienia!</string>
     <string name="error_views_folder_non_existent">Folder nie istnieje</string>
     <string name="updates_notice_desc"><![CDATA["<p>Ten instalator aktualizacji NIE pobiera plików APK. Zawiera jedynie odnośniki do <a href=\"https://github.com/kaii-lb/LavenderPhotos/releases\">wydań w serwisie GitHub</a>. Oznacza\n                to, że te pliki APK nie przechodzą dodatkowej weryfikacji i testów przeprowadzanych przez IzzyOnDroid, F-Droid lub inne platformy.\n\n                <br><br>Kompilacje hostowane na GitHubie są zawsze podpisane, sprawdzone i zweryfikowane przez programistę (kaii-lb), ale to od Ciebie zależy, czy chcesz z nich korzystać.\n\n                <br><br>Aplikacja Lavender Photos nigdy nie wykonuje automatycznych aktualizacji i aktualizuje się wyłącznie za wyraźną zgodą użytkownika.\n            </p>"]]></string>
-    <string name="previous_run_logs">Dzienniki z poprzednich logów</string>
-    <string name="current_run_logs">Aktualne dzienniki logów</string>
     <string name="log_file_non_existent">Jeszcze nie zapisano żadnego pliku loga.</string>
     <string name="debugging_spawn_message_snackbar_desc">Na przykład wycofać funkcję i nie dodać jej odpowiednika :D</string>
     <string name="media_share">Udostępnij</string>
