@@ -23,7 +23,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeComponents
 import javax.inject.Inject
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
@@ -139,7 +142,9 @@ class ImmichInfoViewModel @Inject constructor(
                         auth = Auth.AccessToken(accessToken = state.accessToken),
                         username = state.name,
                         userId = state.userId.toString(),
-                        updatedAt = ""
+                        updatedAt = Clock.System.now().format(
+                            DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
+                        )
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)
@@ -190,7 +195,9 @@ class ImmichInfoViewModel @Inject constructor(
                         auth = Auth.ApiKey(apiKey = apiKey),
                         username = state.user.name,
                         userId = state.user.id.toString(),
-                        updatedAt = ""
+                        updatedAt = Clock.System.now().format(
+                            DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
+                        )
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)

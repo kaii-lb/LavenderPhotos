@@ -47,8 +47,6 @@ class LogManager @Inject constructor(
         try {
             process = ProcessBuilder(
                 "logcat",
-                "-v", "threadtime",
-                "-f", logFile.absolutePath,
                 "--pid", android.os.Process.myPid().toString()
             ).redirectErrorStream(true).start()
 

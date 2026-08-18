@@ -125,6 +125,11 @@ class MediaPicker : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        PhotosApplication.appModule.logManager.stopRecording()
+    }
+
     @Composable
     private fun Content(
         incomingIntent: Intent

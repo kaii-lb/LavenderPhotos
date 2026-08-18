@@ -966,6 +966,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        PhotosApplication.appModule.logManager.stopRecording()
+    }
 }
 
 fun setupNextScreen(window: Window) {

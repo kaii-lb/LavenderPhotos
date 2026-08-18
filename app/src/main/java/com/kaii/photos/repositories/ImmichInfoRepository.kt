@@ -2,6 +2,7 @@ package com.kaii.photos.repositories
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.util.Patterns
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
@@ -72,17 +73,29 @@ class ImmichInfoRepository(
     }
 
     private suspend fun getLoginState() = withContext(Dispatchers.IO) {
-        if (!loginClient.ping()) return@withContext ImmichLoginState.ServerUnreachable
-        if (!loginClient.validate()) return@withContext ImmichLoginState.LoggedOut
+        if (!loginClient.ping()) {
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to ping server [login]!")
+            return@withContext ImmichLoginState.ServerUnreachable
+        }
+
+        if (!loginClient.validate()) {
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to validate user [login]!")
+            return@withContext ImmichLoginState.LoggedOut
+        }
 
         userClient.getMe()?.let {
             ImmichLoginState.LoggedIn(user = it)
-        } ?: ImmichLoginState.LoggedOut
+        } ?: run {
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to fetch login state!")
+            ImmichLoginState.LoggedOut
+        }
     }
 
     private suspend fun getServerState() = withContext(Dispatchers.IO) {
-        val online = serverClient.ping()
-        if (!online) return@withContext null
+        if (!serverClient.ping()) {
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to ping server [server state]!")
+            return@withContext null
+        }
 
         val storage = async { serverClient.getStorage() }
         val info = async { serverClient.getInfo() }
@@ -96,6 +109,7 @@ class ImmichInfoRepository(
 
         if (serverInfo == null || storageInfo == null || perUserInfo == null) {
             cancel("Could not fetch all required data")
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to fetch server state!")
             return@withContext null
         }
 
@@ -138,6 +152,10 @@ class ImmichInfoRepository(
         if (endpoint.isBlank() || !auth.isValid()) {
             _refreshChannel.send(OperationStatus.Failed)
             _userInfo.value = ImmichLoginState.LoggedOut
+            _serverInfo.value = null
+
+            Log.d(ImmichInfoRepository::class.qualifiedName, "Endpoint or Auth is not valid!")
+
             return@run
         }
 
@@ -160,6 +178,7 @@ class ImmichInfoRepository(
             }
 
             else -> {
+                Log.d(ImmichInfoRepository::class.qualifiedName, "Failed to fetch userinfo state!")
                 _refreshChannel.trySend(OperationStatus.Failed)
             }
         }

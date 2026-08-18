@@ -1,6 +1,7 @@
 package com.kaii.photos.screens
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -62,14 +64,20 @@ class ImmichBackupOptionsState(
     scope: CoroutineScope,
     albumsFlow: StateFlow<List<AlbumGridState.Album.Single>>,
     info: Flow<ImmichBasicInfo>,
-    private val settings: SettingsAlbumsListImpl,
-    private val apiClient: ApiClient
+    apiClient: ApiClient,
+    private val settings: SettingsAlbumsListImpl
 ) : ImmichBackupOptionsStateImpl() {
     private val selectedAlbumIds = mutableStateListOf<String>()
     private val _query = MutableStateFlow("")
     private var albumTypes = emptyList<AlbumType>()
 
     override var immichInfo by mutableStateOf(ImmichBasicInfo.Empty)
+
+    private val albumsClient = AlbumsClient(
+        endpoint = immichInfo.endpoint,
+        auth = immichInfo.auth,
+        client = apiClient
+    )
 
     override val query = _query.asStateFlow()
     override val assetCount = mediaDao.immichMediaCount().stateIn(
@@ -91,12 +99,12 @@ class ImmichBackupOptionsState(
     init {
         scope.launch {
             launch {
-                refresh()
-            }
-
-            launch {
-                info.collect {
+                info.collectLatest {
                     immichInfo = it
+
+                    albumsClient.setEndpoint(it.endpoint)
+                    albumsClient.setAuth(it.auth)
+
                     refresh()
                 }
             }
@@ -113,16 +121,12 @@ class ImmichBackupOptionsState(
         hasUnsavedChanges = false
         isLoading = true
 
-        val albumsClient = AlbumsClient(
-            endpoint = immichInfo.endpoint,
-            auth = immichInfo.auth,
-            client = apiClient
-        )
-
         val cloud = albumsClient.getAll()?.map { it.id.toString() }
 
         if (cloud == null) {
             isLoading = false
+            Log.d(ImmichBackupOptionsState::class.qualifiedName, "Cloud albums are null! Cannot refresh backup options!")
+
             return@withContext
         }
 
@@ -173,17 +177,13 @@ class ImmichBackupOptionsState(
     override suspend fun confirm(context: Context) = withContext(Dispatchers.IO) {
         isLoading = true
 
-        val albumsClient = AlbumsClient(
-            endpoint = immichInfo.endpoint,
-            auth = immichInfo.auth,
-            client = apiClient
-        )
-
         val local = albumTypes.filter { it.id in selectedAlbumIds }
         val cloud = albumsClient.getAll()
 
         if (cloud == null) {
             isLoading = false
+            Log.d(ImmichBackupOptionsState::class.qualifiedName, "Cloud albums are null! Cannot confirm backup options!")
+
             return@withContext false
         }
 
@@ -234,9 +234,9 @@ class ImmichBackupOptionsState(
             }
         }
 
-        CloudSyncWorker.immediateEnqueue(context = context, albumId = null)
-
         delay(1000.milliseconds) // eye candy
+
+        CloudSyncWorker.immediateEnqueue(context = context, albumId = null)
 
         hasUnsavedChanges = false
         isLoading = false

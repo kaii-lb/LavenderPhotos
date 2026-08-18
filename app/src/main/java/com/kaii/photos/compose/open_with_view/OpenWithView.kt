@@ -264,6 +264,11 @@ class OpenWithView : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        PhotosApplication.appModule.logManager.stopRecording()
+    }
 }
 
 @Composable
