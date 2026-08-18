@@ -631,8 +631,9 @@ As a precaution, a copy of your secured photos is now present in an export folde
                 <li>Self-host an <a href="https://immich.app/">Immich Server</a></li>
                 <li>Specify server address in Lavender Photos</li>
                 <li>Login using Immich user account</li>
-                <li>Go to any album, click on cloud icon</li>
-                <li>Start backing up your photos!</li>
+                <li>In the dashboard page, click \'Backup Options\'</li>
+                <li>Select the albums you want backed up and click the confirm button</li>
+                <li>Enjoy safe and easy cloud backup!</li>
             </ul>
         ]]>
     </string>
