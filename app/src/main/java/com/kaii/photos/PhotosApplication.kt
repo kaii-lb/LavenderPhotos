@@ -10,6 +10,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import com.kaii.photos.data.logging.CrashHandler
+import com.kaii.photos.data.logging.LogWriter
 import com.kaii.photos.data.providers.NetworkShareCapabilityProvider
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
@@ -57,6 +58,8 @@ class PhotosApplication : Application(), Configuration.Provider {
                     defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
                 )
             )
+
+            LogWriter.init(applicationContext)
 
             // try to migrate from an older datastore system on app startup
             localAppModule.settings.albums.migrate()

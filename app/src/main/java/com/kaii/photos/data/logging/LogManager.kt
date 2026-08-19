@@ -76,11 +76,11 @@ class LogManager @Inject constructor(
     }
 
     fun getShareIntent(): Intent? {
-        val files = listOf(logFile, previousLogFile, CrashHandler.getLogFile(context))
+        val files = listOf(logFile, previousLogFile, CrashHandler.getLogFile(context), LogWriter.getLogFile())
         val fileUris = ArrayList<Uri>(2)
 
         files.forEach { file ->
-            if (!file.exists()) return@forEach
+            if (file == null || !file.exists()) return@forEach
 
             fileUris.add(
                 FileProvider.getUriForFile(
