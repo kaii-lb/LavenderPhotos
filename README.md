@@ -25,6 +25,8 @@
 - **Offline Editing:** Edit and personalize any photo or video, at any time, without an internet connection
 - **Secure Folder:** Secure sensitive photos with bulletproof AES-256 encryption
 - **Quick Info:** Find all the relevant information for a photo from one button click
+- **Network Shares:** Natively browse Google Drive, Proton Drive, Dropbox and other providers
+- **Extra Network Shares:** [RSAF](https://github.com/chenxiaolong/RSAF) support to browse SMB, FTP, Amazon S3, SSH and many other protocols
 - **Easy Management:** Copy and Move photos to albums easily, across storage mediums or even the cloud!
 - **Modern Interface:** Clean UI, smooth UX and a playful interface
 - **Privacy First:** No data is collected, no AI is trained, and no actions without permission
