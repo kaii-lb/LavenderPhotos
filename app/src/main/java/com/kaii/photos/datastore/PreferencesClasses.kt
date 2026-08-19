@@ -241,6 +241,19 @@ sealed interface AlbumType : Parcelable {
     val pinned: Boolean
     val immichId: String?
 
+    fun modify(
+        id: String = this.id,
+        name: String = this.name,
+        pinned: Boolean = this.pinned,
+        immichId: String? = this.immichId
+    ): AlbumType = when (this) {
+        is Cloud -> this.copy(id = id, name = name, pinned = pinned, immichId = immichId!!)
+        is Custom -> this.copy(id = id, name = name, pinned = pinned, immichId = immichId)
+        is Folder -> this.copy(id = id, name = name, pinned = pinned, immichId = immichId)
+        is SAFFolder -> this.copy(id = id, name = name, pinned = pinned, immichId = immichId)
+        PlaceHolder -> this
+    }
+
     @Immutable
     @Serializable
     data class Folder(
@@ -320,6 +333,35 @@ sealed interface AlbumType : Parcelable {
             }
 
             override fun serializeAsValue(value: Cloud): String {
+                return Uri.encode(Json.encodeToString(value))
+            }
+        }
+    }
+
+    @Immutable
+    @Serializable
+    data class SAFFolder(
+        override val id: String,
+        override val name: String,
+        override val pinned: Boolean,
+        override val immichId: String?,
+        val path: String,
+        val base64TreeUri: String
+    ) : AlbumType {
+        class NavType : androidx.navigation.NavType<SAFFolder>(isNullableAllowed = false) {
+            override fun get(bundle: Bundle, key: String): SAFFolder? {
+                return bundle.getString(key)?.let { Json.decodeFromString<SAFFolder>(it) }
+            }
+
+            override fun parseValue(value: String): SAFFolder {
+                return Json.decodeFromString(Uri.decode(value))
+            }
+
+            override fun put(bundle: Bundle, key: String, value: SAFFolder) {
+                bundle.putString(key, Json.encodeToString(value))
+            }
+
+            override fun serializeAsValue(value: SAFFolder): String {
                 return Uri.encode(Json.encodeToString(value))
             }
         }

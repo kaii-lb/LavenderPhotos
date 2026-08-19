@@ -88,7 +88,7 @@ class ImmichBackupOptionsState(
 
     override val albums = albumsFlow.combine(_query) { list, query ->
         list.filter { album ->
-            album.name.contains(query, true)
+            album.name.contains(query, true) && album.info.album !is AlbumType.SAFFolder
         }
     }.stateIn(
         scope = scope,
@@ -110,8 +110,10 @@ class ImmichBackupOptionsState(
             }
 
             launch {
-                settings.get().collect {
-                    albumTypes = it
+                settings.get().collect { albums ->
+                    albumTypes = albums.filter { album ->
+                        album !is AlbumType.SAFFolder // filter out SAF folders since backing them up is not supported yet
+                    }
                 }
             }
         }

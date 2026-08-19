@@ -150,16 +150,18 @@ fun AlbumsListItemImpl(
                 painter = painterResource(
                     id =
                         when (val album = album.info.album) {
-                            is AlbumType.Folder if album.wasCloud -> R.drawable.cloud_download
+                            is AlbumType.Folder if (album.wasCloud || album.immichId != null) -> R.drawable.cloud_download
                             is AlbumType.Cloud -> R.drawable.cloud
+                            is AlbumType.SAFFolder -> R.drawable.smb_share
                             else -> R.drawable.art_track
                         }
                 ),
                 contentDescription = stringResource(
                     id =
                         when (val album = album.info.album) {
-                            is AlbumType.Folder if album.wasCloud -> R.string.albums_is_cloud_linked
+                            is AlbumType.Folder if (album.wasCloud || album.immichId != null) -> R.string.albums_is_cloud_linked
                             is AlbumType.Cloud -> R.string.albums_is_cloud
+                            is AlbumType.SAFFolder -> R.string.albums_is_saf
                             else -> R.string.albums_is_custom
                         }
                 ),

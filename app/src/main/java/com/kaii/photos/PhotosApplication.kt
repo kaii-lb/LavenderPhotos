@@ -10,6 +10,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import com.kaii.photos.data.logging.CrashHandler
+import com.kaii.photos.data.providers.NetworkShareCapabilityProvider
 import com.kaii.photos.database.sync.CloudSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
@@ -77,6 +78,8 @@ class PhotosApplication : Application(), Configuration.Provider {
                     MediaStore.canManageMedia(applicationContext)
                 )
             }
+
+            NetworkShareCapabilityProvider.init(applicationContext)
 
             delay(2000.milliseconds)
             CloudSyncWorker.enqueue(applicationContext)

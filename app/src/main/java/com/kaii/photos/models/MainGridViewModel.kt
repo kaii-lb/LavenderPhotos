@@ -258,12 +258,7 @@ class MainGridViewModel @Inject constructor(
 
                 settings.albums.edit(
                     id = album.id,
-                    newInfo = when (album.info.album) {
-                        is AlbumType.Folder -> album.info.album.copy(pinned = !album.pinned)
-                        is AlbumType.Custom -> album.info.album.copy(pinned = !album.pinned)
-                        is AlbumType.Cloud -> album.info.album.copy(pinned = !album.pinned)
-                        else -> AlbumType.PlaceHolder
-                    }
+                    newInfo = album.info.album.modify(pinned = !album.pinned)
                 )
             }
         }

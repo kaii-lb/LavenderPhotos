@@ -62,6 +62,7 @@ import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.models.CustomAlbumViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
@@ -308,6 +309,89 @@ fun SingleAlbumView(
         selectionManager = viewModel.selectionManager,
         incomingIntent = incomingIntent,
         viewProperties = ViewProperties.Immich,
+        columnSize = { columnSize },
+        openVideosExternally = { openVideosExternally },
+        cacheThumbnails = { cacheThumbnails },
+        thumbnailSize = { thumbnailSize },
+        useRoundedCorners = { useRoundedCorners },
+        confirmToDelete = { confirmToDelete },
+        doNotTrash = { doNotTrash },
+        vibrateOnClick = { vibrateOnClick },
+        tags = { tags },
+        selectedTags = { selectedTags },
+        mediaCount = { mediaCount },
+        mediaSize = { mediaSize },
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        editAlbum = viewModel::editAlbum,
+        removeAlbum = viewModel::removeAlbum,
+        runAction = viewModel::runAction,
+    )
+}
+
+@Composable
+fun SingleAlbumView(
+    album: AlbumType.SAFFolder,
+    viewModel: SAFAlbumViewModel,
+    incomingIntent: Intent? = null
+) {
+    val pagingItems = viewModel.gridMediaFlow.collectAsLazyPagingItems()
+    val allAlbums by viewModel.allAlbums.collectAsStateWithLifecycle()
+
+    val navController = LocalNavController.current
+    val dynamicAlbum by remember {
+        derivedStateOf {
+            allAlbums.find { it.id == album.id } as? AlbumType.SAFFolder
+        }
+    }
+
+    LaunchedEffect(dynamicAlbum) {
+        delay(1000.milliseconds)
+        if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+    }
+
+    if (dynamicAlbum == null) return
+
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel.selectionManager) {
+        viewModel.selectionManager.selection.collect { selectedItems ->
+            tagViewModel.setMediaIds(
+                ids = selectedItems.fastMap { it.id }
+            )
+        }
+    }
+
+    val columnSize by viewModel.columnSize.collectAsStateWithLifecycle()
+    val openVideosExternally by viewModel.openVideosExternally.collectAsStateWithLifecycle()
+    val cacheThumbnails by viewModel.cacheThumbnails.collectAsStateWithLifecycle()
+    val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
+    val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val autoDetectAlbums by viewModel.autoDetectAlbums.collectAsStateWithLifecycle()
+    val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
+    val mediaCount by viewModel.mediaCount.collectAsStateWithLifecycle()
+    val mediaSize by viewModel.mediaSize.collectAsStateWithLifecycle()
+
+    SingleAlbumViewCommon(
+        pagingItems = pagingItems,
+        fileOperationProgress = viewModel.fileOperationProgress,
+        fileShareIntent = viewModel.fileShareIntent,
+        album = { dynamicAlbum!! },
+        albums = { allAlbums },
+        autoDetectAlbums = { autoDetectAlbums },
+        selectionManager = viewModel.selectionManager,
+        incomingIntent = incomingIntent,
+        viewProperties = ViewProperties.SAFFolder,
         columnSize = { columnSize },
         openVideosExternally = { openVideosExternally },
         cacheThumbnails = { cacheThumbnails },

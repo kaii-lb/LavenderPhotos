@@ -199,7 +199,7 @@ fun SingleAlbumViewTopBar(
         } else {
             IsSelectingTopBar(
                 selectionManager = selectionManager,
-                showTags = true,
+                showTags = albumInfo() !is AlbumType.SAFFolder,
                 showTagDialog = showTagDialog,
                 setShowTagDialog = setShowTagDialog
             )

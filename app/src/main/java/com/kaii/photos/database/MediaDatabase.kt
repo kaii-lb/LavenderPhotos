@@ -11,6 +11,7 @@ import androidx.room.migration.AutoMigrationSpec
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.FavouritedItemEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SAFDao
 import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
@@ -48,7 +49,7 @@ import com.kaii.photos.database.migrations.Migration9To10
             ExifData::class,
             SyncTaskItem::class
         ],
-    version = 23,
+    version = 24,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -62,7 +63,8 @@ import com.kaii.photos.database.migrations.Migration9To10
         AutoMigration(from = 18, to = 19),
         AutoMigration(from = 19, to = 20),
         AutoMigration(from = 21, to = 22),
-        AutoMigration(from = 22, to = 23)
+        AutoMigration(from = 22, to = 23),
+        AutoMigration(from = 23, to = 24)
     ]
 )
 
@@ -76,6 +78,7 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
     abstract fun taggedItemsDao(): TaggedItemsDao
     abstract fun exifDataDao(): ExifDataDao
+    abstract fun safDao(): SAFDao
 
     companion object {
         @Volatile

@@ -195,56 +195,59 @@ private fun Content(
         ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = stringResource(id = R.string.media_tools),
-            fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // can't operate on SAF media, so just hide the tools
+        if (album() !is AlbumType.SAFFolder) {
+            Text(
+                text = stringResource(id = R.string.media_tools),
+                fontSize = TextStylingConstants.MEDIUM_TEXT_SIZE.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        val isLandscape by rememberDeviceOrientation()
-        if (!isLandscape) {
-            Row(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clip(CircleShape)
-                    .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = 12.dp,
-                    alignment = Alignment.CenterHorizontally
-                )
-            ) {
-                IconContent(
-                    mediaItem = mediaItem,
-                    showMoveCopyOptions = showMoveCopyOptions,
-                    privacyMode = privacyMode,
-                    album = album,
-                    dismiss = dismiss,
-                    runAction = runAction
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clip(CircleShape)
-                    .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(
-                    space = 8.dp,
-                    alignment = Alignment.CenterVertically
-                ),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                IconContent(
-                    mediaItem = mediaItem,
-                    showMoveCopyOptions = showMoveCopyOptions,
-                    privacyMode = privacyMode,
-                    album = album,
-                    dismiss = dismiss,
-                    runAction = runAction
-                )
+            val isLandscape by rememberDeviceOrientation()
+            if (!isLandscape) {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .clip(CircleShape)
+                        .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 12.dp,
+                        alignment = Alignment.CenterHorizontally
+                    )
+                ) {
+                    IconContent(
+                        mediaItem = mediaItem,
+                        showMoveCopyOptions = showMoveCopyOptions,
+                        privacyMode = privacyMode,
+                        album = album,
+                        dismiss = dismiss,
+                        runAction = runAction
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .clip(CircleShape)
+                        .background(if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(
+                        space = 8.dp,
+                        alignment = Alignment.CenterVertically
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    IconContent(
+                        mediaItem = mediaItem,
+                        showMoveCopyOptions = showMoveCopyOptions,
+                        privacyMode = privacyMode,
+                        album = album,
+                        dismiss = dismiss,
+                        runAction = runAction
+                    )
+                }
             }
         }
     }
@@ -365,7 +368,8 @@ private fun ColumnScope.MediaDataContent(
                 onClick = {
                     if (key == MediaData.Date &&
                         mediaItem().type == MediaType.Image &&
-                        album::class != AlbumType.Cloud::class &&
+                        album()::class != AlbumType.Cloud::class &&
+                        album()::class != AlbumType.SAFFolder::class &&
                         !privacyMode()
                     ) {
                         showDateTimePicker()
@@ -424,7 +428,7 @@ private fun ColumnScope.MediaDataContent(
                     position = RowPosition.Single,
                     containerColor = MaterialTheme.colorScheme.error,
                     contentColor = MaterialTheme.colorScheme.onError,
-                    enabled = !privacyMode(),
+                    enabled = !privacyMode() && album() !is AlbumType.SAFFolder,
                     onClick = {
                         toggleConfirmEraseDialog(true)
                     }
@@ -512,7 +516,7 @@ private fun ColumnScope.MediaDataContent(
             position = RowPosition.Single,
             containerColor = MaterialTheme.colorScheme.error,
             contentColor = MaterialTheme.colorScheme.onError,
-            enabled = !privacyMode(),
+            enabled = !privacyMode() && album() !is AlbumType.SAFFolder,
             onClick = {
                 toggleConfirmEraseDialog(true)
             }

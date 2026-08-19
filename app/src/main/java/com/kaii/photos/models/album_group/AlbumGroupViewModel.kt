@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
-import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.Settings
 import com.kaii.photos.datastore.state.AlbumGridState
@@ -93,12 +92,7 @@ class AlbumGroupViewModel(
         viewModelScope.launch {
             settings.albums.edit(
                 id = album.id,
-                newInfo = when (album.info.album) {
-                    is AlbumType.Folder -> album.info.album.copy(pinned = !album.pinned)
-                    is AlbumType.Custom -> album.info.album.copy(pinned = !album.pinned)
-                    is AlbumType.Cloud -> album.info.album.copy(pinned = !album.pinned)
-                    else -> AlbumType.PlaceHolder
-                }
+                newInfo = album.info.album.modify(pinned = !album.pinned)
             )
         }
     }

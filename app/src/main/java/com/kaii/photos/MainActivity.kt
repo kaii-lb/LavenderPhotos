@@ -104,6 +104,7 @@ import com.kaii.photos.models.MainDialogViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
 import com.kaii.photos.models.PrivacyModeActiveViewModel
+import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.models.TrashViewModel
@@ -806,6 +807,58 @@ class MainActivity : ComponentActivity() {
                             contributors = contributors,
                             appVersion = viewModel.appVersion,
                             navController = navController
+                        )
+                    }
+                }
+
+                navigation<Screens.SAFFolder>(
+                    startDestination = Screens.SAFFolder.GridView::class
+                ) {
+                    composable<Screens.SAFFolder.GridView>(
+                        typeMap = mapOf(
+                            typeOf<AlbumType.SAFFolder>() to AlbumType.SAFFolder.NavType()
+                        )
+                    ) {
+                        val screen = it.toRoute<Screens.SAFFolder.GridView>()
+                        setupNextScreen(window = window)
+
+                        val viewModel = it.sharedViewModel<SAFAlbumViewModel, SAFAlbumViewModel.Factory>(
+                            screenScope = Screens.SAFFolder,
+                            creationCallback = { factory ->
+                                factory.create(album = screen.album)
+                            }
+                        )
+
+                        SingleAlbumView(
+                            album = screen.album,
+                            viewModel = viewModel
+                        )
+                    }
+
+                    composable<Screens.SAFFolder.SinglePhoto>(
+                        typeMap = mapOf(
+                            typeOf<AlbumType.SAFFolder>() to AlbumType.SAFFolder.NavType()
+                        )
+                    ) {
+                        val screen = it.toRoute<Screens.SAFFolder.SinglePhoto>()
+                        val viewModel = it.sharedViewModel<SAFAlbumViewModel, SAFAlbumViewModel.Factory>(
+                            screenScope = Screens.SAFFolder,
+                            creationCallback = { factory ->
+                                factory.create(album = screen.album)
+                            }
+                        )
+
+                        val editId by it.savedStateHandle.getStateFlow<Long?>(
+                            key = "editId",
+                            initialValue = null
+                        ).collectAsStateWithLifecycle()
+
+                        SinglePhotoView(
+                            album = screen.album,
+                            viewModel = viewModel,
+                            index = screen.index,
+                            editId = { editId },
+                            window = window
                         )
                     }
                 }

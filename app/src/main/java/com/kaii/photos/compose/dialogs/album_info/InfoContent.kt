@@ -55,6 +55,31 @@ fun InfoContent(
             }
         }
 
+        if (albumInfo() is AlbumType.SAFFolder) {
+            item {
+                val context = LocalContext.current
+                val resources = LocalResources.current
+
+                val info = albumInfo() as AlbumType.SAFFolder
+
+                TallDialogInfoRow(
+                    title = stringResource(id = R.string.albums_path),
+                    info = info.path,
+                    icon = R.drawable.folder,
+                    position = RowPosition.Top,
+                    onClick = {
+                        val clipboardManager =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipData = ClipData.newPlainText(
+                            resources.getString(R.string.albums_path),
+                            info.path
+                        )
+                        clipboardManager.setPrimaryClip(clipData)
+                    }
+                )
+            }
+        }
+
         item {
             val context = LocalContext.current
             val resources = LocalResources.current

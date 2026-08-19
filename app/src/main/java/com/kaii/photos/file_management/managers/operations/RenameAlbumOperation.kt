@@ -13,12 +13,7 @@ class RenameAlbumOperation @Inject constructor(
     ) {
         settings.edit(
             id = album.id,
-            newInfo = when (album) {
-                is AlbumType.Cloud -> album.copy(name = newName)
-                is AlbumType.Custom -> album.copy(name = newName)
-                is AlbumType.Folder -> album.copy(name = newName)
-                AlbumType.PlaceHolder -> throw IllegalArgumentException("Physically cannot rename ${AlbumType.PlaceHolder::class.qualifiedName}")
-            }
+            newInfo = album.modify(name = newName)
         )
     }
 }

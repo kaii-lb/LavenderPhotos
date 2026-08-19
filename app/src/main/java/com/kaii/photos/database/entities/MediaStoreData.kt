@@ -48,7 +48,8 @@ data class MediaStoreData(
     val hash: String?,
     val size: Long,
     val favourited: Boolean,
-    val duration: Long?
+    val duration: Long?,
+    @ColumnInfo(defaultValue = "false") val isSAF: Boolean = false
 ) {
     companion object {
         val dummyItem = MediaStoreData(
@@ -65,7 +66,8 @@ data class MediaStoreData(
             hash = null,
             size = 0L,
             favourited = false,
-            duration = null
+            duration = null,
+            isSAF = false
         )
     }
 

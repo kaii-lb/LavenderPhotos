@@ -62,7 +62,11 @@ fun MoveCopyAlbumListView(
 ) {
     val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
 
-    var albumsList by remember { mutableStateOf(originalAlbumsList) }
+    var albumsList by remember { mutableStateOf(
+        originalAlbumsList.filter {
+            it.info.album !is AlbumType.SAFFolder
+        }
+    )}
 
     var searchedForText by remember { mutableStateOf("") }
 
@@ -76,6 +80,7 @@ fun MoveCopyAlbumListView(
     LaunchedEffect(searchedForText, originalAlbumsList, isMoving()) {
         albumsList = originalAlbumsList.filter { album ->
             album.name.contains(searchedForText, true)
+                    && album.info.album !is AlbumType.SAFFolder
                     && if (isMoving()) album.id != currentAlbum().id else true
         }
 

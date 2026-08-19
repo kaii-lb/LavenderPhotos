@@ -116,7 +116,18 @@ enum class ViewProperties(
                 index = index
             )
         }
-    );
+    ),
+    SAFFolder(
+        emptyText = R.string.error_views_album_empty,
+        emptyIconResId = R.drawable.error,
+        prefix = null,
+        navigate = { albumInfo, index ->
+            Screens.SAFFolder.SinglePhoto(
+                album = albumInfo as AlbumType.SAFFolder,
+                index = index
+            )
+        }
+    ),;
 
     companion object {
         fun getText(id: Int, resources: Resources) = resources.getString(id)

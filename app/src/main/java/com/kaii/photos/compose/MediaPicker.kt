@@ -72,6 +72,7 @@ import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
@@ -292,6 +293,31 @@ class MediaPicker : ComponentActivity() {
 
                     val screen = it.toRoute<Screens.Immich.GridView>()
                     val viewModel = hiltViewModel<ImmichAlbumViewModel, ImmichAlbumViewModel.Factory>(
+                        creationCallback = { factory ->
+                            factory.create(album = screen.album)
+                        }
+                    )
+
+                    SingleAlbumView(
+                        album = screen.album,
+                        viewModel = viewModel,
+                        incomingIntent = incomingIntent
+                    )
+                }
+            }
+
+            navigation<Screens.SAFFolder>(
+                startDestination = Screens.SAFFolder.GridView::class
+            ) {
+                composable<Screens.SAFFolder.GridView>(
+                    typeMap = mapOf(
+                        typeOf<AlbumType.SAFFolder>() to AlbumType.SAFFolder.NavType()
+                    )
+                ) {
+                    setupNextScreen(window = window)
+
+                    val screen = it.toRoute<Screens.SAFFolder.GridView>()
+                    val viewModel = hiltViewModel<SAFAlbumViewModel, SAFAlbumViewModel.Factory>(
                         creationCallback = { factory ->
                             factory.create(album = screen.album)
                         }

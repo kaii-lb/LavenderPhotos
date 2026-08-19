@@ -1,0 +1,5 @@
+package com.kaii.photos.domain.files
+
+import com.kaii.photos.domain.Error
+
+object FileLoadError : Error

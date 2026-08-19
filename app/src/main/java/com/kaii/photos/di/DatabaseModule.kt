@@ -4,6 +4,7 @@ import android.content.Context
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SAFDao
 import com.kaii.photos.database.daos.SearchDao
 import com.kaii.photos.database.daos.SecuredMediaItemEntityDao
 import com.kaii.photos.database.daos.SyncTaskDao
@@ -49,4 +50,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSearchDao(db: MediaDatabase): SearchDao = db.searchDao()
+
+    @Provides
+    fun provideSAFDao(db: MediaDatabase): SAFDao = db.safDao()
 }

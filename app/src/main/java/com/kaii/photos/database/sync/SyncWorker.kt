@@ -47,11 +47,11 @@ class SyncWorker @AssistedInject constructor(
         val mediaStoreIds = getAllMediaStoreIds(context)
         val inAppIds = dao.getAllMediaIds().toSet()
 
-        val removed = inAppIds - mediaStoreIds
+        val removed = (inAppIds - mediaStoreIds).filter { it >= 0 } // negative numbers are for custom media
         val (added, newGen) = loadMediaDataDelta(context = context)
 
         db.withTransaction {
-            if (removed.isNotEmpty()) dao.deleteAll(removed)
+            if (removed.isNotEmpty()) dao.deleteAll(removed.toSet())
 
             if (added.isNotEmpty()) dao.upsertIgnoringImmich(items = added)
         }

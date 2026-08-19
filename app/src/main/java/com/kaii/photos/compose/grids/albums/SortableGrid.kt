@@ -330,6 +330,10 @@ fun SortableGrid(
                                         Screens.CustomAlbum.GridView(album = album)
                                     }
 
+                                    is AlbumType.SAFFolder -> {
+                                        Screens.SAFFolder.GridView(album = album)
+                                    }
+
                                     else -> {
                                         Screens.Album.GridView(album = album as AlbumType.Folder)
                                     }

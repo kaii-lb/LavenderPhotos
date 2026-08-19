@@ -243,4 +243,18 @@ interface Screens {
         val id: String,
         val name: String
     ) : Screens
+
+    @Serializable
+    object SAFFolder : Screens {
+        @Serializable
+        data class GridView(
+            val album: AlbumType.SAFFolder
+        ) : Screens
+
+        @Serializable
+        data class SinglePhoto(
+            val album: AlbumType.SAFFolder,
+            val index: Int
+        ) : Screens
+    }
 }

@@ -102,6 +102,7 @@ import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
@@ -454,6 +455,62 @@ fun SinglePhotoView(
     )
 }
 
+@Composable
+fun SinglePhotoView(
+    album: AlbumType.SAFFolder,
+    window: Window,
+    viewModel: SAFAlbumViewModel,
+    index: Int,
+    editId: () -> Long?,
+    isOpenWithDefaultView: Boolean = false
+) {
+    val items = viewModel.mediaFlow.collectAsLazyPagingItems()
+    val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
+    val confirmToDelete by viewModel.confirmToDelete.collectAsStateWithLifecycle()
+    val doNotTrash by viewModel.doNotTrash.collectAsStateWithLifecycle()
+    val topBarDetailsFormat by viewModel.topBarDetailsFormat.collectAsStateWithLifecycle()
+    val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
+    val useCache by viewModel.useCache.collectAsStateWithLifecycle()
+    val tapToNav by viewModel.useTapToNav.collectAsStateWithLifecycle()
+    val exifData by viewModel.exifData.collectAsStateWithLifecycle()
+
+    val tagViewModel = viewModel<TagViewModel>(
+        factory = TagViewModelFactory(
+            context = LocalContext.current
+        )
+    )
+
+    val tags by tagViewModel.tags.collectAsStateWithLifecycle()
+    val selectedTags by tagViewModel.appliedTags.collectAsStateWithLifecycle()
+
+    SinglePhotoViewCommon(
+        items = items,
+        navController = LocalNavController.current,
+        window = window,
+        startIndex = index,
+        editId = editId,
+        album = album,
+        isOpenWithDefaultView = isOpenWithDefaultView,
+        shareFlow = viewModel.fileShareIntent,
+        fileOperationProgress = viewModel.fileOperationProgress,
+        useBlackBackground = { useBlackBackground },
+        confirmToDelete = { confirmToDelete },
+        doNotTrash = { doNotTrash },
+        topBarDetailsFormat = topBarDetailsFormat,
+        blurViews = { blurViews },
+        useCache = { useCache },
+        useTapToNav = { tapToNav },
+        tags = { tags },
+        selectedTags = { selectedTags },
+        exifData = { exifData },
+        onTagAdd = tagViewModel::insertTag,
+        onTagClick = tagViewModel::toggleTag,
+        onTagDelete = tagViewModel::deleteTag,
+        setTagMediaId = tagViewModel::setMediaId,
+        runAction = viewModel::runAction
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -595,7 +652,7 @@ private fun SinglePhotoViewCommon(
                 showInfoDialog = { showInfoDialog },
                 privacyMode = { scrollState.privacyMode },
                 isOpenWithDefaultView = isOpenWithDefaultView,
-                showTags = true,
+                showTags = album !is AlbumType.SAFFolder,
                 showTagDialog = { showTagDialog },
                 topBarDetailsFormat = topBarDetailsFormat,
                 expandInfoDialog = {
@@ -847,7 +904,7 @@ private fun BottomBar(
                             shape = IconButtonDefaults.mediumSquareShape,
                             pressedShape = IconButtonDefaults.smallPressedShape
                         ),
-                        enabled = !privacyMode,
+                        enabled = !privacyMode && album() !is AlbumType.SAFFolder,
                         modifier = Modifier
                             .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
                     ) {
@@ -914,7 +971,9 @@ private fun BottomBar(
                     onClick = {
                         showMoveToSecureFolderDialog = true
                     },
-                    enabled = !motionPhoto.isMotionPhoto && !privacyMode && !currentItem().isCloud
+                    enabled = !motionPhoto.isMotionPhoto
+                            && !privacyMode && !currentItem().isCloud
+                            && album() !is AlbumType.SAFFolder
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.secure_folder),
@@ -942,7 +1001,7 @@ private fun BottomBar(
                             )
                         }
                     },
-                    enabled = !privacyMode
+                    enabled = !privacyMode && album() !is AlbumType.SAFFolder
                 ) {
                     Icon(
                         painter = painterResource(id = if (isFavourited) R.drawable.favourite_filled else R.drawable.favourite),
@@ -1011,7 +1070,7 @@ private fun BottomBar(
                             )
                         }
                     },
-                    enabled = !privacyMode
+                    enabled = !privacyMode && album() !is AlbumType.SAFFolder
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.trash),

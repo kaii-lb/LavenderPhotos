@@ -11,6 +11,7 @@ import com.kaii.photos.PhotosApplication
 import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
+import com.kaii.photos.database.daos.SAFDao
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -42,6 +43,7 @@ class AlbumGridState(
     private val apiClient: ApiClient,
     private val context: Context,
     private val mediaDao: MediaDao,
+    private val safDao: SAFDao,
     private val customDao: CustomEntityDao,
     scope: CoroutineScope,
     albumsFlow: Flow<List<AlbumType>>,
@@ -247,16 +249,22 @@ class AlbumGridState(
         val result = mutableListOf<Album>()
         val singleAlbums = mutableListOf<Album.Single>()
 
-        val (folderAlbums, customAlbums) = params.albums.partition { it is AlbumType.Folder }
         val customThumbnails = customDao.getThumbnails(
-            albumIds = customAlbums.map { it.id },
+            albumIds = params.albums.mapNotNull { album ->
+                album.id.takeIf { album is AlbumType.Custom || album is AlbumType.Cloud }
+            },
             sortMode = params.sortMode,
             albumSortMode = params.albumSortMode
         )
 
-        @Suppress("UNCHECKED_CAST")
         val folderThumbnails = mediaDao.getFolderThumbnails(
-            folders = folderAlbums as List<AlbumType.Folder>,
+            folders = params.albums.filterIsInstance<AlbumType.Folder>(),
+            sortMode = params.sortMode,
+            albumSortMode = params.albumSortMode
+        )
+
+        val safThumbnails = safDao.getFolderThumbnails(
+            folders = params.albums.filterIsInstance<AlbumType.SAFFolder>(),
             sortMode = params.sortMode,
             albumSortMode = params.albumSortMode
         )
@@ -266,10 +274,10 @@ class AlbumGridState(
             val infoList = group.albumIds.mapNotNull { id ->
                 remainingAlbums.remove(id)?.let { album ->
                     val thumbnail =
-                        if (album is AlbumType.Folder) {
-                            folderThumbnails[album.id]!!
-                        } else {
-                            customThumbnails[album.id]!!
+                        when (album) {
+                            is AlbumType.Folder -> folderThumbnails[album.id]!!
+                            is AlbumType.SAFFolder -> safThumbnails[album.id]!!
+                            else -> customThumbnails[album.id]!!
                         }
 
                     val info = Info(album, thumbnail)
@@ -291,10 +299,10 @@ class AlbumGridState(
 
         remainingAlbums.values.forEach { album ->
             val thumbnail =
-                if (album is AlbumType.Folder) {
-                    folderThumbnails[album.id]!!
-                } else {
-                    customThumbnails[album.id]!!
+                when (album) {
+                    is AlbumType.Folder -> folderThumbnails[album.id]!!
+                    is AlbumType.SAFFolder -> safThumbnails[album.id]!!
+                    else -> customThumbnails[album.id]!!
                 }
 
             val single = Album.Single(
@@ -361,6 +369,7 @@ fun createAlbumGridState(
     context = context,
     mediaDao = MediaDatabase.getInstance(context).mediaDao(),
     customDao = MediaDatabase.getInstance(context).customDao(),
+    safDao = MediaDatabase.getInstance(context).safDao(),
     albumsFlow = PhotosApplication.appModule.settings.albums.get(),
     sortModeFlow = PhotosApplication.appModule.settings.photoGrid.getSortMode(),
     albumSortModeFlow = PhotosApplication.appModule.settings.albums.getSortMode(),

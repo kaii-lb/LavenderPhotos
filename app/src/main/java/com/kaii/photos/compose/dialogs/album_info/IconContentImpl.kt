@@ -153,12 +153,7 @@ fun IconContentImpl(
             val info = albumInfo()
             editAlbum(
                 info.id,
-                when (info) {
-                    is AlbumType.Folder -> info.copy(pinned = !isPinned)
-                    is AlbumType.Custom -> info.copy(pinned = !isPinned)
-                    is AlbumType.Cloud -> info.copy(pinned = !isPinned)
-                    else -> AlbumType.PlaceHolder
-                }
+                info.modify(pinned = !isPinned)
             )
         },
         modifier = modifier
@@ -178,6 +173,7 @@ fun IconContentImpl(
         onClick = {
             showRenameDialog = true
         },
+        enabled = albumInfo() !is AlbumType.SAFFolder,
         modifier = modifier
             .height(48.dp)
     ) {
@@ -187,7 +183,7 @@ fun IconContentImpl(
         )
     }
 
-    if (!autoDetectAlbums() || (albumInfo() is AlbumType.Custom && albumInfo().immichId == null)) {
+    if (!autoDetectAlbums() || (albumInfo() is AlbumType.Custom && albumInfo().immichId == null) || albumInfo() is AlbumType.SAFFolder) {
         var showDeleteDialog by remember { mutableStateOf(false) }
 
         if (showDeleteDialog) {

@@ -57,6 +57,7 @@ class SettingsAlbumsListImpl(
 
             val presentIds = present.fastMap { it.id }.toHashSet()
             val presentImmichIds = present.fastMapNotNull { it.immichId }.toHashSet()
+            val presentSAFUris = present.filterIsInstance<AlbumType.SAFFolder>().map { it.base64TreeUri }
 
             val newAlbums = list.filter { album ->
                 when (album) {
@@ -78,6 +79,10 @@ class SettingsAlbumsListImpl(
                         if (!present) presentPaths[hash] = album
 
                         present.not()
+                    }
+
+                    is AlbumType.SAFFolder -> {
+                        album.base64TreeUri !in presentSAFUris
                     }
 
                     AlbumType.PlaceHolder -> false
@@ -246,6 +251,11 @@ class SettingsAlbumsListImpl(
                     }
 
                     is AlbumType.Cloud -> newInfo.let {
+                        if (!overwriteId) it.copy(id = id)
+                        else it
+                    }
+
+                    is AlbumType.SAFFolder -> newInfo.let {
                         if (!overwriteId) it.copy(id = id)
                         else it
                     }

@@ -160,7 +160,7 @@ fun SelectingBottomBarItems(
             isMoving = true
             show.value = true
         },
-        enabled = !selectedItemsList.isEmpty()
+        enabled = !selectedItemsList.isEmpty() && albumInfo !is AlbumType.SAFFolder
     ) {
         Icon(
             painter = painterResource(id = R.drawable.cut),
@@ -173,7 +173,7 @@ fun SelectingBottomBarItems(
             isMoving = false
             show.value = true
         },
-        enabled = selectedItemsList.isNotEmpty()
+        enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.SAFFolder
     ) {
         Icon(
             painter = painterResource(id = R.drawable.copy),
@@ -256,7 +256,7 @@ fun SelectingBottomBarItems(
                 selectionManager.clear()
             }
         },
-        enabled = selectedItemsList.isNotEmpty()
+        enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.SAFFolder
     ) {
         Icon(
             painter = painterResource(id = R.drawable.delete),
@@ -302,7 +302,7 @@ fun SelectingBottomBarItems(
         onClick = {
             showMoveToSecureFolderDialog = true
         },
-        enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.Cloud
+        enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.Cloud && albumInfo !is AlbumType.SAFFolder
     ) {
         Icon(
             painter = painterResource(id = R.drawable.secure_folder),
