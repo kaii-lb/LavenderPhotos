@@ -386,8 +386,7 @@
     <string name="immich_server">Immich Sunucusu</string>
     <string name="immich_help_general">Bu nedir?</string>
     <string name="immich_help_general_desc">Albüm düzeyinde medya yedeklemesini bir Immich sunucusuna sağlar</string>
-    <string name="immich_help_detailed_desc">
-        <![CDATA[
+    <string name="immich_help_detailed_desc"><![CDATA[
             <p><a href="https://immich.app/">Immich</a>, herkesin kendi bulut yedekleme sunucusunu barındırmasına olanak tanıyan,
             kendi kendine barındırılan bir fotoğraf ve video yönetim çözümüdür.
             </p>
@@ -399,8 +398,7 @@
                 <li>Herhangi bir albüme gidin, bulut simgesine tıklayın</li>
                 <li>Fotoğraflarınızı yedeklemeye başlayın!</li>
             </ul>
-        ]]>
-    </string>
+        ]]></string>
     <string name="immich_server_url_invalid">Geçersiz Url!</string>
     <string name="immich_misc">Çeşitli</string>
     <string name="albums_remove">Albümü kaldır</string>
