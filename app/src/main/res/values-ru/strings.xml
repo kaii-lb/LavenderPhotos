@@ -404,19 +404,7 @@
     <string name="immich_server">Сервер Immich</string>
     <string name="immich_help_general">Что это?</string>
     <string name="immich_help_general_desc">Позволяет создавать резервные копии медиафайлов по альбомам на сервере Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> представляет собой самостоятельно размещаемое решение для управления фотографиями и видео,
-            позволяющее каждому запустить собственный облачный сервер резервного копирования.
-            </p>
-            <h3 style="text-align:center;">Как использовать?<h3/>
-            <ul>
-                <li>Разместите собственный <a href="https://immich.app/">сервер Immich</a></li>
-                <li>Укажите адрес сервера в Lavender Photos</li>
-                <li>Войдите с помощью учётной записи Immich</li>
-                <li>Откройте любой альбом и нажмите значок облака</li>
-                <li>Начните резервное копирование фотографий!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> представляет собой самостоятельно размещаемое решение для управления фотографиями и видео,\n            позволяющее каждому запустить собственный облачный сервер резервного копирования.\n            </p>\n            <h3 style=\"text-align:center;\">Как использовать?<h3/>\n            <ul>\n                <li>Разместите собственный <a href=\"https://immich.app/\">сервер Immich</a></li>\n                <li>Укажите адрес сервера в Lavender Photos</li>\n                <li>Войдите с помощью учётной записи Immich</li>\n                <li>Откройте любой альбом и нажмите значок облака</li>\n                <li>Начните резервное копирование фотографий!</li>\n            </ul>\n        "]]></string>
     <string name="immich_server_url_invalid">Недопустимый URL-адрес!</string>
     <string name="immich_misc">Разное</string>
     <string name="exif_name">Название:</string>
