@@ -416,19 +416,7 @@
     <string name="immich_server">Servidor Immich</string>
     <string name="immich_help_general">Que é isto?</string>
     <string name="immich_help_general_desc">Permite facer copia de apoio a nivel álbum nun servidor Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> é un servidor auto-hospedado para a xestión de fotos e vídeos, que permite que
-            calquera persoa poida ter o seu servidor na nube para copias de apoio.
-            </p>
-            <h3 style="text-align:center;">Como se utiliza?<h3/>
-            <ul>
-                <li>Auto-hospeda un <a href="https://immich.app/">Servidor Immich</a></li>
-                <li>Indica o enderezo do servidor en Lavender Photos</li>
-                <li>Accede usando a conta de usuaria Immich</li>
-                <li>Vai a un álbum e preme na icona da nube</li>
-                <li>Comeza a copiar as túas fotos!</li>
-            </ul>
-                        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> é un servidor auto-hospedado para a xestión de fotos e vídeos, que permite que\n            calquera persoa poida ter o seu servidor na nube para copias de apoio.\n            </p>\n            <h3 style=\"text-align:center;\">Como se utiliza?<h3/>\n            <ul>\n                <li>Auto-hospeda un <a href=\"https://immich.app/\">Servidor Immich</a></li>\n                <li>Indica o enderezo do servidor en Lavender Photos</li>\n                <li>Accede usando a conta de usuaria Immich</li>\n                <li>Vai a un álbum e preme na icona da nube</li>\n                <li>Comeza a copiar as túas fotos!</li>\n            </ul>\n                        "]]></string>
     <string name="immich_server_url_invalid">URL non válido!</string>
     <string name="immich_misc">Varios</string>
     <string name="exif_name">Nome:</string>
