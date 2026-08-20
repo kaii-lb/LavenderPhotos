@@ -419,19 +419,7 @@
     <string name="immich_server">Server Immich</string>
     <string name="immich_help_general">Apa ini?</string>
     <string name="immich_help_general_desc">Memungkinkan pencadangan media tingkat album ke server Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> adalah solusi manajemen foto dan video yang di-hosting sendiri,
-      yang memungkinkan siapa saja untuk meng-hosting server cadangan cloud mereka sendiri.
-            </p>
-            <h3 style="text-align:center;">Cara Menggunakan?<h3/>
-            <ul>
-                <li>Self-host <a href="https://immich.app/">Server Immich</a></li>
-                <li>Tentukan alamat server di Lavender Photos</li>
-                <li>Masuk menggunakan akun pengguna Immich</li>
-                <li>Buka album mana saja, klik ikon cloud</li>
-                <li>Mulai cadangkan foto Anda!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> adalah solusi manajemen foto dan video yang di-hosting sendiri,\n      yang memungkinkan siapa saja untuk meng-hosting server cadangan cloud mereka sendiri.\n            </p>\n            <h3 style=\"text-align:center;\">Cara Menggunakan?<h3/>\n            <ul>\n                <li>Self-host <a href=\"https://immich.app/\">Server Immich</a></li>\n                <li>Tentukan alamat server di Lavender Photos</li>\n                <li>Masuk menggunakan akun pengguna Immich</li>\n                <li>Buka album mana saja, klik ikon cloud</li>\n                <li>Mulai cadangkan foto Anda!</li>\n            </ul>\n        "]]></string>
     <string name="immich_server_url_invalid">URL Tidak Valid!</string>
     <string name="immich_misc">Lain-lain</string>
     <string name="exif_name">Nama:</string>
