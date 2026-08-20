@@ -356,19 +356,7 @@
     <string name="immich_server">Immich 服务器</string>
     <string name="immich_help_general">这是什么？</string>
     <string name="immich_help_general_desc">允许将相册级别的媒体文件备份至 Immich 服务器</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/  ">Immich</a> 是一个自托管的照片和视频管理解决方案，  
-            任何人都可以用它来搭建自己的云备份服务器。  
-            </p>
-            <h3 style="text-align:center;">如何使用？<h3/>
-            <ul>
-                <li>自托管一个 <a href="https://immich.app/  ">Immich 服务器</a></li>
-                <li>在 Lavender Photos 中指定服务器地址</li>
-                <li>使用 Immich 用户账户登录</li>
-                <li>进入任意相册，点击云图标</li>
-                <li>开始备份你的照片！</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/  \">Immich</a> 是一个自托管的照片和视频管理解决方案，  \n            任何人都可以用它来搭建自己的云备份服务器。  \n            </p>\n            <h3 style=\"text-align:center;\">如何使用？<h3/>\n            <ul>\n                <li>自托管一个 <a href=\"https://immich.app/  \">Immich 服务器</a></li>\n                <li>在 Lavender Photos 中指定服务器地址</li>\n                <li>使用 Immich 用户账户登录</li>\n                <li>进入任意相册，点击云图标</li>\n                <li>开始备份你的照片！</li>\n            </ul>\n        "]]></string>
     <string name="immich_server_url_invalid">Url 无效！</string>
     <string name="look_and_feel_rounded_corners">圆角缩略图</string>
     <string name="look_and_feel_rounded_corners_desc">网格缩略图使用圆角</string>
