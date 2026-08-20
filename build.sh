@@ -42,7 +42,7 @@ function build() {
 		echo
 		echo "Installing..."
 		abi="arm64-v8a"
-		if [ "$3" != "" ]; then
+		if [[ "$3" != "" ]]; then
 			abi="$3"
 		fi
 
@@ -65,10 +65,10 @@ function show_help() {
 
 case $1 in
 	"debug")
-		build "debug" $2
+		build "debug" $2 $3
 		;;
 	"release")
-		build "release" $2
+		build "release" $2 $3
 		;;
 	"optimize")
 		adb shell cmd package compile -m speed-profile com.kaii.photos
