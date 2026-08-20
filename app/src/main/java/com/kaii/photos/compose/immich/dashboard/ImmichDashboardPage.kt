@@ -134,6 +134,8 @@ fun ImmichDashboardPage(
                 val resources = LocalResources.current
                 val coroutineScope = rememberCoroutineScope()
 
+                // TODO: move this to receive an event from the viewmodel instead of using
+                // TODO: a suspend function (setServerAddress)
                 ServerAddressRow(
                     loginInfo = { loginInfo },
                     validateAddress = viewModel::validateServerAddress,

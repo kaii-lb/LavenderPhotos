@@ -8,33 +8,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kaii.photos.R
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.datastore.preferences.SettingsAlbumsListImpl
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.repositories.ImmichInfoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
-import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
-import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeComponents
 import javax.inject.Inject
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class ImmichInfoViewModel @Inject constructor(
-    albums: SettingsAlbumsListImpl,
-    loginClient: LoginClient,
-    userClient: UserClient,
-    serverClient: ServerClient,
+    repoFactory: ImmichInfoRepository.Factory,
     private val immich: SettingsImmichImpl
 ) : ViewModel() {
     val info = immich.getImmichBasicInfo().stateIn(
@@ -43,14 +33,7 @@ class ImmichInfoViewModel @Inject constructor(
         initialValue = ImmichBasicInfo.Empty
     )
 
-    private val repo = ImmichInfoRepository(
-        loginClient = loginClient,
-        userClient = userClient,
-        serverClient = serverClient,
-        immichSettings = immich,
-        albumSettings = albums,
-        scope = viewModelScope
-    )
+    private val repo = repoFactory.create(viewModelScope)
 
     val serverInfo = repo.serverInfo
     val userInfo = repo.userInfo
@@ -87,7 +70,9 @@ class ImmichInfoViewModel @Inject constructor(
     fun setInfo(info: ImmichBasicInfo) = immich.setImmichBasicInfo(info)
 
     fun refresh() {
-        repo.refresh()
+        viewModelScope.launch {
+            repo.refresh()
+        }
     }
 
     fun logout() {
@@ -142,9 +127,7 @@ class ImmichInfoViewModel @Inject constructor(
                         auth = Auth.AccessToken(accessToken = state.accessToken),
                         username = state.name,
                         userId = state.userId.toString(),
-                        updatedAt = Clock.System.now().format(
-                            DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
-                        )
+                        updatedAt = info.value.updatedAt
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)
@@ -195,9 +178,7 @@ class ImmichInfoViewModel @Inject constructor(
                         auth = Auth.ApiKey(apiKey = apiKey),
                         username = state.user.name,
                         userId = state.user.id.toString(),
-                        updatedAt = Clock.System.now().format(
-                            DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET
-                        )
+                        updatedAt = state.user.updatedAt
                     )
                 } else {
                     ImmichBasicInfo.Empty.copy(endpoint = info.value.endpoint)

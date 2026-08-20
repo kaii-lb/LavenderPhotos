@@ -7,11 +7,11 @@ import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class ImmichSessionManager(
@@ -23,13 +23,13 @@ class ImmichSessionManager(
     private val info: Flow<ImmichBasicInfo>,
     appScope: CoroutineScope
 ) {
-    private val updateChannel = Channel<ImmichBasicInfo>()
-    val infoUpdates = updateChannel.receiveAsFlow()
+    private val updateChannel = MutableStateFlow(ImmichBasicInfo.Empty)
+    val infoUpdates = updateChannel.asStateFlow()
 
     init {
         appScope.launch {
             info.distinctUntilChanged().collectLatest { info ->
-                updateChannel.send(info)
+                updateChannel.value = info
 
                 assetsClient.setEndpoint(info.endpoint)
                 assetsClient.setAuth(info.auth)
