@@ -9,7 +9,7 @@ data class ThemeConfiguration(
         val Default = ThemeConfiguration(
             theme = LavenderThemes.Theme.Apple,
             style = LavenderThemes.Style.System,
-            dynamic = true
+            dynamic = false
         )
     }
 

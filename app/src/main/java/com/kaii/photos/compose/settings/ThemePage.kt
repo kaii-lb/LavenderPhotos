@@ -1,5 +1,6 @@
 package com.kaii.photos.compose.settings
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -229,7 +230,8 @@ private fun ThemePageImpl(
                     checked = dynamic(),
                     titleStyle = MaterialTheme.typography.titleLarge,
                     iconPadding = 8.dp,
-                    onSwitchClick = setDynamic
+                    onSwitchClick = setDynamic,
+                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 )
             }
 

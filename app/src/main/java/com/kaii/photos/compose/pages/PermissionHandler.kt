@@ -308,7 +308,7 @@ fun PermissionHandler(
                             PermissionButton(
                                 name = stringResource(id = R.string.permissions_read_external_storage),
                                 description = stringResource(id = R.string.permissions_read_external_storage_desc),
-                                position = RowPosition.Top,
+                                position = RowPosition.Single,
                                 granted = startupManager.permissionGranted(permission = Manifest.permission.READ_EXTERNAL_STORAGE)
                             ) {
                                 readExternalStorageLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)

@@ -2,6 +2,7 @@ package com.kaii.photos.presentation.ui.theme
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -54,7 +55,7 @@ object LavenderThemes {
         systemInDarkTheme: Boolean
     ) = when (style) {
         Style.System -> {
-            if (dynamic) {
+            if (dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (systemInDarkTheme) dynamicDarkColorScheme(context)
                 else dynamicLightColorScheme(context)
             } else {
@@ -64,15 +65,19 @@ object LavenderThemes {
         }
 
         Style.Light -> {
-            if (dynamic) dynamicLightColorScheme(context)
+            if (dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicLightColorScheme(context)
             else theme.themeColors.lightColorScheme
         }
 
         Style.Dark -> {
-            if (dynamic) dynamicDarkColorScheme(context)
+            if (dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) dynamicDarkColorScheme(context)
             else theme.themeColors.darkColorScheme
         }
 
-        Style.Night -> NightColors(context, theme.themeColors, dynamic).darkColorScheme
+        Style.Night -> NightColors(
+            context = context,
+            themeColors = theme.themeColors,
+            dynamic = dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        ).darkColorScheme
     }
 }
