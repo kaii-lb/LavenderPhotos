@@ -246,15 +246,6 @@ private fun VideoPlayerUI(
             }
         }
 
-        LaunchedEffect(isLandscape) {
-            setBarVisibility(
-                visible = state.controlsVisible && !isLandscape,
-                window = window
-            ) { visible ->
-                appBarsVisible.value = visible
-            }
-        }
-
         // seperate boxes to avoid touch blocking due to zindex ordering
         Box(
             modifier = Modifier

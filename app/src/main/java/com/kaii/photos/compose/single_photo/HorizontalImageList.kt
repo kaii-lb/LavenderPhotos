@@ -12,6 +12,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +40,7 @@ import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.modifiers.tapOnScreenHalves
 import com.kaii.photos.compose.videoplayer.VideoPlayer
 import com.kaii.photos.compose.videoplayer.rememberPlayerView
+import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.SingleViewConstants
 import com.kaii.photos.helpers.motion_photo.rememberMotionPhotoState
@@ -152,6 +154,7 @@ fun HorizontalImageList(
     ) { index ->
         if (items[index] == null || items[index] !is PhotoLibraryUIModel.MediaImpl) return@HorizontalPager
 
+        val media = items[index] as PhotoLibraryUIModel.MediaImpl
         val zoomableState = rememberGlideZoomableState()
 
         if (state.settledPage != index) {
@@ -160,9 +163,17 @@ fun HorizontalImageList(
                     animationSpec = snap()
                 )
             }
+        } else {
+            val isLandscape by rememberDeviceOrientation()
+            LaunchedEffect(isLandscape) {
+                setBarVisibility(
+                    visible = videoPlayerState.controlsVisible && (!isLandscape || media.item.type != MediaType.Video),
+                    window = window
+                ) { visible ->
+                    appBarsVisible.value = visible
+                }
+            }
         }
-
-        val media = items[index] as PhotoLibraryUIModel.MediaImpl
 
         val glideModel = remember(media.item.uri) {
             when {
