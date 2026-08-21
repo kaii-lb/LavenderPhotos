@@ -103,8 +103,6 @@ class StartupManager(
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                     permissionQueue.all { it == Manifest.permission.MANAGE_MEDIA }
 
-        println("PERMS CHECK $manageMedia $permissionQueue")
-
         return permissionQueue.isEmpty() || manageMedia
     }
 
