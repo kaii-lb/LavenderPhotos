@@ -13,8 +13,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SplitButton
 import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -130,7 +130,7 @@ fun ImageEditorTopBar(
                 }
             }
 
-            SplitButtonLayout(
+            SplitButton(
                 leadingButton = {
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
@@ -178,7 +178,7 @@ fun ImageEditorTopBar(
                             contentDescription = "Dropdown icon"
                         )
                     }
-                }
+                }, modifier = Modifier, spacing = SplitButtonDefaults.Spacing
             )
         }
     )

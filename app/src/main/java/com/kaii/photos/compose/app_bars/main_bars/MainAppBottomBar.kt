@@ -37,7 +37,7 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -188,8 +188,8 @@ fun MainAppBottomBar(
                                             )
                                         }
                                     },
-                                    shapes = ToggleButtonDefaults.shapes(
-                                        shape = null,
+                                    shapes = ToggleButtonShapes(
+                                        shape = CircleShape,
                                         pressedShape = CircleShape,
                                         checkedShape = CircleShape
                                     ),

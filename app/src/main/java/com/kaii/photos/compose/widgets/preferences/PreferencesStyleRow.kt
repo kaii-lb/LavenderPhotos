@@ -6,10 +6,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,10 +62,9 @@ fun PreferencesStyleRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             styles.forEachIndexed { index, style ->
-                ToggleButton(
+                FilledTonalToggleButton(
                     checked = selected(style),
                     onCheckedChange = { onSelect(style) },
-                    colors = ToggleButtonDefaults.tonalToggleButtonColors(),
                     shapes =
                         when (index) {
                             0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()

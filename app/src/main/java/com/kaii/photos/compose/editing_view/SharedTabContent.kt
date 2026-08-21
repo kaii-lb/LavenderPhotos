@@ -49,6 +49,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -317,7 +318,9 @@ private fun PaintTypeSelector(
                                 drawingPaintState.setSelectedItem(null)
                                 collapsed = true
                             },
-                            shapes = ToggleButtonDefaults.shapes(
+                            shapes = ToggleButtonShapes(
+                                shape = CircleShape,
+                                pressedShape = CircleShape,
                                 checkedShape = CircleShape
                             ),
                             contentPadding = PaddingValues.Zero,
