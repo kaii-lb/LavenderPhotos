@@ -34,7 +34,7 @@
 - **Future:** WAY more to come
 
 # Help us translate
-With over 24 languages supported, Lavender Photos is accessible for all, and contributing a translation would greatly help with that!
+With over 28 languages supported, Lavender Photos is accessible for all, and contributing a translation would greatly help with that!
 Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is a great place to start.
 
 # Screenshots
