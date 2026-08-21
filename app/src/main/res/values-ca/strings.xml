@@ -274,8 +274,8 @@
     <string name="export_settings_backup_save">Desar dades de l\'aplicació</string>
     <string name="export_settings_backup_save_desc">Exporta la configuració i àlbums de l\'aplicació a un fitxer JSON perquè es puguin restablir més endavant. No desa els inicis de sessió d\'Immich o continguts multimèdia protegits.</string>
     <string name="export_settings_backup_load_desc">Carrega la configuració i àlbums de l\'aplicació d\'un fitxer JSON. Sobreescriurà qualsevol configuració existent.</string>
-    <string name="record_logs">Registrar diaris</string>
-    <string name="record_logs_desc">Desar els diaris per a depuració. Toca per veure.</string>
+    <string name="record_logs">Enregistrament de registres</string>
+    <string name="record_logs_desc">Desar els registres per a depuració. Toca per veure.</string>
     <string name="debugging_reset_scan_generation_loading">Escanejant contingut multimèdia…</string>
     <string name="debugging_report_issue">Informa d\'un problema</string>
     <string name="debugging_report_issue_bug">Informa d\'un error</string>
@@ -510,7 +510,7 @@
     <string name="app_lock_password">Establir PIN</string>
     <string name="app_lock_password_desc">Demana un PIN quan s\'inicia l\'aplicació. Un PIN buit treu el bloqueig</string>
     <string name="app_lock_password_set">PIN actualitzat</string>
-    <string name="log_file_non_existent">Encara no s\'ha registrat cap fitxer de registre.</string>
+    <string name="log_file_non_existent">Encara no s\'ha enregistrat cap fitxer de registre.</string>
     <string name="debugging_spawn_loading_snackbar">Fes aparèixer una barra inferior de càrrega</string>
     <string name="immich_logout_question_desc">Està segur que vols tancar la sessió d\'aquest compte?</string>
     <string name="immich_help_general">Què és això?</string>
@@ -599,8 +599,7 @@
     <string name="immich_server_offline">Fora de línia</string>
     <string name="immich_server_unreachable">No s\'ha pogut fer ping al servidor!</string>
     <string name="immich_help_general_desc">Permet còpies de recolzament del contingut multimèdia a nivell d\'àlbum, a un servidor Immich</string>
-    <string name="immich_help_detailed_desc">
-        <![CDATA[
+    <string name="immich_help_detailed_desc"><![CDATA[
             <p><a href="https://immich.app/">Immich</a> és una solució autoallotjada d\'emmagatzematge de fotos i vídeos,
             que permet a tothom allotjar el seu propi servidor de recolzament al núvol.
             </p>
@@ -609,11 +608,11 @@
                 <li>Autoallotja un <a href="https://immich.app/">servidor Immich</a></li>
                 <li>Especifica l\'adreça del servidor a Lavender Photos</li>
                 <li>Inicia sessió utilitzant un compte d\'usuari d\'Immich</li>
-                <li>Vés a qualsevol àlbum, i clica a la icona del núvol</li>
-                <li>Comença a fer còpies de recolzament de les teves fotografies!</li>
+                <li>A la pàgina del tauler de control, clica \'Opcions de les còpies de recolzament\'
+                <li>Escull els àlbums dels quals vols tenir còpies de recolzament, i clica el botó per confirmar-ho</li>
+                <li>Gaudeix de les còpies de recolzament al núvol segures i fàcils!</li>
             </ul>
-        ]]>
-    </string>
+        ]]></string>
     <string name="immich_server_not_loading">Aquest àlbum no té contingut multimèdia, o el servidor és inaccessible</string>
     <string name="immich_account_username">Nom d\'usuari</string>
     <string name="immich_account_role">Càrrec</string>
@@ -701,4 +700,9 @@
     <string name="privacy_authenticate">Autenticar</string>
     <string name="privacy_scroll_mode_last_active">Mode de privacitat actiu</string>
     <string name="privacy_scroll_mode_last_active_desc">El mode de privacitat es va deixar activat el darrer cop que es va tancar l\'aplicació. Si us plau, utilitza la teva contrasenya o biometria per continuar.</string>
+    <string name="albums_is_saf">Aquest és un recurs de xarxa compartit</string>
+    <string name="albums_network_share">Recurs de xarxa compartit</string>
+    <string name="albums_network_share_desc">Només navegació. Requereix RSAF, Drive, o equivalent</string>
+    <string name="logs_share">Compartir els fitxers de registre</string>
+    <string name="record_logs_off">L\'enregistrament de registres està desactivat</string>
 </resources>
