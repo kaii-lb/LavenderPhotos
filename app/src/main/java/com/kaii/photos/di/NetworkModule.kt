@@ -15,6 +15,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
+import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import io.github.kaii_lb.lavender.immichintegration.clients.buildApiClient
 import javax.inject.Singleton
@@ -81,6 +82,16 @@ object NetworkModule {
     fun provideServerClient(
         apiClient: ApiClient
     ): ServerClient = ServerClient(
+        endpoint = "",
+        auth = Auth.None,
+        client = apiClient
+    )
+
+    @Provides
+    @Singleton
+    fun provideSharedLinkClient(
+        apiClient: ApiClient
+    ): SharedLinkClient = SharedLinkClient(
         endpoint = "",
         auth = Auth.None,
         client = apiClient

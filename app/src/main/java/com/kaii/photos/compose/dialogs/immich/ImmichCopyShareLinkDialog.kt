@@ -42,7 +42,7 @@ import com.kaii.photos.compose.dialogs.LavenderDialogBase
 import com.kaii.photos.compose.pages.FullWidthDialogButton
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.helpers.RowPosition
-import com.kaii.photos.models.immich_share_album_page.CreateLinkState
+import com.kaii.photos.models.CreateLinkState
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.photos.widgets.QrCodeState

@@ -10,6 +10,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
+import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
@@ -25,6 +26,7 @@ object SessionModule {
         userClient: UserClient,
         loginClient: LoginClient,
         serverClient: ServerClient,
+        sharedLinkClient: SharedLinkClient,
         @ApplicationScope appScope: CoroutineScope,
         immich: SettingsImmichImpl
     ): ImmichSessionManager = ImmichSessionManager(
@@ -32,6 +34,7 @@ object SessionModule {
         albumsClient = albumsClient,
         userClient = userClient,
         serverClient = serverClient,
+        sharedLinkClient = sharedLinkClient,
         info = immich.getImmichBasicInfo(),
         appScope = appScope,
         loginClient = loginClient

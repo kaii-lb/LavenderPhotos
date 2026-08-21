@@ -101,6 +101,7 @@ import com.kaii.photos.models.CustomAlbumViewModel
 import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.ImmichInfoViewModel
+import com.kaii.photos.models.ImmichShareAlbumViewModel
 import com.kaii.photos.models.MainDialogViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
@@ -118,7 +119,6 @@ import com.kaii.photos.models.data_and_backup.DataAndBackupViewModel
 import com.kaii.photos.models.data_and_backup.DataAndBackupViewModelFactory
 import com.kaii.photos.models.editor.EditorViewModel
 import com.kaii.photos.models.editor.EditorViewModelFactory
-import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
 import com.kaii.photos.models.permissions.PermissionsViewModel
 import com.kaii.photos.models.permissions.PermissionsViewModelFactory
 import com.kaii.photos.models.theme.ThemeViewModel
@@ -595,8 +595,11 @@ class MainActivity : ComponentActivity() {
 
                     composable<Screens.Immich.ShareAlbumPage> {
                         val screen = it.toRoute<Screens.Immich.ShareAlbumPage>()
-                        val viewModel = it.sharedViewModel<ImmichShareAlbumViewModel>(
-                            screenScope = Screens.Immich
+                        val viewModel = it.sharedViewModel<ImmichShareAlbumViewModel, ImmichShareAlbumViewModel.Factory>(
+                            screenScope = Screens.Immich,
+                            creationCallback = { factory ->
+                                factory.create(screen.albumImmichId)
+                            }
                         )
 
                         ImmichShareLinkPage(

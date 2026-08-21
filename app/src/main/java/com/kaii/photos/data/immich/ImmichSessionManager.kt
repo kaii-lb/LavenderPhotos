@@ -5,6 +5,7 @@ import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
+import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,7 @@ class ImmichSessionManager(
     val userClient: UserClient,
     val loginClient: LoginClient,
     val serverClient: ServerClient,
+    val sharedLinkClient: SharedLinkClient,
     private val info: Flow<ImmichBasicInfo>,
     appScope: CoroutineScope
 ) {
@@ -45,6 +47,9 @@ class ImmichSessionManager(
 
                 serverClient.setEndpoint(info.endpoint)
                 serverClient.setAuth(info.auth)
+
+                sharedLinkClient.setEndpoint(info.endpoint)
+                sharedLinkClient.setAuth(info.auth)
             }
         }
     }

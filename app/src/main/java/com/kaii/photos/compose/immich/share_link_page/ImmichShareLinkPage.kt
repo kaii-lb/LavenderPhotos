@@ -58,8 +58,8 @@ import com.kaii.photos.compose.widgets.date_time.DateTimePicker
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.expiryDate
-import com.kaii.photos.models.immich_share_album_page.CreateLinkState
-import com.kaii.photos.models.immich_share_album_page.ImmichShareAlbumViewModel
+import com.kaii.photos.models.CreateLinkState
+import com.kaii.photos.models.ImmichShareAlbumViewModel
 import com.kaii.photos.widgets.rememberDateTimePickerState
 import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkType
@@ -77,6 +77,7 @@ private fun ImmichShareLinkPagePreview() {
         latestImage = "",
         albumTitle = "Album Title",
         itemCount = 256,
+        endpoint = { "" },
         customSlug = { null },
         password = { null },
         description = { "" },
@@ -131,6 +132,7 @@ fun ImmichShareLinkPage(
 ) {
     val sharedLinkState = viewModel.shareLinkState
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val endpoint by viewModel.endpoint.collectAsStateWithLifecycle()
 
     var showDialog by remember { mutableStateOf(false) }
     if (showDialog) {
@@ -170,6 +172,7 @@ fun ImmichShareLinkPage(
         latestImage = latestImage,
         albumTitle = albumTitle,
         itemCount = itemCount,
+        endpoint = { endpoint },
         customSlug = { sharedLinkState.customSlug },
         password = { sharedLinkState.password },
         description = { sharedLinkState.description },
@@ -199,6 +202,7 @@ private fun ImmichShareLinkPageImpl(
     latestImage: String,
     albumTitle: String,
     itemCount: Int,
+    endpoint: () -> String,
     customSlug: () -> String?,
     password: () -> String?,
     description: () -> String,
@@ -215,7 +219,7 @@ private fun ImmichShareLinkPageImpl(
     setAllowUploads: (Boolean) -> Unit,
     setAllowDownloads: (Boolean) -> Unit,
     removeLink: (id: String) -> Unit,
-    showLink: (slug: String?, id: String) -> Unit,
+    showLink: (slug: String?, key: String) -> Unit,
     onConfirm: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -292,7 +296,7 @@ private fun ImmichShareLinkPageImpl(
                         setCustomSlug("".takeIf { checked })
                     },
                     icon = R.drawable.link,
-                    placeholder = stringResource(id = R.string.immich_share_album_custom_url),
+                    placeholder = "${endpoint()}/s/[${stringResource(id = R.string.immich_share_album_custom_url)}]",
                     textFieldValue = customSlug,
                     shape = RoundedCornerShape(
                         topStart = 32.dp, topEnd = 32.dp,
@@ -440,7 +444,7 @@ private fun ImmichShareLinkPageImpl(
                             modifier = Modifier
                                 .animateItem(),
                             copyLink = {
-                                showLink(link.slug, link.id.toString())
+                                showLink(link.slug, link.key)
                             },
                             deleteLink = {
                                 removeLink(link.id.toString())

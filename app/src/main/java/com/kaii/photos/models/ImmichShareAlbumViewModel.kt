@@ -1,17 +1,18 @@
-package com.kaii.photos.models.immich_share_album_page
+package com.kaii.photos.models
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kaii.photos.PhotosApplication
-import com.kaii.photos.datastore.Settings
+import com.kaii.photos.data.immich.ImmichSessionManager
 import com.kaii.photos.screens.ImmichShareLinkState
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.ApiClient
-import io.github.kaii_lb.lavender.immichintegration.clients.SharedLinkClient
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kaii_lb.lavender.immichintegration.serialization.shared_links.SharedLinkResponseDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -24,17 +25,15 @@ interface CreateLinkState {
     data class Success(val url: String) : CreateLinkState
 }
 
-@OptIn(ExperimentalUuidApi::class)
-class ImmichShareAlbumViewModel(
-    private val albumImmichId: String,
-    private val settings: Settings = PhotosApplication.appModule.settings,
-    apiClient: ApiClient = PhotosApplication.appModule.apiClient
+@HiltViewModel(assistedFactory = ImmichShareAlbumViewModel.Factory::class)
+class ImmichShareAlbumViewModel @AssistedInject constructor(
+    @Assisted private val albumImmichId: String,
+    sessionManager: ImmichSessionManager
 ) : ViewModel() {
-    private val sharedLinkClient = SharedLinkClient(
-        client = apiClient,
-        endpoint = "",
-        auth = Auth.None
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(albumImmichId: String): ImmichShareAlbumViewModel
+    }
 
     private val _state = MutableStateFlow<CreateLinkState>(CreateLinkState.Idle)
     val state = _state.asStateFlow()
@@ -44,19 +43,18 @@ class ImmichShareAlbumViewModel(
 
     val shareLinkState = ImmichShareLinkState()
 
-    private var endpoint = ""
+    private val sharedLinkClient = sessionManager.sharedLinkClient
+
+    private val _endpoint = MutableStateFlow("")
+    val endpoint = _endpoint.asStateFlow()
 
     init {
         viewModelScope.launch {
-            settings.immich.getImmichBasicInfo().collect { info ->
-                sharedLinkClient.setEndpoint(info.endpoint)
-                sharedLinkClient.setAuth(info.auth)
-                endpoint = info.endpoint
+            sessionManager.infoUpdates.collectLatest { info ->
+                _endpoint.value = info.endpoint
 
-                if (endpoint.isNotBlank()) launch {
+                if (info.endpoint.isNotBlank()) {
                     while (true) {
-                        if (endpoint.isBlank()) break
-
                         refreshLinks()
 
                         delay(5.seconds)
@@ -80,9 +78,9 @@ class ImmichShareAlbumViewModel(
         }
     }
 
-    fun showLink(slug: String?, id: String) {
+    fun showLink(slug: String?, key: String) {
         _state.value = CreateLinkState.Success(
-            url = buildLink(slug, id)
+            url = buildLink(slug, key)
         )
     }
 
@@ -104,15 +102,18 @@ class ImmichShareAlbumViewModel(
             link = shareLinkState.createRequest(albumImmichId)
         ) ?: return null
 
-        return buildLink(link.slug, link.id.toString())
+        return buildLink(link.slug, link.key)
     }
 
-    private fun buildLink(slug: String?, id: String) =
+    private fun buildLink(slug: String?, key: String) =
         buildString {
-            append("$endpoint/s/")
+            val slug = slug?.takeIf { it.isNotBlank() }
+            val path = if (slug != null) "s" else "share"
+
+            append("${endpoint.value}/$path/")
 
             if (slug != null) append(slug)
-            else append(id)
+            else append(key)
         }
 
     private suspend fun refreshLinks() {

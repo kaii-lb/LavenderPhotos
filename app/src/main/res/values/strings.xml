@@ -683,8 +683,8 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_share_album_allow_uploads">Allow Uploads</string>
     <string name="immich_share_album_allow_downloads">Allow Downloads</string>
     <string name="immich_share_album_require_password">Require Password</string>
-    <string name="immich_share_album_custom_url">Custom URL</string>
-    <string name="immich_share_album_use_custom_url">Use Custom URL</string>
+    <string name="immich_share_album_custom_url">Custom URL Title</string>
+    <string name="immich_share_album_use_custom_url">Use Custom URL Title</string>
     <string name="immich_share_album_description">Description</string>
     <string name="immich_share_album_loading">Creating link…</string>
     <string name="immich_share_album_loading_failed">Failed to create link</string>
