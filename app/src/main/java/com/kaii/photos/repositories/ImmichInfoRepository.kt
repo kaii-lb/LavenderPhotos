@@ -16,6 +16,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import io.github.kaii_lb.lavender.immichintegration.Auth
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import io.github.kaii_lb.lavender.immichintegration.clients.LoginClient
 import io.github.kaii_lb.lavender.immichintegration.clients.ServerClient
 import io.github.kaii_lb.lavender.immichintegration.clients.UserClient
@@ -37,6 +38,7 @@ class ImmichInfoRepository @AssistedInject constructor(
     private val serverClient: ServerClient,
     private val loginClient: LoginClient,
     private val userClient: UserClient,
+    private val assetsClient: AssetsClient,
     private val immichSettings: SettingsImmichImpl,
     private val albumSettings: SettingsAlbumsListImpl,
     @Assisted private val scope: CoroutineScope
@@ -44,6 +46,10 @@ class ImmichInfoRepository @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(scope: CoroutineScope): ImmichInfoRepository
+    }
+    
+    companion object {
+        private val TAG = ImmichInfoRepository::class.qualifiedName!!
     }
 
     private val _serverInfo = MutableStateFlow<ImmichServerInfo?>(null)
@@ -69,7 +75,7 @@ class ImmichInfoRepository @AssistedInject constructor(
                 auth = info.auth
                 endpoint = info.endpoint
 
-                LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Refreshing due to ${ImmichBasicInfo::class.simpleName} change.")
+                LogWriter.debug(TAG, "Refreshing due to ${ImmichBasicInfo::class.simpleName} change.")
 
                 refresh()
             }
@@ -78,43 +84,43 @@ class ImmichInfoRepository @AssistedInject constructor(
 
     private suspend fun getLoginState() = withContext(Dispatchers.IO) {
         if (!loginClient.ping()) {
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Failed to ping server [login]!")
+            LogWriter.error(TAG, "Failed to ping server [login]!")
             return@withContext ImmichLoginState.ServerUnreachable
         }
 
         if (!loginClient.validate()) {
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Failed to validate user [login]!")
+            LogWriter.error(TAG, "Failed to validate user [login]!")
             return@withContext ImmichLoginState.LoggedOut
         }
 
         userClient.getMe()?.let {
-            LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Successfully fetched login state!")
+            LogWriter.debug(TAG, "Successfully fetched login state!")
             ImmichLoginState.LoggedIn(user = it)
         } ?: run {
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Failed to fetch login state!")
+            LogWriter.error(TAG, "Failed to fetch login state!")
             ImmichLoginState.LoggedOut
         }
     }
 
     private suspend fun getServerState() = withContext(Dispatchers.IO) {
         if (!serverClient.ping()) {
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Failed to ping server [server state]!")
+            LogWriter.error(TAG, "Failed to ping server [server state]!")
             return@withContext null
         }
 
         val storage = async { serverClient.getStorage() }
         val info = async { serverClient.getInfo() }
-        val perUserStorage = async { serverClient.getUsagePerUser() }
+        val statistics = async { assetsClient.getAssetStatistics() }
         val versionCheck = async { serverClient.checkVersion() }
 
         // fetch in parallel
         val serverInfo = info.await()
         val storageInfo = storage.await()
-        val perUserInfo = perUserStorage.await()
+        val assetStatistics = statistics.await()
 
-        if (serverInfo == null || storageInfo == null || perUserInfo == null) {
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Failed to fetch server state! " +
-                    "serverInfo: ${serverInfo == null} storageInfo: ${storageInfo == null} perUserInfo: ${perUserInfo == null}")
+        if (serverInfo == null || storageInfo == null || assetStatistics == null) {
+            LogWriter.error(TAG, "Failed to fetch server state! " +
+                    "serverInfo: ${serverInfo != null} storageInfo: ${storageInfo != null} assetStatistics: ${assetStatistics != null}")
 
             return@withContext null
         }
@@ -140,7 +146,7 @@ class ImmichInfoRepository @AssistedInject constructor(
             }
         }
 
-        LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Successfully fetched server state!")
+        LogWriter.debug(TAG, "Successfully fetched server state!")
 
         return@withContext ImmichServerInfo(
             version = serverInfo.version,
@@ -149,7 +155,7 @@ class ImmichInfoRepository @AssistedInject constructor(
             diskSize = storageInfo.diskSize,
             diskUsed = storageInfo.diskUse,
             diskUsedPercentage = storageInfo.diskUsagePercentage / 100f,
-            perUserStorage = perUserInfo.usageByUser,
+            assetStatistics = assetStatistics,
             newVersion = newVersion
         )
     }
@@ -162,19 +168,19 @@ class ImmichInfoRepository @AssistedInject constructor(
             _userInfo.value = ImmichLoginState.LoggedOut
             _serverInfo.value = null
 
-            LogWriter.e(ImmichInfoRepository::class.qualifiedName, "Endpoint or Auth is not valid!")
+            LogWriter.error(TAG, "Endpoint or Auth is not valid!")
 
             return@withContext
         }
 
-        LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Loading server and user data.")
+        LogWriter.debug(TAG, "Loading server and user data.")
 
         _refreshChannel.trySend(OperationStatus.Loading)
 
         _userInfo.value = getLoginState()
         _serverInfo.value = getServerState()
 
-        LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Fetched userInfo: " +
+        LogWriter.debug(TAG, "Fetched userInfo: " +
                 "${_userInfo.value is ImmichLoginState.LoggedIn} and serverInfo: ${_serverInfo.value != null}")
 
         when (_userInfo.value) {
@@ -183,17 +189,17 @@ class ImmichInfoRepository @AssistedInject constructor(
                 immichSettings.setUpdatedAt(date = info.updatedAt)
                 immichSettings.setUsername(name = info.name)
                 _refreshChannel.trySend(OperationStatus.Successful)
-                LogWriter.e(ImmichInfoRepository::class.qualifiedName, "UserInfo is ${ImmichLoginState.LoggedIn::class.simpleName}.")
+                LogWriter.error(TAG, "UserInfo is ${ImmichLoginState.LoggedIn::class.simpleName}.")
             }
 
             is ImmichLoginState.LoggedOut -> {
-                LogWriter.e(ImmichInfoRepository::class.qualifiedName, "UserInfo is ${ImmichLoginState.LoggedOut::class.simpleName}!!")
+                LogWriter.error(TAG, "UserInfo is ${ImmichLoginState.LoggedOut::class.simpleName}!!")
                 _refreshChannel.trySend(OperationStatus.Failed)
                 immichSettings.setImmichBasicInfo(ImmichBasicInfo.Empty.copy(endpoint = endpoint))
             }
 
             else -> {
-                LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Failed to fetch userinfo state!")
+                LogWriter.debug(TAG, "Failed to fetch userinfo state!")
                 _refreshChannel.trySend(OperationStatus.Failed)
             }
         }
@@ -212,7 +218,7 @@ class ImmichInfoRepository @AssistedInject constructor(
             else OperationStatus.Failed
         )
 
-        LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Log successful: ${state != null}!")
+        LogWriter.debug(TAG, "Log successful: ${state != null}!")
 
         state
     }
@@ -233,14 +239,14 @@ class ImmichInfoRepository @AssistedInject constructor(
             else OperationStatus.Failed
         )
 
-        LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Authentication successful: ${state is ImmichLoginState.LoggedIn}!")
+        LogWriter.debug(TAG, "Authentication successful: ${state is ImmichLoginState.LoggedIn}!")
 
         state
     }
 
     suspend fun logout() = withContext(Dispatchers.IO) {
         loginClient.logout().let { success ->
-            LogWriter.d(ImmichInfoRepository::class.qualifiedName, "Logout successful: $success.")
+            LogWriter.debug(TAG, "Logout successful: $success.")
 
             if (success) {
                 _userInfo.value = ImmichLoginState.LoggedOut

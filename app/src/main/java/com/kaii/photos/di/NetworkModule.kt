@@ -1,6 +1,7 @@
 package com.kaii.photos.di
 
 import com.kaii.photos.BuildConfig
+import com.kaii.photos.data.logging.LogWriter
 import com.kaii.photos.database.sync.AndroidNetworkMonitor
 import com.kaii.photos.database.sync.NetworkMonitor
 import dagger.Binds
@@ -30,7 +31,10 @@ abstract class BindNetworkModule {
 object NetworkModule {
     @Provides
     @Singleton
-    fun provideApiClient(): ApiClient = buildApiClient(debugMode = BuildConfig.DEBUG)
+    fun provideApiClient(): ApiClient = buildApiClient(
+        debugMode = BuildConfig.DEBUG,
+        logger = LogWriter
+    )
 
     @Provides
     @Singleton

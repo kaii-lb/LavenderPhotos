@@ -1,6 +1,6 @@
 package com.kaii.photos.domain.immich
 
-import io.github.kaii_lb.lavender.immichintegration.serialization.user.UsageByUserDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetStatisticsDto
 
 data class ImmichServerInfo(
     val version: String,
@@ -9,6 +9,6 @@ data class ImmichServerInfo(
     val diskSize: String,
     val diskUsed: String,
     val diskUsedPercentage: Float,
-    val perUserStorage: List<UsageByUserDto>,
+    val assetStatistics: AssetStatisticsDto,
     val newVersion: String?
 )

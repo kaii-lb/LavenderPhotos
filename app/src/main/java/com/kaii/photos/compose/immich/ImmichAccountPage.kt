@@ -74,11 +74,12 @@ import com.kaii.photos.compose.widgets.UpdatableProfileImage
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.domain.immich.ImmichLoginState
 import com.kaii.photos.domain.immich.ImmichServerInfo
+import com.kaii.photos.domain.immich.QuotaStatistics
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.bytesToGB
 import com.kaii.photos.models.ImmichInfoViewModel
 import com.kaii.photos.models.OperationStatus
-import io.github.kaii_lb.lavender.immichintegration.serialization.user.UsageByUserDto
+import io.github.kaii_lb.lavender.immichintegration.serialization.assets.AssetStatisticsDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAdminResponseDto
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserAvatarColor
 import io.github.kaii_lb.lavender.immichintegration.serialization.user.UserStatus
@@ -178,17 +179,10 @@ private fun ImmichAccountPagePreview() {
                 diskSize = "100 GiB",
                 diskUsed = "25 GiB",
                 diskUsedPercentage = 0.25f,
-                perUserStorage = listOf(
-                    UsageByUserDto(
-                        photos = 9812,
-                        videos = 5125,
-                        quotaSizeInBytes = 5L * 1024 * 1024 * 1024,
-                        usage = (2.65 * 1024 * 1024 * 1024).toLong(),
-                        usagePhotos = (0.75 * 1024 * 1024 * 1024).toLong(),
-                        userId = Uuid.NIL,
-                        userName = "example",
-                        usageVideos = (0.25 * 1024 * 1024 * 1024).toLong()
-                    )
+                assetStatistics = AssetStatisticsDto(
+                    images = 9812,
+                    videos = 5125,
+                    total = 9812 + 5125
                 ),
                 newVersion = "v2.7.5"
             )
@@ -223,14 +217,24 @@ private fun ImmichAccountPageImpl(
     refresh: () -> Unit,
     logout: () -> Unit
 ) {
-    val perUserStorage by remember {
+    val assetStatistics by remember {
         derivedStateOf {
             val info = serverInfo()
             val userInfo = userInfo()
 
             if (info != null && userInfo is ImmichLoginState.LoggedIn) {
-                info.perUserStorage.first { it.userId == userInfo.user.id }
+                info.assetStatistics
             } else null
+        }
+    }
+
+    val quotaStatistics by remember {
+        derivedStateOf {
+            val info = userInfo() as? ImmichLoginState.LoggedIn ?: return@derivedStateOf null
+            val quota = info.user.quotaSizeInBytes
+            val usage = info.user.quotaUsageInBytes
+
+            QuotaStatistics(usage, quota)
         }
     }
 
@@ -449,10 +453,11 @@ private fun ImmichAccountPageImpl(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val animated by animateFloatAsState(
-                        targetValue =
-                            perUserStorage?.quotaSizeInBytes?.let {
-                                perUserStorage!!.usage.toFloat() / it
-                            } ?: 1f,
+                        targetValue = quotaStatistics?.usage?.toFloat()?.let { usage ->
+                            quotaStatistics?.size?.let { size ->
+                                usage / size
+                            }
+                        } ?: 1f,
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
                     )
 
@@ -461,13 +466,13 @@ private fun ImmichAccountPageImpl(
                             animated
                         },
                         color =
-                            if (perUserStorage != null) {
+                            if (assetStatistics != null) {
                                 ProgressIndicatorDefaults.linearColor
                             } else {
                                 MaterialTheme.colorScheme.error
                             }.copy(
                                 alpha =
-                                    if (userInfo() is ImmichLoginState.LoggedIn && perUserStorage?.quotaSizeInBytes != null) 1f
+                                    if (quotaStatistics != null) 1f
                                     else 0.6f
                             ),
                         modifier = Modifier
@@ -480,18 +485,18 @@ private fun ImmichAccountPageImpl(
                     Text(
                         text =
                             when {
-                                perUserStorage != null && perUserStorage?.quotaSizeInBytes == null -> {
+                                quotaStatistics != null && quotaStatistics?.size == null -> {
                                     stringResource(
                                         id = R.string.immich_account_unlimited,
-                                        perUserStorage!!.usage.bytesToGB()
+                                        quotaStatistics?.usage?.bytesToGB() ?: 0f
                                     )
                                 }
 
-                                perUserStorage != null -> {
+                                assetStatistics != null -> {
                                     stringResource(
                                         id = R.string.immich_server_storage_desc_detailed,
-                                        perUserStorage!!.usage.bytesToGB(),
-                                        perUserStorage!!.quotaSizeInBytes?.bytesToGB() ?: 0f
+                                        quotaStatistics?.usage?.bytesToGB() ?: 0f,
+                                        quotaStatistics?.size?.bytesToGB() ?: 0f
                                     )
                                 }
 
@@ -516,7 +521,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_usage_images),
                     iconResID = R.drawable.photogrid,
                     position = RowPosition.Middle,
-                    summary = perUserStorage?.photos?.toString() ?: stringResource(id = R.string.immich_state_unknown),
+                    summary = assetStatistics?.images?.toString() ?: stringResource(id = R.string.immich_state_unknown),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
@@ -529,7 +534,7 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_account_usage_videos),
                     iconResID = R.drawable.videocam,
                     position = RowPosition.Bottom,
-                    summary = perUserStorage?.videos?.toString() ?: stringResource(id = R.string.immich_state_unknown),
+                    summary = assetStatistics?.videos?.toString() ?: stringResource(id = R.string.immich_state_unknown),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,

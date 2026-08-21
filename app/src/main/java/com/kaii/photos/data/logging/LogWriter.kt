@@ -2,6 +2,7 @@ package com.kaii.photos.data.logging
 
 import android.content.Context
 import android.util.Log
+import io.github.kaii_lb.lavender.immichintegration.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -10,7 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.io.File
 
-object LogWriter {
+object LogWriter : Logger {
     private var logFile: File? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -18,7 +19,9 @@ object LogWriter {
     private var consumerJob: Job? = null
 
     private enum class LogLevel {
+        Info,
         Debug,
+        Warn,
         Error
     }
 
@@ -55,12 +58,19 @@ object LogWriter {
         }
     }
 
-    fun d(tag: String?, message: String, throwable: Throwable? = null) = write(LogLevel.Debug, tag, message, throwable)
-    fun e(tag: String?, message: String, throwable: Throwable? = null) = write(LogLevel.Error, tag, message, throwable)
+    override fun debug(tag: String, message: String) = write(LogLevel.Debug, tag, message)
+
+    override fun info(tag: String, message: String) = write(LogLevel.Info, tag, message)
+
+    override fun warn(tag: String, message: String) = write(LogLevel.Warn, tag, message)
+
+    override fun error(tag: String, message: String, throwable: Throwable?) = write(LogLevel.Error, tag, message, throwable)
 
     private fun write(level: LogLevel, tag: String?, message: String, throwable: Throwable? = null) {
         when (level) {
+            LogLevel.Info -> Log.e(tag, message, throwable)
             LogLevel.Debug -> Log.d(tag, message, throwable)
+            LogLevel.Warn -> Log.w(tag, message, throwable)
             LogLevel.Error -> Log.e(tag, message, throwable)
         }
 
