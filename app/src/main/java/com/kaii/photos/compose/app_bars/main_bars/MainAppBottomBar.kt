@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -127,7 +128,8 @@ fun MainAppBottomBar(
                 )
                 .widthIn(max = with(localDensity) {
                     windowInfo.containerSize.width.toDp() * 0.9f
-                }),
+                })
+                .heightIn(max = 64.dp),
             content = {
                 val isSelecting by selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
 
@@ -173,7 +175,9 @@ fun MainAppBottomBar(
                         val coroutineScope = rememberCoroutineScope()
 
                         LazyRow(
-                            state = state
+                            state = state,
+                            modifier = Modifier
+                                .wrapContentHeight()
                         ) {
                             items(
                                 items = tabs
