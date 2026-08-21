@@ -404,11 +404,13 @@ private fun ImmichAccountPageImpl(
                     title = stringResource(id = R.string.immich_auth_password),
                     iconResID = R.drawable.password,
                     position = RowPosition.Middle,
-                    summary = "*".repeat(8),
+                    summary =
+                        if ((userInfo() as? ImmichLoginState.LoggedIn)?.user?.shouldChangePassword == true) stringResource(id = R.string.immich_auth_password_needs_changing)
+                        else "*".repeat(8),
                     showBackground = true,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
-                    enabled = userInfo() is ImmichLoginState.LoggedIn,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn && (userInfo() as? ImmichLoginState.LoggedIn)?.user?.shouldChangePassword != true,
                     action = {
                         showDialog = true
                     }
@@ -573,6 +575,7 @@ private fun ImmichAccountPageImpl(
                     contentColor = MaterialTheme.colorScheme.onError,
                     cornerRadius = 32.dp,
                     innerCornerRadius = 8.dp,
+                    enabled = userInfo() is ImmichLoginState.LoggedIn,
                     action = {
                         showDialog = true
                     }
