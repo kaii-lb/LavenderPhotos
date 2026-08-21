@@ -599,7 +599,6 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="immich_email">Email:</string>
     <string name="immich_state_unknown">Unknown</string>
     <string name="immich_auth_password">Password</string>
-    <string name="immich_auth_password_needs_changing">Password should be changed on web</string>
     <string name="immich_auth_email">Email</string>
     <string name="immich_auth_api_key">Api Key</string>
     <string name="immich_auth_current_password">Current password</string>
