@@ -92,7 +92,14 @@ fun HorizontalImageList(
         onControlsTimeout = {
             val item = items[state.targetPage] as? PhotoLibraryUIModel.MediaImpl
 
-            if (item?.item?.type == MediaType.Video) appBarsVisible.value = false
+            if (item?.item?.type == MediaType.Video) {
+                setBarVisibility(
+                    visible = false,
+                    window = window
+                ) { visible ->
+                    appBarsVisible.value = visible
+                }
+            }
         }
     )
 

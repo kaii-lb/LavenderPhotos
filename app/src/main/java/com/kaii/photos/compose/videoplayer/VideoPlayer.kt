@@ -235,13 +235,23 @@ private fun VideoPlayerUI(
             doubleTapDisplayTimeMillis = 0
         }
 
-        LaunchedEffect(state.controlsVisible, isLandscape) {
+        LaunchedEffect(state.controlsVisible) {
+            if (isLandscape) return@LaunchedEffect
+
             setBarVisibility(
                 visible = state.controlsVisible,
                 window = window
-            ) {
-                appBarsVisible.value = it
-                state.controlsVisible = it
+            ) { visible ->
+                appBarsVisible.value = visible
+            }
+        }
+
+        LaunchedEffect(isLandscape) {
+            setBarVisibility(
+                visible = state.controlsVisible && !isLandscape,
+                window = window
+            ) { visible ->
+                appBarsVisible.value = visible
             }
         }
 
@@ -349,11 +359,13 @@ private fun VideoPlayerUI(
                     detectTapGestures(
                         onTap = { position ->
                             if (!scrollState.videoLock && doubleTapDisplayTimeMillis == 0) {
-                                setBarVisibility(
-                                    visible = if (isLandscape) false else !state.controlsVisible,
-                                    window = window
-                                ) {
-                                    appBarsVisible.value = it
+                                if (isLandscape) {
+                                    setBarVisibility(
+                                        visible = false,
+                                        window = window
+                                    ) { visible ->
+                                        appBarsVisible.value = visible
+                                    }
                                 }
 
                                 state.controlsVisible = !state.controlsVisible
@@ -491,6 +503,7 @@ private fun VideoPlayerUI(
                                     window = window
                                 ) {
                                     appBarsVisible.value = it
+                                    state.controlsVisible = !it
                                 }
 
                                 state.delayHide()
