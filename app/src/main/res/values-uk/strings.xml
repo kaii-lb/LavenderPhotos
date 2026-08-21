@@ -537,19 +537,7 @@
     <string name="immich_server">Immich Сервер</string>
     <string name="immich_help_general">Що це таке?</string>
     <string name="immich_help_general_desc">Дозволити медіа на альбомному рівні робити резервну копію на Immich сервер</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> це рішення для керування фотографіями та відео на власному хостингу,
-            що дозволяє будь-кому утримувати свій власний хмарний сервер резервних копій.
-            </p>
-            <h3 style="text-align:center;">Як Використовувати?<h3/>
-            <ul>
-                <li>Власний хостинг <a href="https://immich.app/">Immich Сервера</a></li>
-                <li>Вкажіть адресу сервера в Lavender Photos</li>
-                <li>Увійдіть використовуючи обліковий запис Immich</li>
-                <li>Перейдіть до будь-якого альбому, натисніть на іконку з хмарою</li>
-                <li>Розпочніть робити резервну копію ваших фото!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> це рішення для керування фотографіями та відео на власному хостингу,\n            що дозволяє будь-кому утримувати свій власний хмарний сервер резервних копій.\n            </p>\n            <h3 style=\"text-align:center;\">Як Використовувати?<h3/>\n            <ul>\n                <li>Власний хостинг <a href=\"https://immich.app/\">Immich Сервера</a></li>\n                <li>Вкажіть адресу сервера в Lavender Photos</li>\n                <li>Увійдіть використовуючи обліковий запис Immich</li>\n                <li>Перейдіть до будь-якого альбому, натисніть на іконку з хмарою</li>\n                <li>Розпочніть робити резервну копію ваших фото!</li>\n            </ul>\n        "]]></string>
     <string name="immich_server_url_invalid">Неправильний Url!</string>
     <string name="immich_misc">Різне</string>
     <string name="immich_server_online">Онлайн</string>
@@ -692,4 +680,9 @@
     <string name="media_share_snackbar_body">Поширено %1$d з %2$d</string>
     <string name="media_secure_snackbar_body">Захищено %1$d з %2$d</string>
     <string name="media_restore_snackbar_body">Відновлено %1$d з %2$d</string>
+    <string name="albums_toggle_nested_display">Відобразити вкладені медіафайли</string>
+    <string name="no_actions_available">Недоступно ніяких дій</string>
+    <string name="privacy_authenticate">Аутентифікуватись</string>
+    <string name="privacy_scroll_mode_last_active">Приватний Режим Активний</string>
+    <string name="privacy_scroll_mode_last_active_desc">Приватний режим був залишений коли додаток був останнього разу закритий. Будь-ласка використайте свій пароль або біометрику для продовження.</string>
 </resources>

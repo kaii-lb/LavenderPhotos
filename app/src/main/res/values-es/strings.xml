@@ -356,19 +356,7 @@
     <string name="immich_server">Servidor Immich</string>
     <string name="immich_help_general">¿Qué es esto?</string>
     <string name="immich_help_general_desc">Permite la copia de seguridad de medios a nivel de álbum en un servidor Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> es una solución de gestión de fotografías y vídeos autohospedada,
-            eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.
-            </p>
-            <h3 style="text-align:center;">¿Cómo utilizarlo?<h3/>
-            <ul>
-                <li>Autohospedar un <a href="https://immich.app/">Servidor Immich</a></li>
-                <li>Especifique la dirección del servidor en Lavender Photos</li>
-                <li>Inicie sesión con la cuenta de usuario de Immich</li>
-                <li>Vaya a cualquier álbum, haga clic en el ícono de la nube</li>
-                <li>¡Empieza a hacer copias de seguridad de tus fotos!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> es una solución de gestión de fotografías y vídeos autohospedada,\n            eso permite que cualquiera pueda alojar su propio servidor de respaldo en la nube.\n            </p>\n            <h3 style=\"text-align:center;\">¿Cómo utilizarlo?<h3/>\n            <ul>\n                <li>Autohospedar un <a href=\"https://immich.app/\">Servidor Immich</a></li>\n                <li>Especifique la dirección del servidor en Lavender Photos</li>\n                <li>Inicie sesión con la cuenta de usuario de Immich</li>\n                <li>Vaya a cualquier álbum, haga clic en el ícono de la nube</li>\n                <li>¡Empieza a hacer copias de seguridad de tus fotos!</li>\n            </ul>\n        "]]></string>
     <string name="immich_server_url_invalid">¡Url Inválida!</string>
     <string name="video_open_externally">Abrir en el navegador externo</string>
     <string name="video_open_externally_desc">Pregunta con qué abrir los vídeos desde una cuadrícula</string>

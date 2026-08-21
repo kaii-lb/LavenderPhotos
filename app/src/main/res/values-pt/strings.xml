@@ -360,19 +360,7 @@
     <string name="immich_server">Servidor Immich</string>
     <string name="immich_help_general">O que é isto?</string>
     <string name="immich_help_general_desc">Permite backup de álbuns inteiros de média para um servidor Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> é uma solução de gestão de média auto-hospedada,
-            que permite qualquer pessoa hospedar o seu próprio servidor de backup.
-            </p>
-            <h3 style="text-align:center;">Como Usar?<h3/>
-            <ul>
-                <li>Hospede um <a href="https://immich.app/">Servidor Immich</a></li>
-                <liEspecifique o endereço do servidor no Lavender Photos</li>
-                <li>Entre com a sua conta do Immich</li>
-                <li>Vá para qualquer álbum e toque no ícone de nuvem</li>
-                <li>Comece o backup das suas fotos!</li>
-            </ul>
-        ]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> é uma solução de gestão de média auto-hospedada,\n            que permite qualquer pessoa hospedar o seu próprio servidor de backup.\n            </p>\n            <h3 style=\"text-align:center;\">Como Usar?<h3/>\n            <ul>\n                <li>Hospede um <a href=\"https://immich.app/\">Servidor Immich</a></li>\n                <liEspecifique o endereço do servidor no Lavender Photos</li>\n                <li>Entre com a sua conta do Immich</li>\n                <li>Vá para qualquer álbum e toque no ícone de nuvem</li>\n                <li>Comece o backup das suas fotos!</li>\n            </ul>\n        "]]></string>
     <string name="immich_misc">Outros</string>
     <string name="exif_name">Nome:</string>
     <string name="exif_path">Caminho:</string>

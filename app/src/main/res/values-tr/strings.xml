@@ -386,8 +386,7 @@
     <string name="immich_server">Immich Sunucusu</string>
     <string name="immich_help_general">Bu nedir?</string>
     <string name="immich_help_general_desc">Albüm düzeyinde medya yedeklemesini bir Immich sunucusuna sağlar</string>
-    <string name="immich_help_detailed_desc">
-        <![CDATA[
+    <string name="immich_help_detailed_desc"><![CDATA[
             <p><a href="https://immich.app/">Immich</a>, herkesin kendi bulut yedekleme sunucusunu barındırmasına olanak tanıyan,
             kendi kendine barındırılan bir fotoğraf ve video yönetim çözümüdür.
             </p>
@@ -399,8 +398,7 @@
                 <li>Herhangi bir albüme gidin, bulut simgesine tıklayın</li>
                 <li>Fotoğraflarınızı yedeklemeye başlayın!</li>
             </ul>
-        ]]>
-    </string>
+        ]]></string>
     <string name="immich_server_url_invalid">Geçersiz Url!</string>
     <string name="immich_misc">Çeşitli</string>
     <string name="albums_remove">Albümü kaldır</string>
@@ -418,4 +416,102 @@
     <string name="secure_encryption_failed_no_permission">Fotoğrafları şifrelemek için izin gerekli</string>
     <string name="secure_migrating">Taşınıyor</string>
     <string name="secure_migrating_desc">Fotoğraflarınız yedekleniyor ve şifreleniyor, lütfen bekleyin…</string>
+    <string name="albums_is_cloud">Bu yalnızca bulutta bulunan bir albümdür</string>
+    <string name="albums_is_cloud_linked">Bulut bağlantılı albüm</string>
+    <string name="albums_paths">Dizinler:</string>
+    <string name="albums_toggle_nested_display">Gömülü medyaları göster</string>
+    <string name="navigation_search">Ara</string>
+    <string name="navigation_away">Başka bir sayfaya yönlendirir</string>
+    <string name="navigation_tap_to_nav_desc">Medyalar arasında gezinmek için ekranın soluna veya sağına dokunun</string>
+    <string name="app_description">Gizliliği ön planda tutan, hızlı ve şık bir açık kaynak galeri uygulaması</string>
+    <string name="updates_no_changelog">Değişim günlüğü bulunmuyor</string>
+    <string name="secure_migrating_notice">Aktarım Bildirimi</string>
+    <string name="secure_migrating_notice_desc">Güvenli klasör şifrelendi! Tüm fotoğrafların artık tamamen güvende ve hiç kimse tarafından erişilemez. Önlem olarak güvenli fotoğraflarının bir kopyası dışa aktarma klasöründe saklanmaktadır. Buna albümler sayfasından veya Dahili Depolama/Android/media/com.kaii.photos/LavenderPhotos/Exports konumundan ulaşabilirsiniz.</string>
+    <string name="secure_unlock">Güvenli Klasör Kilidini Aç</string>
+    <string name="secure_unlock_desc">Kilidi açmak için biyometrik verilerinizi kullanın</string>
+    <string name="secure_unlock_failed">Kimlik doğrulanamadı :&lt;</string>
+    <string name="secure_unlock_short">Klasörün Kilidini Aç</string>
+    <string name="secure_move_out">Medya Güvenli Klasör\'den çıkarılsın mı?</string>
+    <string name="secure_restore_failed">Medya geri yükleme başarısız</string>
+    <string name="export_location">Konum</string>
+    <string name="export_settings_backup_save_load_header">Uygulama Ayarları</string>
+    <string name="export_settings_backup_save">Uygulama Verilerini Kaydet</string>
+    <string name="export_settings_backup_save_desc">Uygulama ayarlarını ve albümleri daha sonra geri yüklenebilmeleri için bir JSON dosyasına aktarır. Immich giriş bilgilerini veya güvenli medyaları kaydetmez.</string>
+    <string name="export_settings_backup_save_success">Uygulama verileri kaydedildi</string>
+    <string name="export_settings_backup_save_error">Uygulama verileri kaydedilemedi</string>
+    <string name="export_settings_backup_load">Uygulama verilerini yükle</string>
+    <string name="export_settings_backup_load_desc">Uygulama ayarlarını ve albümleri bir JSON dosyasından yükler. Mevcut tüm ayarların üzerine yazılır.</string>
+    <string name="export_settings_backup_load_error">Veriler yüklenemedi</string>
+    <string name="favourites_remove_this">Favorilerden kaldırılsın mı?</string>
+    <string name="favourites_migration">Favoriler yenilendi!</string>
+    <string name="favourites_migration_notice">Favoriler</string>
+    <string name="favourites_migration_desc">Bu, en özel anlarınızı takip etmenin bir yoludur. Lavender Photos ile bu; bunu destekleyen tüm uygulamalar arasında senkronize olan favoriler, kusursuz yönetim ve yüksek performanslı bir sistem anlamına geliyor!\n\nLavender Photos\'un önceki bir sürümünden geliyorsanız, geçmişte favorilediğiniz tüm ögeler yeni sisteme taşınacaktır.\n\nLütfen telefonunuzu ve bu uygulamayı açık tutun.</string>
+    <string name="favourites_migration_started">Aktarım başladı!</string>
+    <string name="favourites_migration_none">Aktarılacak öge bulunamadı</string>
+    <string name="favourites_migration_in_progress_short">İşlem devam ediyor</string>
+    <string name="favourites_migration_done">Aktarım tamamlandı!</string>
+    <string name="favourites_migration_declined">Erişim Reddedildi!</string>
+    <string name="favourites_migration_declined_desc">Gerekli izinleri vermediğiniz takdirde Lavender Photos eski sürümdeki favorilerinizi aktaramaz. Bu durum, önceki favorilerinizin kaybolmasına neden olur.</string>
+    <string name="debugging_development">Geliştirici</string>
+    <string name="debugging_spawn_progress_snackbar">İlerleme Çubuğu Bildirimi Göster</string>
+    <string name="debugging_spawn_progress_snackbar_desc">İlerlemesi 5 saniye boyunca her saniye güncellenen sınırlı bir ilerleme çubuğu gösterir</string>
+    <string name="debugging_internals">Dahili Ögeler</string>
+    <string name="debugging_reset_scan_generation">Medyayı Yeniden Tara</string>
+    <string name="debugging_reset_scan_generation_desc">Cihazdaki tüm medya dosyalarını tarar ve uygulamanın veritabanına ekler. Bazı fotoğraflar görünmüyorsa bu seçeneği kullanın</string>
+    <string name="debugging_reset_scan_generation_loading">Medya taranıyor…</string>
+    <string name="debugging_report_issue">Sorun bildir</string>
+    <string name="debugging_report_issue_bug">Hata Bildir</string>
+    <string name="debugging_report_issue_bug_desc">Uygulamadaki bir sorunu düzeltmeye yardımcı olun</string>
+    <string name="debugging_report_issue_feature">Özellik talebi</string>
+    <string name="debugging_report_issue_feature_desc">Yeni bir özellik önerin</string>
+    <string name="debugging_report_issue_other">Diğer</string>
+    <string name="debugging_report_issue_other_desc">Başka bir konu bildir</string>
+    <string name="video_change_audio_track">Bu videonun sesini değiştir</string>
+    <string name="editing_more">Daha fazla</string>
+    <string name="editing_resolution_scale">Ölçeklendir</string>
+    <string name="editing_export_image_failed">Fotoğraf dışa aktarılamadı</string>
+    <string name="editing_export_video_uploading">Video yükleniyor…</string>
+    <string name="settings_about">Hakkında</string>
+    <string name="settings_storage_export_quality">Düzenleyici aktarım kalitesi: %d%%</string>
+    <string name="settings_storage_export_quality_warn">Yüksek değerler dosya boyutunu artırır.</string>
+    <string name="settings_behaviour_loop_never">Videoları Döngüye Alma</string>
+    <string name="settings_behaviour_loop_under_30">30sn Altını Döngüye Al</string>
+    <string name="settings_behaviour_loop_always">Videoları Döngüye Al</string>
+    <string name="settings_behaviour_loop_never_desc">Video bittiğinde oynatma durur</string>
+    <string name="settings_behaviour_loop_under_30_desc">30 saniyenin altındaki tüm videolar bittiğinde otomatik olarak yeniden başlar</string>
+    <string name="settings_behaviour_loop_always_desc">Tüm videolar, süreleri ne olursa olsun bittiğinde otomatik olarak yeniden başlar</string>
+    <string name="settings_sort_mode_date_taken">Çekildiği Tarih</string>
+    <string name="settings_sort_mode_date_modified">Son Düzenleme</string>
+    <string name="settings_sort_mode_month_taken">Çekildiği Ay</string>
+    <string name="settings_sort_mode_date_taken_no_separators">Ayırıcısız Çekim Tarihi</string>
+    <string name="settings_sort_mode_date_modified_no_separators">Çekim Tarihi (Ayırıcısız)</string>
+    <string name="permissions">İzinler</string>
+    <string name="permissions_grant_long">İzin Ver</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Güvenli Klasörde ekran görüntüsüne izin ver</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">Güvenli Klasör açıkken ekran görüntüsü alınmasına, ekran kaydı yapılmasına ve ekran paylaşımına izin verin. Güvenli içerikler son kullanılan uygulamalar önizlemesinde de görünebilir. Koruma altında tutmak için kapalı bırakın</string>
+    <string name="permissions_read_images">Görselleri okut</string>
+    <string name="permissions_read_images_desc">Lavender Photos uygulamasının cihazdaki fotoğraflara erişmesine izin ver</string>
+    <string name="permissions_read_videos">Videoları Tara</string>
+    <string name="permissions_read_videos_desc">Lavender Photos uygulamasının cihazdaki videolara erişmesine izin ver</string>
+    <string name="permissions_read_external_storage">Harici Depolamayı Tara</string>
+    <string name="permissions_read_external_storage_desc">Lavender Photos uygulamasının cihazdaki fotoğraf ve videolara erişmine izin ver</string>
+    <string name="permissions_manage_media">Medyayı Yönet</string>
+    <string name="permissions_manage_media_desc">İsteğe bağlı izin. Çöp kutusu ve silme işlemlerini hızlandırmak için kullanılır</string>
+    <string name="permissions_continue">Devam</string>
+    <string name="permissions_necessary">Zorunlu İzinler</string>
+    <string name="permissions_necessary_desc">Bu izin, uygulamanın çalışabilmesi için gereklidir</string>
+    <string name="permissions_grant_permissions">Erişim İzinlerini Ver</string>
+    <string name="permissions_why">Neden?</string>
+    <string name="permissions_dismiss">Kapat</string>
+    <string name="permissions_read_media_explanation">Bu izin, cihazdaki fotoğraf ve videoları bulmak için gereklidir. Lavender Photos, okuduğu dosyalar konusunda son derece hassastır; bu bilgileri asla paylaşmaz veya kötüye kullanmaz.</string>
+    <string name="permissions_manage_media_explanation">Bu izin isteğe bağlıdır ancak şiddetle tavsiye edilir. Medyaları Yönet izni, Lavender Photos\'un medya dosyalarını silme, çöp kutusuna gönderme, taşıma veya kopyalama işlemlerinde Android Content Resolver API\'sini kullanmasını sağlayarak diğer uygulamalarla daha sorunsuz ve uyumlu çalışmasını sağlar.</string>
+    <string name="permissions_explanation">İzin Açıklaması</string>
+    <string name="media_share_failed">Medya paylaşılamadı!</string>
+    <string name="media_snackbar_operation_failed">İşlem Başarısız!</string>
+    <string name="media_copy_snackbar_title">Ögeler kopyalanıyor…</string>
+    <string name="media_move_snackbar_title">Ögeler taşınıyor…</string>
+    <string name="media_delete_snackbar_title">Ögeler siliniyor…</string>
+    <string name="media_secure_snackbar_title">Ögeler güvenliğe alınıyor…</string>
+    <string name="media_restore_snackbar_title">Ögeler geri yükleniyor…</string>
+    <string name="media_share_snackbar_title">Ögeler paylaşılıyor…</string>
 </resources>

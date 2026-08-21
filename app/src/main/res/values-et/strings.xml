@@ -311,4 +311,19 @@
     <string name="debugging_reset_scan_generation_loading">Skaneerin meediumit…</string>
     <string name="debugging_report_issue">Teata veast või probleemist</string>
     <string name="debugging_report_issue_bug">Veateade</string>
+    <string name="debugging_report_issue_bug_desc">Aita parandada rakenduse viga või probleemi</string>
+    <string name="debugging_report_issue_other_desc">Teata midagi muud</string>
+    <string name="video_seek_icon_desc">Näitab mis suunas kasutaja otsib</string>
+    <string name="video_mute_toggle">Summuta see video või lõpeta summutamine</string>
+    <string name="video_seek_back">Keri tagasi 5 sekundit</string>
+    <string name="video_seek_front">Keri edasi 5 sekundit</string>
+    <string name="video_decrypting">Video on dekrüptimisel, palun oota</string>
+    <string name="video_open_externally">Ava välises pleieris</string>
+    <string name="video_change_audio_track">Vaheta selle videofaili heliriba</string>
+    <string name="editing_bitrate_unit">Bitti sekundis</string>
+    <string name="editing_open_with_copying_video">Töötlen videot…</string>
+    <string name="editing_open_with_copying_image">Töötlen pilti…</string>
+    <string name="editing_resolution_scale">Muuda suurust</string>
+    <string name="editing_export_image_failed">Foto eksportiminei õnnestunud</string>
+    <string name="filter">Filtreeri</string>
 </resources>

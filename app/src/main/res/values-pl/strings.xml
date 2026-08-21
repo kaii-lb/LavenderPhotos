@@ -344,18 +344,19 @@
     <string name="immich_help_general">Co to jest?</string>
     <string name="immich_help_general_desc">Umożliwia tworzenie kopii zapasowych multimediów na poziomie albumu na serwerze Immich</string>
     <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> to rozwiązanie do samodzielnego hostowania zdjęć i filmów,
-            które pozwala każdemu na uruchomienie własnego serwera kopii zapasowych w chmurze.
-            </p>
-            <h3 style="text-align:center;">Jak używać?<h3/>
-            <ul>
-                <li>Uruchom własny <a href="https://immich.app/">serwer Immich</a></li>
-                <li>Podaj adres serwera w aplikacji Lavender Photos</li>
-                <li>Zaloguj się na swoje konto użytkownika Immich</li>
-                <li>Przejdź do dowolnego albumu i kliknij ikonę chmury</li>
-                <li>Rozpocznij tworzenie kopii zapasowej swoich zdjęć!</li>
-            </ul>
-        ]]></string>
+<p><a href="https://immich.app/">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,
+które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
+</p>
+<h3 style="text-align:center;">Jak korzystać?<h3/>
+<ul>
+<li>Samodzielne hostowanie <a href="https://immich.app/">serwera Immich</a></li>
+<li>Określanie adresu serwera w Lavender Photos</li>
+<li>Zaloguj się przy użyciu konta użytkownika Immich</li>
+<li>Na stronie pulpitu kliknij „Opcje kopii zapasowej”</li>
+<li>Wybierz albumy, których kopię zapasową chcesz utworzyć, i kliknij przycisk potwierdzenia</li>
+<li>Ciesz się bezpiecznym i łatwym tworzeniem kopii zapasowych w chmurze!</li>
+</ul>
+]]></string>
     <string name="immich_server_url_invalid">Nieprawidłowy adres URL!</string>
     <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
     <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
@@ -689,4 +690,9 @@
     <string name="privacy_authenticate">Uwierzytelnij</string>
     <string name="privacy_scroll_mode_last_active">Tryb prywatności aktywny</string>
     <string name="privacy_scroll_mode_last_active_desc">Tryb prywatności był aktywny podczas ostatniego zamknięcia aplikacji. Aby kontynuować, użyj hasła lub danych biometrycznych.</string>
+    <string name="albums_is_saf">To jest zasób sieciowy</string>
+    <string name="albums_network_share">Udostępnianie sieciowe</string>
+    <string name="albums_network_share_desc">Tylko przeglądanie. Wymaga RSAF, Drive lub odpowiednika</string>
+    <string name="logs_share">Udostępnij pliki logów</string>
+    <string name="record_logs_off">Zapisywanie logów jest wyłączone</string>
 </resources>
