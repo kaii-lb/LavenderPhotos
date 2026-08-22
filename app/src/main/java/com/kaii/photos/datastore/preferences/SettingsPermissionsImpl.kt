@@ -16,7 +16,6 @@ class SettingsPermissionsImpl(
 ) {
     private val isMediaManagerKey = booleanPreferencesKey("is_media_manager")
     private val confirmToDelete = booleanPreferencesKey("confirm_to_delete")
-    private val preserveDateOnMoveKey = booleanPreferencesKey("permissions_preserve_date_on_move_key")
     private val doNotTrashKey = booleanPreferencesKey("permissions_do_not_trash")
     private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
     private val passwordKey = byteArrayPreferencesKey("permissions_password_key")
@@ -60,17 +59,6 @@ class SettingsPermissionsImpl(
     fun setConfirmToDelete(value: Boolean) = scope.launch {
         context.datastore.edit {
             it[confirmToDelete] = value
-        }
-    }
-
-    fun getPreserveDateOnMove(): Flow<Boolean> =
-        context.datastore.data.map {
-            it[preserveDateOnMoveKey] != false
-        }
-
-    fun setPreserveDateOnMove(value: Boolean) = scope.launch {
-        context.datastore.edit {
-            it[preserveDateOnMoveKey] = value
         }
     }
 

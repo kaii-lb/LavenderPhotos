@@ -22,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,11 +53,12 @@ fun PrivacyAndSecurityPage(
     startupManager: StartupManager,
     modifier: Modifier = Modifier
 ) {
-    val settings = PhotosApplication.appModule.settings.permissions
+    val settings = remember {
+        PhotosApplication.appModule.settings.permissions
+    }
 
     val isMediaManager by settings.getIsMediaManager().collectAsStateWithLifecycle(initialValue = false)
     val confirmToDelete by settings.getConfirmToDelete().collectAsStateWithLifecycle(initialValue = true)
-    val preserveDate by settings.getPreserveDateOnMove().collectAsStateWithLifecycle(initialValue = true)
     val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
     val allowSecureFolderScreenCapture by settings.getAllowSecureFolderScreenCapture().collectAsStateWithLifecycle(initialValue = false)
     val password by settings.getPassword().collectAsStateWithLifecycle(initialValue = null)
@@ -64,7 +66,6 @@ fun PrivacyAndSecurityPage(
     PrivacyAndSecurityPageImpl(
         isMediaManager = { isMediaManager },
         confirmToDelete = { confirmToDelete },
-        preserveDate = { preserveDate },
         doNotTrash = { doNotTrash },
         allowSecureFolderScreenCapture = { allowSecureFolderScreenCapture },
         password = { password },
@@ -72,7 +73,6 @@ fun PrivacyAndSecurityPage(
         modifier = modifier,
         setIsMediaManager = settings::setIsMediaManager,
         setConfirmToDelete = settings::setConfirmToDelete,
-        setPreserveDate = settings::setPreserveDateOnMove,
         setDoNotTrash = settings::setDoNotTrash,
         setAllowSecureFolderScreenCapture = settings::setAllowSecureFolderScreenCapture,
         onPermissionResult = {
@@ -90,7 +90,6 @@ fun PrivacyAndSecurityPagePreview() {
     PrivacyAndSecurityPageImpl(
         isMediaManager = { false },
         confirmToDelete = { false },
-        preserveDate = { false },
         doNotTrash = { false },
         allowSecureFolderScreenCapture = { false },
         password = { null },
@@ -98,7 +97,6 @@ fun PrivacyAndSecurityPagePreview() {
         modifier = Modifier,
         setIsMediaManager = {},
         setConfirmToDelete = {},
-        setPreserveDate = {},
         setDoNotTrash = {},
         setAllowSecureFolderScreenCapture = {},
         onPermissionResult = {}
@@ -109,7 +107,6 @@ fun PrivacyAndSecurityPagePreview() {
 private fun PrivacyAndSecurityPageImpl(
     isMediaManager: () -> Boolean,
     confirmToDelete: () -> Boolean,
-    preserveDate: () -> Boolean,
     doNotTrash: () -> Boolean,
     allowSecureFolderScreenCapture: () -> Boolean,
     password: () -> ByteArray?,
@@ -117,7 +114,6 @@ private fun PrivacyAndSecurityPageImpl(
     modifier: Modifier,
     setIsMediaManager: (value: Boolean) -> Unit,
     setConfirmToDelete: (value: Boolean) -> Unit,
-    setPreserveDate: (value: Boolean) -> Unit,
     setDoNotTrash: (value: Boolean) -> Unit,
     setAllowSecureFolderScreenCapture: (value: Boolean) -> Unit,
     onPermissionResult: (granted: Boolean) -> Unit
@@ -182,18 +178,6 @@ private fun PrivacyAndSecurityPageImpl(
                     showBackground = false,
                     checked = confirmToDelete(),
                     onSwitchClick = setConfirmToDelete
-                )
-            }
-
-            item {
-                PreferencesSwitchRow(
-                    title = stringResource(id = R.string.permissions_overwrite_date_on_move),
-                    summary = stringResource(id = R.string.permissions_overwrite_date_on_move_desc),
-                    iconResID = R.drawable.clock,
-                    position = RowPosition.Single,
-                    showBackground = false,
-                    checked = preserveDate(),
-                    onSwitchClick = setPreserveDate
                 )
             }
 
