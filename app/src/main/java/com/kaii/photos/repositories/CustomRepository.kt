@@ -10,10 +10,14 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.CustomFileManager
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.traits.CountAndSize
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
@@ -39,7 +43,7 @@ class CustomRepository(
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     info: Flow<ImmichBasicInfo>
-) : BaseRepo, RenameFile, RenameAlbum, CountAndSize, Secure {
+) : BaseRepo, RenameFile, RenameAlbum, CountAndSize, Secure, PrepareFileForWrite {
     class Factory @Inject constructor(
         private val customDao: CustomEntityDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -153,9 +157,10 @@ class CustomRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
-    ) = fileManager.prepareEncryptFiles(files)
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
+    ): Result<Unit, FileOperationError> = fileManager.prepareFileForWrite(files, followUpAction)
 
     override suspend fun getExifData(
         file: FileOperationItemMetadata

@@ -1,4 +1,4 @@
-package com.kaii.photos.file_management.managers
+package com.kaii.photos.file_management.managers.impl
 
 import android.content.Context
 import android.content.Intent

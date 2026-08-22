@@ -92,12 +92,14 @@ import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.di.sharedViewModel
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.news.UpdateState
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.NullableByteArrayNavType
 import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.CustomAlbumViewModel
+import com.kaii.photos.models.EditorViewModel
 import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.ImmichInfoViewModel
@@ -117,8 +119,6 @@ import com.kaii.photos.models.contributors.ContributorViewModel
 import com.kaii.photos.models.contributors.ContributorViewModelFactory
 import com.kaii.photos.models.data_and_backup.DataAndBackupViewModel
 import com.kaii.photos.models.data_and_backup.DataAndBackupViewModelFactory
-import com.kaii.photos.models.editor.EditorViewModel
-import com.kaii.photos.models.editor.EditorViewModelFactory
 import com.kaii.photos.models.permissions.PermissionsViewModel
 import com.kaii.photos.models.permissions.PermissionsViewModelFactory
 import com.kaii.photos.models.theme.ThemeViewModel
@@ -877,7 +877,8 @@ class MainActivity : ComponentActivity() {
 
                 composable<Screens.ImageEditor>(
                     typeMap = mapOf(
-                        typeOf<AlbumType>() to AlbumType.NavType()
+                        typeOf<AlbumType>() to AlbumType.NavType(),
+                        typeOf<FileOperationItemMetadata>() to Screens.FileOperationItemMetadataNavType()
                     ),
                     enterTransition = {
                         slideInVertically(
@@ -919,31 +920,32 @@ class MainActivity : ComponentActivity() {
                     setupNextScreen(window = window)
 
                     val screen: Screens.ImageEditor = it.toRoute()
-                    val viewModel = viewModel<EditorViewModel>(
-                        factory = EditorViewModelFactory(
-                            context = context,
-                            album = screen.album
-                        )
-                    )
+                    val viewModel = hiltViewModel<EditorViewModel, EditorViewModel.Factory> { factory ->
+                        factory.create(screen.album)
+                    }
 
                     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
                     val exportQuality by viewModel.exportQuality.collectAsStateWithLifecycle()
                     val info by viewModel.immichInfo.collectAsStateWithLifecycle()
+                    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
 
                     ImageEditor(
-                        uri = screen.uri,
+                        file = screen.file,
                         info = { info },
                         isFromOpenWithView = false,
                         exportQuality = { exportQuality },
                         overwriteByDefault = { overwriteByDefault },
-                        editImage = viewModel::editImage,
-                        setNavProps = viewModel::setNavProps
+                        exitOnSave = { exitOnSave },
+                        navIdFlow = viewModel.navIdFlow,
+                        fileOperationProgress = viewModel.fileOperationProgress,
+                        runAction = viewModel::runAction
                     )
                 }
 
                 composable<Screens.VideoEditor>(
                     typeMap = mapOf(
-                        typeOf<AlbumType>() to AlbumType.NavType()
+                        typeOf<AlbumType>() to AlbumType.NavType(),
+                        typeOf<FileOperationItemMetadata>() to Screens.FileOperationItemMetadataNavType()
                     ),
                     enterTransition = {
                         slideInVertically(
@@ -985,10 +987,13 @@ class MainActivity : ComponentActivity() {
                     setupNextScreen(window)
 
                     val screen = it.toRoute<Screens.VideoEditor>()
+                    val viewModel = hiltViewModel<EditorViewModel, EditorViewModel.Factory> { factory ->
+                        factory.create(screen.album)
+                    }
 
                     VideoEditor(
-                        uri = screen.uri,
-                        album = screen.album,
+                        file = screen.file,
+                        viewModel = viewModel,
                         window = window,
                         isFromOpenWithView = false
                     )

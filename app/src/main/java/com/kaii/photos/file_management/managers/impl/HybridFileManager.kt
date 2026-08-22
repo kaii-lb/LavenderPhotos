@@ -15,6 +15,7 @@ import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.Favourite
 import com.kaii.photos.file_management.managers.traits.Move
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
@@ -32,7 +33,7 @@ import kotlinx.coroutines.flow.channelFlow
 class HybridFileManager @AssistedInject constructor(
     @Assisted private val other: LocalSourceFileManager,
     private val cloud: CloudFileManager
-) : Copy, Move, RenameFile, RenameAlbum, Trash, Delete, Secure, Share, Favourite, ExtractExif, CountAndSize {
+) : Copy, Move, RenameFile, RenameAlbum, Trash, Delete, Secure, Share, Favourite, ExtractExif, CountAndSize, PrepareFileForWrite {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType
@@ -193,11 +194,12 @@ class HybridFileManager @AssistedInject constructor(
         if (files.any { it.isCloud }) throw IllegalArgumentException("This operation is not supported: Cannot secure cloud items!")
         else other.encryptFiles(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
     ): Result<Unit, FileOperationError> =
         if (files.any { it.isCloud }) throw IllegalArgumentException("This operation is not supported: Cannot secure cloud items!")
-        else other.prepareEncryptFiles(files)
+        else other.prepareFileForWrite(files, followUpAction)
 
 
     override suspend fun shareFiles(

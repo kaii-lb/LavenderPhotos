@@ -151,18 +151,6 @@ fun SecureFolderView(
                     animationSpec = AnimationConstants.expressiveTween()
                 )
             ) {
-                SharePhotoEffect(
-                    shareFlow = viewModel.fileShareIntent,
-                    dynamicActivityResultLauncher = dynamicActivityResultLauncher,
-                    reShare = { files ->
-                        viewModel.runAction(
-                            FileOperationAction.Share(
-                                files = files
-                            )
-                        )
-                    }
-                )
-
                 SecureFolderViewBottomAppBar(
                     selectionManager = viewModel.selectionManager,
                     isGettingPermissions = isGettingPermissions,

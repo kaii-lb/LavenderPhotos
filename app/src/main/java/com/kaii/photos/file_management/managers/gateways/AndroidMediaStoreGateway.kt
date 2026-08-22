@@ -36,6 +36,7 @@ import io.github.kaii_lb.lavender.immichintegration.AssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriAssetSource
 import io.github.kaii_lb.lavender.immichintegration.UriWriteChannel
 import java.io.File
+import java.io.OutputStream
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -356,6 +357,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             contentResolver,
             files.map { it.uri.toUri() }
         )
+
+    override fun openOutputStream(uri: Uri): OutputStream? = contentResolver.openOutputStream(uri)
 
     /** tries applying [operation] to a batch of [files] (chunked by 500 for the mediastore limit)
      * and if that fails applies per-item using [applyIndividual] */

@@ -116,14 +116,18 @@ class LocalFileManager @Inject constructor(
         files: List<FileOperationItemMetadata>
     ): Flow<FileOperationProgress<Unit>> = encrypt.execute(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
     ): Result<Unit, FileOperationError> =
         Result.Error(
             error = FileOperationError.RecoverableException.RequiresFollowUp(
                 intentSender = gateway.createWriteRequest(files).intentSender,
-                action = FileOperationAction.PrepareSecure(files = files),
-                followUpAction = FileOperationAction.Secure(files = files)
+                action = FileOperationAction.PrepareFilesForWrite(
+                    files = files,
+                    followUpAction = followUpAction
+                ),
+                followUpAction = followUpAction
             )
         )
 

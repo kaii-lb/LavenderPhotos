@@ -266,9 +266,11 @@ fun SelectingBottomBarItems(
 
     val dirPermissionManager = rememberDirectoryPermissionManager(
         onGranted = {
+            val files = selectedItemsList.toFileOperationMetadataItems()
             runAction(
-                FileOperationAction.PrepareSecure(
-                    files = selectedItemsList.toFileOperationMetadataItems()
+                FileOperationAction.PrepareFilesForWrite(
+                    files = files,
+                    followUpAction = FileOperationAction.Secure(files = files)
                 )
             )
 

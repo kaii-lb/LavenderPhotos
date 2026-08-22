@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -50,15 +49,15 @@ import com.kaii.photos.database.sync.FirstTimeSyncWorker
 import com.kaii.photos.database.sync.SyncManager
 import com.kaii.photos.database.sync.SyncWorker
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.filename
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
+import com.kaii.photos.models.EditorViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
-import com.kaii.photos.models.editor.EditorViewModel
-import com.kaii.photos.models.editor.EditorViewModelFactory
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -148,7 +147,8 @@ class OpenWithView : ComponentActivity() {
 
                             composable<Screens.ImageEditor>(
                                 typeMap = mapOf(
-                                    typeOf<AlbumType>() to AlbumType.NavType()
+                                    typeOf<AlbumType>() to AlbumType.NavType(),
+                                    typeOf<FileOperationItemMetadata>() to Screens.FileOperationItemMetadataNavType()
                                 ),
                                 enterTransition = {
                                     slideInVertically(
@@ -187,24 +187,24 @@ class OpenWithView : ComponentActivity() {
                                     )
                                 }
                             ) {
-                                val context = LocalContext.current
                                 val screen: Screens.ImageEditor = it.toRoute()
-                                val viewModel = viewModel<EditorViewModel>(
-                                    factory = EditorViewModelFactory(
-                                        context = context,
-                                        album = screen.album
-                                    )
-                                )
+                                val viewModel = hiltViewModel<EditorViewModel, EditorViewModel.Factory> { factory ->
+                                    factory.create(screen.album)
+                                }
 
                                 val info by viewModel.immichInfo.collectAsStateWithLifecycle()
+                                val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
+
                                 ImageEditor(
-                                    uri = screen.uri,
+                                    file = screen.file,
                                     info = { info },
                                     isFromOpenWithView = true,
                                     exportQuality = { 8 },
                                     overwriteByDefault = { false },
-                                    editImage = viewModel::editImage,
-                                    setNavProps = viewModel::setNavProps
+                                    exitOnSave = { exitOnSave },
+                                    navIdFlow = viewModel.navIdFlow,
+                                    fileOperationProgress = viewModel.fileOperationProgress,
+                                    runAction = viewModel::runAction
                                 )
                             }
 
@@ -250,12 +250,15 @@ class OpenWithView : ComponentActivity() {
                                 }
                             ) {
                                 val screen = it.toRoute<Screens.VideoEditor>()
+                                val viewModel = hiltViewModel<EditorViewModel, EditorViewModel.Factory> { factory ->
+                                    factory.create(screen.album)
+                                }
 
                                 VideoEditor(
-                                    uri = screen.uri,
+                                    file = screen.file,
                                     window = window,
                                     isFromOpenWithView = true,
-                                    album = null
+                                    viewModel = viewModel
                                 )
                             }
                         }

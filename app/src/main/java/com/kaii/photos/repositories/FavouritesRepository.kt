@@ -9,9 +9,13 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -33,7 +37,7 @@ class FavouritesRepository(
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
-) : BaseRepo, RenameFile, Secure {
+) : BaseRepo, RenameFile, Secure, PrepareFileForWrite {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -138,7 +142,8 @@ class FavouritesRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
-    ) = fileManager.prepareEncryptFiles(files)
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
+    ): Result<Unit, FileOperationError> = fileManager.prepareFileForWrite(files, followUpAction)
 }

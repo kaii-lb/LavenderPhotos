@@ -17,7 +17,7 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.files.FileOperationItemMetadata
-import com.kaii.photos.file_management.managers.SecureFileManager
+import com.kaii.photos.file_management.managers.impl.SecureFileManager
 import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.Restore

@@ -8,6 +8,7 @@ import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.CustomItem
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.ImageEditingState
@@ -22,8 +23,9 @@ import kotlin.time.Duration.Companion.milliseconds
 class CustomFileEditor(
     private val customDao: CustomEntityDao,
     private val albumId: String,
-    override val mediaDao: MediaDao
-) : LocalFileEditor(mediaDao) {
+    override val mediaDao: MediaDao,
+    gateway: MediaStoreGateway
+) : LocalFileEditor(mediaDao, gateway) {
     override suspend fun editImage(
         context: Context,
         image: ImageBitmap,

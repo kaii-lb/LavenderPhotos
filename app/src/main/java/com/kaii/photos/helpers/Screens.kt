@@ -1,8 +1,12 @@
 package com.kaii.photos.helpers
 
+import android.net.Uri
+import android.os.Bundle
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.widgets.ExpressivePINFieldState
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 interface Screens {
     @Serializable
@@ -57,30 +61,29 @@ interface Screens {
 
     @Serializable
     data class ImageEditor(
-        val uri: String,
-        val dateTaken: Long,
+        val file: FileOperationItemMetadata,
         val album: AlbumType
     ) : Screens
 
     @Serializable
     data class VideoEditor(
-        val uri: String,
+        val file: FileOperationItemMetadata,
         val album: AlbumType
     ) : Screens
 
     @Serializable
     object Immich : Screens {
         @Serializable
-        object Dashboard: Screens
+        object Dashboard : Screens
 
         @Serializable
-        object Account: Screens
+        object Account : Screens
 
         @Serializable
-        object Login: Screens
+        object Login : Screens
 
         @Serializable
-        object BackupOptions: Screens
+        object BackupOptions : Screens
 
         @Serializable
         data class ShareAlbumPage(
@@ -256,5 +259,23 @@ interface Screens {
             val album: AlbumType.SAFFolder,
             val index: Int
         ) : Screens
+    }
+
+    class FileOperationItemMetadataNavType : androidx.navigation.NavType<FileOperationItemMetadata>(isNullableAllowed = false) {
+        override fun get(bundle: Bundle, key: String): FileOperationItemMetadata? {
+            return bundle.getString(key)?.let { Json.decodeFromString<FileOperationItemMetadata>(it) }
+        }
+
+        override fun parseValue(value: String): FileOperationItemMetadata {
+            return Json.decodeFromString(Uri.decode(value))
+        }
+
+        override fun put(bundle: Bundle, key: String, value: FileOperationItemMetadata) {
+            bundle.putString(key, Json.encodeToString(value))
+        }
+
+        override fun serializeAsValue(value: FileOperationItemMetadata): String {
+            return Uri.encode(Json.encodeToString(value))
+        }
     }
 }

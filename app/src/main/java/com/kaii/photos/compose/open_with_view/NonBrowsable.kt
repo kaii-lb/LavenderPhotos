@@ -66,6 +66,7 @@ import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.rememberDeviceOrientation
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.DisplayDateFormat
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.formatDate
@@ -408,14 +409,27 @@ private fun BottomBar(
                                         navController.navigate(
                                             if (mediaType == MediaType.Image) {
                                                 Screens.ImageEditor(
-                                                    uri = contentUri.toString(),
-                                                    dateTaken = currentTime / 1000,
-                                                    album = AlbumType.PlaceHolder
+                                                    album = AlbumType.PlaceHolder,
+                                                    file = FileOperationItemMetadata(
+                                                        id = 0L,
+                                                        uri = contentUri.toString(),
+                                                        absolutePath = "",
+                                                        isImage = true,
+                                                        immichUrl = null,
+                                                        parentPath = ""
+                                                    )
                                                 )
                                             } else {
                                                 Screens.VideoEditor(
-                                                    uri = contentUri.toString(),
-                                                    album = AlbumType.PlaceHolder
+                                                    album = AlbumType.PlaceHolder,
+                                                    file = FileOperationItemMetadata(
+                                                        id = 0L,
+                                                        uri = contentUri.toString(),
+                                                        absolutePath = "",
+                                                        isImage = false,
+                                                        immichUrl = null,
+                                                        parentPath = ""
+                                                    )
                                                 )
                                             }
                                         )

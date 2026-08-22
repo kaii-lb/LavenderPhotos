@@ -1,6 +1,7 @@
 package com.kaii.photos.domain.files
 
 import com.kaii.photos.datastore.AlbumType
+import com.kaii.photos.file_management.editing.GenericFileEditor
 
 sealed interface FileOperationAction {
     data class Copy(
@@ -45,8 +46,9 @@ sealed interface FileOperationAction {
         val files: List<FileOperationItemMetadata>
     ) : FileOperationAction
 
-    data class PrepareSecure(
-        val files: List<FileOperationItemMetadata>
+    data class PrepareFilesForWrite(
+        val files: List<FileOperationItemMetadata>,
+        val followUpAction: FileOperationAction
     ) : FileOperationAction
 
     data class Secure(
@@ -66,6 +68,10 @@ sealed interface FileOperationAction {
     ) : FileOperationAction
 
     object ClearSecureFolderCaches : FileOperationAction
+
+    data class SaveEditedMedia(
+        val params: GenericFileEditor.EditParameters
+    ) : FileOperationAction
 
     enum class LongOperationType {
         Copy, Move, TrashDelete, TrashRestore,

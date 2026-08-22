@@ -1,5 +1,8 @@
 package com.kaii.photos.domain.files
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class FileOperationItemMetadata(
     val id: Long,
     val uri: String,

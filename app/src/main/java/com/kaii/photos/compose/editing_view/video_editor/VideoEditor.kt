@@ -56,12 +56,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.FrameDropEffect
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.navigation.NavController
+import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.video_editor.VideoEditorBottomBar
 import com.kaii.photos.compose.app_bars.video_editor.VideoEditorTopBar
@@ -70,12 +69,13 @@ import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.VideoFilterPage
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.database.entities.MediaStoreData
-import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.file_management.editing.GenericFileEditor
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.ColorMatrixEffect
@@ -86,11 +86,12 @@ import com.kaii.photos.helpers.editing.VideoEditorTabs
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberVideoEditingState
-import com.kaii.photos.models.editor.EditorViewModel
-import com.kaii.photos.models.editor.EditorViewModelFactory
+import com.kaii.photos.models.EditorViewModel
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import com.kaii.photos.screens.video.retainVideoPlayerState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -101,33 +102,48 @@ private const val TAG = "com.kaii.photos.compose.editing_view.VideoEditor"
 
 @Composable
 fun VideoEditor(
-    uri: String,
-    album: AlbumType?,
+    file: FileOperationItemMetadata,
+    viewModel: EditorViewModel,
     window: Window,
     isFromOpenWithView: Boolean
 ) {
-    val viewModel = viewModel<EditorViewModel>(
-        factory = EditorViewModelFactory(
-            context = LocalContext.current,
-            album = album ?: AlbumType.PlaceHolder
-        )
-    )
-
     val blurViews by viewModel.blurViews.collectAsStateWithLifecycle()
     val useBlackBackground by viewModel.useBlackBackground.collectAsStateWithLifecycle()
     val overwriteByDefault by viewModel.overwriteByDefault.collectAsStateWithLifecycle()
     val info by viewModel.immichInfo.collectAsStateWithLifecycle()
+    val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
+
+    val navController = LocalNavController.current
+    LaunchedEffect(viewModel.navIdFlow) {
+        viewModel.navIdFlow.collectLatest { newId ->
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("editId", newId)
+
+            delay(500.milliseconds)
+
+            if (exitOnSave && newId != null && !isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
+                navController.popBackStack()
+            }
+        }
+    }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = viewModel.fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = viewModel::runAction
+    )
 
     VideoEditorImpl(
-        uri = uri,
+        file = file,
         info = { info },
         window = window,
         isFromOpenWithView = isFromOpenWithView,
         blurViews = blurViews,
         useBlackBackground = useBlackBackground,
         overwriteByDefault = { overwriteByDefault },
-        editVideo = viewModel::editVideo,
-        setNavProps = viewModel::setNavProps
+        runAction = viewModel::runAction
     )
 }
 
@@ -135,15 +151,14 @@ fun VideoEditor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoEditorImpl(
-    uri: String,
+    file: FileOperationItemMetadata,
     info: () -> ImmichBasicInfo,
     window: Window,
     isFromOpenWithView: Boolean,
     blurViews: Boolean,
     useBlackBackground: Boolean,
     overwriteByDefault: () -> Boolean,
-    editVideo: (NavController, GenericFileEditor.EditParameters.Video) -> Unit,
-    setNavProps: (NavController) -> Unit
+    runAction: (FileOperationAction) -> Unit
 ) {
     var exoPlayerLoading by remember { mutableStateOf(true) }
     val videoPlayerState = retainVideoPlayerState(
@@ -157,14 +172,14 @@ fun VideoEditorImpl(
     )
 
     val context = LocalContext.current
-    LaunchedEffect(uri, info()) {
-        if (uri.startsWith("/api") && (info().auth.isValid().not() || info().endpoint.isBlank())) return@LaunchedEffect
+    LaunchedEffect(file.uri, info()) {
+        if (file.uri.startsWith("/api") && (info().auth.isValid().not() || info().endpoint.isBlank())) return@LaunchedEffect
 
         videoPlayerState.setSource(
             context = context,
             item = MediaStoreData.dummyItem.copy(
-                uri = uri,
-                immichUrl = uri.takeIf { it.startsWith("/api") }
+                uri = file.uri,
+                immichUrl = file.uri.takeIf { it.startsWith("/api") }
             ),
             auth = info().auth,
             endpoint = info().endpoint,
@@ -257,10 +272,10 @@ fun VideoEditorImpl(
                 duration = videoPlayerState.duration / 1000f,
                 width = videoPlayerState.videoSize.width,
                 height = videoPlayerState.videoSize.height,
-                uri = if (uri.startsWith("/api")) {
-                    info().endpoint + uri.replace("original", "video/playback")
+                uri = if (file.uri.startsWith("/api")) {
+                    info().endpoint + file.uri.replace("original", "video/playback")
                 } else {
-                    uri
+                    file.uri
                 },
                 bitrate = videoPlayerState.videoFormat?.bitrate ?: 0,
                 frameRate =
@@ -274,21 +289,21 @@ fun VideoEditorImpl(
     Log.d(TAG, "basic video data $basicVideoData")
 
     LaunchedEffect(videoPlayerState.duration, videoPlayerState.audioTracks.lastOrNull(), info()) {
-        if (uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
+        if (file.uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
 
         val videoFormat = videoPlayerState.videoFormat
         val audioChannelCount = videoPlayerState.audioFormat?.channelCount ?: 2
         val frameRate = videoPlayerState.getFrameRate()
 
         withContext(Dispatchers.IO) {
-            val mediaUri = if (uri.startsWith("/api")) {
-                info().endpoint + uri.replace("original", "video/playback")
+            val mediaUri = if (file.uri.startsWith("/api")) {
+                info().endpoint + file.uri.replace("original", "video/playback")
             } else {
-                uri
+                file.uri
             }
 
             val metadata = MediaMetadataRetriever()
-            if (uri.startsWith("/api")) {
+            if (file.uri.startsWith("/api")) {
                 metadata.setDataSource(
                     mediaUri,
                     info().auth.headers
@@ -399,7 +414,7 @@ fun VideoEditorImpl(
     Scaffold(
         topBar = {
             VideoEditorTopBar(
-                uri = uri,
+                file = file,
                 modifications = modifications,
                 videoEditingState = videoEditingState,
                 drawingPaintState = drawingPaintState,
@@ -410,8 +425,7 @@ fun VideoEditorImpl(
                 isFromOpenWithView = isFromOpenWithView,
                 overwriteByDefault = overwriteByDefault,
                 info = info,
-                editVideo = editVideo,
-                setNavProps = setNavProps
+                runAction = runAction
             )
         },
         bottomBar = {

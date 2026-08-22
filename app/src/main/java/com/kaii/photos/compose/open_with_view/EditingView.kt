@@ -9,8 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.PhotosApplication
@@ -20,9 +20,9 @@ import com.kaii.photos.compose.editing_view.image_editor.ImageEditor
 import com.kaii.photos.compose.editing_view.video_editor.VideoEditor
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.models.editor.EditorViewModel
-import com.kaii.photos.models.editor.EditorViewModelFactory
+import com.kaii.photos.models.EditorViewModel
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
@@ -70,29 +70,44 @@ class EditingView : ComponentActivity() {
                     }
 
                     LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
+                        val viewModel = hiltViewModel<EditorViewModel, EditorViewModel.Factory> { factory ->
+                            factory.create(AlbumType.PlaceHolder)
+                        }
+
                         if (type == MediaType.Video) {
                             VideoEditor(
-                                uri = intent.data!!.toString(),
+                                file = FileOperationItemMetadata(
+                                    id = 0L,
+                                    uri = intent.data!!.toString(),
+                                    absolutePath = "",
+                                    isImage = false,
+                                    immichUrl = null,
+                                    parentPath = ""
+                                ),
                                 window = window,
                                 isFromOpenWithView = true,
-                                album = null
+                                viewModel = viewModel
                             )
                         } else {
-                            val viewModel = viewModel<EditorViewModel>(
-                                factory = EditorViewModelFactory(
-                                    context = applicationContext,
-                                    album = AlbumType.PlaceHolder
-                                )
-                            )
+                            val exitOnSave by viewModel.exitOnSave.collectAsStateWithLifecycle()
 
                             ImageEditor(
-                                uri = intent.data!!.toString(),
+                                file = FileOperationItemMetadata(
+                                    id = 0L,
+                                    uri = intent.data!!.toString(),
+                                    absolutePath = "",
+                                    isImage = true,
+                                    immichUrl = null,
+                                    parentPath = ""
+                                ),
                                 info = { ImmichBasicInfo.Empty },
                                 isFromOpenWithView = true,
                                 exportQuality = { 8 },
                                 overwriteByDefault = { false },
-                                editImage = viewModel::editImage,
-                                setNavProps = viewModel::setNavProps
+                                exitOnSave = { exitOnSave },
+                                navIdFlow = viewModel.navIdFlow,
+                                fileOperationProgress = viewModel.fileOperationProgress,
+                                runAction = viewModel::runAction
                             )
                         }
                     }

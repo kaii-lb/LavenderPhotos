@@ -34,7 +34,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,11 +54,9 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component3
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -108,10 +105,7 @@ import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
-import com.kaii.photos.permissions.files.rememberFilePermissionManager
 import com.kaii.photos.presentation.single_photos_views.rememberDismissSinglePhotoState
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
-import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
@@ -701,15 +695,14 @@ private fun SinglePhotoViewCommon(
                         if (mediaItem.type == MediaType.Image) {
                             navController.navigate(
                                 Screens.ImageEditor(
-                                    uri = mediaItem.uri,
-                                    dateTaken = mediaItem.dateTaken,
+                                    file = mediaItem.toFileOperationMetadata(),
                                     album = album
                                 )
                             )
                         } else {
                             navController.navigate(
                                 Screens.VideoEditor(
-                                    uri = mediaItem.uri,
+                                    file = mediaItem.toFileOperationMetadata(),
                                     album = album
                                 )
                             )
@@ -845,56 +838,13 @@ private fun BottomBar(
             contentAlignment = Alignment.Center
         ) {
             val coroutineScope = rememberCoroutineScope()
-            val resources = LocalResources.current
 
             HorizontalFloatingToolbar(
                 expanded = true,
                 colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
                 floatingActionButton = {
-                    val filePermissionManager = rememberFilePermissionManager(
-                        onGranted = {
-                            showEditingView()
-                        },
-                        onRejected = {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvent.MessageEvent(
-                                        message = resources.getString(R.string.permissions_needed),
-                                        icon = R.drawable.shield_lock,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
-                        }
-                    )
-
-                    val dirPermissionManager = rememberDirectoryPermissionManager(
-                        onGranted = {
-                            filePermissionManager.get(uris = listOf(currentItem().uri.toUri()))
-                        },
-                        onRejected = {
-                            coroutineScope.launch {
-                                LavenderSnackbarController.pushEvent(
-                                    LavenderSnackbarEvent.MessageEvent(
-                                        message = resources.getString(R.string.permissions_needed),
-                                        icon = R.drawable.shield_lock,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                )
-                            }
-                        }
-                    )
-
                     FilledIconButton(
-                        onClick = {
-                            if (!currentItem().isCloud) {
-                                dirPermissionManager.start(
-                                    directories = setOf(currentItem().absolutePath.parent())
-                                )
-                            } else {
-                                showEditingView()
-                            }
-                        },
+                        onClick = showEditingView,
                         colors = IconButtonDefaults.iconButtonColors(
                             contentColor = vibrantFloatingToolbarColors().fabContentColor,
                             containerColor = vibrantFloatingToolbarColors().fabContainerColor,

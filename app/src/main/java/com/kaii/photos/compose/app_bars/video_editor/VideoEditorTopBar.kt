@@ -38,12 +38,13 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavController
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
@@ -56,7 +57,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoEditorTopBar(
-    uri: String,
+    file: FileOperationItemMetadata,
     modifications: SnapshotStateList<VideoModification>,
     basicVideoData: BasicVideoData,
     videoEditingState: VideoEditingState,
@@ -67,8 +68,7 @@ fun VideoEditorTopBar(
     isFromOpenWithView: Boolean,
     overwriteByDefault: () -> Boolean,
     info: () -> ImmichBasicInfo,
-    editVideo: (NavController, GenericFileEditor.EditParameters.Video) -> Unit,
-    setNavProps: (NavController) -> Unit
+    runAction: (FileOperationAction) -> Unit
 ) {
     val navController = LocalNavController.current
     var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
@@ -99,8 +99,6 @@ fun VideoEditorTopBar(
                 val context = LocalContext.current
                 FilledTonalIconButton(
                     onClick = {
-                        setNavProps(navController)
-
                         if (lastSavedModCount.intValue < modifications.size) {
                             showDialog = true
                         } else if (isFromOpenWithView) {
@@ -173,16 +171,15 @@ fun VideoEditorTopBar(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
-                            editVideo(
-                                navController,
-                                GenericFileEditor.EditParameters.Video(
+                            val saveAction = FileOperationAction.SaveEditedMedia(
+                                params = GenericFileEditor.EditParameters.Video(
                                     context = context,
                                     modifications = modifications + drawingPaintState.modifications.map {
                                         it as VideoModification
                                     },
                                     videoEditingState = videoEditingState,
                                     basicVideoData = basicVideoData,
-                                    uri = uri,
+                                    uri = file.uri,
                                     info = info(),
                                     overwrite = overwrite,
                                     containerDimens = containerDimens,
@@ -190,6 +187,17 @@ fun VideoEditorTopBar(
                                     textMeasurer = textMeasurer,
                                     isFromOpenWithView = isFromOpenWithView
                                 )
+                            )
+
+                            runAction(
+                                if (overwrite) {
+                                    FileOperationAction.PrepareFilesForWrite(
+                                        files = listOf(file),
+                                        followUpAction = saveAction
+                                    )
+                                } else {
+                                    saveAction
+                                }
                             )
                         }
                     ) {

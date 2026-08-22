@@ -15,9 +15,11 @@ import com.kaii.photos.database.entities.Tag
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.di.HybridFileManagerFactory
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
@@ -65,7 +67,7 @@ class SearchRepository(
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     dateFormatter: LocalizedDateFormatter
-) : BaseRepo, RenameFile, Secure {
+) : BaseRepo, RenameFile, Secure, PrepareFileForWrite {
     class Factory @Inject constructor(
         private val searchDao: SearchDao,
         private val taggedItemsDao: TaggedItemsDao,
@@ -440,7 +442,8 @@ class SearchRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
-    ) = fileManager.prepareEncryptFiles(files)
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
+    ) = fileManager.prepareFileForWrite(files, followUpAction)
 }

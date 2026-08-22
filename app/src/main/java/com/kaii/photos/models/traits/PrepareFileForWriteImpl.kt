@@ -1,24 +1,26 @@
 package com.kaii.photos.models.traits
 
+import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
-import com.kaii.photos.file_management.managers.traits.Secure
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
-interface SecureImpl {
-    fun <T : Secure> T.encryptFiles(
+interface PrepareFileForWriteImpl {
+    fun <T : PrepareFileForWrite> T.prepareFileForWrite(
         files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction,
         progressChannel: Channel<FileOperationProgress<Unit>>,
         appScope: CoroutineScope
     ) {
         appScope.launch {
-            encryptFiles(files).collect { progress ->
-                progressChannel.send(
-                    element = progress.toGenericProgress()
+            progressChannel.send(
+                element = FileOperationProgress.Finished(
+                    result = prepareFileForWrite(files, followUpAction)
                 )
-            }
+            )
         }
     }
 }

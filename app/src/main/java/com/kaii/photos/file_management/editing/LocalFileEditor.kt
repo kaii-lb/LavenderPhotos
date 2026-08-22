@@ -17,6 +17,12 @@ import com.kaii.photos.R
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.file_management.managers.gateways.MediaStoreGateway
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.helpers.appCloudFolderDir
 import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
@@ -26,12 +32,10 @@ import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.MediaType
-import com.kaii.photos.mediastore.copyUriToUri
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.mediastore.getMediaStoreDataFromUri
-import com.kaii.photos.mediastore.insertMedia
-import com.kaii.photos.mediastore.setDateForMedia
 import com.kaii.photos.mediastore.toContentId
+import com.kaii.photos.mediastore.toFileOperationMetadata
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
@@ -40,8 +44,9 @@ import java.io.File
 import kotlin.time.Clock
 
 open class LocalFileEditor(
-    override val mediaDao: MediaDao
-) : GenericFileEditor {
+    override val mediaDao: MediaDao,
+    private val gateway: MediaStoreGateway
+) : GenericFileEditor, PrepareFileForWrite {
     companion object {
         private val TAG = LocalFileEditor::class.qualifiedName
     }
@@ -115,20 +120,24 @@ open class LocalFileEditor(
             return@withContext null
         }
 
-        if (overwrite) {
-            File(media.absolutePath).delete()
+        if (result.deletedUri != null && overwrite) {
+            gateway.delete(
+                files = listOf(
+                    media.toFileOperationMetadata()
+                )
+            )
         }
 
-        val newUri = context.contentResolver.insertMedia(
-            context = context,
+        val copyResult = gateway.copy(
             media = media.copy(
+                uri = result.newUri.toString(),
                 displayName = media.displayName.replaceAfterLast(".", "mp4"),
                 mimeType = "video/mp4"
             ),
             destination = media.parentPath
         )
 
-        if (newUri == null) {
+        if (copyResult is Result.Error) {
             Log.d(TAG, "Video export failed, could not insert new media")
 
             LavenderSnackbarController.pushEvent(
@@ -142,21 +151,13 @@ open class LocalFileEditor(
             return@withContext null
         }
 
-        context.contentResolver.copyUriToUri(
-            from = result.newUri,
-            to = newUri
-        )
-
         val tempFile = File(result.tempPath!!)
         if (tempFile.exists()) tempFile.delete()
 
         body.value = context.resources.getString(R.string.editing_export_video_loading_body, 3, 3)
         percentage.floatValue = 1f
 
-        return@withContext newUri.toContentId(
-            contentResolver = context.contentResolver,
-            type = MediaType.Video
-        )
+        return@withContext (copyResult as Result.Success).data.id
     }
 
     override suspend fun editImage(
@@ -202,10 +203,9 @@ open class LocalFileEditor(
             return@withContext null
         }
 
-        val newUri =
+        val insertResult =
             if (!overwrite || isFromOpenWithView) {
-                context.contentResolver.insertMedia(
-                    context = context,
+                gateway.insertMedia(
                     media = media.copy(
                         displayName = media.displayName.replaceAfterLast(".", "jpeg"),
                         mimeType = "image/jpeg"
@@ -215,16 +215,17 @@ open class LocalFileEditor(
                     }
                 )
             } else {
-                media.uri.toUri()
+                Result.Success(media.uri.toUri())
             }
 
-        if (newUri == null) {
+        if (insertResult is Result.Error) {
             Log.d(TAG, "Image export failed, could not insert new media")
 
             return@withContext null
         }
 
-        val wroteData = context.contentResolver.openOutputStream(newUri)?.use { outputStream ->
+        val newUri = (insertResult as Result.Success).data
+        val wroteData = gateway.openOutputStream(newUri)?.use { outputStream ->
             bitmap.compress(
                 Bitmap.CompressFormat.JPEG,
                 exportQuality * 10, // exportQuality is from 2 to 8
@@ -232,11 +233,10 @@ open class LocalFileEditor(
             )
         } != null
 
-        context.contentResolver.setDateForMedia(
+        gateway.setDateForMedia(
             uri = newUri,
             type = media.type,
-            dateTaken = if (overwrite) media.dateTaken else Clock.System.now().epochSeconds,
-            overwriteLastModified = true
+            dateTaken = if (overwrite) media.dateTaken else Clock.System.now().epochSeconds
         )
 
         if (!wroteData) {
@@ -250,4 +250,19 @@ open class LocalFileEditor(
             type = MediaType.Image
         )
     }
+
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
+    ): Result<Unit, FileOperationError> =
+        Result.Error(
+            error = FileOperationError.RecoverableException.RequiresFollowUp(
+                intentSender = gateway.createWriteRequest(files).intentSender,
+                action = FileOperationAction.PrepareFilesForWrite(
+                    files = files,
+                    followUpAction = followUpAction
+                ),
+                followUpAction = followUpAction
+            )
+        )
 }

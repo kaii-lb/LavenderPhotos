@@ -1,37 +1,44 @@
-package com.kaii.photos.models.editor
+package com.kaii.photos.models
 
-import android.content.Context
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
-import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
-import com.kaii.photos.file_management.editing.CustomFileEditor
+import com.kaii.photos.datastore.Settings
+import com.kaii.photos.di.ApplicationScope
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.file_management.editing.HybridFileEditor
-import io.github.kaii_lb.lavender.immichintegration.Auth
-import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
-import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
+import com.kaii.photos.models.traits.PrepareFileForWriteImpl
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
-class EditorViewModel(
-    context: Context,
-    album: AlbumType
-) : ViewModel() {
-    private val settings = PhotosApplication.appModule.settings
-    private var exitOnSave = false
+@HiltViewModel(assistedFactory = EditorViewModel.Factory::class)
+class EditorViewModel @AssistedInject constructor(
+    @Assisted album: AlbumType,
+    editorFactory: HybridFileEditor.Factory,
+    settings: Settings,
+    @param:ApplicationScope private val appScope: CoroutineScope
+) : ViewModel(), PrepareFileForWriteImpl {
+    @AssistedFactory
+    interface Factory {
+        fun create(album: AlbumType): EditorViewModel
+    }
 
     val blurViews = settings.lookAndFeel.getBlurViews().stateIn(
         scope = viewModelScope,
@@ -64,62 +71,23 @@ class EditorViewModel(
         initialValue = ImmichBasicInfo.Empty
     )
 
+    val exitOnSave = settings.behaviour.getEditingExitOnSave().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000),
+        initialValue = false
+    )
+
     var newId: Long? = null
 
-    private val db = MediaDatabase.getInstance(context.applicationContext)
-    private val assetsClient = AssetsClient(
-        client = PhotosApplication.appModule.apiClient,
-        endpoint = "",
-        auth = Auth.None
-    )
-    private val albumsClient = AlbumsClient(
-        client = PhotosApplication.appModule.apiClient,
-        endpoint = "",
-        auth = Auth.None
-    )
+    private val editor = editorFactory.create(album)
 
-    private val editor =
-        when (album) {
-            is AlbumType.Custom -> {
-                CustomFileEditor(
-                    customDao = db.customDao(),
-                    mediaDao = db.mediaDao(),
-                    albumId = album.id
-                )
-            }
+    private val progressChannel = Channel<FileOperationProgress<Unit>>(Channel.BUFFERED)
+    val fileOperationProgress = progressChannel.receiveAsFlow()
 
-            else -> {
-                HybridFileEditor(
-                    mediaDao = db.mediaDao(),
-                    assetsClient = assetsClient,
-                    albumsClient = albumsClient,
-                    albumImmichId = album.immichId.takeIf { album !is AlbumType.PlaceHolder }
-                )
-            }
-        }
+    private val _navChannel = Channel<Long?>(Channel.BUFFERED)
+    val navIdFlow = _navChannel.receiveAsFlow()
 
-    init {
-        viewModelScope.launch {
-            launch {
-                settings.immich.getImmichBasicInfo().collect { info ->
-                    assetsClient.setEndpoint(info.endpoint)
-                    assetsClient.setAuth(info.auth)
-
-                    albumsClient.setEndpoint(info.endpoint)
-                    albumsClient.setAuth(info.auth)
-                }
-            }
-
-            launch {
-                settings.behaviour.getEditingExitOnSave().collect {
-                    exitOnSave = it
-                }
-            }
-        }
-    }
-
-    fun editImage(
-        navController: NavController,
+    private fun editImage(
         params: GenericFileEditor.EditParameters.Image
     ) {
         PhotosApplication.appModule.scope.launch {
@@ -162,18 +130,12 @@ class EditorViewModel(
             }
 
             newId = result
-            setNavProps(navController)
 
-            delay(500.milliseconds)
-
-            if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
-                navController.popBackStack()
-            }
+            _navChannel.send(newId)
         }
     }
 
-    fun editVideo(
-        navController: NavController,
+    private fun editVideo(
         params: GenericFileEditor.EditParameters.Video
     ) {
         PhotosApplication.appModule.scope.launch {
@@ -202,21 +164,25 @@ class EditorViewModel(
             }
 
             newId = result
-            setNavProps(navController)
-
-            delay(500.milliseconds)
-
-            if (exitOnSave && result != null && !params.isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
-                navController.popBackStack()
-            }
+            _navChannel.send(newId)
         }
     }
 
-    fun setNavProps(
-        navController: NavController
-    ) {
-        navController.previousBackStackEntry
-            ?.savedStateHandle
-            ?.set("editId", newId)
+    fun runAction(action: FileOperationAction) {
+        when (action) {
+            is FileOperationAction.PrepareFilesForWrite -> editor.prepareFileForWrite(action.files, action.followUpAction, progressChannel, appScope)
+
+            is FileOperationAction.SaveEditedMedia -> {
+                appScope.launch {
+                    if (action.params is GenericFileEditor.EditParameters.Image) {
+                        editImage(action.params)
+                    } else {
+                        editVideo(action.params as GenericFileEditor.EditParameters.Video)
+                    }
+                }
+            }
+
+            else -> Unit
+        }
     }
 }

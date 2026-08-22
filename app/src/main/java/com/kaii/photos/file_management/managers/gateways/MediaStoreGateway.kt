@@ -12,6 +12,7 @@ import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.mediastore.MediaType
 import io.github.kaii_lb.lavender.immichintegration.AssetSource
 import io.github.kaii_lb.lavender.immichintegration.WriteChannel
+import java.io.OutputStream
 
 interface MediaStoreGateway {
     fun insertMedia(
@@ -72,4 +73,6 @@ interface MediaStoreGateway {
     fun is24HrFormat(): Boolean
 
     fun createWriteRequest(files: List<FileOperationItemMetadata>): PendingIntent
+
+    fun openOutputStream(uri: Uri): OutputStream?
 }

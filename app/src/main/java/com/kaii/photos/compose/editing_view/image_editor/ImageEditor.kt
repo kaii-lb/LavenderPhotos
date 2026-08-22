@@ -71,8 +71,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -87,8 +85,12 @@ import com.kaii.photos.compose.editing_view.CropBox
 import com.kaii.photos.compose.editing_view.ImageFilterPage
 import com.kaii.photos.compose.editing_view.PreviewCanvas
 import com.kaii.photos.compose.editing_view.makeDrawCanvas
+import com.kaii.photos.compose.side_effects.FileOperationProgressEffect
 import com.kaii.photos.compose.widgets.shimmerEffect
 import com.kaii.photos.datastore.ImmichBasicInfo
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.editing.GenericFileEditor
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.editing.DrawableText
@@ -99,23 +101,30 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.mediastore.ImmichInfo
+import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ImageEditor(
-    uri: String,
+    file: FileOperationItemMetadata,
     info: () -> ImmichBasicInfo,
     isFromOpenWithView: Boolean,
     exportQuality: () -> Int,
     overwriteByDefault: () -> Boolean,
-    editImage: (NavController, GenericFileEditor.EditParameters.Image) -> Unit,
-    setNavProps: (NavHostController) -> Unit
+    exitOnSave: () -> Boolean,
+    navIdFlow: Flow<Long?>,
+    fileOperationProgress: Flow<FileOperationProgress<Unit>>,
+    runAction: (FileOperationAction) -> Unit
 ) {
     val lastSavedModCount = remember { mutableIntStateOf(0) }
     val totalModCount = remember { mutableIntStateOf(0) }
@@ -140,23 +149,23 @@ fun ImageEditor(
 
     val windowInfo = LocalWindowInfo.current
     val context = LocalContext.current
-    LaunchedEffect(uri, info()) {
-        if (uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
+    LaunchedEffect(file.uri, info()) {
+        if (file.uri.startsWith("/api") && info().auth.isValid().not()) return@LaunchedEffect
 
         withContext(Dispatchers.IO) {
             val drawable =
                 Glide.with(context)
                     .load(
-                        if (uri.startsWith("/api")) {
+                        if (file.uri.startsWith("/api")) {
                             ImmichInfo(
-                                thumbnail = uri,
-                                original = uri,
+                                thumbnail = file.uri,
+                                original = file.uri,
                                 hash = "",
                                 auth = info().auth,
                                 endpoint = info().endpoint,
                                 useThumbnail = false
                             )
-                        } else uri
+                        } else file.uri
                     )
                     .override(Target.SIZE_ORIGINAL)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -237,12 +246,32 @@ fun ImageEditor(
     var actualStarts by remember { mutableStateOf(Pair(0f, 0f)) }
     var containerDimens by remember { mutableStateOf(Size.Zero) }
 
+    val navController = LocalNavController.current
+    LaunchedEffect(navIdFlow) {
+        navIdFlow.collectLatest { newId ->
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("editId", newId)
+
+            delay(500.milliseconds)
+
+            if (exitOnSave() && newId != null && !isFromOpenWithView) launch(Dispatchers.Main) { // need to be on main thread
+                navController.popBackStack()
+            }
+        }
+    }
+
+    val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
+    FileOperationProgressEffect(
+        operationFlow = fileOperationProgress,
+        dynamicActivityResultLauncher = dynamicActivityResultLauncher,
+        runAction = runAction
+    )
+
     Scaffold(
         topBar = {
             val textMeasurer = rememberTextMeasurer()
             var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
-
-            val navController = LocalNavController.current
 
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
@@ -253,25 +282,24 @@ fun ImageEditor(
                     overwrite = it
                 },
                 saveImage = {
-                    editImage(
-                        navController,
-                        GenericFileEditor.EditParameters.Image(
+                    val saveAction = FileOperationAction.SaveEditedMedia(
+                        params = GenericFileEditor.EditParameters.Image(
                             context = context,
-                            uri = uri,
+                            uri = file.uri,
                             image =
                                 Glide.with(context)
                                     .asBitmap()
                                     .load(
-                                        if (uri.startsWith("/api")) {
+                                        if (file.uri.startsWith("/api")) {
                                             ImmichInfo(
-                                                thumbnail = uri,
-                                                original = uri,
+                                                thumbnail = file.uri,
+                                                original = file.uri,
                                                 hash = "",
                                                 auth = info().auth,
                                                 endpoint = info().endpoint,
                                                 useThumbnail = false
                                             )
-                                        } else uri
+                                        } else file.uri
                                     )
                                     .skipMemoryCache(true)
                                     .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -292,9 +320,19 @@ fun ImageEditor(
                             isFromOpenWithView = isFromOpenWithView
                         )
                     )
+
+                    runAction(
+                        if (overwrite) {
+                            FileOperationAction.PrepareFilesForWrite(
+                                files = listOf(file),
+                                followUpAction = saveAction
+                            )
+                        } else {
+                            saveAction
+                        }
+                    )
                 },
                 navigateBack = {
-                    setNavProps(navController)
                     if (isFromOpenWithView) {
                         (context as Activity).finish()
                     } else {
@@ -312,7 +350,7 @@ fun ImageEditor(
                 imageEditingState = imageEditingState,
                 drawingPaintState = drawingPaintState,
                 pagerState = pagerState,
-                uri = uri,
+                uri = file.uri,
                 increaseModCount = {
                     totalModCount.intValue += 1
                 },

@@ -9,10 +9,14 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
+import com.kaii.photos.domain.Result
+import com.kaii.photos.domain.files.FileOperationAction
+import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalSourceFileManager
 import com.kaii.photos.file_management.managers.traits.CountAndSize
+import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
@@ -36,7 +40,7 @@ class HybridRepository(
     dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
-) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize {
+) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize, PrepareFileForWrite {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -166,9 +170,10 @@ class HybridRepository(
         files: List<FileOperationItemMetadata>
     ) = fileManager.encryptFiles(files)
 
-    override fun prepareEncryptFiles(
-        files: List<FileOperationItemMetadata>
-    ) = fileManager.prepareEncryptFiles(files)
+    override fun prepareFileForWrite(
+        files: List<FileOperationItemMetadata>,
+        followUpAction: FileOperationAction
+    ): Result<Unit, FileOperationError> = fileManager.prepareFileForWrite(files, followUpAction)
 
     override suspend fun getMediaCount(album: AlbumType) = fileManager.getMediaCount(album)
 
