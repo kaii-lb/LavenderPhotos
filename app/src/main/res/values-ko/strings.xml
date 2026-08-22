@@ -1,0 +1,777 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Basic -->
+    <string name="app_name">Lavender Photos</string>
+
+    <!-- Albums -->
+    <string name="albums">앨범</string>
+    <string name="finding_albums_on_device">기기에서 앨범을 찾는 중…</string>
+    <string name="albums_found">모든 앨범을 찾았습니다!</string>
+    <string name="add_album">앨범 추가</string>
+    <string name="direct_path_album">직접 경로를 지정하여 앨범 추가</string>
+    <string name="albums_main_list">메인 화면의 앨범</string>
+    <string name="albums_main_list_desc_1">선택한 앨범의 미디어 표시</string>
+    <string name="albums_main_list_desc_2">선택한 앨범에 속하지 않은 미디어 표시</string>
+    <string name="albums_auto_detect">앨범 자동 감지</string>
+    <string name="albums_auto_detect_desc">이 기기의 모든 미디어 폴더를 찾아 앨범 화면에 추가합니다</string>
+    <string name="albums_clear_list">앨범 목록 비우기</string>
+    <string name="albums_clear_list_desc">사용자 지정 앨범과 클라우드 앨범은 유지하면서 모든 앨범 그룹과 폴더 앨범을 삭제합니다</string>
+    <string name="albums_clear_list_done">앨범 목록을 지웠습니다</string>
+    <string name="albums_media_sorting">사진 및 동영상 정렬</string>
+    <string name="albums_media_sorting_desc">그리드에 표시되는 사진과 동영상의 정렬 방식을 설정합니다. 현재 방식: %1$s</string>
+    <string name="albums_is_custom">사용자 지정 앨범입니다</string>
+    <string name="albums_is_cloud">클라우드 전용 앨범입니다</string>
+    <string name="albums_is_saf">네트워크 공유 폴더입니다</string>
+    <string name="albums_is_cloud_linked">클라우드와 연결된 앨범입니다</string>
+    <string name="albums_custom">앨범</string>
+    <string name="albums_custom_desc">어디에서든 원하는 미디어를 추가합니다</string>
+    <string name="albums_folder_desc">폴더에서 미디어를 불러옵니다</string>
+    <string name="albums_non_existent">해당 앨범이 존재하지 않습니다</string>
+    <string name="albums_remove">삭제</string>
+    <string name="albums_remove_desc">목록에서 앨범을 삭제하시겠습니까?</string>
+    <string name="albums_pin">이 앨범 고정</string>
+    <string name="albums_unpin">이 앨범 고정 해제</string>
+    <string name="albums_info">앨범 정보</string>
+    <string name="albums_path">경로:</string>
+    <string name="albums_paths">경로:</string>
+    <string name="albums_item_count">항목 수:</string>
+    <string name="albums_name">앨범 이름</string>
+    <string name="albums_type">앨범 유형</string>
+    <string name="albums_folder">폴더</string>
+    <string name="albums_add_failed">앨범 추가에 실패했습니다 :&lt;</string>
+    <string name="albums_immich_not_backed_up">백업되지 않음</string>
+    <string name="albums_rename_failure">유효하지 않은 앨범 이름</string>
+    <string name="albums_search_for">앨범 검색</string>
+    <string name="albums_toggle_nested_display">하위 폴더의 미디어 표시</string>
+    <string name="albums_network_share">네트워크 공유</string>
+    <string name="albums_network_share_desc">탐색만 지원합니다. RSAF, Drive 또는 이에 준하는 앱이 필요합니다</string>
+
+    <!-- Tabs -->
+    <string name="tabs">탭</string>
+    <string name="tabs_default">기본 탭</string>
+    <string name="tabs_default_desc">Lavender Photos 시작 시 이 탭을 자동으로 엽니다</string>
+    <string name="tabs_customize">탭 사용자 지정</string>
+    <string name="tabs_customize_desc">하단 바에 표시할 탭을 변경합니다</string>
+    <string name="tabs_navigate_to">%1$s 페이지로 이동</string>
+    <string name="tabs_add">탭 추가</string>
+    <string name="tabs_name">탭 이름</string>
+    <string name="tabs_albums_incl">포함된 앨범</string>
+    <string name="tabs_confirm">탭 추가</string>
+    <string name="tabs_empty_params">탭 설정값은 비워 둘 수 없습니다</string>
+    <string name="tabs_max_reached">탭은 16개를 초과하여 추가할 수 없습니다</string>
+    <string name="tabs_min_reached">최소 하나의 탭이 있어야 합니다</string>
+
+    <!-- Navigation -->
+    <string name="return_to_previous_page">이전 페이지로 돌아가기</string>
+    <string name="navigation">탐색</string>
+    <string name="navigation_photos">사진</string>
+    <string name="navigation_secure">보안</string>
+    <string name="navigation_albums">앨범</string>
+    <string name="navigation_search">검색</string>
+    <string name="navigation_favourites">즐겨찾기</string>
+    <string name="navigation_trash">휴지통</string>
+    <string name="navigation_away">다른 페이지로 이동합니다</string>
+    <string name="navigation_tap_to_nav">탭하여 이동</string>
+    <string name="navigation_tap_to_nav_desc">화면의 가장 왼쪽 또는 오른쪽을 탭하여 미디어 사이를 이동합니다</string>
+
+    <!-- App -->
+    <string name="app_name_full">Lavender Photos</string>
+    <string name="app_description">개인정보 보호를 최우선으로 하며, 빠르고 세련된 오픈 소스 갤러리 앱</string>
+    <string name="app_version">버전 %1$s</string>
+    <string name="app_repo">앱 리포지토리</string>
+    <string name="privacy_policy_title">개인정보처리방침</string>
+    <string name="privacy_policy">그런 건 없습니다! 여러분의 데이터는 이 기기 밖으로 절대 나가지 않습니다. AI 학습에 사용되지 않으며, 정보를 수집하기 위한 알고리즘도 없습니다. Lavender Photos는 앞으로도 계속 개인정보 보호에 중점을 둔 갤러리 앱으로 남겠습니다.</string>
+    <string name="support">지원 및 후원</string>
+    <string name="translation">번역</string>
+    <string name="licenses">라이선스</string>
+    <string name="licenses_extra">추가 상세 정보</string>
+    <string name="licenses_extra_desc">라이선스에 대한 자세한 정보를 확인합니다</string>
+    <string name="special_thanks_to">특별히 감사드리는 분:</string>
+
+    <!-- Updates -->
+    <string name="updates">업데이트</string>
+    <string name="updates_check">업데이트 확인</string>
+    <string name="updates_check_desc">앱을 열 때 새 버전을 알려줍니다. 업데이트를 자동으로 설치하지 않습니다</string>
+    <string name="updates_whats_new">새로운 기능</string>
+    <string name="updates_notice">다운로드 안내</string>
+    <string name="updates_notice_desc">
+        <![CDATA[
+            <p>이 업데이트 기능은 APK를 다운로드하지 않습니다. <a href="https://github.com/kaii-lb/LavenderPhotos/releases">GitHub Releases</a>로 연결할 뿐입니다. 따라서 이 APK들은 IzzyOnDroid, F-Droid 또는 다른 곳에서 수행하는 추가 심사와 테스트를 거치지 않습니다.
+
+                <br><br>GitHub에 게시된 빌드는 항상 개발자(kaii-lb)가 서명하고 점검 및 검증하지만, 해당 빌드를 사용할지는 여러분의 판단에 달려 있습니다.
+
+                <br><br>Lavender Photos는 절대로 자동 업데이트하지 않으며, 사용자가 명시적으로 동의한 경우에만 업데이트합니다.
+            </p>
+        ]]>
+    </string>
+    <string name="updates_new_version_available">업데이트가 있습니다!</string>
+    <string name="updates_latest">최신 버전입니다</string>
+    <string name="updates_checking">업데이트 확인 중</string>
+    <string name="updates_no_changelog">변경 내역이 없습니다</string>
+
+    <!-- Secure Folder -->
+    <string name="locked_folder_help_top">보안 폴더는 이 기기에서 사진과 동영상을 안전하게 보관하는 폴더입니다.\n보호된 미디어는 어디에도 업로드되지 않으며, 항상 기기 내부에 저장되고 기기의 비밀번호 또는 지문 정보에 고유한 키로 암호화됩니다.</string>
+    <string name="locked_folder_help_bottom">비밀번호를 잊었거나 지문을 삭제하면 보호된 데이터를 복구할 수 없습니다.\n앱을 삭제하면 보호된 항목도 모두 사라지므로 적절히 백업해 두세요.</string>
+    <string name="secure_folder">보안 폴더</string>
+    <string name="secure_processing">이 미디어를 처리하는 동안 잠시 기다려 주세요</string>
+    <string name="secure_decrypting">파일 복호화 중</string>
+    <string name="secure_getting_file_info">파일 정보 가져오는 중…</string>
+    <string name="secure_please_wait">잠시 기다려 주세요…</string>
+    <string name="secure_export_failed">백업 내보내기에 실패했습니다!</string>
+    <string name="secure_encryption_failed_no_permission">권한 없이는 사진을 암호화할 수 없습니다</string>
+    <string name="secure_migrating">이전 중</string>
+    <string name="secure_migrating_desc">사진을 백업하고 암호화하는 중입니다. 잠시 기다려 주세요…</string>
+    <string name="secure_migrating_notice">이전 안내</string>
+    <string name="secure_migrating_notice_desc">이제 보안 폴더가 암호화되었습니다! 모든 사진이 완전히 안전하게 보호되며 다른 사람이 접근할 수 없습니다.
+
+보안을 위해 보호된 사진의 사본이 내보내기 폴더에 생성되었습니다. 앨범 페이지 또는 "Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports"에서 확인할 수 있습니다.</string>
+    <string name="secure_unlock">보안 폴더 잠금 해제</string>
+    <string name="secure_unlock_desc">생체 인증 정보로 잠금을 해제합니다</string>
+    <string name="secure_unlock_failed">인증에 실패했습니다 :&lt;</string>
+    <string name="secure_unlock_short">폴더 잠금 해제</string>
+    <string name="secure_move_out">보안 폴더에서 미디어를 이동하시겠습니까?</string>
+    <string name="secure_restore_failed">미디어 복원에 실패했습니다</string>
+
+    <!-- Data and Backup -->
+    <string name="export_unenc_backup">암호화되지 않은 백업 내보내기</string>
+    <string name="export_unenc_backup_desc">보호된 모든 항목을 암호화하지 않은 상태로 폴더에 내보냅니다</string>
+    <string name="exporting_backup">백업 내보내는 중…</string>
+    <string name="export_raw_backup">원본 백업 내보내기</string>
+    <string name="export_raw_backup_desc">보호된 모든 항목을 원본 상태(암호화 여부와 관계없이)로 폴더에 내보냅니다</string>
+    <string name="export_unenc_zip">백업을 ZIP으로 내보내기</string>
+    <string name="export_unenc_zip_desc">보호된 모든 항목을 ZIP 파일로 내보냅니다</string>
+    <string name="export_fav_to_folder">백업을 폴더로 내보내기</string>
+    <string name="export_fav_to_folder_desc">즐겨찾기한 모든 항목을 폴더로 내보냅니다</string>
+    <string name="export_fav_to_zip_desc">즐겨찾기한 모든 항목을 ZIP 파일로 내보냅니다</string>
+    <string name="data_and_backup">데이터 및 백업</string>
+    <string name="export_location">내보내기 위치</string>
+    <string name="export_location_desc" translatable="false">Internal Storage/Android/media/com.kaii.photos/LavenderPhotos/Exports</string>
+    <string name="export_settings_backup_save_load_header">앱 설정</string>
+    <string name="export_settings_backup_save">앱 데이터 저장</string>
+    <string name="export_settings_backup_save_desc">나중에 복원할 수 있도록 앱 설정과 앨범을 JSON 파일로 내보냅니다. Immich 로그인 정보와 보호된 미디어는 저장하지 않습니다.</string>
+    <string name="export_settings_backup_save_success">앱 데이터를 저장했습니다</string>
+    <string name="export_settings_backup_save_error">데이터를 저장할 수 없습니다</string>
+    <string name="export_settings_backup_load">앱 데이터 불러오기</string>
+    <string name="export_settings_backup_load_desc">JSON 파일에서 앱 설정과 앨범을 불러옵니다. 기존 설정은 덮어씁니다.</string>
+    <string name="export_settings_backup_load_error">데이터를 불러올 수 없습니다</string>
+
+    <!-- Favourites -->
+    <string name="favourites">즐겨찾기</string>
+    <string name="favourites_add_this">이 미디어를 즐겨찾기에 추가</string>
+    <string name="favourites_remove_this">즐겨찾기에서 삭제하시겠습니까?</string>
+    <string name="favourites_migration">즐겨찾기 시스템이 새롭게 개편되었습니다!</string>
+    <string name="favourites_migration_notice">즐겨찾기</string>
+    <string name="favourites_migration_desc">소중한 순간을 간직하는 방법입니다. Lavender Photos에서는 이를 지원하는 모든 앱에서 동기화되는 즐겨찾기와 손쉬운 관리, 높은 성능을 제공합니다!\n\n이전 버전의 Lavender Photos를 사용하다가 업그레이드한 경우 기존에 즐겨찾기한 모든 항목이 새 시스템으로 이전됩니다.\n\n휴대폰의 전원을 켜 둔 상태로 이 앱을 열어 두세요.</string>
+    <string name="favourites_migration_started">이전이 시작되었습니다!</string>
+    <string name="favourites_migration_none">이전할 항목이 없습니다</string>
+    <string name="favourites_migration_in_progress_short">진행 중</string>
+    <string name="favourites_migration_done">이전이 완료되었습니다!</string>
+    <string name="favourites_migration_declined">권한이 거부되었습니다!</string>
+    <string name="favourites_migration_declined_desc">권한을 허용하지 않으면 Lavender Photos에서 이전 버전의 즐겨찾기를 옮길 수 없습니다! 따라서 이전에 즐겨찾기한 항목을 잃게 됩니다.</string>
+
+    <!-- Debugging -->
+    <string name="debugging">디버깅</string>
+    <string name="debugging_development">개발</string>
+    <string name="logs">로그</string>
+    <string name="logs_share">로그 파일 공유</string>
+    <string name="record_logs">로그 기록</string>
+    <string name="record_logs_desc">디버깅을 위해 로그를 저장합니다. 탭하면 확인할 수 있습니다.</string>
+    <string name="record_logs_off">로그 기록이 꺼져 있습니다</string>
+    <string name="log_file_non_existent">아직 기록된 로그 파일이 없습니다.</string>
+    <string name="album_add_path">앨범 경로 추가</string>
+    <string name="album_add">앨범 추가</string>
+    <string name="album_add_path_placeholder">Download/Movies</string>
+    <string name="debugging_spawn_loading_snackbar">로딩 스낵바 표시</string>
+    <string name="debugging_spawn_loading_snackbar_desc">Compose가 말도 안 되는 동작을 할 때마다 Lavender 스낵바를 디버깅용으로 표시합니다</string>
+    <string name="debugging_loading">디버깅 중…</string>
+    <string name="debugging_spawn_message_snackbar">메시지 스낵바 표시</string>
+    <string name="debugging_spawn_message_snackbar_desc">예를 들어 기능 하나를 더 이상 지원하지 않으면서 대체 기능도 추가하지 않는 경우처럼요 :D</string>
+    <string name="debugging_spawn_progress_snackbar">진행률 스낵바 표시</string>
+    <string name="debugging_spawn_progress_snackbar_desc">진행률 표시줄을 표시하고 5초 동안 매초 진행률을 업데이트합니다</string>
+    <string name="debugging_internals">내부 기능</string>
+    <string name="debugging_reset_scan_generation">미디어 다시 검색</string>
+    <string name="debugging_reset_scan_generation_desc">기기의 모든 미디어를 다시 확인해 앱 데이터베이스에 추가합니다. 일부 이미지가 표시되지 않을 때 사용하세요</string>
+    <string name="debugging_reset_scan_generation_loading">미디어 미디어 검색 중…</string>
+    <string name="debugging_report_issue">문제 신고</string>
+    <string name="debugging_report_issue_bug">버그 신고</string>
+    <string name="debugging_report_issue_bug_desc">앱의 문제를 해결하는 데 도움을 주세요</string>
+    <string name="debugging_report_issue_feature">기능 요청</string>
+    <string name="debugging_report_issue_feature_desc">이 앱에 추가했으면 하는 기능을 제안합니다</string>
+    <string name="debugging_report_issue_other">기타</string>
+    <string name="debugging_report_issue_other_desc">다른 문제를 신고합니다</string>
+
+    <!-- Video -->
+    <string name="video">동영상</string>
+    <string name="video_auto_play">동영상 자동 재생</string>
+    <string name="video_auto_play_desc">화면에 나타나는 즉시 동영상 재생을 시작합니다</string>
+    <string name="video_start_muted">동영상 음소거로 시작</string>
+    <string name="video_start_muted_desc">동영상 재생을 처음 시작할 때 오디오를 재생하지 않습니다</string>
+    <string name="file_is_a_video">동영상 파일</string>
+    <string name="video_seek_icon_desc">사용자가 어느 방향으로 탐색하는지 표시합니다</string>
+    <string name="video_lock_screen">화면을 잠가 오작동 터치를 방지</string>
+    <string name="video_mute_toggle">이 동영상 음소거/음소거 해제</string>
+    <string name="video_seek_back">5초 뒤로 건너뛰기</string>
+    <string name="video_seek_front">5초 앞으로 건너뛰기</string>
+    <string name="video_play_toggle">이 동영상 재생/일시정지 전환</string>
+    <string name="video_decrypting">동영상을 복호화하는 중입니다. 잠시 기다려 주세요</string>
+    <string name="video_open_externally">외부 플레이어에서 열기</string>
+    <string name="video_open_externally_desc">그리드에서 동영상을 탭했을 때 어떤 앱으로 열지 선택하도록 묻습니다</string>
+    <string name="video_change_audio_track">이 동영상의 오디오 트랙 변경</string>
+
+    <!-- Editing -->
+    <string name="edit">편집</string>
+    <string name="editing">편집 중</string>
+    <string name="editing_overwrite_on_save">저장 시 덮어쓰기</string>
+    <string name="editing_overwrite_on_save_desc">미디어를 편집할 때 복사본을 저장하는 대신 원본을 덮어쓰도록 기본 설정합니다</string>
+    <string name="editing_exit_on_save">저장 후 종료</string>
+    <string name="editing_exit_on_save_desc">변경 사항을 저장하면 자동으로 편집 화면을 종료합니다</string>
+    <string name="editing_discard">버리기</string>
+    <string name="editing_discard_desc">진행 중인 편집 내용을 버리시겠습니까?</string>
+    <string name="editing_exit">종료</string>
+    <string name="editing_close_desc">편집 화면 닫기</string>
+    <string name="editing_save">복사본 저장</string>
+    <string name="editing_overwrite">저장</string>
+    <string name="editing_overwrite_desc">원본 덮어쓰기</string>
+    <string name="editing_crop">자르기</string>
+    <string name="editing_adjust">조정</string>
+    <string name="editing_filters">필터</string>
+    <string name="editing_more">더보기</string>
+    <string name="editing_draw">그리기</string>
+    <string name="editing_rotate">회전</string>
+    <string name="editing_ratio">비율</string>
+    <string name="editing_reset">초기화</string>
+    <string name="editing_contrast">대비</string>
+    <string name="editing_brightness">밝기</string>
+    <string name="editing_saturation">채도</string>
+    <string name="editing_black_point">블랙 포인트</string>
+    <string name="editing_white_point">화이트 포인트</string>
+    <string name="editing_warmth">따뜻함</string>
+    <string name="editing_color_tint">색조</string>
+    <string name="editing_highlights">하이라이트</string>
+    <string name="editing_pencil">연필</string>
+    <string name="editing_highlighter">형광펜</string>
+    <string name="editing_text">텍스트</string>
+    <string name="editing_image">이미지</string>
+    <string name="editing_saving">편집한 이미지 저장 중</string>
+    <string name="editing_upload_image">선택</string>
+    <string name="editing_upload_image_failed">이미지를 선택할 수 없습니다</string>
+    <string name="editing_bitrate">비트레이트</string>
+    <string name="editing_bitrate_unit">초당 비트 수</string>
+    <string name="editing_open_with_copying_video">동영상 처리 중…</string>
+    <string name="editing_open_with_copying_image">이미지 처리 중…</string>
+    <string name="editing_resolution_scale">크기 조정</string>
+    <string name="editing_export_image_failed">사진을 내보낼 수 없습니다</string>
+
+    <!-- Editing Filters -->
+    <string name="filter">필터</string>
+    <string name="filter_none">없음</string>
+    <string name="filter_none_desc">이게 왜 필요한가요</string>
+    <string name="filter_inverted">반전</string>
+    <string name="filter_inverted_desc">모든 것이 뒤집힙니다</string>
+    <string name="filter_vibrant">선명하게</string>
+    <string name="filter_vibrant_desc">인생은 즐겁습니다</string>
+    <string name="filter_bw">흑백</string>
+    <string name="filter_bw_desc">1950년대에 갇힌 느낌</string>
+    <string name="filter_film">필름</string>
+    <string name="filter_film_desc">놀란이 뜨기 시작하던 시절</string>
+    <string name="filter_grayscale">그레이스케일</string>
+    <string name="filter_grayscale_desc">으스스하네요</string>
+    <string name="filter_sepia">세피아</string>
+    <string name="filter_sepia_desc">갑오징어. 그게 전부입니다.</string>
+    <string name="filter_bgr">BGR</string>
+    <string name="filter_bgr_desc">왜 이걸 쓰고 있나요?</string>
+    <string name="filter_warm">따뜻하게</string>
+    <string name="filter_warm_desc">포근한 분위기</string>
+    <string name="filter_cool">차갑게</string>
+    <string name="filter_cool_desc">겨울 분위기</string>
+    <string name="filter_vintage">빈티지</string>
+    <string name="filter_vintage_desc">향수가 강하게 느껴집니다</string>
+    <string name="filter_posterize">포스터화</string>
+    <string name="filter_posterize_desc">적은 색으로도 충분하니까요</string>
+    <string name="filter_glow">글로우</string>
+    <string name="filter_glow_desc">어둠 속에서 빛납니다</string>
+    <string name="filter_mushrooms">버섯</string>
+    <string name="filter_mushrooms_desc">음.</string>
+    <string name="filter_solar">솔라</string>
+    <string name="filter_solar_desc">CME가 곧 여러분을 찾아갑니다</string>
+    <string name="filter_peachy">복숭아빛</string>
+    <string name="filter_peachy_desc">달콤하고 보송보송하게</string>
+    <string name="filter_pastel">파스텔</string>
+    <string name="filter_pastel_desc">그림을 못 그리니까요</string>
+    <string name="filter_rustic">러스틱</string>
+    <string name="filter_rustic_desc">숲속에서 주워 온 느낌</string>
+    <string name="filter_dried">드라이</string>
+    <string name="filter_dried_desc">햇볕에 그대로 말린 느낌</string>
+    <string name="filter_toast">토스티</string>
+    <string name="filter_toast_desc">청둥오리처럼 예쁜 색감</string>
+    <string name="filter_shimmer">쉬머</string>
+    <string name="filter_shimmer_desc">괜히 재수 없게 만들지는 맙시다</string>
+    <string name="filter_select">선택</string>
+    <string name="filter_selected">선택됨</string>
+
+    <!-- Video Editing -->
+    <string name="editing_trim">자르기</string>
+    <string name="editing_export_video_loading">동영상 내보내는 중…</string>
+    <string name="editing_export_video_loading_body">%2$d단계 중 %1$d단계</string>
+    <string name="editing_export_video_failed">동영상을 내보낼 수 없습니다</string>
+    <string name="editing_export_video_uploading">동영상 업로드 중…</string>
+    <string name="editing_volume_display">볼륨: %s</string>
+    <string name="editing_speed_display">재생 속도: %s</string>
+    <string name="editing_framerate_display">프레임 레이트: %s</string>
+    <string name="editing_volume">볼륨</string>
+    <string name="editing_wilson">재생 속도</string>
+    <string name="editing_fps">프레임 속도</string>
+
+    <!-- Settings -->
+    <string name="settings">설정</string>
+    <string name="settings_general">일반</string>
+    <string name="settings_theme">테마</string>
+    <string name="settings_look_and_feel">화면 및 디자인</string>
+    <string name="settings_privacy">개인정보 및 보안</string>
+    <string name="settings_memory_storage">메모리 및 저장 공간</string>
+    <string name="settings_storage">저장 공간</string>
+    <string name="settings_memory">메모리</string>
+    <string name="settings_storage_thumbnails_size">현재 썸네일 크기는 %1$s픽셀입니다. 값이 클수록 %2$s를 더 많이 사용합니다</string>
+    <string name="settings_storage_thumbnails_max">썸네일을 가능한 최대 해상도로 표시합니다. %1$s를 가장 많이 사용합니다</string>
+    <string name="settings_storage_thumbnails_cache">썸네일 캐시</string>
+    <string name="settings_storage_thumbnails_cache_desc">저장 공간을 사용하는 대신 더 빠르게 로드할 수 있습니다</string>
+    <string name="settings_storage_thumbnails_resolution">썸네일 해상도</string>
+    <string name="settings_storage_thumbnails_notice">해상도가 높을수록 저장 공간을 더 많이 사용합니다</string>
+    <string name="settings_storage_thumbnails_clear_cache">썸네일 캐시 삭제</string>
+    <string name="settings_storage_thumbnails_clear_cache_desc">저장 공간을 확보하기 위해 썸네일 캐시를 삭제합니다</string>
+    <string name="settings_clear">삭제</string>
+    <string name="settings_clear_cache_desc">이 기기의 모든 썸네일 캐시를 삭제하여 저장 공간을 확보합니다. 다음 시작 시 썸네일을 로드하는 데 더 오래 걸립니다.</string>
+    <string name="settings_about_and_updates">정보 및 업데이트</string>
+    <string name="settings_about">정보</string>
+    <string name="settings_behaviour">동작</string>
+    <string name="settings_navigation_exit_immediately">즉시 종료</string>
+    <string name="settings_navigation_exit_immediately_desc">뒤로 가기 버튼을 눌렀을 때 기본 탭으로 돌아가는 동작을 건너뜁니다</string>
+    <string name="settings_storage_export_quality">편집기 내보내기 품질: %d%%</string>
+    <string name="settings_storage_export_quality_warn">값이 높을수록 이미지 파일 크기가 커집니다.</string>
+    <string name="settings_behaviour_loop_never">동영상 반복 재생 안 함</string>
+    <string name="settings_behaviour_loop_under_30">30초 미만 반복 재생</string>
+    <string name="settings_behaviour_loop_always">동영상 반복 재생</string>
+    <string name="settings_behaviour_loop_never_desc">동영상이 끝나면 재생을 중지합니다</string>
+    <string name="settings_behaviour_loop_under_30_desc">30초 미만인 모든 동영상을 무한 반복 재생합니다</string>
+    <string name="settings_behaviour_loop_always_desc">길이에 관계없이 모든 동영상을 무한 반복 재생합니다</string>
+    <string name="settings_sort_mode_date_taken">촬영 날짜</string>
+    <string name="settings_sort_mode_date_modified">수정 날짜</string>
+    <string name="settings_sort_mode_month_taken">촬영 월</string>
+    <string name="settings_sort_mode_date_taken_no_separators">구분 없이 촬영 날짜</string>
+    <string name="settings_sort_mode_date_modified_no_separators">구분 없이 수정 날짜</string>
+
+    <!-- Trash -->
+    <string name="trash_bin_short">휴지통</string>
+    <string name="trash_bin">휴지통</string>
+    <string name="trash_empty">휴지통을 비우시겠습니까?</string>
+    <string name="trash_empty_desc">휴지통의 모든 항목이 삭제됩니다. 이 작업은 되돌릴 수 없습니다</string>
+    <string name="trash_empty_confirm">비우기</string>
+
+    <!-- Permissions -->
+    <string name="permissions">권한</string>
+    <string name="permissions_media_manager">미디어 관리자</string>
+    <string name="permissions_media_manager_desc">더 빠르고 편리한 휴지통/삭제/복사/이동 기능</string>
+    <string name="permissions_media_management">미디어 관리</string>
+    <string name="permissions_confirm_to_delete">삭제 확인</string>
+    <string name="permissions_confirm_too_delete_desc">미디어를 삭제하기 전에 확인을 요청합니다</string>
+    <string name="permissions_overwrite_date_on_move">이동 시 날짜 유지</string>
+    <string name="permissions_overwrite_date_on_move_desc">복사하거나 이동할 때 미디어 날짜를 유지합니다</string>
+    <string name="permissions_needed">권한 필요</string>
+    <string name="permissions_grant_long">권한 허용</string>
+    <string name="permissions_do_not_trash">휴지통 사용 안 함</string>
+    <string name="permissions_do_not_trash_desc">항목을 휴지통으로 이동하지 않고 즉시 영구 삭제합니다</string>
+    <string name="permissions_allow_secure_folder_screen_capture">보안 폴더에서 화면 캡처 허용</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">보안 폴더가 열려 있는 동안 스크린샷, 화면 녹화 및 화면 공유를 허용합니다. 보호된 콘텐츠가 최근 앱 미리보기에도 표시될 수 있습니다. 보안을 유지하려면 끄세요</string>
+    <string name="permissions_read_images">사진 읽기</string>
+    <string name="permissions_read_images_desc">Lavender Photos가 기기에서 사진을 찾을 수 있도록 허용합니다</string>
+    <string name="permissions_read_videos">동영상 읽기</string>
+    <string name="permissions_read_videos_desc">Lavender Photos가 기기에서 동영상을 찾을 수 있도록 허용합니다</string>
+    <string name="permissions_read_external_storage">외부 저장소 읽기</string>
+    <string name="permissions_read_external_storage_desc">Lavender Photos가 기기에서 사진과 동영상을 찾을 수 있도록 허용합니다</string>
+    <string name="permissions_manage_media">미디어 관리</string>
+    <string name="permissions_manage_media_desc">선택 사항인 권한입니다. 더 빠른 휴지통/삭제 기능에 사용됩니다</string>
+    <string name="permissions_continue">계속</string>
+    <string name="permissions_necessary">필수 권한</string>
+    <string name="permissions_necessary_desc">앱 기능을 사용하려면 이 권한이 필요합니다</string>
+    <string name="permissions_grant_permissions">권한 허용</string>
+    <string name="permissions_why">왜 필요한가요?</string>
+    <string name="permissions_dismiss">닫기</string>
+    <string name="permissions_read_media_explanation">이 권한은 기기에서 사진과 동영상을 찾는 데 필요합니다. Lavender Photos는 읽는 파일의 범위를 엄격하게 제한하며 이 정보를 공유하거나 악용하지 않습니다.</string>
+    <string name="permissions_manage_media_explanation">이 권한은 선택 사항이지만 강력히 권장합니다. 미디어 관리 권한을 사용하면 Lavender Photos가 Android의 Content Resolver API를 이용해 미디어를 휴지통으로 보내거나 삭제, 이동, 복사할 수 있어 다른 앱과의 호환성이 높고 작업이 훨씬 원활해집니다.</string>
+    <string name="permissions_explanation">권한 설명</string>
+
+    <!-- Media -->
+    <string name="media">미디어</string>
+    <string name="sort_indicator">정렬 기준</string>
+    <string name="sort_date">날짜</string>
+    <string name="sort_name">이름</string>
+    <string name="sort_custom">사용자 지정</string>
+    <string name="media_non_existent">이 미디어는 존재하지 않습니다!</string>
+    <string name="media_broken">손상된 미디어</string>
+    <string name="media_share">공유</string>
+    <string name="media_share_failed">미디어 공유에 실패했습니다!</string>
+    <string name="media_delete">삭제</string>
+    <string name="media_delete_confirm">이 미디어를 삭제하시겠습니까?</string>
+    <string name="media_trash_confirm">선택한 항목을 휴지통으로 이동하시겠습니까?</string>
+    <string name="media_secure">보안</string>
+    <string name="media_secure_confirm">이 미디어를 보안 폴더로 이동하시겠습니까?</string>
+    <string name="media_delete_permanently_confirm">이 미디어를 영구 삭제하시겠습니까?</string>
+    <string name="media_cancel">취소</string>
+    <string name="media_restore">복원</string>
+    <string name="media_restore_confirm">이 항목들을 복원하시겠습니까?</string>
+    <string name="media_restore_processing">파일 복원 중</string>
+    <string name="media_move">이동</string>
+    <string name="media_copy">복사</string>
+    <string name="media_rename">이름 변경</string>
+    <string name="media_select">선택</string>
+    <string name="media_exif_erase">EXIF 데이터 삭제</string>
+    <string name="media_exif_done">EXIF 데이터를 삭제했습니다</string>
+    <string name="media_exif_failed">EXIF 데이터 삭제에 실패했습니다</string>
+    <string name="media_erase">지우기</string>
+    <string name="media_confirm">확인</string>
+    <string name="media_okay">확인</string>
+    <string name="media_snackbar_operation_failed">작업에 실패했습니다!</string>
+    <string name="media_copy_snackbar_title">항목 복사 중…</string>
+    <string name="media_move_snackbar_title">항목 이동 중…</string>
+    <string name="media_delete_snackbar_title">항목 삭제 중…</string>
+    <string name="media_secure_snackbar_title">항목 보호 중…</string>
+    <string name="media_restore_snackbar_title">항목 복원 중…</string>
+    <string name="media_share_snackbar_title">항목 공유 중…</string>
+    <string name="media_copy_snackbar_body">%2$d개 중 %1$d개 복사됨</string>
+    <string name="media_move_snackbar_body">%2$d개 중 %1$d개 이동됨</string>
+    <string name="media_delete_snackbar_body">%2$d개 중 %1$d개 삭제됨</string>
+    <string name="media_share_snackbar_body">%2$d개 중 %1$d개 공유됨</string>
+    <string name="media_secure_snackbar_body">%2$d개 중 %1$d개 보호됨</string>
+    <string name="media_restore_snackbar_body">%2$d개 중 %1$d개 복원됨</string>
+    <string name="media_tools">도구</string>
+    <string name="media_information">정보</string>
+    <string name="media_is_raw">RAW 이미지입니다</string>
+    <string name="media_is_gif">GIF입니다</string>
+    <string name="media_is_cloud">클라우드 전용 항목입니다</string>
+
+    <!-- Search -->
+    <string name="search_photo_name">사진 검색</string>
+    <string name="search_photo_tag">태그 검색</string>
+    <string name="search_by_name">이름</string>
+    <string name="search_by_date">날짜</string>
+    <string name="search_by_tag">태그</string>
+    <string name="search_no_tags_found">아직 추가된 태그가 없습니다…</string>
+    <string name="search">검색</string>
+    <string name="search_nothing_found">검색 결과가 없습니다</string>
+
+    <!-- Explanations -->
+    <string name="edit_desc">Lavender Photos에서 %1$s에 파일을 편집했습니다</string>
+    <string name="custom_album_remove_media">삭제</string>
+    <string name="custom_album_remove_media_desc">이 항목들을 앨범에서 삭제하시겠습니까?</string>
+    <string name="action_cannot_be_undone">이 작업은 되돌릴 수 없습니다!</string>
+    <string name="explanation_nothing_here">여기에 아무것도 없습니다…</string>
+    <string name="no_actions_available">사용 가능한 작업이 없습니다</string>
+
+    <!-- Miscellaneous -->
+    <string name="show_options">추가 옵션 표시</string>
+    <string name="set_as_wallpaper">배경화면으로 설정</string>
+    <string name="wallpaper_homescreen">홈 화면</string>
+    <string name="wallpaper_lockscreen">잠금 화면</string>
+    <string name="wallpaper_Both">두 화면 모두</string>
+    <string name="wallpaper_scrollable">스크롤 가능</string>
+    <string name="more_info">추가 상세 정보</string>
+    <string name="none">없음</string>
+    <string name="pixels">픽셀</string>
+    <string name="paths_should_be_relative">경로는 상대 경로여야 합니다</string>
+    <string name="help">도움말</string>
+    <string name="apply">적용</string>
+    <string name="close">닫기</string>
+    <string name="changelog_name">변경 내역</string>
+    <string name="drag_and_drop_data">Lavender Photos 드래그 앤 드롭 데이터</string>
+    <string name="management">관리</string>
+    <string name="next">다음</string>
+    <string name="error">오류!</string>
+    <string name="refresh">새로고침</string>
+    <string name="copy_link">링크 복사</string>
+    <string name="download">다운로드</string>
+    <string name="upload">업로드</string>
+    <string name="metadata">메타데이터</string>
+    <string name="media_picker_processing_items">항목 처리 중…</string>
+    <string name="media_picker_processing_items_body">%2$d개 중 %1$d개 처리 중</string>
+
+    <!--  App Lock  -->
+    <string name="app_lock">앱 잠금</string>
+    <string name="app_lock_password">PIN 설정</string>
+    <string name="app_lock_password_desc">앱을 시작할 때 PIN을 요구합니다. PIN을 비워 두면 잠금이 해제됩니다</string>
+    <string name="app_lock_password_set">PIN이 업데이트되었습니다</string>
+    <string name="app_lock_password_cleared">PIN이 삭제되었습니다</string>
+    <string name="app_lock_unlock">앱 잠금이 활성화되었습니다</string>
+    <string name="app_lock_enter_pin">PIN을 입력하세요</string>
+    <string name="app_lock_set">앱 잠금 설정</string>
+    <string name="app_lock_verify">PIN 확인</string>
+    <string name="app_lock_confirm">PIN 확인</string>
+    <string name="app_lock_submit">확인을 위해 PIN 제출</string>
+    <string name="app_lock_backspace">마지막 입력 문자 삭제</string>
+
+    <!-- Bottom Sheets -->
+    <string name="bottom_sheets_enter_text">텍스트 입력</string>
+    <string name="bottom_sheets_freeform">자유 형식</string>
+    <string name="bottom_sheets_square">정사각형</string>
+    <string name="bottom_sheets_image_ratio">이미지 비율</string>
+    <string name="bottom_sheets_sixteen_by_nine">16:9 (가로)</string>
+    <string name="bottom_sheets_nine_by_sixteen">9:16 (세로)</string>
+    <string name="bottom_sheets_nine_by_twentyone">9:21</string>
+    <string name="bottom_sheets_five_by_four">5:4</string>
+    <string name="bottom_sheets_four_by_three">4:3</string>
+    <string name="bottom_sheets_three_by_two">3:2</string>
+    <string name="bottom_sheets_ratio_selected">이 자르기 비율이 선택되었습니다</string>
+
+    <!-- Error Views -->
+    <string name="error_views_trash_empty">휴지통에 있는 항목이 여기에 표시됩니다</string>
+    <string name="error_views_trash_prefix">휴지통:</string>
+    <string name="error_views_album_empty">이 앨범은 비어 있습니다</string>
+    <string name="error_views_search_not_found">일치하는 항목을 찾을 수 없습니다</string>
+    <string name="error_views_secure_empty">보호된 미디어가 없습니다!</string>
+    <string name="error_views_secure_prefix">보호됨:</string>
+    <string name="error_views_favourites_empty">가장 소중한 추억을 추가해 보세요!</string>
+    <string name="error_views_folder_non_existent">폴더가 존재하지 않습니다</string>
+    <string name="error_views_main_empty">비어 있는 것 같습니다…</string>
+
+    <!-- Look and Feel -->
+    <string name="look_and_feel_styling_separator">스타일</string>
+    <string name="look_and_feel_date_format">날짜 형식</string>
+    <string name="look_and_feel_image_details_format">이미지 정보 형식</string>
+    <string name="look_and_feel_date_format_default">기본</string>
+    <string name="look_and_feel_date_format_short">간단히</string>
+    <string name="look_and_feel_date_format_standard">표준</string>
+    <string name="look_and_feel_date_format_numeric">숫자</string>
+    <string name="look_and_feel_date_format_filename">파일 이름</string>
+    <string name="look_and_feel_date_format_date_taken">촬영 날짜</string>
+    <string name="look_and_feel_date_format_datetime_taken">촬영 날짜 및 시간</string>
+    <string name="look_and_feel_column_size">열 크기: %1$d</string>
+    <string name="look_and_feel_album_column_size">앨범 열 크기: %1$d</string>
+    <string name="look_and_feel_grids">그리드</string>
+    <string name="look_and_feel_use_black_background">미디어 보기 배경을 검은색으로</string>
+    <string name="look_and_feel_use_black_background_desc">이미지 뷰어/동영상 플레이어의 배경을 검은색으로 표시합니다</string>
+    <string name="look_and_feel_nav">탐색</string>
+    <string name="look_and_feel_extra_secure_nav">보안 폴더 바로가기 추가</string>
+    <string name="look_and_feel_extra_secure_nav_desc">앱의 메인 대화상자에서 보안 폴더로 이동할 수 있는 옵션을 표시합니다</string>
+    <string name="look_and_feel_rounded_corners">썸네일 모서리 둥글게</string>
+    <string name="look_and_feel_rounded_corners_desc">사진 그리드의 썸네일 모서리를 둥글게 표시합니다</string>
+    <string name="look_and_feel_views">보기</string>
+    <string name="look_and_feel_views_blur">배경 흐림</string>
+    <string name="look_and_feel_views_blur_desc">현재 이미지의 흐린 버전으로 배경을 채웁니다</string>
+    <string name="look_and_feel_vibrate_on_media_click">탭할 때 진동</string>
+    <string name="look_and_feel_vibrate_on_media_click_desc">미디어 항목을 탭했을 때 짧게 진동할지 설정합니다.</string>
+    <string name="look_and_feel_language">언어</string>
+    <string name="look_and_feel_language_selected">이 언어가 선택되었습니다</string>
+    <string name="look_and_feel_app_language">앱 언어</string>
+    <string name="look_and_feel_app_language_desc">앱의 표시 언어를 변경합니다. 앱을 다시 시작해야 할 수 있습니다. 현재: %1$s</string>
+    <string name="look_and_feel_palette">색상 팔레트</string>
+    <string name="look_and_feel_palette_desc">앱의 색 구성표를 변경합니다</string>
+    <string name="look_and_feel_colors">색상 및 스타일</string>
+    <string name="look_and_feel_colors_desc">앱의 모양을 사용자 지정하고, 색상 팔레트를 변경하며, 동적 테마를 설정합니다</string>
+    <string name="look_and_feel_style">앱 스타일</string>
+    <string name="look_and_feel_style_desc">앱의 색상 스타일을 선택합니다</string>
+    <string name="look_and_feel_style_system">시스템</string>
+    <string name="look_and_feel_style_light">라이트</string>
+    <string name="look_and_feel_style_dark">다크</string>
+    <string name="look_and_feel_style_night">야간</string>
+    <string name="look_and_feel_style_dynamic">동적 색상</string>
+    <string name="look_and_feel_style_dynamic_desc">기기의 배경화면과 시스템 테마에서 색상을 가져옵니다</string>
+
+    <!-- Immich -->
+    <string name="immich_title">Immich 백업</string>
+    <string name="immich_account">Immich 계정</string>
+    <string name="immich_login_unavailable">로그인되지 않음</string>
+    <string name="immich_login_unavailable_desc">연결된 Immich 계정이 없습니다</string>
+    <string name="immich_login_unreachable">엔드포인트에 연결할 수 없음</string>
+    <string name="immich_login_unreachable_desc">서버에 연결할 수 없습니다</string>
+    <string name="immich_login_found">로그인 계정: </string>
+    <string name="immich_login">Immich로 로그인</string>
+    <string name="immich_login_ongoing">로그인 중…</string>
+    <string name="immich_login_successful">로그인에 성공했습니다!</string>
+    <string name="immich_login_failed">로그인에 실패했습니다</string>
+    <string name="immich_endpoint_base">서버 주소</string>
+    <string name="immich_endpoint_base_desc">Immich 백업 서버 주소</string>
+    <string name="immich_endpoint_base_placeholder">https://my.immich.server.com/</string>
+    <string name="immich_clear_endpoint">서버를 삭제하시겠습니까?</string>
+    <string name="immich_clear_endpoint_desc">정말 이 서버 주소를 삭제하시겠습니까?</string>
+    <string name="immich_logout">로그아웃</string>
+    <string name="immich_logout_desc">이 기기에서 계정을 삭제합니다</string>
+    <string name="immich_logout_question_desc">정말 이 계정에서 로그아웃하시겠습니까?</string>
+    <string name="immich_email">이메일:</string>
+    <string name="immich_state_unknown">알 수 없음</string>
+    <string name="immich_auth_password">비밀번호</string>
+    <string name="immich_auth_email">이메일</string>
+    <string name="immich_auth_api_key">API 키</string>
+    <string name="immich_auth_current_password">현재 비밀번호</string>
+    <string name="immich_auth_new_password">새 비밀번호</string>
+    <string name="immich_auth_repeat_new_password">비밀번호 다시 입력</string>
+    <string name="immich_auth_show_password">비밀번호 표시</string>
+    <string name="immich_auth_password_same_as_old">현재 비밀번호와 동일한 비밀번호는 사용할 수 없습니다</string>
+    <string name="immich_auth_password_do_not_match">새 비밀번호가 일치하지 않습니다</string>
+    <string name="immich_auth_password_too_short">비밀번호는 8자 이상이어야 합니다</string>
+    <string name="immich_auth_password_current_blank">현재 비밀번호를 입력하세요</string>
+    <string name="immich_auth_password_good_to_go">비밀번호를 변경할 준비가 되었습니다!</string>
+    <string name="immich_auth_hide_password">비밀번호 표시 또는 숨기기</string>
+    <string name="immich_auth_login_with_api_key">API 키로 로그인</string>
+    <string name="immich_auth_login_with_account">계정으로 로그인</string>
+    <string name="immich_uuid">Immich UUID:</string>
+    <string name="immich_server_info_with_status">서버:</string>
+    <string name="immich_server_info_desc">버전: %1$s. 빌드: %2$s</string>
+    <string name="immich_server_info_new_version_available">새 버전 사용 가능: %1$s</string>
+    <string name="immich_server_storage">서버 저장 공간</string>
+    <string name="immich_server_storage_desc">%2$s 중 %1$s 사용</string>
+    <string name="immich_server_storage_desc_detailed">%2$sGB 중 %1$sGB 사용</string>
+    <string name="immich_server_info_failed">데이터를 사용할 수 없습니다</string>
+    <string name="immich_server">Immich 서버</string>
+    <string name="immich_help_general">이 기능은 무엇인가요?</string>
+    <string name="immich_help_general_desc">앨범 단위로 미디어를 Immich 서버에 백업할 수 있습니다</string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+<p><a href="https://immich.app/">Immich</a>는 사진과 동영상을 관리할 수 있는 셀프 호스팅 솔루션으로,
+누구나 직접 클라우드 백업 서버를 운영할 수 있습니다.</p>
+<h3 style="text-align:center;">사용 방법</h3>
+<ul>
+    <li>Immich 서버를 직접 호스팅합니다</li>
+    <li><a href="https://immich.app/">Immich 서버</a>를 직접 호스팅합니다</li>
+    <li>Lavender Photos에서 서버 주소를 지정합니다</li>
+    <li>Immich 사용자 계정으로 로그인합니다</li>
+    <li>대시보드에서 \'백업 옵션\'을 누릅니다</li>
+    <li>백업할 앨범을 선택하고 확인 버튼을 누릅니다</li>
+    <li>안전하고 간편한 클라우드 백업을 이용하세요!</li>
+</ul>
+]]></string>
+    <string name="immich_server_url_invalid">잘못된 URL입니다!</string>
+    <string name="immich_misc">기타</string>
+    <string name="immich_server_online">온라인</string>
+    <string name="immich_server_offline">오프라인</string>
+    <string name="immich_server_unreachable">서버에 연결할 수 없습니다!</string>
+    <string name="immich_server_not_loading">이 앨범에 미디어가 없거나 서버에 연결할 수 없습니다</string>
+    <string name="immich_account_username">사용자 이름</string>
+    <string name="immich_account_role">역할</string>
+    <string name="immich_account_is_user">사용자</string>
+    <string name="immich_account_is_admin">관리자</string>
+    <string name="immich_account_usage">계정 사용량</string>
+    <string name="immich_account_usage_images">이미지 수</string>
+    <string name="immich_account_usage_videos">동영상 수</string>
+    <string name="immich_account_unlimited">%sGB 사용 중 - 저장 공간 무제한</string>
+    <string name="immich_account_change_password">비밀번호 변경</string>
+    <string name="immich_account_change_password_confirm">변경</string>
+    <string name="immich_account_storage">사용자 저장 공간</string>
+    <string name="immich_account_change_username_failed">사용자 이름 변경에 실패했습니다</string>
+    <string name="immich_account_change_email_failed">이메일 변경에 실패했습니다</string>
+    <string name="immich_account_change_email_invalid">이메일 주소가 잘못되었습니다!</string>
+    <string name="immich_account_change_password_failed">비밀번호 변경에 실패했습니다</string>
+    <string name="immich_account_change_pfp_succeeeded">프로필 사진을 변경했습니다!</string>
+    <string name="immich_account_change_pfp_failed">프로필 사진을 변경할 수 없습니다</string>
+    <string name="immich_account_create">계정 만들기</string>
+    <string name="immich_album_item_description">이 항목을 클라우드 백업에 추가하거나 삭제합니다</string>
+    <string name="immich_backup_options">백업 옵션</string>
+    <string name="immich_backup_options_desc">클라우드와 동기화할 앨범을 선택합니다</string>
+    <string name="immich_backup_options_empty">표시할 항목이 없습니다…</string>
+    <string name="immich_backup_option_cloud_synced_albums">클라우드 동기화 앨범: %d</string>
+    <string name="immich_backup_option_total_uploaded_count">총 업로드 항목: %d</string>
+    <string name="immich_backup_option_changes_synced">변경 사항이 동기화되었습니다!</string>
+    <string name="immich_backup_option_changes_unsaved">저장되지 않은 변경 사항</string>
+    <string name="immich_backup_option_changes_unsaved_desc">새로고침하면 모든 변경 사항이 취소됩니다</string>
+    <string name="immich_backup_sync">항목 동기화</string>
+    <string name="immich_backup_sync_desc">Lavender Photos와 Immich 서버 간의 변경 사항을 동기화합니다</string>
+    <string name="immich_backup_sync_running">항목 동기화 중…</string>
+    <string name="immich_backup_sync_count">%2$d개 중 %1$d개 동기화 중</string>
+    <string name="immich_share_album">앨범 공유</string>
+    <string name="immich_share_album_item_count">%d개 항목</string>
+    <string name="immich_share_album_use_expiry_date">만료 시각</string>
+    <string name="immich_share_album_allow_uploads">업로드 허용</string>
+    <string name="immich_share_album_allow_downloads">다운로드 허용</string>
+    <string name="immich_share_album_require_password">비밀번호 필요</string>
+    <string name="immich_share_album_custom_url">사용자 지정 URL</string>
+    <string name="immich_share_album_use_custom_url">사용자 지정 URL 사용</string>
+    <string name="immich_share_album_description">설명</string>
+    <string name="immich_share_album_loading">링크 생성 중…</string>
+    <string name="immich_share_album_loading_failed">링크 생성에 실패했습니다</string>
+    <string name="immich_share_album_clip_title">Immich 앨범 공유 링크</string>
+    <string name="immich_share_album_empty">앨범이 비어 있습니다!</string>
+    <string name="immich_share_album_customize_link">링크 속성 사용자 지정</string>
+    <string name="immich_share_album_create_link">링크 만들기</string>
+    <string name="immich_share_album_qr_code">공유 링크의 QR 코드 표현</string>
+    <string name="immich_share_album_other_links">이 앨범에서 만든 다른 링크</string>
+    <string name="immich_share_album_delete_link">이 Immich 공유 링크 삭제</string>
+    <string name="immich_share_album_expires_at">만료 시각: %s</string>
+
+    <!--  Exif  -->
+    <string name="exif_name">이름:</string>
+    <string name="exif_path">경로:</string>
+    <string name="exif_date">날짜:</string>
+    <string name="exif_latlong">위도/경도:</string>
+    <string name="exif_device">기기:</string>
+    <string name="exif_fnumber">F값:</string>
+    <string name="exif_shutter_speed">셔터 속도:</string>
+    <string name="exif_mp">메가픽셀:</string>
+    <string name="exif_res">해상도:</string>
+    <string name="exif_size">크기:</string>
+    <string name="exif_date_changed_failed">날짜 변경에 실패했습니다</string>
+    <string name="exif_date_changer_go_back">날짜 선택기로 돌아가기</string>
+
+    <!--  Privacy  -->
+    <string name="privacy_scroll_mode">개인정보 보호 모드</string>
+    <string name="privacy_scroll_mode_enabled">개인정보 보호 모드: 켜짐</string>
+    <string name="privacy_scroll_mode_disabled">개인정보 보호 모드: 꺼짐</string>
+    <string name="privacy_scroll_mode_prompt">스크롤 및 작업에 대한 접근 권한 관리</string>
+    <string name="privacy_scroll_mode_fail">개인정보 보호 모드 변경에 실패했습니다</string>
+    <string name="privacy_scroll_mode_exit_tried">개인정보 보호 모드가 활성화되어 있습니다</string>
+    <string name="privacy_authenticate">인증</string>
+    <string name="privacy_scroll_mode_last_active">개인정보 보호 모드 활성화됨</string>
+    <string name="privacy_scroll_mode_last_active_desc">앱을 마지막으로 닫을 때 개인정보 보호 모드가 활성화된 상태였습니다. 계속하려면 비밀번호 또는 생체 인증을 사용하세요.</string>
+
+    <!--  Startup Processing  -->
+    <string name="startup_processing_indexing">미디어 검색 중…</string>
+    <string name="startup_processing_info">한 번만 수행하는 작업입니다.</string>
+    <string name="startup_processing_progress">완료: %s</string>
+    <string name="startup_processing_explanation">왜 기다려야 하나요?</string>
+    <string name="startup_processing_explanation_desc">Lavender Photos는 정확한 날짜 표시, 빠른 로딩 및 더 많은 기능을 제공하기 위해 기기의 미디어를 색인합니다. <b>한 번만</b> 수행되는 작업이며, 기기의 항목 수에 따라 <i>약 30초~2분</i> 정도 걸립니다. 작업을 중단하면 다음 실행 시 이어서 진행합니다.</string>
+    <string name="startup_processing_skip">건너뛰기</string>
+
+    <!--  Main Dialog  -->
+    <string name="main_dialog_greeting">안녕하세요, %s님!</string>
+
+    <!--  Tags  -->
+    <string name="tags_add">태그 추가!</string>
+    <string name="tags_exists">이미 존재하는 태그입니다!</string>
+    <string name="tags_name">이름: %s</string>
+    <string name="tags_type">유형: %s</string>
+    <string name="tags_path">경로: %s</string>
+    <string name="tags_favourited_true">즐겨찾기: 예</string>
+    <string name="tags_favourited_false">즐겨찾기: 아니요</string>
+    <string name="tags">태그</string>
+    <string name="tags_delete">태그 "%s"을(를) 삭제하시겠습니까?</string>
+
+    <!--  Album Groups  -->
+    <string name="album_group">앨범 그룹</string>
+    <string name="album_group_desc">앨범을 정리합니다</string>
+    <string name="album_group_name">그룹 이름</string>
+    <string name="album_group_name_error">유효하지 않은 이름입니다!</string>
+    <string name="album_group_dialog_name">이름:</string>
+    <string name="album_group_delete">이 그룹을 삭제하시겠습니까?</string>
+    <string name="album_group_item_count">하위 앨범:</string>
+    <string name="album_group_info">앨범 그룹 정보</string>
+    <string name="album_group_show_add_dialog">이 그룹에 앨범 추가</string>
+
+    <!--  News  -->
+    <string name="news">소식</string>
+    <string name="news_note">참고: %1$s</string>
+    <string name="news_github_issue_number">GitHub 이슈: #%1$d</string>
+    <string name="news_category_feature">기능</string>
+    <string name="news_category_improvement">개선</string>
+    <string name="news_category_fix">수정</string>
+    <string name="news_version_latest">최신</string>
+    <string name="news_version_broken">문제 있음</string>
+
+    <!--  Contributors  -->
+    <string name="contributor">기여자</string>
+    <string name="contributor_major">주요 기여자</string>
+    <string name="contributor_maintainer">유지 관리자</string>
+    <string name="contributor_kaii_desc">안전과 개인정보 보호를 저버리지 않으면서 가능한 것의 한계를 넓히는 앱을 만듭니다</string>
+    <string name="contributor_kexxdumb_desc">앱의 초기 단계부터 형태를 다듬고, 테스트하고, 개선하는 데 도움을 주었습니다</string>
+    <string name="contributor_tyrypyrking_desc">보안 암호화 시스템과 파일 복구 절차를 개선했습니다</string>
+    <string name="contributor_stacsk_desc">문제를 찾아내고 수많은 개선 사항을 제안하여 앱 개발을 발전시켰습니다</string>
+    <string name="contributors_community_member">커뮤니티 구성원</string>
+    <string name="contributors_separator_developer">개발자</string>
+    <string name="contributors_separator_major">주요 기여</string>
+    <string name="contributors_separator_contributors">오픈 소스 기여자</string>
+</resources>
