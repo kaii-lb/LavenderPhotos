@@ -105,9 +105,9 @@ android {
                 "en", "ar", "ca", "cs", "da",
                 "de", "el", "eo", "es", "et",
                 "fr", "gl", "hy", "in", "it",
-                "ja", "kn", "pl", "pt", "pt-rBR",
-                "ru", "sk", "sv", "tr", "uk",
-                "vi", "zh-rCN", "zh-rTW",
+                "ja", "kn", "ko", "pl", "pt",
+                "pt-rBR", "ru", "sk", "sv", "tr",
+                "uk", "vi", "zh-rCN", "zh-rTW"
             )
         )
     }
