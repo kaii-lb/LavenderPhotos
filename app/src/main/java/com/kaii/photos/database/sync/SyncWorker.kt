@@ -44,14 +44,18 @@ class SyncWorker @AssistedInject constructor(
         val dao = db.mediaDao()
         val syncManager = SyncManager(context)
 
-        val mediaStoreIds = getAllMediaStoreIds(context)
+        val mediaStoreIds = getAllMediaStoreIds(context) ?: return Result.retry()
         val inAppIds = dao.getAllMediaIds().toSet()
 
         val removed = (inAppIds - mediaStoreIds).filter { it >= 0 } // negative numbers are for custom media
         val (added, newGen) = loadMediaDataDelta(context = context)
 
         db.withTransaction {
-            if (removed.isNotEmpty()) dao.deleteAll(removed.toSet())
+            if (removed.isNotEmpty()) {
+                removed.chunked(500).forEach { chunk ->
+                    dao.deleteAll(chunk)
+                }
+            }
 
             if (added.isNotEmpty()) dao.upsertIgnoringImmich(items = added)
         }

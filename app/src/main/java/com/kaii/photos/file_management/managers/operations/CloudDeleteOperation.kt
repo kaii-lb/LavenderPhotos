@@ -46,8 +46,10 @@ class CloudDeleteOperation @Inject constructor(
             mediaIds = ids,
             immichIds = files.associate { it.id to it.immichId },
             applyLocally = {
-                mediaDao.deleteAll(ids = ids.toSet())
-                customDao.deleteAll(ids = ids.toSet(), album = albumId)
+                ids.chunked(500).forEach { chunk ->
+                    mediaDao.deleteAll(ids = chunk)
+                    customDao.deleteAll(ids = chunk.toSet(), album = albumId)
+                }
             },
             attemptRemote = {
                 val targets = files.mapNotNull { it.immichId }

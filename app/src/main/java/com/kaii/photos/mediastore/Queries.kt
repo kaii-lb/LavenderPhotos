@@ -19,7 +19,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToLong
 
-fun getAllMediaStoreIds(context: Context): Set<Long> {
+fun getAllMediaStoreIds(context: Context): Set<Long>? {
     val cursor =
         context.contentResolver.query(
             MEDIA_STORE_FILE_URI,
@@ -27,7 +27,7 @@ fun getAllMediaStoreIds(context: Context): Set<Long> {
             "(${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))",
             null,
             null,
-        ) ?: return emptySet()
+        ) ?: return null
 
     val ids = mutableSetOf<Long>()
 

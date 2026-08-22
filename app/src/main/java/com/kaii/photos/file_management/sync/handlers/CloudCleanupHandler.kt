@@ -28,6 +28,10 @@ class CloudCleanupHandler @Inject constructor(
             .filter { it.isTrashed || (it.assetId == null && it.action == AssetUploadAction.Accept) }
             .map { it.id.toLong() }
 
-        if (staleIds.isNotEmpty()) mediaDao.deleteAll(ids = staleIds.toSet())
+        if (staleIds.isNotEmpty()) {
+            staleIds.chunked(500).forEach { chunk ->
+                mediaDao.deleteAll(ids = chunk)
+            }
+        }
     }
 }

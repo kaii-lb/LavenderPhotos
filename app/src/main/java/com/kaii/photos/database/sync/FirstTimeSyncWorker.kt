@@ -75,7 +75,7 @@ class FirstTimeSyncWorker @AssistedInject constructor(
         val startTime = Clock.System.now()
         val dao = MediaDatabase.getInstance(context).mediaDao()
 
-        val mediaStoreIds = getAllMediaStoreIds(context)
+        val mediaStoreIds = getAllMediaStoreIds(context) ?: return Result.retry()
         val inAppIds = dao.getAllMediaIds().toSet()
 
         val progress = AtomicInt(0)
@@ -111,7 +111,11 @@ class FirstTimeSyncWorker @AssistedInject constructor(
         }
 
         val removed = inAppIds - mediaStoreIds
-        if (removed.isNotEmpty()) dao.deleteAll(removed)
+        if (removed.isNotEmpty()) {
+            removed.chunked(500).forEach { chunk ->
+                dao.deleteAll(chunk)
+            }
+        }
 
         updateLatestGen(context)
 

@@ -325,7 +325,7 @@ interface MediaDao {
     }
 
     @Query(value = "DELETE FROM media WHERE id IN (:ids)")
-    suspend fun deleteAll(ids: Set<Long>)
+    suspend fun deleteAll(ids: List<Long>)
 
     // TODO: look into optimizing this somehow for numerous nested folders (50+ subfolders, etc)
     private fun buildPathPrefixQuery(
