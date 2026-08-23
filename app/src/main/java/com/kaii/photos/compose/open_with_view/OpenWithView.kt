@@ -210,7 +210,8 @@ class OpenWithView : ComponentActivity() {
 
                             composable<Screens.VideoEditor>(
                                 typeMap = mapOf(
-                                    typeOf<AlbumType>() to AlbumType.NavType()
+                                    typeOf<AlbumType>() to AlbumType.NavType(),
+                                    typeOf<FileOperationItemMetadata>() to Screens.FileOperationItemMetadataNavType()
                                 ),
                                 enterTransition = {
                                     slideInVertically(
