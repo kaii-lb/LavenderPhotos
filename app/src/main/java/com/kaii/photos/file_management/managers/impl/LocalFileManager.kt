@@ -228,4 +228,10 @@ class LocalFileManager @Inject constructor(
             )
         }
     }
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        gateway.eraseExifData(absolutePath)
+    }
 }

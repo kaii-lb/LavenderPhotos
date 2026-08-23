@@ -23,6 +23,7 @@ import com.kaii.photos.domain.files.FileOperationCopyResult
 import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.exif.MediaData
+import com.kaii.photos.helpers.exif.eraseExifMedia
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.mediastore.LAVENDER_FILE_PROVIDER_AUTHORITY
 import com.kaii.photos.mediastore.MediaType
@@ -285,6 +286,12 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
         return if (map.isEmpty()) Result.Error(FileOperationError.Failed)
         else Result.Success(data = map)
     }
+
+    override fun eraseExifData(
+        absolutePath: String
+    ): Result<Unit, FileOperationError> =
+        if (eraseExifMedia(absolutePath)) Result.Success(Unit)
+        else Result.Error(FileOperationError.Failed)
 
     override fun getTrashMediaById(
         id: Long

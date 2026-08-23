@@ -437,6 +437,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="media_delete_snackbar_title">Deleting items…</string>
     <string name="media_secure_snackbar_title">Securing items…</string>
     <string name="media_restore_snackbar_title">Restoring items…</string>
+    <string name="media_clear_exif_snackbar_title">Erased EXIF data</string>
     <string name="media_share_snackbar_title">Sharing items…</string>
     <string name="media_copy_snackbar_body">Copied %1$d out of %2$d</string>
     <string name="media_move_snackbar_body">Moved %1$d out of %2$d</string>
@@ -494,6 +495,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="metadata">Metadata</string>
     <string name="media_picker_processing_items">Processing items…</string>
     <string name="media_picker_processing_items_body">Processing %1$d out of %2$d</string>
+    <string name="done">Done</string>
 
     <!--  App Lock  -->
     <string name="app_lock">App Lock</string>

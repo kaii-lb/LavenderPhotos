@@ -19,6 +19,7 @@ import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
@@ -67,7 +68,7 @@ class SearchRepository(
     info: ImmichBasicInfo,
     sortMode: MediaItemSortMode,
     dateFormatter: LocalizedDateFormatter
-) : BaseRepo, RenameFile, Secure, PrepareFileForWrite {
+) : BaseRepo, RenameFile, Secure, PrepareFileForWrite, ClearExif {
     class Factory @Inject constructor(
         private val searchDao: SearchDao,
         private val taggedItemsDao: TaggedItemsDao,
@@ -446,4 +447,8 @@ class SearchRepository(
         files: List<FileOperationItemMetadata>,
         followUpAction: FileOperationAction
     ) = fileManager.prepareFileForWrite(files, followUpAction)
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ) = fileManager.clearExifData(absolutePath)
 }

@@ -52,10 +52,12 @@ class CustomFileManager @Inject constructor(
             destination = destination
         ).collect { progress ->
             when (progress) {
-                is FileOperationProgress.Started -> send(element = FileOperationProgress.Started(
-                    action = FileOperationAction.LongOperationType.Move,
-                    fileCount = files.size
-                ))
+                is FileOperationProgress.Started -> send(
+                    element = FileOperationProgress.Started(
+                        action = FileOperationAction.LongOperationType.Move,
+                        fileCount = files.size
+                    )
+                )
 
                 is FileOperationProgress.ItemDone -> send(progress)
                 is FileOperationProgress.Finished -> copyResult = progress.result
@@ -215,5 +217,11 @@ class CustomFileManager @Inject constructor(
         customDao.mediaSize(
             album = album.id
         )
+    }
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ): Result<Unit, FileOperationError> = withContext(Dispatchers.IO) {
+        gateway.eraseExifData(absolutePath)
     }
 }

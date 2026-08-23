@@ -300,6 +300,7 @@ class MainGridViewModel @Inject constructor(
             is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
             is FileOperationAction.PrepareFilesForWrite -> repo.prepareFileForWrite(action.files, action.followUpAction, progressChannel, appScope)
             is FileOperationAction.Secure -> repo.encryptFiles(action.files, progressChannel, appScope)
+            is FileOperationAction.ClearExifData -> repo.clearExifData(action.absolutePath, progressChannel, appScope)
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
                 exifDataState.value = repo.getExifData(action.file)

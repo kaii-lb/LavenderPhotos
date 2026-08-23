@@ -10,6 +10,7 @@ import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.Delete
 import com.kaii.photos.file_management.managers.traits.ExtractExif
 import com.kaii.photos.file_management.managers.traits.RenameFile
@@ -44,7 +45,7 @@ class TrashRepository(
     dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
-) : Trash, Delete, Share, ExtractExif, RenameFile {
+) : Trash, Delete, Share, ExtractExif, RenameFile, ClearExif {
     class Factory @Inject constructor(
         private val fileManager: LocalFileManager,
         private val dataSource: TrashDataSource,
@@ -168,4 +169,8 @@ class TrashRepository(
         file: FileOperationItemMetadata,
         newName: String
     ) = fileManager.renameFile(file, newName)
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ) = fileManager.clearExifData(absolutePath)
 }

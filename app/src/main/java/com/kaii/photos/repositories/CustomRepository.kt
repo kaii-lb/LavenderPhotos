@@ -16,6 +16,7 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.CustomFileManager
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
@@ -43,7 +44,7 @@ class CustomRepository(
     scope: CoroutineScope,
     sortMode: Flow<MediaItemSortMode>,
     info: Flow<ImmichBasicInfo>
-) : BaseRepo, RenameFile, RenameAlbum, CountAndSize, Secure, PrepareFileForWrite {
+) : BaseRepo, RenameFile, RenameAlbum, CountAndSize, Secure, PrepareFileForWrite, ClearExif {
     class Factory @Inject constructor(
         private val customDao: CustomEntityDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -173,4 +174,8 @@ class CustomRepository(
     suspend fun removeRelatedRows(albumId: String) = withContext(Dispatchers.Default) {
         customDao.deleteAlbum(album = albumId)
     }
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ) = fileManager.clearExifData(absolutePath)
 }

@@ -9,12 +9,11 @@ import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
 import com.kaii.photos.di.HybridFileManagerFactory
-import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationAction
-import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameFile
 import com.kaii.photos.file_management.managers.traits.Secure
@@ -37,7 +36,7 @@ class FavouritesRepository(
     scope: CoroutineScope,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
-) : BaseRepo, RenameFile, Secure, PrepareFileForWrite {
+) : BaseRepo, RenameFile, Secure, PrepareFileForWrite, ClearExif {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -145,5 +144,9 @@ class FavouritesRepository(
     override fun prepareFileForWrite(
         files: List<FileOperationItemMetadata>,
         followUpAction: FileOperationAction
-    ): Result<Unit, FileOperationError> = fileManager.prepareFileForWrite(files, followUpAction)
+    ) = fileManager.prepareFileForWrite(files, followUpAction)
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ) = fileManager.clearExifData(absolutePath)
 }

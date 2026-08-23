@@ -66,7 +66,7 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.setBarVisibility
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
+import com.kaii.photos.compose.dialogs.single_photo_info_dialog.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties

@@ -16,6 +16,7 @@ import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.models.traits.ClearExifImpl
 import com.kaii.photos.models.traits.DeleteImpl
 import com.kaii.photos.models.traits.RenameFileImpl
 import com.kaii.photos.models.traits.ShareImpl
@@ -39,7 +40,7 @@ class TrashViewModel @Inject constructor(
     lookAndFeel: SettingsLookAndFeelImpl,
     behaviour: SettingsBehaviourImpl,
     storage: SettingsStorageImpl
-) : ViewModel(), TrashImpl, DeleteImpl, ShareImpl, RenameFileImpl {
+) : ViewModel(), TrashImpl, DeleteImpl, ShareImpl, RenameFileImpl, ClearExifImpl {
     val columnSize = lookAndFeel.getColumnSize().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -140,6 +141,7 @@ class TrashViewModel @Inject constructor(
             is FileOperationAction.Delete -> repo.deleteFiles(action.files, action.album, progressChannel, appScope)
             is FileOperationAction.RenameFile -> repo.renameFile(action.file, action.newName, progressChannel, appScope)
             is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)
+            is FileOperationAction.ClearExifData -> repo.clearExifData(action.absolutePath, progressChannel, appScope)
 
             is FileOperationAction.LoadExifData -> viewModelScope.launch {
                 exifDataState.value = repo.getExifData(action.file)

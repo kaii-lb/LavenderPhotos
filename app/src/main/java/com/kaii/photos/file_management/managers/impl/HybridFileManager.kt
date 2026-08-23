@@ -9,6 +9,7 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.domain.mapTo
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.Copy
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.Delete
@@ -33,7 +34,7 @@ import kotlinx.coroutines.flow.channelFlow
 class HybridFileManager @AssistedInject constructor(
     @Assisted private val other: LocalSourceFileManager,
     private val cloud: CloudFileManager
-) : Copy, Move, RenameFile, RenameAlbum, Trash, Delete, Secure, Share, Favourite, ExtractExif, CountAndSize, PrepareFileForWrite {
+) : Copy, Move, RenameFile, RenameAlbum, Trash, Delete, Secure, Share, Favourite, ExtractExif, CountAndSize, PrepareFileForWrite, ClearExif {
     override suspend fun copyFiles(
         files: List<FileOperationItemMetadata>,
         destination: AlbumType
@@ -281,6 +282,12 @@ class HybridFileManager @AssistedInject constructor(
         is AlbumType.Cloud -> cloud.getMediaSize(album)
         else -> other.getMediaSize(album)
     }
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ): Result<Unit, FileOperationError> =
+        if (absolutePath.isBlank()) throw IllegalArgumentException("Cannot erase exif data for cloud items!")
+        else other.clearExifData(absolutePath)
 
     private suspend fun ProducerScope<FileOperationProgress<List<FileOperationCopyResult>>>.collectCopy(
         manager: Copy,

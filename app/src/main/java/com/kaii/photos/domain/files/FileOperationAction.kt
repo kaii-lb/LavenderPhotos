@@ -73,8 +73,13 @@ sealed interface FileOperationAction {
         val params: GenericFileEditor.EditParameters
     ) : FileOperationAction
 
+    data class ClearExifData(
+        val absolutePath: String
+    ) : FileOperationAction
+
     enum class LongOperationType {
         Copy, Move, TrashDelete, TrashRestore,
-        Delete, Share, Secure, Restore
+        Delete, Share, Secure, Restore,
+        ClearExifData
     }
 }

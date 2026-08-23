@@ -39,6 +39,10 @@ class FileOperationSnackbarInfoProvider(
         FileOperationAction.LongOperationType.Restore, FileOperationAction.LongOperationType.TrashRestore -> {
             resources.getString(R.string.media_restore_snackbar_body, current, total)
         }
+
+        FileOperationAction.LongOperationType.ClearExifData -> {
+            resources.getString(R.string.media_clear_exif_snackbar_title)
+        }
     }
 
     fun getMessageFor(
@@ -70,6 +74,10 @@ class FileOperationSnackbarInfoProvider(
 
         FileOperationAction.LongOperationType.Restore, FileOperationAction.LongOperationType.TrashRestore -> {
             resources.getString(R.string.media_restore_snackbar_title)
+        }
+
+        FileOperationAction.LongOperationType.ClearExifData -> {
+            resources.getString(R.string.done)
         }
     }
 
@@ -106,6 +114,10 @@ class FileOperationSnackbarInfoProvider(
 
         FileOperationAction.LongOperationType.Restore -> {
             R.drawable.unlock
+        }
+
+        FileOperationAction.LongOperationType.ClearExifData -> {
+            R.drawable.error
         }
     }
 }

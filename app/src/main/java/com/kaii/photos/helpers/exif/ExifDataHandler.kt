@@ -4,8 +4,6 @@ import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.exifinterface.media.ExifInterface
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -125,7 +123,7 @@ fun getExifDataForMedia(
     }
 }
 
-suspend fun eraseExifMedia(absolutePath: String) = withContext(Dispatchers.IO) {
+fun eraseExifMedia(absolutePath: String): Boolean {
     try {
         val exifInterface = ExifInterface(absolutePath)
 
@@ -262,8 +260,12 @@ suspend fun eraseExifMedia(absolutePath: String) = withContext(Dispatchers.IO) {
         )
 
         exifInterface.saveAttributes()
+
+        return true
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
+
+        return false
     }
 }

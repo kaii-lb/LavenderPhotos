@@ -76,8 +76,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.single_view.SingleViewTopBar
-import com.kaii.photos.compose.dialogs.SinglePhotoInfoDialog
 import com.kaii.photos.compose.dialogs.TrashDeleteDialog
+import com.kaii.photos.compose.dialogs.single_photo_info_dialog.SinglePhotoInfoDialog
 import com.kaii.photos.compose.modifiers.singlePhotoBottomBarProperties
 import com.kaii.photos.compose.modifiers.singlePhotoProperties
 import com.kaii.photos.compose.modifiers.singlePhotoTopBarProperties

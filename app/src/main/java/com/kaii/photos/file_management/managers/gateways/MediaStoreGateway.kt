@@ -63,6 +63,10 @@ interface MediaStoreGateway {
         media: MediaStoreData
     ): Result<Map<MediaData, String>, FileOperationError>
 
+    fun eraseExifData(
+        absolutePath: String
+    ): Result<Unit, FileOperationError>
+
     fun getTrashMediaById(
         id: Long
     ): Result<MediaStoreData, FileOperationError>

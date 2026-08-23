@@ -15,6 +15,7 @@ import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.helpers.TopBarDetailsFormat
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.models.traits.ClearExifImpl
 import com.kaii.photos.models.traits.CopyImpl
 import com.kaii.photos.models.traits.DeleteImpl
 import com.kaii.photos.models.traits.FavouriteImpl
@@ -32,7 +33,9 @@ import kotlinx.coroutines.flow.stateIn
 
 abstract class BaseViewModel(
     protected val settings: Settings
-) : ViewModel(), CopyImpl, MoveImpl, TrashImpl, DeleteImpl, FavouriteImpl, RenameFileImpl, RenameAlbumImpl, SecureImpl, ShareImpl, PrepareFileForWriteImpl {
+) : ViewModel(), CopyImpl, MoveImpl, TrashImpl, DeleteImpl, FavouriteImpl, RenameFileImpl,
+    RenameAlbumImpl, SecureImpl, ShareImpl, PrepareFileForWriteImpl, ClearExifImpl
+{
     val useBlackBackground by lazy {
         settings.lookAndFeel.getUseBlackBackgroundForViews().stateIn(
             scope = viewModelScope,

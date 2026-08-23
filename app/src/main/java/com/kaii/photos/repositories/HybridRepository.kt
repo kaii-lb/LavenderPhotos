@@ -15,6 +15,7 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalSourceFileManager
+import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.CountAndSize
 import com.kaii.photos.file_management.managers.traits.PrepareFileForWrite
 import com.kaii.photos.file_management.managers.traits.RenameAlbum
@@ -40,7 +41,7 @@ class HybridRepository(
     dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
-) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize, PrepareFileForWrite {
+) : BaseRepo, RenameFile, RenameAlbum, Secure, CountAndSize, PrepareFileForWrite, ClearExif {
     class Factory @Inject constructor(
         private val mediaDao: MediaDao,
         private val fileManagerFactory: HybridFileManagerFactory,
@@ -178,4 +179,8 @@ class HybridRepository(
     override suspend fun getMediaCount(album: AlbumType) = fileManager.getMediaCount(album)
 
     override suspend fun getMediaSize(album: AlbumType) = fileManager.getMediaSize(album)
+
+    override suspend fun clearExifData(
+        absolutePath: String
+    ) = fileManager.clearExifData(absolutePath)
 }
