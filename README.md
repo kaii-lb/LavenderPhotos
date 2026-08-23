@@ -53,6 +53,7 @@ Our [Weblate](https://hosted.weblate.org/projects/lavender-photos/) instance is 
 # Install
 - Grab a release version from the [releases page](https://github.com/kaii-lb/LavenderPhotos/releases)
 - Or a nightly version from the [actions page](https://github.com/kaii-lb/LavenderPhotos/actions)
+- Or use the [F-Droid build](https://f-droid.org/en/packages/com.kaii.photos/) with an F-Droid client
 - Or use the [IzzyOnDroid build](https://apt.izzysoft.de/fdroid/index/apk/com.kaii.photos) with an F-Droid client
 
 # Building
