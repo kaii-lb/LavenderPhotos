@@ -11,18 +11,22 @@ import com.kaii.photos.database.entities.epochToDayStart
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.helpers.paging.PhotoLibraryUIModel
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.presentation.selection.SelectionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import java.util.TimeZone
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 class SelectionManager(
+    @Volatile
     private var sortMode: MediaItemSortMode,
     private val scope: CoroutineScope,
     private val getMediaInDate: suspend (Long, MediaItemSortMode) -> Map<Long, SelectedItem>
@@ -53,27 +57,38 @@ class SelectionManager(
             )
     }
 
-    private val timeZone = TimeZone.getDefault()
+    @Volatile
     private var singleSelectMode = false
+
+    private val timeZone = TimeZone.getDefault()
+    private val mutationMutex = Mutex()
     private val selectionLock = Any()
     private var selectionGeneration = 0L
+
+    private val eventChannel = Channel<SelectionEvent>(Channel.BUFFERED)
+    val eventFlow = eventChannel.receiveAsFlow()
 
     private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
     val selection = snapshotFlow { _selection.values.flatMap { it.values } }
 
-    private var _sections by mutableStateOf<List<Long>>(emptyList())
+    private var _sections by mutableStateOf<Set<Long>>(emptySet())
 
     private var manualEnable by mutableStateOf(false)
     val enabled = snapshotFlow { manualEnable || _selection.values.any { it.values.isNotEmpty() } }
 
     @OptIn(FlowPreview::class)
-    val count = selection.map { it.size }.debounce(25.milliseconds)
+    val count = snapshotFlow { _selection.values.sumOf { it.values.size } }.debounce(25.milliseconds)
 
     fun toggle(item: PhotoLibraryUIModel) {
 
         if (item is PhotoLibraryUIModel.MediaImpl) {
-            if (singleSelectMode) clear()
-            toggleMedia(item = item.item)
+            if (singleSelectMode) {
+                val wasSelected = isSelected(item)
+                clear()
+                if (!wasSelected) toggleMedia(item = item.item)
+            } else {
+                toggleMedia(item = item.item)
+            }
         } else if (item is PhotoLibraryUIModel.Section) {
             toggleSection(timestamp = item.timestamp)
         }
@@ -94,7 +109,7 @@ class SelectionManager(
         synchronized(selectionLock) {
             selectionGeneration += 1
             _selection = emptyMap()
-            _sections = emptyList()
+            _sections = emptySet()
             manualEnable = false
         }
     }
@@ -106,39 +121,24 @@ class SelectionManager(
     fun addAll(
         items: List<PhotoLibraryUIModel?>
     ) = launchSelectionMutation { generation ->
-        // hardcoded android limit for handling uris
-        if (_selection.values.sumOf { it.values.size } >= 2000) {
-            // TODO: send a snackbar
-
-            return@launchSelectionMutation
-        }
-
         val snapshot = _selection.toMutableMap()
-        val sections = _sections.toMutableList()
+        val sections = _sections.toMutableSet()
         val grouped = items.fastMapNotNull { it as? PhotoLibraryUIModel.MediaImpl }.groupBy { getKey(it) }
 
         grouped.forEach { (key, list) ->
-            snapshot[key] = (snapshot[key] ?: emptyMap()).toMutableMap().apply {
-                val media = list.associate {
-                    it.item.id to
-                            SelectedItem(
-                                id = it.item.id,
-                                uri = it.item.uri,
-                                immichUrl = it.item.immichUrl,
-                                isImage = it.item.type == MediaType.Image,
-                                absolutePath = it.item.absolutePath,
-                                parentPath = it.item.parentPath
-                            )
-                }
-
-                snapshot[key] = ((snapshot[key] ?: emptyMap()) + media)
-
-                val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
-
-                if (media.size == maxCount) {
-                    sections.add(key)
-                }
+            val media = list.associate {
+                it.item.id to SelectedItem(
+                    id = it.item.id, uri = it.item.uri, immichUrl = it.item.immichUrl,
+                    isImage = it.item.type == MediaType.Image,
+                    absolutePath = it.item.absolutePath, parentPath = it.item.parentPath
+                )
             }
+
+            val merged = (snapshot[key] ?: emptyMap()) + media
+            snapshot[key] = merged
+
+            val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
+            if (merged.size == maxCount) sections.add(key)
         }
 
         publishSelection(generation, snapshot, sections)
@@ -155,18 +155,14 @@ class SelectionManager(
         removed: List<MediaStoreData>
     ) = launchSelectionMutation { generation ->
         val snapshot = _selection.toMutableMap()
-        val sections = _sections.toMutableList()
+        val sections = _sections.toMutableSet()
 
         removed.groupBy { getMediaKey(it) }.forEach { (key, list) ->
             sections.remove(key)
 
-            val concurrentMap = ConcurrentHashMap(snapshot[key] ?: emptyMap())
-            snapshot[key] = concurrentMap.apply {
-                val ids = list.fastMap { it.id }
-                values.forEach {
-                    if (it.id in ids) remove(it.id)
-                }
-            }
+            val ids = list.fastMap { it.id }.toSet()
+            val updated = (snapshot[key] ?: emptyMap()).filterKeys { it !in ids }
+            if (updated.isEmpty()) snapshot.remove(key) else snapshot[key] = updated
         }
 
         added.groupBy { getMediaKey(it) }.forEach { (key, list) ->
@@ -181,7 +177,6 @@ class SelectionManager(
                             parentPath = it.parentPath
                         )
             }
-            snapshot[key] = snapshot[key]!!
 
             val maxCount = getMediaInDate(epochToDayStart(key, timeZone), sortMode).size
 
@@ -190,13 +185,6 @@ class SelectionManager(
             } else {
                 sections.remove(key)
             }
-        }
-
-        // hardcoded android limit for handling uris
-        if (snapshot.values.sumOf { it.values.size } >= 2000) {
-            // TODO: send a snackbar
-
-            return@launchSelectionMutation
         }
 
         publishSelection(generation, snapshot, sections)
@@ -230,29 +218,18 @@ class SelectionManager(
     }
 
     private fun toggleSection(timestamp: Long) = launchSelectionMutation { generation ->
+        if (singleSelectMode) return@launchSelectionMutation
+
         val snapshot = _selection.toMutableMap()
-        val sections = _sections.toMutableList()
+        val sections = _sections.toMutableSet()
 
         if (timestamp in sections) {
-            snapshot[timestamp] = emptyMap()
-            sections.removeAll { it == timestamp }
+            snapshot.remove(timestamp)
+            sections.remove(timestamp)
         } else {
             val media = getMediaInDate(epochToDayStart(timestamp, timeZone), sortMode)
 
-            if (singleSelectMode && media.isNotEmpty()) {
-                val first = media.maxBy { it.value.id } // hacky way to find the first item, not always guaranteed
-                snapshot[timestamp] = mapOf(
-                    first.key to first.value
-                )
-            } else {
-                snapshot[timestamp] = media
-            }
-
-            // hardcoded android limit for handling uris
-            // if (snapshot[timestamp]!!.size >= 2000) {
-            // TODO: send a snackbar
-            // }
-
+            snapshot[timestamp] = media
             sections.add(timestamp)
         }
 
@@ -263,15 +240,8 @@ class SelectionManager(
         item: MediaStoreData,
         key: Long
     ) = launchSelectionMutation { generation ->
-        // hardcoded android limit for handling uris
-        if (_selection.values.sumOf { it.values.size } >= 2000) {
-            // TODO: send a snackbar
-
-            return@launchSelectionMutation
-        }
-
         val snapshot = _selection.toMutableMap()
-        val sections = _sections.toMutableList()
+        val sections = _sections.toMutableSet()
 
         val list = (snapshot[key] ?: emptyMap()) + mapOf(
             item.id to SelectedItem(
@@ -297,7 +267,9 @@ class SelectionManager(
     private fun launchSelectionMutation(block: suspend (Long) -> Unit) =
         currentSelectionGeneration().let { generation ->
             scope.launch(Dispatchers.IO) {
-                block(generation)
+                mutationMutex.withLock {
+                    block(generation)
+                }
             }
         }
 
@@ -308,25 +280,30 @@ class SelectionManager(
     private fun publishSelection(
         generation: Long,
         selection: Map<Long, Map<Long, SelectedItem>>,
-        sections: List<Long>
+        sections: Set<Long>
     ) = synchronized(selectionLock) {
-        if (generation == selectionGeneration) {
+        if (generation != selectionGeneration) return@synchronized
+
+        if (selection.values.sumOf { it.size } <= 2000) {
             _selection = selection
             _sections = sections
+        } else {
+            eventChannel.trySend(SelectionEvent.LimitReached)
         }
     }
 
-    private fun remove(item: MediaStoreData, key: Long) {
-        val snapshot = _selection.toMutableMap()
-        val sections = _sections.toMutableList()
+    private fun remove(item: MediaStoreData, key: Long) = launchSelectionMutation { generation ->
+        val selection = _selection.toMutableMap()
+        val sections = _sections.toMutableSet()
 
-        snapshot[key] = (snapshot[key] ?: emptyMap()).toMutableMap().apply {
-            remove(item.id)
-        }
+        val updated = (selection[key] ?: emptyMap()) - item.id
+
+        if (updated.isEmpty()) selection.remove(key)
+        else selection[key] = updated
+
         sections.remove(key)
 
-        _selection = snapshot
-        _sections = sections
+        publishSelection(generation, selection, sections)
     }
 
     fun setSortMode(mode: MediaItemSortMode) {

@@ -66,6 +66,8 @@ import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.presentation.selection.SelectionEvent
+import com.kaii.photos.presentation.selection.SelectionManagerEventEffect
 import com.kaii.photos.screens.isMultiSelect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -135,6 +137,7 @@ fun SingleAlbumView(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
         fileShareIntent = viewModel.fileShareIntent,
+        eventFlow = viewModel.selectionManager.eventFlow,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -219,6 +222,7 @@ fun SingleAlbumView(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
         fileShareIntent = viewModel.fileShareIntent,
+        eventFlow = viewModel.selectionManager.eventFlow,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -303,6 +307,7 @@ fun SingleAlbumView(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
         fileShareIntent = viewModel.fileShareIntent,
+        eventFlow = viewModel.selectionManager.eventFlow,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -386,6 +391,7 @@ fun SingleAlbumView(
         pagingItems = pagingItems,
         fileOperationProgress = viewModel.fileOperationProgress,
         fileShareIntent = viewModel.fileShareIntent,
+        eventFlow = viewModel.selectionManager.eventFlow,
         album = { dynamicAlbum!! },
         albums = { allAlbums },
         autoDetectAlbums = { autoDetectAlbums },
@@ -419,6 +425,7 @@ private fun SingleAlbumViewCommon(
     pagingItems: LazyPagingItems<PhotoLibraryUIModel>,
     fileOperationProgress: Flow<FileOperationProgress<Unit>>,
     fileShareIntent: Flow<Result<Intent, FileOperationError>>,
+    eventFlow: Flow<SelectionEvent>,
     album: () -> AlbumType,
     albums: () -> List<AlbumType>,
     autoDetectAlbums: () -> Boolean,
@@ -451,6 +458,8 @@ private fun SingleAlbumViewCommon(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     )
+
+    SelectionManagerEventEffect(eventFlow)
 
     if (showInfoDialog) {
         val vibratorManager = rememberVibratorManager()

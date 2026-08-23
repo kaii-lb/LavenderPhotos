@@ -80,6 +80,7 @@ import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.presentation.selection.SelectionManagerEventEffect
 import com.kaii.photos.repositories.SearchMode
 import com.kaii.photos.screens.isMultiSelect
 import com.kaii.photos.setupNextScreen
@@ -168,6 +169,8 @@ fun MainPages(
             )
         }
     }
+
+    SelectionManagerEventEffect(viewModel.selectionManager.eventFlow)
 
     var delayOver by remember { mutableStateOf(false) }
     LaunchedEffect(isSelecting) {

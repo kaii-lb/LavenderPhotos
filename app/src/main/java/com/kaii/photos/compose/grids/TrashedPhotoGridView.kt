@@ -44,6 +44,7 @@ import com.kaii.photos.helpers.OnBackPressedEffect
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.TrashViewModel
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.presentation.selection.SelectionManagerEventEffect
 import com.kaii.photos.screens.isMultiSelect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +84,8 @@ fun TrashedPhotoGridView(
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
         runAction = viewModel::runAction
     )
+
+    SelectionManagerEventEffect(viewModel.selectionManager.eventFlow)
 
     Scaffold(
         modifier = Modifier

@@ -50,6 +50,7 @@ import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.tag_page.TagViewModel
 import com.kaii.photos.models.tag_page.TagViewModelFactory
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.presentation.selection.SelectionManagerEventEffect
 import com.kaii.photos.screens.isMultiSelect
 import kotlinx.coroutines.flow.collectLatest
 
@@ -77,6 +78,8 @@ fun FavouritesGridView(
             )
         }
     }
+
+    SelectionManagerEventEffect(viewModel.selectionManager.eventFlow)
 
     val dynamicActivityResultLauncher = rememberDynamicActivityResultLauncher()
     SharePhotoEffect(

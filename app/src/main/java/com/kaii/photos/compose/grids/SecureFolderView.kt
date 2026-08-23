@@ -52,6 +52,7 @@ import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import com.kaii.photos.models.SecureFolderViewModel
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import com.kaii.photos.presentation.selection.SelectionManagerEventEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,6 +131,8 @@ fun SecureFolderView(
         dynamicActivityResultLauncher = dynamicActivityResultLauncher,
         runAction = viewModel::runAction
     )
+
+    SelectionManagerEventEffect(viewModel.selectionManager.eventFlow)
 
     val items = viewModel.gridMediaFlow.collectAsLazyPagingItems()
 
