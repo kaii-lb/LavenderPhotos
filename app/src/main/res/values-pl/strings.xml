@@ -147,9 +147,6 @@
     <string name="permissions_media_management">Zarządzanie multimediami</string>
     <string name="permissions_confirm_to_delete">Potwierdź usunięcie</string>
     <string name="permissions_confirm_too_delete_desc">Przed usunięciem jakichkolwiek multimediów poproś o potwierdzenie</string>
-    <string name="permissions_overwrite_date_on_move">Zachowaj datę podczas przenoszenia</string>
-    <string name="permissions_overwrite_date_on_move_desc">Zachowuje datę multimediów podczas kopiowania lub przenoszenia</string>
-    <string name="permissions_needed">Wymagane pozwolenie</string>
     <string name="sort_indicator">Sortuj według wskaźnika</string>
     <string name="sort_date">Data</string>
     <string name="sort_name">Nazwa</string>
@@ -171,8 +168,6 @@
     <string name="media_rename">Zmień nazwę</string>
     <string name="media_select">Wybierz</string>
     <string name="media_exif_erase">Usuń dane EXIF</string>
-    <string name="media_exif_done">Usunięto dane EXIF</string>
-    <string name="media_exif_failed">Nie udało się usunąć danych EXIF</string>
     <string name="media_erase">Usuń</string>
     <string name="media_confirm">Potwierdź</string>
     <string name="media_okay">Ok</string>

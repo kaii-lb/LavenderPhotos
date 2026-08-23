@@ -39,8 +39,6 @@
     <string name="permissions_media_management">Manajemen Media</string>
     <string name="permissions_confirm_to_delete">Konfirmasi untuk Menghapus</string>
     <string name="permissions_confirm_too_delete_desc">Minta konfirmasi sebelum menghapus media apa pun</string>
-    <string name="permissions_overwrite_date_on_move">Pertahankan tanggal saat memindahkan</string>
-    <string name="permissions_overwrite_date_on_move_desc">Mempertahankan tanggal media saat menyalin atau memindahkan</string>
     <string name="media">Media</string>
     <string name="sort_indicator">Indikator urutan berdasarkan</string>
     <string name="sort_date">Tanggal</string>
@@ -311,7 +309,6 @@
     <string name="trash_empty_desc">Ini menghapus semua item di tempat sampah, tindakan ini tidak dapat dibatalkan</string>
     <string name="trash_empty_confirm">Kosongkan</string>
     <string name="permissions">Izin</string>
-    <string name="permissions_needed">Izin Diperlukan</string>
     <string name="permissions_grant_long">Berikan Izin</string>
     <string name="permissions_do_not_trash">Jangan Gunakan Tempat Sampah</string>
     <string name="permissions_do_not_trash_desc">Hapus item secara langsung dan permanen tanpa memindahkan ke Tempat Sampah terlebih dahulu</string>
@@ -340,8 +337,6 @@
     <string name="media_rename">Ganti Nama</string>
     <string name="media_select">Pilih</string>
     <string name="media_exif_erase">Hapus data EXIF</string>
-    <string name="media_exif_done">Data EXIF dihapus</string>
-    <string name="media_exif_failed">Gagal menghapus data EXIF</string>
     <string name="media_erase">Hapus</string>
     <string name="media_confirm">Konfirmasi</string>
     <string name="media_okay">Oke</string>

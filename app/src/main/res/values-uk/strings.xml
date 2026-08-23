@@ -150,8 +150,6 @@
     <string name="media_rename">Перейменувати</string>
     <string name="media_select">Обрати</string>
     <string name="media_exif_erase">Витерти EXIF дані</string>
-    <string name="media_exif_done">EXIF-інформацію видалено</string>
-    <string name="media_exif_failed">Не вдалось видалити EXIF-інформацію</string>
     <string name="media_erase">Видалити</string>
     <string name="media_confirm">Підтвердити</string>
     <string name="media_okay">Okay</string>
@@ -195,9 +193,6 @@
     <string name="permissions_media_management">Властивості управління медіафайлами</string>
     <string name="permissions_confirm_to_delete">Підтвердження перед видаленням</string>
     <string name="permissions_confirm_too_delete_desc">Запитувати підтвердження перед видаленням будь-яких медіафайлів</string>
-    <string name="permissions_overwrite_date_on_move">Залишати дату при переміщенні</string>
-    <string name="permissions_overwrite_date_on_move_desc">Залишати дату медіа при копіюванні чи переміщені</string>
-    <string name="permissions_needed">Потрібен дозвіл</string>
     <string name="video_seek_icon_desc">Показує напрям перемотування відео</string>
     <string name="media">Медіафайли</string>
     <string name="media_secure">Захистити</string>

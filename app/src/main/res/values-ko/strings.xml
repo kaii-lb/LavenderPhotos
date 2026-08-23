@@ -374,9 +374,6 @@
     <string name="permissions_media_management">미디어 관리</string>
     <string name="permissions_confirm_to_delete">삭제 확인</string>
     <string name="permissions_confirm_too_delete_desc">미디어를 삭제하기 전에 확인을 요청합니다</string>
-    <string name="permissions_overwrite_date_on_move">이동 시 날짜 유지</string>
-    <string name="permissions_overwrite_date_on_move_desc">복사하거나 이동할 때 미디어 날짜를 유지합니다</string>
-    <string name="permissions_needed">권한 필요</string>
     <string name="permissions_grant_long">권한 허용</string>
     <string name="permissions_do_not_trash">휴지통 사용 안 함</string>
     <string name="permissions_do_not_trash_desc">항목을 휴지통으로 이동하지 않고 즉시 영구 삭제합니다</string>
@@ -425,8 +422,6 @@
     <string name="media_rename">이름 변경</string>
     <string name="media_select">선택</string>
     <string name="media_exif_erase">EXIF 데이터 삭제</string>
-    <string name="media_exif_done">EXIF 데이터를 삭제했습니다</string>
-    <string name="media_exif_failed">EXIF 데이터 삭제에 실패했습니다</string>
     <string name="media_erase">지우기</string>
     <string name="media_confirm">확인</string>
     <string name="media_okay">확인</string>

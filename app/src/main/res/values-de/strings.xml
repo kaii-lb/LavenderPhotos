@@ -297,8 +297,6 @@
     <string name="permissions">Berechtigungen</string>
     <string name="permissions_media_manager">Medien Manager</string>
     <string name="permissions_media_manager_desc">Besseres und schnelleres entfernen/löschen/kopieren/verschieben</string>
-    <string name="permissions_overwrite_date_on_move_desc">Behält das Datum des Mediums wenn dieses kopiert oder verschoben wird</string>
-    <string name="permissions_needed">Benötigt Berechtigung</string>
     <string name="permissions_grant_long">Berechtigung erteilen</string>
     <string name="permissions_do_not_trash">Den Papierkorb nicht verwenden</string>
     <string name="permissions_do_not_trash_desc">Löscht Medien sofort und unwiderruflich ohne sie in den Papierkorb zu verschieben</string>
@@ -376,5 +374,4 @@
     <string name="permissions_media_management">Medienmanagement</string>
     <string name="permissions_confirm_to_delete">Löschen bestätigen</string>
     <string name="permissions_confirm_too_delete_desc">Vor dem Löschen von Medien fragen</string>
-    <string name="permissions_overwrite_date_on_move">Datum beim verschieben behalten</string>
 </resources>

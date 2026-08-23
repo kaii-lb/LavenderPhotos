@@ -331,9 +331,6 @@
     <string name="permissions_media_management">Gestió dels continguts multimèdia</string>
     <string name="permissions_confirm_to_delete">Confirma per eliminar</string>
     <string name="permissions_confirm_too_delete_desc">Demana la confirmació abans d\'eliminar qualsevol contingut multimèdia</string>
-    <string name="permissions_overwrite_date_on_move">Conservar la data en moure</string>
-    <string name="permissions_overwrite_date_on_move_desc">Manté la data del contingut multimèdia quan es copia o mou</string>
-    <string name="permissions_needed">Permís necessari</string>
     <string name="permissions_grant_long">Concedir permís</string>
     <string name="permissions_allow_secure_folder_screen_capture">Permetre captures de pantalla al directori protegit</string>
     <string name="permissions_allow_secure_folder_screen_capture_desc">Permet captures de pantalla, gravació de pantalla i compartició de pantalla quan hi ha obert el directori protegit. El contingut protegit pot aparèixer també a la vista preliminar de les aplicacions recents. Deixa-ho desactivat per mantenir-ho protegit</string>
@@ -371,8 +368,6 @@
     <string name="media_rename">Reanomena</string>
     <string name="media_select">Selecciona</string>
     <string name="media_exif_erase">Esborra les dades EXIF</string>
-    <string name="media_exif_done">S\'han esborrat les dades EXIF</string>
-    <string name="media_exif_failed">Error en esborrar les dades EXIF</string>
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">D\'acord</string>
     <string name="media_snackbar_operation_failed">La operació ha fallat!</string>

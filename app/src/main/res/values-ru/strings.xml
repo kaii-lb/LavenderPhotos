@@ -154,9 +154,6 @@
     <string name="permissions_media_management">Управление медиафайлами</string>
     <string name="permissions_confirm_to_delete">Подтверждать удаление</string>
     <string name="permissions_confirm_too_delete_desc">Запрашивать подтверждение перед удалением медиафайлов</string>
-    <string name="permissions_overwrite_date_on_move">Сохранять дату при перемещении</string>
-    <string name="permissions_overwrite_date_on_move_desc">Сохраняет дату медиафайла при копировании или перемещении</string>
-    <string name="permissions_needed">Требуется разрешение</string>
     <string name="media">Медиафайлы</string>
     <string name="sort_indicator">Сортировать по индикатору</string>
     <string name="sort_date">Дата</string>
@@ -180,8 +177,6 @@
     <string name="media_rename">Переименовать</string>
     <string name="media_select">Выбрать</string>
     <string name="media_exif_erase">Удалить данные EXIF</string>
-    <string name="media_exif_done">Данные EXIF удалены</string>
-    <string name="media_exif_failed">Не удалось удалить данные EXIF</string>
     <string name="media_erase">Стереть</string>
     <string name="media_confirm">Подтвердить</string>
     <string name="media_okay">Хорошо</string>

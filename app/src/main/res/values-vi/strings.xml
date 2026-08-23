@@ -289,9 +289,6 @@
     <string name="permissions_media_management">Quản lý tệp</string>
     <string name="permissions_confirm_to_delete">Xác nhận để xóa</string>
     <string name="permissions_confirm_too_delete_desc">Hỏi yêu cầu xác nhận trước khi xóa bất kỳ tệp nào</string>
-    <string name="permissions_overwrite_date_on_move">Giữ nguyên ngày tháng khi di chuyển</string>
-    <string name="permissions_overwrite_date_on_move_desc">Giữ nguyên ngày tháng của phương tiện khi sao chép hoặc di chuyển</string>
-    <string name="permissions_needed">Cần Quyền Hạn</string>
     <string name="permissions_grant_long">Cấp quyền</string>
     <string name="permissions_do_not_trash">Không sử dụng thùng rác</string>
     <string name="permissions_do_not_trash_desc">Xóa ngay lập tức và vĩnh viễn các mục mà không cần chuyển chúng vào thùng rác trước</string>

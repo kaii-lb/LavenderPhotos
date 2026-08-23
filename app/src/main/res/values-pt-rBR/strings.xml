@@ -246,9 +246,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="permissions_media_management">Gerenciamento de Mídia</string>
     <string name="permissions_confirm_to_delete">Confirmar Exclusão</string>
     <string name="permissions_confirm_too_delete_desc">Pede confirmação antes de excluir qualquer mídia</string>
-    <string name="permissions_overwrite_date_on_move">Preservar data ao mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">Mantém a data da mídia ao copiar ou mover</string>
-    <string name="permissions_needed">Permissão Necessária</string>
     <string name="permissions_do_not_trash">Não utilizar Lixeira</string>
     <string name="permissions_do_not_trash_desc">Excluir itens imediatamente e permanentemente sem movê-los antes para a Lixeira</string>
     <string name="media">Mídia</string>
@@ -262,8 +259,6 @@ o que significa que ele não passa por nenhum teste adicional realizado por Izzy
     <string name="media_rename">Renomear</string>
     <string name="media_select">Selecionar</string>
     <string name="media_exif_erase">Apagar dados EXIF</string>
-    <string name="media_exif_done">Dados EXIF removidos</string>
-    <string name="media_exif_failed">Falha ao apagar dados EXIF</string>
     <string name="media_erase">Apagar</string>
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Okay</string>

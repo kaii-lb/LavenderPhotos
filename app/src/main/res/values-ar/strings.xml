@@ -143,12 +143,9 @@
     <string name="permissions_media_management">إدارة الوسائط</string>
     <string name="permissions_confirm_to_delete">تأكيد الحذف</string>
     <string name="permissions_confirm_too_delete_desc">طلب التأكيد قبل حذف أي وسائط</string>
-    <string name="permissions_overwrite_date_on_move">الاحتفاظ بالتاريخ عند النقل</string>
-    <string name="permissions_overwrite_date_on_move_desc">يحتفظ بتاريخ الوسائط عند نسخها أو نقلها</string>
     <string name="logs">السجلات</string>
     <string name="record_logs">سجل السجلات</string>
     <string name="record_logs_desc">خزّن السجلات للتصحيح. انقر للعرض.</string>
-    <string name="permissions_needed">مطلوب إذن</string>
     <string name="media">وسائط</string>
     <string name="sort_indicator">فرز حسب المؤشر</string>
     <string name="sort_date">تاريخ</string>
@@ -172,8 +169,6 @@
     <string name="media_rename">إعادة تسمية</string>
     <string name="media_select">اختيار</string>
     <string name="media_exif_erase">مسح بيانات EXIF</string>
-    <string name="media_exif_done">تمت إزالة بيانات EXIF</string>
-    <string name="media_exif_failed">تعذر مسح بيانات EXIF</string>
     <string name="media_erase">مسح</string>
     <string name="media_confirm">تأكيد</string>
     <string name="media_okay">حسنًا</string>

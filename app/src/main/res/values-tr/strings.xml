@@ -264,9 +264,6 @@
     <string name="permissions_media_management">Medya Yönetimi</string>
     <string name="permissions_confirm_to_delete">Silmeyi Onayla</string>
     <string name="permissions_confirm_too_delete_desc">Herhangi bir medyayı silmeden önce onay iste</string>
-    <string name="permissions_overwrite_date_on_move">Taşımada tarihi koru</string>
-    <string name="permissions_overwrite_date_on_move_desc">Kopyalama veya taşıma sırasında medyanın tarihini korur</string>
-    <string name="permissions_needed">İzin Gerekli</string>
     <string name="permissions_do_not_trash">Çöp Kutusunu Kullanma</string>
     <string name="permissions_do_not_trash_desc">Öğeleri önce Çöp Kutusuna taşımadan hemen ve kalıcı olarak sil</string>
     <!-- Media -->
@@ -293,8 +290,6 @@
     <string name="media_rename">Yeniden Adlandır</string>
     <string name="media_select">Seç</string>
     <string name="media_exif_erase">EXIF verilerini sil</string>
-    <string name="media_exif_done">EXIF verileri kaldırıldı</string>
-    <string name="media_exif_failed">EXIF verileri silinemedi</string>
     <string name="media_erase">Sil</string>
     <string name="media_confirm">Onayla</string>
     <string name="media_okay">Tamam</string>

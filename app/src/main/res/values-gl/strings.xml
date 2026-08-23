@@ -275,9 +275,6 @@
     <string name="permissions_media_management">Xestión do multimedia</string>
     <string name="permissions_confirm_to_delete">Confirmar Eliminación</string>
     <string name="permissions_confirm_too_delete_desc">Pedir confirmación antes de eliminar o multimedia</string>
-    <string name="permissions_overwrite_date_on_move">Conservar data ao mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">Mantén a data orixinal cando se move ou copia</string>
-    <string name="permissions_needed">Precísase o permiso</string>
     <string name="permissions_grant_long">Conceder permiso</string>
     <string name="permissions_do_not_trash">Non usar Caldeiro do Lixo</string>
     <string name="permissions_do_not_trash_desc">Eliminar elementos directa e permanentemente sen movelos primeiro ao Caldeiro do Lixo</string>
@@ -319,8 +316,6 @@
     <string name="media_rename">Renomear</string>
     <string name="media_select">Seleccionar</string>
     <string name="media_exif_erase">Eliminar datos EXIF</string>
-    <string name="media_exif_done">Borráronse os datos EXIF</string>
-    <string name="media_exif_failed">Fallou a eliminación dos datos EXIF</string>
     <string name="media_erase">Borrar</string>
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Ok</string>

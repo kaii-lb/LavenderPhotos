@@ -327,9 +327,6 @@
     <string name="permissions_media_management">Správa médií</string>
     <string name="permissions_confirm_to_delete">Potvrzovat mazání</string>
     <string name="permissions_confirm_too_delete_desc">Vyžádat potvrzení před odstraněním jakéhokoli média</string>
-    <string name="permissions_overwrite_date_on_move">Zachovat datum při přesunu</string>
-    <string name="permissions_overwrite_date_on_move_desc">Zachová datum média při kopírování nebo přesouvání</string>
-    <string name="permissions_needed">Je vyžadováno oprávnění</string>
     <string name="permissions_grant_long">Udělit oprávnění</string>
     <string name="permissions_do_not_trash">Nepoužívat koš</string>
     <string name="permissions_do_not_trash_desc">Okamžitě a trvale odstranit položky bez předchozího přesunutí do koše</string>
@@ -375,8 +372,6 @@
     <string name="media_rename">Přejmenovat</string>
     <string name="media_select">Vybrat</string>
     <string name="media_exif_erase">Vymazat data EXIF</string>
-    <string name="media_exif_done">Data EXIF odstraněna</string>
-    <string name="media_exif_failed">Data EXIF se nepodařilo vymazat</string>
     <string name="media_erase">Vymazat</string>
     <string name="media_confirm">Potvrdit</string>
     <string name="media_okay">OK</string>

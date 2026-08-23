@@ -163,9 +163,6 @@
     <string name="permissions_media_management">媒体管理</string>
     <string name="permissions_confirm_to_delete">确认删除</string>
     <string name="permissions_confirm_too_delete_desc">删除任何媒体前请求确认</string>
-    <string name="permissions_overwrite_date_on_move">移动时保留原日期</string>
-    <string name="permissions_overwrite_date_on_move_desc">复制或移动时保留媒体的日期</string>
-    <string name="permissions_needed">需要权限</string>
     <string name="media">媒体</string>
     <string name="sort_indicator">按标记排序</string>
     <string name="sort_date">日期</string>
@@ -189,8 +186,6 @@
     <string name="media_rename">重命名</string>
     <string name="media_select">选择</string>
     <string name="media_exif_erase">清除EXIF数据</string>
-    <string name="media_exif_done">已清除EXIF数据</string>
-    <string name="media_exif_failed">清除EXIF数据失败</string>
     <string name="media_erase">清除</string>
     <string name="media_confirm">确认</string>
     <string name="media_okay">确定</string>

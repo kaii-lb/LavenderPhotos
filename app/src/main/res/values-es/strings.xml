@@ -160,9 +160,6 @@
     <string name="permissions_media_management">Administración de Multimedia</string>
     <string name="permissions_confirm_to_delete">Confirme para Eliminar</string>
     <string name="permissions_confirm_too_delete_desc">Solicite confirmación antes de eliminar cualquier multimedia</string>
-    <string name="permissions_overwrite_date_on_move">Preservar la fecha al mover</string>
-    <string name="permissions_overwrite_date_on_move_desc">Mantiene la fecha de los medios al copiar o mover</string>
-    <string name="permissions_needed">Permiso Necesario</string>
     <string name="media">Multimedia</string>
     <string name="sort_indicator">Ordenar por indicador</string>
     <string name="sort_date">Fecha</string>
@@ -186,8 +183,6 @@
     <string name="media_rename">Renombrar</string>
     <string name="media_select">Seleccionar</string>
     <string name="media_exif_erase">Borrar datos EXIF</string>
-    <string name="media_exif_done">Datos EXIF eliminados</string>
-    <string name="media_exif_failed">Error al borrar datos EXIF</string>
     <string name="media_erase">Borrar</string>
     <string name="media_confirm">Confirmar</string>
     <string name="media_okay">Ok</string>

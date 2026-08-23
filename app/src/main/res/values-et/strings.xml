@@ -192,8 +192,6 @@
     <string name="media_restore_confirm">Kas taastad need objektid?</string>
     <string name="media_restore_processing">Taastan faile</string>
     <string name="media_exif_erase">Kustuta EXIF-metateave</string>
-    <string name="media_exif_done">EXIF-metateave on kustutatud</string>
-    <string name="media_exif_failed">EXIF-metateabe kustutamine ei õnnestunud</string>
     <string name="set_as_wallpaper">Määra taustapildiks</string>
     <string name="wallpaper_homescreen">Koduleht</string>
     <string name="wallpaper_lockscreen">Lukustusvaade</string>
