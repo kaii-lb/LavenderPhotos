@@ -55,6 +55,8 @@ class SelectionManager(
 
     private val timeZone = TimeZone.getDefault()
     private var singleSelectMode = false
+    private val selectionLock = Any()
+    private var selectionGeneration = 0L
 
     private var _selection by mutableStateOf<Map<Long, Map<Long, SelectedItem>>>(emptyMap())
     val selection = snapshotFlow { _selection.values.flatMap { it.values } }
@@ -89,9 +91,12 @@ class SelectionManager(
     }
 
     fun clear() {
-        _selection = emptyMap()
-        _sections = emptyList()
-        manualEnable = false
+        synchronized(selectionLock) {
+            selectionGeneration += 1
+            _selection = emptyMap()
+            _sections = emptyList()
+            manualEnable = false
+        }
     }
 
     fun setSingleSelectModeActive(active: Boolean) {
@@ -100,12 +105,12 @@ class SelectionManager(
 
     fun addAll(
         items: List<PhotoLibraryUIModel?>
-    ) = scope.launch(Dispatchers.IO) {
+    ) = launchSelectionMutation { generation ->
         // hardcoded android limit for handling uris
         if (_selection.values.sumOf { it.values.size } >= 2000) {
             // TODO: send a snackbar
 
-            return@launch
+            return@launchSelectionMutation
         }
 
         val snapshot = _selection.toMutableMap()
@@ -136,8 +141,7 @@ class SelectionManager(
             }
         }
 
-        _selection = snapshot
-        _sections = sections
+        publishSelection(generation, snapshot, sections)
     }
 
     fun addMedia(item: MediaStoreData) {
@@ -149,7 +153,7 @@ class SelectionManager(
     fun updateSelection(
         added: List<MediaStoreData>,
         removed: List<MediaStoreData>
-    ) = scope.launch(Dispatchers.IO) {
+    ) = launchSelectionMutation { generation ->
         val snapshot = _selection.toMutableMap()
         val sections = _sections.toMutableList()
 
@@ -192,11 +196,10 @@ class SelectionManager(
         if (snapshot.values.sumOf { it.values.size } >= 2000) {
             // TODO: send a snackbar
 
-            return@launch
+            return@launchSelectionMutation
         }
 
-        _selection = snapshot
-        _sections = sections
+        publishSelection(generation, snapshot, sections)
     }
 
     private fun getKey(item: PhotoLibraryUIModel) =
@@ -226,7 +229,7 @@ class SelectionManager(
         }
     }
 
-    private fun toggleSection(timestamp: Long) = scope.launch(Dispatchers.IO) {
+    private fun toggleSection(timestamp: Long) = launchSelectionMutation { generation ->
         val snapshot = _selection.toMutableMap()
         val sections = _sections.toMutableList()
 
@@ -253,19 +256,18 @@ class SelectionManager(
             sections.add(timestamp)
         }
 
-        _selection = snapshot
-        _sections = sections
+        publishSelection(generation, snapshot, sections)
     }
 
     private fun add(
         item: MediaStoreData,
         key: Long
-    ) = scope.launch(Dispatchers.IO) {
+    ) = launchSelectionMutation { generation ->
         // hardcoded android limit for handling uris
         if (_selection.values.sumOf { it.values.size } >= 2000) {
             // TODO: send a snackbar
 
-            return@launch
+            return@launchSelectionMutation
         }
 
         val snapshot = _selection.toMutableMap()
@@ -289,8 +291,29 @@ class SelectionManager(
             sections.add(key)
         }
 
-        _selection = snapshot
-        _sections = sections
+        publishSelection(generation, snapshot, sections)
+    }
+
+    private fun launchSelectionMutation(block: suspend (Long) -> Unit) =
+        currentSelectionGeneration().let { generation ->
+            scope.launch(Dispatchers.IO) {
+                block(generation)
+            }
+        }
+
+    private fun currentSelectionGeneration() = synchronized(selectionLock) {
+        selectionGeneration
+    }
+
+    private fun publishSelection(
+        generation: Long,
+        selection: Map<Long, Map<Long, SelectedItem>>,
+        sections: List<Long>
+    ) = synchronized(selectionLock) {
+        if (generation == selectionGeneration) {
+            _selection = selection
+            _sections = sections
+        }
     }
 
     private fun remove(item: MediaStoreData, key: Long) {
