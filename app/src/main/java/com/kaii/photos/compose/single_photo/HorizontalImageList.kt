@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -55,7 +56,9 @@ import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.screens.video.retainVideoPlayerState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.ZoomableState
 import me.saket.telephoto.zoomable.glide.ZoomableGlideImage
@@ -81,6 +84,7 @@ fun HorizontalImageList(
     isSecuredMedia: Boolean = false
 ) {
     val motionPhoto = rememberMotionPhotoState()
+    val isLandscape by rememberDeviceOrientation()
 
     val playerView = rememberPlayerView(
         useTextureView = false,
@@ -118,6 +122,27 @@ fun HorizontalImageList(
         }
     }
 
+    LaunchedEffect(state.settledPage, isLandscape) {
+        val settled = items.itemSnapshotList.getOrNull(state.settledPage) as? PhotoLibraryUIModel.MediaImpl
+
+        if (settled == null) {
+            motionPhoto.reset()
+            return@LaunchedEffect
+        }
+
+        motionPhoto.getFor(
+            uri = settled.item.uri,
+            type = settled.item.type
+        )
+
+        setBarVisibility(
+            visible = videoPlayerState.controlsVisible && (!isLandscape || settled.item.type != MediaType.Video),
+            window = window
+        ) { visible ->
+            appBarsVisible.value = visible
+        }
+    }
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -152,9 +177,8 @@ fun HorizontalImageList(
                 }
             }
     ) { index ->
-        if (items[index] == null || items[index] !is PhotoLibraryUIModel.MediaImpl) return@HorizontalPager
+        val media = items[index] as? PhotoLibraryUIModel.MediaImpl ?: return@HorizontalPager
 
-        val media = items[index] as PhotoLibraryUIModel.MediaImpl
         val zoomableState = rememberGlideZoomableState()
 
         if (state.settledPage != index) {
@@ -162,16 +186,6 @@ fun HorizontalImageList(
                 zoomableState.resetZoom(
                     animationSpec = snap()
                 )
-            }
-        } else {
-            val isLandscape by rememberDeviceOrientation()
-            LaunchedEffect(isLandscape) {
-                setBarVisibility(
-                    visible = videoPlayerState.controlsVisible && (!isLandscape || media.item.type != MediaType.Video),
-                    window = window
-                ) { visible ->
-                    appBarsVisible.value = visible
-                }
             }
         }
 
@@ -255,26 +269,20 @@ fun HorizontalImageList(
                 // cheap base layer for the secure viewer: the small pre-stored encrypted thumbnail (same
                 // model the grid uses, so it's likely already in glide's memory cache). gated on a ready
                 // (non-zero) iv and an existing file; null -> the full-file model is used as the base
-                val glideThumbnailModel = remember {
-                    if (!isSecuredMedia) null
-                    else (media as PhotoLibraryUIModel.SecuredMedia).bytes
-                        ?.takeIf { it.size >= 32 }
-                        ?.getThumbnailIv()
-                        ?.takeIf { iv -> iv.any { b -> b.toInt() != 0 } }
-                        ?.let { thumbIv ->
-                            val thumbFile = File(media.item.absolutePath).secureThumbnailImage(context)
-                            // withContext(Dispatchers.IO) {
-                            if (thumbFile.exists()) {
-                                SecureInfo(
-                                    iv = thumbIv,
-                                    absolutePath = thumbFile.absolutePath,
-                                    key = media.signature()
-                                )
-                            } else {
-                                null
+                val glideThumbnailModel by produceState<SecureInfo?>(null, media.item.absolutePath, isSecuredMedia) {
+                    value = withContext(Dispatchers.IO) {
+                        if (!isSecuredMedia) null
+                        else (media as PhotoLibraryUIModel.SecuredMedia).bytes
+                            ?.takeIf { it.size >= 32 }
+                            ?.getThumbnailIv()
+                            ?.takeIf { iv -> iv.any { b -> b.toInt() != 0 } }
+                            ?.let { thumbIv ->
+                                val thumbFile = File(media.item.absolutePath).secureThumbnailImage(context)
+                                if (thumbFile.exists()) {
+                                    SecureInfo(iv = thumbIv, absolutePath = thumbFile.absolutePath, key = media.signature())
+                                } else null
                             }
-                            // }
-                        }
+                    }
                 }
 
                 if (blurViews()) {

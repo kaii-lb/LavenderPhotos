@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -44,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -110,7 +108,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -577,25 +574,20 @@ private fun SinglePhotoViewCommon(
 
     val context = LocalContext.current
     val appBarsVisible = remember { mutableStateOf(true) }
-    var mediaItem by remember { mutableStateOf(MediaStoreData.dummyItem) }
+    val mediaItem = if (currentIndex in 0..<items.itemCount) {
+        (items[currentIndex] as? PhotoLibraryUIModel.MediaImpl)?.item ?: MediaStoreData.dummyItem
+    } else {
+        MediaStoreData.dummyItem
+    }
 
-    LaunchedEffect(currentIndex, items, items.itemSnapshotList) {
-        mediaItem =
-            if (currentIndex in 0..<items.itemCount && items.itemCount != 0) {
-                ((items[currentIndex] as? PhotoLibraryUIModel.MediaImpl))?.item ?: MediaStoreData.dummyItem
-            } else {
-                MediaStoreData.dummyItem
-            }
-
+    LaunchedEffect(mediaItem.id) {
         setTagMediaId(mediaItem.id)
     }
 
     LaunchedEffect(items.itemCount) {
-        snapshotFlow { items.itemCount }.collectLatest {
-            delay(PhotoGridConstants.LOADING_TIME_SHORT.milliseconds)
-            if (items.itemCount == 0) launch(Dispatchers.Main) {
-                navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
-            }
+        delay(PhotoGridConstants.LOADING_TIME_SHORT.milliseconds)
+        if (items.itemCount == 0) {
+            navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
         }
     }
 
@@ -673,8 +665,6 @@ private fun SinglePhotoViewCommon(
             )
         },
         bottomBar = {
-            val coroutineScope = rememberCoroutineScope()
-
             BottomBar(
                 visible = appBarsVisible.value,
                 currentItem = { mediaItem },
@@ -764,19 +754,15 @@ private fun SinglePhotoViewCommon(
 
         Column(
             modifier = Modifier
-                .padding(0.dp)
                 .background(if (useBlackBackground()) Color.Black else MaterialTheme.colorScheme.background)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             LaunchedEffect(state.currentPage) {
-                snapshotFlow { state.currentPage }.collect {
-                    sheetState.hide()
-                    showInfoDialog = false
-
-                    currentIndex = it
-                }
+                sheetState.hide()
+                showInfoDialog = false
+                currentIndex = state.currentPage
             }
 
             HorizontalImageList(
@@ -932,9 +918,7 @@ private fun BottomBar(
                 }
 
                 val vibratorManager = rememberVibratorManager()
-                val isFavourited = remember(currentItem()) {
-                    currentItem().favourited
-                }
+                val isFavourited = currentItem().favourited
 
                 IconButton(
                     onClick = {
