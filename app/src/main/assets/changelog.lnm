@@ -5,7 +5,30 @@
 // A line starting with '-' indicates an item, with format: - [issueNumber=0_PADDED_6_DIGIT_NUMBER] title=VARIABLE_LENGTH_STRING
 //      note that issueNumber is not mandatory, but if found it needs to be at the start
 
-# version=v2.1.2 date=17-08-2026 status=Latest
+# version=v2.1.3 date=23-08-2026 status=Latest
+    + category=Features
+        - title=Improved logging system
+        - issueNumber=000299 title=Add ability to browse network shares (Google Drive, SMB, etc)
+        - issueNumber=000307 title=Add Korean translation
+
+    + category=Improvements
+        - title=Update Immich 'What Is This' description and instructions
+        - title=Update translations for Ukrainian, Catalan, Turkish, Estonian, Indonesian, Spanish, Portuguese, Arabic, Russian, Simplified Chinese, Portuguese (Brazil), Polish, Galician,
+        - issueNumber=00281 title=Port file editors to new permission handling system
+        - issueNumber=00281 title=Port 'Erase Exif Data' and 'Rename File' functionalities to new permission handling system
+        - title=Safer sync worker logic for deletion and addition of media files
+        - title=Optimize single photo views
+        - title=Smoother bulk selection
+
+    + category=Fixes
+        - issueNumber=000301 title=Fix default tab feature not working as intended
+        - title=Fix crash on Android 11 due to dynamic theming
+        - issueNumber=000305 title=Fix video player controls not properly hiding
+        - title=Fix crash when using Immich album sharing page
+        - issueNumber=000276 title=Fix ghost selections in some photo views
+        - title=Remove unused 'Preserve date on move' setting
+
+# version=v2.1.2 date=17-08-2026
     + category=Fixes
         - issueNumber=000297 title=Fix inability to drag-select items
         - issueNumber=000298 title=Fix clearing trash-bin not working
