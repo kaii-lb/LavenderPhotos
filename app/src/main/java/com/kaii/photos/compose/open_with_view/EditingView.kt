@@ -25,9 +25,11 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.models.EditorViewModel
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
 
+@AndroidEntryPoint
 class EditingView : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
