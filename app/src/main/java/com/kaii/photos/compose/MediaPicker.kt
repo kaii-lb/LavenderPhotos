@@ -44,8 +44,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -62,6 +67,10 @@ import com.kaii.photos.compose.grids.TrashedPhotoGridView
 import com.kaii.photos.compose.grids.albums.AlbumGroup
 import com.kaii.photos.compose.grids.albums.SingleAlbumView
 import com.kaii.photos.compose.pages.FavouritesMigrationPage
+import com.kaii.photos.compose.pages.PermissionHandler
+import com.kaii.photos.compose.pages.PrivacyModeActivePage
+import com.kaii.photos.compose.pages.ScreenLock
+import com.kaii.photos.compose.pages.StartupLoadingPage
 import com.kaii.photos.compose.pages.main.MainPages
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.Screens
@@ -72,30 +81,55 @@ import com.kaii.photos.models.FavouritesViewModel
 import com.kaii.photos.models.ImmichAlbumViewModel
 import com.kaii.photos.models.MainGridViewModel
 import com.kaii.photos.models.MultiAlbumViewModel
+import com.kaii.photos.models.PrivacyModeActiveViewModel
 import com.kaii.photos.models.SAFAlbumViewModel
 import com.kaii.photos.models.SearchViewModel
 import com.kaii.photos.models.TrashViewModel
+import com.kaii.photos.models.permissions.PermissionsViewModel
+import com.kaii.photos.models.permissions.PermissionsViewModelFactory
+import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.screens.isMultiSelect
 import com.kaii.photos.screens.retainMediaPickerState
 import com.kaii.photos.setupNextScreen
 import com.kaii.photos.ui.theme.PhotosTheme
+import com.kaii.photos.widgets.ExpressivePINFieldState
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarBox
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarHostState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
 
 @AndroidEntryPoint
 class MediaPicker : ComponentActivity() {
+    private lateinit var navController: NavHostController
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
+        var isCheckingCredentials = true
+        splashScreen.setKeepOnScreenCondition { isCheckingCredentials }
 
         val incomingIntent = intent
+        val settings = PhotosApplication.appModule.settings
+        val startupManager = StartupManager(
+            context = applicationContext,
+            settings = settings.permissions
+        )
+
+        lifecycleScope.launch {
+            Glide.get(applicationContext).setMemoryCategory(MemoryCategory.HIGH)
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            startupManager.checkState()
+            isCheckingCredentials = false
+        }
 
         setContent {
             val themeSerial by PhotosApplication.appModule.settings.lookAndFeel
@@ -112,6 +146,8 @@ class MediaPicker : ComponentActivity() {
                 )
 
                 val navControllerLocal = rememberNavController()
+                navController = navControllerLocal
+
                 CompositionLocalProvider(
                     LocalNavController provides navControllerLocal
                 ) {
@@ -119,7 +155,17 @@ class MediaPicker : ComponentActivity() {
 
                     val snackbarHostState = remember { LavenderSnackbarHostState() }
                     LavenderSnackbarBox(snackbarHostState = snackbarHostState) {
-                        Content(incomingIntent = incomingIntent)
+                        Content(
+                            incomingIntent = incomingIntent,
+                            startupManager = startupManager,
+                            startupPage = when (startupManager.state) {
+                                StartupManager.State.MissingPermissions -> Screens.Startup.PermissionsPage
+                                StartupManager.State.NeedsIndexing -> Screens.Startup.ProcessingPage
+                                StartupManager.State.PasswordLocked -> Screens.Startup.ScreenLock
+                                StartupManager.State.PrivacyModeActive -> Screens.Startup.PrivacyModeActive
+                                StartupManager.State.Unlocked -> Screens.MainPages
+                            }
+                        )
                     }
                 }
             }
@@ -131,14 +177,30 @@ class MediaPicker : ComponentActivity() {
         PhotosApplication.appModule.logManager.stopRecording()
     }
 
+    override fun onRestart() {
+        super.onRestart()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val password = PhotosApplication.appModule.settings.permissions.getPassword().first()
+
+            if (password != null && navController.currentDestination?.hasRoute(Screens.Startup.ScreenLock::class) != true) {
+                launch(Dispatchers.Main) {
+                    navController.navigate(Screens.Startup.ScreenLock)
+                }
+            }
+        }
+    }
+
     @Composable
     private fun Content(
-        incomingIntent: Intent
+        incomingIntent: Intent,
+        startupManager: StartupManager,
+        startupPage: Screens
     ) {
         val navController = LocalNavController.current
         NavHost(
             navController = navController,
-            startDestination = Screens.MainPages,
+            startDestination = startupPage,
             modifier = Modifier
                 .fillMaxSize(1f)
                 .background(MaterialTheme.colorScheme.background),
@@ -171,6 +233,33 @@ class MediaPicker : ComponentActivity() {
                 ) { width -> -width } + fadeIn()
             }
         ) {
+            composable<Screens.Startup.PermissionsPage> {
+                val viewModel = viewModel<PermissionsViewModel>(factory = PermissionsViewModelFactory())
+
+                PermissionHandler(
+                    startupManager = startupManager,
+                    viewModel = viewModel
+                )
+            }
+
+            composable<Screens.Startup.ProcessingPage> {
+                StartupLoadingPage(startupManager = startupManager)
+            }
+
+            composable<Screens.Startup.ScreenLock> {
+                ScreenLock(
+                    action = ExpressivePINFieldState.Action.Unlock
+                )
+            }
+
+            composable<Screens.Startup.PrivacyModeActive> {
+                val viewModel = hiltViewModel<PrivacyModeActiveViewModel>()
+
+                PrivacyModeActivePage(
+                    viewModel = viewModel
+                )
+            }
+
             navigation<Screens.MainPages>(
                 startDestination = Screens.MainPages.MainGrid.GridView
             ) {

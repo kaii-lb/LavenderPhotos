@@ -156,13 +156,15 @@ class MainActivity : ComponentActivity() {
         var isCheckingCredentials = true
         splashScreen.setKeepOnScreenCondition { isCheckingCredentials }
 
-        Glide.get(this).setMemoryCategory(MemoryCategory.HIGH)
-
         val settings = PhotosApplication.appModule.settings
         val startupManager = StartupManager(
             context = applicationContext,
             settings = settings.permissions
         )
+
+        lifecycleScope.launch {
+            Glide.get(applicationContext).setMemoryCategory(MemoryCategory.HIGH)
+        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             startupManager.checkState()
@@ -1017,14 +1019,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onRestart() {
+        super.onRestart()
 
         lifecycleScope.launch(Dispatchers.IO) {
             val password = PhotosApplication.appModule.settings.permissions.getPassword().first()
 
-            if (password != null) launch(Dispatchers.Main) {
-                navController.navigate(Screens.Startup.ScreenLock)
+            if (password != null && navController.currentDestination?.hasRoute(Screens.Startup.ScreenLock::class) != true) {
+                launch(Dispatchers.Main) {
+                    navController.navigate(Screens.Startup.ScreenLock)
+                }
             }
         }
     }
