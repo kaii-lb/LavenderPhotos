@@ -87,10 +87,10 @@ class LavenderExoPlayer(
         setLoadControl(
             DefaultLoadControl.Builder().apply {
                 setBufferDurationsMs(
+                    2_500,
+                    20_000,
                     1000,
-                    5000,
-                    1000,
-                    1000
+                    2_500
                 )
 
                 setBackBuffer(
@@ -299,8 +299,8 @@ class LavenderExoPlayer(
             }
         }
 
-        if (exoPlayer.isCommandAvailable(Player.COMMAND_PREPARE)) exoPlayer.prepare()
         exoPlayer.setMediaSource(source)
+        if (exoPlayer.isCommandAvailable(Player.COMMAND_PREPARE)) exoPlayer.prepare()
     }
 
     fun release() {

@@ -107,7 +107,6 @@ fun OpenWithContent(
     val scrollState = retainSinglePhotoScrollState(isOpenWithView = true)
 
     val playerView = rememberPlayerView(
-        useTextureView = false,
         blurViews = blurViews,
         useBlackBackground = useBlackBackground
     )

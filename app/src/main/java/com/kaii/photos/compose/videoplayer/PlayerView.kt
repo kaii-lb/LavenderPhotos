@@ -20,8 +20,7 @@ import com.kaii.photos.R
 @Composable
 fun rememberPlayerView(
     blurViews: Boolean,
-    useBlackBackground: Boolean,
-    useTextureView: Boolean = false
+    useBlackBackground: Boolean
 ): PlayerView {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -37,12 +36,10 @@ fun rememberPlayerView(
     val playerView = remember {
         PlayerView(
             context,
-            if (useTextureView) resources.getXml(R.xml.custom_player_view).let {
+            resources.getXml(R.xml.custom_player_view).let {
                 it.next()
                 it.nextTag()
                 Xml.asAttributeSet(it)
-            } else {
-                null
             }
         ).apply {
             layoutParams = ViewGroup.LayoutParams(

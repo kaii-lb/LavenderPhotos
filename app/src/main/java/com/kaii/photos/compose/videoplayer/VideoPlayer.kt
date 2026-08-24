@@ -47,9 +47,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -166,14 +166,14 @@ private fun VideoPlayerUI(
 
     val transformableState = retainTransformableState(applyTransformation = false)
 
+    val view = LocalView.current
+    LaunchedEffect(state.isPlaying, shouldPlay()) {
+        view.keepScreenOn = state.isPlaying && shouldPlay()
+    }
+
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .then(
-                if (state.isPlaying && shouldPlay()) {
-                    Modifier.keepScreenOn()
-                } else Modifier.Companion
-            ),
+            .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         playerSlot()

@@ -92,25 +92,27 @@ class VideoPlayerState(
     var selectedAudioTrack by mutableStateOf<LavenderExoPlayer.AudioTrack?>(null)
         private set
 
-    private val player: LavenderExoPlayer = LavenderExoPlayer(
-        context = context,
-        onDurationChanged = { new ->
-            duration = new
+    private val player: LavenderExoPlayer by lazy {
+        LavenderExoPlayer(
+            context = context,
+            onDurationChanged = { new ->
+                duration = new
 
-            setRepeatMode(duration)
-        },
-        onCurrentPositionChanged = { new ->
-            currentPosition = new
-        },
-        onPlaybackStateChanged = onPlaybackStateChanged,
-        onAudioTracksChanged = { tracks ->
-            audioTracks.clear()
-            audioTracks.addAll(tracks)
+                setRepeatMode(duration)
+            },
+            onCurrentPositionChanged = { new ->
+                currentPosition = new
+            },
+            onPlaybackStateChanged = onPlaybackStateChanged,
+            onAudioTracksChanged = { tracks ->
+                audioTracks.clear()
+                audioTracks.addAll(tracks)
 
-            val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
-            current?.let { setAudioTrack(it) }
-        }
-    )
+                val current = player.getAudioTrack() ?: tracks.firstOrNull()?.language
+                current?.let { setAudioTrack(it) }
+            }
+        )
+    }
 
     val playbackSpeed: Float
         get() = player.playbackSpeed
@@ -126,6 +128,8 @@ class VideoPlayerState(
 
     init {
         coroutineScope.launch {
+            delay(50.milliseconds)
+
             launch {
                 muteOnStartFlow.collectLatest {
                     muteOnStart = it
@@ -204,21 +208,23 @@ class VideoPlayerState(
         loop: Boolean = false,
         shouldPlay: () -> Boolean,
         decryptProgress: (progress: Float) -> Unit = {}
-    ) {
-        if (isReleased) return
+    ) = withContext(Dispatchers.IO) {
+        if (isReleased) return@withContext
 
         val immichUrl = item.immichVideoUrl?.takeIf { item.isCloud }?.let { endpoint + it }
         val uri = immichUrl ?: item.uri
 
-        if (currentSource == uri) return
+        if (currentSource == uri) return@withContext
+        currentSource = uri
 
-        this.loopMode = if (loop) 2 else 0
-        this.shouldPlay = shouldPlay
-        this.audioTracks.clear()
-
-        pause()
-
+        audioTracks.clear()
         videoTitle = item.displayName
+        loopMode = if (loop) 2 else 0
+        this@VideoPlayerState.shouldPlay = shouldPlay
+
+        withContext(Dispatchers.Main) {
+            pause()
+        }
 
         val input = when {
             // secure item, needs decoding
@@ -274,21 +280,23 @@ class VideoPlayerState(
             }
         }
 
-        if (input == null) return
+        if (input == null) return@withContext
 
-        player.setSource(
-            context = context,
-            input = input,
-            loop = loop,
-            decryptProgress = decryptProgress
-        )
+        withContext(Dispatchers.Main) {
+            player.setSource(
+                context = context,
+                input = input,
+                loop = loop,
+                decryptProgress = decryptProgress
+            )
 
-        player.setPlayWhenReady(autoPlay && shouldPlay())
-        if (shouldPlay() && autoPlay) {
-            play()
+            player.setPlayWhenReady(autoPlay && shouldPlay())
+            if (shouldPlay() && autoPlay) {
+                play()
+            }
+
+            setRepeatMode(player.duration)
         }
-
-        setRepeatMode(player.duration)
     }
 
     fun delayHide() {

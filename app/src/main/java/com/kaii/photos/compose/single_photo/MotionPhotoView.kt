@@ -113,7 +113,6 @@ fun MotionPhotoView(
         )
 
         val playerView = rememberPlayerView(
-            useTextureView = false,
             blurViews = blurViews,
             useBlackBackground = useBlackBackground
         )

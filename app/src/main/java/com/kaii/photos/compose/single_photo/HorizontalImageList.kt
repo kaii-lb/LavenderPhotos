@@ -87,7 +87,6 @@ fun HorizontalImageList(
     val isLandscape by rememberDeviceOrientation()
 
     val playerView = rememberPlayerView(
-        useTextureView = false,
         blurViews = blurViews(),
         useBlackBackground = useBlackBackground()
     )
@@ -236,7 +235,7 @@ fun HorizontalImageList(
                     scrollState = scrollState,
                     window = window,
                     shouldPlay = {
-                        state.currentPage == index
+                        state.settledPage == index
                     },
                     useCache = useCache(),
                     modifier = Modifier

@@ -635,7 +635,6 @@ fun VideoEditorImpl(
                 contentAlignment = Alignment.Center
             ) {
                 val playerView = rememberPlayerView(
-                    useTextureView = true,
                     blurViews = blurViews,
                     useBlackBackground = useBlackBackground
                 )
