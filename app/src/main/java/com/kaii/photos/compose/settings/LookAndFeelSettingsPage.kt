@@ -462,7 +462,10 @@ private fun LookAndFeelSettingsPageImpl(
                     iconResID = R.drawable.texture,
                     showBackground = false,
                     checked = useBlackBackground(),
-                    onSwitchClick = setUseBlackBackground
+                    onSwitchClick = {
+                        setUseBlackBackground(it)
+                        setBlurViews(false)
+                    }
                 )
             }
 
@@ -474,7 +477,10 @@ private fun LookAndFeelSettingsPageImpl(
                     iconResID = R.drawable.lens_blur,
                     showBackground = false,
                     checked = blurViews(),
-                    onSwitchClick = setBlurViews
+                    onSwitchClick = {
+                        setBlurViews(it)
+                        setUseBlackBackground(false)
+                    }
                 )
             }
         }
