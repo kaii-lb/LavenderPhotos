@@ -130,7 +130,7 @@ object SecureIvRecovery {
                 val p0 = candidate.toByteArray()
                 RandomAccessFile(tempPlain, "rw").use { it.seek(0); it.write(p0) }
 
-                if (!validates(context, tempPlain, kind)) continue
+                if (!validates(tempPlain, kind)) continue
 
                 val iv = ByteArray(16) { i -> (zeroFirstBlock[i].toInt() xor p0[i].toInt()).toByte() }
                 // all-zero is this app's not-ready/corrupt sentinel and also signals a bad guess
@@ -222,7 +222,7 @@ object SecureIvRecovery {
     private enum class Kind { PNG, JPEG, VIDEO, IMAGE_OTHER }
 
     /** Validate the reconstructed plaintext file: full (downsampled) image decode, or video metadata. */
-    private fun validates(context: Context, plaintext: File, kind: Kind): Boolean = when (kind) {
+    private fun validates(plaintext: File, kind: Kind): Boolean = when (kind) {
         Kind.VIDEO -> validatesVideo(plaintext)
         else -> validatesImage(plaintext)
     }
@@ -240,7 +240,7 @@ object SecureIvRecovery {
             }
             val bitmap = BitmapFactory.decodeFile(plaintext.absolutePath, decodeOpts)
             (bitmap != null).also { bitmap?.recycle() }
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             false
         }
     }
@@ -264,7 +264,7 @@ object SecureIvRecovery {
             val hasVideo = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO)
             val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             hasVideo == "yes" || (width?.toIntOrNull() ?: 0) > 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         } finally {
             try { retriever.release() } catch (_: Exception) {}
@@ -288,7 +288,7 @@ object SecureIvRecovery {
                 sibling.inputStream().use { stream ->
                     ByteArray(32).takeIf { stream.read(it) >= 32 }
                 }
-            } catch (e: Exception) { null } ?: continue
+            } catch (_: Exception) { null } ?: continue
 
             EncryptionManager.decryptFirstBlock(head, siblingIv)?.let { result.add(it) }
         }

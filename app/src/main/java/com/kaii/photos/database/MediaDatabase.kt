@@ -95,12 +95,12 @@ abstract class MediaDatabase : RoomDatabase() {
                 ).apply {
                     addMigrations(
                         Migration3to4(appContext),
-                        Migration4to5(appContext),
+                        Migration4to5(),
                         Migration9To10(appContext),
                         Migration10To11(),
                         Migration12To13(),
                         Migration14To15(appContext),
-                        Migration16To17(appContext),
+                        Migration16To17(),
                         Migration20To21()
                     )
                     enableMultiInstanceInvalidation()
