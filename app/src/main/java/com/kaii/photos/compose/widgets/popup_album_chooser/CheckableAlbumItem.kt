@@ -1,7 +1,9 @@
 package com.kaii.photos.compose.widgets.popup_album_chooser
 
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -13,7 +15,7 @@ import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
 
 @Composable
-fun CheckableAlbumItem(
+fun LazyItemScope.CheckableAlbumItem(
     album: AlbumGridState.Album.Single,
     selected: () -> Boolean,
     position: RowPosition,
@@ -24,7 +26,12 @@ fun CheckableAlbumItem(
         album = album,
         position = position,
         info = { ImmichBasicInfo.Empty },
-        modifier = modifier,
+        modifier = modifier
+            .animateItem(
+                fadeInSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                placementSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                fadeOutSpec = MaterialTheme.motionScheme.defaultEffectsSpec()
+            ),
         suffix = {
             FilledTonalIconToggleButton(
                 checked = selected(),

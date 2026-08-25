@@ -752,6 +752,10 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="album_group_item_count">Sub-albums:</string>
     <string name="album_group_info">Album group info</string>
     <string name="album_group_show_add_dialog">Add albums to this group</string>
+    <string name="album_group_filter_none">None</string>
+    <string name="album_group_filter_in_this_album">In this album</string>
+    <string name="album_group_filter_not_in_an_album">Not in an album</string>
+    <string name="album_group_filter_in_other_albums">In other albums</string>
 
     <!--  News  -->
     <string name="news">News</string>

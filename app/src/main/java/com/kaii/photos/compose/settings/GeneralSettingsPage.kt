@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,7 +17,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,11 +46,15 @@ import com.kaii.photos.datastore.DefaultTabs
 import com.kaii.photos.helpers.RowPosition
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.helpers.grid_management.MediaItemSortMode
+import com.kaii.photos.widgets.SortModePickerState
+import com.kaii.photos.widgets.popup_chooser_state.GenericPopUpAlbumChooserState
+import com.kaii.photos.widgets.popup_chooser_state.rememberGenericPopUpAlbumChooserState
 import com.kaii.photos.widgets.rememberSortModePickerState
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -67,7 +71,17 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
     val defaultTab by settings.defaultTabs.getDefaultTab().collectAsStateWithLifecycle(initialValue = DefaultTabs.TabTypes.photos)
     val checkForUpdatesOnStartup by settings.versions.getCheckUpdatesOnStartup().collectAsStateWithLifecycle(initialValue = false)
 
+    val popupChooserState = rememberGenericPopUpAlbumChooserState { album, query ->
+        album.name.contains(query, true)
+                && album.info.album is AlbumType.Folder
+                && album.info.album.paths.size == 1
+    }
+
+    val sortModeState = rememberSortModePickerState()
+
     GeneralSettingsPageImpl(
+        popupChooserState = popupChooserState,
+        sortModeState = sortModeState,
         mainPhotosPaths = { mainPhotosPaths },
         shouldShowEverything = { shouldShowEverything },
         autoDetectAlbums = { autoDetectAlbums },
@@ -92,7 +106,27 @@ fun GeneralSettingsPage(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
+    val state = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
     GeneralSettingsPageImpl(
+        popupChooserState = remember {
+            GenericPopUpAlbumChooserState(
+                state = state,
+                albumsFlow = flowOf(
+                    emptyList()
+                ),
+                coroutineScope = coroutineScope,
+                filter = { album, query -> album.name.contains(query, true) }
+            )
+        },
+        sortModeState = remember {
+            SortModePickerState(
+                sortModeFlow = flowOf(MediaItemSortMode.DateTaken),
+                coroutineScope = coroutineScope,
+                setMode = {}
+            )
+        },
         mainPhotosPaths = { emptySet() },
         shouldShowEverything = { false },
         autoDetectAlbums = { false },
@@ -117,6 +151,8 @@ private fun GeneralSettingsPagePreview(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GeneralSettingsPageImpl(
+    popupChooserState: GenericPopUpAlbumChooserState,
+    sortModeState: SortModePickerState,
     mainPhotosPaths: () -> Set<String>,
     shouldShowEverything: () -> Boolean,
     autoDetectAlbums: () -> Boolean,
@@ -155,7 +191,6 @@ private fun GeneralSettingsPageImpl(
 
             item {
                 val coroutineScope = rememberCoroutineScope()
-                val selectedAlbums = remember { mutableStateListOf<String>() }
                 var showAlbumsSelectionDialog by remember { mutableStateOf(false) }
 
                 PreferencesSwitchRow(
@@ -168,30 +203,25 @@ private fun GeneralSettingsPageImpl(
                         if (!shouldShowEverything()) stringResource(id = R.string.albums_main_list_desc_1)
                         else stringResource(id = R.string.albums_main_list_desc_2),
                     onRowClick = {
-                        selectedAlbums.clear()
-                        selectedAlbums.addAll(mainPhotosPaths())
+                        popupChooserState.clear()
+                        popupChooserState.addAll(mainPhotosPaths())
 
                         showAlbumsSelectionDialog = true
                     },
                     onSwitchClick = { checked ->
                         setShowEverything(checked)
 
-                        selectedAlbums.clear()
+                        popupChooserState.clear()
                         clearMainPhotosAlbums()
                     }
                 )
 
                 if (showAlbumsSelectionDialog) {
+                    val selectedAlbums by popupChooserState.selectedAlbums.collectAsStateWithLifecycle()
+
                     PopUpAlbumChooser(
-                        selectedAlbums = selectedAlbums,
+                        state = popupChooserState,
                         key = { (it as? AlbumType.Folder)?.paths?.first() ?: it.id },
-                        filter = { searchedForText, albums ->
-                            albums.filter { album ->
-                                album.name.contains(searchedForText, true)
-                                        && album.info.album is AlbumType.Folder
-                                        && album.info.album.paths.size == 1
-                            }
-                        },
                         onDismiss = {
                             coroutineScope.launch(Dispatchers.Default) {
                                 clearMainPhotosAlbums()
@@ -200,7 +230,7 @@ private fun GeneralSettingsPageImpl(
                                     addMainPhotosAlbum(album)
                                 }
 
-                                // hack as hell but fsr it's the only thing that works
+                                // hacky as hell but fsr it's the only thing that works
                                 delay(200.milliseconds)
 
                                 showAlbumsSelectionDialog = false
@@ -272,12 +302,11 @@ private fun GeneralSettingsPageImpl(
             }
 
             item {
-                val state = rememberSortModePickerState()
                 var showSortModeSelectorDialog by remember { mutableStateOf(false) }
 
                 if (showSortModeSelectorDialog) {
                     SortModePopupChooser(
-                        state = state,
+                        state = sortModeState,
                         onDismiss = {
                             showSortModeSelectorDialog = false
                         }
@@ -288,7 +317,7 @@ private fun GeneralSettingsPageImpl(
                     title = stringResource(id = R.string.albums_media_sorting),
                     summary = stringResource(
                         id = R.string.albums_media_sorting_desc,
-                        stringResource(id = state.currentMode.labelId)
+                        stringResource(id = sortModeState.currentMode.labelId)
                     ),
                     iconResID = R.drawable.sorting,
                     position = RowPosition.Single,

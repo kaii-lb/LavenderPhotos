@@ -72,6 +72,7 @@ fun AlbumGroup(
         topBar = {
             AlbumGroupTopBar(
                 group = { viewModel.group },
+                groups = { groups },
                 navController = navController,
                 showInfoDialog = {
                     if (viewModel.group != null) {

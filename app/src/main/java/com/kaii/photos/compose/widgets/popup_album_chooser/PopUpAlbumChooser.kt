@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.add
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -28,13 +28,8 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,39 +37,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.state.AlbumGridState
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.widgets.popup_chooser_state.PopUpAlbumChooserState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PopUpAlbumChooser(
-    selectedAlbums: SnapshotStateList<String>,
+    state: PopUpAlbumChooserState,
     sheetState: SheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     ),
-    albumGridState: AlbumGridState = PhotosApplication.appModule.albumGridState,
     key: (album: AlbumType) -> String,
-    filter: (searchedForText: String, list: List<AlbumGridState.Album.Single>) -> List<AlbumGridState.Album.Single>,
+    extraContent: (@Composable () -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
-    val state = rememberLazyListState()
-
-    val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
-    var albumsList by remember { mutableStateOf(originalAlbumsList) }
-    var searchedForText by remember { mutableStateOf("") }
-
-    LaunchedEffect(searchedForText, originalAlbumsList) {
-        albumsList = filter(searchedForText, originalAlbumsList)
-
-        if (albumsList.isNotEmpty()) state.scrollToItem(0)
-    }
+    val albumsList by state.albumsList.collectAsStateWithLifecycle()
 
     ModalBottomSheet(
         sheetState = sheetState,
@@ -112,20 +95,34 @@ fun PopUpAlbumChooser(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            ClearableTextField(
-                value = searchedForText,
-                onValueChange = { searchedForText = it },
-                placeholder = stringResource(id = R.string.albums_search_for),
-                icon = R.drawable.search,
+            val query by state.query.collectAsStateWithLifecycle()
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
                     .padding(horizontal = 16.dp),
-                onClear = {
-                    searchedForText = ""
-                },
-                onConfirm = {}
-            )
+                verticalArrangement = Arrangement.spacedBy(
+                    space = 8.dp,
+                    alignment = Alignment.Top
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ClearableTextField(
+                    value = query,
+                    onValueChange = state::search,
+                    placeholder = stringResource(id = R.string.albums_search_for),
+                    icon = R.drawable.search,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    onClear = {
+                        state.search("")
+                    },
+                    onConfirm = {}
+                )
+
+                if (extraContent != null) extraContent()
+            }
         }
 
         if (albumsList.isEmpty()) {
@@ -136,7 +133,7 @@ fun PopUpAlbumChooser(
             )
         } else {
             LazyColumn(
-                state = state,
+                state = state.state,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(start = 16.dp, top = 8.dp, end = 16.dp)
@@ -150,14 +147,16 @@ fun PopUpAlbumChooser(
                 items(
                     count = albumsList.size,
                     key = {
-                        albumsList[it].id
+                        key(albumsList[it].info.album)
                     }
                 ) { index ->
                     val album = key(albumsList[index].info.album)
 
                     CheckableAlbumItem(
                         album = albumsList[index],
-                        selected = { selectedAlbums.contains(album) },
+                        selected = {
+                            state.isSelected(album)
+                        },
                         position =
                             when {
                                 albumsList.size == 1 -> RowPosition.Single
@@ -166,11 +165,7 @@ fun PopUpAlbumChooser(
                                 else -> RowPosition.Middle
                             },
                         onCheckedChange = {
-                            if (selectedAlbums.contains(album)) {
-                                selectedAlbums.remove(album)
-                            } else {
-                                selectedAlbums.add(album)
-                            }
+                            state.toggle(album)
                         }
                     )
                 }
