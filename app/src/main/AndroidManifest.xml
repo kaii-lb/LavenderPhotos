@@ -89,7 +89,10 @@
             android:name=".compose.open_with_view.OpenWithView"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:theme="@style/Theme.Photos">
+            android:theme="@style/Theme.Photos"
+            android:launchMode="singleTask"
+            android:taskAffinity="">
+
             <intent-filter>
                 <action android:name="com.android.camera.action.REVIEW" />
 
