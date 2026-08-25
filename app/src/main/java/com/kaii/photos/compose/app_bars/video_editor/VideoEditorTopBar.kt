@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SplitButton
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.media3.common.util.UnstableApi
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.user_action.ConfirmationDialog
 import com.kaii.photos.compose.widgets.SelectableDropDownMenuItem
@@ -50,6 +53,9 @@ import com.kaii.photos.helpers.editing.BasicVideoData
 import com.kaii.photos.helpers.editing.DrawingPaintState
 import com.kaii.photos.helpers.editing.VideoEditingState
 import com.kaii.photos.helpers.editing.VideoModification
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -162,42 +168,66 @@ fun VideoEditorTopBar(
                 }
             }
 
+            val context = LocalContext.current
+            val resources = LocalResources.current
+            val textMeasurer = rememberTextMeasurer()
+            val coroutineScope = rememberCoroutineScope()
+            val directoryPermissionManager = rememberDirectoryPermissionManager(
+                onGranted = {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
+                        val saveAction = FileOperationAction.SaveEditedMedia(
+                            params = GenericFileEditor.EditParameters.Video(
+                                context = context,
+                                modifications = modifications + drawingPaintState.modifications.map {
+                                    it as VideoModification
+                                },
+                                videoEditingState = videoEditingState,
+                                basicVideoData = basicVideoData,
+                                uri = file.uri,
+                                info = info(),
+                                overwrite = overwrite,
+                                containerDimens = containerDimens,
+                                canvasSize = canvasSize,
+                                textMeasurer = textMeasurer,
+                                isFromOpenWithView = isFromOpenWithView
+                            )
+                        )
+
+                        runAction(
+                            if (overwrite) {
+                                FileOperationAction.PrepareFilesForWrite(
+                                    files = listOf(file),
+                                    followUpAction = saveAction
+                                )
+                            } else {
+                                saveAction
+                            }
+                        )
+                    }
+                },
+                onRejected = {
+                    coroutineScope.launch {
+                        LavenderSnackbarController.pushEvent(
+                            event = LavenderSnackbarEvent.MessageEvent(
+                                message = resources.getString(R.string.permissions_necessary),
+                                icon = R.drawable.error_2,
+                                duration = SnackbarDuration.Short
+                            )
+                        )
+                    }
+                }
+            )
+
             SplitButton(
                 leadingButton = {
-                    val context = LocalContext.current
-                    val textMeasurer = rememberTextMeasurer()
-
                     SplitButtonDefaults.LeadingButton(
                         onClick = {
                             lastSavedModCount.intValue = modifications.size
 
-                            val saveAction = FileOperationAction.SaveEditedMedia(
-                                params = GenericFileEditor.EditParameters.Video(
-                                    context = context,
-                                    modifications = modifications + drawingPaintState.modifications.map {
-                                        it as VideoModification
-                                    },
-                                    videoEditingState = videoEditingState,
-                                    basicVideoData = basicVideoData,
-                                    uri = file.uri,
-                                    info = info(),
-                                    overwrite = overwrite,
-                                    containerDimens = containerDimens,
-                                    canvasSize = canvasSize,
-                                    textMeasurer = textMeasurer,
-                                    isFromOpenWithView = isFromOpenWithView
+                            directoryPermissionManager.start(
+                                directories = setOf(
+                                    file.parentPath
                                 )
-                            )
-
-                            runAction(
-                                if (overwrite) {
-                                    FileOperationAction.PrepareFilesForWrite(
-                                        files = listOf(file),
-                                        followUpAction = saveAction
-                                    )
-                                } else {
-                                    saveAction
-                                }
                             )
                         }
                     ) {

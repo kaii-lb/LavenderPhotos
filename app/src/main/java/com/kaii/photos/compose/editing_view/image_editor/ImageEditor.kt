@@ -31,6 +31,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -60,6 +61,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -77,6 +79,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.signature.ObjectKey
 import com.kaii.photos.LocalNavController
+import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.app_bars.image_editor.ImageEditorBottomBar
 import com.kaii.photos.compose.app_bars.image_editor.ImageEditorTopBar
@@ -101,7 +104,10 @@ import com.kaii.photos.helpers.editing.MediaColorFilters
 import com.kaii.photos.helpers.editing.rememberDrawingPaintState
 import com.kaii.photos.helpers.editing.rememberImageEditingState
 import com.kaii.photos.mediastore.ImmichInfo
+import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
 import com.kaii.photos.permissions.files.rememberDynamicActivityResultLauncher
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
+import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -270,8 +276,75 @@ fun ImageEditor(
 
     Scaffold(
         topBar = {
+            val resources = LocalResources.current
             val textMeasurer = rememberTextMeasurer()
             var overwrite by remember(overwriteByDefault()) { mutableStateOf(overwriteByDefault()) }
+            val directoryPermissionManager = rememberDirectoryPermissionManager(
+                onGranted = {
+                    PhotosApplication.appModule.scope.launch(Dispatchers.IO) {
+                        val saveAction = FileOperationAction.SaveEditedMedia(
+                            params = GenericFileEditor.EditParameters.Image(
+                                context = context,
+                                uri = file.uri,
+                                image =
+                                    Glide.with(context)
+                                        .asBitmap()
+                                        .load(
+                                            if (file.uri.startsWith("/api")) {
+                                                ImmichInfo(
+                                                    thumbnail = file.uri,
+                                                    original = file.uri,
+                                                    hash = "",
+                                                    auth = info().auth,
+                                                    endpoint = info().endpoint,
+                                                    useThumbnail = false
+                                                )
+                                            } else file.uri
+                                        )
+                                        .skipMemoryCache(true)
+                                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                        .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))
+                                        .override(Target.SIZE_ORIGINAL)
+                                        .submit()
+                                        .get()
+                                        .asImageBitmap(),
+                                containerDimens = containerDimens,
+                                exportQuality = exportQuality(),
+                                drawingPaintState = drawingPaintState,
+                                imageEditingState = imageEditingState,
+                                modifications = modifications,
+                                textMeasurer = textMeasurer,
+                                actualLeft = actualStarts.first,
+                                actualTop = actualStarts.second,
+                                overwrite = overwrite,
+                                isFromOpenWithView = isFromOpenWithView
+                            )
+                        )
+
+                        runAction(
+                            if (overwrite) {
+                                FileOperationAction.PrepareFilesForWrite(
+                                    files = listOf(file),
+                                    followUpAction = saveAction
+                                )
+                            } else {
+                                saveAction
+                            }
+                        )
+                    }
+                },
+                onRejected = {
+                    coroutineScope.launch {
+                        LavenderSnackbarController.pushEvent(
+                            event = LavenderSnackbarEvent.MessageEvent(
+                                message = resources.getString(R.string.permissions_necessary),
+                                icon = R.drawable.error_2,
+                                duration = SnackbarDuration.Short
+                            )
+                        )
+                    }
+                }
+            )
 
             ImageEditorTopBar(
                 modifications = imageEditingState.modificationList,
@@ -282,54 +355,10 @@ fun ImageEditor(
                     overwrite = it
                 },
                 saveImage = {
-                    val saveAction = FileOperationAction.SaveEditedMedia(
-                        params = GenericFileEditor.EditParameters.Image(
-                            context = context,
-                            uri = file.uri,
-                            image =
-                                Glide.with(context)
-                                    .asBitmap()
-                                    .load(
-                                        if (file.uri.startsWith("/api")) {
-                                            ImmichInfo(
-                                                thumbnail = file.uri,
-                                                original = file.uri,
-                                                hash = "",
-                                                auth = info().auth,
-                                                endpoint = info().endpoint,
-                                                useThumbnail = false
-                                            )
-                                        } else file.uri
-                                    )
-                                    .skipMemoryCache(true)
-                                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                                    .signature(ObjectKey(Clock.System.now().toEpochMilliseconds()))
-                                    .override(Target.SIZE_ORIGINAL)
-                                    .submit()
-                                    .get()
-                                    .asImageBitmap(),
-                            containerDimens = containerDimens,
-                            exportQuality = exportQuality(),
-                            drawingPaintState = drawingPaintState,
-                            imageEditingState = imageEditingState,
-                            modifications = modifications,
-                            textMeasurer = textMeasurer,
-                            actualLeft = actualStarts.first,
-                            actualTop = actualStarts.second,
-                            overwrite = overwrite,
-                            isFromOpenWithView = isFromOpenWithView
+                    directoryPermissionManager.start(
+                        directories = setOf(
+                            file.parentPath
                         )
-                    )
-
-                    runAction(
-                        if (overwrite) {
-                            FileOperationAction.PrepareFilesForWrite(
-                                files = listOf(file),
-                                followUpAction = saveAction
-                            )
-                        } else {
-                            saveAction
-                        }
                     )
                 },
                 navigateBack = {

@@ -319,6 +319,8 @@ fun ContentResolver.setDateForMedia(
         )
 
         return true
+    } catch (_: UnsupportedOperationException) {
+        return true
     } catch (e: Throwable) {
         Log.e(TAG, e.toString())
         e.printStackTrace()
@@ -395,7 +397,7 @@ fun Uri.toContentId(contentResolver: ContentResolver, type: MediaType) =
         val docPath = path!!.substringAfter("/document/")
         val basePath =
             if (docPath.startsWith("primary")) baseInternalStorageDirectory
-            else "/storage/" + docPath.split(":").first()
+            else "/storage/" + docPath.split(":").first() + "/"
 
         val path = basePath + path!!.substringAfter(":").substringAfter(":")
 
