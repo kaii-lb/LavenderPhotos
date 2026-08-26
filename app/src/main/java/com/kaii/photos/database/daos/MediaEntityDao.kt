@@ -12,6 +12,7 @@ import androidx.room.Upsert
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.kaii.photos.database.entities.MediaStoreData
+import com.kaii.photos.database.escapeLikeWildcards
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.state.AlbumGridState
@@ -347,7 +348,4 @@ interface MediaDao {
         val sql = "$select FROM media WHERE $where ORDER BY $orderByColumn DESC"
         return SimpleSQLiteQuery(sql, args.toTypedArray())
     }
-
-    private fun String.escapeLikeWildcards(): String =
-        replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 }

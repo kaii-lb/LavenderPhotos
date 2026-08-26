@@ -87,14 +87,16 @@ class SAFFileManager @Inject constructor(
     }
 
     override suspend fun getMediaCount(album: AlbumType): Int = withContext(Dispatchers.IO) {
-        safDao.countMediaInPaths(
-            treeUri = (album as AlbumType.SAFFolder).base64TreeUri
-        )
+        val treeUri = (album as AlbumType.SAFFolder).base64TreeUri
+
+        if (album.showNested) safDao.countMediaInPathsPrefixes(treeUri = treeUri)
+        else safDao.countMediaInPaths(treeUri = treeUri)
     }
 
     override suspend fun getMediaSize(album: AlbumType): Long = withContext(Dispatchers.IO) {
-        safDao.mediaSize(
-            treeUri = (album as AlbumType.SAFFolder).base64TreeUri
-        )
+        val treeUri = (album as AlbumType.SAFFolder).base64TreeUri
+
+        if (album.showNested) safDao.mediaSizeByPathPrefixes(treeUri = treeUri)
+        else safDao.mediaSize(treeUri = treeUri)
     }
 }

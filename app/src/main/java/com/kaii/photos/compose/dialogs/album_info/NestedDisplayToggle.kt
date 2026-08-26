@@ -25,9 +25,16 @@ import com.kaii.photos.R
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.helpers.TextStylingConstants
 
+private fun AlbumType.getNestedState() =
+    if (this is AlbumType.Folder) {
+        showNested
+    } else {
+        (this as AlbumType.SAFFolder).showNested
+    }
+
 @Composable
 fun NestedDisplayToggle(
-    album: () -> AlbumType.Folder,
+    album: () -> AlbumType,
     modifier: Modifier = Modifier,
     containerColor: Color =
         if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainer
@@ -43,11 +50,12 @@ fun NestedDisplayToggle(
             .clip(shape = RoundedCornerShape(32.dp))
             .background(color = containerColor.copy(alpha = if (enabled) 1f else 0.4f))
             .clickable(enabled = enabled) {
+                val album = album()
+
                 editAlbum(
-                    album().id,
-                    album().copy(
-                        showNested = !album().showNested
-                    )
+                    album.id,
+                    if (album is AlbumType.Folder) album.copy(showNested = !album.showNested)
+                    else (album as AlbumType.SAFFolder).copy(showNested = !album.showNested)
                 )
             }
             .padding(all = 12.dp),
@@ -62,13 +70,13 @@ fun NestedDisplayToggle(
         )
 
         Switch(
-            checked = album().showNested,
+            checked = album().getNestedState(),
             onCheckedChange = { checked ->
+                val album = album()
                 editAlbum(
                     album().id,
-                    album().copy(
-                        showNested = checked
-                    )
+                    if (album is AlbumType.Folder) album.copy(showNested = checked)
+                    else (album as AlbumType.SAFFolder).copy(showNested = checked)
                 )
             }
         )

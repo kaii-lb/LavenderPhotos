@@ -121,11 +121,9 @@ fun AlbumInfoDialog(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            if (albumInfo() is AlbumType.Folder) {
+                            if (albumInfo() is AlbumType.Folder || albumInfo() is AlbumType.SAFFolder) {
                                 NestedDisplayToggle(
-                                    album = {
-                                        albumInfo() as AlbumType.Folder
-                                    },
+                                    album = { albumInfo() },
                                     editAlbum = editAlbum
                                 )
                             }
@@ -174,11 +172,9 @@ fun AlbumInfoDialog(
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (albumInfo() is AlbumType.Folder) {
+                        if (albumInfo() is AlbumType.Folder || albumInfo() is AlbumType.SAFFolder) {
                             NestedDisplayToggle(
-                                album = {
-                                    albumInfo() as AlbumType.Folder
-                                },
+                                album = { albumInfo() },
                                 editAlbum = editAlbum
                             )
                         }

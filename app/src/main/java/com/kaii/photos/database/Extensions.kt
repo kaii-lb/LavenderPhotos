@@ -9,3 +9,6 @@ suspend fun MediaDao.getMediaFromMetadata(
 ) = files.chunked(500).flatMap { chunk ->
     this.getMedia(ids = chunk.fastMap { it.id })
 }
+
+fun String.escapeLikeWildcards(): String =
+    replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

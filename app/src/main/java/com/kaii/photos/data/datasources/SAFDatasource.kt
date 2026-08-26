@@ -32,64 +32,18 @@ class SAFDatasource @AssistedInject constructor(
     suspend fun fetch(): Result<List<MediaStoreData>, FileLoadError> = withContext(Dispatchers.IO) {
         try {
             val treeUri = Base64.decode(album.base64TreeUri).decodeToString().toUri()
-            val documentId = DocumentsContract.getTreeDocumentId(treeUri)
-            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, documentId)
-
-            val projection = arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_MIME_TYPE,
-                DocumentsContract.Document.COLUMN_SIZE,
-                DocumentsContract.Document.COLUMN_LAST_MODIFIED
-            )
+            val rootDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
 
             val mediaItems = mutableListOf<MediaStoreData>()
 
-            context.contentResolver.query(
-                childrenUri,
-                projection,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-                val idCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
-                val nameCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
-                val mimeCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
-                val sizeCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
-                val dateModifiedCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
+            collectMedia(
+                treeUri = treeUri,
+                documentId = rootDocumentId,
+                parentPath = album.base64TreeUri,
+                into = mediaItems
+            )
 
-                while (cursor.moveToNext()) {
-                    val id = cursor.getString(idCol)
-                    val displayName = cursor.getString(nameCol)
-                    val mimeType = cursor.getString(mimeCol)
-                    val size = cursor.getLong(sizeCol)
-                    val dateModified = cursor.getLong(dateModifiedCol) / 1000
-
-                    if (mimeType == null || (!mimeType.startsWith("image/") && !mimeType.startsWith("video/"))) continue
-
-                    val fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id)
-
-                    mediaItems.add(
-                        MediaStoreData(
-                            id = stableId(treeUri, id),
-                            uri = fileUri.toString(),
-                            absolutePath = id,
-                            parentPath = album.base64TreeUri,
-                            displayName = displayName,
-                            dateTaken = dateModified,
-                            dateModified = dateModified,
-                            mimeType = mimeType,
-                            type = if (mimeType.startsWith("image/")) MediaType.Image else MediaType.Video,
-                            immichUrl = null,
-                            hash = null,
-                            size = size,
-                            favourited = false,
-                            duration = null,
-                            isSAF = true
-                        )
-                    )
-                }
-            }
+            println("MEDIA ${mediaItems.map { it.displayName }}")
 
             Result.Success(data = mediaItems)
         } catch (e: Throwable) {
@@ -100,6 +54,80 @@ class SAFDatasource @AssistedInject constructor(
             )
 
             Result.Error(FileLoadError)
+        }
+    }
+
+    private fun collectMedia(
+        treeUri: Uri,
+        documentId: String,
+        parentPath: String,
+        into: MutableList<MediaStoreData>
+    ) {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, documentId)
+
+        val projection = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE,
+            DocumentsContract.Document.COLUMN_SIZE,
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED
+        )
+
+        context.contentResolver.query(
+            childrenUri,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val idCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+            val nameCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+            val mimeCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
+            val sizeCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
+            val dateModifiedCol = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getString(idCol)
+                val mimeType = cursor.getString(mimeCol)
+
+                if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    collectMedia(
+                        treeUri = treeUri,
+                        documentId = id,
+                        parentPath = "$parentPath/$id",
+                        into = into
+                    )
+
+                    continue
+                }
+
+                if (mimeType == null || (!mimeType.startsWith("image/") && !mimeType.startsWith("video/"))) continue
+
+                val displayName = cursor.getString(nameCol)
+                val size = cursor.getLong(sizeCol)
+                val dateModified = cursor.getLong(dateModifiedCol) / 1000
+                val fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id)
+
+                into.add(
+                    MediaStoreData(
+                        id = stableId(treeUri, id),
+                        uri = fileUri.toString(),
+                        absolutePath = id,
+                        parentPath = parentPath,
+                        displayName = displayName,
+                        dateTaken = dateModified,
+                        dateModified = dateModified,
+                        mimeType = mimeType,
+                        type = if (mimeType.startsWith("image/")) MediaType.Image else MediaType.Video,
+                        immichUrl = null,
+                        hash = null,
+                        size = size,
+                        favourited = false,
+                        duration = null,
+                        isSAF = true
+                    )
+                )
+            }
         }
     }
 

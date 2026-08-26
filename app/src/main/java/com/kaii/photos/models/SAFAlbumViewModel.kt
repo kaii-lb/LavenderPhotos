@@ -79,6 +79,10 @@ class SAFAlbumViewModel @AssistedInject constructor(
         settings.albums.edit(id, newInfo)
     }
 
+    fun updateShowNested(value: Boolean) {
+        repo.updateShowNested(value)
+    }
+
     override fun runAction(action: FileOperationAction) {
         when (action) {
             is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)

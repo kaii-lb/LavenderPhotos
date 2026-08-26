@@ -353,7 +353,13 @@ fun SingleAlbumView(
 
     LaunchedEffect(dynamicAlbum) {
         delay(1000.milliseconds)
-        if (dynamicAlbum == null) navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        if (dynamicAlbum == null) {
+            navController.popBackStack(Screens.MainPages.MainGrid.GridView::class, inclusive = false)
+        } else {
+            viewModel.updateShowNested(
+                value = dynamicAlbum!!.showNested
+            )
+        }
     }
 
     if (dynamicAlbum == null) return

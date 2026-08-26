@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,6 +45,7 @@ class SAFRepository(
     private val treeUri: String,
     private val safDao: SAFDao,
     private val transactionRunner: TransactionRunner,
+    showNested: Boolean,
     dateFormatter: LocalizedDateFormatter,
     sortMode: Flow<MediaItemSortMode>,
     info: Flow<ImmichBasicInfo>
@@ -66,6 +68,7 @@ class SAFRepository(
                 datasource = datasourceFactory.create(album),
                 fileManager = fileManager,
                 treeUri = album.base64TreeUri,
+                showNested = album.showNested,
                 safDao = safDao,
                 transactionRunner = transactionRunner,
                 dateFormatter = dateFormatter,
@@ -74,17 +77,27 @@ class SAFRepository(
             )
     }
 
-    private val params = combine(info, sortMode) { info, sortMode ->
-        RoomQueryParams(
+    data class QueryParams(
+        override val sortMode: MediaItemSortMode,
+        override val info: ImmichBasicInfo,
+        val showNested: Boolean
+    ) : RoomQueryParams(sortMode, info)
+
+    private val showNestedFlow = MutableStateFlow(showNested)
+
+    private val params = combine(info, sortMode, showNestedFlow) { info, sortMode, showNested ->
+        QueryParams(
             sortMode = sortMode,
-            info = info
+            info = info,
+            showNested = showNested
         )
     }.stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,
-        initialValue = RoomQueryParams(
+        initialValue = QueryParams(
             sortMode = MediaItemSortMode.DateTaken,
-            info = ImmichBasicInfo.Empty
+            info = ImmichBasicInfo.Empty,
+            showNested = false
         )
     )
 
@@ -98,8 +111,13 @@ class SAFRepository(
                 initialLoadSize = 100
             ),
             pagingSourceFactory = {
-                if (params.sortMode.isDateModified) safDao.getPagedMediaDateModified(treeUri)
-                else safDao.getPagedMediaDateTaken(treeUri)
+                if (params.showNested) {
+                    if (params.sortMode.isDateModified) safDao.getPagedMediaDateModifiedByPathPrefix(treeUri)
+                    else safDao.getPagedMediaDateTakenByPathPrefix(treeUri)
+                } else {
+                    if (params.sortMode.isDateModified) safDao.getPagedMediaDateModified(treeUri)
+                    else safDao.getPagedMediaDateTaken(treeUri)
+                }
             }
         ).flow.mapToMedia(
             auth = params.info.auth,
@@ -143,6 +161,8 @@ class SAFRepository(
 
     init {
         scope.launch {
+            delay(5.seconds)
+
             while (true) {
                 refresh()
                 delay(15.seconds)
@@ -150,12 +170,17 @@ class SAFRepository(
         }
     }
 
+    fun updateShowNested(value: Boolean) {
+        showNestedFlow.value = value
+    }
+
     suspend fun mediaInDateRange(
         timestamp: Long,
         treeUri: String,
         dateModified: Boolean
     ) = withContext(Dispatchers.IO) {
-        safDao.mediaInDateRange(timestamp, treeUri, dateModified)
+        if (showNestedFlow.value) safDao.mediaInDateRangeNested(timestamp, treeUri, dateModified)
+        else safDao.mediaInDateRange(timestamp, treeUri, dateModified)
     }
 
     suspend fun deleteAlbum() = withContext(Dispatchers.IO) {
