@@ -514,4 +514,15 @@
     <string name="contributor">Kaasautor</string>
     <string name="contributor_major">Oluline kaasautor</string>
     <string name="contributor_maintainer">Hooldaja</string>
+    <string name="permissions_do_not_trash">Ära kasuta prügikasti</string>
+    <string name="permissions_do_not_trash_desc">Kustuta sisu koheselt ja ära esmalt viska neid prügikasti</string>
+    <string name="permissions_overwrite_date_on_move_desc">Kopeerimisel ja teisaldamisel säilita meediumi kuupäev</string>
+    <string name="permissions_overwrite_date_on_move">Säilita faili kuupäev</string>
+    <string name="permissions_confirm_to_delete">Kinnitus kustutamisel</string>
+    <string name="permissions_confirm_too_delete_desc">Ükspuha missuguse multimeediafaili kustutamisel küsi kinnitust</string>
+    <string name="permissions_media_management">Meediumihaldus</string>
+    <string name="permissions_needed">Õigused on vajalikud</string>
+    <string name="permissions_grant_long">Anna vastavad õigused</string>
+    <string name="permissions_explanation">Õiguse selgitus</string>
+    <string name="startup_processing_indexing">Otsin multimeediasisu…</string>
 </resources>
