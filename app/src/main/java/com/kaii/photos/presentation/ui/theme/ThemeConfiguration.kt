@@ -1,5 +1,7 @@
 package com.kaii.photos.presentation.ui.theme
 
+import android.os.Build
+
 data class ThemeConfiguration(
     val theme: LavenderThemes.Theme,
     val style: LavenderThemes.Style,
@@ -9,7 +11,7 @@ data class ThemeConfiguration(
         val Default = ThemeConfiguration(
             theme = LavenderThemes.Theme.Apple,
             style = LavenderThemes.Style.System,
-            dynamic = false
+            dynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         )
     }
 
