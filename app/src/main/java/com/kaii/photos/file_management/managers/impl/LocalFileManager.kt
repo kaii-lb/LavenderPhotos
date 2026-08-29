@@ -75,23 +75,32 @@ class LocalFileManager @Inject constructor(
             return@channelFlow
         }
 
-        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError>? = null
-
-        deleteFiles(
-            files = files,
-            albumId = destination.id,
-            immichId = destination.immichId
-        ).collect { progress ->
-            if (progress is FileOperationProgress.Finished) {
-                finalResult = progress.result.mapTo(
-                    to = copyResult as Result.Success
+        var finalResult: Result<List<FileOperationCopyResult>, FileOperationError> = Result.Success(
+            data = files.map {
+                FileOperationCopyResult(
+                    id = it.id,
+                    immichId = it.immichId
                 )
+            }
+        )
+
+        if (destination !is AlbumType.Custom) {
+            deleteFiles(
+                files = files,
+                albumId = destination.id,
+                immichId = destination.immichId
+            ).collect { progress ->
+                if (progress is FileOperationProgress.Finished) {
+                    finalResult = progress.result.mapTo(
+                        to = copyResult as Result.Success
+                    )
+                }
             }
         }
 
         send(
             element = FileOperationProgress.Finished(
-                result = finalResult ?: Result.Error(FileOperationError.Failed)
+                result = finalResult
             )
         )
     }
