@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.dialogs.LavenderDialogBase
@@ -138,7 +139,9 @@ fun AlbumAddChoiceDialog(
                 onGranted = { uri ->
                     PhotosApplication.appModule.scope.launch {
                         try {
-                            val folderName = uri.path?.filename()?.substringAfter(":") ?: "Network Share"
+                            val documentFile = DocumentFile.fromTreeUri(context, uri)
+                            val folderName = documentFile?.name ?: "Network Share"
+
                             val packageName = uri.toString().substringAfter("://").substringBefore("/").substringBeforeLast(".")
                             val info = context.packageManager
                                 .getPackageInfo(packageName, 0)
