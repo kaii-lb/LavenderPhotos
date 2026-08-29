@@ -176,7 +176,20 @@ private fun VideoPlayerUI(
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        playerSlot()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(
+                    scaleX = transformableState.scale,
+                    scaleY = transformableState.scale,
+                    translationX = -transformableState.offset.x * transformableState.scale,
+                    translationY = -transformableState.offset.y * transformableState.scale,
+                    transformOrigin = TransformOrigin(0f, 0f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            playerSlot()
+        }
 
         AnimatedVisibility(
             visible = !shouldPlay(),
@@ -188,13 +201,6 @@ private fun VideoPlayerUI(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer(
-                    scaleX = transformableState.scale,
-                    scaleY = transformableState.scale,
-                    translationX = -transformableState.offset.x * transformableState.scale,
-                    translationY = -transformableState.offset.y * transformableState.scale,
-                    transformOrigin = TransformOrigin(0f, 0f)
-                )
         ) {
             GlideImage(
                 model = item.uri.toUri(),
