@@ -654,4 +654,9 @@
     <string name="export_settings_backup_save">Сохранить Данные Приложения</string>
     <string name="debugging_report_issue_other">Другое</string>
     <string name="navigation_tap_to_nav">Нажмите для навигации</string>
+    <string name="albums_is_saf">Это сетевой ресурс</string>
+    <string name="albums_toggle_nested_display">Посмотреть вложенные медиа</string>
+    <string name="albums_network_share">Сетевой ресурс</string>
+    <string name="albums_network_share_desc">Только просмотр. Требуется RSAF, Диск или аналогичный ресурс</string>
+    <string name="navigation_tap_to_nav_desc">Нажмите на крайнюю левую или правую сторону экрана чтобы перемещатся между медиафайлами</string>
 </resources>
