@@ -29,8 +29,8 @@ android {
         applicationId = "com.kaii.photos"
         minSdk = 30
         targetSdk = 37
-        versionCode = 213
-        versionName = "v2.1.3"
+        versionCode = 214
+        versionName = "v2.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -224,3 +224,38 @@ dependencies {
     baselineProfile(project(":baselineprofile"))
 }
 
+val changelogFile = layout.projectDirectory.file("src/main/assets/changelog.lnm")
+
+tasks.register("validateChangelog") {
+    inputs.file(changelogFile)
+    description = "Validates the app's changelog to avoid crashes at runtime"
+
+    doLast {
+        val targetFile = inputs.files.first { it.name == "changelog.lnm" }
+
+        if (!targetFile.exists()) {
+            throw GradleException("Validation failed: Required file is missing at ${targetFile.absolutePath}")
+        }
+
+        if (targetFile.length() == 0L) {
+            throw GradleException("Validation failed: Required file is empty at ${targetFile.absolutePath}")
+        }
+
+        val parser = LnmValidator()
+        var index = 0
+
+        targetFile.forEachLine { line ->
+            index += 1
+
+            if (!parser.validateLine(line)) {
+                throw GradleException(
+                    "Validation failed: Required file is not correctly formatted at ${targetFile.absolutePath}. Offending line #$index: $line"
+                )
+            }
+        }
+    }
+}
+
+tasks.matching { it.name == "generateReleaseAssets" }.all {
+    dependsOn("validateChangelog")
+}
