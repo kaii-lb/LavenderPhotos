@@ -31,9 +31,9 @@ class AlbumGroupPopupChooserState(
         @param:StringRes val label: Int
     ) {
         None(label = R.string.album_group_filter_none),
-        InThisAlbum(label = R.string.album_group_filter_in_this_album),
-        NotInAnAlbum(label = R.string.album_group_filter_not_in_an_album),
-        InOtherAlbums(label = R.string.album_group_filter_in_other_albums)
+        InThisGroup(label = R.string.album_group_filter_in_this_groups),
+        NotInAGroup(label = R.string.album_group_filter_not_in_a_group),
+        InOtherGroups(label = R.string.album_group_filter_in_other_groups)
     }
 
     private val _filter = MutableStateFlow(Filters.None)

@@ -56,9 +56,9 @@ fun AlbumGroupTopBar(
         val nameMatch = album.name.contains(query, true)
 
         val filterMatch = when (filter) {
-            AlbumGroupPopupChooserState.Filters.InThisAlbum -> group()?.albumIds?.contains(album.id) == true
-            AlbumGroupPopupChooserState.Filters.NotInAnAlbum -> groups().none { it.albumIds.contains(album.id) }
-            AlbumGroupPopupChooserState.Filters.InOtherAlbums -> group()?.albumIds?.contains(album.id) == false
+            AlbumGroupPopupChooserState.Filters.InThisGroup -> group()?.albumIds?.contains(album.id) == true
+            AlbumGroupPopupChooserState.Filters.NotInAGroup -> groups().none { it.albumIds.contains(album.id) }
+            AlbumGroupPopupChooserState.Filters.InOtherGroups -> groups().any { it.albumIds.contains(album.id) && it.id != group()?.id }
             AlbumGroupPopupChooserState.Filters.None -> true
         }
 
