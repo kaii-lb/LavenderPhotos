@@ -43,8 +43,6 @@ class SAFDatasource @AssistedInject constructor(
                 into = mediaItems
             )
 
-            println("MEDIA ${mediaItems.map { it.displayName }}")
-
             Result.Success(data = mediaItems)
         } catch (e: Throwable) {
             Log.e(
