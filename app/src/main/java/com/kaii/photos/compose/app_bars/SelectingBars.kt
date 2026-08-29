@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ import com.kaii.photos.helpers.grid_management.SelectionManager
 import com.kaii.photos.helpers.parent
 import com.kaii.photos.mediastore.getAbsolutePathFromUri
 import com.kaii.photos.permissions.files.rememberDirectoryPermissionManager
+import com.kaii.photos.widgets.popup_chooser_state.rememberMoveCopyAlbumListState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -133,17 +135,21 @@ fun SelectingBottomBarItems(
         )
     }
 
+    val popupChooserState = rememberMoveCopyAlbumListState()
     val show = remember { mutableStateOf(false) }
-    var isMoving by remember { mutableStateOf(false) }
+
+    LaunchedEffect(albumInfo) {
+        popupChooserState.setCurrentAlbum(albumInfo)
+    }
+
     MoveCopyAlbumListView(
         show = show,
+        popupChooserState = popupChooserState,
         clear = selectionManager::clear,
-        isMoving = { isMoving },
-        currentAlbum = { albumInfo },
         insetsPadding = WindowInsets.statusBars,
         onClick = { album ->
             runAction(
-                if (isMoving) FileOperationAction.Move(
+                if (popupChooserState.isMoving) FileOperationAction.Move(
                     files = selectedItemsList.toFileOperationMetadataItems(),
                     origin = albumInfo,
                     destination = album
@@ -157,7 +163,7 @@ fun SelectingBottomBarItems(
 
     IconButton(
         onClick = {
-            isMoving = true
+            popupChooserState.isMoving = true
             show.value = true
         },
         enabled = !selectedItemsList.isEmpty() && albumInfo !is AlbumType.SAFFolder
@@ -170,7 +176,7 @@ fun SelectingBottomBarItems(
 
     IconButton(
         onClick = {
-            isMoving = false
+            popupChooserState.isMoving = false
             show.value = true
         },
         enabled = selectedItemsList.isNotEmpty() && albumInfo !is AlbumType.SAFFolder

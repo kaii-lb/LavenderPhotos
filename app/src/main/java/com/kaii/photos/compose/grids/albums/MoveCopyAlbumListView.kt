@@ -6,8 +6,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,79 +20,59 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.FolderIsEmpty
 import com.kaii.photos.compose.widgets.ClearableTextField
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.datastore.state.AlbumGridState
+import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.helpers.RowPosition
+import com.kaii.photos.widgets.popup_chooser_state.MoveCopyAlbumListState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MoveCopyAlbumListView(
-    albumGridState: AlbumGridState = PhotosApplication.appModule.albumGridState,
+    popupChooserState: MoveCopyAlbumListState,
     show: MutableState<Boolean>,
-    currentAlbum: () -> AlbumType,
-    isMoving: () -> Boolean,
     insetsPadding: WindowInsets,
     dismissInfoDialog: () -> Unit = {},
     clear: () -> Unit,
     onClick: (album: AlbumType) -> Unit
 ) {
-    val originalAlbumsList by albumGridState.singleAlbums.collectAsStateWithLifecycle()
-
-    var albumsList by remember { mutableStateOf(
-        originalAlbumsList.filter {
-            it.info.album !is AlbumType.SAFFolder
-        }
-    )}
-
-    var searchedForText by remember { mutableStateOf("") }
-
-    val state = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val albumsList by popupChooserState.albumsList.collectAsStateWithLifecycle()
     val sheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
     )
 
-    val coroutineScope = rememberCoroutineScope()
-    LaunchedEffect(searchedForText, originalAlbumsList, isMoving()) {
-        albumsList = originalAlbumsList.filter { album ->
-            album.name.contains(searchedForText, true)
-                    && album.info.album !is AlbumType.SAFFolder
-                    && if (isMoving()) album.id != currentAlbum().id else true
-        }
-
-        if (albumsList.isNotEmpty()) state.scrollToItem(0)
-    }
-
     LaunchedEffect(show.value) {
-        searchedForText = ""
+        popupChooserState.clear()
     }
+
+    val query by popupChooserState.query.collectAsStateWithLifecycle()
 
     if (show.value) {
         ModalBottomSheet(
@@ -124,22 +107,61 @@ fun MoveCopyAlbumListView(
                     shrinkTowards = Alignment.Top
                 ) + fadeOut(),
                 modifier = Modifier
-                    .fillMaxWidth(1f)
+                    .fillMaxWidth()
             ) {
-                ClearableTextField(
-                    value = searchedForText,
-                    onValueChange = { searchedForText = it },
-                    placeholder = stringResource(id = R.string.albums_search_for),
-                    icon = R.drawable.search,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .height(56.dp)
-                        .padding(16.dp, 0.dp),
-                    onClear = {
-                        searchedForText = ""
-                    },
-                    onConfirm = {}
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(
+                        space = 8.dp,
+                        alignment = Alignment.Top
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ClearableTextField(
+                        value = query,
+                        onValueChange = popupChooserState::search,
+                        placeholder = stringResource(id = R.string.albums_search_for),
+                        icon = R.drawable.search,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        onClear = popupChooserState::clear,
+                        onConfirm = {}
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(
+                                state = rememberScrollState()
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(
+                            space = 8.dp,
+                            alignment = Alignment.Start
+                        )
+                    ) {
+                        val activeFilter by popupChooserState.filter.collectAsStateWithLifecycle()
+
+                        MoveCopyAlbumListState.Filters.entries.forEach { filter ->
+                            ElevatedFilterChip(
+                                selected = activeFilter == filter,
+                                onClick = {
+                                    popupChooserState.applyFilter(filter)
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(id = filter.label),
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                },
+                                shapes = FilterChipDefaults.shapes()
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -151,8 +173,10 @@ fun MoveCopyAlbumListView(
                     backgroundColor = Color.Transparent
                 )
             } else {
+                val info by popupChooserState.immichInfo.collectAsStateWithLifecycle(initialValue = ImmichBasicInfo.Empty)
+
                 LazyColumn(
-                    state = state,
+                    state = popupChooserState.state,
                     modifier = Modifier
                         .fillMaxSize(1f)
                         .padding(8.dp, 8.dp, 8.dp, 0.dp),
@@ -180,7 +204,7 @@ fun MoveCopyAlbumListView(
 
                                     else -> RowPosition.Middle
                                 },
-                            info = albumGridState::getImmichInfo,
+                            info = { info },
                             show = show,
                             dismissInfoDialog = dismissInfoDialog,
                             clear = clear,
@@ -197,10 +221,6 @@ fun MoveCopyAlbumListView(
                     }
                 }
             }
-        }
-    } else {
-        LaunchedEffect(Unit) {
-            state.scrollToItem(0)
         }
     }
 }

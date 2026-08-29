@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.toFileOperationMetadata
+import com.kaii.photos.widgets.popup_chooser_state.rememberMoveCopyAlbumListState
 import java.io.File
 
 @Composable
@@ -107,22 +109,26 @@ fun IconContentImpl(
         }
     }
 
+
     if (showMoveCopyOptions) {
+        val popupChooserState = rememberMoveCopyAlbumListState()
         val show = remember { mutableStateOf(false) }
-        var isMoving by remember { mutableStateOf(false) }
+
+        LaunchedEffect(album()) {
+            popupChooserState.setCurrentAlbum(album())
+        }
 
         MoveCopyAlbumListView(
             show = show,
+            popupChooserState = popupChooserState,
             insetsPadding = WindowInsets.statusBars,
             dismissInfoDialog = dismiss,
             clear = {},
-            isMoving = { isMoving },
-            currentAlbum = album,
             onClick = { destination ->
                 val files = listOf(mediaItem().toFileOperationMetadata())
 
                 runAction(
-                    if (isMoving) FileOperationAction.Move(
+                    if (popupChooserState.isMoving) FileOperationAction.Move(
                         files = files,
                         origin = album(),
                         destination = destination
@@ -136,7 +142,7 @@ fun IconContentImpl(
 
         IconButton(
             onClick = {
-                isMoving = true
+                popupChooserState.isMoving = true
                 show.value = true
             },
             enabled = !privacyMode(),
@@ -151,7 +157,7 @@ fun IconContentImpl(
 
         IconButton(
             onClick = {
-                isMoving = false
+                popupChooserState.isMoving = false
                 show.value = true
             },
             enabled = !privacyMode(),

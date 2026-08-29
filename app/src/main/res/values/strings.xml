@@ -38,6 +38,7 @@
     <string name="albums_name">Album Name</string>
     <string name="albums_type">Album Type</string>
     <string name="albums_folder">Folder</string>
+    <string name="albums_cloud">Cloud Album</string>
     <string name="albums_add_failed">Failed to add albums :&lt;</string>
     <string name="albums_immich_not_backed_up">Not backed up</string>
     <string name="albums_rename_failure">Invalid album name</string>

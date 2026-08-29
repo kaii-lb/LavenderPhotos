@@ -23,6 +23,7 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.files.FileOperationAction
 import com.kaii.photos.domain.files.toFileOperationMetadataItems
 import com.kaii.photos.helpers.grid_management.SelectionManager
+import com.kaii.photos.widgets.popup_chooser_state.rememberMoveCopyAlbumListState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,14 +80,14 @@ fun FavouritesBottomAppBarItems(
         )
     }
 
+    val popupChooserState = rememberMoveCopyAlbumListState()
     val show = remember { mutableStateOf(false) }
 
     MoveCopyAlbumListView(
         show = show,
+        popupChooserState = popupChooserState,
         insetsPadding = WindowInsets.statusBars,
         clear = selectionManager::clear,
-        isMoving = { false },
-        currentAlbum = { AlbumType.PlaceHolder },
         onClick = { album ->
             process(
                 FileOperationAction.Copy(

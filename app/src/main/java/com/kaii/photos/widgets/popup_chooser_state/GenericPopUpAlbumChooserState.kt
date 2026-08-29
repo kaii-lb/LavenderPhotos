@@ -61,7 +61,9 @@ class GenericPopUpAlbumChooserState(
     }
 
     override fun clear() {
+        _query.value = ""
         _selectedAlbums.clear()
+        state.requestScrollToItem(0)
     }
 
     override fun toggle(album: String) {
