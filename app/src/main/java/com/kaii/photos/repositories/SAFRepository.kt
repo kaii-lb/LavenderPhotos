@@ -11,7 +11,6 @@ import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
-import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import com.kaii.photos.file_management.managers.impl.SAFFileManager
@@ -134,26 +133,22 @@ class SAFRepository(
     }.cachedIn(scope)
 
     suspend fun refresh() = withContext(Dispatchers.IO) {
-        val result = datasource.fetch()
+        datasource.fetch().collect { items ->
+            val existingIds = safDao.getAllIdsIn(treeUri).toSet()
+            val incomingIds = items.map { it.id }.toSet()
+            val deleted = existingIds - incomingIds
 
-        if (result is Result.Error) return@withContext
-
-        result as Result.Success
-
-        val existingIds = safDao.getAllIdsIn(treeUri).toSet()
-        val incomingIds = result.data.map { it.id }.toSet()
-        val deleted = existingIds - incomingIds
-
-        transactionRunner.run {
-            if (result.data.isNotEmpty()) {
-                result.data.chunked(500).forEach { chunk ->
-                    safDao.upsertAll(items = chunk)
+            transactionRunner.run {
+                if (items.isNotEmpty()) {
+                    items.chunked(500).forEach { chunk ->
+                        safDao.upsertAll(items = chunk)
+                    }
                 }
-            }
 
-            if (deleted.isNotEmpty()) {
-                deleted.chunked(500).forEach { chunk ->
-                    safDao.deleteAll(ids = chunk)
+                if (deleted.isNotEmpty()) {
+                    deleted.chunked(500).forEach { chunk ->
+                        safDao.deleteAll(ids = chunk)
+                    }
                 }
             }
         }

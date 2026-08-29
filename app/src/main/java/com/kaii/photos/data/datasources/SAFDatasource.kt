@@ -7,15 +7,15 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.AlbumType
-import com.kaii.photos.domain.Result
-import com.kaii.photos.domain.files.FileLoadError
 import com.kaii.photos.mediastore.MediaType
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import kotlin.io.encoding.Base64
@@ -29,38 +29,31 @@ class SAFDatasource @AssistedInject constructor(
         fun create(album: AlbumType.SAFFolder): SAFDatasource
     }
 
-    suspend fun fetch(): Result<List<MediaStoreData>, FileLoadError> = withContext(Dispatchers.IO) {
+    fun fetch() = flow {
         try {
             val treeUri = Base64.decode(album.base64TreeUri).decodeToString().toUri()
             val rootDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
 
-            val mediaItems = mutableListOf<MediaStoreData>()
-
             collectMedia(
                 treeUri = treeUri,
                 documentId = rootDocumentId,
-                parentPath = album.base64TreeUri,
-                into = mediaItems
+                parentPath = album.base64TreeUri
             )
-
-            Result.Success(data = mediaItems)
         } catch (e: Throwable) {
             Log.e(
                 SAFDatasource::class.qualifiedName,
                 "Failed to load SAF folder!",
                 e
             )
-
-            Result.Error(FileLoadError)
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
-    private fun collectMedia(
+    private suspend fun FlowCollector<List<MediaStoreData>>.collectMedia(
         treeUri: Uri,
         documentId: String,
-        parentPath: String,
-        into: MutableList<MediaStoreData>
+        parentPath: String
     ) {
+        val mediaItems = mutableListOf<MediaStoreData>()
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, documentId)
 
         val projection = arrayOf(
@@ -92,8 +85,7 @@ class SAFDatasource @AssistedInject constructor(
                     collectMedia(
                         treeUri = treeUri,
                         documentId = id,
-                        parentPath = "$parentPath/$id",
-                        into = into
+                        parentPath = "$parentPath/$id"
                     )
 
                     continue
@@ -106,7 +98,12 @@ class SAFDatasource @AssistedInject constructor(
                 val dateModified = cursor.getLong(dateModifiedCol) / 1000
                 val fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id)
 
-                into.add(
+                if (mediaItems.size > 250) {
+                    emit(value = mediaItems)
+                    mediaItems.clear()
+                }
+
+                mediaItems.add(
                     MediaStoreData(
                         id = stableId(treeUri, id),
                         uri = fileUri.toString(),
