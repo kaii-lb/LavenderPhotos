@@ -76,6 +76,7 @@ import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.shareImage
 import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.copyUriToUri
+import com.kaii.photos.mediastore.isLivePhotoFormat
 import com.kaii.photos.screens.video.retainVideoPlayerState
 import io.github.kaii_lb.lavender.immichintegration.Auth
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
@@ -164,6 +165,18 @@ fun OpenWithContent(
             val zoomableState = rememberGlideZoomableState()
             val motionPhoto = rememberMotionPhotoState()
 
+            LaunchedEffect(mimeType) {
+                if (mimeType.substringAfter("/").isLivePhotoFormat()) {
+                    motionPhoto.reset()
+                    return@LaunchedEffect
+                }
+
+                motionPhoto.getFor(
+                    uri = uri.toString(),
+                    type = type
+                )
+            }
+
             if (type == MediaType.Video) {
                 VideoPlayer(
                     item = MediaStoreData.dummyItem.copy(
@@ -183,13 +196,6 @@ fun OpenWithContent(
                     playerSlot = playerSlot
                 )
             } else {
-                LaunchedEffect(Unit) {
-                    motionPhoto.getFor(
-                        uri = uri.toString(),
-                        type = type
-                    )
-                }
-
                 if (motionPhoto.isMotionPhoto) {
                     MotionPhotoView(
                         item = MediaStoreData.dummyItem.copy(
@@ -202,8 +208,7 @@ fun OpenWithContent(
                         auth = { Auth.None },
                         endpoint = { "" },
                         shouldPlay = { true },
-                        blurViews = blurViews,
-                        useBlackBackground = useBlackBackground,
+                        playerSlot = playerSlot,
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = uri,

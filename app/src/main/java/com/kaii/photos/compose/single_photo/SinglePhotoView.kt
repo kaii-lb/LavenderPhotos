@@ -91,6 +91,7 @@ import com.kaii.photos.helpers.rememberVibratorManager
 import com.kaii.photos.helpers.scrolling.retainSinglePhotoScrollState
 import com.kaii.photos.helpers.vibrateShort
 import com.kaii.photos.mediastore.MediaType
+import com.kaii.photos.mediastore.isLivePhoto
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.models.CustomAlbumViewModel
 import com.kaii.photos.models.FavouritesViewModel
@@ -897,10 +898,13 @@ private fun BottomBar(
 
                 val motionPhoto = rememberMotionPhotoState()
                 LaunchedEffect(currentItem().uri) {
-                    motionPhoto.getFor(
-                        uri = currentItem().uri,
-                        type = currentItem().type
-                    )
+                    motionPhoto.reset()
+                    if (currentItem().isLivePhoto()) {
+                        motionPhoto.getFor(
+                            uri = currentItem().uri,
+                            type = currentItem().type
+                        )
+                    }
                 }
 
                 IconButton(

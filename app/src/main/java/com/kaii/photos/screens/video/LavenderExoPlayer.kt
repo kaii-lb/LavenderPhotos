@@ -317,7 +317,7 @@ class LavenderExoPlayer(
     fun applyEffects(effectList: List<Effect>) = exoPlayer.applyEffects(effectList)
 
     fun linkPlayerView(playerView: PlayerView) {
-        playerView.player = exoPlayer
+        if (playerView.player != exoPlayer) playerView.player = exoPlayer
     }
 
     fun setAudioTrack(language: String): Boolean {

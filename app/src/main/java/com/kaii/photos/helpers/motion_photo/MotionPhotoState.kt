@@ -25,24 +25,26 @@ import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlParsingException
 import kotlin.time.Duration.Companion.milliseconds
 
-private const val TAG = "com.kaii.photos.helpers.MotionPhoto"
-
 // TODO: support secure folder
 @OptIn(UnstableApi::class)
 class MotionPhotoState(
     private val context: Context
 ) {
+    companion object {
+        private val TAG = MotionPhotoState::class.qualifiedName
+    }
+
     var isMotionPhoto by mutableStateOf(false)
         private set
-
-    fun reset() {
-        isMotionPhoto = false
-    }
 
     private sealed interface ParsingState {
         data class Parsed(val xmpMeta: XmpMeta) : ParsingState
         object HasNone : ParsingState
         object Failed : ParsingState
+    }
+
+    fun reset() {
+        isMotionPhoto = false
     }
 
     suspend fun getFor(

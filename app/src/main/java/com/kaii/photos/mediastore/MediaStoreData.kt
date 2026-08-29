@@ -82,6 +82,20 @@ fun MediaStoreData.isRawImage(): Boolean {
 
 fun MediaStoreData.isGIF(): Boolean = this.mimeType.lowercase() == "image/gif"
 
+private val livePhotoExtensions = listOf(
+    "jpg",
+    "jpeg",
+    "heic",
+    "avif"
+)
+
+fun String.isLivePhotoFormat(): Boolean = this.lowercase() in livePhotoExtensions
+
+fun MediaStoreData.isLivePhoto(): Boolean = run {
+    val extension = this.displayName.substringAfterLast(".")
+    extension.isLivePhotoFormat()
+}
+
 fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())
 
 @OptIn(ExperimentalUuidApi::class)

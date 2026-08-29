@@ -18,10 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.kaii.photos.compose.app_bars.setBarVisibility
-import com.kaii.photos.compose.videoplayer.rememberPlayerView
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.screens.video.VideoPlayerState
@@ -43,8 +41,7 @@ fun MotionPhotoView(
     auth: () -> Auth,
     endpoint: () -> String,
     shouldPlay: () -> Boolean,
-    blurViews: Boolean,
-    useBlackBackground: Boolean,
+    playerSlot: @Composable () -> Unit,
     glideImageView: @Composable (modifier: Modifier) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -52,14 +49,16 @@ fun MotionPhotoView(
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(item, auth(), endpoint()) {
-        state.setSource(
-            context = context,
-            item = item,
-            auth = auth(),
-            endpoint = endpoint(),
-            loop = true,
-            shouldPlay = shouldPlay
-        )
+        if (shouldPlay()) {
+            state.setSource(
+                context = context,
+                item = item,
+                auth = auth(),
+                endpoint = endpoint(),
+                loop = true,
+                shouldPlay = shouldPlay
+            )
+        }
     }
 
     Box(
@@ -112,22 +111,7 @@ fun MotionPhotoView(
             animationSpec = tween(durationMillis = AnimationConstants.DURATION)
         )
 
-        val playerView = rememberPlayerView(
-            blurViews = blurViews,
-            useBlackBackground = useBlackBackground
-        )
-
-        AndroidView(
-            factory = {
-                playerView
-            },
-            update = {
-                state.linkPlayerView(it)
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(alpha)
-        )
+        playerSlot()
 
         glideImageView(Modifier.alpha(1f - alpha))
     }

@@ -54,6 +54,7 @@ import com.kaii.photos.mediastore.MediaType
 import com.kaii.photos.mediastore.SecureInfo
 import com.kaii.photos.mediastore.getIv
 import com.kaii.photos.mediastore.getThumbnailIv
+import com.kaii.photos.mediastore.isLivePhoto
 import com.kaii.photos.mediastore.signature
 import com.kaii.photos.screens.video.retainVideoPlayerState
 import kotlinx.coroutines.Dispatchers
@@ -121,11 +122,14 @@ fun HorizontalImageList(
         }
     }
 
+    LaunchedEffect(state.currentPage) {
+        motionPhoto.reset()
+    }
+
     LaunchedEffect(state.settledPage, isLandscape) {
         val settled = items.itemSnapshotList.getOrNull(state.settledPage) as? PhotoLibraryUIModel.MediaImpl
 
-        if (settled == null) {
-            motionPhoto.reset()
+        if (settled == null || !settled.item.isLivePhoto()) {
             return@LaunchedEffect
         }
 
@@ -250,17 +254,6 @@ fun HorizontalImageList(
                 )
             }
         } else {
-            LaunchedEffect(state.settledPage) {
-                if (state.settledPage == index) {
-                    motionPhoto.getFor(
-                        uri = media.item.uri,
-                        type = media.item.type
-                    )
-                } else {
-                    motionPhoto.reset()
-                }
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -301,9 +294,10 @@ fun HorizontalImageList(
                         window = window,
                         auth = { media.auth },
                         endpoint = { media.endpoint ?: "" },
-                        shouldPlay = { state.currentPage == index },
-                        blurViews = blurViews(),
-                        useBlackBackground = useBlackBackground(),
+                        shouldPlay = { state.settledPage == index },
+                        playerSlot = {
+                            if (state.settledPage == index) playerSlot()
+                        },
                         glideImageView = @Composable { modifier ->
                             GlideView(
                                 model = glideModel,
