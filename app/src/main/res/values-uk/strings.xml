@@ -576,8 +576,8 @@
     <string name="immich_share_album_allow_uploads">Дозволити Відвантаження</string>
     <string name="immich_share_album_allow_downloads">Дозволити Завантаження</string>
     <string name="immich_share_album_require_password">Потребує Пароль</string>
-    <string name="immich_share_album_custom_url">Кастомізований URL</string>
-    <string name="immich_share_album_use_custom_url">Використати Кастомізований URL</string>
+    <string name="immich_share_album_custom_url">Кастомізований URL Заголовок</string>
+    <string name="immich_share_album_use_custom_url">Використати Кастомізований URL Заголовок</string>
     <string name="immich_share_album_description">Опис</string>
     <string name="immich_share_album_loading">Створення посилання…</string>
     <string name="immich_share_album_loading_failed">Помилка при створені посилання</string>
@@ -680,4 +680,9 @@
     <string name="privacy_authenticate">Аутентифікуватись</string>
     <string name="privacy_scroll_mode_last_active">Приватний Режим Активний</string>
     <string name="privacy_scroll_mode_last_active_desc">Приватний режим був залишений коли додаток був останнього разу закритий. Будь-ласка використайте свій пароль або біометрику для продовження.</string>
+    <string name="albums_is_saf">Це є мережевим поширенням</string>
+    <string name="albums_network_share">Мережеве Поширення</string>
+    <string name="albums_network_share_desc">Тільки перегляд. Потребує RSAF, Drive або еквівалент</string>
+    <string name="logs_share">Поширити лог файли</string>
+    <string name="record_logs_off">Запис логів вимкнений</string>
 </resources>

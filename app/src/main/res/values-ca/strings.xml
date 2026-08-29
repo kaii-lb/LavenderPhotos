@@ -652,8 +652,8 @@
     <string name="immich_share_album_allow_uploads">Permetre pujades</string>
     <string name="immich_share_album_allow_downloads">Permetre descàrregues</string>
     <string name="immich_share_album_require_password">Demanar contrasenya</string>
-    <string name="immich_share_album_custom_url">URL personalitzada</string>
-    <string name="immich_share_album_use_custom_url">Utilitza una URL personalitzada</string>
+    <string name="immich_share_album_custom_url">Títol d\'URL personalitzada</string>
+    <string name="immich_share_album_use_custom_url">Utilitza un títol d\'URL personalitzada</string>
     <string name="immich_share_album_description">Descripció</string>
     <string name="immich_share_album_loading">Creant l\'enllaç…</string>
     <string name="immich_share_album_loading_failed">No s\'ha pogut crear l\'enllaç</string>

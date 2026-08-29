@@ -219,4 +219,12 @@
     <string name="albums_remove">Retirer</string>
     <string name="albums_rename_failure">Nom d\'album invalide</string>
     <string name="albums_search_for">Rechercher un album</string>
+    <string name="albums_is_saf">Ceci est un partage réseau</string>
+    <string name="albums_immich_not_backed_up">Non sauvegardé</string>
+    <string name="albums_network_share">Partage réseau</string>
+    <string name="navigation_photos">Photos</string>
+    <string name="navigation_secure">Sécurisé</string>
+    <string name="navigation_albums">Albums</string>
+    <string name="navigation_search">Recherche</string>
+    <string name="navigation_favourites">Favoris</string>
 </resources>

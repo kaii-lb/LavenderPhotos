@@ -338,20 +338,7 @@
     <string name="immich_server">Serwer Immich</string>
     <string name="immich_help_general">Co to jest?</string>
     <string name="immich_help_general_desc">Umożliwia tworzenie kopii zapasowych multimediów na poziomie albumu na serwerze Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA[
-<p><a href="https://immich.app/">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,
-które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
-</p>
-<h3 style="text-align:center;">Jak korzystać?<h3/>
-<ul>
-<li>Samodzielne hostowanie <a href="https://immich.app/">serwera Immich</a></li>
-<li>Określanie adresu serwera w Lavender Photos</li>
-<li>Zaloguj się przy użyciu konta użytkownika Immich</li>
-<li>Na stronie pulpitu kliknij „Opcje kopii zapasowej”</li>
-<li>Wybierz albumy, których kopię zapasową chcesz utworzyć, i kliknij przycisk potwierdzenia</li>
-<li>Ciesz się bezpiecznym i łatwym tworzeniem kopii zapasowych w chmurze!</li>
-</ul>
-]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA["<![CDATA[\n\n            <p><a href=\"https://immich.app/\">Immich</a> to samodzielnie hostowane rozwiązanie do zarządzania zdjęciami i filmami,\nktóre pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.\n</p>\n<h3 style=\"text-align:center;\">Jak korzystać?<h3/>\n<ul>\n<li>Samodzielne hostowanie <a href=\"https://immich.app/\">serwera Immich</a></li>\n<li>Określanie adresu serwera w Lavender Photos</li>\n<li>Zaloguj się przy użyciu konta użytkownika Immich</li>\n<li>Na stronie pulpitu kliknij „Opcje kopii zapasowej”</li>\n<li>Wybierz albumy, których kopię zapasową chcesz utworzyć, i kliknij przycisk potwierdzenia</li>\n<li>Ciesz się bezpiecznym i łatwym tworzeniem kopii zapasowych w chmurze!</li>\n</ul>"]]></string>
     <string name="immich_server_url_invalid">Nieprawidłowy adres URL!</string>
     <string name="look_and_feel_rounded_corners">Zaokrąglone rogi miniatur</string>
     <string name="look_and_feel_rounded_corners_desc">Zaokrąglone rogi miniatur w siatkach zdjęć</string>
@@ -610,8 +597,8 @@ które pozwala każdemu hostować własny serwer kopii zapasowych w chmurze.
     <string name="immich_share_album_allow_uploads">Zezwalaj na przesyłanie</string>
     <string name="immich_share_album_allow_downloads">Zezwalaj na pobieranie</string>
     <string name="immich_share_album_require_password">Wymagane hasło</string>
-    <string name="immich_share_album_custom_url">Niestandardowy adres URL</string>
-    <string name="immich_share_album_use_custom_url">Użyj niestandardowego adresu URL</string>
+    <string name="immich_share_album_custom_url">Niestandardowy tytuł adresu URL</string>
+    <string name="immich_share_album_use_custom_url">Użyj niestandardowego tytułu adresu URL</string>
     <string name="immich_share_album_description">Opis</string>
     <string name="immich_share_album_loading">Tworzenie łącza…</string>
     <string name="immich_share_album_loading_failed">Nie udało się utworzyć łącza</string>
