@@ -338,9 +338,6 @@
     <string name="permissions_media_management">Gestione di media</string>
     <string name="permissions_confirm_to_delete">Conferma per eliminare</string>
     <string name="permissions_confirm_too_delete_desc">Chiedi una conferma prima dell\'eliminazione di un file</string>
-    <string name="permissions_overwrite_date_on_move">Mantieni la data originale durante lo spostamento</string>
-    <string name="permissions_overwrite_date_on_move_desc">Mantiene la data originale quando sposti o copi</string>
-    <string name="permissions_needed">Permessi richiesti</string>
     <string name="permissions_grant_long">Autorizza</string>
     <string name="permissions_do_not_trash">Non usare il cestino</string>
     <string name="permissions_do_not_trash_desc">Cancella immediatamente e permanentemente senza spostarli nel cestino</string>
@@ -387,8 +384,6 @@
     <string name="media_rename">Rinomina</string>
     <string name="media_select">Seleziona</string>
     <string name="media_exif_erase">Cancella i dati EXIF</string>
-    <string name="media_exif_done">Dati EXIF rimossi</string>
-    <string name="media_exif_failed">Rimozione dei dati EXIF fallita</string>
     <string name="media_erase">Cancella</string>
     <string name="media_confirm">Conferma</string>
     <string name="media_okay">Ok</string>
