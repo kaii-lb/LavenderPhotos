@@ -99,14 +99,16 @@ fun MediaStoreData.isLivePhoto(): Boolean = run {
 fun MediaStoreData.signature() = ObjectKey("$dateTaken$dateModified$absolutePath$id$mimeType$size".hashCode())
 
 @OptIn(ExperimentalUuidApi::class)
-fun AssetResponseDto.toMediaStoreData() =
+fun AssetResponseDto.toMediaStoreData(
+    overrideAbsolutePath: String? = null
+) =
     MediaStoreData(
         id = Uuid.parse(id).toLongs { a, _ -> a },
         uri = "/api/assets/${id}/original",
         dateTaken = Instant.parse(fileCreatedAt).epochSeconds,
         dateModified = Instant.parse(fileModifiedAt).epochSeconds,
         type = if (type == AssetType.Image) MediaType.Image else MediaType.Video,
-        absolutePath = "",
+        absolutePath = overrideAbsolutePath ?: "",
         parentPath = "",
         displayName = originalFileName,
         mimeType = originalMimeType,

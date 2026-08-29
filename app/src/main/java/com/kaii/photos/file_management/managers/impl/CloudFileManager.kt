@@ -4,7 +4,6 @@ import android.content.Intent
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.entities.SyncOperation
-import com.kaii.photos.database.getMediaFromMetadata
 import com.kaii.photos.database.sync.SyncTaskRecorder
 import com.kaii.photos.datastore.AlbumType
 import com.kaii.photos.domain.Result
@@ -32,6 +31,7 @@ import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.managers.traits.Trash
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.exifDataToMediaData
+import com.kaii.photos.helpers.filename
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
 import io.github.kaii_lb.lavender.immichintegration.serialization.albums.AlbumUpdateDto
 import kotlinx.coroutines.Dispatchers
@@ -169,8 +169,6 @@ class CloudFileManager @Inject constructor(
             return@channelFlow
         }
 
-        val names = mediaDao.getMediaFromMetadata(files).associate { it.id to it.displayName }
-
         val semaphore = Semaphore(permits = 5)
 
         val cached = files.map { item ->
@@ -178,7 +176,7 @@ class CloudFileManager @Inject constructor(
                 semaphore.withPermit {
                     val result = cloudResolveShareable.execute(
                         item = item,
-                        fileName = names[item.id]!!
+                        fileName = item.absolutePath.filename()
                     )
 
                     if (result != null) {

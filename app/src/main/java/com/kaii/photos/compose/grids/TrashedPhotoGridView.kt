@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -87,6 +88,14 @@ fun TrashedPhotoGridView(
 
     SelectionManagerEventEffect(viewModel.selectionManager.eventFlow)
 
+    LifecycleStartEffect(Unit) {
+        viewModel.start()
+
+        onStopOrDispose {
+            viewModel.cancel()
+        }
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(1f),
@@ -97,7 +106,6 @@ fun TrashedPhotoGridView(
                 selectionManager = viewModel.selectionManager,
                 deleteAll = viewModel::deleteAll,
                 onBackClick = {
-                    viewModel.cancel()
                     navController.popBackStack()
                 }
             )

@@ -133,6 +133,7 @@ class TrashViewModel @Inject constructor(
         repo.cancel()
     }
 
+    fun start() = repo.start()
     fun cancel() = repo.cancel()
 
     fun runAction(action: FileOperationAction) {

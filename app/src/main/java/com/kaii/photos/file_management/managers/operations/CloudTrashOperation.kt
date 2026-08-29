@@ -10,6 +10,7 @@ import com.kaii.photos.domain.files.FileOperationError
 import com.kaii.photos.domain.files.FileOperationItemMetadata
 import com.kaii.photos.domain.files.FileOperationProgress
 import io.github.kaii_lb.lavender.immichintegration.clients.AlbumsClient
+import io.github.kaii_lb.lavender.immichintegration.clients.AssetsClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -20,6 +21,7 @@ import kotlin.uuid.Uuid
 class CloudTrashOperation @Inject constructor(
     private val customDao: CustomEntityDao,
     private val albumsClient: AlbumsClient,
+    private val assetsClient: AssetsClient,
     private val delete: CloudDeleteOperation,
     private val recorder: SyncTaskRecorder
 ) {
@@ -29,15 +31,18 @@ class CloudTrashOperation @Inject constructor(
         albumId: String,
         immichId: String?
     ): Flow<FileOperationProgress<Unit>> = flow {
-        check(isTrashed) {
-            "Cannot restore files to cloud albums!!"
-        }
-
         if (files.isEmpty()) return@flow
 
-        if (immichId == null) {
+        if (immichId == null && isTrashed) {
             delete.execute(files, albumId).collect { emit(it) }
             return@flow
+        } else if (immichId == null) {
+            restore(files).collect { emit(it) }
+            return@flow
+        }
+
+        check(isTrashed) {
+            "Cannot restore files to cloud albums!!"
         }
 
         emit(
@@ -85,4 +90,30 @@ class CloudTrashOperation @Inject constructor(
 
         emit(FileOperationProgress.Finished(result = Result.Success(Unit)))
     }.flowOn(Dispatchers.IO)
+
+    private fun restore(
+        files: List<FileOperationItemMetadata>
+    ) = flow {
+        emit(
+            value = FileOperationProgress.Started(
+                action = FileOperationAction.LongOperationType.Delete,
+                fileCount = files.size
+            )
+        )
+
+        val result = assetsClient.restore(
+            ids = files.map {
+                Uuid.parse(it.immichId!!)
+            }
+        ) != null
+
+        emit(
+            value =
+                FileOperationProgress.Finished(
+                    result =
+                        if (result) Result.Success(Unit)
+                        else Result.Error(error = FileOperationError.Failed)
+                )
+        )
+    }
 }

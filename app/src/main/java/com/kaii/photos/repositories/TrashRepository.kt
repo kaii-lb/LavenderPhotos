@@ -4,11 +4,17 @@ import androidx.compose.ui.util.fastMap
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.kaii.photos.data.datasources.trash.LocalTrashDataSource
+import com.kaii.photos.data.datasources.trash.NetworkTrashDataSource
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.datastore.ImmichBasicInfo
 import com.kaii.photos.datastore.preferences.SettingsImmichImpl
 import com.kaii.photos.datastore.preferences.SettingsPhotoGridImpl
+import com.kaii.photos.di.HybridFileManagerFactory
+import com.kaii.photos.domain.Result
 import com.kaii.photos.domain.files.FileOperationItemMetadata
+import com.kaii.photos.domain.files.FileOperationProgress
+import com.kaii.photos.file_management.managers.impl.HybridFileManager
 import com.kaii.photos.file_management.managers.impl.LocalFileManager
 import com.kaii.photos.file_management.managers.traits.ClearExif
 import com.kaii.photos.file_management.managers.traits.Delete
@@ -20,7 +26,6 @@ import com.kaii.photos.helpers.grid_management.MediaItemSortMode
 import com.kaii.photos.helpers.paging.ListPagingSource
 import com.kaii.photos.helpers.paging.mapToMedia
 import com.kaii.photos.helpers.paging.mapToSeparatedMedia
-import com.kaii.photos.mediastore.TrashDataSource
 import com.kaii.photos.mediastore.toFileOperationMetadata
 import com.kaii.photos.mediastore.toSelectedItem
 import com.kaii.photos.presentation.ui.LocalizedDateFormatter
@@ -33,22 +38,26 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.TimeZone
 import javax.inject.Inject
 
 class TrashRepository(
-    private val fileManager: LocalFileManager,
-    private val dataSource: TrashDataSource,
-    scope: CoroutineScope,
+    private val fileManager: HybridFileManager,
+    private val localDataSource: LocalTrashDataSource,
+    private val networkDataSource: NetworkTrashDataSource,
+    private val scope: CoroutineScope,
     dateFormatter: LocalizedDateFormatter,
     info: Flow<ImmichBasicInfo>,
     sortMode: Flow<MediaItemSortMode>
 ) : Trash, Delete, Share, ExtractExif, RenameFile, ClearExif {
     class Factory @Inject constructor(
-        private val fileManager: LocalFileManager,
-        private val dataSource: TrashDataSource,
+        private val fileManagerFactory: HybridFileManagerFactory,
+        private val localFileManager: LocalFileManager,
+        private val localDataSource: LocalTrashDataSource,
+        private val networkDataSource: NetworkTrashDataSource,
         private val dateFormatter: LocalizedDateFormatter,
         private val immich: SettingsImmichImpl,
         private val photoGrid: SettingsPhotoGridImpl
@@ -57,8 +66,11 @@ class TrashRepository(
             scope: CoroutineScope
         ): TrashRepository =
             TrashRepository(
-                fileManager = fileManager,
-                dataSource = dataSource,
+                fileManager = fileManagerFactory.create(
+                    other = localFileManager
+                ),
+                localDataSource = localDataSource,
+                networkDataSource = networkDataSource,
                 scope = scope,
                 dateFormatter = dateFormatter,
                 info = immich.getImmichBasicInfo(),
@@ -72,8 +84,6 @@ class TrashRepository(
         override val info: ImmichBasicInfo
     ) : RoomQueryParams(sortMode, info)
 
-    private fun getMediaDataFlow() = dataSource.loadMediaStoreData().flowOn(Dispatchers.IO)
-
     private val items = MutableStateFlow(emptyList<MediaStoreData>())
     private val timeZone = TimeZone.getDefault()
 
@@ -86,11 +96,7 @@ class TrashRepository(
     }
 
     init {
-        scope.launch(Dispatchers.IO) {
-            getMediaDataFlow().collectLatest { media ->
-                items.value = media
-            }
-        }
+        start()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,10 +123,31 @@ class TrashRepository(
         )
     }.cachedIn(scope)
 
-    fun cancel() = dataSource.cancel()
+    fun cancel() {
+        localDataSource.cancel()
+        networkDataSource.cancel()
+    }
+
+    fun start() {
+        val local = localDataSource.start()
+        val network = networkDataSource.start()
+
+        scope.launch {
+            combine(local, network) { local, network ->
+                Pair(local, network)
+            }.flowOn(Dispatchers.IO).collectLatest { (local, network) ->
+                items.value = (local + network).sortedByDescending {
+                    it.dateModified
+                }
+            }
+        }
+    }
 
     suspend fun getAllFiles() = withContext(Dispatchers.IO) {
-        dataSource.query().fastMap {
+        val local = localDataSource.query()
+        val network = networkDataSource.query()
+
+        (local + network).fastMap {
             it.toFileOperationMetadata()
         }
     }
@@ -129,9 +156,7 @@ class TrashRepository(
         timestamp: Long,
         sortMode: MediaItemSortMode
     ) = withContext(Dispatchers.IO) {
-        val allTrashItems = dataSource.query()
-
-        allTrashItems.filter { item ->
+        items.value.filter { item ->
             val key = when {
                 sortMode == MediaItemSortMode.MonthTaken -> item.getMonthTaken(timeZone)
                 sortMode.isDateModified -> item.getDateModifiedDay(timeZone)
@@ -148,14 +173,30 @@ class TrashRepository(
         files: List<FileOperationItemMetadata>,
         albumId: String,
         immichId: String?
-    ) = fileManager.deleteFiles(files, albumId, immichId)
+    ) = fileManager.deleteFiles(files, "trash", immichId).onEach { progress ->
+        if (progress is FileOperationProgress.Finished && progress.result is Result.Success) {
+            val ids = files.fastMap { it.id }
+
+            items.value = items.value.filter {
+                it.id !in ids
+            }
+        }
+    }
 
     override suspend fun trashFiles(
         files: List<FileOperationItemMetadata>,
         isTrashed: Boolean,
         albumId: String,
         immichId: String?
-    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId)
+    ) = fileManager.trashFiles(files, isTrashed, albumId, immichId).onEach { progress ->
+        if (progress is FileOperationProgress.Finished && progress.result is Result.Success) {
+            val ids = files.fastMap { it.id }
+
+            items.value = items.value.filter {
+                it.id !in ids
+            }
+        }
+    }
 
     override suspend fun shareFiles(
         files: List<FileOperationItemMetadata>

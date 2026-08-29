@@ -1,4 +1,4 @@
-package com.kaii.photos.mediastore
+package com.kaii.photos.data.datasources.trash
 
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -17,6 +17,8 @@ import com.bumptech.glide.util.Preconditions
 import com.bumptech.glide.util.Util
 import com.kaii.photos.database.entities.MediaStoreData
 import com.kaii.photos.helpers.parent
+import com.kaii.photos.mediastore.MEDIA_STORE_FILE_URI
+import com.kaii.photos.mediastore.MediaType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -31,9 +33,9 @@ import kotlin.math.roundToLong
 private const val TAG = "com.kaii.photos.mediastore.TrashDataSource"
 
 /** Loads metadata from the media store for images and videos. */
-class TrashDataSource @Inject constructor(
+class LocalTrashDataSource @Inject constructor(
     @param:ApplicationContext private val context: Context
-) {
+) : TrashDataSource {
     companion object {
         private val PROJECTION =
             arrayOf(
@@ -52,7 +54,7 @@ class TrashDataSource @Inject constructor(
 
     private val cancellationSignal = CancellationSignal()
 
-    fun loadMediaStoreData(): Flow<List<MediaStoreData>> = callbackFlow {
+    override fun start(): Flow<List<MediaStoreData>> = callbackFlow {
         val contentObserver =
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
@@ -91,7 +93,7 @@ class TrashDataSource @Inject constructor(
         }
     }.conflate()
 
-    fun query(): List<MediaStoreData> {
+    override suspend fun query(): List<MediaStoreData> {
         Preconditions.checkArgument(
             Util.isOnBackgroundThread(),
             "Can only query from a background thread"
@@ -170,5 +172,5 @@ class TrashDataSource @Inject constructor(
         return holderMap.sortedByDescending { it.dateModified }
     }
 
-    fun cancel() = cancellationSignal.cancel()
+    override fun cancel() = cancellationSignal.cancel()
 }

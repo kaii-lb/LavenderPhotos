@@ -57,7 +57,7 @@ class CloudDeleteOperation @Inject constructor(
                 if (targets.isEmpty()) {
                     Result.Success(Unit)
                 } else {
-                    val success = assetsClient.delete(ids = targets.map { Uuid.parse(it) }, force = false)
+                    val success = assetsClient.delete(ids = targets.map { Uuid.parse(it) }, force = albumId == "trash")
                     if (success) Result.Success(Unit) else Result.Error(FileOperationError.Failed)
                 }
             }
