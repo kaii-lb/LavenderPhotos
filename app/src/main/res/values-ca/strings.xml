@@ -700,4 +700,12 @@
     <string name="albums_network_share_desc">Només navegació. Requereix RSAF, Drive, o equivalent</string>
     <string name="logs_share">Compartir els fitxers de registre</string>
     <string name="record_logs_off">L\'enregistrament de registres està desactivat</string>
+    <string name="albums_cloud">Àlbum al núvol</string>
+    <string name="media_clear_exif_snackbar_title">Dades EXIF esborrades</string>
+    <string name="done">Fet</string>
+    <string name="selection_limit_reached">S\'ha arribat al límit de selecció!</string>
+    <string name="album_group_filter_none">Cap</string>
+    <string name="album_group_filter_in_this_groups">En aquest grup</string>
+    <string name="album_group_filter_not_in_a_group">En cap grup</string>
+    <string name="album_group_filter_in_other_groups">En altres grups</string>
 </resources>
