@@ -154,11 +154,7 @@ fun MainDialog(
                         item {
                             val authManager = rememberSecureFolderAuthManager(
                                 coroutineScope = coroutineScope,
-                                extraAction = {
-                                    coroutineScope.launch {
-                                        dismiss()
-                                    }
-                                }
+                                extraAction = dismiss
                             )
 
                             ExpressiveDialogRow(

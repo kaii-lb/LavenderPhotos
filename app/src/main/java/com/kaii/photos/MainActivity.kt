@@ -349,7 +349,7 @@ class MainActivity : ComponentActivity() {
                             immichInfo = { immichInfo },
                             dismiss = {
                                 sheetState.hide()
-                                navController.popBackStack()
+                                // navController.popBackStack()
                             }
                         )
                     }

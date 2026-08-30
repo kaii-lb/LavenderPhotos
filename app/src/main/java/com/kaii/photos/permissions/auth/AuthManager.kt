@@ -12,14 +12,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import com.kaii.photos.LocalNavController
 import com.kaii.photos.R
-import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarController
 import io.github.kaii_lb.lavender.snackbars.LavenderSnackbarEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 class AuthManager(
     private val context: Context,
@@ -63,7 +60,7 @@ class AuthManager(
 @Composable
 fun rememberSecureFolderAuthManager(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    extraAction: (() -> Unit)? = null
+    extraAction: (suspend () -> Unit)? = null
 ): AuthManager {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -76,11 +73,7 @@ fun rememberSecureFolderAuthManager(
             subtitle = resources.getString(R.string.secure_unlock_desc),
             onSuccess = {
                 coroutineScope.launch {
-                    if (extraAction != null) {
-                        extraAction()
-                        delay(AnimationConstants.DURATION.milliseconds)
-                    }
-
+                    if (extraAction != null) extraAction()
                     navController.navigate(route = Screens.SecureFolder.GridView)
                 }
             },
