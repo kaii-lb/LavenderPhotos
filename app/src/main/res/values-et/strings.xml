@@ -543,4 +543,25 @@
     <string name="permissions_manage_media_desc">Mittekohustuslik õigus. Kasutusel kiiremaks prügikasti kasutamiseks ja kustutamiseks</string>
     <string name="permissions_continue">Jätka</string>
     <string name="permissions_necessary">Vajalikud õigused</string>
+    <string name="permissions_necessary_desc">See õigus on vajalik rakenduse korrektses toimimiseks</string>
+    <string name="permissions_grant_permissions">Luba õigused</string>
+    <string name="permissions_why">Miks?</string>
+    <string name="permissions_dismiss">Loobu</string>
+    <string name="permissions_read_media_explanation">Seda luba on vaja, et leida seadmes olevaid fotosid ja videoid. Rakendus Lavender Photos on väga range selles osas, milliseid faile ta loeb ning ei jaga ega kasuta seda teavet kunagi ära.</string>
+    <string name="media_clear_exif_snackbar_title">EXIF-andmed on kustutatud</string>
+    <string name="done">Valmis</string>
+    <string name="selection_limit_reached">Oled jõudnud valiku ülempiirini!</string>
+    <string name="look_and_feel_grids">Ruudustik</string>
+    <string name="look_and_feel_use_black_background">Must taust meediumivaates</string>
+    <string name="look_and_feel_use_black_background_desc">Pildivaate ja videopleier taust saab olema must</string>
+    <string name="look_and_feel_views_blur">Tausta hägustamine</string>
+    <string name="look_and_feel_views_blur_desc">Täida taust hetkelt vaadatava pildi hägustatud variandiga</string>
+    <string name="look_and_feel_language">Keel</string>
+    <string name="look_and_feel_language_selected">See keel on valitud</string>
+    <string name="look_and_feel_app_language">Rakenduse keel</string>
+    <string name="look_and_feel_app_language_desc">Saad muuta rakenduse keelt. Ilmselt on vajalik rakenduse uuesti käivitamine. Hetkel kasutatav keel on: %1$s</string>
+    <string name="look_and_feel_palette">Värvipalett</string>
+    <string name="look_and_feel_palette_desc">Muuda rakenduse värve</string>
+    <string name="look_and_feel_colors">Värvid ja stiilid</string>
+    <string name="look_and_feel_colors_desc">Kohenda rakenduse välimust, muuda värvipalette ja lülita sisse dünaamiline kujundus</string>
 </resources>
