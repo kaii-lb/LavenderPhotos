@@ -677,4 +677,12 @@
     <string name="albums_network_share_desc">Tylko przeglądanie. Wymaga RSAF, Drive lub odpowiednika</string>
     <string name="logs_share">Udostępnij pliki logów</string>
     <string name="record_logs_off">Zapisywanie logów jest wyłączone</string>
+    <string name="albums_cloud">Album w chmurze</string>
+    <string name="media_clear_exif_snackbar_title">Usunięto dane EXIF</string>
+    <string name="done">Gotowe</string>
+    <string name="selection_limit_reached">Osiągnięto limit wyboru!</string>
+    <string name="album_group_filter_none">Brak</string>
+    <string name="album_group_filter_in_this_groups">W tej grupie</string>
+    <string name="album_group_filter_not_in_a_group">Poza grupą</string>
+    <string name="album_group_filter_in_other_groups">W innych grupach</string>
 </resources>
