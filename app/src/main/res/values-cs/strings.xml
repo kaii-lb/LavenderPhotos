@@ -601,8 +601,8 @@
     <string name="immich_share_album_allow_uploads">Povolit nahrávání</string>
     <string name="immich_share_album_allow_downloads">Povolit stahování</string>
     <string name="immich_share_album_require_password">Vyžadovat heslo</string>
-    <string name="immich_share_album_custom_url">Vlastní URL</string>
-    <string name="immich_share_album_use_custom_url">Použít vlastní URL</string>
+    <string name="immich_share_album_custom_url">Vlastní název URL</string>
+    <string name="immich_share_album_use_custom_url">Použít vlastní název URL</string>
     <string name="immich_share_album_description">Popis</string>
     <string name="immich_share_album_loading">Vytváření odkazu…</string>
     <string name="immich_share_album_loading_failed">Odkaz se nepodařilo vytvořit</string>
@@ -692,4 +692,17 @@
     <string name="privacy_authenticate">Ověřit totožnost</string>
     <string name="privacy_scroll_mode_last_active">Režim soukromí je aktivní</string>
     <string name="privacy_scroll_mode_last_active_desc">Režim soukromí zůstal při posledním ukončení aplikace aktivní. Pro pokračování použijte heslo nebo biometrické ověření.</string>
+    <string name="albums_is_saf">Toto je síťové sdílení</string>
+    <string name="albums_cloud">Cloudové album</string>
+    <string name="albums_network_share">Síťové sdílení</string>
+    <string name="albums_network_share_desc">Pouze pro procházení. Vyžaduje RSAF, Drive nebo podobný nástroj</string>
+    <string name="logs_share">Sdílet soubory protokolů</string>
+    <string name="record_logs_off">Záznam protokolů je vypnutý</string>
+    <string name="media_clear_exif_snackbar_title">Data EXIF byla vymazána</string>
+    <string name="done">Hotovo</string>
+    <string name="selection_limit_reached">Byl dosažen limit výběru!</string>
+    <string name="album_group_filter_none">Vše</string>
+    <string name="album_group_filter_in_this_groups">V této skupině</string>
+    <string name="album_group_filter_not_in_a_group">Bez skupiny</string>
+    <string name="album_group_filter_in_other_groups">V jiných skupinách</string>
 </resources>
