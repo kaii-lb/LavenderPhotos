@@ -564,4 +564,6 @@
     <string name="look_and_feel_palette_desc">Muuda rakenduse värve</string>
     <string name="look_and_feel_colors">Värvid ja stiilid</string>
     <string name="look_and_feel_colors_desc">Kohenda rakenduse välimust, muuda värvipalette ja lülita sisse dünaamiline kujundus</string>
+    <string name="albums_toggle_nested_display">Näita alamkaustade meediat</string>
+    <string name="navigation_tap_to_nav">Vajuta navigeerimiseks</string>
 </resources>
