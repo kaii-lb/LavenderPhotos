@@ -2,6 +2,7 @@ package com.kaii.photos.file_management.managers.gateways
 
 import android.app.PendingIntent
 import android.app.RecoverableSecurityException
+import android.content.ClipData
 import android.content.ContentProviderOperation
 import android.content.ContentValues
 import android.content.Context
@@ -243,6 +244,11 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
     override fun share(
         files: List<FileOperationItemMetadata>
     ): Result<Intent, FileOperationError> {
+        val fileUris = ArrayList<Uri>()
+        files.forEach { file ->
+            fileUris.add(file.uri.toUri())
+        }
+
         if (files.size == 1) {
             val item = files.first()
 
@@ -250,6 +256,8 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
                 action = Intent.ACTION_SEND
                 type = if (item.isImage) "image/*" else "video/*"
                 putExtra(Intent.EXTRA_STREAM, item.uri.toUri())
+                clipData = ClipData.newRawUri(null, fileUris[0])
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
             return Result.Success(shareIntent)
@@ -258,11 +266,11 @@ class AndroidMediaStoreGatewayImpl @Inject constructor(
             val shareIntent = Intent().apply {
                 action = Intent.ACTION_SEND_MULTIPLE
                 type = if (hasVideos) "video/*" else "image/*"
-            }
-
-            val fileUris = ArrayList<Uri>()
-            files.forEach { file ->
-                fileUris.add(file.uri.toUri())
+                clipData = ClipData.newRawUri(null, fileUris[0])
+                for (i in 1 until fileUris.size) {
+                    clipData?.addItem(ClipData.Item(fileUris[i]))
+                }
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
             shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, fileUris)
