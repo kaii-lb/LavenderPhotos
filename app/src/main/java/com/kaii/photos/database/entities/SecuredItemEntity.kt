@@ -9,7 +9,8 @@ data class SecuredItemEntity (
 	@PrimaryKey val originalPath: String,
     @ColumnInfo(name = "secured_path") val securedPath: String,
     @ColumnInfo(name = "iv") val iv: ByteArray,
-    @ColumnInfo(name = "date_taken") val dateTaken: Long? = null
+    @ColumnInfo(name = "date_taken") val dateTaken: Long? = null,
+    @ColumnInfo(name = "duration") val duration: Long? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

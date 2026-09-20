@@ -9,16 +9,22 @@ import com.kaii.photos.database.entities.SecuredItemEntity
 @Dao
 interface SecuredMediaItemEntityDao {
     @Query(value = "SELECT originalPath FROM secureditementity WHERE secured_path = :securedPath")
-    fun getOriginalPathFromSecuredPath(securedPath: String) : String?
+    fun getOriginalPathFromSecuredPath(securedPath: String): String?
 
-	@Query(value = "SELECT iv FROM secureditementity WHERE secured_path = :securedPath")
-	fun getIvFromSecuredPath(securedPath: String): ByteArray?
+    @Query(value = "SELECT iv FROM secureditementity WHERE secured_path = :securedPath")
+    fun getIvFromSecuredPath(securedPath: String): ByteArray?
 
     @Query(value = "SELECT secured_path FROM secureditementity WHERE originalPath = :originalPath")
     fun getSecuredPathFromOriginalPath(originalPath: String): String?
 
     @Query(value = "SELECT date_taken FROM secureditementity WHERE secured_path = :securedPath")
     fun getDateTakenFor(securedPath: String): Long?
+
+    @Query(value = "UPDATE secureditementity SET duration = :duration WHERE secured_path = :securedPath")
+    fun updateDuration(securedPath: String, duration: Long?)
+
+    @Query(value = "SELECT duration FROM secureditementity WHERE secured_path = :securedPath")
+    fun getDuration(securedPath: String): Long?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEntity(vararg entity: SecuredItemEntity)

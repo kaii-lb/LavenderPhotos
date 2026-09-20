@@ -138,9 +138,13 @@ fun SecureFolderView(
 
     Scaffold(
         topBar = {
-            SecureFolderViewTopAppBar(selectionManager = viewModel.selectionManager) {
-                navController.popBackStack()
-            }
+            val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+            SecureFolderViewTopAppBar(
+                isLoading = { isLoading },
+                selectionManager = viewModel.selectionManager,
+                onBackClicked = navController::popBackStack
+            )
         },
         bottomBar = {
             val isSelecting by viewModel.selectionManager.enabled.collectAsStateWithLifecycle(initialValue = false)
@@ -199,12 +203,15 @@ fun SecureFolderView(
             val thumbnailSize by viewModel.thumbnailSize.collectAsStateWithLifecycle()
             val useRoundedCorners by viewModel.useRoundedCorners.collectAsStateWithLifecycle()
             val vibrateOnClick by viewModel.vibrateOnClick.collectAsStateWithLifecycle()
+            val hasItems by viewModel.hasItems.collectAsStateWithLifecycle()
 
             PhotoGrid(
                 pagingItems = items,
                 album = { AlbumType.PlaceHolder },
                 selectionManager = viewModel.selectionManager,
-                viewProperties = ViewProperties.SecureFolder,
+                viewProperties =
+                    if (hasItems) ViewProperties.SecureFolderLoading
+                    else ViewProperties.SecureFolder,
                 columnSize = { columnSize },
                 openVideosExternally = { openVideosExternally },
                 cacheThumbnails = { cacheThumbnails },

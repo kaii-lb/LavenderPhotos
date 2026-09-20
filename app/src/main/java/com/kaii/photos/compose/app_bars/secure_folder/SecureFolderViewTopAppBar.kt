@@ -1,9 +1,16 @@
 package com.kaii.photos.compose.app_bars.secure_folder
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,9 +33,10 @@ import com.kaii.photos.compose.app_bars.IsSelectingTopBar
 import com.kaii.photos.compose.app_bars.getAppBarContentTransition
 import com.kaii.photos.helpers.grid_management.SelectionManager
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SecureFolderViewTopAppBar(
+    isLoading: () -> Boolean,
     selectionManager: SelectionManager,
     onBackClicked: () -> Unit
 ) {
@@ -69,6 +77,20 @@ fun SecureFolderViewTopAppBar(
                         modifier = Modifier
                             .width(160.dp)
                     )
+                },
+                actions = {
+                    AnimatedVisibility(
+                        visible = isLoading(),
+                        enter = fadeIn() + scaleIn(MaterialTheme.motionScheme.fastSpatialSpec()),
+                        exit = fadeOut() + scaleOut(MaterialTheme.motionScheme.fastSpatialSpec()),
+                        modifier = Modifier
+                            .size(32.dp)
+                    ) {
+                        ContainedLoadingIndicator(
+                            modifier = Modifier
+                                .size(32.dp)
+                        )
+                    }
                 }
             )
         } else {

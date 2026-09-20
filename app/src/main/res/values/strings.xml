@@ -527,6 +527,7 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="error_views_album_empty">This album is empty</string>
     <string name="error_views_search_not_found">Unable to find any matches</string>
     <string name="error_views_secure_empty">None of your media is protected!</string>
+    <string name="error_views_secure_loading">Loading your media…</string>
     <string name="error_views_secure_prefix">Secured:</string>
     <string name="error_views_favourites_empty">Add your most precious memories!</string>
     <string name="error_views_folder_non_existent">Folder doesn\'t exist</string>

@@ -49,7 +49,7 @@ import com.kaii.photos.database.migrations.Migration9To10
             ExifData::class,
             SyncTaskItem::class
         ],
-    version = 24,
+    version = 25,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 5, to = 6),
@@ -64,7 +64,8 @@ import com.kaii.photos.database.migrations.Migration9To10
         AutoMigration(from = 19, to = 20),
         AutoMigration(from = 21, to = 22),
         AutoMigration(from = 22, to = 23),
-        AutoMigration(from = 23, to = 24)
+        AutoMigration(from = 23, to = 24),
+        AutoMigration(from = 24, to = 25)
     ]
 )
 

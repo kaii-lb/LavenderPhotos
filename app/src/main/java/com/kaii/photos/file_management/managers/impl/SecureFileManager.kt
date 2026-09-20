@@ -17,7 +17,6 @@ import com.kaii.photos.file_management.managers.traits.Restore
 import com.kaii.photos.file_management.managers.traits.Share
 import com.kaii.photos.file_management.secure.LocalSecureManager
 import com.kaii.photos.helpers.EncryptionManager
-import com.kaii.photos.helpers.appSecureFolderDir
 import com.kaii.photos.helpers.exif.MediaData
 import com.kaii.photos.helpers.exif.getExifDataForMedia
 import com.kaii.photos.helpers.grid_management.toSecureMedia
@@ -179,21 +178,20 @@ class SecureFileManager @Inject constructor(
         immichId: String?
     ): Flow<FileOperationProgress<Unit>> = flow {
         try {
+            val media = files.toSecureMedia(context = context)
+
             emit(
                 value = FileOperationProgress.Started(
                     action = FileOperationAction.LongOperationType.Delete,
-                    fileCount = files.size
+                    fileCount = media.size
                 )
             )
 
-            files.forEach { item ->
-                val file = File(
-                    context.appSecureFolderDir,
-                    item.uri.substringAfterLast("/") // filename
-                )
+            media.forEach { item ->
+                val file = File(item.item.absolutePath)
+                val thumbnail = file.secureThumbnailImage(context)
 
                 file.delete()
-                val thumbnail = file.secureThumbnailImage(context)
                 thumbnail.delete()
 
                 secureDao.deleteEntityBySecuredPath(securedPath = file.absolutePath)
@@ -201,7 +199,7 @@ class SecureFileManager @Inject constructor(
 
                 emit(
                     value = FileOperationProgress.ItemDone(
-                        uri = item.uri
+                        uri = item.item.uri
                     )
                 )
             }

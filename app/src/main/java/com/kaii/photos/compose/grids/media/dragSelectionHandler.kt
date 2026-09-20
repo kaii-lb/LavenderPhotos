@@ -47,6 +47,7 @@ fun Modifier.dragSelectionHandler(
     gridState: LazyGridState,
     isDragSelecting: MutableState<Boolean>,
     context: Context,
+    isSecureFolder: Boolean,
     thumbnailSettings: Pair<Boolean, Int>,
     enabled: Boolean
 ) = composed {
@@ -101,7 +102,7 @@ fun Modifier.dragSelectionHandler(
                     if (item is PhotoLibraryUIModel.MediaImpl) {
                         val selected = selectionManager.isSelected(item)
 
-                        if (selected) {
+                        if (selected && !isSecureFolder) {
                             isDragAndDropping = true
                             coroutineScope.launch(Dispatchers.IO) {
                                 val items = selectionManager.selection.first().fastMapNotNull { item ->

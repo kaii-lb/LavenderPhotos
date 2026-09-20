@@ -77,6 +77,9 @@ class SecureFolderViewModel @Inject constructor(
     private val exifDataState = MutableStateFlow<Result<Map<MediaData, String>, FileOperationError>>(Result.Error(FileOperationError.Failed))
     val exifData = exifDataState.asStateFlow()
 
+    val isLoading = repo.isLoading
+    val hasItems = repo.hasItems
+
     override fun runAction(action: FileOperationAction) {
         when (action) {
             is FileOperationAction.Share -> repo.shareFiles(action.files, shareChannel, progressChannel, appScope)

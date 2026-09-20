@@ -45,11 +45,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -150,44 +150,27 @@ class SecureRepository(
     private val secureFolder = File(appContext.appSecureFolderDir)
     private val timeZone = TimeZone.getDefault()
 
-    // load() does a read-modify-write on items.value, so concurrent calls (init, the FileObserver firing
-    // once per file during a batch secure, the post-verify reload) used to lost-update each other and
-    // freeze a not-ready zero-iv row. serialise load() and coalesce bursts: while one runs, extra
-    // requests just set a rerun flag instead of spawning more coroutines
-    private val loadMutex = Mutex()
+    private val thumbnailDispatcher = Dispatchers.IO.limitedParallelism(2)
+    private val _fileList = MutableStateFlow(secureFolder.listFiles())
 
-    @Volatile
-    private var loadQueued = false
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
-    private fun requestLoad(context: Context) {
-        scope.launch { runLoadCoalesced(context) }
-    }
-
-    private suspend fun runLoadCoalesced(context: Context) {
-        loadQueued = true
-        if (!loadMutex.tryLock()) return // a load is already active; it will observe loadQueued and rerun
-        try {
-            while (loadQueued) {
-                loadQueued = false
-                load(context)
-            }
-        } finally {
-            loadMutex.unlock()
-        }
-    }
+    private val _hasItems = MutableStateFlow(false)
+    val hasItems = _hasItems.asStateFlow()
 
     private val fileObserver =
         object : FileObserver(File(appContext.appSecureFolderDir), CREATE or DELETE or MODIFY or MOVED_TO or MOVED_FROM) {
+            init {
+                _fileList.value = secureFolder.listFiles()
+                _hasItems.value = _fileList.value!!.isNotEmpty()
+            }
+
             override fun onEvent(event: Int, path: String?) {
                 // doesn't matter what event type just refresh
-                if (path != null) {
-                    _fileList.value = secureFolder.listFiles()
-                    requestLoad(appContext)
-                }
+                _fileList.value = secureFolder.listFiles()
             }
         }
-
-    private val _fileList = MutableStateFlow(secureFolder.listFiles())
 
     private val items = MutableStateFlow(emptyList<PhotoLibraryUIModel.SecuredMedia>())
     private val params = combine(info, sortMode, items) { info, sortMode, items ->
@@ -208,11 +191,16 @@ class SecureRepository(
 
     init {
         scope.launch {
-            runLoadCoalesced(context)
+            _fileList.collect {
+                Log.d(TAG, "REQUESTING LOAD")
+                _isLoading.value = true
+                load(appContext)
+                _isLoading.value = false
+            }
         }
 
         scope.launch {
-            verifyThumbnails(context)
+            verifyThumbnails(appContext)
         }
     }
 
@@ -269,7 +257,6 @@ class SecureRepository(
         val snapshot = _fileList.value?.sortedBy { it.lastModified() } ?: return@withContext
 
         val mediaStoreData = items.value.toMutableList()
-        val metadataRetriever = MediaMetadataRetriever()
 
         snapshot.forEach { file ->
             // self-healing skip: only keep an already-processed item if its cached thumbnail iv still
@@ -325,17 +312,10 @@ class SecureRepository(
                 secureDao.getOriginalPathFromSecuredPath(file.absolutePath) ?: context.appRestoredFilesDir
 
             val duration = if (type == MediaType.Video) {
-                // thanks to IvanCarapovic
-                // https://github.com/IvanCarapovic/LavenderPhotos/blob/22494d0684ce3dc6f7b6f01ee0a8f41f31787dcd/app/src/main/java/com/kaii/photos/compose/grids/PhotoGridView.kt#L517
-                try {
-                    metadataRetriever.setDataSource(file.absolutePath)
-                    metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
-                } catch (e: RuntimeException) {
-                    Log.e(TAG, e.toString())
-                    Log.e(TAG, "The failing file was ${file.absolutePath}")
-                    null
-                }
+                secureDao.getDuration(file.absolutePath)
             } else null
+
+            Log.d(TAG, "DURATION $duration")
 
             val item = MediaStoreData(
                 type = type,
@@ -355,7 +335,7 @@ class SecureRepository(
                 immichUrl = null,
                 hash = null,
                 favourited = false,
-                duration = duration?.let { (it / 1000.0).roundToLong() }
+                duration = duration
             )
 
             val securedItem = PhotoLibraryUIModel.SecuredMedia(
@@ -368,9 +348,7 @@ class SecureRepository(
             mediaStoreData.add(securedItem)
         }
 
-        metadataRetriever.close()
-
-        val presentPaths = _fileList.value!!.map { it.absolutePath }
+        val presentPaths = snapshot.map { it.absolutePath }
         items.value =
             mediaStoreData
                 .filter { media ->
@@ -380,28 +358,35 @@ class SecureRepository(
                 }
     }
 
-    private suspend fun verifyThumbnails(context: Context) = withContext(Dispatchers.IO) {
+    private suspend fun verifyThumbnails(context: Context) = withContext(thumbnailDispatcher) {
         val snapshot = _fileList.value ?: return@withContext
 
         var generatedAny = false
 
         snapshot.forEach { file ->
             val thumbnail = file.secureThumbnailImage(context)
-
-            // regenerate if the iv row is missing OR the cached png is gone. the thumbnail cache lives
-            // in cacheDir, which the OS can purge under storage pressure, leaving a dangling iv row that
-            // would otherwise never be rebuilt
-            if (secureDao.getIvFromSecuredPath(thumbnail.absolutePath) != null && thumbnail.exists()) return@forEach
-
             val mimeType = Files.probeContentType(Path(file.absolutePath))
             val type =
                 if (mimeType.lowercase().contains("image")) MediaType.Image
                 else if (mimeType.lowercase().contains("video")) MediaType.Video
                 else return@forEach
 
+            val isVideoDurationValid = type == MediaType.Video && secureDao.getDuration(file.absolutePath) != null
+
+            // regenerate if the iv row is missing OR the cached png is gone. the thumbnail cache lives
+            // in cacheDir, which the OS can purge under storage pressure, leaving a dangling iv row that
+            // would otherwise never be rebuilt
+            if (secureDao.getIvFromSecuredPath(thumbnail.absolutePath) != null &&
+                thumbnail.exists() &&
+                (type == MediaType.Image || isVideoDurationValid)
+            ) return@forEach
+
+
             if (type == MediaType.Image) {
+                Log.d(TAG, "updating image")
                 addImageThumbnail(file, context)
             } else {
+                Log.d(TAG, "updating video")
                 addVideoThumbnail(file, context)
             }
 
@@ -410,7 +395,7 @@ class SecureRepository(
 
         // refresh the listing so items holding a not-ready (zero) iv pick up their real iv via the
         // self-healing skip in load(). single coalesced reload, not one per file
-        if (generatedAny) runLoadCoalesced(context)
+        if (generatedAny) load(context)
     }
 
     private suspend fun addImageThumbnail(
@@ -478,6 +463,13 @@ class SecureRepository(
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(decrypted.absolutePath)
+
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                ?.toLongOrNull()
+                ?.let {
+                    secureDao.updateDuration(file.absolutePath, (it / 1000.0).roundToLong())
+                }
+
             retriever.getScaledFrameAtTime(-1L, MediaMetadataRetriever.OPTION_CLOSEST, 1024, 1024)
                 ?.let { bitmap ->
                     addEncryptedThumbnail(context, bitmap, file.secureVideoThumbnailImage(context), secureDao)

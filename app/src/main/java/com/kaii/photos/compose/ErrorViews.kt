@@ -85,6 +85,16 @@ enum class ViewProperties(
             )
         }
     ),
+    SecureFolderLoading(
+        emptyText = R.string.error_views_secure_loading,
+        emptyIconResId = R.drawable.secure_folder,
+        prefix = R.string.error_views_secure_prefix,
+        navigate = { _, index ->
+            Screens.SecureFolder.SinglePhoto(
+                index = index
+            )
+        }
+    ),
     Favourites(
         emptyText = R.string.error_views_favourites_empty,
         emptyIconResId = R.drawable.favourite,
@@ -128,6 +138,9 @@ enum class ViewProperties(
             )
         }
     ),;
+
+    val isSecureFolder: Boolean
+        get() = this == SecureFolder || this == SecureFolderLoading
 
     companion object {
         fun getText(id: Int, resources: Resources) = resources.getString(id)

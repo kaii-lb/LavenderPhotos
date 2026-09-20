@@ -181,6 +181,7 @@ private fun DeviceMedia(
                     pagingItems = pagingItems,
                     isDragSelecting = isDragSelecting,
                     context = context,
+                    isSecureFolder = viewProperties.isSecureFolder,
                     thumbnailSettings = Pair(cacheThumbnails(), thumbnailSize()),
                     enabled = isMultiSelectMode
                 )
@@ -241,7 +242,7 @@ private fun DeviceMedia(
                         is PhotoLibraryUIModel.MediaImpl -> {
                             MediaItem(
                                 item = item,
-                                isSecureMedia = viewProperties == ViewProperties.SecureFolder,
+                                isSecureMedia = viewProperties.isSecureFolder,
                                 isSelecting = { isSelecting },
                                 thumbnailSettings = {
                                     Pair(cacheThumbnails(), thumbnailSize())
