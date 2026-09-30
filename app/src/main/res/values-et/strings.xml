@@ -571,4 +571,6 @@
     <string name="permissions_media_manager">Meediumihaldur</string>
     <string name="permissions_media_manager_desc">Parem ja kiirem prügikasti viskamine, kustutamine, kopeerimine ja teisaldamine</string>
     <string name="permissions_allow_secure_folder_screen_capture">Luba turvakausta vaates ekraanitõmmistus</string>
+    <string name="permissions_allow_secure_folder_screen_capture_desc">Luba ekraanipiltide tegemine, ekraani salvestamine ja ekraani jagamine, kui turvakaust on avatud. Turvatud sisu võib ilmuda ka viimati kasutatud rakenduste eelvaates. Jäta see valik väljalülitatuks, et sisu oleks kaitstud</string>
+    <string name="permissions_read_images">Piltide tuvastamine</string>
 </resources>
