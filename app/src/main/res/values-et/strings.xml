@@ -564,6 +564,11 @@
     <string name="look_and_feel_palette_desc">Muuda rakenduse värve</string>
     <string name="look_and_feel_colors">Värvid ja stiilid</string>
     <string name="look_and_feel_colors_desc">Kohenda rakenduse välimust, muuda värvipalette ja lülita sisse dünaamiline kujundus</string>
-    <string name="albums_toggle_nested_display">Näita alamkaustade meediat</string>
+    <string name="albums_toggle_nested_display">Näita alamkaustade meediumi</string>
     <string name="navigation_tap_to_nav">Vajuta navigeerimiseks</string>
+    <string name="settings_behaviour_loop_never">Ära iialgi korda videoid</string>
+    <string name="settings_behaviour_loop_under_30">Korda, kui video kestus on alla 30sekundi</string>
+    <string name="permissions_media_manager">Meediumihaldur</string>
+    <string name="permissions_media_manager_desc">Parem ja kiirem prügikasti viskamine, kustutamine, kopeerimine ja teisaldamine</string>
+    <string name="permissions_allow_secure_folder_screen_capture">Luba turvakausta vaates ekraanitõmmistus</string>
 </resources>
