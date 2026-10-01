@@ -670,4 +670,5 @@
     <string name="contributors_separator_major">突出贡献者</string>
     <string name="albums_cloud">云相册</string>
     <string name="albums_network_share">网络分享</string>
+    <string name="albums_is_saf">这是个网络共享</string>
 </resources>
