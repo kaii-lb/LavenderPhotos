@@ -9,18 +9,18 @@
     <string name="albums_found">Tüm albümler bulundu!</string>
     <string name="add_album">Albüm ekle</string>
     <string name="direct_path_album">Albüm eklemek için doğrudan bir yol kullanın</string>
-    <string name="albums_main_list">Tümünü Ana Sayfada Göster</string>
-    <string name="albums_main_list_desc_1">Seçilen albümlerin fotoğrafları ana fotoğraf görünümünde gösterilecektir</string>
-    <string name="albums_main_list_desc_2">Seçilen albümler ana fotoğraf görünümünde gösterilmek üzere kara listeye alınacaktır</string>
+    <string name="albums_main_list">Ana Sayfa Albümleri</string>
+    <string name="albums_main_list_desc_1">Seçilen albümlerden medya dosyalarını göster</string>
+    <string name="albums_main_list_desc_2">Seçilen albümlerde olmayan medyaları göster</string>
     <string name="albums_auto_detect">Albümleri otomatik algıla</string>
     <string name="albums_auto_detect_desc">Bu cihazdaki medya içeren tüm klasörleri algılar ve albümler görünümüne ekler</string>
     <string name="albums_clear_list">Albüm listesini temizle</string>
-    <string name="albums_clear_list_desc">Kamera ve İndirilenler hariç tüm albümleri kaldır</string>
+    <string name="albums_clear_list_desc">Özel ve bulut albümlerini korurken, tüm albüm gruplarını ve klasör albümlerini siler</string>
     <string name="albums_clear_list_done">Albüm listesi temizlendi</string>
     <string name="albums_media_sorting">Medya Sıralaması</string>
     <string name="albums_media_sorting_desc">Izgaralardaki fotoğraf ve videoların sıralamasını ayarlar</string>
     <string name="albums_is_custom">Bu özel bir albümdür</string>
-    <string name="albums_custom">Özel Albüm</string>
+    <string name="albums_custom">Albüm</string>
     <string name="albums_custom_desc">Herhangi bir yerden herhangi bir medya ekleyin</string>
     <string name="albums_folder_desc">Bir klasörden medya yükle</string>
     <string name="albums_non_existent">Böyle bir albüm mevcut değil</string>
@@ -28,11 +28,11 @@
     <string name="albums_pin">Bu albümü sabitle</string>
     <string name="albums_unpin">Bu albümün sabitlemesini kaldır</string>
     <string name="albums_info">Albüm Bilgisi</string>
-    <string name="albums_path">Yol</string>
-    <string name="albums_item_count">Öğe Sayısı</string>
+    <string name="albums_path">Yol:</string>
+    <string name="albums_item_count">Öğe Sayısı:</string>
     <string name="albums_name">Albüm Adı</string>
     <string name="albums_type">Albüm Türü</string>
-    <string name="albums_folder">Klasör Albümü</string>
+    <string name="albums_folder">Klasör</string>
     <string name="albums_add_failed">Albümler eklenemedi :&lt;</string>
     <!-- Tabs -->
     <string name="tabs">Sekmeler</string>
@@ -46,7 +46,7 @@
     <string name="tabs_albums_incl">Dahil Edilen Albümler</string>
     <string name="tabs_confirm">Sekme Ekle</string>
     <string name="tabs_empty_params">Sekme parametreleri boş olamaz</string>
-    <string name="tabs_max_reached">8\'den fazla sekme eklenemez</string>
+    <string name="tabs_max_reached">16\'dan fazla sekme eklenemez</string>
     <string name="tabs_min_reached">En az bir sekme mevcut olmalıdır</string>
     <!-- Navigation -->
     <string name="return_to_previous_page">Önceki sayfaya dön</string>
@@ -76,12 +76,12 @@
                 <br><br>Lavender Photos asla otomatik güncelleme yapmaz ve yalnızca açık kullanıcı onayı ile günceller.
             </p>
         ]]></string>
-    <string name="updates_new_version_available">Yeni sürüm mevcut!</string>
-    <string name="updates_latest">Zaten en son sürümdesiniz</string>
+    <string name="updates_new_version_available">Güncelleme mevcut!</string>
+    <string name="updates_latest">Güncel</string>
     <string name="updates_checking">Güncellemeler Kontrol Ediliyor</string>
     <!-- Secure Folder -->
     <string name="locked_folder_help_top">Güvenli Klasör, bu cihazdaki resimleriniz ve videolarınız için güvenli bir klasördür.\nGüvenli hale getirilen medya hiçbir yere yüklenmez ve her zaman cihazınızda, cihazınızın parolasına veya parmak izi verilerine özgü bir anahtarla şifrelenmiş olarak kalır.</string>
-    <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.</string>
+    <string name="locked_folder_help_bottom">Parola unutulursa veya parmak izi kaldırılırsa güvenli veriler geri yüklenemez.\nUygulama kaldırıldığında korunan öğeler kaybolacaktır, bunları uygun şekilde yedekleyin.</string>
     <string name="secure_folder">Güvenli Klasör</string>
     <string name="secure_processing">Bu medya işlenirken bekleyin</string>
     <string name="secure_decrypting">Dosyaların Şifresi Çözülüyor</string>
@@ -509,4 +509,10 @@
     <string name="media_secure_snackbar_title">Ögeler güvenliğe alınıyor…</string>
     <string name="media_restore_snackbar_title">Ögeler geri yükleniyor…</string>
     <string name="media_share_snackbar_title">Ögeler paylaşılıyor…</string>
+    <string name="albums_is_saf">Bu bir ağ paylaşımıdır</string>
+    <string name="albums_cloud">Bulut Albümü</string>
+    <string name="albums_network_share">Ağ Paylaşımı</string>
+    <string name="albums_network_share_desc">Sadece göz atılabilir. RSAF, Drive veya eşdeğeri gereklidir</string>
+    <string name="logs_share">Paylaşılan günlük dosyaları</string>
+    <string name="record_logs_off">Günlük kaydı kapalı</string>
 </resources>
