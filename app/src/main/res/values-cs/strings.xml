@@ -546,18 +546,19 @@
     <string name="immich_help_general">Co to je?</string>
     <string name="immich_help_general_desc">Umožňuje zálohovat média na úrovni alb na server Immich</string>
     <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,
-            které komukoli umožňuje provozovat vlastní cloudový zálohovací server.
-            </p>
-            <h3 style="text-align:center;">Jak ho používat?<h3/>
-            <ul>
-                <li>Provozujte vlastní <a href="https://immich.app/">server Immich</a></li>
-                <li>V aplikaci Lavender Photos zadejte adresu serveru</li>
-                <li>Přihlaste se pomocí uživatelského účtu Immich</li>
-                <li>Přejděte do libovolného alba a klepněte na ikonu cloudu</li>
-                <li>Začněte zálohovat své fotografie!</li>
-            </ul>
-        ]]></string>
+    <p><a href="https://immich.app/">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,
+    které komukoli umožňuje provozovat vlastní cloudový zálohovací server.
+    </p>
+    <h3 style="text-align:center;">Jak ho používat?</h3>
+    <ul>
+        <li>Provozujte vlastní <a href="https://immich.app/">server Immich</a></li>
+        <li>V aplikaci Lavender Photos zadejte adresu serveru</li>
+        <li>Přihlaste se pomocí uživatelského účtu Immich</li>
+        <li>Na stránce přehledu klepněte na „Možnosti zálohování“</li>
+        <li>Vyberte alba, která chcete zálohovat, a klepněte na tlačítko potvrzení</li>
+        <li>Užívejte si bezpečné a snadné cloudové zálohování!</li>
+    </ul>
+]]></string>
     <string name="immich_server_url_invalid">Neplatná URL!</string>
     <string name="immich_misc">Různé</string>
     <string name="immich_server_online">Online</string>
