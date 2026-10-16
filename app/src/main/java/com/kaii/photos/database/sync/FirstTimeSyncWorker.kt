@@ -1,6 +1,7 @@
 package com.kaii.photos.database.sync
 
 import android.content.Context
+import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.room.concurrent.AtomicInt
@@ -75,6 +76,7 @@ class FirstTimeSyncWorker @AssistedInject constructor(
         val startTime = Clock.System.now()
         val dao = MediaDatabase.getInstance(context).mediaDao()
 
+        val volumesBefore = MediaStore.getExternalVolumeNames(context)
         val mediaStoreIds = getAllMediaStoreIds(context) ?: return Result.retry()
         val inAppIds = dao.getAllMediaIds().toSet()
 
@@ -110,7 +112,14 @@ class FirstTimeSyncWorker @AssistedInject constructor(
             SyncManager(context).setGeneration(gen = newGen)
         }
 
-        val removed = inAppIds - mediaStoreIds
+        val removed =
+            if (MediaStore.getExternalVolumeNames(context) != volumesBefore) emptyList()
+            else RemovalGuard.filterSafeRemovals(
+                context = context,
+                dao = dao,
+                candidates = inAppIds - mediaStoreIds
+            )
+
         if (removed.isNotEmpty()) {
             removed.chunked(500).forEach { chunk ->
                 dao.deleteAll(chunk)

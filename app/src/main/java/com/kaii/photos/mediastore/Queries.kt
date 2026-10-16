@@ -285,163 +285,156 @@ suspend fun chunkLoadMediaData(
     return@coroutineScope maxGen
 }
 
-/** returns the items and the new mediastore generation */
+/**
+ * Loads everything that changed since the last sync, one volume at a time since `_generation_modified` is a per-volume counter.
+ * @return the changed items and the new generation for every volume that was successfully queried
+ */
 suspend fun loadMediaDataDelta(
     context: Context
 ) = withContext(Dispatchers.IO) {
     val items = mutableListOf<MediaStoreData>()
     val syncManager = SyncManager(context)
-    val generation = syncManager.getGeneration() - 1
+    val newGens = mutableMapOf<String, Long>()
 
-    items.clear()
-    val selectionArgs = arrayOf(generation.toString())
-    val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
-            "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
+    MediaStore.getExternalVolumeNames(context).forEach { volume ->
+        val storedGen = syncManager.getVolumeGeneration(volume)
+        val generation = (storedGen - 1).coerceAtLeast(0L)
 
-    val projection =
-        arrayOf(
-            MediaColumns._ID,
-            MediaColumns.DATA,
-            MediaColumns.DATE_TAKEN,
-            MediaColumns.DATE_ADDED,
-            MediaColumns.DATE_MODIFIED,
-            MediaColumns.MIME_TYPE,
-            MediaColumns.DISPLAY_NAME,
-            FileColumns.MEDIA_TYPE,
-            MediaColumns.SIZE,
-            MediaColumns.IS_FAVORITE,
-            MediaColumns.GENERATION_MODIFIED,
-            MediaColumns.DURATION
-        )
+        val selectionArgs = arrayOf(generation.toString())
+        val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
+                "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
 
-    var newGen = generation
-    context.contentResolver.query(
-        MEDIA_STORE_FILE_URI,
-        projection,
-        selection,
-        selectionArgs,
-        null
-    )?.use { cursor ->
-        val genColNum = cursor.getColumnIndexOrThrow(MediaColumns.GENERATION_MODIFIED)
-        val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
-        val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
-        val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
-        val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
-        val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
-        val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
-        val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
-        val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
-        val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
-        val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
+        val projection =
+            arrayOf(
+                MediaColumns._ID,
+                MediaColumns.DATA,
+                MediaColumns.DATE_TAKEN,
+                MediaColumns.DATE_ADDED,
+                MediaColumns.DATE_MODIFIED,
+                MediaColumns.MIME_TYPE,
+                MediaColumns.DISPLAY_NAME,
+                FileColumns.MEDIA_TYPE,
+                MediaColumns.SIZE,
+                MediaColumns.IS_FAVORITE,
+                MediaColumns.GENERATION_MODIFIED,
+                MediaColumns.DURATION
+            )
 
-        while (cursor.moveToNext()) {
-            // for each item since it changes for images vs videos
-            val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
+        var newGen = storedGen
+        context.contentResolver.query(
+            MediaStore.Files.getContentUri(volume),
+            projection,
+            selection,
+            selectionArgs,
+            null
+        )?.use { cursor ->
+            val genColNum = cursor.getColumnIndexOrThrow(MediaColumns.GENERATION_MODIFIED)
+            val idColNum = cursor.getColumnIndexOrThrow(MediaColumns._ID)
+            val absolutePathColNum = cursor.getColumnIndexOrThrow(MediaColumns.DATA)
+            val mimeTypeColNum = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE)
+            val mediaTypeColumnIndex = cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)
+            val displayNameIndex = cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_MODIFIED)
+            val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_TAKEN)
+            val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATE_ADDED)
+            val sizeColumn = cursor.getColumnIndexOrThrow(MediaColumns.SIZE)
+            val favouritedColumn = cursor.getColumnIndexOrThrow(MediaColumns.IS_FAVORITE)
 
-            val gen = cursor.getLong(genColNum)
-            if (gen > newGen) newGen = gen
+            while (cursor.moveToNext()) {
+                // for each item since it changes for images vs videos
+                val durationColumn = cursor.getColumnIndex(MediaColumns.DURATION)
 
-            val absolutePath = cursor.getString(absolutePathColNum)
-            val id = cursor.getLong(idColNum)
-            val mimeType = cursor.getString(mimeTypeColNum)
-            val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
-            val dateAdded = cursor.getLong(dateAddedColumn)
-            val dateModified = cursor.getLong(dateModifiedColumn)
-            val displayName = cursor.getString(displayNameIndex)
-            val size = cursor.getLong(sizeColumn)
-            val favourited = cursor.getInt(favouritedColumn) == 1
-            val duration = cursor.getLongOrNull(durationColumn)
+                val gen = cursor.getLong(genColNum)
+                if (gen > newGen) newGen = gen
 
-            val type =
-                if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
-                else MediaType.Video
+                val absolutePath = cursor.getString(absolutePathColNum)
+                val id = cursor.getLong(idColNum)
+                val mimeType = cursor.getString(mimeTypeColNum)
+                val mediaStoreDateTaken = cursor.getLong(dateTakenColumn) / 1000
+                val dateAdded = cursor.getLong(dateAddedColumn)
+                val dateModified = cursor.getLong(dateModifiedColumn)
+                val displayName = cursor.getString(displayNameIndex)
+                val size = cursor.getLong(sizeColumn)
+                val favourited = cursor.getInt(favouritedColumn) == 1
+                val duration = cursor.getLongOrNull(durationColumn)
 
-            val dateTaken =
-                when {
-                    mediaStoreDateTaken > 0L -> mediaStoreDateTaken
+                val type =
+                    if (cursor.getInt(mediaTypeColumnIndex) == FileColumns.MEDIA_TYPE_IMAGE) MediaType.Image
+                    else MediaType.Video
 
-                    type == MediaType.Image -> {
-                        getDateTakenForMedia(absolutePath, dateModified)
+                val dateTaken =
+                    when {
+                        mediaStoreDateTaken > 0L -> mediaStoreDateTaken
+
+                        type == MediaType.Image -> {
+                            getDateTakenForMedia(absolutePath, dateModified)
+                        }
+
+                        dateAdded > 0L -> dateAdded
+
+                        else -> {
+                            dateModified
+                        }
                     }
 
-                    dateAdded > 0L -> dateAdded
+                val uriParentPath =
+                    if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                val uri = ContentUris.withAppendedId(uriParentPath, id)
 
-                    else -> {
-                        dateModified
-                    }
-                }
+                val new =
+                    MediaStoreData(
+                        type = type,
+                        id = id,
+                        uri = uri.toString(),
+                        mimeType = mimeType,
+                        dateModified = dateModified,
+                        dateTaken = dateTaken,
+                        displayName = displayName,
+                        absolutePath = absolutePath,
+                        parentPath = absolutePath.parent(),
+                        size = size,
+                        immichUrl = null,
+                        hash = null,
+                        favourited = favourited,
+                        duration = duration?.let { (it / 1000.0).roundToLong() }
+                    )
 
-            val uriParentPath =
-                if (type == MediaType.Image) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            val uri = ContentUris.withAppendedId(uriParentPath, id)
-
-            val new =
-                MediaStoreData(
-                    type = type,
-                    id = id,
-                    uri = uri.toString(),
-                    mimeType = mimeType,
-                    dateModified = dateModified,
-                    dateTaken = dateTaken,
-                    displayName = displayName,
-                    absolutePath = absolutePath,
-                    parentPath = absolutePath.parent(),
-                    size = size,
-                    immichUrl = null,
-                    hash = null,
-                    favourited = favourited,
-                    duration = duration?.let { (it / 1000.0).roundToLong() }
-                )
-
-            items.add(new)
+                items.add(new)
+            }
         }
+
+        newGens[volume] = newGen
     }
 
-    return@withContext Pair(items, newGen)
+    return@withContext Pair(items, newGens.toMap())
 }
 
 fun updateLatestGen(context: Context) {
     val syncManager = SyncManager(context.applicationContext)
-    var newGen = syncManager.getGeneration()
 
-    val selectionArgs = arrayOf(newGen.toString())
-    val selection = "${MediaStore.Images.Media.GENERATION_MODIFIED} >= ? " +
-            "AND (${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO}))"
+    MediaStore.getExternalVolumeNames(context).forEach { volume ->
+        var newGen = 0L
 
-    val projection =
-        arrayOf(
-            MediaColumns._ID,
-            MediaColumns.DATA,
-            MediaColumns.DATE_TAKEN,
-            MediaColumns.DATE_ADDED,
-            MediaColumns.DATE_MODIFIED,
-            MediaColumns.MIME_TYPE,
-            MediaColumns.DISPLAY_NAME,
-            FileColumns.MEDIA_TYPE,
-            MediaColumns.SIZE,
-            MediaColumns.IS_FAVORITE,
-            MediaColumns.GENERATION_MODIFIED,
-            MediaColumns.DURATION
-        )
+        val queried = context.contentResolver.query(
+            MediaStore.Files.getContentUri(volume),
+            arrayOf(MediaColumns.GENERATION_MODIFIED),
+            "${FileColumns.MEDIA_TYPE} IN (${FileColumns.MEDIA_TYPE_IMAGE}, ${FileColumns.MEDIA_TYPE_VIDEO})",
+            null,
+            null
+        )?.use { cursor ->
+            val genColNum = cursor.getColumnIndexOrThrow(MediaColumns.GENERATION_MODIFIED)
 
+            while (cursor.moveToNext()) {
+                val gen = cursor.getLong(genColNum)
 
-    context.contentResolver.query(
-        MEDIA_STORE_FILE_URI,
-        projection,
-        selection,
-        selectionArgs,
-        null
-    )?.use { cursor ->
-        val genColNum = cursor.getColumnIndexOrThrow(MediaColumns.GENERATION_MODIFIED)
+                if (gen > newGen) newGen = gen
+            }
 
-        while (cursor.moveToNext()) {
-            val gen = cursor.getLong(genColNum)
+            true
+        } ?: false
 
-            if (gen > newGen) newGen = gen
-        }
+        if (queried) syncManager.setVolumeGeneration(volume, newGen)
     }
-
-    syncManager.setGeneration(newGen)
 }
 
 fun getMediaFromTrashId(

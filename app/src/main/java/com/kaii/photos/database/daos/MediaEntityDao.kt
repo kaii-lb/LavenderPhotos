@@ -95,6 +95,9 @@ interface MediaDao {
     @Query(value = "SELECT id FROM media WHERE uri LIKE 'content://%'")
     fun getAllMediaIds(): List<Long>
 
+    @Query(value = "SELECT id, absolutePath FROM media WHERE id IN (:ids)")
+    suspend fun getIdsAndPaths(ids: List<Long>): List<MediaIdAndPath>
+
     @Query(value = "SELECT * from media WHERE favourited = 1 ORDER BY dateTaken DESC")
     fun getPagedFavouritesDateTaken(): PagingSource<Int, MediaStoreData>
 
@@ -349,3 +352,8 @@ interface MediaDao {
         return SimpleSQLiteQuery(sql, args.toTypedArray())
     }
 }
+
+data class MediaIdAndPath(
+    val id: Long,
+    val absolutePath: String
+)

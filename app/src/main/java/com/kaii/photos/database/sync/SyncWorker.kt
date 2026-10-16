@@ -1,6 +1,7 @@
 package com.kaii.photos.database.sync
 
 import android.content.Context
+import android.provider.MediaStore
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.room.withTransaction
@@ -44,11 +45,19 @@ class SyncWorker @AssistedInject constructor(
         val dao = db.mediaDao()
         val syncManager = SyncManager(context)
 
+        val volumesBefore = MediaStore.getExternalVolumeNames(context)
         val mediaStoreIds = getAllMediaStoreIds(context) ?: return Result.retry()
+
+        if (MediaStore.getExternalVolumeNames(context) != volumesBefore) return Result.retry()
+
         val inAppIds = dao.getAllMediaIds().toSet()
 
-        val removed = (inAppIds - mediaStoreIds).filter { it >= 0 } // negative numbers are for custom media
-        val (added, newGen) = loadMediaDataDelta(context = context)
+        val removed = RemovalGuard.filterSafeRemovals(
+            context = context,
+            dao = dao,
+            candidates = (inAppIds - mediaStoreIds).filter { it >= 0 }
+        )
+        val (added, newGens) = loadMediaDataDelta(context = context)
 
         db.withTransaction {
             if (removed.isNotEmpty()) {
@@ -60,7 +69,9 @@ class SyncWorker @AssistedInject constructor(
             if (added.isNotEmpty()) dao.upsertIgnoringImmich(items = added)
         }
 
-        syncManager.setGeneration(gen = newGen)
+        newGens.forEach { (volume, gen) ->
+            syncManager.setVolumeGeneration(volumeName = volume, gen = gen)
+        }
 
         val endTime = Clock.System.now()
 
