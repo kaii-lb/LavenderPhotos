@@ -6,7 +6,7 @@
  
   [![GitHub Release](https://img.shields.io/github/v/release/kaii-lb/LavenderPhotos?style=for-the-badge&color=green)](https://github.com/kaii-lb/LavenderPhotos/releases/latest)
   [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kaii-lb/LavenderPhotos/total?style=for-the-badge)](https://github.com/kaii-lb/LavenderPhotos/releases)
-  [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kaii-lb/LavenderPhotos/workflow.yml?branch=main&style=for-the-badge&label=Nightly)](https://github.com/kaii-lb/LavenderPhotos/actions/workflows/workflow.yml)
+  [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/kaii-lb/LavenderPhotos/workflow.yml?style=for-the-badge&label=Nightly)](https://github.com/kaii-lb/LavenderPhotos/actions/workflows/workflow.yml)
   [![Static Badge](https://img.shields.io/badge/Koltin-100%25-green?style=for-the-badge)](https://kotlinlang.org/)
 
   [![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapt.izzysoft.de%2Ffdroid%2Fapi%2Fv1%2Fpackages%2Fcom.kaii.photos&query=%24.packages%5B0%5D.versionName&style=for-the-badge&label=IzzyOnDroid)](https://apt.izzysoft.de/fdroid/index/apk/com.kaii.photos)
