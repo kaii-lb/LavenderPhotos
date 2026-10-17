@@ -247,4 +247,15 @@
     <string name="secure_encryption_failed_no_permission">Impossible de crypter des photos sans autorisation</string>
     <string name="secure_migrating">Migration</string>
     <string name="secure_migrating_desc">Sauvegarde et chiffrement de vos photos, un instant…</string>
+    <string name="secure_unlock_desc">Utilisez vos identifiants biométriques pour déverrouiller</string>
+    <string name="editing_export_video_loading">Exportation de la vidéo…</string>
+    <string name="permissions_why">Pourquoi ?</string>
+    <string name="app_lock_confirm">Vérifiez votre code PIN</string>
+    <string name="look_and_feel_date_format_date_taken">Date de prise de vue</string>
+    <string name="immich_endpoint_base_placeholder">https://mon.immich.serveur.com/</string>
+    <string name="immich_clear_endpoint">Supprimer le serveur ?</string>
+    <string name="immich_clear_endpoint_desc">Êtes-vous sûr de vouloir supprimer cette adresse de serveur ?</string>
+    <string name="immich_logout">Se déconnecter</string>
+    <string name="contributors_separator_developer">Développeur</string>
+    <string name="contributors_separator_contributors">Contributeurs open source</string>
 </resources>
