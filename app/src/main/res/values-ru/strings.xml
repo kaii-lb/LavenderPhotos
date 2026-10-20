@@ -73,7 +73,7 @@
     <string name="logs">Журналы</string>
     <string name="record_logs">Записывать журналы</string>
     <string name="record_logs_desc">Сохранять журналы для отладки. Нажмите, чтобы просмотреть.</string>
-    <string name="log_file_non_existent">Файл журнала пока не записан.</string>
+    <string name="log_file_non_existent">Файл логов пока не записан.</string>
     <string name="album_add_path">Добавить путь к альбомам</string>
     <string name="album_add">Добавить альбом</string>
     <string name="album_add_path_placeholder">Download/Movies</string>
@@ -391,7 +391,7 @@
     <string name="immich_state_unknown">Неизвестно</string>
     <string name="immich_auth_password">Пароль</string>
     <string name="immich_auth_email">Электронная почта</string>
-    <string name="immich_uuid">UUID Immich:</string>
+    <string name="immich_uuid">Immich UUID:</string>
     <string name="immich_server_info_desc">Версия: %1$s. Сборка: %2$s</string>
     <string name="immich_server_storage">Хранилище сервера</string>
     <string name="immich_server_storage_desc">Использовано %1$s из %2$s</string>
@@ -399,7 +399,20 @@
     <string name="immich_server">Сервер Immich</string>
     <string name="immich_help_general">Что это?</string>
     <string name="immich_help_general_desc">Позволяет создавать резервные копии медиафайлов по альбомам на сервере Immich</string>
-    <string name="immich_help_detailed_desc"><![CDATA["\n            <p><a href=\"https://immich.app/\">Immich</a> представляет собой самостоятельно размещаемое решение для управления фотографиями и видео,\n            позволяющее каждому запустить собственный облачный сервер резервного копирования.\n            </p>\n            <h3 style=\"text-align:center;\">Как использовать?<h3/>\n            <ul>\n                <li>Разместите собственный <a href=\"https://immich.app/\">сервер Immich</a></li>\n                <li>Укажите адрес сервера в Lavender Photos</li>\n                <li>Войдите с помощью учётной записи Immich</li>\n                <li>Откройте любой альбом и нажмите значок облака</li>\n                <li>Начните резервное копирование фотографий!</li>\n            </ul>\n        "]]></string>
+    <string name="immich_help_detailed_desc"><![CDATA[
+ <p><a href="https://immich.app/">Immich</a> - это автономное решение для управления фотографиями и видео,
+которое позволяет любому пользователю разместить свой собственный облачный сервер резервного копирования.
+ < / p>
+ <h3 style="выравнивание текста по центру">Как пользоваться?<h3/>
+ <ул>
+ <li>Самостоятельный хостинг <a href="https://immich.app/">Отдельного сервера</a></li>
+ <li>Укажите адрес сервера в Lavender Photos</li>
+ <li>Войдите в систему, используя учетную запись пользователя Immich</li>
+ <li>На странице панели мониторинга нажмите "Параметры резервного копирования"</li>
+ <li>Выберите альбомы, для которых вы хотите создать резервную копию, и нажмите кнопку подтверждения</li>
+ <li>Наслаждайтесь безопасным и простым облачным резервным копированием!</li>
+ </ul>
+ ]]></string>
     <string name="immich_server_url_invalid">Недопустимый URL-адрес!</string>
     <string name="immich_misc">Разное</string>
     <string name="exif_name">Название:</string>
@@ -438,7 +451,7 @@
     <string name="albums_rename_failure">Недопустимое название альбома</string>
     <string name="debugging_development">Разработка</string>
     <string name="settings_storage_export_quality_warn">Высокие значения увеличивают размер изображений.</string>
-    <string name="media_snackbar_operation_failed">Синхронизация не удалась!</string>
+    <string name="media_snackbar_operation_failed">Операция не удалась!</string>
     <string name="media_copy_snackbar_title">Копирование элементов…</string>
     <string name="media_move_snackbar_title">Перемещение элементов…</string>
     <string name="media_delete_snackbar_title">Удаление элементов…</string>
@@ -461,9 +474,9 @@
     <string name="startup_processing_progress">Готово: %s</string>
     <string name="albums_is_cloud">Это альбом доступный только в облаке</string>
     <string name="albums_paths">Пути:</string>
-    <string name="media_copy_snackbar_body">Копирование: %1$d из %2$d</string>
-    <string name="media_move_snackbar_body">Перемещение: %1$d из %2$d</string>
-    <string name="media_delete_snackbar_body">Удаление: %1$d из %2$d</string>
+    <string name="media_copy_snackbar_body">Скопировано: %1$d из %2$d</string>
+    <string name="media_move_snackbar_body">Перемещено: %1$d из %2$d</string>
+    <string name="media_delete_snackbar_body">Удалено: %1$d из %2$d</string>
     <string name="immich_login_unreachable">Сервер недоступен</string>
     <string name="startup_processing_info">Это однократная операция.</string>
     <string name="startup_processing_explanation">Почему нужно ждать?</string>
@@ -576,7 +589,7 @@
     <string name="immich_auth_password_current_blank">Текущий пароль не может быть пустым</string>
     <string name="immich_auth_password_good_to_go">Всё готово для изменения пароля!</string>
     <string name="immich_auth_hide_password">Показать или скрыть пароль</string>
-    <string name="immich_auth_login_with_api_key">Войти с помощью ключа API</string>
+    <string name="immich_auth_login_with_api_key">Войти с помощью API ключа</string>
     <string name="immich_auth_login_with_account">Войти с помощью учётной записи</string>
     <string name="immich_server_info_new_version_available">Доступна новая версия: %1$s</string>
     <string name="immich_server_storage_desc_detailed">Использовано %1$s ГБ из %2$s ГБ</string>
@@ -654,4 +667,43 @@
     <string name="export_settings_backup_save">Сохранить Данные Приложения</string>
     <string name="debugging_report_issue_other">Другое</string>
     <string name="navigation_tap_to_nav">Нажмите для навигации</string>
+    <string name="albums_is_saf">Это сетевой ресурс</string>
+    <string name="albums_toggle_nested_display">Посмотреть вложенные медиа</string>
+    <string name="albums_network_share">Сетевой ресурс</string>
+    <string name="albums_network_share_desc">Только просмотр. Требуется RSAF, Диск или аналогичный ресурс</string>
+    <string name="navigation_tap_to_nav_desc">Нажмите на крайнюю левую или правую сторону экрана чтобы перемещатся между медиафайлами</string>
+    <string name="export_settings_backup_save_error">Ошибка сохранения в облоко</string>
+    <string name="contributor_stacsk_desc">Выявил проблемы и предложил множество улучшений для продвижения разработки приложения</string>
+    <string name="export_settings_backup_save_desc">Экспортирует настройки приложения и альбомы в JSON‑файл, чтобы их можно было позже восстановить. Не сохраняет логины и неизменяемые медиафайлы.</string>
+    <string name="export_settings_backup_save_success">Данные сохранены</string>
+    <string name="export_settings_backup_load">Загрузить сохранение</string>
+    <string name="export_settings_backup_load_desc">Загружает настройки приложения и альбомы из файла JSON. Перезаписывает все существующие настройки.</string>
+    <string name="export_settings_backup_load_error">Не удалось загрузить данные</string>
+    <string name="logs_share">Поделиться логами</string>
+    <string name="record_logs_off">Запись логов отключена.</string>
+    <string name="debugging_report_issue">Сообщить о ошибке</string>
+    <string name="debugging_report_issue_bug">Отчет об ошибке</string>
+    <string name="debugging_report_issue_bug_desc">Помочь устранить проблему с приложением</string>
+    <string name="debugging_report_issue_feature">Предложение по функции</string>
+    <string name="debugging_report_issue_feature_desc">Предложить идею новой функции для этого приложения</string>
+    <string name="debugging_report_issue_other_desc">Сообщить о чем-то ещё</string>
+    <string name="media_share_failed">Не удалось поделиться медиафайлами!</string>
+    <string name="media_secure_snackbar_title">Закрепление элеменов…</string>
+    <string name="media_restore_snackbar_title">Восстановление элементов…</string>
+    <string name="media_clear_exif_snackbar_title">Удаленные данные EXIF</string>
+    <string name="media_share_snackbar_title">Отправка элементов…</string>
+    <string name="media_share_snackbar_body">Отправлено %1$d из %2$d</string>
+    <string name="media_secure_snackbar_body">Защищено %1$d из %2$d</string>
+    <string name="media_restore_snackbar_body">Восстановлено %1$d из %2$d</string>
+    <string name="no_actions_available">Нет доступных действий</string>
+    <string name="done">Сделано</string>
+    <string name="selection_limit_reached">Достигнут предел выбора!</string>
+    <string name="privacy_authenticate">Проверка подлинности</string>
+    <string name="privacy_scroll_mode_last_active">Режим конфиденциальности активен</string>
+    <string name="privacy_scroll_mode_last_active_desc">Режим конфиденциальности оставался активным, когда приложение было закрыто в последний раз. Пожалуйста, используйте свой пароль или биометрические данные, чтобы продолжить.</string>
+    <string name="album_group_filter_in_this_groups">В этой группе</string>
+    <string name="album_group_filter_not_in_a_group">Не в группе</string>
+    <string name="album_group_filter_in_other_groups">В других группах</string>
+    <string name="album_group_filter_none">Отсутствует</string>
+    <string name="albums_cloud">Облачный альбом</string>
 </resources>

@@ -546,18 +546,19 @@
     <string name="immich_help_general">Co to je?</string>
     <string name="immich_help_general_desc">Umožňuje zálohovat média na úrovni alb na server Immich</string>
     <string name="immich_help_detailed_desc"><![CDATA[
-            <p><a href="https://immich.app/">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,
-            které komukoli umožňuje provozovat vlastní cloudový zálohovací server.
-            </p>
-            <h3 style="text-align:center;">Jak ho používat?<h3/>
-            <ul>
-                <li>Provozujte vlastní <a href="https://immich.app/">server Immich</a></li>
-                <li>V aplikaci Lavender Photos zadejte adresu serveru</li>
-                <li>Přihlaste se pomocí uživatelského účtu Immich</li>
-                <li>Přejděte do libovolného alba a klepněte na ikonu cloudu</li>
-                <li>Začněte zálohovat své fotografie!</li>
-            </ul>
-        ]]></string>
+    <p><a href="https://immich.app/">Immich</a> je řešení pro správu fotografií a videí hostované vlastními silami,
+    které komukoli umožňuje provozovat vlastní cloudový zálohovací server.
+    </p>
+    <h3 style="text-align:center;">Jak ho používat?</h3>
+    <ul>
+        <li>Provozujte vlastní <a href="https://immich.app/">server Immich</a></li>
+        <li>V aplikaci Lavender Photos zadejte adresu serveru</li>
+        <li>Přihlaste se pomocí uživatelského účtu Immich</li>
+        <li>Na stránce přehledu klepněte na „Možnosti zálohování“</li>
+        <li>Vyberte alba, která chcete zálohovat, a klepněte na tlačítko potvrzení</li>
+        <li>Užívejte si bezpečné a snadné cloudové zálohování!</li>
+    </ul>
+]]></string>
     <string name="immich_server_url_invalid">Neplatná URL!</string>
     <string name="immich_misc">Různé</string>
     <string name="immich_server_online">Online</string>
@@ -601,8 +602,8 @@
     <string name="immich_share_album_allow_uploads">Povolit nahrávání</string>
     <string name="immich_share_album_allow_downloads">Povolit stahování</string>
     <string name="immich_share_album_require_password">Vyžadovat heslo</string>
-    <string name="immich_share_album_custom_url">Vlastní URL</string>
-    <string name="immich_share_album_use_custom_url">Použít vlastní URL</string>
+    <string name="immich_share_album_custom_url">Vlastní název URL</string>
+    <string name="immich_share_album_use_custom_url">Použít vlastní název URL</string>
     <string name="immich_share_album_description">Popis</string>
     <string name="immich_share_album_loading">Vytváření odkazu…</string>
     <string name="immich_share_album_loading_failed">Odkaz se nepodařilo vytvořit</string>
@@ -692,4 +693,17 @@
     <string name="privacy_authenticate">Ověřit totožnost</string>
     <string name="privacy_scroll_mode_last_active">Režim soukromí je aktivní</string>
     <string name="privacy_scroll_mode_last_active_desc">Režim soukromí zůstal při posledním ukončení aplikace aktivní. Pro pokračování použijte heslo nebo biometrické ověření.</string>
+    <string name="albums_is_saf">Toto je síťové sdílení</string>
+    <string name="albums_cloud">Cloudové album</string>
+    <string name="albums_network_share">Síťové sdílení</string>
+    <string name="albums_network_share_desc">Pouze pro procházení. Vyžaduje RSAF, Drive nebo podobný nástroj</string>
+    <string name="logs_share">Sdílet soubory protokolů</string>
+    <string name="record_logs_off">Záznam protokolů je vypnutý</string>
+    <string name="media_clear_exif_snackbar_title">Data EXIF byla vymazána</string>
+    <string name="done">Hotovo</string>
+    <string name="selection_limit_reached">Byl dosažen limit výběru!</string>
+    <string name="album_group_filter_none">Vše</string>
+    <string name="album_group_filter_in_this_groups">V této skupině</string>
+    <string name="album_group_filter_not_in_a_group">Bez skupiny</string>
+    <string name="album_group_filter_in_other_groups">V jiných skupinách</string>
 </resources>

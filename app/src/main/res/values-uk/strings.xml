@@ -685,4 +685,12 @@
     <string name="albums_network_share_desc">Тільки перегляд. Потребує RSAF, Drive або еквівалент</string>
     <string name="logs_share">Поширити лог файли</string>
     <string name="record_logs_off">Запис логів вимкнений</string>
+    <string name="albums_cloud">Хмарний Альбом</string>
+    <string name="media_clear_exif_snackbar_title">Очищені EXIF дані</string>
+    <string name="done">Готово</string>
+    <string name="selection_limit_reached">Досягнуто ліміту обрання!</string>
+    <string name="album_group_filter_none">Нічого</string>
+    <string name="album_group_filter_in_this_groups">В цій групі</string>
+    <string name="album_group_filter_not_in_a_group">Не в групі</string>
+    <string name="album_group_filter_in_other_groups">В інших групах</string>
 </resources>

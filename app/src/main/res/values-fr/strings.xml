@@ -27,7 +27,7 @@
     <string name="updates_check_desc">Vous informe d\'une nouvelle version quand vous ouvrez cette appli. N\'installe pas automatiquement la mise à jour</string>
     <string name="updates_whats_new">Quoi de neuf</string>
     <string name="updates_notice">Notification de téléchargement</string>
-    <string name="updates_latest">Dernière version déjà installée</string>
+    <string name="updates_latest">À jour</string>
     <string name="secure_folder">Dossier Sécurisé</string>
     <string name="export_unenc_backup">Exporter une sauvegarde décryptée</string>
     <string name="export_unenc_backup_desc">Exporte un dossier contenant tous vos médias sécurisés, décryptés</string>
@@ -42,7 +42,7 @@
     <string name="albums_folder">Dossier</string>
     <string name="privacy_policy">Il n\'y en a pas ! Aucune de vos données ne sort de cet appareil. Aucune IA n\'est entraînée sur vos données, aucun algorithme ne récolte vos informations, rien. Lavender Photos a toujours été et sera toujours une appli de galerie photo qui privilégie la confidentialité.</string>
     <string name="secure_processing">Merci d\'attendre pendant que le média est traité</string>
-    <string name="updates_new_version_available">Nouvelle version disponible !</string>
+    <string name="updates_new_version_available">Mise à jour disponible !</string>
     <string name="updates_checking">Vérification de mise à jour</string>
     <string name="updates_notice_desc"><![CDATA[\n            &lt;p&gt;Cet outil de mise à jour télécharge des apks depuis les &lt;a href=\"https ://github.com/kaii-lb/LavenderPhotos/releases\"&gt;GitHub Releases&lt;/a&gt; ce qui\n                veut dire qu\'ils ne passent pas par les processus de tests réalisés sur IzzyOnDroid, F-Droid ou ailleurs.\n\n                &lt;br&gt;&lt;br&gt;Les éditions du logiciel hébergées sur GitHub sont toujours signées et vérifiées par le développeur (kaii-lb), mais c\'est à vous de voir si vous voulez les utiliser ou non.\n\n                &lt;br&gt;&lt;br&gt;Lavender Photos ne fait jamais de mise à automatique, et ne se mets à jour qu\'avec votre accord explicite.\n            <&lt>/p>;\n        ]]></string>
     <string name="export_fav_to_folder">Exporter une sauvegarde dans un dossier</string>
@@ -227,4 +227,35 @@
     <string name="navigation_albums">Albums</string>
     <string name="navigation_search">Recherche</string>
     <string name="navigation_favourites">Favoris</string>
+    <string name="albums_is_cloud_linked">Ceci est un album synchronisé sur le cloud</string>
+    <string name="albums_cloud">Album Cloud</string>
+    <string name="albums_toggle_nested_display">Afficher les médias imbriqués</string>
+    <string name="albums_network_share_desc">Consultation uniquement, Requiert RSAF, Drive ou équivalent</string>
+    <string name="navigation">Navigation</string>
+    <string name="navigation_away">Navigue vers une autre page</string>
+    <string name="navigation_tap_to_nav">Appuyé pour naviguer</string>
+    <string name="navigation_tap_to_nav_desc">Appuyez sur les bords gauche ou droit de l\'écran pour passer d\'un contenu multimédia à l\'autre</string>
+    <string name="app_description">Application de galerie open-source, élégante, performante et respectueuse de la vie privée</string>
+    <string name="app_repo">Répertoire des applications</string>
+    <string name="licenses_extra">Informations complémentaires</string>
+    <string name="licenses_extra_desc">Consulter des informations plus détaillées sur les licences</string>
+    <string name="special_thanks_to">Un grand merci à :</string>
+    <string name="updates_no_changelog">Pas de changelog disponible</string>
+    <string name="secure_getting_file_info">Obtention des informations sur le fichier…</string>
+    <string name="secure_please_wait">Attendez s\'il vous plaît…</string>
+    <string name="secure_export_failed">Échec de l\'exportation de la backup!</string>
+    <string name="secure_encryption_failed_no_permission">Impossible de crypter des photos sans autorisation</string>
+    <string name="secure_migrating">Migration</string>
+    <string name="secure_migrating_desc">Sauvegarde et chiffrement de vos photos, un instant…</string>
+    <string name="secure_unlock_desc">Utilisez vos identifiants biométriques pour déverrouiller</string>
+    <string name="editing_export_video_loading">Exportation de la vidéo…</string>
+    <string name="permissions_why">Pourquoi ?</string>
+    <string name="app_lock_confirm">Vérifiez votre code PIN</string>
+    <string name="look_and_feel_date_format_date_taken">Date de prise de vue</string>
+    <string name="immich_endpoint_base_placeholder">https://mon.immich.serveur.com/</string>
+    <string name="immich_clear_endpoint">Supprimer le serveur ?</string>
+    <string name="immich_clear_endpoint_desc">Êtes-vous sûr de vouloir supprimer cette adresse de serveur ?</string>
+    <string name="immich_logout">Se déconnecter</string>
+    <string name="contributors_separator_developer">Développeur</string>
+    <string name="contributors_separator_contributors">Contributeurs open source</string>
 </resources>

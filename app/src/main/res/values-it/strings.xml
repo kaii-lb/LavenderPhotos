@@ -699,4 +699,12 @@
     <string name="contributors_separator_developer">Sviluppatore</string>
     <string name="contributors_separator_major">Punti salienti</string>
     <string name="contributors_separator_contributors">Contributori open-source</string>
+    <string name="albums_cloud">Album Cloud</string>
+    <string name="media_clear_exif_snackbar_title">Elimina dati EXIF</string>
+    <string name="done">Fine</string>
+    <string name="selection_limit_reached">Limite di selezione raggiunto!</string>
+    <string name="album_group_filter_none">Nessuno</string>
+    <string name="album_group_filter_in_this_groups">In questo gruppo</string>
+    <string name="album_group_filter_not_in_a_group">Non in questo gruppo</string>
+    <string name="album_group_filter_in_other_groups">In altri gruppi</string>
 </resources>
