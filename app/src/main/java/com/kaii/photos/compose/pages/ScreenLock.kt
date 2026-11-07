@@ -97,8 +97,18 @@ fun ScreenLock(
     val navController = LocalNavController.current
     val settings = PhotosApplication.appModule.settings.permissions
 
-    val savedPin by settings.getPassword().collectAsStateWithLifecycle(initialValue = null)
-    val biometricUnlockEnabled by settings.getBiometricUnlockEnabled().collectAsStateWithLifecycle(initialValue = false)
+    // These flows must keep their identity across recompositions. Creating fresh map/flowOf
+    // instances here would recreate ExpressivePINFieldState when its status changes, which can
+    // cancel the pending Success event before the PIN unlock is handled.
+    val storedPinFlow = remember(settings) { settings.getPassword() }
+    val storedSaltFlow = remember(settings) { settings.getSalt() }
+    val pinFlow = remember(settings, password) { password?.let { flowOf(it) } ?: storedPinFlow }
+    val saltFlow = remember(settings, salt) { salt?.let { flowOf(it) } ?: storedSaltFlow }
+
+    val savedPin by storedPinFlow.collectAsStateWithLifecycle(initialValue = null)
+    val biometricUnlockEnabled by remember(settings) {
+        settings.getBiometricUnlockEnabled()
+    }.collectAsStateWithLifecycle(initialValue = false)
     val canUseBiometrics = action == ExpressivePINFieldState.Action.Unlock &&
         canUnlockAppWithBiometrics(
             hasPin = savedPin != null,
@@ -137,8 +147,8 @@ fun ScreenLock(
 
     val state = rememberExpressivePINFieldState(
         action = action,
-        pinBytes = password?.let { flowOf(it) } ?: settings.getPassword(),
-        saltBytes = salt?.let { flowOf(it) } ?: settings.getSalt()
+        pinBytes = pinFlow,
+        saltBytes = saltFlow
     )
 
     LaunchedEffect(state) {
