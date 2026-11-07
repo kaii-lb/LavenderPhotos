@@ -507,6 +507,11 @@ As a precaution, a copy of your secured photos is now present in an export folde
     <string name="app_lock_confirm">Confirm your PIN</string>
     <string name="app_lock_submit">Submit PIN for checking</string>
     <string name="app_lock_backspace">Delete last input character</string>
+    <string name="app_lock_biometrics">Unlock with biometrics</string>
+    <string name="app_lock_biometrics_desc">Use your fingerprint or another supported biometric instead of the app PIN. The PIN remains available.</string>
+    <string name="app_lock_biometrics_prompt">Authenticate to unlock Lavender Photos</string>
+    <string name="app_lock_biometrics_unavailable">Set an app PIN and enroll a strong biometric on your device to enable this.</string>
+    <string name="app_lock_use_biometrics">Use biometrics</string>
 
     <!-- Bottom Sheets -->
     <string name="bottom_sheets_enter_text">Enter Text</string>

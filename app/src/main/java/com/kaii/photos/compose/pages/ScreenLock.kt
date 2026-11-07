@@ -20,11 +20,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,8 +42,12 @@ import com.kaii.photos.LocalNavController
 import com.kaii.photos.PhotosApplication
 import com.kaii.photos.R
 import com.kaii.photos.compose.widgets.ExpressivePINField
+import com.kaii.photos.domain.authentication.PromptAuthResult
 import com.kaii.photos.helpers.AnimationConstants
 import com.kaii.photos.helpers.Screens
+import com.kaii.photos.permissions.auth.canUnlockAppWithBiometrics
+import com.kaii.photos.permissions.auth.hasStrongBiometrics
+import com.kaii.photos.presentation.authentication.rememberBiometricPromptManager
 import com.kaii.photos.presentation.ui.theme.ThemeConfiguration
 import com.kaii.photos.ui.theme.PhotosTheme
 import com.kaii.photos.widgets.ExpressivePINFieldState
@@ -84,8 +93,47 @@ fun ScreenLock(
     salt: ByteArray? = null
 ) {
     val resources = LocalResources.current
+    val context = LocalContext.current
     val navController = LocalNavController.current
     val settings = PhotosApplication.appModule.settings.permissions
+
+    val savedPin by settings.getPassword().collectAsStateWithLifecycle(initialValue = null)
+    val biometricUnlockEnabled by settings.getBiometricUnlockEnabled().collectAsStateWithLifecycle(initialValue = false)
+    val canUseBiometrics = action == ExpressivePINFieldState.Action.Unlock &&
+        canUnlockAppWithBiometrics(
+            hasPin = savedPin != null,
+            optedIn = biometricUnlockEnabled,
+            hasBiometrics = hasStrongBiometrics(context)
+        )
+    val biometricPromptManager = if (action == ExpressivePINFieldState.Action.Unlock) {
+        rememberBiometricPromptManager(
+            title = stringResource(id = R.string.app_lock),
+            subtitle = stringResource(id = R.string.app_lock_biometrics_prompt),
+            biometricOnly = true,
+            cancelText = stringResource(id = R.string.close)
+        )
+    } else null
+    var unlockHandled by remember { mutableStateOf(false) }
+
+    suspend fun finishUnlock(waitForPinAnimation: Boolean = true) {
+        if (unlockHandled) return
+        unlockHandled = true
+
+        if (waitForPinAnimation) delay(AnimationConstants.DURATION_LONG.milliseconds)
+
+        if (navController.currentDestination?.hasRoute(Screens.MainPages::class) == true
+            || navController.previousBackStackEntry == null
+        ) {
+            settings.setPrivacyModeActive(active = false)
+            navController.navigate(Screens.MainPages) {
+                popUpTo(Screens.Startup.ScreenLock) {
+                    inclusive = true
+                }
+            }
+        } else {
+            navController.popBackStack()
+        }
+    }
 
     val state = rememberExpressivePINFieldState(
         action = action,
@@ -101,20 +149,7 @@ fun ScreenLock(
 
             when (action) {
                 ExpressivePINFieldState.Action.Unlock -> {
-                    delay(AnimationConstants.DURATION_LONG.milliseconds)
-
-                    if (navController.currentDestination?.hasRoute(Screens.MainPages::class) == true
-                        || navController.previousBackStackEntry == null
-                    ) {
-                        settings.setPrivacyModeActive(active = false)
-                        navController.navigate(Screens.MainPages) {
-                            popUpTo(Screens.Startup.ScreenLock) {
-                                inclusive = true
-                            }
-                        }
-                    } else {
-                        navController.popBackStack()
-                    }
+                    finishUnlock()
                 }
 
                 ExpressivePINFieldState.Action.Verify -> {
@@ -169,6 +204,18 @@ fun ScreenLock(
         }
     }
 
+    LaunchedEffect(biometricPromptManager, canUseBiometrics) {
+        biometricPromptManager?.events?.collect { result ->
+            if (canUseBiometrics && result == PromptAuthResult.Succeeded) {
+                finishUnlock(waitForPinAnimation = false)
+            }
+        }
+    }
+
+    LaunchedEffect(biometricPromptManager, canUseBiometrics) {
+        if (canUseBiometrics) biometricPromptManager?.authenticate()
+    }
+
     val status by state.status.collectAsStateWithLifecycle()
     ScreenLock(
         action = action,
@@ -177,7 +224,10 @@ fun ScreenLock(
         modifier = modifier,
         onKeyPressed = state::addCode,
         onDeletePressed = state::deleteCode,
-        onSubmitPressed = state::submit
+        onSubmitPressed = state::submit,
+        onBiometricUnlock = if (canUseBiometrics && !unlockHandled) {
+            biometricPromptManager?.let { it::authenticate }
+        } else null
     )
 }
 
@@ -190,7 +240,8 @@ private fun ScreenLock(
     modifier: Modifier = Modifier,
     onKeyPressed: (code: Int) -> Unit,
     onDeletePressed: () -> Unit,
-    onSubmitPressed: () -> Unit
+    onSubmitPressed: () -> Unit,
+    onBiometricUnlock: (() -> Unit)? = null
 ) {
     Scaffold(
         modifier = modifier,
@@ -252,6 +303,17 @@ private fun ScreenLock(
                 onDeletePressed = onDeletePressed,
                 onSubmitPressed = onSubmitPressed
             )
+
+            if (onBiometricUnlock != null) {
+                TextButton(onClick = onBiometricUnlock) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.face),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(text = stringResource(id = R.string.app_lock_use_biometrics))
+                }
+            }
         }
     }
 }

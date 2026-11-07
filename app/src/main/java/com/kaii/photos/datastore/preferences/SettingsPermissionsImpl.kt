@@ -20,6 +20,7 @@ class SettingsPermissionsImpl(
     private val allowSecureFolderScreenCaptureKey = booleanPreferencesKey("permissions_allow_secure_folder_screen_capture")
     private val passwordKey = byteArrayPreferencesKey("permissions_password_key")
     private val saltKey = byteArrayPreferencesKey("permissions_password_salt_key")
+    private val biometricUnlockKey = booleanPreferencesKey("permissions_biometric_unlock")
     private val privacyModeKey = booleanPreferencesKey("permissions_privacy_mode_key")
 
     suspend fun migrate() {
@@ -96,6 +97,19 @@ class SettingsPermissionsImpl(
     fun setPassword(password: ByteArray?) = scope.launch {
         context.datastore.edit {
             it[passwordKey] = password ?: ByteArray(0)
+            // A new (or removed) PIN requires the user to opt in to biometrics again.
+            it[biometricUnlockKey] = false
+        }
+    }
+
+    fun getBiometricUnlockEnabled(): Flow<Boolean> = context.datastore.data.map {
+        it[biometricUnlockKey] == true
+    }
+
+    fun setBiometricUnlockEnabled(enabled: Boolean) = scope.launch {
+        context.datastore.edit {
+            // Never leave biometric app unlock enabled without an app-lock PIN.
+            it[biometricUnlockKey] = enabled && it[passwordKey]?.isNotEmpty() == true
         }
     }
 

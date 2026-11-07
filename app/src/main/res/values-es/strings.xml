@@ -542,6 +542,11 @@
     <string name="app_lock_confirm">Confirma tu PIN</string>
     <string name="app_lock_submit">Envíe el PIN para verificar</string>
     <string name="app_lock_backspace">Eliminar el último carácter de la entrada</string>
+    <string name="app_lock_biometrics">Desbloquear con biometría</string>
+    <string name="app_lock_biometrics_desc">Usa tu huella u otro dato biométrico compatible en vez del PIN de la aplicación. El PIN sigue disponible.</string>
+    <string name="app_lock_biometrics_prompt">Identifícate para desbloquear Lavender Photos</string>
+    <string name="app_lock_biometrics_unavailable">Establece un PIN y registra un dato biométrico seguro en tu dispositivo para activar esta opción.</string>
+    <string name="app_lock_use_biometrics">Usar biometría</string>
     <string name="look_and_feel_language">Idioma</string>
     <string name="look_and_feel_language_selected">Este idioma está seleccionado</string>
     <string name="look_and_feel_app_language">Idioma de la App</string>

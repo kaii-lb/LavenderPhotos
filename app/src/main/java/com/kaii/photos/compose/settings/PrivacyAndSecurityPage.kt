@@ -46,6 +46,7 @@ import com.kaii.photos.helpers.Screens
 import com.kaii.photos.helpers.TextStylingConstants
 import com.kaii.photos.permissions.StartupManager
 import com.kaii.photos.permissions.auth.rememberPasswordAuthManager
+import com.kaii.photos.permissions.auth.hasStrongBiometrics
 import com.kaii.photos.widgets.ExpressivePINFieldState
 
 @Composable
@@ -62,6 +63,8 @@ fun PrivacyAndSecurityPage(
     val doNotTrash by settings.getDoNotTrash().collectAsStateWithLifecycle(initialValue = true)
     val allowSecureFolderScreenCapture by settings.getAllowSecureFolderScreenCapture().collectAsStateWithLifecycle(initialValue = false)
     val password by settings.getPassword().collectAsStateWithLifecycle(initialValue = null)
+    val biometricUnlockEnabled by settings.getBiometricUnlockEnabled().collectAsStateWithLifecycle(initialValue = false)
+    val hasBiometrics = hasStrongBiometrics(LocalContext.current)
 
     PrivacyAndSecurityPageImpl(
         isMediaManager = { isMediaManager },
@@ -69,12 +72,15 @@ fun PrivacyAndSecurityPage(
         doNotTrash = { doNotTrash },
         allowSecureFolderScreenCapture = { allowSecureFolderScreenCapture },
         password = { password },
+        biometricUnlockEnabled = { biometricUnlockEnabled },
+        hasBiometrics = hasBiometrics,
         navController = LocalNavController.current,
         modifier = modifier,
         setIsMediaManager = settings::setIsMediaManager,
         setConfirmToDelete = settings::setConfirmToDelete,
         setDoNotTrash = settings::setDoNotTrash,
         setAllowSecureFolderScreenCapture = settings::setAllowSecureFolderScreenCapture,
+        setBiometricUnlockEnabled = settings::setBiometricUnlockEnabled,
         onPermissionResult = {
             startupManager.onPermissionResult(
                 permission = Manifest.permission.MANAGE_MEDIA,
@@ -93,12 +99,15 @@ fun PrivacyAndSecurityPagePreview() {
         doNotTrash = { false },
         allowSecureFolderScreenCapture = { false },
         password = { null },
+        biometricUnlockEnabled = { false },
+        hasBiometrics = false,
         navController = rememberNavController(),
         modifier = Modifier,
         setIsMediaManager = {},
         setConfirmToDelete = {},
         setDoNotTrash = {},
         setAllowSecureFolderScreenCapture = {},
+        setBiometricUnlockEnabled = {},
         onPermissionResult = {}
     )
 }
@@ -110,12 +119,15 @@ private fun PrivacyAndSecurityPageImpl(
     doNotTrash: () -> Boolean,
     allowSecureFolderScreenCapture: () -> Boolean,
     password: () -> ByteArray?,
+    biometricUnlockEnabled: () -> Boolean,
+    hasBiometrics: Boolean,
     navController: NavController,
     modifier: Modifier,
     setIsMediaManager: (value: Boolean) -> Unit,
     setConfirmToDelete: (value: Boolean) -> Unit,
     setDoNotTrash: (value: Boolean) -> Unit,
     setAllowSecureFolderScreenCapture: (value: Boolean) -> Unit,
+    setBiometricUnlockEnabled: (value: Boolean) -> Unit,
     onPermissionResult: (granted: Boolean) -> Unit
 ) {
     Scaffold(
@@ -247,6 +259,23 @@ private fun PrivacyAndSecurityPageImpl(
                             )
                         }
                     }
+                )
+            }
+
+            item {
+                val canEnable = password() != null && hasBiometrics
+                PreferencesSwitchRow(
+                    title = stringResource(id = R.string.app_lock_biometrics),
+                    summary = stringResource(
+                        id = if (canEnable) R.string.app_lock_biometrics_desc
+                        else R.string.app_lock_biometrics_unavailable
+                    ),
+                    iconResID = R.drawable.face,
+                    position = RowPosition.Single,
+                    showBackground = false,
+                    enabled = canEnable,
+                    checked = biometricUnlockEnabled() && password() != null,
+                    onSwitchClick = setBiometricUnlockEnabled
                 )
             }
         }
