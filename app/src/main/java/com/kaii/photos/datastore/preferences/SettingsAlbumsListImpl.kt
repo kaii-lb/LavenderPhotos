@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.kaii.photos.datastore.AlbumCoverStore
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumInfo
 import com.kaii.photos.datastore.AlbumSortMode
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -31,6 +33,7 @@ class SettingsAlbumsListImpl(
     private val context: Context,
     private val scope: CoroutineScope
 ) {
+    val covers = AlbumCoverStore(context)
     private val oldAlbumListKey = stringPreferencesKey("album_folder_path_list")
     private val sortModeKey = intPreferencesKey("album_sort_mode")
     private val autoDetectAlbumsKey = booleanPreferencesKey("album_auto_detect")
@@ -191,6 +194,12 @@ class SettingsAlbumsListImpl(
     fun get() = context.datastore.data.map { data ->
         val jsonString = data[albumsKey] ?: jsonDefaultAlbumsList
         return@map json.decodeFromString<List<AlbumType>>(jsonString)
+    }.onStart {
+        // Persist the default IDs before exposing them, so covers also survive
+        // restarts when automatic album detection is disabled.
+        context.datastore.edit { data ->
+            if (data[albumsKey] == null) data[albumsKey] = jsonDefaultAlbumsList
+        }
     }
 
     private fun set(list: List<AlbumType>) = scope.launch {
@@ -210,6 +219,7 @@ class SettingsAlbumsListImpl(
 
             data[albumsKey] = json.encodeToString(present)
         }
+        covers.remove(setOf(albumId))
     }
 
     fun removeAll(albumIds: List<String>) = scope.launch {
@@ -225,6 +235,7 @@ class SettingsAlbumsListImpl(
 
             data[albumsKey] = json.encodeToString(present)
         }
+        covers.remove(albumIds.toSet())
     }
 
     fun edit(
@@ -268,11 +279,16 @@ class SettingsAlbumsListImpl(
     }
 
     fun reset() = scope.launch {
+        val removedIds = mutableSetOf<String>()
         context.datastore.edit { data ->
             val currentList = data[albumsKey] ?: return@edit
             val keptAlbums = json.decodeFromString<List<AlbumType>>(currentList).fastFilter {
                 it !is AlbumType.Folder || it.immichId != null
             }
+            removedIds.addAll(
+                json.decodeFromString<List<AlbumType>>(currentList)
+                    .map { it.id }.toSet() - keptAlbums.map { it.id }.toSet()
+            )
 
             val string = data[albumGroupsKey] ?: "[]"
             json.decodeFromString<List<AlbumGroup>>(string).forEach {
@@ -281,6 +297,7 @@ class SettingsAlbumsListImpl(
 
             data[albumsKey] = json.encodeToString(keptAlbums + defaultAlbumsList)
         }
+        covers.remove(removedIds)
     }
 
     fun setSortMode(sortMode: AlbumSortMode) = scope.launch {

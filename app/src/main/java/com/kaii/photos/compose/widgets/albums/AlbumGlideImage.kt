@@ -64,7 +64,7 @@ fun AlbumGlideImage(
         if (state) {
             GlideImage(
                 model =
-                    if ((albumInfo.album is AlbumType.Cloud)) ImmichInfo(
+                    if (albumInfo.album is AlbumType.Cloud && !albumInfo.thumbnail.isCustom) ImmichInfo(
                         thumbnail = albumInfo.thumbnail.uri,
                         original = albumInfo.thumbnail.uri,
                         hash = "",

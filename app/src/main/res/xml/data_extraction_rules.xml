@@ -6,12 +6,15 @@
 <data-extraction-rules>
     <cloud-backup>
         <include domain="file" path="datastore/."/>
+        <include domain="file" path="album_covers/."/>
         <include domain="database" path="media-database.db"/>
         <include domain="database" path="media-database.db-wal"/>
         <include domain="database" path="media-database.db-shm"/>
     </cloud-backup>
 
     <device-transfer>
+        <include domain="file" path="datastore/."/>
+        <include domain="file" path="album_covers/."/>
         <include domain="database" path="media-database.db"/>
         <include domain="database" path="media-database.db-wal"/>
         <include domain="database" path="media-database.db-shm"/>

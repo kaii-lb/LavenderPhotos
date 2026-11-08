@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="albums_cover_choose">Elegir portada</string>
+    <string name="albums_cover_reset">Portada automática</string>
+    <string name="albums_cover_crop">Recortar portada del álbum</string>
+    <string name="albums_cover_crop_hint">Arrastra para encuadrar. Pellizca o usa la barra para ampliar.</string>
+    <string name="albums_cover_save">Usar como portada</string>
+    <string name="albums_cover_error">No se pudo cargar o guardar la portada. Prueba con otra imagen.</string>
+</resources>
