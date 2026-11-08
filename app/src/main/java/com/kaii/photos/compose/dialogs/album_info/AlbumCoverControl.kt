@@ -9,6 +9,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -156,7 +158,10 @@ private fun AlbumCoverCropDialog(
         onDismissRequest = { if (!saving) onDismiss() },
         title = { Text(stringResource(R.string.albums_cover_crop)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 val source = bitmap
                 if (source != null) {
                     val image = remember(source) { source.asImageBitmap() }

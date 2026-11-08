@@ -143,7 +143,7 @@ class AlbumGridState(
                     flow5 = albumsOrderFlow
                 ) { sortMode, albumSortMode, albums, groups, order ->
                     Params(sortMode, albumSortMode, albums, groups, order)
-                }.combine(coversFlow) { params, covers ->
+                }.distinctUntilChanged().combine(coversFlow) { params, covers ->
                     params.copy(covers = covers)
                 }.collectLatest {
                     params = it
