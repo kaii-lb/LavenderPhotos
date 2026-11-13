@@ -56,6 +56,7 @@ function show_help() {
 	echo "Commands:"
 	echo "	debug: build the debug version of this app"
 	echo "	release: build the release version of this app"
+	echo "	optimize: compile this package on-device using speed-profile"
 	echo
 	echo "Options:"
 	echo "	-h | --help: Show this help menu"
@@ -71,6 +72,7 @@ case $1 in
 		build "release" $2 $3
 		;;
 	"optimize")
+		echo "Optimizing..."
 		adb shell cmd package compile -m speed-profile com.kaii.photos
 		;;
 	"--help" | "-h" | "")
