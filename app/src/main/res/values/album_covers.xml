@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="albums_cover_choose">Choose cover</string>
+    <string name="albums_cover_reset">Automatic cover</string>
+    <string name="albums_cover_crop">Crop album cover</string>
+    <string name="albums_cover_crop_hint">Drag to position. Pinch or use the slider to zoom.</string>
+    <string name="albums_cover_save">Use as cover</string>
+    <string name="albums_cover_error">Could not load or save the cover. Try another image.</string>
+</resources>

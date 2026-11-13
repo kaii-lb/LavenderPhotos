@@ -12,6 +12,7 @@ import com.kaii.photos.database.MediaDatabase
 import com.kaii.photos.database.daos.CustomEntityDao
 import com.kaii.photos.database.daos.MediaDao
 import com.kaii.photos.database.daos.SAFDao
+import com.kaii.photos.datastore.AlbumCoverStore
 import com.kaii.photos.datastore.AlbumGroup
 import com.kaii.photos.datastore.AlbumSortMode
 import com.kaii.photos.datastore.AlbumType
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -53,6 +55,7 @@ class AlbumGridState(
     sortModeFlow: Flow<MediaItemSortMode>,
     albumSortModeFlow: Flow<AlbumSortMode>,
     allAlbumsFlow: Flow<Boolean>,
+    coversFlow: Flow<Map<String, String>>,
     private val updateAlbums: (added: List<AlbumType>, updated: List<AlbumType.Cloud>, removed: List<String>) -> Unit
 ) {
     @Immutable
@@ -93,7 +96,8 @@ class AlbumGridState(
             val signature: ObjectKey,
             val albumId: String,
             val date: Long,
-            val isGif: Boolean
+            val isGif: Boolean,
+            val isCustom: Boolean = false
         )
     }
 
@@ -102,7 +106,8 @@ class AlbumGridState(
         val albumSortMode: AlbumSortMode,
         val albums: List<AlbumType>,
         val groups: List<AlbumGroup>,
-        val order: List<String>
+        val order: List<String>,
+        val covers: Map<String, String> = emptyMap()
     )
 
     private var immichInfo = ImmichBasicInfo.Empty
@@ -138,6 +143,8 @@ class AlbumGridState(
                     flow5 = albumsOrderFlow
                 ) { sortMode, albumSortMode, albums, groups, order ->
                     Params(sortMode, albumSortMode, albums, groups, order)
+                }.distinctUntilChanged().combine(coversFlow) { params, covers ->
+                    params.copy(covers = covers)
                 }.collectLatest {
                     params = it
                     refresh()
@@ -280,7 +287,7 @@ class AlbumGridState(
                             else -> customThumbnails[album.id]!!
                         }
 
-                    val info = Info(album, thumbnail)
+                    val info = Info(album, withCustomCover(album.id, thumbnail))
                     singleAlbums.add(Album.Single(info, album.id, album.name, null, thumbnail.date, album.pinned))
                     info
                 }
@@ -308,7 +315,7 @@ class AlbumGridState(
             val single = Album.Single(
                 info = Info(
                     album = album,
-                    thumbnail = thumbnail
+                    thumbnail = withCustomCover(album.id, thumbnail)
                 ),
                 id = album.id,
                 name = album.name,
@@ -333,6 +340,20 @@ class AlbumGridState(
 
         _albums.value = sortAndPin(result, params.albumSortMode, params.order)
         _singleAlbums.value = sortAndPin(deduplicatedSingleAlbums, params.albumSortMode, params.order)
+    }
+
+    private fun withCustomCover(albumId: String, automatic: Info.Thumbnail): Info.Thumbnail {
+        val name = params.covers[albumId] ?: return automatic
+        val file = File(File(context.filesDir, AlbumCoverStore.DIRECTORY), name)
+        if (!file.isFile) return automatic
+
+        // Keep the media date: selecting a cover must not reorder albums.
+        return automatic.copy(
+            uri = file.absolutePath,
+            signature = ObjectKey(name),
+            isGif = false,
+            isCustom = true
+        )
     }
 
     private fun <T : Album> sortAndPin(list: List<T>, mode: AlbumSortMode, order: List<String>): List<T> {
@@ -376,6 +397,7 @@ fun createAlbumGridState(
     allAlbumsFlow = PhotosApplication.appModule.settings.albums.getAutoDetect(),
     albumGroupsFlow = PhotosApplication.appModule.settings.albums.getGroups(),
     albumsOrderFlow = PhotosApplication.appModule.settings.albums.getOrder(),
+    coversFlow = PhotosApplication.appModule.settings.albums.covers.get(),
     info = PhotosApplication.appModule.settings.immich.getImmichBasicInfo(),
     apiClient = apiClient,
     updateAlbums = { added, updated, removed ->

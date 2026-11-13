@@ -106,6 +106,8 @@ fun AlbumInfoDialog(
                                 removeAlbum = removeAlbum,
                                 dismiss = dismiss
                             )
+
+                            AlbumCoverControl(albumId = albumInfo().id)
                         }
 
                         Column(
@@ -165,6 +167,8 @@ fun AlbumInfoDialog(
                             renameAlbum = renameAlbum,
                             dismiss = dismiss
                         )
+
+                        AlbumCoverControl(albumId = albumInfo().id)
 
                         Text(
                             text = stringResource(id = R.string.albums_info),
