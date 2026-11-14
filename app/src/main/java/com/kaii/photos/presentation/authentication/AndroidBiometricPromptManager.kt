@@ -15,18 +15,24 @@ import kotlinx.coroutines.flow.receiveAsFlow
 class AndroidBiometricPromptManager(
     private val context: Context,
     title: String,
-    subtitle: String
+    subtitle: String,
+    biometricOnly: Boolean = false,
+    cancelText: String = ""
 ) : BiometricPromptManager {
-    private val _events = Channel<PromptAuthResult>()
+    private val _events = Channel<PromptAuthResult>(Channel.BUFFERED)
     override val events = _events.receiveAsFlow()
 
-    private val prompt = BiometricPrompt.Builder(context)
+    private val promptBuilder = BiometricPrompt.Builder(context)
         .setTitle(title)
         .setSubtitle(subtitle)
         .setAllowedAuthenticators(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            if (biometricOnly) BiometricManager.Authenticators.BIOMETRIC_STRONG
+            else BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
         )
-        .build()
+
+    private val prompt = (if (biometricOnly) {
+        promptBuilder.setNegativeButton(cancelText, context.mainExecutor) { _, _ -> }
+    } else promptBuilder).build()
 
     private val promptCallback = object : BiometricPrompt.AuthenticationCallback() {
         override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
@@ -62,15 +68,19 @@ class AndroidBiometricPromptManager(
 @Composable
 fun rememberBiometricPromptManager(
     title: String,
-    subtitle: String
+    subtitle: String,
+    biometricOnly: Boolean = false,
+    cancelText: String = ""
 ): BiometricPromptManager {
     val context = LocalContext.current
 
-    return remember(context, title, subtitle) {
+    return remember(context, title, subtitle, biometricOnly, cancelText) {
         AndroidBiometricPromptManager(
             context = context,
             title = title,
-            subtitle = subtitle
+            subtitle = subtitle,
+            biometricOnly = biometricOnly,
+            cancelText = cancelText
         )
     }
 }
